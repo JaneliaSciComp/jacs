@@ -178,7 +178,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runNeuronMergeTest(String taskOwner, String separationEntityId, String commaSeparatedNeuronFragmentList) {
         try {
-            NeuronMergeTask task = new NeuronMergeTask(new HashSet<Node>(), taskOwner, new ArrayList<org.janelia.it.jacs.model.tasks.Event>(), new HashSet<TaskParameter>());
+            NeuronMergeTask task = new NeuronMergeTask(new HashSet<Node>(), taskOwner, new ArrayList<Event>(), new HashSet<TaskParameter>());
             task.setJobName("Neuron Merge Task");
             task.setParameter(NeuronMergeTask.PARAM_separationEntityId, separationEntityId);
             task.setParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList, commaSeparatedNeuronFragmentList);
@@ -244,13 +244,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 
     public void runUpgradeData() {
         try {
-            logger.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new HashSet<String>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
-            logger.info("Found users with data sets: "+subjectKeys);
-            for(String subjectKey : subjectKeys) {
+            for(Subject subject : EJBFactory.getLocalComputeBean().getSubjects()) {
+            	String subjectKey = subject.getKey();
                 logger.info("Queuing upgrade pipelines for "+subjectKey);
                 runUpgradeUserData(subjectKey);
             }
@@ -607,6 +602,8 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         entity.setEntityTypeName(entityTypeName);
         if (isCommonRoot) {
             entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
+            Entity workspace = EJBFactory.getLocalEntityBean().getDefaultWorkspace(ownerKey);
+            EJBFactory.getLocalEntityBean().addRootToWorkspace(ownerKey, workspace.getId(), entity.getId());
         }
         return entity;
     }

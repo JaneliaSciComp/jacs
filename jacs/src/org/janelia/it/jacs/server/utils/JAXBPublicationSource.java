@@ -13,6 +13,7 @@ import javax.xml.bind.UnmarshalException;
 import javax.xml.bind.Unmarshaller;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -110,7 +111,7 @@ public class JAXBPublicationSource {
 
         for (int i = 0; i < members.size(); i++) {
             Object nextMember = members.get(i);
-            if (nextMember instanceof org.janelia.it.jacs.server.jaxb.reference_record.File) {
+            if (nextMember instanceof File) {
                 logger.error("Encountered file member at top level");
             }
             else if (nextMember instanceof Subdir) {
@@ -335,7 +336,7 @@ public class JAXBPublicationSource {
         long returnValue = 0L;
         try {
             URL url = new URL(location);
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             // NOTE: this does not get a long worth of data--just an int.
             //  An int is not sufficient for most downloads, but may be okay
             //  for just PDFs.  However, if this "getContentLength()" is

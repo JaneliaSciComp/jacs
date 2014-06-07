@@ -61,10 +61,10 @@ public class SerializableJobTemplate implements Serializable {
                 // 2 method accept java collections as parameters
                 // but getMethod() requires specific type name, not a subclass
                 // so for Map and List parameter types, we need to provide our own types
-                if (val instanceof java.util.List)
-                    paramType = java.util.List.class;
-                else if (val instanceof java.util.Map)
-                    paramType = java.util.Map.class;
+                if (val instanceof List)
+                    paramType = List.class;
+                else if (val instanceof Map)
+                    paramType = Map.class;
                 else
                     paramType = val.getClass();
 

@@ -5,11 +5,12 @@ import com.google.gwt.user.client.ui.Widget;
 import org.gwtwidgets.client.wrap.Callback;
 import org.gwtwidgets.client.wrap.EffectOption;
 import org.janelia.it.jacs.web.gwt.common.client.effect.SafeEffect;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.DeckPanel;
 
 /**
  * @author Michael Press
  */
-public class FadingDeckPanel extends org.janelia.it.jacs.web.gwt.common.google.user.client.ui.DeckPanel {
+public class FadingDeckPanel extends DeckPanel {
     /**
      * Overrides parent implementation to fade out the old panel and fade in the new one
      */

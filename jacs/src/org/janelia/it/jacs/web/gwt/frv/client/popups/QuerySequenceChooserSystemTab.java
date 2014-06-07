@@ -75,7 +75,7 @@ public class QuerySequenceChooserSystemTab extends QuerySequenceChooserBaseTab {
             }
 
             public void onSuccess(Object object) {
-                RecruitableJobInfo[] jobs = (org.janelia.it.jacs.shared.tasks.RecruitableJobInfo[]) object;
+                RecruitableJobInfo[] jobs = (RecruitableJobInfo[]) object;
                 if (jobs == null || jobs.length == 0) {
                     _logger.debug("Got 0 system jobs");
                     listener.onNoData();

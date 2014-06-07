@@ -5,6 +5,7 @@ import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.TabBar;
 
 import java.util.HashMap;
 
@@ -12,7 +13,7 @@ import java.util.HashMap;
 /**
  * @author Michael Press
  */
-public class RoundedTabBar extends org.janelia.it.jacs.web.gwt.common.google.user.client.ui.TabBar {
+public class RoundedTabBar extends TabBar {
     private HashMap _labels = new HashMap();
 
     /**

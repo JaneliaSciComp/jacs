@@ -10,6 +10,9 @@
 package org.janelia.it.jacs.server.jaxb.reference_record;
 
 
+import java.lang.String;
+import java.util.List;
+
 /**
  * Java content class for anonymous complex type.
  * <p>The following schema fragment specifies the expected content contained within this java content object. (defined at file:/C:/current_projects/cvsfiles/Camera/shared/schema/reference_record.xsd line 107)
@@ -52,22 +55,22 @@ public interface SubdirType {
      * {@link org.janelia.it.jacs.server.jaxb.reference_record.Subdir}
      * {@link org.janelia.it.jacs.server.jaxb.reference_record.File}
      */
-    java.util.List getFileOrSubdir();
+    List getFileOrSubdir();
 
     /**
      * Gets the value of the name property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getName();
+    String getName();
 
     /**
      * Sets the value of the name property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setName(java.lang.String value);
+    void setName(String value);
 
 }

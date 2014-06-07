@@ -13,6 +13,7 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.table.SortableTable;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.TableCell;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.TablePopulateListener;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.TableRow;
+import org.janelia.it.jacs.web.gwt.common.client.ui.table.advancedsort.AdvancedSortableTableClickListener;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.columns.TextColumn;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.FulltextPopperUpperHTML;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.PagedDataRetriever;
@@ -126,7 +127,7 @@ public class ClusterAnnotationsPanelBuilder extends BaseClusterMemberEntitiesPan
                 false,
                 PagingPanel.ADVANCEDSORTLINK_IN_THE_HEADER,
                 "ClusterAnnotationsData");
-        dataPagingPanel.addAdvancedSortClickListener(new org.janelia.it.jacs.web.gwt.common.client.ui.table.advancedsort.AdvancedSortableTableClickListener(dataTable,
+        dataPagingPanel.addAdvancedSortClickListener(new AdvancedSortableTableClickListener(dataTable,
                 dataTable.getAllSortableColumns()));
         dataPagingPanel.setStyleName("clusterMembersDataPanel");
     }

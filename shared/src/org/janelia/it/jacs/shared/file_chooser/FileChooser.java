@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -351,7 +352,7 @@ public class FileChooser extends JFileChooser {
         }
     }
 
-    class DirectoryFileFilter implements java.io.FileFilter {
+    class DirectoryFileFilter implements FileFilter {
         public boolean accept(File f) {
             return f.isDirectory();
         }

@@ -11,7 +11,7 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanRemote
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote
 import org.janelia.it.jacs.compute.api.EntityBeanRemote
 import org.janelia.it.jacs.compute.api.SolrBeanRemote
-import org.janelia.it.jacs.compute.api.support.SolrResults
+import org.janelia.it.jacs.shared.solr.SolrResults
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.model.user_data.Subject

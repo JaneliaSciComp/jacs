@@ -384,6 +384,19 @@ public class SageArtifactExportService extends AbstractEntityService {
         return prop;
     }
     
+    private ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+    	for(ImageProperty property : image.getImageProperties()) {
+    		if (property.getType().equals(type)) {
+    			property.setValue(value);
+    			return sage.saveImageProperty(property);
+    		}
+    	}
+        ImageProperty prop = new ImageProperty(type, image, value, createDate);
+        image.getImageProperties().add(prop);
+        sage.saveImageProperty(prop);
+        return prop;
+    }
+    
     private SecondaryImage getOrCreateSecondaryImage(Entity entity, CvTerm productType, Image sourceImage) throws Exception {
 
         String imageName = entity.getId()+"-"+entity.getName();

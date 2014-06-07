@@ -9,6 +9,7 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.recruitment.FrvStatisticsGenerationService;
@@ -54,7 +55,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
 
     public long blastFrvASingleGenbankFileReturnId(String pathToGenbankFile, String ownerLogin) {
         // Example: /usr/local/projects/X/filestore/system/genomeProject/1167236348080292196/NC_010087.gbk
-        org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+        ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         try {
             System.out.println("Running BlastFRV for: " + pathToGenbankFile);
             GenbankFileInfo genbankFileInfo = getGenbankFileInfoForGivenFile(pathToGenbankFile);
@@ -96,7 +97,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
 
     public void genomeProjectBlastFrvServiceForEachDataset() {
         try {
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             List<GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileList();
             Subject tmpUser = computeBean.getSubjectByNameOrKey(User.SYSTEM_USER_LOGIN);
             // For each Genbank file, run blast, import recruitment file node, and recruitment result file node
@@ -415,7 +416,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
             // generateSampleInfoFile();
 
             // Now run the pipeline
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             List<GenbankFileInfo> genbankFiles = RecruitmentDataHelper.getGenbankFileList();
             Subject tmpUser = computeBean.getSubjectByNameOrKey(User.SYSTEM_USER_LOGIN);
             // For each Genbank file, run blast, import recruitment file node, and recruitment result file node
@@ -460,7 +461,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
      */
     public void updateDataSetFastaFiles() {
         try {
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             // Find the recruitment file node related to each Genbank chromosome and generate the "All Read" FASTA file
             List<Node> resultNodes = getSystemRecruitmentResultFileNodeList();
             for (Node resultNode : resultNodes) {
@@ -724,7 +725,7 @@ public class RecruitmentNodeManager implements RecruitmentNodeManagerMBean {
         }
         GenomeProjectRecruitmentSamplingTask samplingTask = new GenomeProjectRecruitmentSamplingTask(blastDbIds, owner);
         samplingTask.setJobName("Sampling of " + blastDbIds);
-        org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+        ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         samplingTask.setParameter(Task.PARAM_project, RECRUITMENT_PROJECT_CODE);
         samplingTask = (GenomeProjectRecruitmentSamplingTask) computeBean.saveOrUpdateTask(samplingTask);
         // Submit the job

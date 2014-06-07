@@ -11,13 +11,14 @@ import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 @SOAPBinding(style = SOAPBinding.Style.RPC)
 @Stateless(name = "FlyWorkstationWS")
 @WebService(endpointInterface = "org.janelia.it.jacs.compute.ws.FlyWorkstationWS")
 @Remote(FlyWorkstationWS.class)
 @TransactionTimeout(60)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 1, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 1, timeout = 10000)
 public class FlyWorkstationWSBean extends BaseWSBean {
 
     // todo The Web service layer needs to be flushed out

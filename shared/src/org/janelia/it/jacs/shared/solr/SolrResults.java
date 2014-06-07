@@ -1,11 +1,11 @@
-package org.janelia.it.jacs.compute.api.support;
-
-import java.io.Serializable;
-import java.util.*;
+package org.janelia.it.jacs.shared.solr;
 
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.janelia.it.jacs.model.entity.Entity;
+
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * Encapsulate SOLR results with their mapped Entity objects.

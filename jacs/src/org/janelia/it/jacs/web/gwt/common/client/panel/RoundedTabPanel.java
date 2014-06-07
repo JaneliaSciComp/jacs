@@ -7,11 +7,12 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.ActionLink;
 import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.TabBar;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.TabPanel;
 
 /**
  * @author Michael Press
  */
-public class RoundedTabPanel extends org.janelia.it.jacs.web.gwt.common.google.user.client.ui.TabPanel {
+public class RoundedTabPanel extends TabPanel {
     ActionLink[] _actionLink = null;
     private String _actionLinkPanelStyleName;
 

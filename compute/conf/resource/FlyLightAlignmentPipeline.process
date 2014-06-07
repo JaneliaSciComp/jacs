@@ -125,6 +125,11 @@
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
     	    </operation>
     	    
+            <!-- Synchronize results to SAGE -->
+            <operation name="Sage Qi Score Sync" processor="org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService">
+                <input name="ALIGNMENT_ID" value="$V{RESULT_ENTITY_ID}"/>
+            </operation>
+        
     	    <!-- Run analyses on aligned results, if there are signal channels to analyze -->
     	    <sequence if="SIGNAL_CHANNELS is not empty">
         	    

@@ -97,45 +97,33 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String objective = properties.getProperty("alignment.objective");
                     String scoreNcc = properties.getProperty("alignment.quality.score.ncc");
                     String scoreQi = properties.getProperty("alignment.quality.score.qi");
-
-                    String score1MinusQi = null;
-                    Double score1MinusQiCombined = null;
+                    String scoreJbaQi = properties.getProperty("alignment.quality.score.jbaqi");
+                    String scoreJbaQm = properties.getProperty("alignment.quality.score.jbaqm");
+                    
+                    String score1MinusQiCsv = null;
                     List<String> inconsistencyScoreStrs = new ArrayList<String>();
-                    List<Double> inconsistencyScores = new ArrayList<Double>();
                     if (!StringUtils.isEmpty(scoreQi)) {
                         for(String qiScore : Task.listOfStringsFromCsvString(scoreQi)) {
                             try {
                                 double score = 1 - Double.parseDouble(qiScore);
                                 inconsistencyScoreStrs.add(dfScore.format(score));
-                                inconsistencyScores.add(score);
                             }
                             catch (NumberFormatException e) {
                                 logger.error("Error parsing double: "+e);
                             }
                         }
-                        if (inconsistencyScores.size()==3) {
-                        	double q1 = inconsistencyScores.get(0);
-                        	double q2 = inconsistencyScores.get(1);
-                        	double q3 = inconsistencyScores.get(2);
-                        	score1MinusQiCombined = q1 * 0.288 + q2 * 0.462 + q3 * 0.25;
-                        }
-                        else if (inconsistencyScores.size()==1) {
-                        	score1MinusQiCombined = inconsistencyScores.get(0);
-                        }
-                        else {
-                        	logger.warn("Unsupported number of inconsistency scores: ["+scoreQi+"]");
-                        }
-                        score1MinusQi = Task.csvStringFromCollection(inconsistencyScoreStrs);
+                        score1MinusQiCsv = Task.csvStringFromCollection(inconsistencyScoreStrs);
                     }
-
+                    
                     helper.setAlignmentSpace(stackEntity, alignmentSpace);
                     helper.setOpticalResolution(stackEntity, opticalRes);
                     helper.setPixelResolution(stackEntity, pixelRes);
                     helper.setBoundingBox(stackEntity, boundingBox);
                     helper.setObjective(stackEntity, objective);
                     helper.setNccScore(stackEntity, scoreNcc);
-                    helper.setQiScore(stackEntity, dfScore.format(score1MinusQiCombined));
-                    helper.setQiScores(stackEntity, dfScore.format(score1MinusQi));
+                    helper.setQiScores(stackEntity, score1MinusQiCsv);
+                    helper.setQiScore(stackEntity, scoreJbaQi);
+                    helper.setQmScore(stackEntity, scoreJbaQm);
                     
                     if ("true".equals(properties.getProperty("default"))) {
                         defaultAlignmentSpace = alignmentSpace;

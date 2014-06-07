@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -22,7 +23,7 @@ import java.util.List;
 @Stateless(name = "TiledMicroscopeEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledMicroscopeBeanRemote {
 
     private static final Logger _logger = Logger.getLogger(AnnotationBeanImpl.class);

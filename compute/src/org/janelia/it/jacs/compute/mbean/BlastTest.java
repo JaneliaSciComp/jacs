@@ -64,7 +64,7 @@ public class BlastTest implements BlastTestMBean {
             ms.setActualUserChoices(dbList);
             blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
             blastNTask.setOwner("sreenath");
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             computeBean.saveOrUpdateTask(blastNTask);
             computeBean.submitJob("BlastWithGridMerge", blastNTask.getObjectId());
             System.out.println("\33[0m");
@@ -107,7 +107,7 @@ public class BlastTest implements BlastTestMBean {
 
                 blastTask.setOwner("lkagan");
                 blastTask.setJobName("Test Huge File " + i);
-                org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+                ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
                 blastTask = (TBlastNTask) computeBean.saveOrUpdateTask(blastTask);
                 System.out.println("Submitted task " + blastTask.getObjectId());
                 out.append("Submitted task ").append(blastTask.getObjectId()).append("\n");
@@ -135,7 +135,7 @@ public class BlastTest implements BlastTestMBean {
             ms.setActualUserChoices(dbList);
             blastNTask.setParameter(BlastNTask.PARAM_subjectDatabases, Task.csvStringFromCollection(ms.getActualUserChoices()));
             blastNTask.setOwner("smurphy");
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             computeBean.saveOrUpdateTask(blastNTask);
             computeBean.submitJob("BlastWithGridMerge", blastNTask.getObjectId());
         }
@@ -176,7 +176,7 @@ public class BlastTest implements BlastTestMBean {
 
             blastNTask.setOwner("sreenath");
 
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             computeBean.saveOrUpdateTask(blastNTask);
             computeBean.submitJob("FRVBlast", blastNTask.getObjectId());
 
@@ -253,7 +253,7 @@ public class BlastTest implements BlastTestMBean {
     public void updateTasksToParameterStringMap() {
         Map<Long, String> taskPvoMap;
         try {
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             taskPvoMap = computeBean.getAllTaskPvoStrings();
             // This is commented out to simplify permissions issues when running at UCSD
             //java.io.PrintWriter taskParamFile = new java.io.PrintWriter(new java.io.FileOutputStream("taskParamFile.tsv"));
@@ -491,7 +491,7 @@ public class BlastTest implements BlastTestMBean {
 
     public long getCumulativeCpuTime(long taskId) {
         try {
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             return computeBean.getCumulativeCpuTime(taskId);
         }
         catch (RemoteException e) {

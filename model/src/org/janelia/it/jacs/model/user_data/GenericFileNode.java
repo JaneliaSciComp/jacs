@@ -5,6 +5,8 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.tasks.Task;
 
+import java.io.Serializable;
+
 //import org.apache.log4j.*;
 
 
@@ -13,7 +15,7 @@ import org.janelia.it.jacs.model.tasks.Task;
  * Date: Oct 2, 2009
  * Time: 10:16:37 AM
  */
-public class GenericFileNode extends FileNode implements java.io.Serializable, IsSerializable {
+public class GenericFileNode extends FileNode implements Serializable, IsSerializable {
 
     static Logger logger = Logger.getLogger(GenericFileNode.class.getName());
 

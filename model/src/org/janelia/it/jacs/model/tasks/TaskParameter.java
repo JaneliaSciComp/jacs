@@ -4,7 +4,9 @@ package org.janelia.it.jacs.model.tasks;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
-public class TaskParameter implements java.io.Serializable, IsSerializable {
+import java.io.Serializable;
+
+public class TaskParameter implements Serializable, IsSerializable {
 
     // Fields
     private Task task;

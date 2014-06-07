@@ -6,6 +6,7 @@ import org.janelia.it.jacs.server.api.RecruitmentAPI;
 import org.janelia.it.jacs.shared.processors.recruitment.AnnotationTableData;
 import org.janelia.it.jacs.shared.processors.recruitment.ProjectData;
 import org.janelia.it.jacs.shared.processors.recruitment.SampleData;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.web.gwt.common.client.model.tasks.LegendItem;
 import org.janelia.it.jacs.web.gwt.common.client.service.GWTServiceException;
 import org.janelia.it.jacs.web.gwt.common.server.JcviGWTSpringController;
@@ -30,7 +31,7 @@ public class RecruitmentServiceImpl extends JcviGWTSpringController implements R
         this.recruitmentAPI = recruitmentAPI;
     }
 
-    public String runRecruitmentJob(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo job) throws GWTServiceException {
+    public String runRecruitmentJob(RecruitableJobInfo job) throws GWTServiceException {
         try {
             return recruitmentAPI.runRecruitmentJob(job, getSessionUser().getUserLogin());
         }

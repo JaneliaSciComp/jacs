@@ -8,6 +8,7 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime;
 
+import com.sun.msv.grammar.Grammar;
 import com.sun.xml.bind.DatatypeConverterImpl;
 import com.sun.xml.bind.Messages;
 
@@ -62,7 +63,7 @@ public class DefaultJAXBContextImpl extends JAXBContext {
     /**
      * Once we load a grammar, we will cache the value here.
      */
-    private com.sun.msv.grammar.Grammar grammar = null;
+    private Grammar grammar = null;
 
     /**
      * Loads a grammar object for the unmarshal-time validation.
@@ -71,7 +72,7 @@ public class DefaultJAXBContextImpl extends JAXBContext {
      * getGrammar is normally very expensive, so it's worth
      * synchronizing to avoid unnecessary invocation.
      */
-    public synchronized com.sun.msv.grammar.Grammar getGrammar() throws JAXBException {
+    public synchronized Grammar getGrammar() throws JAXBException {
         if (grammar == null)
             grammar = gi.getGrammar();
         return grammar;

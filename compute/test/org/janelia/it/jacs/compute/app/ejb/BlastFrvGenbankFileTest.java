@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.compute.app.ejb;
 
 import org.janelia.it.jacs.compute.ComputeTestCase;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.mbean.RecruitmentNodeManager;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -39,7 +40,7 @@ public class BlastFrvGenbankFileTest extends ComputeTestCase {
         }
         // Next, poll and wait for result, within a limit
         try {
-            org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
             int sanityCheck=300; // five-minutes
             while (!Task.isDone(statusTypeAndValue[0])) {

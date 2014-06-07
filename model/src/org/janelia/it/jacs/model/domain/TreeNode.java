@@ -8,7 +8,7 @@ import org.jongo.marshall.jackson.oid.Id;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonTypeInfo(use=com.fasterxml.jackson.annotation.JsonTypeInfo.Id.CLASS,property="class")
+@JsonTypeInfo(use= JsonTypeInfo.Id.CLASS,property="class")
 public class TreeNode implements DomainObject {
 
     @Id

@@ -25,7 +25,7 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.RemotePagingPan
  * Date: Nov 19, 2007
  * Time: 1:49:11 PM
  */
-public class RemoveJobEventHandler implements ClickListener, PopupListener, org.janelia.it.jacs.web.gwt.common.client.ui.RemoveJobListener {
+public class RemoveJobEventHandler implements ClickListener, PopupListener, RemoveJobListener {
     private static Logger _logger = Logger.getLogger("org.janelia.it.jacs.web.gwt.common.client.ui.RemoveJobEventHandler");
 
     private JobInfo _jobStatus;
@@ -40,7 +40,7 @@ public class RemoveJobEventHandler implements ClickListener, PopupListener, org.
         ((ServiceDefTarget) _statusservice).setServiceEntryPoint("status.srv");
     }
 
-    public RemoveJobEventHandler(org.janelia.it.jacs.shared.tasks.JobInfo jobStatus, TableRow row, RemotePagingPanel pagingPanel) {
+    public RemoveJobEventHandler(JobInfo jobStatus, TableRow row, RemotePagingPanel pagingPanel) {
         _jobStatus = jobStatus;
         _row = row;
         _inProgress = false;

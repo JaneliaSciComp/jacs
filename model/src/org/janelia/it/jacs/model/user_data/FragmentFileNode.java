@@ -6,13 +6,15 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
 
+import java.io.Serializable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: smurphy
  * Date: Nov 14, 2006
  * Time: 1:13:37 PM
  */
-public class FragmentFileNode extends FileNode implements java.io.Serializable, IsSerializable, Blastable {
+public class FragmentFileNode extends FileNode implements Serializable, IsSerializable, Blastable {
 
     static Logger logger = Logger.getLogger(FragmentFileNode.class.getName());
 

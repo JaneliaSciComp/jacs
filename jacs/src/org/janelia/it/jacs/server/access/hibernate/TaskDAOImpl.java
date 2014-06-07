@@ -22,6 +22,7 @@ import org.janelia.it.jacs.server.access.hibernate.utils.BlastJobInfoGenerator;
 import org.janelia.it.jacs.server.access.hibernate.utils.BlastJobInfoGeneratorFactory;
 import org.janelia.it.jacs.shared.tasks.BlastJobInfo;
 import org.janelia.it.jacs.shared.tasks.JobInfo;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.shared.tasks.RnaSeqJobInfo;
 import org.janelia.it.jacs.shared.tasks.SearchJobInfo;
 import org.janelia.it.jacs.web.gwt.common.server.RecruitmentTaskToInfoTranslator;
@@ -481,7 +482,7 @@ public class TaskDAOImpl extends DaoBaseImpl implements TaskDAO {
                         dataSortField = "lastEvent.eventType";
                     }
                     else if (dataSortField.equals(BlastJobInfo.SORT_BY_QUERY_SEQ) ||
-                            dataSortField.equals(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo.QUERY_SORT)) {
+                            dataSortField.equals(RecruitableJobInfo.QUERY_SORT)) {
                         // It could be that anything which hits this area already has non-null a likeString but I'm not
                         // taking any chances.
                         if (!fromHQL.contains("left join t.taskParameterSet query with query.name = 'query' ")) {
@@ -498,12 +499,12 @@ public class TaskDAOImpl extends DaoBaseImpl implements TaskDAO {
                         dataSortField = "blastDB.name";
                     }
                     // Recruitment Job Sorting
-                    else if (dataSortField.equals(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo.HITS_SORT)) {
+                    else if (dataSortField.equals(RecruitableJobInfo.HITS_SORT)) {
                         fromHQL += "left join t.taskParameterSet numHits with numHits.name = 'numHits' ";
                         dataSortField = "cast(numHits.value as integer)";
                     }
-                    else if (dataSortField.equals(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo.SORT_BY_GENOME_LENGTH) ||
-                            dataSortField.equals(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo.LENGTH_SORT)) {
+                    else if (dataSortField.equals(RecruitableJobInfo.SORT_BY_GENOME_LENGTH) ||
+                            dataSortField.equals(RecruitableJobInfo.LENGTH_SORT)) {
                         fromHQL += "left join t.taskParameterSet refEnd with refEnd.name = 'refEnd' ";
                         dataSortField = "cast(refEnd.value as float)";
                     }

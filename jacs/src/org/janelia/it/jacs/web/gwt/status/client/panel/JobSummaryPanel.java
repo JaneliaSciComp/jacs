@@ -124,7 +124,7 @@ public class JobSummaryPanel extends TitledBox {
 
             _grid.setWidget(0, 5, xl);
 
-            org.janelia.it.jacs.web.gwt.common.client.popup.jobs.JobParameterPopup parameterPopup = new JobParameterPopup(
+            JobParameterPopup parameterPopup = new JobParameterPopup(
                     job.getJobname(),
                     new FormattedDateTime(job.getSubmitted().getTime()).toString(),
                     blastPopupParamMap, false);

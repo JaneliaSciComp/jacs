@@ -3,6 +3,7 @@ package org.janelia.it.jacs.shared;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import junit.textui.TestRunner;
 import org.janelia.it.jacs.shared.blast.BlastGridMergeSortTest;
 import org.janelia.it.jacs.shared.blast.BlastWriterBtabTest;
 import org.janelia.it.jacs.shared.blast.BlastWriterNCBITabTest;
@@ -37,6 +38,6 @@ public class SharedModuleTestSuite extends TestSuite {
 
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(suite());
+        TestRunner.run(suite());
     }
 }

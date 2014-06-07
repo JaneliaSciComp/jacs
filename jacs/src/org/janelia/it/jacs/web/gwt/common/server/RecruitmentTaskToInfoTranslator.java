@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
 import org.janelia.it.jacs.model.vo.DoubleParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
+import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 
 import java.text.DecimalFormat;
 import java.util.Date;
@@ -21,9 +22,9 @@ import java.util.Date;
  */
 public class RecruitmentTaskToInfoTranslator {
 
-    public static org.janelia.it.jacs.shared.tasks.RecruitableJobInfo getInfoForRecruitmentResultTask(RecruitmentViewerFilterDataTask task)
+    public static RecruitableJobInfo getInfoForRecruitmentResultTask(RecruitmentViewerFilterDataTask task)
             throws ParameterException {
-        org.janelia.it.jacs.shared.tasks.RecruitableJobInfo info = new org.janelia.it.jacs.shared.tasks.RecruitableJobInfo();
+        RecruitableJobInfo info = new RecruitableJobInfo();
         info.setJobId(String.valueOf(task.getObjectId()));
         info.setUsername(task.getOwner());
         info.setJobname(task.getJobName());

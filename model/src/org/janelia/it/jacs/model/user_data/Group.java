@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.model.user_data;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,7 +13,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Group extends Subject implements java.io.Serializable, IsSerializable
+public class Group extends Subject implements Serializable, IsSerializable
 {
 	public static final String ADMIN_GROUP_NAME = "admin";
     public static final String ADMIN_GROUP_KEY = "group:admin";

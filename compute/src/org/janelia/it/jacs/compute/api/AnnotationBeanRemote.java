@@ -48,7 +48,11 @@ public interface AnnotationBeanRemote {
     public long getNumDescendantsAnnotated(Long entityId) throws ComputeException;
     public List<Long> getEntityIdsInAlignmentSpace(String opticalRes, String pixelRes, List<Long> guids) throws ComputeException;
 
+    /**
+     * @deprecated use getWorkspaces to get the real roots
+     */
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException;
+	
     
     public List<Entity> getAlignmentSpaces(String subjectKey) throws ComputeException;
     public Entity getChildFolderByName(String subjectKey, Long parentId, String folderName, boolean createIfNecessary) throws ComputeException;

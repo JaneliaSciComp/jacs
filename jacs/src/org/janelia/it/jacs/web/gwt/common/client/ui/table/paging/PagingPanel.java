@@ -15,6 +15,7 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.link.ActionLink;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.AdvancedSortActionLink;
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.SmallLink;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.*;
+import org.janelia.it.jacs.web.gwt.common.client.ui.table.advancedsort.AdvancedSortClickListener;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar;
 import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem;
@@ -994,7 +995,7 @@ public class PagingPanel extends VerticalPanel {
             pagingInProgressLabel.setVisible(false);
     }
 
-    public void addAdvancedSortClickListener(org.janelia.it.jacs.web.gwt.common.client.ui.table.advancedsort.AdvancedSortClickListener advancedClickListener) {
+    public void addAdvancedSortClickListener(AdvancedSortClickListener advancedClickListener) {
         if (advancedSortLink != null) {
             advancedSortLink.addClickListener(advancedClickListener);
         }

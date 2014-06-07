@@ -15,7 +15,10 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,21 +39,21 @@ public class MetaGenoPipeController extends HttpServlet {
 
     private static Logger logger = Logger.getLogger(MetaGenoPipeController.class);
 
-    protected void doPost(javax.servlet.http.HttpServletRequest httpServletRequest,
-                          javax.servlet.http.HttpServletResponse httpServletResponse)
-            throws javax.servlet.ServletException, java.io.IOException {
+    protected void doPost(HttpServletRequest httpServletRequest,
+                          HttpServletResponse httpServletResponse)
+            throws ServletException, IOException {
         doProcess(httpServletRequest, httpServletResponse);
     }
 
-    protected void doGet(javax.servlet.http.HttpServletRequest httpServletRequest,
-                         javax.servlet.http.HttpServletResponse httpServletResponse)
-            throws javax.servlet.ServletException, java.io.IOException {
+    protected void doGet(HttpServletRequest httpServletRequest,
+                         HttpServletResponse httpServletResponse)
+            throws ServletException, IOException {
         doProcess(httpServletRequest, httpServletResponse);
     }
 
-    protected void doProcess(javax.servlet.http.HttpServletRequest httpServletRequest,
-                             javax.servlet.http.HttpServletResponse httpServletResponse)
-            throws javax.servlet.ServletException, java.io.IOException {
+    protected void doProcess(HttpServletRequest httpServletRequest,
+                             HttpServletResponse httpServletResponse)
+            throws ServletException, IOException {
         try {
             String uploadFastaFilePath = httpServletRequest.getParameter("Upload Fasta File Node");
             String inputNodeForOrfCaller = httpServletRequest.getParameter("Start Metagenomic ORF Calling Pipeline");

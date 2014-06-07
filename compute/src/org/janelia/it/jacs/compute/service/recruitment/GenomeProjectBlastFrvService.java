@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.recruitment;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -166,7 +167,7 @@ public class GenomeProjectBlastFrvService implements IService {
 
 
     private String waitAndVerifyCompletion(Long taskId) throws Exception {
-        org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+        ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         String[] statusTypeAndValue = computeBean.getTaskStatus(taskId);
         while (!Task.isDone(statusTypeAndValue[0])) {
             Thread.sleep(5000);

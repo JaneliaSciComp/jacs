@@ -358,4 +358,9 @@
         </parameter>
     </operation>
 
+    <operation>
+        <description>Export Qi/Qm scores for all aligned 20x samples to SAGE</description>
+        <name>runSageQiScoreSync</name>
+    </operation>
+    
 </mbean>

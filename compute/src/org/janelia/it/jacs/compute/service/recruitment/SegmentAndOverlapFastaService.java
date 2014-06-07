@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.compute.service.recruitment;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
@@ -27,7 +28,7 @@ public class SegmentAndOverlapFastaService implements IService {
 
     public void execute(IProcessData processData) throws ServiceException {
         // Get the values from the task
-        org.janelia.it.jacs.compute.api.ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+        ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
         Task task = null;
         try {
             // Prep for execution

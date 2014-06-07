@@ -5,6 +5,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ import java.util.Set;
  * Date: Nov 13, 2006
  * Time: 10:32:16 AM
  */
-public class BlastDatasetNode extends Node implements java.io.Serializable, IsSerializable {
+public class BlastDatasetNode extends Node implements Serializable, IsSerializable {
 
     // Fields
     private Set<BlastDatabaseFileNode> blastDatabaseFileNodes = new HashSet<BlastDatabaseFileNode>();

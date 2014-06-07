@@ -36,6 +36,7 @@ import org.janelia.it.jacs.server.access.TaskDAO;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.server.access.hibernate.NodeDAOImpl;
 import org.janelia.it.jacs.server.utils.SystemException;
+import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHit;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 
 import java.rmi.RemoteException;
@@ -103,7 +104,7 @@ public class DataSetAPI {
         }
     }
 
-    public List<org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHit> getPagedBlastHitsByTaskId(String taskId,
+    public List<BlastHit> getPagedBlastHitsByTaskId(String taskId,
                                                                                                        int startIndex,
                                                                                                        int numRows,
                                                                                                        SortArgument[] sortArgs) {

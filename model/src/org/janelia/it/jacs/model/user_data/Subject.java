@@ -7,13 +7,14 @@ import org.janelia.it.jacs.model.user_data.prefs.SubjectPreference;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlValue;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.NONE)
-public class Subject implements java.io.Serializable, IsSerializable {
+public class Subject implements Serializable, IsSerializable {
 	
     private Long id;
     @XmlValue

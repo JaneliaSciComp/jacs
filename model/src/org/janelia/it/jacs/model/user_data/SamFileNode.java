@@ -5,13 +5,15 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.tasks.Task;
 
+import java.io.Serializable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: smurphy
  * Date: Feb 19, 2010
  * Time: 4:16:05 PM
  */
-public class SamFileNode extends FileNode implements java.io.Serializable, IsSerializable {
+public class SamFileNode extends FileNode implements Serializable, IsSerializable {
 
     static Logger logger = Logger.getLogger(FastaFileNode.class.getName());
 

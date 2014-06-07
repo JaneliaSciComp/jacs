@@ -261,7 +261,7 @@ abstract public class QuerySequenceChooserBaseTab implements QuerySequenceChoose
 
     abstract void getPagedTaskResults(String searchString, int startIndex, int numRows, SortArgument[] sortArgs, final DataRetrievedListener listener);
 
-    protected List processDataBase(org.janelia.it.jacs.shared.tasks.RecruitableJobInfo[] jobs) {
+    protected List processDataBase(RecruitableJobInfo[] jobs) {
         List<TableRow> tableRows = new ArrayList<TableRow>();
         if (jobs != null) {
             for (RecruitableJobInfo job : jobs) {

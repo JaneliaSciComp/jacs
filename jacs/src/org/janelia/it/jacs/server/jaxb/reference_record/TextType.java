@@ -10,6 +10,8 @@
 package org.janelia.it.jacs.server.jaxb.reference_record;
 
 
+import java.lang.String;
+
 /**
  * Java content class for text_type complex type.
  * <p>The following schema fragment specifies the expected content contained within this java content object. (defined at file:/C:/current_projects/cvsfiles/Camera/shared/schema/reference_record.xsd line 129)
@@ -32,32 +34,32 @@ public interface TextType {
      * Gets the value of the local property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getLocal();
+    String getLocal();
 
     /**
      * Sets the value of the local property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setLocal(java.lang.String value);
+    void setLocal(String value);
 
     /**
      * Gets the value of the url property.
      *
      * @return possible object is
-     *         {@link java.lang.String}
+     *         {@link String}
      */
-    java.lang.String getURL();
+    String getURL();
 
     /**
      * Sets the value of the url property.
      *
      * @param value allowed object is
-     *              {@link java.lang.String}
+     *              {@link String}
      */
-    void setURL(java.lang.String value);
+    void setURL(String value);
 
 }

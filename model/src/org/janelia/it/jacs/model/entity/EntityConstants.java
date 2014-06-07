@@ -26,12 +26,14 @@ public class EntityConstants {
     public static final String STATUS_VALID                          = "Valid";
 
     // Singleton Entity Names
+    public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
     public static final String NAME_SHARED_DATA                      = "Shared Data";
     public static final String NAME_SPLIT_PICKING                    = "Split Picking";
     public static final String NAME_DATA_SETS                        = "Data Sets";
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
+    public static final String NAME_SEARCH_RESULTS                   = "Search Results";
     
     // Common Types
     public static final String TYPE_ANNOTATION                       = "Annotation";
@@ -49,6 +51,7 @@ public class EntityConstants {
     public static final String TYPE_COMPARTMENT                      = "Compartment";
     
     // Single Neuron Imaging Types
+    public static final String TYPE_WORKSPACE                        = "Workspace";
     public static final String TYPE_ERROR                            = "Error";
     public static final String TYPE_DATA_SET                         = "Data Set";
     public static final String TYPE_SAMPLE                           = "Sample";
@@ -153,7 +156,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
     public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
-    public static final String ATTRIBUTE_SORT_CRITERIA                       = "Sort Criteria";
     
     // Geometric Tree
     //

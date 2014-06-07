@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -374,14 +375,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     }
                     
                     if (ed.getOrderIndex()==null) {
-                        stmtEd.setNull(8, java.sql.Types.INTEGER);  
+                        stmtEd.setNull(8, Types.INTEGER);
                     }
                     else {
                         stmtEd.setObject(8, ed.getOrderIndex());    
                     }
 
                     if (ed.getChildEntity()==null) {
-                        stmtEd.setNull(9, java.sql.Types.BIGINT);   
+                        stmtEd.setNull(9, Types.BIGINT);
                     }
                     else {
                         stmtEd.setObject(9, ed.getChildEntity().getId());   
@@ -830,31 +831,82 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
-    public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws DaoException {
+    public List<Entity> getWorkspaces(String subjectKey) throws DaoException {
+        return getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_WORKSPACE);
+    }
 
+    public Entity getDefaultWorkspace(String subjectKey) throws DaoException {
+		List<Entity> workspaces = getUserEntitiesByNameAndTypeName(subjectKey, EntityConstants.NAME_DEFAULT_WORKSPACE, EntityConstants.TYPE_WORKSPACE);
+		if (workspaces.size()>1) {
+			throw new DaoException("More than one default workspace exists for "+subjectKey);
+		}
+		else if (workspaces.isEmpty()) {
+			throw new DaoException("No default workspace exists for "+subjectKey);
+		}
+		return workspaces.get(0);
+    }
+
+	public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws DaoException {
+		Entity workspace = getEntityById(workspaceId);
+		Entity entity = getEntityById(entityId);
+		return addRootToWorkspace(subjectKey, workspace, entity);
+	}
+	
+	public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspaceId="+workspaceId+", entityName="+entityName+")");
+        }
+        Entity entity = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, entityName);
+        EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        saveOrUpdate(entity);
+		Entity workspace = getEntityById(workspaceId);
+		if (workspace==null) {
+			throw new DaoException("No such workspace with id "+workspaceId);
+		}
+		return addRootToWorkspace(subjectKey, workspace, entity);
+	}
+	
+	public EntityData addRootToWorkspace(String subjectKey, Entity workspace, Entity entity) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspace.id="+workspace.getId()+", entity.id="+entity.getId()+")");
+        }
+		// Find the appropriate place to insert this root, and renumber everything while we're at it.
+		Integer insertionIndex = null;
+		int index = 0;
+		for(EntityData ed : workspace.getOrderedEntityData()) {
+			if (ed.getChildEntity()==null) continue;
+			String childOwner = ed.getChildEntity().getOwnerKey();
+			if (insertionIndex==null && !subjectKey.equals(childOwner)) {
+				// Insert the root before the first un-owned entity
+				insertionIndex = index;
+				index++;
+			}
+			if (ed.getOrderIndex()!=index) {
+				ed.setOrderIndex(index);
+		        ed.setUpdatedDate(new Date());
+				saveOrUpdate(ed);
+			}
+			index++;
+		}
+		if (insertionIndex==null) {
+			// No non-owned entities, so add it to the end
+			insertionIndex = index;
+		}
+		return addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
+	}
+	
+    public Entity getCommonRootFolderByName(String subjectKey, String folderName, boolean createIfNecessary) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getCommonRootFolderByName(subjectKey="+subjectKey+", folderName="+folderName+", createIfNecessary="+createIfNecessary+")");
         }
         
-        Entity folder = null;
-        for(Entity entity : getUserEntitiesByNameAndTypeName(subjectKey, folderName, EntityConstants.TYPE_FOLDER)) {
-            if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)!=null) {
-                if (folder!=null) {
-                    throw new IllegalStateException("Multiple common roots owned by "+subjectKey+" with name: "+folderName);
-                }
-                folder = entity;
-            }
-        }
+        Entity workspace = getDefaultWorkspace(subjectKey);
+        Entity folder = EntityUtils.findChildWithNameAndTypeAndOwner(workspace, folderName, EntityConstants.TYPE_FOLDER, subjectKey);
         
-        if (folder!=null) {
-            return filter(folder);
-        }
-        
-        if (createIfNecessary) {
+        if (folder==null && createIfNecessary) {
             log.info("Creating new topLevelFolder with name=" + folderName);
-            folder = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, folderName);
-            EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            saveOrUpdate(folder);
+            EntityData folderEd = createFolderInWorkspace(subjectKey, workspace.getId(), folderName);
+            folder = folderEd.getChildEntity();
             log.info("Saved top level folder as " + folder.getId());
         }
         
@@ -1546,8 +1598,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     String entityAttrName = rs.getString(4);
                     String ownerKey = rs.getString(5);
                     String value = rs.getString(6);
-                    java.util.Date creationDate = rs.getTimestamp(7);
-                    java.util.Date updatedDate = rs.getTimestamp(8);
+                    Date creationDate = rs.getTimestamp(7);
+                    Date updatedDate = rs.getTimestamp(8);
                     Integer orderIndex = rs.getInt(9);
                     
                     Entity parentEntity = parentEntityId==null?null:new Entity(parentEntityId);
@@ -1704,6 +1756,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         saveOrUpdate(ed);
 
+        promoteToCommonRootIfWorkspaceChild(parent, entity);
+        
         Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
         boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
 
@@ -1746,11 +1800,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             if (existingChildrenIds.contains(childId)) continue;
             if (childId.equals(parentId)) continue;
             
-            Entity child = childMap.get(childId);
+            Entity entity = childMap.get(childId);
             
             EntityData ed = new EntityData();
             ed.setParentEntity(parent);
-            ed.setChildEntity(child);
+            ed.setChildEntity(entity);
             ed.setOwnerKey(subjectKey);
             ed.setCreationDate(createDate);
             ed.setUpdatedDate(createDate);
@@ -1759,9 +1813,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             saveOrUpdate(ed);
             parent.getEntityData().add(ed);
 
-            boolean grantOwnerPermissions = !subjectKeys.contains(child.getOwnerKey());
+            promoteToCommonRootIfWorkspaceChild(parent, entity);
+            
+            boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
             if (grantOwnerPermissions) {
-                for(EntityActorPermission permission : child.getEntityActorPermissions()) {
+                for(EntityActorPermission permission : entity.getEntityActorPermissions()) {
                     if (subjectKeys.contains(permission.getSubjectKey())) {
                         grantOwnerPermissions = false;
                         break;
@@ -1769,10 +1825,24 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 }
             }
             
-            propagatePermissions(parent, child, true, grantOwnerPermissions);
+            propagatePermissions(parent, entity, true, grantOwnerPermissions);
         }
         
         updateChildCount(parent);
+    }
+    
+    private void promoteToCommonRootIfWorkspaceChild(Entity parent, Entity entity) throws DaoException {
+        if (parent.getEntityTypeName().equals(EntityConstants.TYPE_WORKSPACE)) {
+        	// Making something a child of a workspace makes it a common root
+        	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)==null) {
+        		if (isEntityTypeSupportsAttribute(parent.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
+	        		EntityData crEd = newData(parent, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
+	        		crEd.setValue(EntityConstants.ATTRIBUTE_COMMON_ROOT);
+	        		entity.getEntityData().add(crEd);
+	            	saveOrUpdate(crEd);
+        		}
+        	}
+        }
     }
     
     private void updateChildCount(Entity entity) throws DaoException {
@@ -3373,6 +3443,39 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         return addEntityToParent(parentEntity, alignedItemEntity, parentEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ITEM);
     }
 
+    /******************************************************************************************************************/
+    /** UTILITY */
+    /******************************************************************************************************************/
+    
+    public void checkAttributeTypes(Entity... entities) {
+        for(Entity entity : entities) {
+            for(EntityData ed : entity.getEntityData()) {
+                checkEntityTypeSupportsAttribute(entity.getEntityTypeName(), ed.getEntityAttrName());
+            }
+        }
+    }
+
+    public void checkAttributeTypes(EntityData... entityDatas) {
+        for(EntityData ed : entityDatas) {
+            checkEntityTypeSupportsAttribute(ed.getParentEntity().getEntityTypeName(), ed.getEntityAttrName());
+        }
+    }
+    
+    public void checkEntityTypeSupportsAttribute(String entityTypeName, String attrName) {
+        if (isEntityTypeSupportsAttribute(entityTypeName, attrName)) return;
+        throw new IllegalStateException("Entity type "+entityTypeName+" does not support attribute "+attrName);
+    }
+
+    public boolean isEntityTypeSupportsAttribute(String entityTypeName, String attrName) {
+        EntityType entityType = getEntityTypeByName(entityTypeName);
+        for(EntityAttribute attr : entityType.getAttributes()) {
+            if (attr.getName().equals(attrName)) {
+                return true;
+            }
+        }
+        return false; 
+    }
+    
     private Entity filter(Object obj) {
         return filter(obj, true);
     }

@@ -5,12 +5,14 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.tasks.Task;
 
+import java.io.Serializable;
+
 /**
  * User: naxelrod
  * Date: Oct 2, 2009
  * Time: 10:16:37 AM
  */
-public class GenericPDFFileNode extends FileNode implements java.io.Serializable, IsSerializable {
+public class GenericPDFFileNode extends FileNode implements Serializable, IsSerializable {
 
     static Logger logger = Logger.getLogger(GenericPDFFileNode.class.getName());
 

@@ -9,6 +9,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.janelia.it.jacs.model.common.UserDataNodeVO;
+import org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener;
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupCenteredLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.service.DataService;
@@ -31,14 +32,14 @@ public class FRDataPanel extends Composite {
     private RoundedButton _recruitAgainstSamples;
     private RoundedButton _completeRecruitmentAgainstSampling;
     private TitledBox _mainPanel;
-    private org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener _listener;
+    private JobSubmissionListener _listener;
     private static DataServiceAsync _dataservice = (DataServiceAsync) GWT.create(DataService.class);
 
     static {
         ((ServiceDefTarget) _dataservice).setServiceEntryPoint("data.srv");
     }
 
-    public FRDataPanel(String title, String taskId, org.janelia.it.jacs.web.gwt.common.client.jobs.JobSubmissionListener listener) {
+    public FRDataPanel(String title, String taskId, JobSubmissionListener listener) {
         _listener = listener;
         init(title, taskId);
     }

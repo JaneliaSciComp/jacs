@@ -78,7 +78,7 @@ public class ProteinResult extends CategoryResult {
         return goAnnotationDescription;
     }
 
-    public void setGoAnnotationDescription(List<org.janelia.it.jacs.model.genomics.AnnotationDescription> goAnnotationDescription) {
+    public void setGoAnnotationDescription(List<AnnotationDescription> goAnnotationDescription) {
         this.goAnnotationDescription = goAnnotationDescription;
     }
 

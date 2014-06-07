@@ -45,7 +45,7 @@ public class FrvControlsPanelMateTab extends FrvControlsPanelBaseTab {
 
     public void setJob(JobInfo job) {
         super.setJob(job);
-        org.janelia.it.jacs.shared.tasks.RecruitableJobInfo recruitJob = (RecruitableJobInfo) job;
+        RecruitableJobInfo recruitJob = (RecruitableJobInfo) job;
         String mateInfo = recruitJob.getMateInfo();
         goodBoxLeft.setValue(mateInfo.charAt(0) == '1');
         goodBoxRight.setValue(mateInfo.charAt(1) == '1');

@@ -27,12 +27,13 @@ import org.janelia.it.jacs.shared.annotation.FilterResult;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 500, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
     private static final Logger _logger = Logger.getLogger(AnnotationBeanImpl.class);
@@ -271,12 +272,13 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         try {
             return _annotationDAO.getEntityIdsInAlignmentSpace( opticalRes, pixelRes, guids);
 
-        } catch ( DaoException daoe ) {
+        } 
+        catch ( DaoException daoe ) {
             _logger.error("Error getting applicable subset of entity ids for an alignment space.");
             throw new ComputeException("Error paring down entity ids for list", daoe);
         }
-    }
-
+	}
+	
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException {
         try {
             List<Entity> entities = _annotationDAO.getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);

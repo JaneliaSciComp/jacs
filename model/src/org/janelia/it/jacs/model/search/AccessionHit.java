@@ -4,7 +4,9 @@ package org.janelia.it.jacs.model.search;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.user_data.Node;
 
-public class AccessionHit implements java.io.Serializable, IsSerializable {
+import java.io.Serializable;
+
+public class AccessionHit implements Serializable, IsSerializable {
 
     // Fields
     private Node searchResultNode;

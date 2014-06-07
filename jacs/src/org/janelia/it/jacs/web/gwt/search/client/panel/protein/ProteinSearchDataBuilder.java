@@ -56,7 +56,7 @@ public class ProteinSearchDataBuilder extends CategorySearchDataBuilder {
     private static Integer TAXONOMY_COLUMN_LENGTH = 25;
     private static Integer BIG_COLUMN_LENGTH = 50;
 
-    private org.janelia.it.jacs.web.gwt.detail.client.peptide.PeptideTableBuilder _tableBuilder;
+    private PeptideTableBuilder _tableBuilder;
 
     public ProteinSearchDataBuilder(String searchId, String searchQuery) {
         super(searchId, searchQuery);

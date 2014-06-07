@@ -33,6 +33,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -58,7 +59,7 @@ import java.util.regex.Pattern;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 200, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     
     private Logger logger = Logger.getLogger(this.getClass());

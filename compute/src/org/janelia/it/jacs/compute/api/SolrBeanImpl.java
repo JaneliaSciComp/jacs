@@ -26,15 +26,16 @@ import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
-import org.janelia.it.jacs.compute.api.support.SageTerm;
-import org.janelia.it.jacs.compute.api.support.SolrDocTypeEnum;
-import org.janelia.it.jacs.compute.api.support.SolrResults;
+import org.janelia.it.jacs.shared.solr.SageTerm;
+import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
+import org.janelia.it.jacs.shared.solr.SolrResults;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
+import org.jboss.ejb3.StrictMaxPool;
 
 /**
  * Implementation of SOLR indexing and searching operations. 
@@ -45,7 +46,7 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = org.jboss.ejb3.StrictMaxPool.class, maxSize = 100, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public static final String SOLR_EJB_PROP = "SolrEJB.Name";

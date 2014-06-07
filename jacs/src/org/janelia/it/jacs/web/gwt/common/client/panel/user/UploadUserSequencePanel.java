@@ -52,6 +52,8 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.RemotePagingPan
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.paging.RemotingPaginator;
 import org.janelia.it.jacs.web.gwt.common.client.util.BlastData;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar;
+import org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -407,10 +409,10 @@ public class UploadUserSequencePanel extends VerticalPanel {
     }
 
     private Widget createUserSequenceExportWidget(final UserDataNodeVO node) {
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar menu = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar();
+        MenuBar menu = new MenuBar();
         menu.setAutoOpen(false);
 
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar dropDown = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuBar(true);
+        MenuBar dropDown = new MenuBar(true);
 
         dropDown.addItem("Export previous sequence as FASTA", true, new Command() {
             public void execute() {
@@ -421,7 +423,7 @@ public class UploadUserSequencePanel extends VerticalPanel {
             }
         });
 
-        org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem export = new org.janelia.it.jacs.web.gwt.common.google.user.client.ui.MenuItem("Export&nbsp;" + ImageBundleFactory.getControlImageBundle().getArrowDownEnabledImage().getHTML(),
+        MenuItem export = new MenuItem("Export&nbsp;" + ImageBundleFactory.getControlImageBundle().getArrowDownEnabledImage().getHTML(),
                 /* asHTML*/ true, dropDown);
         export.setStyleName("topLevelMenuItem");
         menu.addItem(export);

@@ -8,6 +8,8 @@
 
 package org.janelia.it.jacs.server.jaxb.reference_record.impl.runtime;
 
+import org.xml.sax.SAXException;
+
 public interface PrefixCallback {
-    void onPrefixMapping(String prefix, String uri) throws org.xml.sax.SAXException;
+    void onPrefixMapping(String prefix, String uri) throws SAXException;
 }

@@ -23,7 +23,7 @@ public class AdvancedBlast extends BaseEntryPoint {
     public static final String TASK_ID_PARAM = "taskId";
     public static final String DATASET_PARAM = "dataset";
 
-    private org.janelia.it.jacs.web.gwt.common.client.panel.user.jobs.BlastJobResultsPanel _blastJobResultsPanel;
+    private BlastJobResultsPanel _blastJobResultsPanel;
     private AdvancedBlastPanel _advancedBlastPanel;
 
     public void onModuleLoad() {

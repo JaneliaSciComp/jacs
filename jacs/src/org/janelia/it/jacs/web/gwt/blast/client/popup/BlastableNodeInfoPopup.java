@@ -3,13 +3,14 @@ package org.janelia.it.jacs.web.gwt.blast.client.popup;
 
 import com.google.gwt.user.client.ui.FlexTable;
 import org.janelia.it.jacs.model.common.BlastableNodeVO;
+import org.janelia.it.jacs.web.gwt.common.client.popup.BaseInfoPopup;
 import org.janelia.it.jacs.web.gwt.common.client.util.NumberUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.StringUtils;
 
 /**
  * @author Michael Press
  */
-public class BlastableNodeInfoPopup extends org.janelia.it.jacs.web.gwt.common.client.popup.BaseInfoPopup {
+public class BlastableNodeInfoPopup extends BaseInfoPopup {
     private BlastableNodeVO _node;
 
     /**

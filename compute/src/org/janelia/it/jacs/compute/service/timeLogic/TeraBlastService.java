@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.sql.Timestamp;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -386,7 +387,7 @@ public class TeraBlastService implements IService {
  * return current date/time as timestamp
  */
     private Timestamp nowTimeStamp() {
-        java.util.Date today = new java.util.Date();
+        Date today = new Date();
         return new Timestamp( today.getTime() );
     }
 
