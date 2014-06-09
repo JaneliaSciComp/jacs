@@ -1,11 +1,11 @@
 package org.janelia.it.jacs.compute.service.common;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Utility to retrieve and store process data items with contextual logging.
@@ -108,14 +108,6 @@ public class ProcessDataAccessor {
         return value;
     }
 
-    public Boolean getRequiredItemAsBoolean(String key) {
-        final Boolean value = getItemAsBoolean(key);
-        if (value == null) {
-            throw new IllegalArgumentException(key + " must be specified");
-        }
-        return value;
-    }
-    
     public void putItem(String key,
                         Object value) {
 
@@ -126,13 +118,16 @@ public class ProcessDataAccessor {
                 sb.append('\'');
                 sb.append(value);
                 sb.append('\'');
-            }
-            else if (Collection.class.isAssignableFrom(value.getClass())) {
-                sb.append(((Collection)value).size());
-                sb.append(" items");
-            }
-            else {
-                sb.append(value);
+            } else if (value == null) {
+                sb.append("null");
+            } else {
+                final Class clazz = value.getClass();
+                if ((clazz != null) && Collection.class.isAssignableFrom(clazz)) {
+                    sb.append(((Collection) value).size());
+                    sb.append(" items");
+                } else {
+                    sb.append(value);
+                }
             }
             sb.append(" in ");
             sb.append(key);
