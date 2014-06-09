@@ -485,14 +485,6 @@ public class EntityUtils {
     	return getDefaultImageFilePath(entity);
     }
     
-    public static Entity findChildWithName(Entity entity, String childName) {
-        return findChildWithNameAndType(entity, childName, null);
-    }
-
-    public static Entity findChildWithType(Entity entity, String type) {
-        return findChildWithNameAndType(entity, null, type);
-    }
-    
     public static Entity findChildWithEntityId(Entity entity, Long entityId) {
         for (EntityData ed : entity.getEntityData()) {
             Entity child = ed.getChildEntity();
@@ -502,44 +494,49 @@ public class EntityUtils {
         }
         return null;
     }
-
-    public static Entity findChildWithNameAndType(Entity entity, String childName, String type) {
-        for (EntityData ed : entity.getEntityData()) {
-            Entity child = ed.getChildEntity();
-            if (child!=null) {
-                if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName()))) {
-                    return child;
-                }
-            }
-        }
-        return null;
+    
+    public static Entity findChildWithName(Entity entity, String childName) {
+        return findChildWithNameAndTypeAndOwner(entity, childName, null, null);
     }
 
+    public static Entity findChildWithType(Entity entity, String type) {
+        return findChildWithNameAndTypeAndOwner(entity, null, type, null);
+    }
+    
+    public static Entity findChildWithNameAndType(Entity entity, String childName, String type) {
+    	return findChildWithNameAndTypeAndOwner(entity, childName, type, null);
+    }
+
+    public static Entity findChildWithNameAndOwner(Entity entity, String childName, String owner) {
+        return findChildWithNameAndTypeAndOwner(entity, childName, null, owner);
+    }
+    
     public static Entity findChildWithNameAndTypeAndOwner(Entity entity, String childName, String type, String owner) {
-        for (EntityData ed : entity.getEntityData()) {
-            Entity child = ed.getChildEntity();
-            if (child!=null) {
-                if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName())) && (owner==null||owner.equals(child.getOwnerKey()))) {
-                    return child;
-                }
-            }
-        }
-        return null;
+    	EntityData ed = findChildEntityDataWithNameAndTypeAndOwner(entity, null, type, null);
+    	return ed==null?null:ed.getChildEntity();
     }
     
     public static EntityData findChildEntityDataWithName(Entity entity, String childName) {
-		return findChildEntityDataWithNameAndType(entity, childName, null);
+		return findChildEntityDataWithNameAndTypeAndOwner(entity, childName, null, null);
     }
 
     public static EntityData findChildEntityDataWithType(Entity entity, String type) {
-		return findChildEntityDataWithNameAndType(entity, null, type);
+		return findChildEntityDataWithNameAndTypeAndOwner(entity, null, type, null);
     }
 
     public static EntityData findChildEntityDataWithNameAndType(Entity entity, String childName, String type) {
+		return findChildEntityDataWithNameAndTypeAndOwner(entity, childName, type, null);
+    }
+
+    public static EntityData findChildEntityDataWithNameAndOwner(Entity entity, String childName, String owner) {
+		return findChildEntityDataWithNameAndTypeAndOwner(entity, childName, null, owner);
+    }
+    
+    public static EntityData findChildEntityDataWithNameAndTypeAndOwner(Entity entity, String childName, String type, String owner) {
 		for (EntityData ed : entity.getEntityData()) {
 			Entity child = ed.getChildEntity();
 			if (child!=null) {
-				if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName()))) {
+				if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName())) && (owner==null||owner.equals(child.getOwnerKey()))) {
 					return ed;
 				}
 			}
