@@ -45,14 +45,19 @@ public class SageQiScoreSyncService extends AbstractEntityService {
      * Process all alignments.
      */
     public void execute() throws Exception {
-        
+
         this.sage = new SageDAO(logger);
         this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
         this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
 
         Long alignmentId = data.getItemAsLong("ALIGNMENT_ID");
         if (alignmentId!=null) {
-        	processAlignment(alignmentId);
+        	try {
+        		processAlignment(alignmentId);
+        	}
+        	catch (Exception e) {
+        		logger.warn("Problem synchronizing Qi/Qm scores to SAGE for alignment "+alignmentId+". The pipeline will continue.",e);
+        	}
         }
         else {
         	processAllAlignments();
