@@ -1,15 +1,15 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A configured aligner which takes additional parameters to align the 63x image to a whole brain 20x image.
@@ -44,49 +44,30 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     private void initParameters(Entity sample) throws Exception {
 
         entityLoader.populateChildren(sample);
-        for(Entity objectiveSample : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE)) {
+
+        final List<Entity> sampleList = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
+        contextLogger.info("initParameters: found " + sampleList.size() + " objective samples for entity " + sample);
+
+        for(Entity objectiveSample : sampleList) {
             
             String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
-                logger.info("Found 20x sub-sample: "+objectiveSample.getName());
+                contextLogger.info("Found 20x sub-sample: "+objectiveSample.getName());
                 Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
-                if (result != null) {
-                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                    if (image!=null) {
-                        input2 = new AlignmentInputFile();
-                        input2.setPropertiesFromEntity(image);
-                        if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
-                        logInputFound("second input (20x stack)", input2);
-                    }
-                    else {
-                        logger.error("Could not find default 3d image for result "+result.getName()+" (id="+result.getId()+")");
-                    }
-                }
+                input2 = buildInputFromResult("second input (20x stack)", result);
             }
             else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
-                logger.info("Found 63x sub-sample: "+objectiveSample.getName());
+                contextLogger.info("Found 63x sub-sample: "+objectiveSample.getName());
                 Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
-                if (result!=null) {
-                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                    if (image!=null) {
-                        input1 = new AlignmentInputFile();
-                        input1.setPropertiesFromEntity(image);
-                        if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
-                        logInputFound("first input (63x stack)", input1);
-                    }
-                    else {
-                        logger.error("Could not find default 3d image for result "+result.getName()+" (id="+result.getId()+")");
-                    }
-                }
-
+                input1 = buildInputFromResult("first input (63x stack)", result);
                 this.gender = sampleHelper.getConsensusLsmAttributeValue(objectiveSample, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
                 if (gender!=null) {
-                    logger.info("Found gender consensus: "+gender);
+                    contextLogger.info("Found gender consensus: "+gender);
                 }
             }
         }
 
-        List<AlignmentInputFile> alignmentInputFiles = new ArrayList<AlignmentInputFile>();
+        List<AlignmentInputFile> alignmentInputFiles = new ArrayList<>();
         alignmentInputFiles.add(input1);
         alignmentInputFiles.add(input2);
         
@@ -101,20 +82,20 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     private Entity getLatestResultOfType(Entity objectiveSample, String resultType, String anatomicalArea) throws Exception {
         entityLoader.populateChildren(objectiveSample);
 
-        logger.info("Looking for latest result of type "+resultType+" with anatomicalArea="+anatomicalArea);
+        contextLogger.info("Looking for latest result of type "+resultType+" with anatomicalArea="+anatomicalArea);
         
         List<Entity> pipelineRuns = EntityUtils.getChildrenOfType(objectiveSample, EntityConstants.TYPE_PIPELINE_RUN);
         Collections.reverse(pipelineRuns);
         for(Entity pipelineRun : pipelineRuns) {
             entityLoader.populateChildren(pipelineRun);
-            
-            logger.info("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
+
+            contextLogger.info("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
             
             List<Entity> results = EntityUtils.getChildrenForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT);
             Collections.reverse(results);
             for(Entity result : results) {
 
-                logger.info("    Check result "+result.getName()+" (id="+result.getId()+")");
+                contextLogger.info("    Check result "+result.getName()+" (id="+result.getId()+")");
                 
                 if (result.getEntityTypeName().equals(resultType)) {
                     if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
@@ -127,5 +108,32 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             }   
         }
         return null;
+    }
+
+    private AlignmentInputFile buildInputFromResult(String inputType,
+                                                    Entity sampleProcessingResult) throws Exception {
+
+        AlignmentInputFile inputFile = null;
+
+        if (sampleProcessingResult != null) {
+
+            final Entity image = sampleProcessingResult.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+            if (image != null) {
+
+                inputFile = new AlignmentInputFile();
+                inputFile.setPropertiesFromEntity(image);
+
+                if (warpNeurons) {
+                    inputFile.setInputSeparationFilename(getConsolidatedLabel(sampleProcessingResult));
+                }
+
+                logInputFound(inputType, inputFile);
+
+            } else {
+                contextLogger.error("Could not find default 3d image for result " + sampleProcessingResult +
+                                    " (id=" + sampleProcessingResult.getId() + ")");
+            }
+        }
+        return inputFile;
     }
 }

@@ -62,8 +62,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected boolean warpNeurons;
     protected AlignmentInputFile input1;
     protected AlignmentInputFile input2;
-    protected List<String> archivedFiles = new ArrayList<String>();
-    protected List<String> targetFiles = new ArrayList<String>();
+    protected List<String> archivedFiles = new ArrayList<>();
+    protected List<String> targetFiles = new ArrayList<>();
     
     // ****************************************************************************************************************
     // When this service is run with the Aligner interface method, it determines and outputs the alignment inputs
@@ -74,8 +74,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
         try {
             // From SubmitDrammaJobService
-            this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            this.processData = processData;
+            super.initLoggersAndData(processData);
             this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);
             
             this.entityBean = EJBFactory.getLocalEntityBean();
@@ -84,22 +83,15 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
-            this.warpNeurons = !"false".equals((String)processData.getItem("WARP_NEURONS"));
-            
-            String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-            if (sampleEntityId == null || "".equals(sampleEntityId)) {
-                throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-            }
-            
-            this.sampleEntity = entityBean.getEntityById(sampleEntityId);
-            if (sampleEntity == null) {
-                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-            }
-            
-            List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>)processData.getItem("SAMPLE_AREAS");
+            this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
+            this.warpNeurons = ! data.getItemAsBoolean("WARP_NEURONS");
+
+            @SuppressWarnings("unchecked")
+            List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREAS");
+
             if (sampleAreas != null) {
                 // The naive implementation tries to find the default brain area to align. Subclasses may have a different
                 // strategy for finding input files and other parameters.
@@ -110,14 +102,16 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                         entityLoader.populateChildren(result);
                         if (result!=null) {
                             if (alignedArea!=null) {
-                                logger.warn("Found more than one default brain area to align. Using: "+alignedArea);
+                                contextLogger.warn("Found more than one default brain area to align. Using: "+alignedArea);
                             }
                             else {
                                 Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                                 this.alignedArea = areaName;    
                                 input1 = new AlignmentInputFile();
                                 input1.setPropertiesFromEntity(image);
-                                if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
+                                if (warpNeurons) {
+                                    input1.setInputSeparationFilename(getConsolidatedLabel(result));
+                                }
                             }
                         }
                     }
@@ -126,36 +120,36 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             
             if (input1!=null) {
                 logInputFound("input stack", input1); 
-                logger.info("  Sample area: "+alignedArea);
+                contextLogger.info("  Sample area: "+alignedArea);
                 
                 if (input1.getOpticalResolution()==null) {
                     // Interoperability with legacy samples
-                    logger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
+                    contextLogger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
                     input1.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea));
                     if (input1.getOpticalResolution()!=null) {
-                        logger.info("Found optical resolution consensus: "+input1.getOpticalResolution());
+                        contextLogger.info("Found optical resolution consensus: "+input1.getOpticalResolution());
                     }
                 }
                 
                 if (input1.getPixelResolution()==null) {
                     // Interoperability with legacy samples
-                    logger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
+                    contextLogger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
                     input1.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, alignedArea));
                     if (input1.getPixelResolution()!=null) {
-                        logger.info("Found pixel resolution consensus: "+input1.getPixelResolution());
+                        contextLogger.info("Found pixel resolution consensus: "+input1.getPixelResolution());
                     }
                 }
                 
                 if (input1.getChannelColors()!=null) {
-                    logger.info("  Channel colors: "+input1.getChannelColors());
+                    contextLogger.info("  Channel colors: "+input1.getChannelColors());
                 }
                 
                 this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
                 if (gender!=null) {
-                    logger.info("Found gender consensus: "+gender);
+                    contextLogger.info("Found gender consensus: "+gender);
                 }
                 
-                List<AlignmentInputFile> alignmentInputFiles = new ArrayList<AlignmentInputFile>();
+                List<AlignmentInputFile> alignmentInputFiles = new ArrayList<>();
                 alignmentInputFiles.add(input1);
                 alignmentInputFiles.add(input2);
                 
@@ -172,46 +166,27 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     
     
     protected void logInputFound(String type, AlignmentInputFile input) {
-        logger.info("Found "+type+": ");
-        logger.info("  Input filename: "+input.getInputFilename());
-        logger.info("  Input channel spec: "+input.getChannelSpec());
-        logger.info("  Input channel colors: "+input.getChannelColors());
-        logger.info("  Input separation to warp: "+input.getInputSeparationFilename());
-        logger.info("  Reference channel: "+input.getRefChannel());
-        logger.info("  Reference channel (one-indexed): "+input.getRefChannelOneIndexed());    
-        logger.info("  Optical resolution: "+input.getOpticalResolution());
-        logger.info("  Pixel resolution: "+input.getPixelResolution());
+        contextLogger.info("Found " + type + ": " + input);
     }
 
     protected void putOutputVars(String chanSpec, String channelColors, List<AlignmentInputFile> alignmentInputFiles) {
-        logger.info("Putting '"+chanSpec+"' in CHANNEL_SPEC");
-        processData.putItem("CHANNEL_SPEC", chanSpec);
-        String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
-        logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
-        processData.putItem("SIGNAL_CHANNELS", signalChannels);
-        String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
-        logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
-        processData.putItem("REFERENCE_CHANNEL", referenceChannels);
-        logger.info("Putting '"+channelColors+"' in CHANNEL_COLORS");
-        processData.putItem("CHANNEL_COLORS", channelColors);
-        logger.info("Putting "+alignmentInputFiles.size()+" objects in ALIGNMENT_INPUTS");
-        processData.putItem("ALIGNMENT_INPUTS", alignmentInputFiles);
+        data.putItem("CHANNEL_SPEC", chanSpec);
+        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+        data.putItem("SIGNAL_CHANNELS", signalChannels);
+        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+        data.putItem("REFERENCE_CHANNEL", referenceChannels);
+        data.putItem("CHANNEL_COLORS", channelColors);
+        data.putItem("ALIGNMENT_INPUTS", alignmentInputFiles);
         
         if (!archivedFiles.isEmpty()) {
-            logger.info("Putting true in COPY_FROM_ARCHIVE");
-            processData.putItem("COPY_FROM_ARCHIVE", Boolean.TRUE);
-            logger.info("Putting "+archivedFiles.size()+" objects in SOURCE_FILE_PATHS");
-            processData.putItem("SOURCE_FILE_PATHS", Task.csvStringFromCollection(archivedFiles));
-            logger.info("Putting "+targetFiles.size()+" objects in TARGET_FILE_PATHS");
-            processData.putItem("TARGET_FILE_PATHS", Task.csvStringFromCollection(targetFiles));
+            data.putItem("COPY_FROM_ARCHIVE", Boolean.TRUE);
+            data.putItem("SOURCE_FILE_PATHS", Task.csvStringFromCollection(archivedFiles));
+            data.putItem("TARGET_FILE_PATHS", Task.csvStringFromCollection(targetFiles));
         }
         else {
-            logger.info("Putting false in COPY_FROM_ARCHIVE");
-            processData.putItem("COPY_FROM_ARCHIVE", Boolean.FALSE);
-            logger.info("Putting null in SOURCE_FILE_PATHS");
-            processData.putItem("SOURCE_FILE_PATHS", null);
-            logger.info("Putting null in TARGET_FILE_PATHS");
-            processData.putItem("TARGET_FILE_PATHS", null);
+            data.putItem("COPY_FROM_ARCHIVE", Boolean.FALSE);
+            data.putItem("SOURCE_FILE_PATHS", null);
+            data.putItem("TARGET_FILE_PATHS", null);
         }
     }
     
@@ -272,41 +247,34 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected void init(IProcessData processData) throws Exception {        
 
         try {
+            super.init(processData);
+
             this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
             this.annotationBean = EJBFactory.getLocalAnnotationBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
-            String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-            if (sampleEntityId == null || "".equals(sampleEntityId)) {
-                throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
+            this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
+
+            @SuppressWarnings("unchecked")
+            List<AlignmentInputFile> alignmentInputs = (List) data.getRequiredItem("ALIGNMENT_INPUTS");
+
+            final int numberOfAlignmentInputs = alignmentInputs.size();
+            if ((numberOfAlignmentInputs < 1) || (numberOfAlignmentInputs > 2)) {
+                throw new IllegalArgumentException("invalid number of ALIGNMENT_INPUTS (" +
+                                                   numberOfAlignmentInputs + "): only 1 or 2 may be specified");
             }
-            
-            this.sampleEntity = entityBean.getEntityById(sampleEntityId);
-            if (sampleEntity == null) {
-                throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-            }
-            
-            List<AlignmentInputFile> alignmentInputs = (List)processData.getItem("ALIGNMENT_INPUTS");
-            if (alignmentInputs == null) {
-                throw new IllegalArgumentException("ALIGNMENT_INPUTS may not be null");
-            }
-            
-            if (alignmentInputs.size()>0) {
-                this.input1 = alignmentInputs.get(0);
-            }
-            
-            if (alignmentInputs.size()>1) {
+
+            this.input1 = alignmentInputs.get(0);
+            if (numberOfAlignmentInputs > 1) {
                 this.input2 = alignmentInputs.get(1);
             }
             
-            super.init(processData);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new ServiceException(e);
         }
     }
@@ -351,7 +319,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     		throw new MissingDataException("Brain alignment core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
-    	if (outputFile!=null && !outputFile.exists()) {
+    	if (! outputFile.exists()) {
     		throw new MissingDataException("Output file not found: "+outputFile.getAbsolutePath());
     	}
 	}

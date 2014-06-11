@@ -138,11 +138,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
 
     protected void init(IProcessData processData) throws Exception {
-        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-        this.contextLogger = new ContextLogger(this.logger);
-
-        this.processData = processData;
-        this.data = new ProcessDataAccessor(processData, this.contextLogger);
+        initLoggersAndData(processData);
 
         // Permit the task to be predefined elsewhere
         if (this.task == null) {
@@ -155,7 +151,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         if (this.resultFileNode == null) {
             this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);
         }
-        this.jobSet = new HashSet<String>();
+        this.jobSet = new HashSet<>();
         if (resultFileNode == null) {
             throw new MissingDataException("ResultFileNode for createtask " + task.getObjectId() +
                     " must exist before a grid job is submitted");
@@ -169,12 +165,18 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         FileUtil.ensureDirExists(getSGEErrorDirectory());
     }
 
+    protected void initLoggersAndData(IProcessData processData)  throws Exception {
+        this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+        this.contextLogger = new ContextLogger(this.logger);
+
+        this.processData = processData;
+        this.data = new ProcessDataAccessor(processData, this.contextLogger);
+    }
+
     /**
      * Override this method to specify that the job needs to run exclusively on the entire node.
      * 
      * Defaults to false.
-     * 
-     * @return
      */
     protected boolean isExclusive() {
         return false;
@@ -186,8 +188,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * getRequiredMemoryInGB.
      * 
      * Defaults to 1 slot.
-     * 
-     * @return
+     *
+     * @return the minimum number of slots needed for this grid job.
      */
     protected int getRequiredSlots() {
     	return 1;
@@ -198,8 +200,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * allocated to achieve this memory requirement.
      * 
      * Defaults to 1 GB.
-     * 
-     * @return
+     *
+     * @return the minimum amount of memory needed for this grid job.
      */
     protected int getRequiredMemoryInGB() {
     	return 1;
@@ -208,7 +210,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     /**
      * Override this to return true if the job is going to finish quickly. This isn't guaranteed to do anything, but on
      * some grid it may queue to a specific "short job" queue or resource.
-     * @return
+     *
+     * @return true if the job is going to finish quickly.
      */
     protected boolean isShortJob() {
     	return false;
@@ -217,10 +220,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     /**
      * Override this method to add flags to the native specification. If you override this method, call super
      * in order to process ARCHIVE_FLAG.
-     * @return
+     *
+     * @return additional flags for the native specification.
      */
     protected String getAdditionalNativeSpecification() {
-        if ("true".equals((String)processData.getItem("ARCHIVE_FLAG"))) {
+        if ("true".equals(processData.getItem("ARCHIVE_FLAG"))) {
             return "-l archive=true";    
         }
         return null;
@@ -231,7 +235,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * by default. If it is overridden to return a non-null value, then isShortJob, getRequiredSlots,  
      * getRequiredMemoryInGB, and getAdditionalNativeSpecification will be ignored.
      * 
-     * @return
+     * @return null or the overriden native specification.
      */
     protected String getNativeSpecificationOverride() {
     	return null;
@@ -320,7 +324,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         DrmaaHelper drmaa = new DrmaaHelper(logger);
 
         if (!checkSubmitJobPrecondition(drmaa)) {
-            return new HashSet<String>();
+            return new HashSet<>();
         }
 
         SerializableJobTemplate jt = prepareJobTemplate(drmaa);
@@ -427,10 +431,13 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * @throws org.ggf.drmaa.DrmaaException - Drmaa had an issue setting the specification
      */
     protected void setProject(SerializableJobTemplate jt) throws DrmaaException {
-        String project = task.getParameter(Task.PARAM_project).trim();
-        if (project != null && project.length() > 0) {
-            logger.info("setProject = -P " + project);
-            jt.setNativeSpecification("-P " + project);
+        String project = task.getParameter(Task.PARAM_project);
+        if (project != null) {
+            project = project.trim();
+            if (project.length() > 0) {
+                logger.info("setProject = -P " + project);
+                jt.setNativeSpecification("-P " + project);
+            }
         }
     }
 

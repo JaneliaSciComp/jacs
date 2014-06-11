@@ -21,7 +21,7 @@ public class AlignmentInputFile implements Serializable {
     protected Integer refChannel;
     protected Integer refChannelOneIndexed;
     protected Integer numChannels;
-    
+
     public void setPropertiesFromEntity(Entity image) {
         setInputFilename(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         setChannelColors(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
@@ -29,7 +29,7 @@ public class AlignmentInputFile implements Serializable {
         setOpticalResolution(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION));
         setPixelResolution(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
     }
-    
+
     public String getInputFilename() {
         return inputFilename;
     }
@@ -67,10 +67,10 @@ public class AlignmentInputFile implements Serializable {
         this.channelSpec = channelSpec;
         if (channelSpec!=null) {
             if (channelSpec.contains("r")) {
-                this.refChannel = channelSpec.indexOf('r');
-                this.refChannelOneIndexed = refChannel + 1;
+                setRefChannel(channelSpec.indexOf('r'));
+                setRefChannelOneIndexed(refChannel + 1);
             }
-            this.numChannels = channelSpec.length();
+            setNumChannels(channelSpec.length());
         }
     }
     public Integer getRefChannel() {
@@ -90,5 +90,20 @@ public class AlignmentInputFile implements Serializable {
     }
     public void setNumChannels(Integer numChannels) {
         this.numChannels = numChannels;
+    }
+
+    @Override
+    public String toString() {
+        return "AlignmentInputFile{" +
+                "inputFilename='" + inputFilename + '\'' +
+                ", inputSeparationFilename='" + inputSeparationFilename + '\'' +
+                ", opticalResolution='" + opticalResolution + '\'' +
+                ", pixelResolution='" + pixelResolution + '\'' +
+                ", channelSpec='" + channelSpec + '\'' +
+                ", channelColors='" + channelColors + '\'' +
+                ", refChannel=" + refChannel +
+                ", refChannelOneIndexed=" + refChannelOneIndexed +
+                ", numChannels=" + numChannels +
+                '}';
     }
 }
