@@ -15,7 +15,8 @@ import java.util.List;
 public class ProcessDataAccessor {
 
     private static final int MAX_STRING_LENGTH = 1000;
-    
+    private static final int MAX_COLLECTION_SIZE = 5;
+
     private ContextLogger contextLogger;
     private IProcessData processData;
 
@@ -32,17 +33,7 @@ public class ProcessDataAccessor {
             sb.append("Retrieved ");
             sb.append(key);
             sb.append(" value of ");
-            if (value instanceof String) {
-                String v = (String)value;
-                if (v.length()>MAX_STRING_LENGTH) {
-                    v = v.substring(0, MAX_STRING_LENGTH)+"...";
-                }
-                sb.append('\'');
-                sb.append(v);
-                sb.append('\'');
-            } else {
-                sb.append(value);
-            }
+            appendValueToStringBuilder(value, sb);
             contextLogger.info(sb.toString());
         }
         return value;
@@ -114,21 +105,7 @@ public class ProcessDataAccessor {
         if (contextLogger.isInfoEnabled()) {
             StringBuilder sb = new StringBuilder(256);
             sb.append("Putting ");
-            if (value instanceof String) {
-                sb.append('\'');
-                sb.append(value);
-                sb.append('\'');
-            } else if (value == null) {
-                sb.append("null");
-            } else {
-                final Class clazz = value.getClass();
-                if ((clazz != null) && Collection.class.isAssignableFrom(clazz)) {
-                    sb.append(((Collection) value).size());
-                    sb.append(" items");
-                } else {
-                    sb.append(value);
-                }
-            }
+            appendValueToStringBuilder(value, sb);
             sb.append(" in ");
             sb.append(key);
             contextLogger.info(sb.toString());
@@ -137,4 +114,42 @@ public class ProcessDataAccessor {
         processData.putItem(key, value);
     }
 
+    private void appendValueToStringBuilder(Object value,
+                                            StringBuilder sb) {
+
+        if (value instanceof String) {
+
+            sb.append('\'');
+
+            String v = (String) value;
+            if (v.length() > MAX_STRING_LENGTH) {
+                sb.append(v.substring(0, MAX_STRING_LENGTH));
+                sb.append("...");
+            } else {
+                sb.append(v);
+            }
+
+            sb.append('\'');
+
+        } else if (value == null) {
+
+            sb.append("null");
+
+        } else {
+
+            final Class clazz = value.getClass();
+            if ((clazz != null) && Collection.class.isAssignableFrom(clazz)) {
+                final int size = ((Collection) value).size();
+                if (size > MAX_COLLECTION_SIZE) {
+                    sb.append(size);
+                    sb.append(" items");
+                } else {
+                    sb.append(value);
+                }
+            } else {
+                sb.append(value);
+            }
+
+        }
+    }
 }

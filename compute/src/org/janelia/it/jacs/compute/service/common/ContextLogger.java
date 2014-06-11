@@ -30,14 +30,16 @@ public class ContextLogger {
      */
     public void appendToLogContext(Task task) {
         if (task != null) {
-            logContext.append(", task ");
-            logContext.append(task.getObjectId());
+            StringBuilder taskContext = new StringBuilder(128);
+            taskContext.append("task ");
+            taskContext.append(task.getObjectId());
             final Long parentTaskId = task.getParentTaskId();
             if (parentTaskId != null) {
-                logContext.append(" (child of task ");
-                logContext.append(parentTaskId);
-                logContext.append(")");
+                taskContext.append(" (child of task ");
+                taskContext.append(parentTaskId);
+                taskContext.append(")");
             }
+            appendToLogContext(taskContext.toString());
         }
     }
 
@@ -48,8 +50,16 @@ public class ContextLogger {
      */
     public void appendToLogContext(String additionalContext) {
         if (! StringUtils.isEmpty(additionalContext)) {
-            logContext.append(", ");
+            final int len = logContext.length();
+            if (len == 0) {
+                logContext.append("\t [CONTEXT: ");
+            } else {
+                logContext.setLength(len - 1); // remove trailing ']'
+                logContext.append(", ");
+            }
+
             logContext.append(additionalContext);
+            logContext.append(']');
         }
     }
 
