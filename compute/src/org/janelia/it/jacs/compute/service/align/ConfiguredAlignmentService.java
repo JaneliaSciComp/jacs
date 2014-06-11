@@ -2,9 +2,11 @@ package org.janelia.it.jacs.compute.service.align;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -113,31 +115,37 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
     @Override
     public void postProcess() throws MissingDataException {
-        File outputDir = new File(resultFileNode.getDirectoryPath());
-        try {
-            File[] propertiesFiles = outputDir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(".properties");
-                }
-            });
 
-            if (propertiesFiles==null) {
-                throw new MissingDataException("Output directory missing for alignment: " + outputDir);
+        final File outputDir = new File(resultFileNode.getDirectoryPath());
+
+        if (! outputDir.exists()) {
+            throw new MissingDataException("Output directory missing for alignment: " + outputDir);
+        }
+
+        try {
+            final Collection<File> propertiesFiles = getPropertiesFiles(outputDir);
+
+            if (propertiesFiles.size() == 0) {
+                throw new MissingDataException("alignment output directory " + outputDir.getAbsolutePath() +
+                        " does not contain any '.properties' files");
+            } else {
+                contextLogger.info("postProcess: '.properties' file(s) are " + propertiesFiles);
             }
 
             List<String> filenames = new ArrayList<>();
             String defaultFilename = null;
             String canonicalPath;
+            File propertyFileDir;
 
             for (File propertiesFile : propertiesFiles) {
                 Properties properties = new Properties();
                 properties.load(new FileReader(propertiesFile));
 
+                propertyFileDir = propertiesFile.getParentFile();
                 String filename = properties.getProperty("alignment.stack.filename");
-                File file = new File(outputDir, filename);
+                File file = new File(propertyFileDir, filename);
                 if (!file.exists()) {
-                    throw new MissingDataException("File does not exist: "+file);
+                    throw new MissingDataException("Alignment stack file does not exist: " + file.getAbsolutePath());
                 }
 
                 canonicalPath = file.getCanonicalPath();
@@ -147,7 +155,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                         defaultFilename = canonicalPath;
                     } else {
                         contextLogger.warn("default flag is true for both " + defaultFilename +
-                                           " and " + canonicalPath);
+                                           " and " + canonicalPath + " (ignoring flag for second file)");
                     }
                 }
             }
@@ -170,4 +178,28 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             throw new MissingDataException("Error getting alignment outputs: " + outputDir, e);
         }
     }
+
+    /**
+     * Finds all .properties files within the specified directory and all of its sub-directories.
+     * Separated here as a protected method to support unit testing.
+     *
+     * @param  outputDir  root directory to start search.
+     *
+     * @return list of .properties files.
+     */
+    protected Collection<File> getPropertiesFiles(File outputDir) {
+
+        // Most aligners simply place the .properties files in the root result directory but
+        // the brainalignPolarityPair_ds_dpx_1024px_INT_v2.sh aligner places properties files
+        // in the following sub-directories:
+        //
+        //   Neurons/20x/NeuronAligned20xScale.properties
+        //   Neurons/63x/NeuronAligned63xScale.properties
+        //   Brains/20x/Aligned20xScale.properties
+        //   Brains/63x/Aligned63xScale.properties
+
+        final String[] extensions = { "properties" };
+        return FileUtils.listFiles(outputDir, extensions, true);
+    }
+
 }

@@ -86,9 +86,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
-            this.warpNeurons = ! data.getItemAsBoolean("WARP_NEURONS");
-            
             this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
+            this.warpNeurons = ! data.getItemAsBoolean("WARP_NEURONS");
 
             @SuppressWarnings("unchecked")
             List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREAS");
@@ -167,15 +166,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     
     
     protected void logInputFound(String type, AlignmentInputFile input) {
-        contextLogger.info("Found "+type+": ");
-        contextLogger.info("  Input filename: "+input.getInputFilename());
-        contextLogger.info("  Input channel spec: "+input.getChannelSpec());
-        contextLogger.info("  Input channel colors: "+input.getChannelColors());
-        contextLogger.info("  Input separation to warp: "+input.getInputSeparationFilename());
-        contextLogger.info("  Reference channel: "+input.getRefChannel());
-        contextLogger.info("  Reference channel (one-indexed): "+input.getRefChannelOneIndexed());
-        contextLogger.info("  Optical resolution: "+input.getOpticalResolution());
-        contextLogger.info("  Pixel resolution: "+input.getPixelResolution());
+        contextLogger.info("Found " + type + ": " + input);
     }
 
     protected void putOutputVars(String chanSpec, String channelColors, List<AlignmentInputFile> alignmentInputFiles) {

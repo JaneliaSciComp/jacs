@@ -1,6 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
+import org.janelia.it.jacs.compute.service.align.*;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -18,38 +18,38 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 		AlignmentAlgorithm aa = paa.getAlgorithm();
 		
 		if (AlignmentAlgorithm.WHOLE_40X == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xAlignmentService");
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", WholeBrain40xAlignmentService.class.getName());
         	processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Whole Brain 40x Alignment"));
 		}
 		else if (AlignmentAlgorithm.WHOLE_40X_IMPROVED == aa) {
-            processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain40xImprovedAlignmentService");
+            processData.putItem("ALIGNMENT_SERVICE_CLASS", WholeBrain40xImprovedAlignmentService.class.getName());
             processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Whole Brain 40x Alignment"));
         }
 		else if (AlignmentAlgorithm.WHOLE_63X == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.WholeBrain63xAlignmentService");
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", WholeBrain63xAlignmentService.class.getName());
         	processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Whole Brain 63x Alignment"));
 		}
 		else if (AlignmentAlgorithm.OPTIC == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.OpticLobeAlignmentService");
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", OpticLobeAlignmentService.class.getName());
         	processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Optic Lobe Alignment"));
 		}
 		else if (AlignmentAlgorithm.CENTRAL == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.CentralBrainAlignmentService");
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", CentralBrainAlignmentService.class.getName());
         	processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Central Brain Alignment"));
 		}
 		else if (AlignmentAlgorithm.CONFIGURED == aa) {
-        	processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.ConfiguredAlignmentService");
+        	processData.putItem("ALIGNMENT_SERVICE_CLASS", ConfiguredAlignmentService.class.getName());
         	processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Brain Alignment"));
         	
         	processData.putItem("ALIGNMENT_SCRIPT_NAME", paa.getParameter());
 		}
         else if (AlignmentAlgorithm.CONFIGURED_BRAIN_VNC == aa) {
-            processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.ConfiguredBrainVNCAlignmentService");
+            processData.putItem("ALIGNMENT_SERVICE_CLASS", ConfiguredBrainVNCAlignmentService.class.getName());
             processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Brain/VNC Alignment"));
             processData.putItem("ALIGNMENT_SCRIPT_NAME", paa.getParameter());
         }
 		else if (AlignmentAlgorithm.CONFIGURED_PAIR == aa) {
-            processData.putItem("ALIGNMENT_SERVICE_CLASS", "org.janelia.it.jacs.compute.service.align.ConfiguredPairAlignmentService");
+            processData.putItem("ALIGNMENT_SERVICE_CLASS", ConfiguredPairAlignmentService.class.getName());
             processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Brain 20X/63X Alignment"));
             processData.putItem("ALIGNMENT_SCRIPT_NAME", paa.getParameter());
         }
