@@ -9,8 +9,8 @@ import org.janelia.it.jacs.model.domain.MaterializedView;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.TreeNode;
 import org.janelia.it.jacs.model.domain.Workspace;
+import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.util.Assert;
 
 /**
  * Unit tests for workspaces, folders, and views.
@@ -22,8 +22,8 @@ public class WorkspaceTest extends MongoDbTest {
     @Test
     public void testSubjects() {
         for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {
-            Assert.notNull(subject.getId());
-            Assert.notNull(subject.getKey());
+            Assert.assertNotNull(subject.getId());
+            Assert.assertNotNull(subject.getKey());
         }
     }
     
@@ -62,7 +62,7 @@ public class WorkspaceTest extends MongoDbTest {
             }
         }
 
-        Assert.isTrue(userObjIds.containsAll(groupObjIds));
+        Assert.assertTrue(userObjIds.containsAll(groupObjIds));
     }
     
     private void testWorkspace(String subjectKey) {
@@ -72,6 +72,7 @@ public class WorkspaceTest extends MongoDbTest {
         int numChildren = 0;
         for(Workspace workspace : dao.getWorkspaces(subjectKey)) {
             numWorkspaces += 1;
+            int numTopLevel = 0;
             for(DomainObject obj : dao.getDomainObjects(subjectKey, workspace.getChildren())) {
                 numWorkspaces += 1;
                 if (obj instanceof MaterializedView) {
@@ -85,13 +86,15 @@ public class WorkspaceTest extends MongoDbTest {
                     if (child==null) continue;
                     numChildren += 1;
                 }
+                numTopLevel++;
             }
+            Assert.assertTrue(numTopLevel==workspace.getNumChildren());
         }
         
-        Assert.isTrue(numWorkspaces>0);
-        Assert.isTrue(numFolders>0);
-        Assert.isTrue(numViews>0);
-        Assert.isTrue(numChildren>0);
+        Assert.assertTrue(numWorkspaces>0);
+        Assert.assertTrue(numFolders>0);
+        Assert.assertTrue(numViews>0);
+        Assert.assertTrue(numChildren>0);
     }
     
 }

@@ -104,7 +104,6 @@ public class DomainDAO {
     }
 
     public MongoCollection getCollection(String type) {
-        
         return jongo.getCollection(type);
     }
     
@@ -115,7 +114,7 @@ public class DomainDAO {
     /** 
      * Return the set of subjectKeys which are readable by the given subject. This includes the subject itself, and all of the groups it is part of. 
      */
-    private Set<String> getSubjectSet(String subjectKey) {
+    public Set<String> getSubjectSet(String subjectKey) {
         Subject subject = subjectCollection.findOne("{key:#}",subjectKey).projection("{_id:0,groups:1}").as(Subject.class);
         if (subject==null) throw new IllegalArgumentException("No such subject: "+subjectKey);
         Set<String> groups = subject.getGroups();
@@ -142,12 +141,13 @@ public class DomainDAO {
         Map<Long,DomainObject> map = new HashMap<Long,DomainObject>(ids.size());
         
         for(DomainObject item : iterable) {
+        	//log.info(item.getId()+"  "+item);
             map.put(item.getId(), item);
         }
         for(Long id : ids) {
             DomainObject item = map.get(id);
             if  (item==null) {
-                log.warn("Item with id "+id+" was not found");
+                //log.warn("Item with id "+id+" was not found");
             }
             list.add(item);
         }
@@ -158,7 +158,7 @@ public class DomainDAO {
      * Get the domain objects referenced by the given list of References.
      */
     public List<DomainObject> getDomainObjects(String subjectKey, List<Reference> references) {
-
+    	
         List<DomainObject> domainObjects = new ArrayList<DomainObject>();
         if (references==null || references.isEmpty()) return domainObjects;
         
@@ -181,7 +181,14 @@ public class DomainDAO {
         // TODO: remove this after the next db load fixes it
         if ("workspace".equals(type)) type = "treeNode";
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(getCollection(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(getObjectClass(type)), ids);
+
+        Class<? extends DomainObject> clazz = getObjectClass(type);
+        if (clazz==null) {
+        	log.error("No object type for "+type);
+        	return new ArrayList<DomainObject>();
+        }
+    	
+        return toList(getCollection(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(clazz), ids);
     }
 
     public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {

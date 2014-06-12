@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.ImageType;
@@ -18,8 +19,8 @@ import org.janelia.it.jacs.model.domain.SampleTile;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.TreeNode;
 import org.janelia.it.jacs.model.domain.Workspace;
+import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.util.Assert;
 
 public class SampleTest extends MongoDbTest {
     
@@ -119,8 +120,34 @@ public class SampleTest extends MongoDbTest {
 //    }
     
 
-    //@Test
+    @Test
     public void test() {
+    
+    	
+//    	for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {
+//    		System.out.println(subject.getId());
+//    	}
+        //return toList(getCollection(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(getObjectClass(type)), ids);
+        
+    	
+    	List<Long> ids = new ArrayList<Long>();
+    	ids.add(1813399562556014681L);
+
+//    	String subjectKey = "user:rokickik";
+//        Set<String> subjects = dao.getSubjectSet(subjectKey);
+//    	for(TreeNode treeNode : dao.getCollection("treeNode").find("{_id:{$in:#}}",ids).as(TreeNode.class)) {
+//    		System.out.println(treeNode.getId()+" "+treeNode.getReaders());
+//    	}
+
+    	for(DomainObject treeNode : dao.getDomainObjects("user:rokickik","treeNode",ids)) {
+    		System.out.println(treeNode.getId()+" "+treeNode);
+    	}
+    	
+    	
+    }
+    
+    //@Test
+    public void test3() {
 
 //        for(Workspace workspace : dao.getCollection("treeNode").find("{class:#,ownerKey:#}",Workspace.class.getName(),"user:saffordt").projection("{class:1,name:1}").as(Workspace.class)) {
 //            
@@ -157,12 +184,12 @@ public class SampleTest extends MongoDbTest {
     
     public void testSubjects() {
         for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {
-            Assert.notNull(subject.getId());
-            Assert.notNull(subject.getKey());
+            Assert.assertNotNull(subject.getId());
+            Assert.assertNotNull(subject.getKey());
         }
     }
     
-    @Test
+    //@Test
     public void runBenchmarks() throws Exception {
 
         long start = System.currentTimeMillis();
