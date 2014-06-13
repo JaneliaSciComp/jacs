@@ -512,7 +512,7 @@ public class EntityUtils {
     }
     
     public static Entity findChildWithNameAndTypeAndOwner(Entity entity, String childName, String type, String owner) {
-    	EntityData ed = findChildEntityDataWithNameAndTypeAndOwner(entity, null, type, null);
+    	EntityData ed = findChildEntityDataWithNameAndTypeAndOwner(entity, childName, type, owner);
     	return ed==null?null:ed.getChildEntity();
     }
     
