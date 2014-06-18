@@ -750,7 +750,9 @@ public class EntityUtils {
 	public static Map<Long,Entity> getEntityMap(Collection<Entity> entities) {
         Map<Long, Entity> entityMap = new HashMap<Long, Entity>();
         for (Entity entity : entities) {
-            entityMap.put(entity.getId(), entity);
+        	if (entity!=null) {
+        		entityMap.put(entity.getId(), entity);
+        	}
         }
 		return entityMap;
 	}
