@@ -1,0 +1,8 @@
+<!--
+	Validation service.
+-->
+<process name="Validation Pipeline" processor="queue/shortPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    <operation name="Validation Service" processor="org.janelia.it.jacs.compute.service.validation.SimpleValidationService"/>
+    </sequence>
+</process>
