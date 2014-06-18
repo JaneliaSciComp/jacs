@@ -59,4 +59,6 @@ public interface WorkstationDataManagerMBean {
     public void addChildFolder(String parentId, String folderName);
     
     public void runBenchmarks();
+    
+    public void cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName, Long parentEntityId, Boolean clonePermissions);
 }

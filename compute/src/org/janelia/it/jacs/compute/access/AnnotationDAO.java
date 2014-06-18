@@ -426,6 +426,59 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
+    public Entity cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName, boolean clonePermissions) throws ComputeException {
+        if (log.isTraceEnabled()) {
+            log.trace("cloneEntityTree(sourceRootId="+sourceRootId+", targetSubjectKey="+targetSubjectKey+", targetRootName="+targetRootName+")");
+        }
+        
+    	Entity sourceRoot = getEntityById(sourceRootId);    	
+    	if (sourceRoot == null) {
+    		throw new DaoException("Cannot find the source root for cloning: "+sourceRootId);
+    	}
+    	
+        Entity cloned = cloneEntityTree(sourceRoot, targetSubjectKey, targetRootName, clonePermissions, new HashMap<Long,Entity>());
+        return cloned;
+    }
+
+    private Entity cloneEntityTree(Entity sourceEntity, String targetSubjectKey, String targetName, boolean clonePermissions, Map<Long,Entity> visited) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("cloneEntityTree(source="+sourceEntity+", targetSubjectKey="+targetSubjectKey+", targetName="+targetName+")");
+        }
+        
+        if (visited.containsKey(sourceEntity.getId())) return visited.get(sourceEntity.getId());
+        
+        Entity clonedEntity = newEntity(sourceEntity.getEntityTypeName(), targetName, targetSubjectKey);
+        saveOrUpdate(clonedEntity);
+
+        visited.put(sourceEntity.getId(), clonedEntity);
+        
+        // Add the entity data 
+    	for(EntityData ed : sourceEntity.getEntityData()) {
+    		
+    		Entity newChildEntity = null;
+    		Entity childEntity = ed.getChildEntity();
+    		if (childEntity != null) {
+    			newChildEntity = cloneEntityTree(childEntity, targetSubjectKey, childEntity.getName(), clonePermissions, visited);	
+    		}
+    		
+            EntityData newEd = clonedEntity.addChildEntity(newChildEntity, ed.getEntityAttrName());
+            newEd.setOrderIndex(ed.getOrderIndex());
+            newEd.setValue(ed.getValue());
+            saveOrUpdate(newEd);
+    	}
+
+        log.trace("cloned "+sourceEntity.getId()+" as "+clonedEntity.getId());
+        
+        if (clonePermissions) {
+            for(EntityActorPermission permission : getFullPermissions(sourceEntity)) {
+            	if (permission.getSubjectKey().equals(targetSubjectKey)) continue; // Don't need to grant permissions to the new owner
+            	grantPermissions(clonedEntity, permission.getSubjectKey(), permission.getPermissions(), false);    
+            }
+        }
+        
+    	return clonedEntity;
+    }
+    
     private Entity newEntity(String entityTypeName, String name, String subjectKey) {
         if (log.isTraceEnabled()) {
             log.trace("newEntity(entityTypeName="+entityTypeName+", name="+name+", subjectKey="+subjectKey+")");

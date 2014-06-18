@@ -57,4 +57,5 @@ public interface EntityBeanLocal extends EntityBeanRemote {
     public Entity saveBulkEntityTree(Entity root) throws ComputeException;
     
     public List<Long> getOrphanEntityIds(String subjectKey) throws ComputeException;
+    public Entity cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName, boolean clonePermissions) throws ComputeException;
 }

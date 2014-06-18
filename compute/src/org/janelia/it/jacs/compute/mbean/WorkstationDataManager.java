@@ -701,4 +701,18 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
         return i;
     }
+
+    public void cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName, Long parentEntityId, Boolean clonePermissions) {
+    	try {
+	        EntityBeanLocal e = EJBFactory.getLocalEntityBean();
+	        Entity clonedRoot = e.cloneEntityTree(sourceRootId, targetSubjectKey, targetRootName, clonePermissions);
+	        if (parentEntityId!=null) {
+	        	Entity parent = e.getEntityById(parentEntityId);
+	        	e.addEntityToParent(parent, clonedRoot, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+	        }
+    	}
+    	catch (Exception ex) {
+            logger.error("Error running cloneEntityTree", ex);
+    	}
+    }
 }
