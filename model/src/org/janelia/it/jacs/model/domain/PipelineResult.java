@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -38,6 +40,23 @@ public class PipelineResult implements HasFilepath {
 
     public NeuronSeparation getLatestSeparationResult() {
         return (NeuronSeparation)getLatestResultOfType(NeuronSeparation.class);
+    }
+
+    public void addResult(PipelineResult result) {
+    	if (results==null) {
+    		this.results = new ArrayList<PipelineResult>();
+    	}
+    	results.add(result);
+    }
+    
+    public void removeResult(PipelineResult result) {
+    	if (results==null) {
+    		return;
+    	}
+    	results.remove(result);
+    	if (results.isEmpty()) {
+    		results = null;
+    	}
     }
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */

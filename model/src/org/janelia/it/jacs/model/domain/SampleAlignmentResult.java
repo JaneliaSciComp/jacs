@@ -4,6 +4,7 @@ import java.util.Map;
 
 public class SampleAlignmentResult extends PipelineResult implements HasImages {
 
+	private String name;
     private String imageSize;
     private String opticalResolution;
     private String alignmentSpace;
@@ -14,11 +15,17 @@ public class SampleAlignmentResult extends PipelineResult implements HasImages {
     private Map<ImageType,String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
+
+    public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
     public String getImageSize() {
         return imageSize;
     }
-    public void setImageSize(String imageSize) {
+	public void setImageSize(String imageSize) {
         this.imageSize = imageSize;
     }
     public String getOpticalResolution() {

@@ -293,12 +293,25 @@ public class MongoDbImport extends AnnotationDAO {
         List<Reference> children = new ArrayList<Reference>();
         for(Entity childEntity : folderEntity.getOrderedChildren()) {
             String childType = childEntity.getEntityTypeName();
+            Long childId = childEntity.getId();
             if (childType.equals(EntityConstants.TYPE_FOLDER)) {
                 loadFolderHierarchy(childEntity, visited);
             }
-            String type = getCollectionName(childEntity.getEntityTypeName());
-            Reference ref = new Reference(type,childEntity.getId());
-            children.add(ref);
+            else if (childType.equals(EntityConstants.TYPE_SAMPLE) && childEntity.getName().contains("~")) {
+            	Entity parentSample = getAncestorWithType(childEntity.getOwnerKey(), childId, EntityConstants.TYPE_SAMPLE);
+            	if (parentSample!=null) {
+            		childId = parentSample.getId();
+            	}
+            	else {
+            		childId = null;
+            	}
+            		
+            }
+            if (childId!=null) {
+	            String type = getCollectionName(childEntity.getEntityTypeName());
+	            Reference ref = new Reference(type,childId);
+	            children.add(ref);
+            }
         }
         
         if (!children.isEmpty()) {
@@ -735,6 +748,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private SampleAlignmentResult getAlignmentResult(Entity alignmentEntity, Entity imageEntity, Entity movieEntity) {
         SampleAlignmentResult result = new SampleAlignmentResult();
+        result.setName(alignmentEntity.getName());
         result.setCreationDate(imageEntity.getCreationDate());
         result.setAlignmentSpace(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE));
         result.setBoundingBox(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_BOUNDING_BOX));
