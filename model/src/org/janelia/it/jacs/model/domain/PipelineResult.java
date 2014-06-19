@@ -2,7 +2,6 @@ package org.janelia.it.jacs.model.domain;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
