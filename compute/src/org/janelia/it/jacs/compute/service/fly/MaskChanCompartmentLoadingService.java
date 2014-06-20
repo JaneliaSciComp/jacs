@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.service.fly;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -28,6 +29,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     private static final String INPATH_PARAM = "MASK_CHAN_PATH";
     private static final String OPTICAL_RES_PARAM = "OPTICAL_RESOLUTION";
     private static final String PIXEL_RES_PARAM = "PIXEL_RESOLUTION";
+    private static final String ALIGNMENT_SPACE_NAME_PARAM = "ALIGNMENT_SPACE_NAME";
 
     private static final String FILESTORE_ROOT_PATH = SystemConfigurationProperties.getString("FileStore.CentralDir");
     private static final String COMPARTMENT_NAMES_FILE = FILESTORE_ROOT_PATH+File.separator+"/MaskResources/Compartment/maskNameIndex.txt";
@@ -88,7 +90,12 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         if ( pixelResolution == null ) {
             pixelResolution = DEFAULT_PIXEL_RESOLUTION;
         }
-    	
+
+        String alignmentSpaceName = (String)processData.getItem(ALIGNMENT_SPACE_NAME_PARAM);
+        if ( alignmentSpaceName == null ) {
+            alignmentSpaceName = DEFAULT_ALIGNMENT_SPACE;
+        }
+
         // Check input path: has files of correct type?  If so, get them into a convenient form.
         Map<String,MaskChannel> folderContents = readInputFolderContents(inputFSFolder);
 
@@ -102,8 +109,8 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     	}
 
         // Compartments belong to a compartment set that has characteristics of all contents.
-        String compartmentSetName = EntityConstants.TYPE_COMPARTMENT_SET + " " + DEFAULT_ALIGNMENT_SPACE + " " + opticalResolution + " " + pixelResolution;
-        Entity compartmentSetEntity = createCompartmentSetEntity( EntityConstants.TYPE_COMPARTMENT_SET, compartmentSetName, opticalResolution, pixelResolution );
+        String compartmentSetName = EntityConstants.TYPE_COMPARTMENT_SET + " " + alignmentSpaceName + " " + opticalResolution + " " + pixelResolution;
+        Entity compartmentSetEntity = createCompartmentSetEntity( EntityConstants.TYPE_COMPARTMENT_SET, compartmentSetName, alignmentSpaceName, opticalResolution, pixelResolution );
 
         // Add this set as an entity-child of the folder.
         helper.addToParent( topLevelFolder, compartmentSetEntity, topLevelFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY );
@@ -182,12 +189,12 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         return compartmentEntity;
     }
 
-    protected Entity createCompartmentSetEntity(String entityTypeName, String compartmentSetName, String opticalResolution, String pixelResolution) throws Exception {
+    protected Entity createCompartmentSetEntity(String entityTypeName, String compartmentSetName, String alignmentSpaceName, String opticalResolution, String pixelResolution) throws Exception {
         Entity compartmentSetEntity = new Entity();
         compartmentSetEntity.setOwnerKey(ownerKey);
         compartmentSetEntity.setEntityTypeName(entityTypeName);
         compartmentSetEntity.setName(compartmentSetName);
-        compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, DEFAULT_ALIGNMENT_SPACE);
+        compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE, alignmentSpaceName);
         compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, opticalResolution);
         compartmentSetEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelResolution);
         compartmentSetEntity = saveStampedEntity(compartmentSetEntity);
@@ -217,40 +224,43 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     }
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName, String ownerKey, Date createDate, boolean createIfNecessary, boolean loadTree) throws Exception {
-        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
-        Entity topLevelFolder = null;
-        if (topLevelFolders != null) {
-            // Only accept the current user's top level folder
-            for (Entity entity : topLevelFolders) {
-                if (entity.getOwnerKey().equals(ownerKey)
-                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
-                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
-                    // This is the folder we want, now load the entire folder hierarchy
-                    if (loadTree) {
-                        topLevelFolder = entityBean.getEntityTree(entity.getId());
-                    } else {
-                        topLevelFolder = entity;
-                    }
-                    logger.info("Found existing topLevelFolder common root, compartmentShortName=" + topLevelFolder.getName());
-                    break;
-                }
-            }
-        }
+        EntityHelper entityHelper = new EntityHelper( entityBean, computeBean, ownerKey, logger );
+        Entity topLevelFolder = entityHelper.createOrVerifyRootEntity(topLevelFolderName, createIfNecessary, loadTree );
 
-        if (topLevelFolder == null && createIfNecessary) {
-            logger.info("Creating new topLevelFolder with compartmentShortName=" + topLevelFolderName);
-            topLevelFolder = new Entity();
-            topLevelFolder.setOwnerKey( ownerKey );
-            topLevelFolder.setCreationDate(createDate);
-            topLevelFolder.setUpdatedDate(createDate);
-            topLevelFolder.setOwnerKey(ownerKey);
-            topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
-            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
-            logger.info("Saved top level folder as " + topLevelFolder.getId());
-        }
-        logger.info("At top-level-folder time, owner key is " + ownerKey);
+//        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
+//        Entity topLevelFolder = null;
+//        if (topLevelFolders != null) {
+//            // Only accept the current user's top level folder
+//            for (Entity entity : topLevelFolders) {
+//                if (entity.getOwnerKey().equals(ownerKey)
+//                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
+//                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+//                    // This is the folder we want, now load the entire folder hierarchy
+//                    if (loadTree) {
+//                        topLevelFolder = entityBean.getEntityTree(entity.getId());
+//                    } else {
+//                        topLevelFolder = entity;
+//                    }
+//                    logger.info("Found existing topLevelFolder common root, compartmentShortName=" + topLevelFolder.getName());
+//                    break;
+//                }
+//            }
+//        }
+//
+//        if (topLevelFolder == null && createIfNecessary) {
+//            logger.info("Creating new topLevelFolder with compartmentShortName=" + topLevelFolderName);
+//            topLevelFolder = new Entity();
+//            topLevelFolder.setOwnerKey( ownerKey );
+//            topLevelFolder.setCreationDate(createDate);
+//            topLevelFolder.setUpdatedDate(createDate);
+//            topLevelFolder.setOwnerKey(ownerKey);
+//            topLevelFolder.setName(topLevelFolderName);
+//            topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
+//            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+//            topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
+//            logger.info("Saved top level folder as " + topLevelFolder.getId());
+//        }
+//        logger.info("At top-level-folder time, owner key is " + ownerKey);
 
         return topLevelFolder;
     }

@@ -287,6 +287,11 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Name to give the compartment set (e.g. &quot;Unified 20x Alignment Space&quot; or &quot;Yoshi 63x Subsampled Alignment Space&quot;).</description>
+            <name>alignmentSpaceName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
             <description>Directory path of compartment mask-channel files to import (e.g. /nobackup/jacs/jacsData/filestore/MaskResources/Compartment/A_DIRECTORY_CONTAINING_MASK_CHAN_DATA).</description>
             <name>maskChanPath</name>
             <type>java.lang.String</type>
@@ -488,34 +493,5 @@
         <name>runBenchmarks</name>
     </operation>
     
-    <operation>
-        <description>Clone an entity tree and optionally change the owner, root name, and add it to a new parent.</description>
-        <name>cloneEntityTree</name>
-        <parameter>
-           <description>Entity id of the root of the tree to clone</description>
-           <name>sourceRootId</name>
-           <type>java.lang.Long</type>
-        </parameter>
-        <parameter>
-           <description>Full subject key of the owner of the clone (e.g. "group:flylight")</description>
-           <name>targetSubjectKey</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>New name for the root of the cloned entity (may be left empty to keep the name of the cloned entity)</description>
-           <name>targetRootName</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Entity id of the entity to add the new cloned root to (may be left empty to leave the clone as an orphan)</description>
-           <name>parentEntityId</name>
-           <type>java.lang.Long</type>
-        </parameter>
-        <parameter>
-           <description>Should all the permissions be cloned as well?</description>
-           <name>clonePermissions</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
     
 </mbean>
