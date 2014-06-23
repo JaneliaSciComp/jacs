@@ -92,10 +92,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     @Override
-    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName, String opticalResolution, String pixelResolution) {
+    public void runCompartmentLoading(String user, String alignmentSpaceName, String maskChanPath, String topLevelFolderName, String opticalResolution, String pixelResolution) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("mask chan file path", maskChanPath, null));
+            taskParameters.add(new TaskParameter("alignment space name", alignmentSpaceName, null ));
             taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
             taskParameters.add(new TaskParameter("optical resolution", opticalResolution, null));
             taskParameters.add(new TaskParameter("pixel resolution", pixelResolution, null));

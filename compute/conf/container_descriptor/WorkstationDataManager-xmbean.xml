@@ -287,6 +287,11 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Name to give the compartment set (e.g. &quot;Unified 20x Alignment Space&quot; or &quot;Yoshi 63x Subsampled Alignment Space&quot;).</description>
+            <name>alignmentSpaceName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
             <description>Directory path of compartment mask-channel files to import (e.g. /nobackup/jacs/jacsData/filestore/MaskResources/Compartment/A_DIRECTORY_CONTAINING_MASK_CHAN_DATA).</description>
             <name>maskChanPath</name>
             <type>java.lang.String</type>

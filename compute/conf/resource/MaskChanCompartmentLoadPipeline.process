@@ -14,10 +14,13 @@
             <input name="PROCESS_VARIABLE_3" value="OPTICAL_RESOLUTION"/>
             <input name="TASK_PARAMETER_4" value="pixel resolution"/>
             <input name="PROCESS_VARIABLE_4" value="PIXEL_RESOLUTION"/>
+            <input name="TASK_PARAMETER_5" value="alignment space name"/>
+            <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_SPACE_NAME"/>
 	        <output name="MASK_CHAN_PATH"/>
 	        <output name="TOP_LEVEL_FOLDER_NAME"/>
             <output name="OPTICAL_RESOLUTION"/>
             <output name="PIXEL_RESOLUTION"/>
+            <output name="ALIGNMENT_SPACE_NAME"/>
 	    </operation>
 		 
 	    <!-- Load everything and create entities as needed -->
@@ -26,6 +29,7 @@
 			<input name="TOP_LEVEL_FOLDER_NAME"/>
             <input name="OPTICAL_RESOLUTION"/>
             <input name="PIXEL_RESOLUTION"/>
+            <input name="ALIGNMENT_SPACE_NAME"/>
 		</operation>
 		
     </sequence>
