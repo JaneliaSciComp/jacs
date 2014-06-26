@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mbean PUBLIC
+          "-//JBoss//DTD JBOSS XMBEAN 1.0//EN"
+          "http://www.jboss.org/j2ee/dtd/jboss_xmbean_1_0.dtd">
+<mbean>
+
+    <description>Geometric Search Management Bean</description>
+    <class>org.janelia.it.jacs.compute.mbean.GeometricSearch</class>
+    <constructor>
+        <description>The default constructor</description>
+        <name>GeometricSearch</name>
+    </constructor>
+    
+    <operation>
+        <description>Start Geometric Search Manager</description>
+        <name>start</name>
+    </operation>
+    
+    <operation>
+        <description>Stop Geometric Search Manager</description>
+        <name>stop</name>
+    </operation>
+    
+</mbean>

@@ -12,4 +12,8 @@ package org.janelia.it.jacs.compute.mbean;
  */
 interface GeometricIndexMBean {
     
+    public void start();
+    
+    public void stop();
+    
 }
