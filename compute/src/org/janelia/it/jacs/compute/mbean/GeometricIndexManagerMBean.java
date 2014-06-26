@@ -10,7 +10,7 @@ package org.janelia.it.jacs.compute.mbean;
  *
  * @author murphys
  */
-interface GeometricIndexMBean {
+interface GeometricIndexManagerMBean {
     
     public void start();
     

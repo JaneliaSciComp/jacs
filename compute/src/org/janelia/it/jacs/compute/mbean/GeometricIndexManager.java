@@ -12,9 +12,9 @@ import org.apache.log4j.Logger;
  *
  * @author murphys
  */
-public class GeometricIndex implements GeometricIndexMBean {
+public class GeometricIndexManager implements GeometricIndexManagerMBean {
     
-    private static final Logger logger = Logger.getLogger(GeometricIndex.class);
+    private static final Logger logger = Logger.getLogger(GeometricIndexManager.class);
 
 
     @Override

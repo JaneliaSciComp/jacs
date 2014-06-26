@@ -5,10 +5,10 @@
 <mbean>
 
     <description>Geometric Search Management Bean</description>
-    <class>org.janelia.it.jacs.compute.mbean.GeometricSearch</class>
+    <class>org.janelia.it.jacs.compute.mbean.GeometricSearchManager</class>
     <constructor>
         <description>The default constructor</description>
-        <name>GeometricSearch</name>
+        <name>GeometricSearchManager</name>
     </constructor>
     
     <operation>
