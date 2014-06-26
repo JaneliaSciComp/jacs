@@ -6,10 +6,12 @@
 
 package org.janelia.it.jacs.compute.launcher.pipelines;
 
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
+import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.ejb3.StrictMaxPool;
+
+import javax.ejb.ActivationConfigProperty;
+import javax.ejb.MessageDriven;
 
 /**
  *
@@ -26,6 +28,6 @@ import org.jboss.ejb3.StrictMaxPool;
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 @PoolClass(value = StrictMaxPool.class, maxSize = 50, timeout = 10000)
-public class EntityScannerLauncherMDB {
+public class EntityScannerLauncherMDB extends SeriesLauncherMDB {
     
 }
