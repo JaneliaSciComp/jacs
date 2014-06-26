@@ -92,10 +92,11 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     }
 
     @Override
-    public void runCompartmentLoading(String user, String maskChanPath, String topLevelFolderName, String opticalResolution, String pixelResolution) {
+    public void runCompartmentLoading(String user, String alignmentSpaceName, String maskChanPath, String topLevelFolderName, String opticalResolution, String pixelResolution) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("mask chan file path", maskChanPath, null));
+            taskParameters.add(new TaskParameter("alignment space name", alignmentSpaceName, null ));
             taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
             taskParameters.add(new TaskParameter("optical resolution", opticalResolution, null));
             taskParameters.add(new TaskParameter("pixel resolution", pixelResolution, null));
@@ -628,68 +629,144 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         try {
             EntityBeanLocal e = EJBFactory.getLocalEntityBean();
             AnnotationBeanLocal a = EJBFactory.getLocalAnnotationBean();
-
-            long start = System.currentTimeMillis();
-            int commonRootCount = a.getCommonRootEntities("group:leetlab").size();
-            logger.info("getCommonRootEntities('group:leetlab') took "+(System.currentTimeMillis()-start)+" ms and returned "+commonRootCount);
-            
-            start = System.currentTimeMillis();
-            e.grantPermissions("group:leetlab", 1759767174932594786L, "user:rokickik", "r", true);
-            logger.info("grantPermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
-            
-            start = System.currentTimeMillis();
-            e.revokePermissions("group:leetlab", 1759767174932594786L, "user:rokickik", true);
-            logger.info("revokePermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
-
-            start = System.currentTimeMillis();
-            int num = countTree(1803555221738094690L); // Count the number of items in the "Pan Lineage 40x" tree
-            logger.info("countTree('Pan Lineage 40x') took "+(System.currentTimeMillis()-start)+" ms and returned "+num);
-            
-            logger.info("getProjectedResults(Sample->LSM Stack) ...");
-            
-            Long retiredDataId = 1870629090470396002L;
-            String subjectKey = "group:heberleinlab";
-            
-            start = System.currentTimeMillis();
-            Map<Long,Entity> entityMap = new HashMap<Long,Entity>();
-            List<Long> entityIds = new ArrayList<Long>();
-            for(Entity child : e.getChildEntities("group:heberleinlab", retiredDataId)) {
-                entityIds.add(child.getId());
-                entityMap.put(child.getId(), child);
-            }
-            logger.info("1) getting original entity set ("+entityIds.size()+" ids) took "+(System.currentTimeMillis()-start)+" ms");
-            
-            start = System.currentTimeMillis();
-            List<String> upMapping = new ArrayList<String>();
-            List<String> downMapping = new ArrayList<String>();
-            downMapping.add("Supporting Data");
-            downMapping.add("Image Tile");
-            downMapping.add("LSM Stack");
-            List<MappedId> mappings = e.getProjectedResults(subjectKey, entityIds, upMapping, downMapping);
-            logger.info("2) mapping "+entityIds.size()+" ids took "+(System.currentTimeMillis()-start)+" ms");
-
-            start = System.currentTimeMillis();
-            int i = 0;
-            for(MappedId mappedId : mappings) {
-                Entity original = entityMap.get(mappedId.getOriginalId());
-                Entity mapped = e.getEntityById(subjectKey, mappedId.getMappedId());
-                logger.info(original.getName()+" -> "+mapped.getName());
-                i++;
-            }
-            logger.info("3) retrieval "+i+" ids took "+(System.currentTimeMillis()-start)+" ms");
-            
-            start = System.currentTimeMillis();
-            int count = countTree(retiredDataId);
-            logger.info("4) count entity tree returned "+count+" and took "+(System.currentTimeMillis()-start)+" ms");
-            
+//
+//            long start = System.currentTimeMillis();
+//            int commonRootCount = a.getCommonRootEntities("group:leetlab").size();
+//            logger.info("getCommonRootEntities('group:leetlab') took "+(System.currentTimeMillis()-start)+" ms and returned "+commonRootCount);
+//            
+//            start = System.currentTimeMillis();
+//            e.grantPermissions("group:leetlab", 1759767174932594786L, "user:rokickik", "r", true);
+//            logger.info("grantPermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
+//            
+//            start = System.currentTimeMillis();
+//            e.revokePermissions("group:leetlab", 1759767174932594786L, "user:rokickik", true);
+//            logger.info("revokePermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
+//
+//            start = System.currentTimeMillis();
+//            int num = countTree(1803555221738094690L); // Count the number of items in the "Pan Lineage 40x" tree
+//            logger.info("countTree('Pan Lineage 40x') took "+(System.currentTimeMillis()-start)+" ms and returned "+num);
+//            
+//            logger.info("getProjectedResults(Sample->LSM Stack) ...");
+//            
+//            Long retiredDataId = 1870629090470396002L;
+//            String subjectKey = "group:heberleinlab";
+//            
+//            start = System.currentTimeMillis();
+//            Map<Long,Entity> entityMap = new HashMap<Long,Entity>();
+//            List<Long> entityIds = new ArrayList<Long>();
+//            for(Entity child : e.getChildEntities("group:heberleinlab", retiredDataId)) {
+//                entityIds.add(child.getId());
+//                entityMap.put(child.getId(), child);
+//            }
+//            logger.info("1) getting original entity set ("+entityIds.size()+" ids) took "+(System.currentTimeMillis()-start)+" ms");
+//            
+//            start = System.currentTimeMillis();
+//            List<String> upMapping = new ArrayList<String>();
+//            List<String> downMapping = new ArrayList<String>();
+//            downMapping.add("Supporting Data");
+//            downMapping.add("Image Tile");
+//            downMapping.add("LSM Stack");
+//            List<MappedId> mappings = e.getProjectedResults(subjectKey, entityIds, upMapping, downMapping);
+//            logger.info("2) mapping "+entityIds.size()+" ids took "+(System.currentTimeMillis()-start)+" ms");
+//
+//            start = System.currentTimeMillis();
+//            int i = 0;
+//            for(MappedId mappedId : mappings) {
+//                Entity original = entityMap.get(mappedId.getOriginalId());
+//                Entity mapped = e.getEntityById(subjectKey, mappedId.getMappedId());
+//                logger.info(original.getName()+" -> "+mapped.getName());
+//                i++;
+//            }
+//            logger.info("3) retrieval "+i+" ids took "+(System.currentTimeMillis()-start)+" ms");
+//            
+//            start = System.currentTimeMillis();
+//            int count = countTree(retiredDataId);
+//            logger.info("4) count entity tree returned "+count+" and took "+(System.currentTimeMillis()-start)+" ms");
+//            
 //            start = System.currentTimeMillis();
 //            e.deleteEntityTreeById(subjectKey, retiredDataId);
 //            logger.info("5) deletion of entity tree took "+(System.currentTimeMillis()-start)+" ms");
             
-        }
-        catch (Exception ex) {
+        	// 
+
+//
+//            //logger.info("!!!!!!!!! get folder: getEntityById("+1988022805484011618L+")"); // 3 queries 
+//            Entity rootFolder = e.getEntityById(1889491952735354978L);
+//          
+//            //logger.info("!!!!!!!!! load folder chidlren: loadLazyEntity("+1988022805484011618L+")"); // 7 queries
+//            e.loadLazyEntity(rootFolder, false);
+//                        
+//            long start = System.currentTimeMillis();
+//            
+//            for(Entity sample : rootFolder.getOrderedChildren()) {
+//                //logger.info("!!!!!!!!! load sample: loadLazyEntity("+sample.getId()+")"); // 2 queries
+//                e.loadLazyEntity(sample, false);
+//            	
+//            	String qiScore = null;
+//            	
+//            	for(Entity subsample : sample.getChildren()) {
+//            		if (!subsample.getEntityTypeName().equals("Sample")) {
+//            			continue;
+//            		}
+//            		String objective = subsample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+//            		if (objective!=null && objective.equals("20x")) {
+//            			qiScore = getQiScore(e, subsample);
+//            		}
+//            	}
+//            	
+//            	if (qiScore == null) {
+//            		qiScore = getQiScore(e, sample);
+//            	}
+//            	
+//            	logger.info("Sample "+sample.getName()+" = "+qiScore);
+//            }
+//            
+//            logger.info("Getting nascar icons took "+(System.currentTimeMillis()-start)+" ms");
+            
+
+			
+            Long root = 1957959676293283929L;
+
+			long start = System.currentTimeMillis();
+			e.grantPermissions("user:nerna", root, "user:rokickik", "r", true);
+			logger.info("grantPermissions('LC21_samples') took "
+					+ (System.currentTimeMillis() - start) + " ms");
+
+			start = System.currentTimeMillis();
+			e.revokePermissions("user:nerna", root, "user:rokickik", true);
+			logger.info("revokePermissions('LC21_samples') took "
+					+ (System.currentTimeMillis() - start) + " ms");
+
+		} catch (Exception ex) {
             logger.error("Error running runBenchmarks", ex);
         }
+    }
+    
+    private String getQiScore(EntityBeanLocal e, Entity sample) throws Exception {
+
+    	String qiScore = null;
+        //logger.info("!!!!!!!!! load sub sample: loadLazyEntity("+subsample.getId()+")"); // 2 queries
+        e.loadLazyEntity(sample, false);
+    
+		Entity run = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);                       
+		if (run!=null) {
+            //logger.info("!!!!!!!!! load run: loadLazyEntity("+run.getId()+")"); // 2 queries
+            e.loadLazyEntity(run, false);
+			
+            Entity alignment = EntityUtils.findChildWithName(run, "JBA Alignment");
+			if (alignment!=null) {
+				//logger.info("!!!!!!!!! load alignment: loadLazyEntity("+alignment.getId()+")"); // 2 queries
+                e.loadLazyEntity(alignment, false);
+                
+				Entity d3i = alignment.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+				if (d3i!=null) {
+					qiScore = d3i.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+				}
+			}
+			
+		}
+		
+		return qiScore;
     }
     
     private int countTree(Long entityId) throws Exception {
@@ -700,19 +777,5 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             i += countTree(child.getId());
         }
         return i;
-    }
-
-    public void cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName, Long parentEntityId, Boolean clonePermissions) {
-    	try {
-	        EntityBeanLocal e = EJBFactory.getLocalEntityBean();
-	        Entity clonedRoot = e.cloneEntityTree(sourceRootId, targetSubjectKey, targetRootName, clonePermissions);
-	        if (parentEntityId!=null) {
-	        	Entity parent = e.getEntityById(parentEntityId);
-	        	e.addEntityToParent(parent, clonedRoot, parent.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-	        }
-    	}
-    	catch (Exception ex) {
-            logger.error("Error running cloneEntityTree", ex);
-    	}
     }
 }
