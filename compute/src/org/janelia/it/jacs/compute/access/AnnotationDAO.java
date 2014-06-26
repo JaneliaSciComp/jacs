@@ -1632,7 +1632,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 sql.append("inner join entity e on ced.parent_entity_id=e.id ");
                 sql.append("inner join entityData ed on ed.child_entity_id=e.id  ");
                 sql.append("and ed.parent_entity_id=? ");
-
+                
                 stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                 stmt.setFetchSize(Integer.MIN_VALUE);
                 
@@ -1654,6 +1654,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     Date creationDate = rs.getTimestamp(7);
                     Date updatedDate = rs.getTimestamp(8);
                     Integer orderIndex = rs.getInt(9);
+                    if (rs.wasNull()) orderIndex = null; // Work-around for getInt returning a primitive instead of an Integer like it really should.                    
                     
                     Entity parentEntity = parentEntityId==null?null:new Entity(parentEntityId);
                     Entity childEntity = childEntityId==null?null:new Entity(childEntityId);
