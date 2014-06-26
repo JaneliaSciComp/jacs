@@ -22,11 +22,10 @@ public class EntityValidatable implements Validatable {
     private String name;
     private boolean valid;
     private String validityReason;
-    private EntityFinder finder;
 
     /**
      * Given the parent entity, look for a child that matches the prototype validatable.  Fill that contract,
-     * or indicate it could not be filed in the validity getters.
+     * or indicate it could not be filled in the validity getters.
      *
      * @param prototypeValidatable the child found must conform to this.
      * @param parentEntity the child will be among this one's children.
@@ -68,7 +67,7 @@ public class EntityValidatable implements Validatable {
 
     @Override
     public String getValidityReason() {
-        return validityReason.toString().trim();
+        return validityReason.trim();
     }
 
     private void validate( EntityFinder finder, int maxSubEntities ) throws FinderException {
@@ -99,5 +98,6 @@ public class EntityValidatable implements Validatable {
         this.id = id.toString();
         this.name = id.toString();
 
+        validityReason = validationReasonBuilder.toString();
     }
 }
