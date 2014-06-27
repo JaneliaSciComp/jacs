@@ -21,13 +21,22 @@ public class PrototypeValidatable {
      * @return one just like this.
      */
     @Override
-    public Object clone() {
+    public PrototypeValidatable clone() {
+        PrototypeValidatable v = shallowClone();
+        v.setChildren(children);
+        return v;
+    }
+
+    /**
+     * Maintenance chore: make sure this gets updated with all required state if any changes are made.
+     * @return one just like this.
+     */
+    public PrototypeValidatable shallowClone() {
         PrototypeValidatable v = new PrototypeValidatable();
         v.setValidationType(validationType);
         v.setValidationTypeCategory(validationTypeCategory);
         v.setParent(parent);
         v.setMaxCount(maxCount);
-        v.setChildren(children);
         return v;
     }
 

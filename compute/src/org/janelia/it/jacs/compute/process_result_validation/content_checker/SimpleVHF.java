@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This factory implementation uses simple, hardcoded hierarchy creation.
+ * This factory implementation uses simple, hardcoded creation.
  * Created by fosterl on 6/24/14.
  */
 public class SimpleVHF implements ValidatableCollectionFactory {
-// TODO: change this to a map, with entity type-vs-validatable.
+    private int id;
     private Map<String,PrototypeValidatable> prototypeValidatables;
 
     @Override
@@ -27,17 +27,9 @@ public class SimpleVHF implements ValidatableCollectionFactory {
         sampleValidatable.setValidationType(ValidationType.Entity);
         sampleValidatable.setValidationTypeCategory(EntityConstants.TYPE_SAMPLE);
 
-        int id = 1;
+        id = 1;
 
-        // Major sub tree: supporting data....
-        PrototypeValidatable supportingData =
-                new Builder()
-                        .valType(ValidationType.Entity)
-                        .maxCount(1)
-                        .category(EntityConstants.TYPE_SUPPORTING_DATA)
-                .build();
-        prototypeValidatables.put( supportingData.getValidationTypeCategory(), supportingData );
-
+        PrototypeValidatable neuronCollectionValidation = establishNeuronCollectionValidation();
 
         // Major sub tree: pipeline run....
         PrototypeValidatable pipelineRun =
@@ -45,43 +37,96 @@ public class SimpleVHF implements ValidatableCollectionFactory {
                         .valType(ValidationType.Entity)
                         .category(EntityConstants.TYPE_PIPELINE_RUN)
                 .build();
-        prototypeValidatables.put( supportingData.getValidationTypeCategory(), pipelineRun );
+        pipelineRun.addChild( new PrototypeValidatable.Relationship(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION, id++), neuronCollectionValidation.shallowClone() );
 
-
-// TODO: break the tree links.  Only parent/child relationship supported.  All else handled through recursively
-// Looking up stuff.
-        // Pipeline's sample proc....
-        PrototypeValidatable sampleProcResult =
+        //...runs have files under them.
+        PrototypeValidatable v3dpbd =
                 new Builder()
-                        .valType(ValidationType.Entity)
-                        .category(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+                        .valType(ValidationType.File)
+                        .category("v3dpbd")
+                        .maxCount(1)
                 .build();
-        pipelineRun.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), sampleProcResult);
-
-        // Sample proc's neuron sep...
-        PrototypeValidatable spNeuronSep =
+        PrototypeValidatable png =
                 new Builder()
-                        .valType(ValidationType.Entity)
-                        .category(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)
+                        .valType(ValidationType.File)
+                        .category("png")
+                        .maxCount(1)
                 .build();
-        sampleProcResult.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), spNeuronSep);
+
+        pipelineRun.addChild( new PrototypeValidatable.Relationship( EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE, id++), v3dpbd );
+        pipelineRun.addChild( new PrototypeValidatable.Relationship( EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, id++), png );
+        pipelineRun.addChild( new PrototypeValidatable.Relationship( EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, id++), png );
+        pipelineRun.addChild( new PrototypeValidatable.Relationship( EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, id++), png );
+
+        prototypeValidatables.put( pipelineRun.getValidationTypeCategory(), pipelineRun );
+
+    }
+
+//        // Pipeline's sample proc....
+//        PrototypeValidatable sampleProcResult =
+//                new Builder()
+//                        .valType(ValidationType.Entity)
+//                        .category(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+//                .build();
+//        pipelineRun.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), sampleProcResult);
+//
+//        // Sample proc's neuron sep...
+//        PrototypeValidatable spNeuronSep =
+//                new Builder()
+//                        .valType(ValidationType.Entity)
+//                        .category(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)
+//                .build();
+//        sampleProcResult.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), spNeuronSep);
+//
+//
+//        // Neuron sep's supporting data...
+//        PrototypeValidatable snNsSupportingData =
+//                new Builder()
+//                        .valType(ValidationType.Entity)
+//                        .category(EntityConstants.TYPE_SUPPORTING_DATA)
+//                .build();
+//        spNeuronSep.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), snNsSupportingData);
+//
+//
+//
+//        // Pipeline run's alignment result.
+//        PrototypeValidatable alignmentResult =
+//                new Builder()
+//                        .valType(ValidationType.Entity)
+//                        .category(EntityConstants.TYPE_ALIGNMENT_RESULT)
+//                .build();
+//        pipelineRun.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), alignmentResult);
+
+//        // Major sub tree: supporting data....
+//        PrototypeValidatable supportingData =
+//                new Builder()
+//                        .valType(ValidationType.Entity)
+//                        .maxCount(1)
+//                        .category(EntityConstants.TYPE_SUPPORTING_DATA)
+//                .build();
+//        prototypeValidatables.put( supportingData.getValidationTypeCategory(), supportingData );
+
+//Q: Will all Image File entities have the same stuff under them?
+    // For the default 3d image, signal mip, default 2d image and ref mip, there will also be entities bearing
+    // more files.
+    //               LATER.
+//        PrototypeValidatable default3dImage =
+//                new Builder()
+//                        .valType(ValidationType.Entity)
+//                        .category(EntityConstants.TYPE_IMAGE_3D)
+//                        .maxCount(1)
+//                        .build();
 
 
-        // Neuron sep's supporting data...
-        PrototypeValidatable snNsSupportingData =
-                new Builder()
-                        .valType(ValidationType.Entity)
-                        .category(EntityConstants.TYPE_SUPPORTING_DATA)
-                .build();
-        spNeuronSep.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), snNsSupportingData);
 
+
+    private PrototypeValidatable establishNeuronCollectionValidation() {
         // Neuron sep's Frag Collec(tion)
         PrototypeValidatable snNsFragCollec =
                 new Builder()
                         .valType(ValidationType.Entity)
                         .category(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION)
                 .build();
-        spNeuronSep.addChild(new PrototypeValidatable.Relationship("Neuron Fragments", id++), snNsFragCollec);
 
         // ...frags IN the Neuron Sep's NF collec.
         PrototypeValidatable snNsFragInCollec =
@@ -89,7 +134,6 @@ public class SimpleVHF implements ValidatableCollectionFactory {
                         .valType(ValidationType.Entity)
                         .category(EntityConstants.TYPE_NEURON_FRAGMENT)
                 .build();
-        snNsFragCollec.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), snNsFragInCollec);
 
 
         // Each fragment will have certain files in it.
@@ -109,7 +153,6 @@ public class SimpleVHF implements ValidatableCollectionFactory {
         snNsFragMask.addChild(new PrototypeValidatable.Relationship(EntityConstants.ATTRIBUTE_FILE_PATH, id++), filePathPV);
 
 
-
         PrototypeValidatable snNsFragChan =
                 new Builder()
                         .valType(ValidationType.Entity)
@@ -124,7 +167,6 @@ public class SimpleVHF implements ValidatableCollectionFactory {
         snNsFragChan.addChild(new PrototypeValidatable.Relationship(EntityConstants.ATTRIBUTE_FILE_PATH, id++), filePathPV);
 
 
-
         PrototypeValidatable snsFrag2D =
                 new Builder()
                         .valType(ValidationType.Entity)
@@ -137,16 +179,10 @@ public class SimpleVHF implements ValidatableCollectionFactory {
                 .build();
         snsFrag2D.addChild(new PrototypeValidatable.Relationship(EntityConstants.ATTRIBUTE_FILE_PATH, id++), filePathPV);
 
-
-
-        // Pipeline run's alignment result.
-        PrototypeValidatable alignmentResult =
-                new Builder()
-                        .valType(ValidationType.Entity)
-                        .category(EntityConstants.TYPE_ALIGNMENT_RESULT)
-                .build();
-        pipelineRun.addChild(PrototypeValidatable.Relationship.createNonNamedRelationship(id++), alignmentResult);
-
+        // Ensure these types are registered for validation.
+        prototypeValidatables.put( EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION, snNsFragCollec );
+        prototypeValidatables.put( EntityConstants.TYPE_NEURON_FRAGMENT, snNsFragInCollec );
+        return snNsFragCollec;
     }
 
     class Builder {

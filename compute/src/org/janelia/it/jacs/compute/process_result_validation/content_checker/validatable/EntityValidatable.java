@@ -32,12 +32,12 @@ public class EntityValidatable implements Validatable {
      * @param sampleId this is for reporting.
      * @param maxSubEntities can be set to the UNLIMITED_INSTANCES if this is not needed. Typical value is 1.
      */
-    public EntityValidatable( PrototypeValidatable prototypeValidatable, Entity parentEntity, Long sampleId, int maxSubEntities, EntityFinder finder ) throws FinderException {
+    public EntityValidatable( PrototypeValidatable prototypeValidatable, Entity parentEntity, Long sampleId, EntityFinder finder ) throws FinderException {
         this.prototypeValidatable = prototypeValidatable;
         this.parentEntity = parentEntity;
         this.sampleId = sampleId;
 
-        validate( finder, maxSubEntities );
+        validate( finder, prototypeValidatable.getMaxCount() );
     }
 
     @Override
