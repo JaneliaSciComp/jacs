@@ -19,6 +19,16 @@
            <name>user</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Optional Dataset Name</description>
+            <name>dataset</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Optional Sample ID</description>
+            <name>sample</name>
+            <type>java.lang.String</type>
+        </parameter>
     </operation>
 
 </mbean>

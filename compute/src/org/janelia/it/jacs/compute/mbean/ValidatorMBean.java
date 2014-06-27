@@ -5,5 +5,5 @@ package org.janelia.it.jacs.compute.mbean;
  * Created by fosterl on 6/17/14.
  */
 public interface ValidatorMBean {
-    void runValidations(String user);
+    void runValidations(String user, String dataset, String sample);
 }

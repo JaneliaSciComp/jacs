@@ -1,17 +1,14 @@
 package org.janelia.it.jacs.compute.service.validation;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.process_result_validation.content_checker.PrototypeValidatable;
-import org.janelia.it.jacs.compute.process_result_validation.content_checker.SimpleVHF;
+import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * Validation proceeds from here.
@@ -22,20 +19,29 @@ import java.util.Map;
 public class ValidationService extends AbstractEntityService {
     private Logger logger = Logger.getLogger(ValidationService.class);
 
-    private FileDiscoveryHelper fileHelper;
+    //private FileDiscoveryHelper fileHelper;
     private SampleHelper sampleHelper;
+    private ValidationEngine validationEngine;
+
+    private Long sampleId;
+
+    public ValidationService() {
+        sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        validationEngine = new ValidationEngine();
+    }
 
     @Override
     protected void execute() throws Exception {
         String dataSetName = (String) processData.getItem("DATA_SET_NAME");
-        Long sampleId = (Long)processData.getItem("SAMPLE_ID");
+        String sampleEntityIdStr = (String) processData.getItem("SAMPLE_ENTITY_ID");
+        if ( sampleEntityIdStr != null ) {
+            sampleId = Long.parseLong(sampleEntityIdStr);
+        }
         logger.info("Running validation, ownerKey=" + ownerKey +
                 ", dataSetName=" + dataSetName + ", sampleId=" + sampleId);
 
-        this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
+        //this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-
-        Map<String,PrototypeValidatable> validationMap = new SimpleVHF().getValidatables();
 
         if ( sampleId == null ) {
             Collection<Entity> dataSets = new ArrayList<>();
@@ -51,22 +57,21 @@ public class ValidationService extends AbstractEntityService {
                 // Look for all the datasets' samples.
                 Collection<Entity> sampleChildEntities = entityBean.getChildEntities(dataSetEntity.getId());
                 for ( Entity sampleChild: sampleChildEntities ) {
-                    traverse(sampleChild.getId(), validationMap);
+                    traverse(sampleChild.getId());
                 }
             }
         }
         else {
-            traverse(sampleId, validationMap);
+            traverse(sampleId);
         }
     }
 
     /** Recursive descent of entity by ID. */
-    private void traverse( Long parentId, Map<String,PrototypeValidatable> validationMap ) throws Exception {
+    private void traverse( Long parentId ) throws Exception {
         Collection<Entity> children = entityBean.getChildEntities( parentId );
         for ( Entity child: children ) {
-            PrototypeValidatable pv = validationMap.get( child.getEntityTypeName() );
-            if ( pv != null ) {
-            }
+            validationEngine.validateByType( child, sampleId );
+            traverse(child.getId());
         }
     }
 }

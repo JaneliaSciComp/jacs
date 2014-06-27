@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.process_result_validation.content_checker;
+package org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker;
 
 import java.util.Map;
 

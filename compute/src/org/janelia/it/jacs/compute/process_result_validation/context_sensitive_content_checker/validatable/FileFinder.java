@@ -1,6 +1,6 @@
-package org.janelia.it.jacs.compute.process_result_validation.content_checker.validatable;
+package org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.validatable;
 
-import org.janelia.it.jacs.compute.process_result_validation.content_checker.FinderException;
+import org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.FinderException;
 
 import java.io.File;
 

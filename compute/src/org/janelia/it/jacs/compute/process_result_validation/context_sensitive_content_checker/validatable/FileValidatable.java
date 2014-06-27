@@ -1,11 +1,10 @@
-package org.janelia.it.jacs.compute.process_result_validation.content_checker.validatable;
+package org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.validatable;
 
-import org.janelia.it.jacs.compute.process_result_validation.content_checker.FinderException;
-import org.janelia.it.jacs.compute.process_result_validation.content_checker.PrototypeValidatable;
-import org.janelia.it.jacs.compute.process_result_validation.content_checker.Validatable;
+import org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.FinderException;
+import org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.PrototypeValidatable;
+import org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.Validatable;
 
 import java.io.File;
-import java.io.FileFilter;
 
 /**
  * Created by fosterl on 6/18/14.

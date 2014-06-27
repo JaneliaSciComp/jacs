@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.process_result_validation.content_checker;
+package org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker;
 
 /**
  * Implement this with something that can be validated by the checker.

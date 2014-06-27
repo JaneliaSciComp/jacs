@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.process_result_validation.content_checker.validatable;
+package org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.validatable;
 
 /**
  * Created by fosterl on 6/18/14.

@@ -1,8 +1,8 @@
-package org.janelia.it.jacs.compute.process_result_validation.content_checker.finder;
+package org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.finder;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.process_result_validation.content_checker.validatable.EntityFinder;
+import org.janelia.it.jacs.compute.process_result_validation.context_sensitive_content_checker.validatable.EntityFinder;
 import org.janelia.it.jacs.model.entity.Entity;
 
 import java.util.ArrayList;
