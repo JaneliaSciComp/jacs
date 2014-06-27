@@ -902,4 +902,13 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
 	}
 	
+	public Entity cloneEntityTree(Long sourceRootId, String targetSubjectKey, String targetRootName, boolean clonePermissions) throws ComputeException {
+        try {
+            return _annotationDAO.cloneEntityTree(sourceRootId, targetSubjectKey, targetRootName, clonePermissions);
+        }
+        catch (DaoException e) {
+            _logger.error("Error cloning entity tree "+sourceRootId, e);
+            throw new ComputeException("Error cloning entity tree "+sourceRootId,e);
+        }
+	}
 }

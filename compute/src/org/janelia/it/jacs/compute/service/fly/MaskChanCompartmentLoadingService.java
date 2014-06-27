@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.service.fly;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -223,40 +224,43 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
     }
 
     protected Entity createOrVerifyRootEntity(String topLevelFolderName, String ownerKey, Date createDate, boolean createIfNecessary, boolean loadTree) throws Exception {
-        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
-        Entity topLevelFolder = null;
-        if (topLevelFolders != null) {
-            // Only accept the current user's top level folder
-            for (Entity entity : topLevelFolders) {
-                if (entity.getOwnerKey().equals(ownerKey)
-                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
-                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
-                    // This is the folder we want, now load the entire folder hierarchy
-                    if (loadTree) {
-                        topLevelFolder = entityBean.getEntityTree(entity.getId());
-                    } else {
-                        topLevelFolder = entity;
-                    }
-                    logger.info("Found existing topLevelFolder common root, compartmentShortName=" + topLevelFolder.getName());
-                    break;
-                }
-            }
-        }
+        EntityHelper entityHelper = new EntityHelper( entityBean, computeBean, ownerKey, logger );
+        Entity topLevelFolder = entityHelper.createOrVerifyRootEntity(topLevelFolderName, createIfNecessary, loadTree );
 
-        if (topLevelFolder == null && createIfNecessary) {
-            logger.info("Creating new topLevelFolder with compartmentShortName=" + topLevelFolderName);
-            topLevelFolder = new Entity();
-            topLevelFolder.setOwnerKey( ownerKey );
-            topLevelFolder.setCreationDate(createDate);
-            topLevelFolder.setUpdatedDate(createDate);
-            topLevelFolder.setOwnerKey(ownerKey);
-            topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
-            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
-            logger.info("Saved top level folder as " + topLevelFolder.getId());
-        }
-        logger.info("At top-level-folder time, owner key is " + ownerKey);
+//        Set<Entity> topLevelFolders = entityBean.getEntitiesByName(topLevelFolderName);
+//        Entity topLevelFolder = null;
+//        if (topLevelFolders != null) {
+//            // Only accept the current user's top level folder
+//            for (Entity entity : topLevelFolders) {
+//                if (entity.getOwnerKey().equals(ownerKey)
+//                        && entity.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)
+//                        && entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT) != null) {
+//                    // This is the folder we want, now load the entire folder hierarchy
+//                    if (loadTree) {
+//                        topLevelFolder = entityBean.getEntityTree(entity.getId());
+//                    } else {
+//                        topLevelFolder = entity;
+//                    }
+//                    logger.info("Found existing topLevelFolder common root, compartmentShortName=" + topLevelFolder.getName());
+//                    break;
+//                }
+//            }
+//        }
+//
+//        if (topLevelFolder == null && createIfNecessary) {
+//            logger.info("Creating new topLevelFolder with compartmentShortName=" + topLevelFolderName);
+//            topLevelFolder = new Entity();
+//            topLevelFolder.setOwnerKey( ownerKey );
+//            topLevelFolder.setCreationDate(createDate);
+//            topLevelFolder.setUpdatedDate(createDate);
+//            topLevelFolder.setOwnerKey(ownerKey);
+//            topLevelFolder.setName(topLevelFolderName);
+//            topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
+//            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+//            topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
+//            logger.info("Saved top level folder as " + topLevelFolder.getId());
+//        }
+//        logger.info("At top-level-folder time, owner key is " + ownerKey);
 
         return topLevelFolder;
     }

@@ -19,44 +19,43 @@ public class InitVariablesFromTaskService implements IService {
 
     public void execute(IProcessData processData) throws ServiceException {
         try {
-            Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            Task task = ProcessDataHelper.getTask(processData);
+            final Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            final Task task = ProcessDataHelper.getTask(processData);
+            final ContextLogger contextLogger = new ContextLogger(logger);
+            contextLogger.appendToLogContext(task);
+            final ProcessDataAccessor data = new ProcessDataAccessor(processData, contextLogger);
             
             boolean override = true;
-            String overrideStr = (String)processData.getItem("OVERRIDE");
+            String overrideStr = data.getItemAsString("OVERRIDE");
             if (!StringUtils.isEmpty(overrideStr)) {
-                override = Boolean.parseBoolean(overrideStr);   
-                logger.debug("Will "+(override?"":"not ")+"override existing variables");
+                override = Boolean.parseBoolean(overrideStr);
             }
-            
-        	int num = 1;
-        	while (true) {
-        		String taskParamName = (String)processData.getItem("TASK_PARAMETER_"+num);	
-        		if (taskParamName == null || num>100) break;
-        		String processVarName = (String)processData.getItem("PROCESS_VARIABLE_"+num);	
-        		String value = task.getParameter(taskParamName);
-        		if (value != null) {
-        			// We specifically avoid overriding existing values in ProcessData, because if the process file
-        			// is being <include>'d, then the task may not contain the parameter which is already in 
-        			// ProcessData.        		    
-        		    if (override || processData.getItem(processVarName)==null) {
+            contextLogger.debug("Will " + (override ? "" : "not ") + "override existing variables");
+
+            for (int i = 1; i < 100; i++) {
+                String taskParamName = (String) processData.getItem("TASK_PARAMETER_" + i);
+                if (taskParamName == null) {
+                    break;
+                }
+                String processVarName = (String) processData.getItem("PROCESS_VARIABLE_" + i);
+                String value = task.getParameter(taskParamName);
+                if (value != null) {
+                    // We specifically avoid overriding existing values in ProcessData, because if the process file
+                    // is being <include>'d, then the task may not contain the parameter which is already in
+                    // ProcessData.
+                    if (override || processData.getItem(processVarName)==null) {
                         if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
-                            Object booleanValue = Boolean.valueOf(value);    
-                            logger.info("Putting boolean value '"+booleanValue+"' in "+processVarName);
-                            processData.putItem(processVarName, booleanValue);
+                            data.putItem(processVarName, Boolean.valueOf(value));
+                        } else {
+                            data.putItem(processVarName, value);
                         }
-                        else {
-                            logger.info("Putting value '"+value+"' in "+processVarName);
-                            processData.putItem(processVarName, value);
-                        }
-        		    }
-        		    
-            	}
-                num++;
-        	}
-        	processData.putItem("TASK_OWNER", task.getOwner());
-        } 
-        catch (Exception e) {
+                    }
+
+                }
+            }
+
+            data.putItem("TASK_OWNER", task.getOwner());
+        } catch (Exception e) {
             throw new ServiceException(e);
         }
     }
