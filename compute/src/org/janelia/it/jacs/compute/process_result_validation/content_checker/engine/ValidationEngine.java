@@ -5,7 +5,6 @@ import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator.*;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.omg.CORBA._ValueDefStub;
 
 import java.util.HashMap;
 import java.util.Map;
