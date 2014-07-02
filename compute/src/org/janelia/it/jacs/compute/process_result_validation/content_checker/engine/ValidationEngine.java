@@ -30,21 +30,25 @@ public class ValidationEngine {
             try {
                 validator.validate( entity, sampleId );
             } catch ( Exception ex ) {
-                validationLogger.reportError("Exception while trying to validate: " + entity.getName() + "/" + entity.getId() + " under sample " + sampleId + "::" + ex.getMessage());
+                validationLogger.reportError(entity.getId(), sampleId, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, "Exception: " + ex.getMessage());
             }
         }
     }
 
     private void createValidatorMap() {
+        SubEntityValidator subEntityValidator = new SubEntityValidator( validationLogger );
         validationLogger = new ValidationLogger( logger );
         validatorMap = new HashMap<>();
-        validatorMap.put( EntityConstants.TYPE_SAMPLE, new SampleValidator(validationLogger) );
+        validatorMap.put( EntityConstants.TYPE_SAMPLE, new SampleValidator(validationLogger, subEntityValidator ) );
         validatorMap.put( EntityConstants.TYPE_NEURON_FRAGMENT, new NeuronFragmentValidator( validationLogger ) );
         validatorMap.put( EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, new NeuronSeparatorPipelineResultValidator(validationLogger));
 
         validatorMap.put( EntityConstants.TYPE_IMAGE_2D, new SimpleFilePathValidator(validationLogger, EntityConstants.TYPE_IMAGE_2D, 1000L) );
         validatorMap.put( EntityConstants.TYPE_MOVIE, new SimpleFilePathValidator(validationLogger, EntityConstants.TYPE_MOVIE, 1000L) );
         validatorMap.put( EntityConstants.TYPE_IMAGE_3D, new SimpleFilePathValidator(validationLogger, EntityConstants.TYPE_IMAGE_2D, 1000L) );
+
+        validatorMap.put( EntityConstants.TYPE_IMAGE_TILE, new ImageTileValidator(validationLogger, subEntityValidator) );
+        validatorMap.put( EntityConstants.TYPE_LSM_STACK, new LsmValidator(validationLogger ) );
     }
 
 }

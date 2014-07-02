@@ -14,6 +14,7 @@ import java.util.Set;
  */
 public class SampleValidator implements TypeValidator {
     private ValidationLogger validationLogger;
+    private SubEntityValidator subEntityValidator;
     private static String[] requiredChildEntityTypes;
     static {
         requiredChildEntityTypes = new String[] {
@@ -24,31 +25,14 @@ public class SampleValidator implements TypeValidator {
         };
     }
 
-    public SampleValidator( ValidationLogger logger ) {
+    public SampleValidator( ValidationLogger logger, SubEntityValidator subEntityValidator ) {
         this.validationLogger = logger;
+        this.subEntityValidator = subEntityValidator;
     }
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
-        Set<String> entityNamesFound = new HashSet<>();
-        for ( EntityData entityData : entity.getEntityData() ) {
-            entityNamesFound.add( entityData.getEntityAttrName() );
-        }
-
-        for ( String requiredChild: requiredChildEntityTypes ) {
-            if ( ! entityNamesFound.contains( requiredChild ) ) {
-                reportMissingChild( requiredChild, sampleId, entity );
-            }
-        }
-    }
-
-    private void reportMissingChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.reportError(
-            String.format(
-                "Expected child entity for %s, under entity %s/%d, belonging to sample %d not found.",
-                childAttribName, entity.getName(), entity.getId(), sampleId
-            )
-        );
+        subEntityValidator.validateSubEntities( entity, sampleId, requiredChildEntityTypes );
     }
 
 }

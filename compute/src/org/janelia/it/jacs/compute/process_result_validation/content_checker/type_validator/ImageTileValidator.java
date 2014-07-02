@@ -1,0 +1,53 @@
+package org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator;
+
+import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
+
+/**
+ * Check the contents of an Image Tile, to ensure it is good.  Report what is missing.  Typical names for
+ * such entities are "brain", or "cns"
+ *
+ * Created by fosterl on 7/1/14.
+ */
+public class ImageTileValidator implements TypeValidator {
+    private static final String NO_LSM_STACKS = "No LSM stacks";
+    private ValidationLogger validationLogger;
+    private static String[] requiredChildEntityTypes;
+    private SubEntityValidator subEntityValidator;
+    static {
+        requiredChildEntityTypes = new String[] {
+                EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
+                EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE,
+                EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE,
+        };
+    }
+
+    public ImageTileValidator( ValidationLogger validationLogger, SubEntityValidator subEntityValidator ) {
+        this.validationLogger = validationLogger;
+        this.subEntityValidator = subEntityValidator;
+        this.validationLogger.addCategory( NO_LSM_STACKS );
+    }
+
+    @Override
+    public void validate(Entity entity, Long sampleId) throws Exception {
+        // Check the simple parts: got these files?
+        subEntityValidator.validateSubEntities( entity, sampleId, requiredChildEntityTypes );
+        int lsmCount = 0;
+        // The more unique parts of the val: look for some nondescriptly-named entities.
+        for ( EntityData entityData : entity.getEntityData() ) {
+            // Look at all generic Entity children.
+            if ( entityData.getEntityAttrName().equals( EntityConstants.ATTRIBUTE_ENTITY ) ) {
+                Entity childEntity = entityData.getChildEntity();
+                if ( childEntity.getEntityTypeName().equals( EntityConstants.TYPE_LSM_STACK ) ) {
+                    lsmCount ++;
+                }
+            }
+        }
+
+        if (lsmCount == 0) {
+            validationLogger.reportError( sampleId, entity.getId(), NO_LSM_STACKS, "LSMs missing from " + entity.getName() );
+        }
+    }
+}
