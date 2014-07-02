@@ -20,6 +20,7 @@ public class Sample implements DomainObject {
     private String chanSpec;
     private String dataSet;
     private String effector;
+    private String gender;
     private String line;
     private String slideCode;
     private String status;
@@ -94,7 +95,13 @@ public class Sample implements DomainObject {
     public void setEffector(String effector) {
         this.effector = effector;
     }
-    public String getLine() {
+    public String getGender() {
+		return gender;
+	}
+	public void setGender(String gender) {
+		this.gender = gender;
+	}
+	public String getLine() {
         return line;
     }
     public void setLine(String line) {

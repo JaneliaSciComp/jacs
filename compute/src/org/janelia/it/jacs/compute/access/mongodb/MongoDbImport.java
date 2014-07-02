@@ -24,6 +24,7 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
+import org.janelia.it.jacs.model.domain.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.Annotation;
 import org.janelia.it.jacs.model.domain.FlyLine;
 import org.janelia.it.jacs.model.domain.Folder;
@@ -78,6 +79,7 @@ public class MongoDbImport extends AnnotationDAO {
     
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
 	protected static final int ANNOTATION_BATCH_SIZE = 1000;
+	protected static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
 	
 	protected SubjectDAO subjectDao;
     protected Jongo jongo;
@@ -92,6 +94,8 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection annotationCollection;
     protected MongoCollection ontologyCollection;
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
+
+    private String genderConsensus = null;
     
     public MongoDbImport(String serverUrl, String databaseName) throws UnknownHostException {
         super(logger);
@@ -209,21 +213,20 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Loading workspace for "+subjectKey);
         
-        LinkedList<Entity> rootFolders = new LinkedList<Entity>(getCommonRootEntities(subjectKey));
+        Entity workspaceEntity = getDefaultWorkspace(subjectKey);
+        
+        LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
         Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
         List<Reference> children = loadRootFolders(rootFolders, visited);
         
-        Long id = (Long)TimebasedIdentifierGenerator.generate(1L);
-        
-        Date now = new Date();
         Workspace workspace = new Workspace();
-        workspace.setId(id);
-        workspace.setOwnerKey(subjectKey);
+        workspace.setId(workspaceEntity.getId());
+        workspace.setOwnerKey(workspaceEntity.getOwnerKey());
         workspace.setReaders(getDefaultSubjectKeys(subjectKey));
         workspace.setWriters(getDefaultSubjectKeys(subjectKey));
-        workspace.setCreationDate(now);
-        workspace.setUpdatedDate(now);
-        workspace.setName("Default Workspace");
+        workspace.setCreationDate(workspaceEntity.getCreationDate());
+        workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
+        workspace.setName(workspaceEntity.getName());
         workspace.setChildren(children);
         treeNodeCollection.insert(workspace);
         
@@ -548,6 +551,9 @@ public class MongoDbImport extends AnnotationDAO {
         
         Map<String, ObjectiveSample> objectiveSamples = new HashMap<String, ObjectiveSample>();
         
+        // Reset consensus values
+        this.genderConsensus = null;
+        
         List<Entity> objSampleEntities = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_SAMPLE);
         if (objSampleEntities.isEmpty()) {
             String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
@@ -578,6 +584,9 @@ public class MongoDbImport extends AnnotationDAO {
         else {
             sample.setObjectives(objectiveSamples);    
         }
+        
+        // Set derived consensus values
+        sample.setGender(genderConsensus);
         
         return sample;
     }
@@ -758,7 +767,26 @@ public class MongoDbImport extends AnnotationDAO {
         result.setImageSize(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
         result.setObjective(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
         result.setOpticalResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
-
+        
+        Map<AlignmentScoreType,String> scores = new HashMap<AlignmentScoreType,String>();
+        String qiScores = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORES);
+        if (!StringUtils.isEmpty(qiScores)) {
+        	scores.put(AlignmentScoreType.InconsistencyByRegion,qiScores);
+        }
+        String qiScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+        if (!StringUtils.isEmpty(qiScore)) {
+        	scores.put(AlignmentScoreType.Inconsistency,qiScore);
+        }
+        String qmScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+        if (!StringUtils.isEmpty(qmScore)) {
+        	scores.put(AlignmentScoreType.ModelViolation,qmScore);
+        }
+        String nccScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_NCC_SCORE);
+        if (!StringUtils.isEmpty(qmScore)) {
+        	scores.put(AlignmentScoreType.NormalizedCrossCorrelation,nccScore);
+        }
+        if (!scores.isEmpty()) result.setScores(scores);
+        
         Map<ImageType,String> images = new HashMap<ImageType,String>();
         addImage(images,ImageType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
         addImage(images,ImageType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
@@ -766,7 +794,7 @@ public class MongoDbImport extends AnnotationDAO {
         if (movieEntity!=null) {
             addImage(images,ImageType.AlignVerifyMovie,getRelativeFilename(result,movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
         }
-        result.setImages(images);
+        if (!images.isEmpty()) result.setImages(images);
         
         return result;
     }
@@ -787,6 +815,14 @@ public class MongoDbImport extends AnnotationDAO {
         lsm.setEffector(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR));
         lsm.setLsmFilepath(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         lsm.setGender(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER));
+        
+        if (genderConsensus==null) {
+        	genderConsensus = lsm.getGender();
+        }
+        else if (!genderConsensus.equals(lsm.getGender())) {
+        	genderConsensus = NO_CONSENSUS_VALUE;
+        }
+        
         lsm.setLine(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE));
         lsm.setMountingProtocol(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL));
         lsm.setTissueOrientation(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION));
