@@ -12,6 +12,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasImages {
     private String channelColors;
     private String chanSpec;
     private String objective;
+    private Map<AlignmentScoreType,String> scores;
     private Map<ImageType,String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
@@ -70,6 +71,10 @@ public class SampleAlignmentResult extends PipelineResult implements HasImages {
     public void setImages(Map<ImageType, String> images) {
         this.images = images;
     }
-    
-
+	public Map<AlignmentScoreType, String> getScores() {
+		return scores;
+	}
+	public void setScores(Map<AlignmentScoreType, String> scores) {
+		this.scores = scores;
+	}
 }
