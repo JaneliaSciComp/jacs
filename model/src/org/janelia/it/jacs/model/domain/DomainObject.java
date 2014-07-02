@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.util.Date;
 import java.util.Set;
 
 public interface DomainObject {
@@ -20,4 +21,11 @@ public interface DomainObject {
 
     public abstract void setWriters(Set<String> writers);
 
+    public Date getCreationDate();
+    
+    public void setCreationDate(Date creationDate);
+    
+    public Date getUpdatedDate();
+    
+    public void setUpdatedDate(Date updatedDate);
 }

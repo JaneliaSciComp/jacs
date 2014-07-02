@@ -26,6 +26,7 @@ import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.Annotation;
+import org.janelia.it.jacs.model.domain.DataSet;
 import org.janelia.it.jacs.model.domain.FlyLine;
 import org.janelia.it.jacs.model.domain.Folder;
 import org.janelia.it.jacs.model.domain.HasFilepath;
@@ -42,6 +43,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Sample;
 import org.janelia.it.jacs.model.domain.SampleAlignmentResult;
+import org.janelia.it.jacs.model.domain.SampleImageType;
 import org.janelia.it.jacs.model.domain.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.SampleTile;
@@ -85,6 +87,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected Jongo jongo;
     protected MongoCollection subjectCollection;
     protected MongoCollection treeNodeCollection;
+    protected MongoCollection dataSetCollection;
 	protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
     protected MongoCollection patternMaskCollection;
@@ -108,7 +111,8 @@ public class MongoDbImport extends AnnotationDAO {
     	            .build());
         subjectCollection = jongo.getCollection("subject");
         treeNodeCollection = jongo.getCollection("treeNode");
-    	sampleCollection = jongo.getCollection("sample");
+        dataSetCollection = jongo.getCollection("dataSet");
+        sampleCollection = jongo.getCollection("sample");
         screenSampleCollection = jongo.getCollection("screenSample");
         patternMaskCollection = jongo.getCollection("patternMask");
         flyLineCollection = jongo.getCollection("flyLine");
@@ -133,7 +137,11 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Adding fly lines");
         loadFlyLines();
         
+        log.info("Adding data sets");
+        loadDataSets();
+        
         log.info("Adding samples");
+        // TODO: handle cell counting results
         loadSamples();
 
         log.info("Adding screen data");
@@ -144,6 +152,14 @@ public class MongoDbImport extends AnnotationDAO {
         
         log.info("Adding annotations");
         loadAnnotations();
+        
+        // TODO: add data sets
+        
+        // TODO: add compartment sets
+        
+        // TODO: add alignment board entities
+        
+        // TODO: add large image viewer workspaces and associated entities
         
         log.info("Loading MongoDB took "+(System.currentTimeMillis()-startAll)+" ms");
     }
@@ -458,6 +474,87 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
 
+    /* FLY LINES */
+    
+
+    private void loadDataSets() throws DaoException {
+        long start = System.currentTimeMillis();
+        Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
+        resetSession();
+        loadDataSets(lines);
+        log.info("Loading " + lines.size() + " data sets took " + (System.currentTimeMillis() - start) + " ms");
+    }
+    
+    private void loadDataSets(Deque<Entity> dataSets) {
+
+        for(Iterator<Entity> i = dataSets.iterator(); i.hasNext(); ) {
+            Entity dataSetEntity = i.next();
+            
+            try {
+                long start = System.currentTimeMillis();
+                DataSet dataSet = getDataSetObject(dataSetEntity);
+                if (dataSet!=null) {
+                    dataSetCollection.insert(dataSet);
+                }
+                
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove();
+                resetSession();
+
+                if (dataSet!=null) {
+                    log.info("  Loading "+dataSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+dataSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+            }
+            catch (Throwable e) {
+                log.error("Error loading dataset "+dataSetEntity.getId(),e);
+            }
+        }
+    }
+
+    private DataSet getDataSetObject(Entity dataSetEntity) {
+    	DataSet dataset = new DataSet();
+        dataset.setId(dataSetEntity.getId());
+        dataset.setName(dataSetEntity.getName());
+        dataset.setOwnerKey(dataSetEntity.getOwnerKey());
+        dataset.setReaders(getSubjectKeysWithPermission(dataSetEntity, "r"));
+        dataset.setWriters(getSubjectKeysWithPermission(dataSetEntity, "w"));
+        dataset.setCreationDate(dataSetEntity.getCreationDate());
+        dataset.setUpdatedDate(dataSetEntity.getUpdatedDate());
+        dataset.setIdentifier(dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));
+        
+    	if (dataSetEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)!=null) {
+    		dataset.setSageSync(true);
+    	}
+    	
+        String sampleImageType = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
+        if (sampleImageType!=null) {
+            dataset.setSampleImageType(SampleImageType.valueOf(sampleImageType));
+        }
+        
+        String sampleNamePattern = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_NAME_PATTERN);
+        if (sampleNamePattern!=null) {
+            dataset.setSampleNamePattern(sampleNamePattern);
+        }
+        
+        String pipelineProcess = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+        if (pipelineProcess!=null) {
+        	List<String> processNames = new ArrayList<String>();
+        	for(String processName : pipelineProcess.split(",")) {
+        		if (!StringUtils.isEmpty(processName)) {
+        			processNames.add(processName);
+        		}
+        	}
+        	if (!processNames.isEmpty()) {
+        		dataset.setPipelineProcesses(processNames);
+        	}
+        }
+        
+        return dataset;
+    }
+    
     /* SAMPLES */
     
     private void loadSamples() {
@@ -807,6 +904,8 @@ public class MongoDbImport extends AnnotationDAO {
         lsm.setOwnerKey(lsmEntity.getOwnerKey());
         lsm.setReaders(getSubjectKeysWithPermission(lsmEntity, "r"));
         lsm.setWriters(getSubjectKeysWithPermission(lsmEntity, "w"));
+        lsm.setCreationDate(lsmEntity.getCreationDate());
+        lsm.setUpdatedDate(lsmEntity.getUpdatedDate());
         lsm.setAge(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_AGE));
         lsm.setAnatomicalArea(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
         lsm.setChannelColors(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
@@ -883,6 +982,8 @@ public class MongoDbImport extends AnnotationDAO {
         neuronFragment.setOwnerKey(fragmentEntity.getOwnerKey());
         neuronFragment.setReaders(getSubjectKeysWithPermission(fragmentEntity, "r"));
         neuronFragment.setWriters(getSubjectKeysWithPermission(fragmentEntity, "w"));
+        neuronFragment.setCreationDate(fragmentEntity.getCreationDate());
+        neuronFragment.setUpdatedDate(fragmentEntity.getUpdatedDate());
         String number = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
         if (number!=null) {
             neuronFragment.setNumber(Integer.parseInt(number));
@@ -909,7 +1010,7 @@ public class MongoDbImport extends AnnotationDAO {
         Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
         resetSession();
         loadFlyLines(lines);
-        log.info("Loading " + lines.size() + " samples took " + (System.currentTimeMillis() - start) + " ms");
+        log.info("Loading " + lines.size() + " fly lines took " + (System.currentTimeMillis() - start) + " ms");
     }
     
     private void loadFlyLines(Deque<Entity> flyLines) {
@@ -953,6 +1054,8 @@ public class MongoDbImport extends AnnotationDAO {
         flyline.setOwnerKey(flyLineEntity.getOwnerKey());
         flyline.setReaders(getSubjectKeysWithPermission(flyLineEntity, "r"));
         flyline.setWriters(getSubjectKeysWithPermission(flyLineEntity, "w"));
+        flyline.setCreationDate(flyLineEntity.getCreationDate());
+        flyline.setUpdatedDate(flyLineEntity.getUpdatedDate());
         flyline.setSplitPart(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART));
         
         String robotId = flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID);
@@ -1167,7 +1270,7 @@ public class MongoDbImport extends AnnotationDAO {
             conn = getJdbcConnection();
             
             StringBuilder sql = new StringBuilder();
-            sql.append("select a.id, a.name, a.owner_key, a.creation_date, target.id, target.entity_type, ");
+            sql.append("select a.id, a.name, a.owner_key, a.creation_date, a.updated_date, target.id, target.entity_type, ");
             sql.append("  ked.child_entity_id keyId, ved.child_entity_id valueId ");
             sql.append("from entity a ");
             sql.append("join entityData ted on ted.parent_entity_id=a.id and ted.entity_att=? ");
@@ -1192,9 +1295,10 @@ public class MongoDbImport extends AnnotationDAO {
                 String annotationName = rs.getString(2);
                 String owner = rs.getString(3);
                 Date creationDate = rs.getTimestamp(4);
-                Long targetId = rs.getBigDecimal(5).longValue();
-                String targetType = rs.getString(6);
-                String keyIdStr = rs.getString(7);
+                Date updatedDate = rs.getTimestamp(5);
+                Long targetId = rs.getBigDecimal(6).longValue();
+                String targetType = rs.getString(7);
+                String keyIdStr = rs.getString(8);
                 String valueIdStr = rs.getString(8);
                 
                 Long keyId = null;
@@ -1217,7 +1321,8 @@ public class MongoDbImport extends AnnotationDAO {
                     }
                 }
                 
-                Annotation annotation = getAnnotation(annotationId, annotationName, owner, creationDate, targetId, targetType, keyId, valueId);
+                Annotation annotation = getAnnotation(annotationId, annotationName, owner, 
+                		creationDate, updatedDate, targetId, targetType, keyId, valueId);
                 queue.add(annotation);
                 
                 if (queue.size()>ANNOTATION_BATCH_SIZE) {
@@ -1249,7 +1354,7 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
     
-    private Annotation getAnnotation(Long annotationId, String annotationName, String ownerKey, Date creationDate,
+    private Annotation getAnnotation(Long annotationId, String annotationName, String ownerKey, Date creationDate, Date updatedDate,
             Long targetId, String targetType, Long keyId, Long valueId) {
         
         Annotation annotation = new Annotation();
@@ -1259,6 +1364,7 @@ public class MongoDbImport extends AnnotationDAO {
         annotation.setWriters(getDefaultSubjectKeys(ownerKey));
         annotation.setText(annotationName);
         annotation.setCreationDate(creationDate);
+        annotation.setUpdatedDate(updatedDate);
         
         if (keyId!=null) {
             OntologyTermReference keyTerm = new OntologyTermReference();

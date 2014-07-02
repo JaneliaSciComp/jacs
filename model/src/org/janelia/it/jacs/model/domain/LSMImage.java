@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,6 +14,8 @@ public class LSMImage implements DomainObject, HasImages {
     private String ownerKey;
     private Set<String> readers;
     private Set<String> writers;
+    private Date creationDate;
+    private Date updatedDate;
     private String age;
     private String anatomicalArea;
     private String channelColors;
@@ -63,6 +66,18 @@ public class LSMImage implements DomainObject, HasImages {
     }
     public void setWriters(Set<String> writers) {
         this.writers = writers;
+    }
+    public Date getCreationDate() {
+        return creationDate;
+    }
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+    public Date getUpdatedDate() {
+        return updatedDate;
+    }
+    public void setUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
     }
     public String getAge() {
         return age;

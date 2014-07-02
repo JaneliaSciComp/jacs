@@ -17,6 +17,7 @@ public class Annotation implements DomainObject {
     private Set<String> readers;
     private Set<String> writers;
     private Date creationDate;
+    private Date updatedDate;
     private String targetType;
     @JsonUnwrapped
     private Reference target;
@@ -61,6 +62,12 @@ public class Annotation implements DomainObject {
     }
     public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
+    }
+    public Date getUpdatedDate() {
+        return updatedDate;
+    }
+    public void setUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
     }
     public String getTargetType() {
         return targetType;
