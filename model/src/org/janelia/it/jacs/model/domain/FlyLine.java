@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.util.Date;
 import java.util.Set;
 
 import org.jongo.marshall.jackson.oid.Id;
@@ -12,6 +13,8 @@ public class FlyLine implements DomainObject {
     private String ownerKey;
     private Set<String> readers;
     private Set<String> writers;
+    private Date creationDate;
+    private Date updatedDate;
     private Long representativeId;
     private Long balancedLineId;
     private Long originalLineId;
@@ -49,6 +52,18 @@ public class FlyLine implements DomainObject {
     }
     public void setWriters(Set<String> writers) {
         this.writers = writers;
+    }
+    public Date getCreationDate() {
+        return creationDate;
+    }
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+    public Date getUpdatedDate() {
+        return updatedDate;
+    }
+    public void setUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
     }
     public Long getRepresentativeId() {
         return representativeId;

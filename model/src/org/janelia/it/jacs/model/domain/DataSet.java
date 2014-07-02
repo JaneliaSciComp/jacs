@@ -1,45 +1,40 @@
 package org.janelia.it.jacs.model.domain;
 
 import java.util.Date;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import org.jongo.marshall.jackson.oid.Id;
 
-public class NeuronFragment implements DomainObject, HasImages, HasFilepath {
+public class DataSet implements DomainObject {
 
     @Id
     private Long id;
-    private Long sampleId;
-    private Long separationId;
+    private String name;
     private String ownerKey;
     private Set<String> readers;
     private Set<String> writers;
     private Date creationDate;
     private Date updatedDate;
-    private Integer number;
-    private String filepath;
-    private Map<ImageType,String> images;
+    private String identifier;
+    private String sampleNamePattern;
+    private SampleImageType sampleImageType;
+    private Boolean sageSync;
+    private List<String> pipelineProcesses;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-
+    
     public Long getId() {
         return id;
     }
     public void setId(Long id) {
         this.id = id;
     }
-    public Long getSampleId() {
-        return sampleId;
+    public String getName() {
+        return name;
     }
-    public void setSampleId(Long sampleId) {
-        this.sampleId = sampleId;
-    }
-    public Long getSeparationId() {
-        return separationId;
-    }
-    public void setSeparationId(Long separationId) {
-        this.separationId = separationId;
+    public void setName(String name) {
+        this.name = name;
     }
     public String getOwnerKey() {
         return ownerKey;
@@ -71,23 +66,34 @@ public class NeuronFragment implements DomainObject, HasImages, HasFilepath {
     public void setUpdatedDate(Date updatedDate) {
         this.updatedDate = updatedDate;
     }
-    public Integer getNumber() {
-        return number;
-    }
-    public void setNumber(Integer number) {
-        this.number = number;
-    }
-    public String getFilepath() {
-        return filepath;
-    }
-    public void setFilepath(String filepath) {
-        this.filepath = filepath;
-    }
-    public Map<ImageType, String> getImages() {
-        return images;
-    }
-    public void setImages(Map<ImageType, String> images) {
-        this.images = images;
-    }
-    
+	public String getIdentifier() {
+		return identifier;
+	}
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
+	}
+	public String getSampleNamePattern() {
+		return sampleNamePattern;
+	}
+	public void setSampleNamePattern(String sampleNamePattern) {
+		this.sampleNamePattern = sampleNamePattern;
+	}
+	public SampleImageType getSampleImageType() {
+		return sampleImageType;
+	}
+	public void setSampleImageType(SampleImageType sampleImageType) {
+		this.sampleImageType = sampleImageType;
+	}
+	public Boolean getSageSync() {
+		return sageSync;
+	}
+	public void setSageSync(Boolean sageSync) {
+		this.sageSync = sageSync;
+	}
+	public List<String> getPipelineProcesses() {
+		return pipelineProcesses;
+	}
+	public void setPipelineProcesses(List<String> pipelineProcesses) {
+		this.pipelineProcesses = pipelineProcesses;
+	}
 }
