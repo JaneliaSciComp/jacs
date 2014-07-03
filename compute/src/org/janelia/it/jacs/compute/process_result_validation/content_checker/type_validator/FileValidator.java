@@ -4,7 +4,6 @@ import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,10 +12,6 @@ import java.util.Set;
  * Created by fosterl on 6/27/14.
  */
 public class FileValidator {
-    public static final String MISSING = "Missing ";
-    public static final String EMPTY = "Empty ";
-    public static final String FILE_ERROR = "File Error ";
-    public static final String MIN_SIZE = "Min Size ";
     private final String VAL_MISSING_CHILD = "Expected child entity missing: ";
     private final String VAL_EMPTY_CHILD = "Child entity contents empty: ";   // "Are you my mommy?"
 
@@ -28,9 +23,9 @@ public class FileValidator {
 
     public void validateFileSet( Entity entity, Long sampleId, String[] requiredChildEntityTypes ) throws Exception {
         for ( String type: requiredChildEntityTypes ) {
-            validationLogger.addCategory( MISSING + type );
-            validationLogger.addCategory( EMPTY + type );
-            validationLogger.addCategory( FILE_ERROR + type );
+            validationLogger.addCategory( ValidationLogger.MISSING + type );
+            validationLogger.addCategory( ValidationLogger.EMPTY + type );
+            validationLogger.addCategory( ValidationLogger.FILE_ERROR + type );
         }
         Set<String> entityNamesFound = new HashSet<>();
         for ( EntityData entityData : entity.getEntityData() ) {
@@ -49,7 +44,7 @@ public class FileValidator {
                 else {
                     Long minSize = validationLogger.getMinSize( requiredChild );
                     if ( minSize > 0 ) {
-                        validationLogger.addCategory( MIN_SIZE + requiredChild + " " + minSize );
+                        validationLogger.addCategory( ValidationLogger.MIN_SIZE + requiredChild + " " + minSize );
                     }
                     validateFile( value, requiredChild, sampleId, entity );
                 }
@@ -58,14 +53,14 @@ public class FileValidator {
     }
 
     public void validateFile( String filePath, String fileType, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.addCategory( FILE_ERROR + fileType );
+        validationLogger.addCategory( ValidationLogger.FILE_ERROR + fileType );
         Long minLength = validationLogger.getMinSize( fileType );
         if ( minLength > 0 ) {
-            validationLogger.addCategory( MIN_SIZE + fileType + " " + minLength );
+            validationLogger.addCategory( ValidationLogger.MIN_SIZE + fileType + " " + minLength );
         }
         String prob = TypeValidationHelper.getFileError( filePath, fileType, minLength );
         if ( prob != null ) {
-            validationLogger.reportError( entity.getId(), sampleId, FILE_ERROR + fileType, prob );
+            validationLogger.reportError( entity.getId(), sampleId, entity.getEntityTypeName(), ValidationLogger.FILE_ERROR + fileType, prob);
         }
     }
 
@@ -81,11 +76,11 @@ public class FileValidator {
     }
 
     private void reportMissingChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.reportError( entity.getId(), sampleId, VAL_MISSING_CHILD + childAttribName, MISSING + childAttribName );
+        validationLogger.reportError( entity.getId(), sampleId, entity.getEntityTypeName(), VAL_MISSING_CHILD + childAttribName, ValidationLogger.MISSING + childAttribName);
     }
 
     private void reportEmptyChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.reportError( entity.getId(), sampleId, VAL_EMPTY_CHILD + childAttribName, EMPTY + childAttribName );
+        validationLogger.reportError( entity.getId(), sampleId, entity.getEntityTypeName(), VAL_EMPTY_CHILD + childAttribName, ValidationLogger.EMPTY + childAttribName);
     }
 
 }

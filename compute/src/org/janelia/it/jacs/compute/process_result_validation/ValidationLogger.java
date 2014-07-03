@@ -14,8 +14,12 @@ import java.util.Map;
 public class ValidationLogger {
     // Refer to the header in interpreting the log.
     public static final String GENERAL_CATEGORY_EXCEPTION = "Something which threw an exception";
-    private static final String VAL_LOG_HEADER = "Entity\tSample\tError\tCategory";
-    private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s";
+    public static final String MISSING = "Missing ";
+    public static final String EMPTY = "Empty ";
+    public static final String FILE_ERROR = "File Error ";
+    public static final String MIN_SIZE = "Min Size ";
+    private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tError\tCategory";
+    private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s\t%s";
     private Logger internalLogger;
     private Set<String> categories;
     private Map<String,Long> filePatternToMinSize;
@@ -67,15 +71,16 @@ public class ValidationLogger {
      * Absence of evidence is not evidence of absence.
      *
      * @param sampleId the sample tree containnig the entity being checked.
+     * @param owningEntityType what kind of entity is being checked.
      * @param entityId the GUID of the entity with failure.
      * @param testCategory what kind of test.
      * @param message description of failure.
      */
-    public void reportError( Long sampleId, Long entityId, String testCategory, String message ) {
+    public void reportError( Long sampleId, Long entityId, String owningEntityType, String testCategory, String message ) {
         if ( ! categories.contains( testCategory ) ) {
             throw new UnknownCategoryException( testCategory, sampleId, entityId, message );
         }
-        String errorMesage = String.format( VAL_LOG_FMT, entityId, sampleId, message, testCategory );
+        String errorMesage = String.format( VAL_LOG_FMT, sampleId, entityId, owningEntityType, message, testCategory );
         internalLogger.error( errorMesage );
     }
 

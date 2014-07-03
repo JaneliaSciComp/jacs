@@ -43,7 +43,9 @@ public class SubEntityValidator {
                 "Expected child entity for %s, under entity %s/%d, belonging to sample %d not found.",
                 childAttribName, entity.getName(), entity.getId(), sampleId
         );
-        validationLogger.reportError( sampleId, entity.getId(), MISSING_SUBENTITY + childAttribName, message );
+        validationLogger.reportError(
+                sampleId, entity.getId(), entity.getEntityTypeName(), MISSING_SUBENTITY + childAttribName, message
+        );
     }
 
 }

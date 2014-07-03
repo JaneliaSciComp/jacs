@@ -23,9 +23,8 @@ public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
     public void validate(Entity entity, Long sampleId) throws Exception {
         Entity fragments = entity.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
         if ( fragments == null ) {
-            validationLogger.reportError( sampleId, entity.getId(), NO_FRAGMENTS,
-                    "No fragments found for " + EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION + ": " + entity.getName() + "/" + entity.getId() + "."
-            );
+            validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), NO_FRAGMENTS,
+                    "No fragments found for " + EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION + ": " + entity.getName() + "/" + entity.getId() + ".");
         }
     }
 }

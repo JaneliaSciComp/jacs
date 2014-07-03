@@ -41,7 +41,7 @@ public class ValidationEngine {
                 validator.validate( entity, sampleId );
             } catch ( Exception ex ) {
                 ex.printStackTrace();
-                validationLogger.reportError(entity.getId(), sampleId, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, "Exception: " + ex.getMessage());
+                validationLogger.reportError(entity.getId(), sampleId, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, EntityConstants.TYPE_SAMPLE, "Exception: " + ex.getMessage());
                 throw new RuntimeException("Halting");
             }
         }
@@ -51,12 +51,14 @@ public class ValidationEngine {
         validationLogger.setMinSize( EntityConstants.TYPE_IMAGE_2D, 50L );
         validationLogger.setMinSize( EntityConstants.TYPE_MOVIE, 1000L );
         validationLogger.setMinSize( EntityConstants.TYPE_IMAGE_3D, 5000L );
+        validationLogger.setMinSize( EntityConstants.TYPE_V3D_ANO_FILE, 100000L );
 
         SubEntityValidator subEntityValidator = new SubEntityValidator( validationLogger );
         validatorMap = new HashMap<>();
         validatorMap.put( EntityConstants.TYPE_SAMPLE, new SampleValidator(validationLogger, subEntityValidator ) );
-        validatorMap.put( EntityConstants.TYPE_NEURON_FRAGMENT, new NeuronFragmentValidator( validationLogger ) );
-        validatorMap.put( EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, new NeuronSeparatorPipelineResultValidator(validationLogger));
+        validatorMap.put( EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, new SampleProcessingValidator(validationLogger, subEntityValidator, entityBean));
+        validatorMap.put( EntityConstants.TYPE_NEURON_FRAGMENT, new NeuronFragmentValidator(validationLogger) );
+        validatorMap.put( EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, new NeuronSeparatorPipelineResultValidator(validationLogger) );
 
         validatorMap.put( EntityConstants.TYPE_IMAGE_2D, new SimpleFilePathValidator( validationLogger, EntityConstants.TYPE_IMAGE_2D) );
         validatorMap.put( EntityConstants.TYPE_MOVIE, new SimpleFilePathValidator( validationLogger, EntityConstants.TYPE_MOVIE) );
