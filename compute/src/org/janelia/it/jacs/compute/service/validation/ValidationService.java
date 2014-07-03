@@ -25,13 +25,11 @@ public class ValidationService extends AbstractEntityService {
 
     private Long sampleId;
 
-    public ValidationService() {
-        sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        validationEngine = new ValidationEngine();
-    }
-
     @Override
     protected void execute() throws Exception {
+        sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        validationEngine = new ValidationEngine(entityBean, computeBean, annotationBean);
+
         String dataSetName = (String) processData.getItem("DATA_SET_NAME");
         String sampleEntityIdStr = (String) processData.getItem("SAMPLE_ENTITY_ID");
         if ( sampleEntityIdStr != null ) {

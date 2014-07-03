@@ -16,6 +16,7 @@ public class FileValidator {
     public static final String MISSING = "Missing ";
     public static final String EMPTY = "Empty ";
     public static final String FILE_ERROR = "File Error ";
+    public static final String MIN_SIZE = "Min Size ";
     private final String VAL_MISSING_CHILD = "Expected child entity missing: ";
     private final String VAL_EMPTY_CHILD = "Child entity contents empty: ";   // "Are you my mommy?"
 
@@ -29,6 +30,7 @@ public class FileValidator {
         for ( String type: requiredChildEntityTypes ) {
             validationLogger.addCategory( MISSING + type );
             validationLogger.addCategory( EMPTY + type );
+            validationLogger.addCategory( FILE_ERROR + type );
         }
         Set<String> entityNamesFound = new HashSet<>();
         for ( EntityData entityData : entity.getEntityData() ) {
@@ -41,18 +43,26 @@ public class FileValidator {
             }
             else {
                 String value = safeString(entity, requiredChild);
-                validationLogger.addCategory( FILE_ERROR + value );
                 if ( value.length() == 0 ) {
                     reportEmptyChild(requiredChild, sampleId, entity);
                 }
                 else {
-                    validateFile( value, requiredChild, sampleId, entity, 10000L );
+                    Long minSize = validationLogger.getMinSize( requiredChild );
+                    if ( minSize > 0 ) {
+                        validationLogger.addCategory( MIN_SIZE + requiredChild + " " + minSize );
+                    }
+                    validateFile( value, requiredChild, sampleId, entity );
                 }
             }
         }
     }
 
-    public void validateFile( String filePath, String fileType, Long sampleId, Entity entity, Long minLength ) throws Exception {
+    public void validateFile( String filePath, String fileType, Long sampleId, Entity entity ) throws Exception {
+        validationLogger.addCategory( FILE_ERROR + fileType );
+        Long minLength = validationLogger.getMinSize( fileType );
+        if ( minLength > 0 ) {
+            validationLogger.addCategory( MIN_SIZE + fileType + " " + minLength );
+        }
         String prob = TypeValidationHelper.getFileError( filePath, fileType, minLength );
         if ( prob != null ) {
             validationLogger.reportError( entity.getId(), sampleId, FILE_ERROR + fileType, prob );
@@ -60,7 +70,7 @@ public class FileValidator {
     }
 
     private String safeString(Entity entity, String requiredChild) {
-        String value = entity.getValueByAttributeName( requiredChild );
+        String value = entity.getValueByAttributeName(requiredChild);
         if ( value == null ) {
             value = "";
         }

@@ -4,6 +4,8 @@ import org.apache.log4j.Logger;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This captures error output from validations.  This captures what is wrong.
@@ -16,11 +18,36 @@ public class ValidationLogger {
     private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s";
     private Logger internalLogger;
     private Set<String> categories;
+    private Map<String,Long> filePatternToMinSize;
 
     public ValidationLogger( Logger internalLogger ) {
         this.internalLogger = internalLogger;
+        this.filePatternToMinSize = new HashMap<>();
         this.categories = new HashSet<>();
         this.categories.add( GENERAL_CATEGORY_EXCEPTION );
+    }
+
+    /**
+     * Setup the minimum file size, given the filePattern.  Can then return for any validation.
+     * @param filePattern ending of file name.  Expected to have been trimmed, not null, case sensitive.
+     * @param minSize register this for broad use.
+     */
+    public void setMinSize( String filePattern, Long minSize ) {
+        filePatternToMinSize.put(filePattern, minSize);
+    }
+
+    /**
+     * Tells a validator how long files like this need to be in order to pass muster.
+     *
+     * @param filePattern ending of file name. Expected to have been trimmmed, not null, case sensitive.
+     * @return
+     */
+    public Long getMinSize( String filePattern ) {
+        Long rtnVal = filePatternToMinSize.get(filePattern);
+        if ( rtnVal == null ) {
+            rtnVal = 0L;
+        }
+        return rtnVal;
     }
 
     /**
@@ -56,7 +83,7 @@ public class ValidationLogger {
      * This is used to enforce the category constraint.
      */
     public static class UnknownCategoryException extends RuntimeException {
-        private static final String MSG_FMT = "Unknown category %s while reporting message %s on sample %d's descendent %d.  Please register the category.";
+        private static final String MSG_FMT = "Unknown category %s while reporting message %s on sample %d's descendent %s.  Please register the category.";
         public UnknownCategoryException( String category, Long sampleId, Long entityId, String msg ) {
             super( String.format( MSG_FMT, category, sampleId, entityId, msg ) );
         }

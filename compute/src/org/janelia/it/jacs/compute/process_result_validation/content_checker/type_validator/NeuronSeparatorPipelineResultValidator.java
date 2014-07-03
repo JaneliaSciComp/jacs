@@ -12,7 +12,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
 
     private ValidationLogger validationLogger;
-    private static final String NO_FRAGMENTS = "No " + EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION;
+    private static final String NO_FRAGMENTS = "No Fragments";
 
     public NeuronSeparatorPipelineResultValidator( ValidationLogger validationLogger ) {
         this.validationLogger = validationLogger;
@@ -24,7 +24,7 @@ public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
         Entity fragments = entity.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
         if ( fragments == null ) {
             validationLogger.reportError( sampleId, entity.getId(), NO_FRAGMENTS,
-                    "No " + EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION + " found for " + entity.getEntityTypeName() + ": " + entity.getName() + "/" + entity.getId() + "."
+                    "No fragments found for " + EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION + ": " + entity.getName() + "/" + entity.getId() + "."
             );
         }
     }

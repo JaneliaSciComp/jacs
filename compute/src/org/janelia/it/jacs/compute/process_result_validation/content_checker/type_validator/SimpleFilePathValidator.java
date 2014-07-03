@@ -11,20 +11,17 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  */
 public class SimpleFilePathValidator implements TypeValidator {
     private String attributeType;
-    private Long minLength;
     private FileValidator fileValidator;
 
-    public SimpleFilePathValidator(ValidationLogger validationLogger, String attributeType, Long minLength) {
+    public SimpleFilePathValidator(ValidationLogger validationLogger, String attributeType) {
         this.attributeType = attributeType;
-        this.minLength = minLength;
         fileValidator = new FileValidator(validationLogger);
     }
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
         String filePath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        fileValidator.validateFile(filePath, attributeType, sampleId, entity, minLength);
-
+        fileValidator.validateFile(filePath, attributeType, sampleId, entity);
     }
 
 }

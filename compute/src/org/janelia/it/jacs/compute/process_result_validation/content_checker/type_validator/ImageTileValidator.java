@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator;
 
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -14,8 +15,10 @@ import org.janelia.it.jacs.model.entity.EntityData;
 public class ImageTileValidator implements TypeValidator {
     private static final String NO_LSM_STACKS = "No LSM stacks";
     private ValidationLogger validationLogger;
-    private static String[] requiredChildEntityTypes;
+    private EntityBeanLocal entitybean;
     private SubEntityValidator subEntityValidator;
+
+    private static String[] requiredChildEntityTypes;
     static {
         requiredChildEntityTypes = new String[] {
                 EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
@@ -24,9 +27,10 @@ public class ImageTileValidator implements TypeValidator {
         };
     }
 
-    public ImageTileValidator( ValidationLogger validationLogger, SubEntityValidator subEntityValidator ) {
+    public ImageTileValidator( ValidationLogger validationLogger, SubEntityValidator subEntityValidator, EntityBeanLocal entityBean ) {
         this.validationLogger = validationLogger;
         this.subEntityValidator = subEntityValidator;
+        this.entitybean = entityBean;
         this.validationLogger.addCategory( NO_LSM_STACKS );
     }
 
@@ -39,8 +43,9 @@ public class ImageTileValidator implements TypeValidator {
         for ( EntityData entityData : entity.getEntityData() ) {
             // Look at all generic Entity children.
             if ( entityData.getEntityAttrName().equals( EntityConstants.ATTRIBUTE_ENTITY ) ) {
-                Entity childEntity = entityData.getChildEntity();
-                if ( childEntity.getEntityTypeName().equals( EntityConstants.TYPE_LSM_STACK ) ) {
+                // Must ensure all needed info has been pulled from db.
+                Entity newChildEntity = entitybean.getEntityById( entityData.getChildEntity().getId() );
+                if ( newChildEntity.getEntityTypeName().equals( EntityConstants.TYPE_LSM_STACK ) ) {
                     lsmCount ++;
                 }
             }
