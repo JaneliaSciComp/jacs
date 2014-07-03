@@ -4,11 +4,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.Folder;
-import org.janelia.it.jacs.model.domain.MaterializedView;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.TreeNode;
-import org.janelia.it.jacs.model.domain.Workspace;
+import org.janelia.it.jacs.model.domain.workspace.Folder;
+import org.janelia.it.jacs.model.domain.workspace.MaterializedView;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.junit.Assert;
 import org.junit.Test;
 

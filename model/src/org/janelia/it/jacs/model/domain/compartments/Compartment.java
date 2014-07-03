@@ -1,0 +1,48 @@
+package org.janelia.it.jacs.model.domain.compartments;
+
+import java.util.Map;
+
+import org.janelia.it.jacs.model.domain.enums.ImageType;
+import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+
+public class Compartment implements HasImages {
+
+	private String name;
+	private String code;
+	private String color;
+	private Integer number;
+    private Map<ImageType,String> images;
+	
+    /* EVERYTHING BELOW IS AUTO-GENERATED */
+	
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getCode() {
+		return code;
+	}
+	public void setCode(String code) {
+		this.code = code;
+	}
+	public String getColor() {
+		return color;
+	}
+	public void setColor(String color) {
+		this.color = color;
+	}
+	public Integer getNumber() {
+		return number;
+	}
+	public void setNumber(Integer number) {
+		this.number = number;
+	}
+    public Map<ImageType, String> getImages() {
+        return images;
+    }
+    public void setImages(Map<ImageType, String> images) {
+        this.images = images;
+    }
+}
