@@ -3,11 +3,11 @@ package org.janelia.it.jacs.model.domain.screen;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
-import org.janelia.it.jacs.model.domain.enums.ImageType;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class PatternMask extends AbstractDomainObject implements HasImages, HasFilepath {
+public class PatternMask extends AbstractDomainObject implements HasFiles, HasFilepath {
 
     private Long screenSampleId;
     private String filepath;
@@ -15,7 +15,7 @@ public class PatternMask extends AbstractDomainObject implements HasImages, HasF
     private boolean normalized;
     private Integer intensityScore;
     private Integer distributionScore;
-    private Map<ImageType,String> images;
+    private Map<FileType,String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
@@ -55,10 +55,10 @@ public class PatternMask extends AbstractDomainObject implements HasImages, HasF
     public void setDistributionScore(Integer distributionScore) {
         this.distributionScore = distributionScore;
     }
-    public Map<ImageType, String> getImages() {
+    public Map<FileType, String> getFiles() {
         return images;
     }
-    public void setImages(Map<ImageType, String> images) {
+    public void setImages(Map<FileType, String> images) {
         this.images = images;
     }
 }

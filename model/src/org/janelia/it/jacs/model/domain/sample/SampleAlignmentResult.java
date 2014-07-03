@@ -3,10 +3,10 @@ package org.janelia.it.jacs.model.domain.sample;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
-import org.janelia.it.jacs.model.domain.enums.ImageType;
-import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class SampleAlignmentResult extends PipelineResult implements HasImages {
+public class SampleAlignmentResult extends PipelineResult implements HasFiles {
 
 	private String name;
     private String imageSize;
@@ -17,7 +17,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasImages {
     private String chanSpec;
     private String objective;
     private Map<AlignmentScoreType,String> scores;
-    private Map<ImageType,String> images;
+    private Map<FileType,String> files;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 
@@ -69,11 +69,11 @@ public class SampleAlignmentResult extends PipelineResult implements HasImages {
     public void setObjective(String objective) {
         this.objective = objective;
     }
-    public Map<ImageType, String> getImages() {
-        return images;
+    public Map<FileType, String> getFiles() {
+        return files;
     }
-    public void setImages(Map<ImageType, String> images) {
-        this.images = images;
+    public void setFiles(Map<FileType, String> files) {
+        this.files = files;
     }
 	public Map<AlignmentScoreType, String> getScores() {
 		return scores;
