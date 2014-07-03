@@ -2,16 +2,16 @@ package org.janelia.it.jacs.model.domain.compartments;
 
 import java.util.Map;
 
-import org.janelia.it.jacs.model.domain.enums.ImageType;
-import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class Compartment implements HasImages {
+public class Compartment implements HasFiles {
 
 	private String name;
 	private String code;
 	private String color;
 	private Integer number;
-    private Map<ImageType,String> images;
+    private Map<FileType,String> images;
 	
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 	
@@ -39,10 +39,10 @@ public class Compartment implements HasImages {
 	public void setNumber(Integer number) {
 		this.number = number;
 	}
-    public Map<ImageType, String> getImages() {
+    public Map<FileType, String> getFiles() {
         return images;
     }
-    public void setImages(Map<ImageType, String> images) {
+    public void setImages(Map<FileType, String> images) {
         this.images = images;
     }
 }

@@ -4,15 +4,15 @@ import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.enums.ImageType;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class ScreenSample extends AbstractDomainObject implements HasImages, HasFilepath {
+public class ScreenSample extends AbstractDomainObject implements HasFiles, HasFilepath {
 
     private String flyLine;
     private String filepath;
-    private Map<ImageType,String> images;
+    private Map<FileType,String> images;
     private ReverseReference masks;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
@@ -23,10 +23,10 @@ public class ScreenSample extends AbstractDomainObject implements HasImages, Has
     public void setFilepath(String filepath) {
         this.filepath = filepath;
     }
-    public Map<ImageType, String> getImages() {
+    public Map<FileType, String> getFiles() {
         return images;
     }
-    public void setImages(Map<ImageType, String> images) {
+    public void setImages(Map<FileType, String> images) {
         this.images = images;
     }
     public String getFlyLine() {

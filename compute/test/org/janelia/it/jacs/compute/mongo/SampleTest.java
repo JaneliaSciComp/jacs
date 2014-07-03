@@ -8,7 +8,7 @@ import java.util.Map;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.enums.ImageType;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
@@ -249,7 +249,7 @@ public class SampleTest extends MongoDbTest {
                         if (image==null) {
                             throw new IllegalStateException("Missing LSM: "+lsmRef.getTargetId());
                         }
-                        System.out.println(sample.getName()+" -> "+image.getImages().get(ImageType.Stack));
+                        System.out.println(sample.getName()+" -> "+image.getFiles().get(FileType.Stack));
                         mappedLsms++;
                     }
                 }

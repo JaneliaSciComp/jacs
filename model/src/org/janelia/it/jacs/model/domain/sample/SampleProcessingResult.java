@@ -2,15 +2,15 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.Map;
 
-import org.janelia.it.jacs.model.domain.enums.ImageType;
-import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class SampleProcessingResult extends PipelineResult implements HasImages {
+public class SampleProcessingResult extends PipelineResult implements HasFiles {
 
     private String anatomicalArea;
     private String imageSize;
     private String opticalResolution;
-    private Map<ImageType,String> images;
+    private Map<FileType,String> files;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
@@ -32,10 +32,10 @@ public class SampleProcessingResult extends PipelineResult implements HasImages 
     public void setOpticalResolution(String opticalResolution) {
         this.opticalResolution = opticalResolution;
     }
-    public Map<ImageType, String> getImages() {
-        return images;
+    public Map<FileType, String> getFiles() {
+        return files;
     }
-    public void setImages(Map<ImageType, String> images) {
-        this.images = images;
+    public void setFiles(Map<FileType, String> files) {
+        this.files = files;
     }
 }

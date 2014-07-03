@@ -31,7 +31,7 @@ import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.compartments.Compartment;
 import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
-import org.janelia.it.jacs.model.domain.enums.ImageType;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.enums.SampleImageType;
 import org.janelia.it.jacs.model.domain.gui.AlignmentBoard;
 import org.janelia.it.jacs.model.domain.gui.AlignmentBoardItem;
@@ -51,6 +51,7 @@ import org.janelia.it.jacs.model.domain.sample.PipelineError;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
+import org.janelia.it.jacs.model.domain.sample.SampleCellCountingResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
@@ -484,9 +485,9 @@ public class MongoDbImport extends AnnotationDAO {
     		dataset.setSageSync(true);
     	}
     	
-        String sampleImageType = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
-        if (sampleImageType!=null) {
-            dataset.setSampleImageType(SampleImageType.valueOf(sampleImageType));
+        String sampleFileType = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
+        if (sampleFileType!=null) {
+            dataset.setSampleImageType(SampleImageType.valueOf(sampleFileType));
         }
         
         String sampleNamePattern = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_NAME_PATTERN);
@@ -704,6 +705,10 @@ public class MongoDbImport extends AnnotationDAO {
                     
                     results.add(result);
                 }
+                else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_CELL_COUNTING_RESULT)) {
+                    SampleCellCountingResult result = getSampleCellCountingResult(resultEntity);
+                    results.add(result);
+                }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
                     
                     Map<String,PipelineResult> nsResultMap = new HashMap<String,PipelineResult>();
@@ -789,21 +794,80 @@ public class MongoDbImport extends AnnotationDAO {
         if (!StringUtils.isEmpty(area)) {
             result.setAnatomicalArea(area);
         }
+        
+        Map<FileType,String> files = new HashMap<FileType,String>();
+        
         Entity stackEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         if (stackEntity!=null) {
-            
             result.setImageSize(cleanRes(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
             result.setOpticalResolution(cleanRes(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
-            
-            Map<ImageType,String> images = new HashMap<ImageType,String>();
-            addImage(images,ImageType.Stack,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            addImage(images,ImageType.ReferenceMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-            addImage(images,ImageType.SignalMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
-            result.setImages(images);
+            addImage(files,FileType.Stack,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(files,FileType.ReferenceMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+            addImage(files,FileType.SignalMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
         }
         else {
-            log.warn("  Sample processing result has no stack: "+resultEntity.getId());
+            log.warn("  Sample processing result has no default stack: "+resultEntity.getId());
         }
+
+        Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
+        if (supportingDataEntity!=null) {
+        	for(Entity child : supportingDataEntity.getChildren()) {
+        		String childName = child.getName();
+        		String childFilepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        		if (childName.endsWith("lsm.json")) {
+        			// TODO: keep track of these and associate them with the lsm documents
+        		}
+        	}
+        }
+
+        if (!files.isEmpty()) result.setFiles(files);
+        
+        return result;
+    }
+
+    private SampleCellCountingResult getSampleCellCountingResult(Entity resultEntity) {
+    	SampleCellCountingResult result = new SampleCellCountingResult();
+        result.setCreationDate(resultEntity.getCreationDate());
+        result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        
+        String cellCountStr = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CELL_COUNT);
+        if (cellCountStr!=null) {
+        	result.setCellCount(Integer.parseInt(cellCountStr));
+        }
+
+        Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
+        if (supportingDataEntity!=null) {
+        	
+        	Map<FileType,String> files = new HashMap<FileType,String>();
+        	
+        	for(Entity child : supportingDataEntity.getChildren()) {
+        		String childName = child.getName();
+        		String childFilepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        		
+        		if ("cellCounterPlan.txt".equals(childName)) {
+        			files.put(FileType.CellCountPlan, getRelativeFilename(result,childFilepath));
+        		}
+        		else if (childName.endsWith("CellCounterReport.txt")) {
+        			files.put(FileType.CellCountReport, getRelativeFilename(result,childFilepath));	
+        		}
+        		else if (childName.contains("CellCounterImage")) { 
+	        		if (childName.endsWith(".v3dpbd")) {
+	        			files.put(FileType.CellCountImage, getRelativeFilename(result,childFilepath));	
+	        		}
+	        		else if (childName.endsWith("_signal.png")) {
+	        			files.put(FileType.CellCountImageMip, getRelativeFilename(result,childFilepath));	
+	        		}
+        		}
+        		else if (childName.endsWith(".v3dpbd")) {
+        			files.put(FileType.CellCountStack, getRelativeFilename(result,childFilepath));	
+        		}
+        		else if (childName.endsWith("_signal.png")) {
+        			files.put(FileType.CellCountStackMip, getRelativeFilename(result,childFilepath));	
+        		}
+        	}
+            if (!files.isEmpty()) result.setFiles(files);
+        }
+        
         return result;
     }
     
@@ -839,14 +903,14 @@ public class MongoDbImport extends AnnotationDAO {
         }
         if (!scores.isEmpty()) result.setScores(scores);
         
-        Map<ImageType,String> images = new HashMap<ImageType,String>();
-        addImage(images,ImageType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-        addImage(images,ImageType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-        addImage(images,ImageType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+        Map<FileType,String> files = new HashMap<FileType,String>();
+        addImage(files,FileType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        addImage(files,FileType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+        addImage(files,FileType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
         if (movieEntity!=null) {
-            addImage(images,ImageType.AlignVerifyMovie,getRelativeFilename(result,movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(files,FileType.AlignmentVerificationMovie,getRelativeFilename(result,movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
         }
-        if (!images.isEmpty()) result.setImages(images);
+        if (!files.isEmpty()) result.setFiles(files);
         
         return result;
     }
@@ -894,10 +958,10 @@ public class MongoDbImport extends AnnotationDAO {
         }
         lsm.setSlideCode(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
 
-        Map<ImageType,String> images = new HashMap<ImageType,String>();
-        addImage(images,ImageType.Stack,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        addImage(images,ImageType.ReferenceMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
-        addImage(images,ImageType.SignalMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
+        Map<FileType,String> images = new HashMap<FileType,String>();
+        addImage(images,FileType.Stack,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        addImage(images,FileType.ReferenceMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
+        addImage(images,FileType.SignalMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
         lsm.setImages(images);
         
         return lsm;
@@ -948,10 +1012,10 @@ public class MongoDbImport extends AnnotationDAO {
         neuronFragment.setSeparationId(separationEntity.getId());
         neuronFragment.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         
-        Map<ImageType,String> images = new HashMap<ImageType,String>();
-        addImage(images,ImageType.Mip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
-        addImage(images,ImageType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
-        addImage(images,ImageType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
+        Map<FileType,String> images = new HashMap<FileType,String>();
+        addImage(images,FileType.Mip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        addImage(images,FileType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
+        addImage(images,FileType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
         neuronFragment.setImages(images);
         
         return neuronFragment;
@@ -1055,12 +1119,12 @@ public class MongoDbImport extends AnnotationDAO {
         
         patternMaskCollection.insert(masks.toArray());
 
-        Map<ImageType,String> images = new HashMap<ImageType,String>();
-        addImage(images,ImageType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        Map<FileType,String> images = new HashMap<FileType,String>();
+        addImage(images,FileType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         if (alignedStack!=null) {
-            addImage(images,ImageType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            addImage(images,ImageType.Mip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+            addImage(images,FileType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(images,FileType.Mip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         screenSample.setImages(images);
         
@@ -1125,9 +1189,9 @@ public class MongoDbImport extends AnnotationDAO {
         mask.setIntensityScore(intensity);
         mask.setDistributionScore(distribution);
 
-        Map<ImageType,String> images = new HashMap<ImageType,String>();
-        addImage(images,ImageType.Stack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-        addImage(images,ImageType.HeatmapMip,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        Map<FileType,String> images = new HashMap<FileType,String>();
+        addImage(images,FileType.Stack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        addImage(images,FileType.HeatmapMip,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         mask.setImages(images);
         return mask;
     }
@@ -1473,9 +1537,9 @@ public class MongoDbImport extends AnnotationDAO {
     			log.error("Error parsing compartment name: "+compartmentEntity.getName());
     		}
 
-            Map<ImageType,String> images = new HashMap<ImageType,String>();
-            addImage(images,ImageType.MaskFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE));
-            addImage(images,ImageType.ChanFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE));
+            Map<FileType,String> images = new HashMap<FileType,String>();
+            addImage(images,FileType.MaskFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE));
+            addImage(images,FileType.ChanFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE));
             compartment.setImages(images);
             
     		compartments.add(compartment);
@@ -1595,11 +1659,11 @@ public class MongoDbImport extends AnnotationDAO {
         return subjectKeys;
     }
 
-    private void addImage(Map<ImageType,String> images, ImageType key, String value) {
+    private void addImage(Map<FileType,String> images, FileType key, String value) {
         if (value==null) return;
         images.put(key, value);
     }
-
+    
     private String getCollectionName(String entityType) {
         if (EntityConstants.TYPE_SAMPLE.equals(entityType)) {
             return "sample";
@@ -1630,6 +1694,9 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else if (EntityConstants.TYPE_COMPARTMENT_SET.equals(entityType)) {
             return "compartmentSet";
+        }
+        else if (EntityConstants.TYPE_ALIGNMENT_BOARD.equals(entityType)) {
+            return "alignmentBoard";
         }
         return "unknown";
     }

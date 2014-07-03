@@ -5,11 +5,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
-import org.janelia.it.jacs.model.domain.enums.ImageType;
-import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.jongo.marshall.jackson.oid.Id;
 
-public class LSMImage extends AbstractDomainObject implements HasImages {
+public class LSMImage extends AbstractDomainObject implements HasFiles {
 
     private Long sampleId;
     private String age;
@@ -29,7 +29,7 @@ public class LSMImage extends AbstractDomainObject implements HasImages {
     private String pixelResolution;
     private Integer sageId;
     private String slideCode;
-    private Map<ImageType,String> images;
+    private Map<FileType,String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
@@ -141,10 +141,10 @@ public class LSMImage extends AbstractDomainObject implements HasImages {
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
     }
-    public Map<ImageType, String> getImages() {
+    public Map<FileType, String> getFiles() {
         return images;
     }
-    public void setImages(Map<ImageType, String> images) {
+    public void setImages(Map<FileType, String> images) {
         this.images = images;
     }
     

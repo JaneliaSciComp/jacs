@@ -4,15 +4,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.enums.ImageType;
-import org.janelia.it.jacs.model.domain.interfaces.HasImages;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class SampleTile implements HasImages {
+public class SampleTile implements HasFiles {
     
     private String name;
     private String anatomicalArea;
     private List<Reference> lsmReferences;
-    private Map<ImageType,String> images;
+    private Map<FileType,String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
@@ -34,10 +34,10 @@ public class SampleTile implements HasImages {
     public void setLsmReferences(List<Reference> lsmReferences) {
         this.lsmReferences = lsmReferences;
     }
-    public Map<ImageType, String> getImages() {
+    public Map<FileType, String> getFiles() {
         return images;
     }
-    public void setImages(Map<ImageType, String> images) {
+    public void setImages(Map<FileType, String> images) {
         this.images = images;
     }
     
