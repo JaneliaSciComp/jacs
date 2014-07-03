@@ -16,6 +16,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.hibernate.FlushMode;
@@ -23,39 +25,42 @@ import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
-import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
-import org.janelia.it.jacs.model.domain.AlignmentScoreType;
-import org.janelia.it.jacs.model.domain.Annotation;
-import org.janelia.it.jacs.model.domain.DataSet;
-import org.janelia.it.jacs.model.domain.FlyLine;
-import org.janelia.it.jacs.model.domain.Folder;
-import org.janelia.it.jacs.model.domain.HasFilepath;
-import org.janelia.it.jacs.model.domain.ImageType;
-import org.janelia.it.jacs.model.domain.LSMImage;
-import org.janelia.it.jacs.model.domain.MaterializedView;
-import org.janelia.it.jacs.model.domain.NeuronFragment;
-import org.janelia.it.jacs.model.domain.NeuronSeparation;
-import org.janelia.it.jacs.model.domain.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.PatternMask;
-import org.janelia.it.jacs.model.domain.PipelineError;
-import org.janelia.it.jacs.model.domain.PipelineResult;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.Sample;
-import org.janelia.it.jacs.model.domain.SampleAlignmentResult;
-import org.janelia.it.jacs.model.domain.SampleImageType;
-import org.janelia.it.jacs.model.domain.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.SampleProcessingResult;
-import org.janelia.it.jacs.model.domain.SampleTile;
-import org.janelia.it.jacs.model.domain.ScreenSample;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.TreeNode;
-import org.janelia.it.jacs.model.domain.Workspace;
+import org.janelia.it.jacs.model.domain.compartments.Compartment;
+import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
+import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
+import org.janelia.it.jacs.model.domain.enums.ImageType;
+import org.janelia.it.jacs.model.domain.enums.SampleImageType;
+import org.janelia.it.jacs.model.domain.gui.AlignmentBoard;
+import org.janelia.it.jacs.model.domain.gui.AlignmentBoardItem;
+import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
+import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.EnumText;
 import org.janelia.it.jacs.model.domain.ontology.Interval;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.PipelineError;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.screen.FlyLine;
+import org.janelia.it.jacs.model.domain.screen.PatternMask;
+import org.janelia.it.jacs.model.domain.screen.ScreenSample;
+import org.janelia.it.jacs.model.domain.workspace.Folder;
+import org.janelia.it.jacs.model.domain.workspace.MaterializedView;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -96,6 +101,8 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection ontologyCollection;
+    protected MongoCollection compartmentSetCollection;
+    protected MongoCollection alignmentBoardCollection;
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
 
     private String genderConsensus = null;
@@ -120,6 +127,8 @@ public class MongoDbImport extends AnnotationDAO {
     	fragmentCollection = jongo.getCollection("fragment");
     	annotationCollection = jongo.getCollection("annotation");
     	ontologyCollection = jongo.getCollection("ontology");
+    	compartmentSetCollection = jongo.getCollection("compartmentSet");
+    	alignmentBoardCollection = jongo.getCollection("alignmentBoard");
     }
 
     public void loadAllEntities() throws DaoException {
@@ -152,16 +161,16 @@ public class MongoDbImport extends AnnotationDAO {
         
         log.info("Adding annotations");
         loadAnnotations();
-        
-        // TODO: add data sets
-        
-        // TODO: add compartment sets
-        
-        // TODO: add alignment board entities
+
+        log.info("Adding compartment sets");
+        loadCompartmentSets();
+
+        log.info("Adding alignment boards");
+        loadAlignmentBoards();
         
         // TODO: add large image viewer workspaces and associated entities
         
-        log.info("Loading MongoDB took "+(System.currentTimeMillis()-startAll)+" ms");
+        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
     }
 
     private void resetSession() {
@@ -237,12 +246,12 @@ public class MongoDbImport extends AnnotationDAO {
         
         Workspace workspace = new Workspace();
         workspace.setId(workspaceEntity.getId());
+        workspace.setName(workspaceEntity.getName());
         workspace.setOwnerKey(workspaceEntity.getOwnerKey());
         workspace.setReaders(getDefaultSubjectKeys(subjectKey));
-        workspace.setWriters(getDefaultSubjectKeys(subjectKey));
+        workspace.setWriters(workspace.getReaders());
         workspace.setCreationDate(workspaceEntity.getCreationDate());
         workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
-        workspace.setName(workspaceEntity.getName());
         workspace.setChildren(children);
         treeNodeCollection.insert(workspace);
         
@@ -302,10 +311,10 @@ public class MongoDbImport extends AnnotationDAO {
         }
         
         node.setId(folderEntity.getId());
+        node.setName(folderEntity.getName());
         node.setOwnerKey(folderEntity.getOwnerKey());
         node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
         node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
-        node.setName(folderEntity.getName());
         node.setCreationDate(folderEntity.getCreationDate());
         node.setUpdatedDate(folderEntity.getUpdatedDate());
         
@@ -340,146 +349,92 @@ public class MongoDbImport extends AnnotationDAO {
         treeNodeCollection.insert(node);
         return node.getId();
     }
-    
-
-    /* ONTOLOGIES */
-    
-    private void loadOntologies() throws DaoException {
-        Deque<Entity> ontologyRoots = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT));
-        loadOntologies(ontologyRoots);
-    }
-
-    private int loadOntologies(Deque<Entity> ontologyRoots) {
-
-        int c = 0;
-        for(Iterator<Entity> i = ontologyRoots.iterator(); i.hasNext(); ) {
-            Entity ontologyRootEntity = i.next();
-
-            // Skip these unused/large ontologies
-            if (ontologyRootEntity.getName().equals("Fly anatomy") 
-                    || ontologyRootEntity.getName().equals("Fly Taxonomy") 
-                    || ontologyRootEntity.getName().equals("CARO") 
-                    || ontologyRootEntity.getName().equals("FlyBase miscellaneous CV")) {
-                continue;
-            }
-            if (ontologyRootEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC)!=null) {
-                continue;
-            }
-            
-            Session session = null;
-            try {
-                long start = System.currentTimeMillis();
-
-                session = openNewExternalSession();
-                Ontology ontology = getOntology(ontologyRootEntity);
-                ontologyCollection.insert(ontology);
-
-                // Free memory by releasing the reference to this entire entity tree
-                i.remove(); 
-                resetSession();
-
-                if (ontology!=null) {
-                    log.info("  Loading "+ontologyRootEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-                else {
-                    log.info("  Failure loading "+ontologyRootEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-                
-            }
-            catch (Throwable e) {
-                log.error("Error loading ontology "+ontologyRootEntity.getId(),e);
-            }
-            finally {
-                if (session==null) closeExternalSession();
-            }
-            
-            c++;
-        }
-        
-        return c;
-    }
-
-    private Ontology getOntology(Entity ontologyEntity) throws Exception {
-       
-        Ontology ontology = (Ontology)getOntologyTerm(ontologyEntity, ontologyEntity);
-        ontology.setOwnerKey(ontologyEntity.getOwnerKey());
-        ontology.setReaders(getSubjectKeysWithPermission(ontologyEntity, "r"));
-        ontology.setWriters(getSubjectKeysWithPermission(ontologyEntity, "w"));
-        ontology.setCreationDate(ontologyEntity.getCreationDate());
-        ontology.setUpdatedDate(ontologyEntity.getUpdatedDate());
-        
-        return ontology;
-    }
-    
-    private OntologyTerm getOntologyTerm(Entity ontologyEntity, Entity ontologyTermEntity) throws Exception {
-
-        populateChildren(ontologyTermEntity);
-        
-        OntologyTerm ontologyTerm = null;
-        if (ontologyEntity.getId().equals(ontologyTermEntity.getId())) {
-            ontologyTerm = new Ontology();
-        }
-        else {
-            String typeName = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
-            ontologyTerm = createOntologyTypeByName(typeName);   
-        }
-        
-        ontologyTerm.setId(ontologyTermEntity.getId());
-        ontologyTerm.setName(ontologyTermEntity.getName());
-        
-        if (ontologyTerm instanceof Interval) {
-            Interval interval = (Interval)ontologyTerm;
-            String lower = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
-            String upper = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
-            if (lower!=null) {
-                interval.setLowerBound(Long.parseLong(lower));
-            }
-            if (upper!=null) {
-                interval.setUpperBound(Long.parseLong(upper));
-            }
-        }
-        else if (ontologyTerm instanceof EnumText) {
-            EnumText enumText = (EnumText)ontologyTerm;
-            String enumId = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID);
-            if (enumId!=null) {
-                enumText.setValueEnumId(Long.parseLong(enumId));
-            }
-        }
-
-        List<OntologyTerm> terms = new ArrayList<OntologyTerm>();
-        for(Entity childEntity : EntityUtils.getChildrenForAttribute(ontologyTermEntity, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
-            OntologyTerm term = getOntologyTerm(ontologyEntity, childEntity);
-            if (term!=null) {
-                terms.add(term);
-            }
-        }
-        if (!terms.isEmpty()) {
-            ontologyTerm.setTerms(terms);
-        }
-        
-        ontologyTermIdToOntologyId.put(ontologyTermEntity.getId(), ontologyEntity.getId());
-        
-        return ontologyTerm;
-    }
-    
-    private OntologyTerm createOntologyTypeByName(String className) {
-        try {
-            if (className==null) return new Ontology();
-            return (OntologyTerm)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
-        }
-        catch (Exception ex) {
-            log.error("Could not instantiate ontology term for type "+className);
-        }
-        return null;
-    }
-
 
     /* FLY LINES */
+    
+    private void loadFlyLines() throws DaoException {
+        long start = System.currentTimeMillis();
+        Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
+        resetSession();
+        loadFlyLines(lines);
+        log.info("Loading " + lines.size() + " fly lines took " + (System.currentTimeMillis() - start) + " ms");
+    }
+    
+    private void loadFlyLines(Deque<Entity> flyLines) {
+
+        for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
+            Entity flyLineEntity = i.next();
+            // Skip these samples
+            if (flyLineEntity.getName().contains("~")) continue;
+            if (EntityConstants.VALUE_ERROR.equals(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
+                continue;
+            }
+            
+            try {
+                long start = System.currentTimeMillis();
+                FlyLine flyLine = getFlyLineObject(flyLineEntity);
+                if (flyLine!=null) {
+                    flyLineCollection.insert(flyLine);
+                }
+                
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove();
+                resetSession();
+
+                if (flyLine!=null) {
+                    log.info("  Loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+            }
+            catch (Throwable e) {
+                log.error("Error loading fly line "+flyLineEntity.getId(),e);
+            }
+        }
+    }
+
+    private FlyLine getFlyLineObject(Entity flyLineEntity) {
+        FlyLine flyline = new FlyLine();
+        flyline.setId(flyLineEntity.getId());
+        flyline.setName(flyLineEntity.getName());
+        flyline.setOwnerKey(flyLineEntity.getOwnerKey());
+        flyline.setReaders(getSubjectKeysWithPermission(flyLineEntity, "r"));
+        flyline.setWriters(getSubjectKeysWithPermission(flyLineEntity, "w"));
+        flyline.setCreationDate(flyLineEntity.getCreationDate());
+        flyline.setUpdatedDate(flyLineEntity.getUpdatedDate());
+        flyline.setSplitPart(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART));
+        
+        String robotId = flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID);
+        if (robotId!=null) {
+            flyline.setRobotId(Integer.parseInt(robotId));
+        }
+        
+        Entity balanced = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_BALANCED_FLYLINE);
+        if (balanced!=null) {
+            flyline.setBalancedLineId(balanced.getId());
+        }
+
+        Entity original = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE);
+        if (original!=null) {
+            flyline.setOriginalLineId(original.getId());
+        }
+
+        Entity representative = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
+        if (representative!=null) {
+            flyline.setRepresentativeId(representative.getId());
+        }
+        
+        return flyline;
+    }
+    
+
+    /* DATA SETS */
     
 
     private void loadDataSets() throws DaoException {
         long start = System.currentTimeMillis();
-        Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
+        Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET));
         resetSession();
         loadDataSets(lines);
         log.info("Loading " + lines.size() + " data sets took " + (System.currentTimeMillis() - start) + " ms");
@@ -631,12 +586,12 @@ public class MongoDbImport extends AnnotationDAO {
         Sample sample = new Sample();
                 
         sample.setId(sampleEntity.getId());
+        sample.setName(sampleEntity.getName());
         sample.setOwnerKey(sampleEntity.getOwnerKey());
         sample.setReaders(getSubjectKeysWithPermission(sampleEntity, "r"));
         sample.setWriters(getSubjectKeysWithPermission(sampleEntity, "w"));
         sample.setCreationDate(sampleEntity.getCreationDate());
         sample.setUpdatedDate(sampleEntity.getUpdatedDate());
-        sample.setName(sampleEntity.getName());
         sample.setAge(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_AGE));
         sample.setChanSpec(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
         sample.setDataSet(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER));
@@ -901,6 +856,7 @@ public class MongoDbImport extends AnnotationDAO {
         LSMImage lsm = new LSMImage();
         lsm.setId(lsmEntity.getId());
         lsm.setSampleId(sampleEntity.getId());
+        lsm.setName(lsmEntity.getName());
         lsm.setOwnerKey(lsmEntity.getOwnerKey());
         lsm.setReaders(getSubjectKeysWithPermission(lsmEntity, "r"));
         lsm.setWriters(getSubjectKeysWithPermission(lsmEntity, "w"));
@@ -979,6 +935,7 @@ public class MongoDbImport extends AnnotationDAO {
         NeuronFragment neuronFragment = new NeuronFragment();
         neuronFragment.setId(fragmentEntity.getId());
         neuronFragment.setSampleId(sampleEntity.getId());
+        neuronFragment.setName(fragmentEntity.getName());
         neuronFragment.setOwnerKey(fragmentEntity.getOwnerKey());
         neuronFragment.setReaders(getSubjectKeysWithPermission(fragmentEntity, "r"));
         neuronFragment.setWriters(getSubjectKeysWithPermission(fragmentEntity, "w"));
@@ -995,92 +952,12 @@ public class MongoDbImport extends AnnotationDAO {
         addImage(images,ImageType.Mip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
         addImage(images,ImageType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
         addImage(images,ImageType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
-        
         neuronFragment.setImages(images);
         
         return neuronFragment;
     }
     
 
-    /* FLY LINES */
-    
-
-    private void loadFlyLines() throws DaoException {
-        long start = System.currentTimeMillis();
-        Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
-        resetSession();
-        loadFlyLines(lines);
-        log.info("Loading " + lines.size() + " fly lines took " + (System.currentTimeMillis() - start) + " ms");
-    }
-    
-    private void loadFlyLines(Deque<Entity> flyLines) {
-
-        for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
-            Entity flyLineEntity = i.next();
-            // Skip these samples
-            if (flyLineEntity.getName().contains("~")) continue;
-            if (EntityConstants.VALUE_ERROR.equals(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
-                continue;
-            }
-            
-            try {
-                long start = System.currentTimeMillis();
-                FlyLine flyLine = getFlyLineObject(flyLineEntity);
-                if (flyLine!=null) {
-                    flyLineCollection.insert(flyLine);
-                }
-                
-                // Free memory by releasing the reference to this entire entity tree
-                i.remove();
-                resetSession();
-
-                if (flyLine!=null) {
-                    log.info("  Loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-                else {
-                    log.info("  Failure loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
-            }
-            catch (Throwable e) {
-                log.error("Error loading fly line "+flyLineEntity.getId(),e);
-            }
-        }
-    }
-
-    private FlyLine getFlyLineObject(Entity flyLineEntity) {
-        FlyLine flyline = new FlyLine();
-        flyline.setId(flyLineEntity.getId());
-        flyline.setName(flyLineEntity.getName());
-        flyline.setOwnerKey(flyLineEntity.getOwnerKey());
-        flyline.setReaders(getSubjectKeysWithPermission(flyLineEntity, "r"));
-        flyline.setWriters(getSubjectKeysWithPermission(flyLineEntity, "w"));
-        flyline.setCreationDate(flyLineEntity.getCreationDate());
-        flyline.setUpdatedDate(flyLineEntity.getUpdatedDate());
-        flyline.setSplitPart(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SPLIT_PART));
-        
-        String robotId = flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ROBOT_ID);
-        if (robotId!=null) {
-            flyline.setRobotId(Integer.parseInt(robotId));
-        }
-        
-        Entity balanced = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_BALANCED_FLYLINE);
-        if (balanced!=null) {
-            flyline.setBalancedLineId(balanced.getId());
-        }
-
-        Entity original = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_ORIGINAL_FLYLINE);
-        if (original!=null) {
-            flyline.setOriginalLineId(original.getId());
-        }
-
-        Entity representative = flyLineEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_REPRESENTATIVE_SAMPLE);
-        if (representative!=null) {
-            flyline.setRepresentativeId(representative.getId());
-        }
-        
-        return flyline;
-    }
-    
     
     /* SCREEN SAMPLES */
     
@@ -1146,6 +1023,7 @@ public class MongoDbImport extends AnnotationDAO {
         ScreenSample screenSample = new ScreenSample();
                 
         screenSample.setId(screenSampleEntity.getId());
+        screenSample.setName(screenSampleEntity.getName());
         screenSample.setOwnerKey(screenSampleEntity.getOwnerKey());
         screenSample.setReaders(getSubjectKeysWithPermission(screenSampleEntity, "r"));
         screenSample.setWriters(getSubjectKeysWithPermission(screenSampleEntity, "w"));
@@ -1236,12 +1114,12 @@ public class MongoDbImport extends AnnotationDAO {
         PatternMask mask = new PatternMask();
         mask.setId(maskEntity.getId());
         mask.setScreenSampleId(screenSample.getId());
+        mask.setName(maskEntity.getName());
         mask.setOwnerKey(maskEntity.getOwnerKey());
         mask.setReaders(getSubjectKeysWithPermission(maskEntity, "r"));
         mask.setWriters(getSubjectKeysWithPermission(maskEntity, "w"));
         mask.setCreationDate(maskEntity.getCreationDate());
         mask.setUpdatedDate(maskEntity.getUpdatedDate());
-        mask.setName(maskEntity.getName());
         mask.setFilepath(screenSample.getFilepath());
         mask.setMaskSetName(maskSetName);
         mask.setIntensityScore(intensity);
@@ -1255,6 +1133,138 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     
+    /* ONTOLOGIES */
+    
+    private void loadOntologies() throws DaoException {
+        Deque<Entity> ontologyRoots = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT));
+        loadOntologies(ontologyRoots);
+    }
+
+    private int loadOntologies(Deque<Entity> ontologyRoots) {
+
+        int c = 0;
+        for(Iterator<Entity> i = ontologyRoots.iterator(); i.hasNext(); ) {
+            Entity ontologyRootEntity = i.next();
+
+            // Skip these unused/large ontologies
+            if (ontologyRootEntity.getName().equals("Fly anatomy") 
+                    || ontologyRootEntity.getName().equals("Fly Taxonomy") 
+                    || ontologyRootEntity.getName().equals("CARO") 
+                    || ontologyRootEntity.getName().equals("FlyBase miscellaneous CV")) {
+                continue;
+            }
+            if (ontologyRootEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC)!=null) {
+                continue;
+            }
+            
+            Session session = null;
+            try {
+                long start = System.currentTimeMillis();
+
+                session = openNewExternalSession();
+                Ontology ontology = getOntology(ontologyRootEntity);
+                ontologyCollection.insert(ontology);
+
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove(); 
+                resetSession();
+
+                if (ontology!=null) {
+                    log.info("  Loading "+ontologyRootEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+ontologyRootEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                
+            }
+            catch (Throwable e) {
+                log.error("Error loading ontology "+ontologyRootEntity.getId(),e);
+            }
+            finally {
+                if (session==null) closeExternalSession();
+            }
+            
+            c++;
+        }
+        
+        return c;
+    }
+
+    private Ontology getOntology(Entity ontologyEntity) throws Exception {
+       
+        Ontology ontology = (Ontology)getOntologyTerm(ontologyEntity, ontologyEntity);
+        ontology.setOwnerKey(ontologyEntity.getOwnerKey());
+        ontology.setReaders(getSubjectKeysWithPermission(ontologyEntity, "r"));
+        ontology.setWriters(getSubjectKeysWithPermission(ontologyEntity, "w"));
+        ontology.setCreationDate(ontologyEntity.getCreationDate());
+        ontology.setUpdatedDate(ontologyEntity.getUpdatedDate());
+        
+        return ontology;
+    }
+    
+    private OntologyTerm getOntologyTerm(Entity ontologyEntity, Entity ontologyTermEntity) throws Exception {
+
+        populateChildren(ontologyTermEntity);
+        
+        OntologyTerm ontologyTerm = null;
+        if (ontologyEntity.getId().equals(ontologyTermEntity.getId())) {
+            ontologyTerm = new Ontology();
+        }
+        else {
+            String typeName = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+            ontologyTerm = createOntologyTypeByName(typeName);   
+        }
+        
+        ontologyTerm.setId(ontologyTermEntity.getId());
+        ontologyTerm.setName(ontologyTermEntity.getName());
+        
+        if (ontologyTerm instanceof Interval) {
+            Interval interval = (Interval)ontologyTerm;
+            String lower = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_LOWER);
+            String upper = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_INTERVAL_UPPER);
+            if (lower!=null) {
+                interval.setLowerBound(Long.parseLong(lower));
+            }
+            if (upper!=null) {
+                interval.setUpperBound(Long.parseLong(upper));
+            }
+        }
+        else if (ontologyTerm instanceof EnumText) {
+            EnumText enumText = (EnumText)ontologyTerm;
+            String enumId = ontologyTermEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID);
+            if (enumId!=null) {
+                enumText.setValueEnumId(Long.parseLong(enumId));
+            }
+        }
+
+        List<OntologyTerm> terms = new ArrayList<OntologyTerm>();
+        for(Entity childEntity : EntityUtils.getChildrenForAttribute(ontologyTermEntity, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT)) {
+            OntologyTerm term = getOntologyTerm(ontologyEntity, childEntity);
+            if (term!=null) {
+                terms.add(term);
+            }
+        }
+        if (!terms.isEmpty()) {
+            ontologyTerm.setTerms(terms);
+        }
+        
+        ontologyTermIdToOntologyId.put(ontologyTermEntity.getId(), ontologyEntity.getId());
+        
+        return ontologyTerm;
+    }
+    
+    private OntologyTerm createOntologyTypeByName(String className) {
+        try {
+            if (className==null) return new Ontology();
+            return (OntologyTerm)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
+        }
+        catch (Exception ex) {
+            log.error("Could not instantiate ontology term for type "+className);
+        }
+        return null;
+    }
+
+
     /* ANNOTATIONS */
     
     private void loadAnnotations() {
@@ -1359,10 +1369,10 @@ public class MongoDbImport extends AnnotationDAO {
         
         Annotation annotation = new Annotation();
         annotation.setId(annotationId);
+        annotation.setName(annotationName);
         annotation.setOwnerKey(ownerKey);
         annotation.setReaders(getDefaultSubjectKeys(ownerKey));
-        annotation.setWriters(getDefaultSubjectKeys(ownerKey));
-        annotation.setText(annotationName);
+        annotation.setWriters(annotation.getReaders());
         annotation.setCreationDate(creationDate);
         annotation.setUpdatedDate(updatedDate);
         
@@ -1386,6 +1396,185 @@ public class MongoDbImport extends AnnotationDAO {
         return annotation;
     }
     
+    
+    /* COMPARTMENT SETS */
+    
+    private void loadCompartmentSets() throws DaoException {
+        Deque<Entity> compartmentSets = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_COMPARTMENT_SET));
+        loadCompartmentSets(compartmentSets);
+    }
+
+    private int loadCompartmentSets(Deque<Entity> ontologyRoots) {
+
+        int c = 0;
+        for(Iterator<Entity> i = ontologyRoots.iterator(); i.hasNext(); ) {
+            Entity compartmentSetEntity = i.next();
+
+            Session session = null;
+            try {
+                long start = System.currentTimeMillis();
+
+                session = openNewExternalSession();
+                CompartmentSet compartmentSet = getCompartmentSet(compartmentSetEntity);
+                compartmentSetCollection.insert(compartmentSet);
+
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove(); 
+                resetSession();
+
+                if (compartmentSet!=null) {
+                    log.info("  Loading "+compartmentSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+compartmentSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                
+            }
+            catch (Throwable e) {
+                log.error("Error loading compartment set "+compartmentSetEntity.getId(),e);
+            }
+            finally {
+                if (session==null) closeExternalSession();
+            }
+            
+            c++;
+        }
+        
+        return c;
+    }
+
+    private CompartmentSet getCompartmentSet(Entity compartmentSetEntity) throws Exception {
+       
+    	CompartmentSet compartmentSet = new CompartmentSet();
+    	compartmentSet.setName(compartmentSetEntity.getName());
+    	compartmentSet.setOwnerKey(compartmentSetEntity.getOwnerKey());
+    	compartmentSet.setReaders(getSubjectKeysWithPermission(compartmentSetEntity, "r"));
+    	compartmentSet.setWriters(getSubjectKeysWithPermission(compartmentSetEntity, "w"));
+    	compartmentSet.setCreationDate(compartmentSetEntity.getCreationDate());
+    	compartmentSet.setUpdatedDate(compartmentSetEntity.getUpdatedDate());
+    	compartmentSet.setAlignmentSpace(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE));
+    	compartmentSet.setImageSize(cleanRes(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+    	compartmentSet.setOpticalResolution(cleanRes(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+        
+    	Pattern p = Pattern.compile("(.*?) \\((.*?)\\)");
+    	
+    	List<Compartment> compartments = new ArrayList<Compartment>();
+    	for(Entity compartmentEntity : compartmentSetEntity.getOrderedChildren()) {
+    		Compartment compartment = new Compartment();
+    		compartment.setColor(compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
+    	    Matcher m = p.matcher(compartmentEntity.getName());
+    		if (m.matches()) {
+    			String name = m.group(1);
+    			String code = m.group(2);
+        		compartment.setName(name);
+        		compartment.setCode(code);
+    		}
+    		else {
+    			log.error("Error parsing compartment name: "+compartmentEntity.getName());
+    		}
+
+            Map<ImageType,String> images = new HashMap<ImageType,String>();
+            addImage(images,ImageType.MaskFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE));
+            addImage(images,ImageType.ChanFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE));
+            compartment.setImages(images);
+            
+    		compartments.add(compartment);
+    	}
+    	
+    	if (!compartments.isEmpty()) compartmentSet.setCompartments(compartments);
+    	
+        return compartmentSet;
+    }
+    
+
+    /* ALIGNMENT BOARDS */
+    
+    private void loadAlignmentBoards() throws DaoException {
+        Deque<Entity> alignmentBoards = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ALIGNMENT_BOARD));
+        loadAlignmentBoards(alignmentBoards);
+    }
+
+    private int loadAlignmentBoards(Deque<Entity> alignmentBoards) {
+
+        int c = 0;
+        for(Iterator<Entity> i = alignmentBoards.iterator(); i.hasNext(); ) {
+            Entity alignmentBoardEntity = i.next();
+
+            Session session = null;
+            try {
+                long start = System.currentTimeMillis();
+
+                session = openNewExternalSession();
+                AlignmentBoard alignmentBoard = getAlignmentBoard(alignmentBoardEntity);
+                alignmentBoardCollection.insert(alignmentBoard);
+
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove(); 
+                resetSession();
+
+                if (alignmentBoard!=null) {
+                    log.info("  Loading "+alignmentBoardEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                else {
+                    log.info("  Failure loading "+alignmentBoardEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                }
+                
+            }
+            catch (Throwable e) {
+                log.error("Error loading alignment board "+alignmentBoardEntity.getId(),e);
+            }
+            finally {
+                if (session==null) closeExternalSession();
+            }
+            
+            c++;
+        }
+        
+        return c;
+    }
+
+    private AlignmentBoard getAlignmentBoard(Entity alignmentBoardEntity) throws Exception {
+    	AlignmentBoard alignmentBoard = new AlignmentBoard();
+    	alignmentBoard.setName(alignmentBoardEntity.getName());
+    	alignmentBoard.setOwnerKey(alignmentBoardEntity.getOwnerKey());
+    	alignmentBoard.setReaders(getSubjectKeysWithPermission(alignmentBoardEntity, "r"));
+    	alignmentBoard.setWriters(getSubjectKeysWithPermission(alignmentBoardEntity, "w"));
+    	alignmentBoard.setCreationDate(alignmentBoardEntity.getCreationDate());
+    	alignmentBoard.setUpdatedDate(alignmentBoardEntity.getUpdatedDate());
+    	alignmentBoard.setAlignmentSpace(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE));
+    	alignmentBoard.setImageSize(cleanRes(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+    	alignmentBoard.setOpticalResolution(cleanRes(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+    	List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardEntity);
+    	if (!children.isEmpty()) alignmentBoard.setChildren(children);
+    	
+        return alignmentBoard;
+    }
+    
+    private List<AlignmentBoardItem> getAlignmentBoardChildren(Entity alignmentBoardItem) {
+
+    	List<AlignmentBoardItem> items = new ArrayList<AlignmentBoardItem>();
+    	
+    	for(Entity alignmentBoardItemEntity : EntityUtils.getChildrenForAttribute(alignmentBoardItem, EntityConstants.ATTRIBUTE_ITEM)) {
+    		Entity targetEntity = alignmentBoardItemEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_ENTITY);
+    		if (targetEntity==null) {
+    			log.info("Target no longer exists for alignment board item: "+alignmentBoardItemEntity.getId());
+    		}
+    		else {
+        		AlignmentBoardItem item = new AlignmentBoardItem();
+        		item.setInclusionStatus(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_INCLUSION_STATUS));
+        		item.setVisible("true".equalsIgnoreCase(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY)));
+        		item.setColor(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
+        		item.setRenderMethod(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RENDER_METHOD));
+        		Reference target = new Reference(getCollectionName(targetEntity.getEntityTypeName()), targetEntity.getId());
+        		item.setTarget(target);
+        		List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
+        		if (!children.isEmpty()) item.setChildren(children);	
+        		items.add(item);
+    		}
+    	}
+    	
+    	return items;
+    }
     
     /* UTILITY METHODS */
 
@@ -1438,6 +1627,9 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else if (EntityConstants.TYPE_FLY_LINE.equals(entityType)) {
             return "flyLine";
+        }
+        else if (EntityConstants.TYPE_COMPARTMENT_SET.equals(entityType)) {
+            return "compartmentSet";
         }
         return "unknown";
     }

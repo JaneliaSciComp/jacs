@@ -14,7 +14,6 @@ public abstract class OntologyTerm {
     private String name;
     private List<OntologyTerm> terms;
 
-
     public abstract boolean allowsChildren();
     
     public abstract String getTypeName();
