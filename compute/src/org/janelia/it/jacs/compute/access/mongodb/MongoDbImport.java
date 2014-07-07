@@ -61,7 +61,6 @@ import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.workspace.Folder;
 import org.janelia.it.jacs.model.domain.workspace.MaterializedView;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -88,7 +87,9 @@ public class MongoDbImport extends AnnotationDAO {
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
 	protected static final int ANNOTATION_BATCH_SIZE = 1000;
 	protected static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
-	
+
+    private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE };
+    
 	protected SubjectDAO subjectDao;
     protected Jongo jongo;
     protected MongoCollection subjectCollection;
@@ -239,22 +240,9 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Loading workspace for "+subjectKey);
         
-        Entity workspaceEntity = getDefaultWorkspace(subjectKey);
-        
-        LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
+        LinkedList<Entity> rootFolders = new LinkedList<Entity>(getWorkspaces(subjectKey));
         Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
-        List<Reference> children = loadRootFolders(rootFolders, visited);
-        
-        Workspace workspace = new Workspace();
-        workspace.setId(workspaceEntity.getId());
-        workspace.setName(workspaceEntity.getName());
-        workspace.setOwnerKey(workspaceEntity.getOwnerKey());
-        workspace.setReaders(getDefaultSubjectKeys(subjectKey));
-        workspace.setWriters(workspace.getReaders());
-        workspace.setCreationDate(workspaceEntity.getCreationDate());
-        workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
-        workspace.setChildren(children);
-        treeNodeCollection.insert(workspace);
+        loadRootFolders(rootFolders, visited);
         
         log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
     }
@@ -271,12 +259,7 @@ public class MongoDbImport extends AnnotationDAO {
                 long start = System.currentTimeMillis();
                 
                 session = openNewExternalSession();
-                Long nodeId = loadFolderHierarchy(folderEntity, visited);
-
-                if (nodeId!=null) {
-                    Reference root = new Reference("workspace",nodeId);
-                    roots.add(root);
-                }
+                loadFolderHierarchy(folderEntity, visited);
                 
                 // Free memory by releasing the reference to this entire entity tree
                 i.remove(); 
@@ -326,16 +309,25 @@ public class MongoDbImport extends AnnotationDAO {
             if (childType.equals(EntityConstants.TYPE_FOLDER)) {
                 loadFolderHierarchy(childEntity, visited);
             }
-            else if (childType.equals(EntityConstants.TYPE_SAMPLE) && childEntity.getName().contains("~")) {
-            	Entity parentSample = getAncestorWithType(childEntity.getOwnerKey(), childId, EntityConstants.TYPE_SAMPLE);
-            	if (parentSample!=null) {
-            		childId = parentSample.getId();
+            else {
+            	String colName = getCollectionName(childType);
+            	if ("unknown".equals(colName) || ("sample".equals(colName) && childEntity.getName().contains("~"))) {
+            		Entity owningEntity = null;
+            		Long newChildId = null;
+            		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
+            		// if they referenced a sub-sample, we find the parent sample. Same goes for neuron separations, etc.
+            		// The priority list defines the ordered list of possible entity types to try as ancestors.  
+            		for (String entityType : entityTranslationPriority) {
+            			owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
+                    	if (owningEntity!=null) {
+                    		newChildId = owningEntity.getId();
+                    		break;
+                    	}
+            		}
+            		if (newChildId!=null) childId = newChildId;
             	}
-            	else {
-            		childId = null;
-            	}
-            		
             }
+            
             if (childId!=null) {
 	            String type = getCollectionName(childEntity.getEntityTypeName());
 	            Reference ref = new Reference(type,childId);
@@ -788,6 +780,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private SampleProcessingResult getSampleProcessingResult(Entity resultEntity) {
         SampleProcessingResult result = new SampleProcessingResult();
+        result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         String area = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
@@ -832,7 +825,12 @@ public class MongoDbImport extends AnnotationDAO {
         
         String cellCountStr = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CELL_COUNT);
         if (cellCountStr!=null) {
-        	result.setCellCount(Integer.parseInt(cellCountStr));
+        	try {
+        		result.setCellCount(Integer.parseInt(cellCountStr));	
+        	}
+        	catch (NumberFormatException e) {
+        		log.info("Could not parse cell count: "+cellCountStr);
+        	}
         }
 
         Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
@@ -988,6 +986,7 @@ public class MongoDbImport extends AnnotationDAO {
         fragmentsReference.setReferenceId(separationEntity.getId());
         
         NeuronSeparation neuronSeparation = new NeuronSeparation();
+        neuronSeparation.setName(separationEntity.getName());
         neuronSeparation.setCreationDate(separationEntity.getCreationDate());
         neuronSeparation.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         neuronSeparation.setFragmentsReference(fragmentsReference);
@@ -1510,6 +1509,7 @@ public class MongoDbImport extends AnnotationDAO {
     private CompartmentSet getCompartmentSet(Entity compartmentSetEntity) throws Exception {
        
     	CompartmentSet compartmentSet = new CompartmentSet();
+    	compartmentSet.setId(compartmentSetEntity.getId());
     	compartmentSet.setName(compartmentSetEntity.getName());
     	compartmentSet.setOwnerKey(compartmentSetEntity.getOwnerKey());
     	compartmentSet.setReaders(getSubjectKeysWithPermission(compartmentSetEntity, "r"));
@@ -1599,6 +1599,7 @@ public class MongoDbImport extends AnnotationDAO {
 
     private AlignmentBoard getAlignmentBoard(Entity alignmentBoardEntity) throws Exception {
     	AlignmentBoard alignmentBoard = new AlignmentBoard();
+    	alignmentBoard.setId(alignmentBoardEntity.getId());
     	alignmentBoard.setName(alignmentBoardEntity.getName());
     	alignmentBoard.setOwnerKey(alignmentBoardEntity.getOwnerKey());
     	alignmentBoard.setReaders(getSubjectKeysWithPermission(alignmentBoardEntity, "r"));
