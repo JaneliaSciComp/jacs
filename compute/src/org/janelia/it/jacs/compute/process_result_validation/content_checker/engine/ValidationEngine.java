@@ -47,6 +47,10 @@ public class ValidationEngine {
         }
     }
 
+    public void writeCategories() {
+        validationLogger.close();
+    }
+
     private void createValidatorMap() {
         validationLogger.setMinSize( EntityConstants.TYPE_IMAGE_2D, 50L );
         validationLogger.setMinSize( EntityConstants.TYPE_MOVIE, 1000L );

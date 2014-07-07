@@ -62,6 +62,9 @@ public class ValidationService extends AbstractEntityService {
         else {
             traverse(sampleId);
         }
+        // Follow up with category list.  This may be modified at some point, as reports lines are cached
+        // within the validating engine, and grouped by their categories on report-back.
+        validationEngine.writeCategories();
     }
 
     /** Recursive descent of entity by ID. */

@@ -2,16 +2,14 @@ package org.janelia.it.jacs.compute.process_result_validation;
 
 import org.apache.log4j.Logger;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.Closeable;
+import java.util.*;
 
 /**
  * This captures error output from validations.  This captures what is wrong.
  * Created by fosterl on 6/27/14.
  */
-public class ValidationLogger {
+public class ValidationLogger implements Closeable {
     // Refer to the header in interpreting the log.
     public static final Category GENERAL_CATEGORY_EXCEPTION = new Category("Something which threw an exception");
     public static final String MISSING = "Missing ";
@@ -21,14 +19,14 @@ public class ValidationLogger {
     private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tError\tCategory";
     private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s\t%s";
     private Logger internalLogger;
-    private Set<Category> categories;
+    private Map<Category,List<ReportData>> categoryListMap;
     private Map<String,Long> filePatternToMinSize;
 
     public ValidationLogger( Logger internalLogger ) {
         this.internalLogger = internalLogger;
         this.filePatternToMinSize = new HashMap<>();
-        this.categories = new HashSet<>();
-        this.categories.add( GENERAL_CATEGORY_EXCEPTION );
+        this.categoryListMap = new TreeMap<>();
+        addCategory(GENERAL_CATEGORY_EXCEPTION);
     }
 
     /**
@@ -61,11 +59,11 @@ public class ValidationLogger {
      * @param category something that will be checked.
      */
     public void addCategory( String category ) {
-        categories.add( new Category(category) );
+        addCategory(new Category(category));
     }
 
     public void addCategory( Category category ) {
-        categories.add( category );
+        categoryListMap.put(category, new ArrayList<ReportData>());
     }
 
     /**
@@ -81,11 +79,37 @@ public class ValidationLogger {
      * @param message description of failure.
      */
     public void reportError( Long sampleId, Long entityId, String owningEntityType, Category testCategory, String message ) {
-        if ( ! categories.contains( testCategory ) ) {
+        if ( ! categoryListMap.containsKey(testCategory) ) {
             throw new UnknownCategoryException( testCategory, sampleId, entityId, message );
         }
-        String errorMesage = String.format( VAL_LOG_FMT, sampleId, entityId, owningEntityType, message, testCategory );
-        internalLogger.error( errorMesage );
+        ReportData reportData = new ReportData();
+        reportData.setCategory( testCategory );
+        reportData.setEntityId(entityId);
+        reportData.setSampleId(sampleId);
+        reportData.setEntityType(owningEntityType);
+        reportData.setMessage( message );
+        categoryListMap.get( testCategory ).add( reportData );
+    }
+
+    /**
+     * This is the final closure.  Do not try and report any errors or add categories after this.
+     */
+    @Override
+    public void close() {
+        internalLogger.info("Category List Follows:");
+        for ( Category category: categoryListMap.keySet() ) {
+            internalLogger.info("CATEGORY: " + category);
+            internalLogger.info( VAL_LOG_HEADER );
+            for ( ReportData reportData: categoryListMap.get( category ) ) {
+                String errorMesage = String.format(
+                        VAL_LOG_FMT, reportData.getSampleId(), reportData.getEntityId(), reportData.getEntityType(), reportData.getMessage(), reportData.getCategory()
+                );
+                internalLogger.error( errorMesage );
+            }
+        }
+
+        categoryListMap = null;
+
     }
 
     /**
@@ -101,11 +125,13 @@ public class ValidationLogger {
     /**
      * Category is constructed/used largely like exceptions are used: seed it with a string, and use it like a marker.
      */
-    public static class Category {
+    public static class Category implements Comparable<Category> {
         private String categoryText;
         public Category( String categoryText ) {
             this.categoryText = categoryText;
         }
+
+        @Override
         public String toString() { return categoryText; }
 
         /**
@@ -114,6 +140,7 @@ public class ValidationLogger {
          * @param o some other object--probably another Category.
          * @return true if to-string between this and other match.
          */
+        @Override
         public boolean equals( Object o ) {
             if ( o == null ) {
                 return false;
@@ -121,6 +148,63 @@ public class ValidationLogger {
             return o.toString().equals( toString() );
         }
 
+        @Override
         public int hashCode() { return toString().hashCode(); }
+
+        @Override
+        public int compareTo(Category o) {
+            if ( o == null ) {
+                return Integer.MAX_VALUE;
+            }
+            return categoryText.compareTo( o.toString() );
+        }
+    }
+
+    public static class ReportData {
+        private Category category;
+        private Long sampleId;
+        private Long entityId;
+        private String entityType;
+        private String message;
+
+        public Category getCategory() {
+            return category;
+        }
+
+        public void setCategory(Category category) {
+            this.category = category;
+        }
+
+        public Long getSampleId() {
+            return sampleId;
+        }
+
+        public void setSampleId(Long sampleId) {
+            this.sampleId = sampleId;
+        }
+
+        public Long getEntityId() {
+            return entityId;
+        }
+
+        public void setEntityId(Long entityId) {
+            this.entityId = entityId;
+        }
+
+        public String getEntityType() {
+            return entityType;
+        }
+
+        public void setEntityType(String entityType) {
+            this.entityType = entityType;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
     }
 }
