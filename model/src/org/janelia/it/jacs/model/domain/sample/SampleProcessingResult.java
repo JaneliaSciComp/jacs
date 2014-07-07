@@ -7,13 +7,20 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
 public class SampleProcessingResult extends PipelineResult implements HasFiles {
 
+	private String name;
     private String anatomicalArea;
     private String imageSize;
     private String opticalResolution;
     private Map<FileType,String> files;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
+
+    public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
     public String getAnatomicalArea() {
         return anatomicalArea;
     }
