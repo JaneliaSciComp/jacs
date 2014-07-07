@@ -32,7 +32,7 @@ public class ValidationService extends AbstractEntityService {
 
         String dataSetName = (String) processData.getItem("DATA_SET_NAME");
         String sampleEntityIdStr = (String) processData.getItem("SAMPLE_ENTITY_ID");
-        if ( sampleEntityIdStr != null ) {
+        if ( sampleEntityIdStr != null  &&  sampleEntityIdStr.trim().length() > 0 ) {
             sampleId = Long.parseLong(sampleEntityIdStr);
         }
         logger.info("Running validation, ownerKey=" + ownerKey +
