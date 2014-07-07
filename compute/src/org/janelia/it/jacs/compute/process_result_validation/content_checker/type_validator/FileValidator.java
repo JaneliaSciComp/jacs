@@ -76,11 +76,11 @@ public class FileValidator {
     }
 
     private void reportMissingChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.reportError( entity.getId(), sampleId, entity.getEntityTypeName(), VAL_MISSING_CHILD + childAttribName, ValidationLogger.MISSING + childAttribName);
+        validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), VAL_MISSING_CHILD + childAttribName, ValidationLogger.MISSING + childAttribName);
     }
 
     private void reportEmptyChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.reportError( entity.getId(), sampleId, entity.getEntityTypeName(), VAL_EMPTY_CHILD + childAttribName, ValidationLogger.EMPTY + childAttribName);
+        validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), VAL_EMPTY_CHILD + childAttribName, ValidationLogger.EMPTY + childAttribName);
     }
 
 }
