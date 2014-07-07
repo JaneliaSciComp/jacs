@@ -12,7 +12,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
 
     private ValidationLogger validationLogger;
-    private static final String NO_FRAGMENTS = "No Fragments";
+    private static final ValidationLogger.Category NO_FRAGMENTS = new ValidationLogger.Category("No Fragments");
 
     public NeuronSeparatorPipelineResultValidator( ValidationLogger validationLogger ) {
         this.validationLogger = validationLogger;

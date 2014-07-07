@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class ValidationLogger {
     // Refer to the header in interpreting the log.
-    public static final String GENERAL_CATEGORY_EXCEPTION = "Something which threw an exception";
+    public static final Category GENERAL_CATEGORY_EXCEPTION = new Category("Something which threw an exception");
     public static final String MISSING = "Missing ";
     public static final String EMPTY = "Empty ";
     public static final String FILE_ERROR = "File Error ";
@@ -21,7 +21,7 @@ public class ValidationLogger {
     private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tError\tCategory";
     private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s\t%s";
     private Logger internalLogger;
-    private Set<String> categories;
+    private Set<Category> categories;
     private Map<String,Long> filePatternToMinSize;
 
     public ValidationLogger( Logger internalLogger ) {
@@ -61,6 +61,10 @@ public class ValidationLogger {
      * @param category something that will be checked.
      */
     public void addCategory( String category ) {
+        categories.add( new Category(category) );
+    }
+
+    public void addCategory( Category category ) {
         categories.add( category );
     }
 
@@ -76,7 +80,7 @@ public class ValidationLogger {
      * @param testCategory what kind of test.
      * @param message description of failure.
      */
-    public void reportError( Long sampleId, Long entityId, String owningEntityType, String testCategory, String message ) {
+    public void reportError( Long sampleId, Long entityId, String owningEntityType, Category testCategory, String message ) {
         if ( ! categories.contains( testCategory ) ) {
             throw new UnknownCategoryException( testCategory, sampleId, entityId, message );
         }
@@ -89,8 +93,34 @@ public class ValidationLogger {
      */
     public static class UnknownCategoryException extends RuntimeException {
         private static final String MSG_FMT = "Unknown category %s while reporting message %s on sample %d's descendent %s.  Please register the category.";
-        public UnknownCategoryException( String category, Long sampleId, Long entityId, String msg ) {
+        private UnknownCategoryException( Category category, Long sampleId, Long entityId, String msg ) {
             super( String.format( MSG_FMT, category, sampleId, entityId, msg ) );
         }
+    }
+
+    /**
+     * Category is constructed/used largely like exceptions are used: seed it with a string, and use it like a marker.
+     */
+    public static class Category {
+        private String categoryText;
+        public Category( String categoryText ) {
+            this.categoryText = categoryText;
+        }
+        public String toString() { return categoryText; }
+
+        /**
+         * This o'ride liberally is true for anything whose to-string is also equal.
+         *
+         * @param o some other object--probably another Category.
+         * @return true if to-string between this and other match.
+         */
+        public boolean equals( Object o ) {
+            if ( o == null ) {
+                return false;
+            }
+            return o.toString().equals( toString() );
+        }
+
+        public int hashCode() { return toString().hashCode(); }
     }
 }

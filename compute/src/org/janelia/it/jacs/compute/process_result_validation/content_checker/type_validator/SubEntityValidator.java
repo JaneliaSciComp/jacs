@@ -21,7 +21,8 @@ public class SubEntityValidator {
         this.validationLogger = validationLogger;
     }
 
-    public void validateSubEntities(Entity entity, Long sampleId, String[] requiredChildEntityTypes) throws Exception {
+    public boolean validateSubEntities(Entity entity, Long sampleId, String[] requiredChildEntityTypes) throws Exception {
+        boolean rtnVal = true;
         for ( String type: requiredChildEntityTypes ) {
             validationLogger.addCategory( MISSING_SUBENTITY + type );
         }
@@ -34,8 +35,10 @@ public class SubEntityValidator {
         for ( String requiredChild: requiredChildEntityTypes ) {
             if ( ! entityNamesFound.contains( requiredChild ) ) {
                 reportMissingChild( requiredChild, sampleId, entity );
+                rtnVal = false;
             }
         }
+        return rtnVal;
     }
 
     private void reportMissingChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
@@ -44,7 +47,7 @@ public class SubEntityValidator {
                 childAttribName, entity.getName(), entity.getId(), sampleId
         );
         validationLogger.reportError(
-                sampleId, entity.getId(), entity.getEntityTypeName(), MISSING_SUBENTITY + childAttribName, message
+                sampleId, entity.getId(), entity.getEntityTypeName(), new ValidationLogger.Category(MISSING_SUBENTITY + childAttribName), message
         );
     }
 

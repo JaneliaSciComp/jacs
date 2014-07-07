@@ -71,7 +71,7 @@ public class SampleProcessingValidator implements TypeValidator {
                         validationLogger.reportError(
                                 sampleId, entity.getId(),
                                 entity.getEntityTypeName(),
-                                ValidationLogger.MISSING + REQUIRED_FILE_PATTERNS[ i ],
+                                new ValidationLogger.Category(ValidationLogger.MISSING + REQUIRED_FILE_PATTERNS[ i ]),
                                 String.format(
                                         "Failed to find a %s under Sample Processing entity %d.",
                                         REQUIRED_FILE_PATTERNS[ i ],

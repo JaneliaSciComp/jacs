@@ -13,19 +13,16 @@ import org.janelia.it.jacs.model.entity.EntityData;
  * Created by fosterl on 7/1/14.
  */
 public class ImageTileValidator implements TypeValidator {
-    private static final String NO_LSM_STACKS = "No LSM stacks";
+    private static final ValidationLogger.Category NO_LSM_STACKS = new ValidationLogger.Category("No LSM stacks");
     private ValidationLogger validationLogger;
     private EntityBeanLocal entitybean;
     private SubEntityValidator subEntityValidator;
 
-    private static String[] requiredChildEntityTypes;
-    static {
-        requiredChildEntityTypes = new String[] {
+    private static final String[] REQUIRED_CHILD_ENTITY_TYPES = new String[] {
                 EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
                 EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE,
                 EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE,
-        };
-    }
+    };
 
     public ImageTileValidator( ValidationLogger validationLogger, SubEntityValidator subEntityValidator, EntityBeanLocal entityBean ) {
         this.validationLogger = validationLogger;
@@ -36,8 +33,10 @@ public class ImageTileValidator implements TypeValidator {
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
+        boolean isValid = true;
+
         // Check the simple parts: got these files?
-        subEntityValidator.validateSubEntities( entity, sampleId, requiredChildEntityTypes );
+        isValid = subEntityValidator.validateSubEntities( entity, sampleId, REQUIRED_CHILD_ENTITY_TYPES );
         int lsmCount = 0;
         // The more unique parts of the val: look for some nondescriptly-named entities.
         for ( EntityData entityData : entity.getEntityData() ) {
@@ -53,6 +52,11 @@ public class ImageTileValidator implements TypeValidator {
 
         if (lsmCount == 0) {
             validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), NO_LSM_STACKS, "LSMs missing from " + entity.getName());
+            isValid = false;
+        }
+
+        if ( isValid ) {
+            System.out.println("Found a valid Image Tile: " + entity.getId());
         }
     }
 }

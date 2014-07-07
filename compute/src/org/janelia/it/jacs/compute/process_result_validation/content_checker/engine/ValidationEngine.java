@@ -41,7 +41,7 @@ public class ValidationEngine {
                 validator.validate( entity, sampleId );
             } catch ( Exception ex ) {
                 ex.printStackTrace();
-                validationLogger.reportError(entity.getId(), sampleId, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, EntityConstants.TYPE_SAMPLE, "Exception: " + ex.getMessage());
+                validationLogger.reportError(entity.getId(), sampleId, EntityConstants.TYPE_SAMPLE, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, "Exception: " + ex.getMessage());
                 throw new RuntimeException("Halting");
             }
         }
