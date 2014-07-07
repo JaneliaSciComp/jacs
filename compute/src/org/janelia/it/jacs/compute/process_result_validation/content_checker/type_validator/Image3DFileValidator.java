@@ -13,7 +13,7 @@ public class Image3DFileValidator implements TypeValidator {
 
     private FileValidator fileValidator;
 
-    private static String[] REQUIRED_CHILD_FILES;
+    private final static String[] REQUIRED_CHILD_FILES;
     static {
         REQUIRED_CHILD_FILES = new String[] {
                 EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,

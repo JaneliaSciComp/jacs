@@ -13,7 +13,7 @@ import java.util.Set;
  * Created by fosterl on 6/27/14.
  */
 public class SampleProcessingValidator implements TypeValidator {
-    private static final String[] REQUIRED_CHILD_ENTITY_TYPES = new String[] { EntityConstants.ATTRIBUTE_SUPPORTING_FILES, };
+    private static final String[] REQUIRED_ATTRIBUTE_NAMES = new String[] { EntityConstants.ATTRIBUTE_SUPPORTING_FILES, };
     private static final String[] REQUIRED_FILE_PATTERNS = new String[] { ".lsm.metadata", "stitched-" };
 
     private ValidationLogger validationLogger;
@@ -34,14 +34,14 @@ public class SampleProcessingValidator implements TypeValidator {
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
-        subEntityValidator.validateSubEntities( entity, sampleId, REQUIRED_CHILD_ENTITY_TYPES);
-        validateDescendants( entity, sampleId );
+        subEntityValidator.validateSubEntitiesByAttributeName(entity, sampleId, REQUIRED_ATTRIBUTE_NAMES);
+        validateSupportingData(entity, sampleId);
     }
 
     /**
      * This does some more complex delving to find what's needed.
      */
-    private void validateDescendants( Entity entity, Long sampleId ) throws Exception {
+    public void validateSupportingData(Entity entity, Long sampleId) throws Exception {
         Set<Entity> children = entityBean.getChildEntities( entity.getId() );
         boolean[] subEntityFound = new boolean[ REQUIRED_FILE_PATTERNS.length ];
         for ( Entity child: children ) {

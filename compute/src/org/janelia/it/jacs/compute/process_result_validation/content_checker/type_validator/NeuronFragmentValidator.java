@@ -14,8 +14,6 @@ public class NeuronFragmentValidator implements TypeValidator {
     private FileValidator fileValidator;
     private static final String[] REQUIRED_CHILD_FILES = new String[] {
                 EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
-                EntityConstants.ATTRIBUTE_MASK_IMAGE,
-                EntityConstants.ATTRIBUTE_CHAN_IMAGE,
     };
 
     public NeuronFragmentValidator( ValidationLogger validationLogger ) {

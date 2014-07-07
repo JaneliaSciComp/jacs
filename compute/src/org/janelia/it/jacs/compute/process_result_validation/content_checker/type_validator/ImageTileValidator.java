@@ -18,7 +18,7 @@ public class ImageTileValidator implements TypeValidator {
     private EntityBeanLocal entitybean;
     private SubEntityValidator subEntityValidator;
 
-    private static final String[] REQUIRED_CHILD_ENTITY_TYPES = new String[] {
+    private static final String[] REQUIRED_ATTRIBUTE_NAMES = new String[] {
                 EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
                 EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE,
                 EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE,
@@ -34,7 +34,7 @@ public class ImageTileValidator implements TypeValidator {
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
         // Check the simple parts: got these files?
-        boolean isValid = subEntityValidator.validateSubEntities( entity, sampleId, REQUIRED_CHILD_ENTITY_TYPES );
+        boolean isValid = subEntityValidator.validateSubEntitiesByAttributeName(entity, sampleId, REQUIRED_ATTRIBUTE_NAMES);
         int lsmCount = 0;
         // The more unique parts of the val: look for some nondescriptly-named entities.
         for ( EntityData entityData : entity.getEntityData() ) {
@@ -49,7 +49,7 @@ public class ImageTileValidator implements TypeValidator {
         }
 
         if (lsmCount == 0) {
-            validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), NO_LSM_STACKS, "LSMs missing from " + entity.getName());
+            validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), NO_LSM_STACKS, "LSMs missing from " + entity.getName() );
             isValid = false;
         }
 
