@@ -33,10 +33,8 @@ public class ImageTileValidator implements TypeValidator {
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
-        boolean isValid = true;
-
         // Check the simple parts: got these files?
-        isValid = subEntityValidator.validateSubEntities( entity, sampleId, REQUIRED_CHILD_ENTITY_TYPES );
+        boolean isValid = subEntityValidator.validateSubEntities( entity, sampleId, REQUIRED_CHILD_ENTITY_TYPES );
         int lsmCount = 0;
         // The more unique parts of the val: look for some nondescriptly-named entities.
         for ( EntityData entityData : entity.getEntityData() ) {
@@ -55,7 +53,7 @@ public class ImageTileValidator implements TypeValidator {
             isValid = false;
         }
 
-        if ( isValid ) {
+        if ( isValid   &&   REPORT_POSITIVES ) {
             System.out.println("Found a valid Image Tile: " + entity.getId());
         }
     }

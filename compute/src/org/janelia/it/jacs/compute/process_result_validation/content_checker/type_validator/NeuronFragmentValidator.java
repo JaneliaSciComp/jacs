@@ -12,14 +12,11 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 public class NeuronFragmentValidator implements TypeValidator {
 
     private FileValidator fileValidator;
-    private static String[] REQUIRED_CHILD_FILES;
-    static {
-        REQUIRED_CHILD_FILES = new String[] {
+    private static final String[] REQUIRED_CHILD_FILES = new String[] {
                 EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
                 EntityConstants.ATTRIBUTE_MASK_IMAGE,
                 EntityConstants.ATTRIBUTE_CHAN_IMAGE,
-        };
-    }
+    };
 
     public NeuronFragmentValidator( ValidationLogger validationLogger ) {
         fileValidator = new FileValidator(validationLogger);
@@ -27,6 +24,8 @@ public class NeuronFragmentValidator implements TypeValidator {
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
-        fileValidator.validateFileSet(entity, sampleId, REQUIRED_CHILD_FILES);
+        if ( fileValidator.validateFileSet(entity, sampleId, REQUIRED_CHILD_FILES)  &&  REPORT_POSITIVES ) {
+            System.out.println( "Found a valid Neuron Fragment " + entity.getId() );
+        }
     }
 }
