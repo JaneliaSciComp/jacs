@@ -14,6 +14,11 @@ import java.util.Set;
  * Created by fosterl on 7/7/14.
  */
 public class AlignmentResultValidator implements TypeValidator {
+    //todo research the name as defined constant.
+    public static final String JBA_ALIGNMENT_ENTITY_NAME = "JBA Alignment";
+    private static final ValidationLogger.Category MISSING_QI_CATEGORY = new ValidationLogger.Category("Qi Score Missing");
+    private static final String MISSING_QI_FMT = MISSING_QI_CATEGORY + " under JBA Alignment %d / %s in sample %d";
+
     private static final String[] REQUIRED_CHILD_ENTITY_TYPES = new String[] {
             EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT,
             EntityConstants.TYPE_SUPPORTING_DATA,
@@ -32,8 +37,14 @@ public class AlignmentResultValidator implements TypeValidator {
             EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE,
     };
 
+    private final static String[] REQUIRED_JPA_CHILD_FILES = new String[] {
+            EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE,
+            EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE,
+    };
+
     private EntityBeanLocal entityBean;
     private SubEntityValidator subEntityValidator;
+    private ValidationLogger validationLogger;
 
     private FileValidator fileValidator;
     private SampleProcessingValidator sampleProcessingValidator;
@@ -42,6 +53,7 @@ public class AlignmentResultValidator implements TypeValidator {
         this.subEntityValidator = subEntityValidator;
         this.entityBean = entityBean;
         this.fileValidator = new FileValidator( validationLogger );
+        this.validationLogger = validationLogger;
         sampleProcessingValidator = new SampleProcessingValidator( validationLogger, subEntityValidator, entityBean );
     }
 
@@ -78,5 +90,34 @@ public class AlignmentResultValidator implements TypeValidator {
                 break;
             }
         }
+
+        if ( entity.getName().equals(JBA_ALIGNMENT_ENTITY_NAME) ) {
+            validationLogger.addCategory( MISSING_QI_CATEGORY );
+            entityBean.loadLazyEntity(entity, false);
+
+            String qiScore = null;
+            boolean validJPA = true;
+            Entity d3i = entity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+            if ( d3i != null ) {
+                qiScore = d3i.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+                validJPA = fileValidator.validateFileSet( d3i, sampleId, REQUIRED_JPA_CHILD_FILES );
+            }
+
+            if ( qiScore == null ) {
+                validationLogger.reportError(
+                        sampleId, d3i.getId(), entity.getEntityTypeName(), MISSING_QI_CATEGORY,
+                        String.format(
+                                MISSING_QI_FMT, entity.getId(), entity.getName(), sampleId
+                        )
+                );
+                validJPA = false;
+            }
+
+            if ( validJPA  &&  REPORT_POSITIVES ) {
+                System.out.println("Found a " + JBA_ALIGNMENT_ENTITY_NAME + " with valid QI Score and 3d-Image's sub-files.");
+            }
+
+        }
     }
+
 }

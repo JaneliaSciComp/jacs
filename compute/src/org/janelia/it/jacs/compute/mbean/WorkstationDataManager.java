@@ -741,7 +741,10 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             logger.error("Error running runBenchmarks", ex);
         }
     }
-    
+
+    /*
+     @Deprecated going to the validation engine code instead. LLF
+     */
     private String getQiScore(EntityBeanLocal e, Entity sample) throws Exception {
 
     	String qiScore = null;
