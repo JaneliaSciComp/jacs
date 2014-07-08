@@ -9,6 +9,6 @@ import org.janelia.it.jacs.model.entity.Entity;
  * Created by fosterl on 6/27/14.
  */
 public interface TypeValidator {
-    final static boolean REPORT_POSITIVES = true;
+    final static boolean REPORT_POSITIVES = false;
     void validate(Entity entity, Long sampleId ) throws Exception;
 }
