@@ -61,6 +61,7 @@ import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.workspace.Folder;
 import org.janelia.it.jacs.model.domain.workspace.MaterializedView;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -239,10 +240,23 @@ public class MongoDbImport extends AnnotationDAO {
         long start = System.currentTimeMillis();
 
         log.info("Loading workspace for "+subjectKey);
+
+        Entity workspaceEntity = getDefaultWorkspace(subjectKey);
         
-        LinkedList<Entity> rootFolders = new LinkedList<Entity>(getWorkspaces(subjectKey));
+        LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
         Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
-        loadRootFolders(rootFolders, visited);
+        List<Reference> children = loadRootFolders(rootFolders, visited);
+        
+        Workspace workspace = new Workspace();
+        workspace.setId(workspaceEntity.getId());
+        workspace.setName(workspaceEntity.getName());
+        workspace.setOwnerKey(workspaceEntity.getOwnerKey());
+        workspace.setReaders(getDefaultSubjectKeys(subjectKey));
+        workspace.setWriters(workspace.getReaders());
+        workspace.setCreationDate(workspaceEntity.getCreationDate());
+        workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
+        workspace.setChildren(children);
+        treeNodeCollection.insert(workspace);
         
         log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
     }
@@ -259,7 +273,12 @@ public class MongoDbImport extends AnnotationDAO {
                 long start = System.currentTimeMillis();
                 
                 session = openNewExternalSession();
-                loadFolderHierarchy(folderEntity, visited);
+                Long nodeId = loadFolderHierarchy(folderEntity, visited);
+
+                if (nodeId!=null) {
+                    Reference root = new Reference("workspace",nodeId);
+                    roots.add(root);
+                }
                 
                 // Free memory by releasing the reference to this entire entity tree
                 i.remove(); 
@@ -280,6 +299,12 @@ public class MongoDbImport extends AnnotationDAO {
     
     private Long loadFolderHierarchy(Entity folderEntity, Set<Long> visited) throws Exception {
 
+    	String colName = getCollectionName(folderEntity.getEntityTypeName());
+    	if (colName==null) {
+    		log.warn("Cannot load top level entity with type: "+folderEntity.getEntityTypeName());
+    		return null;
+    	}
+    	
         if (visited.contains(folderEntity.getId())) {
             return folderEntity.getId();
         }
@@ -310,8 +335,8 @@ public class MongoDbImport extends AnnotationDAO {
                 loadFolderHierarchy(childEntity, visited);
             }
             else {
-            	String colName = getCollectionName(childType);
-            	if ("unknown".equals(colName) || ("sample".equals(colName) && childEntity.getName().contains("~"))) {
+            	String childColName = getCollectionName(childType);
+            	if ("unknown".equals(childColName) || ("sample".equals(childColName) && childEntity.getName().contains("~"))) {
             		Entity owningEntity = null;
             		Long newChildId = null;
             		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
