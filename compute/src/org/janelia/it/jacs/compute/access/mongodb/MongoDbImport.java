@@ -900,6 +900,7 @@ public class MongoDbImport extends AnnotationDAO {
 
     private SampleCellCountingResult getSampleCellCountingResult(Entity resultEntity) {
     	SampleCellCountingResult result = new SampleCellCountingResult();
+    	result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         
