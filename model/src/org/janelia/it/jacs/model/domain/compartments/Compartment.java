@@ -11,7 +11,7 @@ public class Compartment implements HasFiles {
 	private String code;
 	private String color;
 	private Integer number;
-    private Map<FileType,String> images;
+    private Map<FileType,String> files;
 	
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 	
@@ -40,9 +40,9 @@ public class Compartment implements HasFiles {
 		this.number = number;
 	}
     public Map<FileType, String> getFiles() {
-        return images;
+        return files;
     }
-    public void setImages(Map<FileType, String> images) {
-        this.images = images;
+    public void setFiles(Map<FileType, String> files) {
+        this.files = files;
     }
 }

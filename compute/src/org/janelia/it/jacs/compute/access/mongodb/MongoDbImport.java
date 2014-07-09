@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
+import java.io.File;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +13,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
+import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -89,7 +92,7 @@ public class MongoDbImport extends AnnotationDAO {
 	protected static final int ANNOTATION_BATCH_SIZE = 1000;
 	protected static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
 
-    private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE };
+    private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE, EntityConstants.TYPE_LSM_STACK };
     
 	protected SubjectDAO subjectDao;
     protected Jongo jongo;
@@ -108,6 +111,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection alignmentBoardCollection;
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
 
+    // Load state
     private String genderConsensus = null;
     
     public MongoDbImport(String serverUrl, String databaseName) throws UnknownHostException {
@@ -132,6 +136,7 @@ public class MongoDbImport extends AnnotationDAO {
     	ontologyCollection = jongo.getCollection("ontology");
     	compartmentSetCollection = jongo.getCollection("compartmentSet");
     	alignmentBoardCollection = jongo.getCollection("alignmentBoard");
+    	
     }
 
     public void loadAllEntities() throws DaoException {
@@ -153,7 +158,8 @@ public class MongoDbImport extends AnnotationDAO {
         loadDataSets();
         
         log.info("Adding samples");
-        // TODO: handle cell counting results
+        // TODO: handle curated neurons
+        // TODO: handle pattern mask results in samples (knappj)
         loadSamples();
 
         log.info("Adding screen data");
@@ -273,7 +279,7 @@ public class MongoDbImport extends AnnotationDAO {
                 long start = System.currentTimeMillis();
                 
                 session = openNewExternalSession();
-                Long nodeId = loadFolderHierarchy(folderEntity, visited);
+                Long nodeId = loadFolderHierarchy(folderEntity, visited, "  ");
 
                 if (nodeId!=null) {
                     Reference root = new Reference("workspace",nodeId);
@@ -297,8 +303,15 @@ public class MongoDbImport extends AnnotationDAO {
         return roots;
     }
     
-    private Long loadFolderHierarchy(Entity folderEntity, Set<Long> visited) throws Exception {
+    private Long loadFolderHierarchy(Entity folderEntity, Set<Long> visited, String indent) throws Exception {
 
+    	if ("supportingFiles".equals(folderEntity.getName())) {
+    		log.info(indent+"Skipping "+folderEntity.getName());
+    		return null;
+    	}
+    	
+        log.trace(indent+"Loading "+folderEntity.getName());
+        
     	String colName = getCollectionName(folderEntity.getEntityTypeName());
     	if (colName==null) {
     		log.warn("Cannot load top level entity with type: "+folderEntity.getEntityTypeName());
@@ -326,49 +339,91 @@ public class MongoDbImport extends AnnotationDAO {
         node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
         node.setCreationDate(folderEntity.getCreationDate());
         node.setUpdatedDate(folderEntity.getUpdatedDate());
-        
-        List<Reference> children = new ArrayList<Reference>();
-        for(Entity childEntity : folderEntity.getOrderedChildren()) {
-            String childType = childEntity.getEntityTypeName();
-            Long childId = childEntity.getId();
-            if (childType.equals(EntityConstants.TYPE_FOLDER)) {
-                loadFolderHierarchy(childEntity, visited);
+    
+	    // Using a hash here to eliminate duplicates, especially those caused by folders which contain multiple descendants of the same sample
+	    HashSet<Reference> children = new LinkedHashSet<Reference>();
+	    
+	    // Preprocess all child names and see if we need to do a bulk mapping
+	    Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
+	    
+	    // 1) Case 1: Sub samples
+	    List<Long> subsampleIds = new ArrayList<Long>();
+	    for(Entity childEntity : folderEntity.getOrderedChildren()) {
+	        String childType = childEntity.getEntityTypeName();
+        	String childColName = getCollectionName(childType);
+        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
+        		subsampleIds.add(childEntity.getId());
+        	}
+	    }
+	    if (!subsampleIds.isEmpty()) {
+			List<String> upMapping = new ArrayList<String>();
+			upMapping.add("Sample");
+			List<String> downMapping = new ArrayList<String>();
+			List<MappedId> mappings = getProjectedResults(null, subsampleIds, upMapping, downMapping);
+			Map<Long,Entity> mappedEntities = getMappedEntities(mappings);
+            for(MappedId mappedId : mappings) {
+            	translatedEntities.put(mappedId.getOriginalId(),  mappedEntities.get(mappedId.getOriginalId()));
             }
-            else {
-            	String childColName = getCollectionName(childType);
-            	if ("unknown".equals(childColName) || ("sample".equals(childColName) && childEntity.getName().contains("~"))) {
-            		Entity owningEntity = null;
-            		Long newChildId = null;
-            		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
-            		// if they referenced a sub-sample, we find the parent sample. Same goes for neuron separations, etc.
-            		// The priority list defines the ordered list of possible entity types to try as ancestors.  
-            		for (String entityType : entityTranslationPriority) {
-            			owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
-                    	if (owningEntity!=null) {
-                    		newChildId = owningEntity.getId();
-                    		break;
-                    	}
-            		}
-            		if (newChildId!=null) childId = newChildId;
-            	}
-            }
-            
-            if (childId!=null) {
+            //log.trace(indent+"Translated "+subsampleIds.size()+ " sub samples to "+translatedEntities.size()+" entities");
+		}
+
+	    for(Entity childEntity : folderEntity.getOrderedChildren()) {
+	    	
+	        String childType = childEntity.getEntityTypeName();
+	        Long childId = childEntity.getId();
+	        if (childType.equals(EntityConstants.TYPE_FOLDER)) {
+	            loadFolderHierarchy(childEntity, visited, indent+"  ");
+	        }
+	        else {
+	        	Entity translatedEntity = translatedEntities.get(childEntity.getId());
+	        	if (translatedEntity!=null) {
+	        		childId = translatedEntity.getId();
+	        	}
+//	        	String childColName = getCollectionName(childType);
+//	        	// TODO: translate unknown entities using "unknown".equals(childColName) but this takes a long time
+//	        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
+//	        		Entity owningEntity = null;
+//	        		Long newChildId = null;
+//	        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
+//	        		// if they referenced a sub-sample, we find the parent sample. Same goes for neuron separations, etc.
+//	        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
+//	        		for (String entityType : entityTranslationPriority) {
+//	        			owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
+//	                	if (owningEntity!=null) {
+//	                		newChildId = owningEntity.getId();
+//	                		logger.info("    Will reference "+entityType+"#"+newChildId+" instead of "+childType+"#"+childId);
+//	                		break;
+//	                	}
+//	        		}
+//	        		if (newChildId!=null) childId = newChildId;
+//	        	}
+	        }
+	        
+	        if (childId!=null) {
 	            String type = getCollectionName(childEntity.getEntityTypeName());
 	            Reference ref = new Reference(type,childId);
 	            children.add(ref);
-            }
-        }
-        
+	        }
+	    }
+
+	    
         if (!children.isEmpty()) {
-            node.setChildren(children);
+            node.setChildren(new ArrayList<Reference>(children));
         }
 
         treeNodeCollection.insert(node);
         return node.getId();
     }
 
-    /* FLY LINES */
+    private Map<Long, Entity> getMappedEntities(List<MappedId> mappings) throws Exception {
+		List<Long> entityIds = new ArrayList<Long>(); 
+		for(MappedId mappedId : mappings) {
+			entityIds.add(mappedId.getMappedId());
+		}
+		return EntityUtils.getEntityMap(getEntitiesInList(null, entityIds));
+	}
+
+	/* FLY LINES */
     
     private void loadFlyLines() throws DaoException {
         long start = System.currentTimeMillis();
@@ -1547,6 +1602,8 @@ public class MongoDbImport extends AnnotationDAO {
         
     	Pattern p = Pattern.compile("(.*?) \\((.*?)\\)");
     	
+    	String rootDir = null;
+    	
     	List<Compartment> compartments = new ArrayList<Compartment>();
     	for(Entity compartmentEntity : compartmentSetEntity.getOrderedChildren()) {
     		Compartment compartment = new Compartment();
@@ -1562,12 +1619,41 @@ public class MongoDbImport extends AnnotationDAO {
     			log.error("Error parsing compartment name: "+compartmentEntity.getName());
     		}
 
-            Map<FileType,String> images = new HashMap<FileType,String>();
-            addImage(images,FileType.MaskFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE));
-            addImage(images,FileType.ChanFile,compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE));
-            compartment.setImages(images);
+            Map<FileType,String> files = new HashMap<FileType,String>();
+            String maskFile = compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE);
+            String chanFile = compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE);
+            
+            String parent = new File(maskFile).getParent();
+            if (rootDir==null || parent.equals(rootDir)) {
+            	rootDir = parent;
+            }
+            else {
+            	log.warn("Comparment set "+compartmentSet.getName()+" does not agree on root dir: "+parent+" != "+rootDir);
+            }
+
+            parent = new File(chanFile).getParent();
+            if (rootDir==null || parent.equals(rootDir)) {
+            	rootDir = parent;
+            }
+            else {
+            	log.warn("Comparment set "+compartmentSet.getName()+" does not agree on root dir: "+parent+" != "+rootDir);
+            }
+            
+            addImage(files,FileType.MaskFile,maskFile);
+            addImage(files,FileType.ChanFile,chanFile);
+            compartment.setFiles(files);
             
     		compartments.add(compartment);
+    	}
+    	
+    	compartmentSet.setFilepath(rootDir);
+    	    	
+    	for(Compartment compartment : compartments) {
+            Map<FileType,String> relativeFiles = new HashMap<FileType,String>();
+    		for(FileType fileType : compartment.getFiles().keySet()) {
+    			relativeFiles.put(fileType, compartment.getFiles().get(fileType).replaceFirst(rootDir+"/?", ""));
+    		}
+            compartment.setFiles(relativeFiles);
     	}
     	
     	if (!compartments.isEmpty()) compartmentSet.setCompartments(compartments);
