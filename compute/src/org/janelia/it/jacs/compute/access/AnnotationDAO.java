@@ -1309,7 +1309,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         PreparedStatement stmt = null;
         try {
             
-            log.debug(sql);
+            log.trace(sql);
             
             conn = getJdbcConnection();
             stmt = conn.prepareStatement(sql.toString());
