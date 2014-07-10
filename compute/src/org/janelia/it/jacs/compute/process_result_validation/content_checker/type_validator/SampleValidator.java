@@ -44,11 +44,16 @@ public class SampleValidator implements TypeValidator {
             }
         }
 
+        boolean reportableSuccess = false;
+        if ( unmatchedImageTileCount > 0 ) {
+            reportableSuccess = true;
+        }
+
         // Next: are there enough Sample Processing Results?
         for ( Entity child: refreshedSampleEntity.getChildren() ) {
             if ( child.getEntityTypeName().equals( EntityConstants.TYPE_PIPELINE_RUN ) ) {
-                Entity refreshedPipelineRunEntity = entityBean.getEntityAndChildren( child.getId() );
-                for ( Entity grandChild: child.getChildren() ) {
+                Entity refreshedPipeline = entityBean.getEntityAndChildren( child.getId() );
+                for ( Entity grandChild: refreshedPipeline.getChildren() ) {
                     if ( grandChild.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT ) ) {
                         unmatchedImageTileCount --;
                     }
@@ -65,6 +70,10 @@ public class SampleValidator implements TypeValidator {
                     NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE,
                     String.format( UNMATCHED_TILE_FMT, unmatchedImageTileCount, sampleId )
             );
+        }
+
+        if ( validationLogger.isToReportPositives()  &&  reportableSuccess  &&  unmatchedImageTileCount <= 0 ) {
+            validationLogger.reportSuccess( entity.getId(), EntityConstants.TYPE_SAMPLE + " : has one+ pipeline runs matched by sample processing.");
         }
     }
 

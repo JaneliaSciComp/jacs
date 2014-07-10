@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.process_result_validation;
 import org.apache.log4j.Logger;
 
 import java.io.Closeable;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -16,11 +17,16 @@ public class ValidationLogger implements Closeable {
     public static final String EMPTY = "Empty ";
     public static final String FILE_ERROR = "File Error ";
     public static final String MIN_SIZE = "Min Size ";
+    private static final String CATEGORY_BREAK = "\f";
     private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tError\tCategory";
     private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s\t%s";
+    private static final String CATEGORY_LIST_HEADER = "Category List Follows:";
+    private static final String CATEGORY_LABEL = "CATEGORY: ";
     private Logger internalLogger;
     private Map<Category,List<ReportData>> categoryListMap;
     private Map<String,Long> filePatternToMinSize;
+
+    private PrintWriter internalWriter;
 
     private boolean __reportPositives;
 
@@ -29,6 +35,10 @@ public class ValidationLogger implements Closeable {
         this.filePatternToMinSize = new HashMap<>();
         this.categoryListMap = new TreeMap<>();
         addCategory(GENERAL_CATEGORY_EXCEPTION);
+    }
+
+    public void setPrintWriter(PrintWriter writer) {
+        this.internalWriter = writer;
     }
 
     public boolean isToReportPositives() { return __reportPositives; }
@@ -68,7 +78,9 @@ public class ValidationLogger implements Closeable {
     }
 
     public void addCategory( Category category ) {
-        categoryListMap.put(category, new ArrayList<ReportData>());
+        if ( ! categoryListMap.containsKey( category ) ) {
+            categoryListMap.put(category, new ArrayList<ReportData>());
+        }
     }
 
     /**
@@ -105,9 +117,47 @@ public class ValidationLogger implements Closeable {
      */
     @Override
     public void close() {
-        internalLogger.info("Category List Follows:");
+        if ( internalWriter == null ) {
+            writeToLog();
+        }
+        else {
+            outputToWriter();
+            internalWriter.close();
+        }
+        categoryListMap = null;
+
+    }
+
+    /**
+     * File-wise dump for subsequent read by another process.
+     */
+    private void outputToWriter() {
+        internalWriter.println(CATEGORY_LIST_HEADER);
         for ( Category category: categoryListMap.keySet() ) {
-            internalLogger.info("CATEGORY: " + category);
+            internalWriter.println(CATEGORY_LABEL + category.toString());
+        }
+
+        for ( Category category: categoryListMap.keySet() ) {
+            if ( categoryListMap.get( category ).size() > 0 ) {
+                internalWriter.println(VAL_LOG_HEADER);
+                for ( ReportData reportData: categoryListMap.get( category ) ) {
+                    String errorMesage = String.format(
+                            VAL_LOG_FMT, reportData.getSampleId(), reportData.getEntityId(), reportData.getEntityType(), reportData.getMessage(), reportData.getCategory()
+                    );
+                    internalWriter.println(errorMesage);
+                }
+                internalWriter.print(CATEGORY_BREAK);
+            }
+        }
+    }
+
+    /**
+     * Log-wise dump for programmer examine.
+     */
+    private void writeToLog() {
+        internalLogger.info(CATEGORY_LIST_HEADER);
+        for ( Category category: categoryListMap.keySet() ) {
+            internalLogger.info(CATEGORY_LABEL + category);
             internalLogger.info( VAL_LOG_HEADER );
             for ( ReportData reportData: categoryListMap.get( category ) ) {
                 String errorMesage = String.format(
@@ -116,9 +166,6 @@ public class ValidationLogger implements Closeable {
                 internalLogger.error( errorMesage );
             }
         }
-
-        categoryListMap = null;
-
     }
 
     /**

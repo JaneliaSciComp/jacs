@@ -61,11 +61,14 @@ public class ValidationService extends AbstractEntityService {
     }
 
     /** Recursive descent of entity by ID. */
-    private void traverseForValidation( Long parentId ) throws Exception {
+    private void traverseForValidation( Long parentId, Long sampleId ) throws Exception {
         Collection<Entity> children = entityBean.getChildEntities( parentId );
         for ( Entity child: children ) {
-            validationEngine.validateByType( child, guid );
-            traverseForValidation( child.getId() );
+            if ( child.getId() == 1803764205405347938L) {
+                System.out.println("Found our broken sample.");
+            }
+            validationEngine.validateByType( child, sampleId );
+            traverseForValidation( child.getId(), sampleId );
         }
     }
 
@@ -74,7 +77,7 @@ public class ValidationService extends AbstractEntityService {
         Entity entity = entityBean.getEntityAndChildren( guid );
         if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE ) ) {
             // Do not look for samples under samples.  Do not recurse further here.
-            traverseForValidation( entity.getId() );
+            traverseForValidation( entity.getId(), guid );
         }
         else {
             for ( Entity child: entity.getChildren() ) {

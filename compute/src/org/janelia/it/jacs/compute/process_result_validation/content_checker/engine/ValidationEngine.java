@@ -9,6 +9,10 @@ import org.janelia.it.jacs.compute.process_result_validation.content_checker.typ
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,8 +29,18 @@ public class ValidationEngine {
 
     private Map<String,TypeValidator> validatorMap;
 
-    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) {
+    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException {
         validationLogger = new ValidationLogger( logger );
+        PrintWriter pw = new PrintWriter(
+                new FileWriter(
+                        File.createTempFile(
+                                this.getClass().getSimpleName(),
+                                ".report.tsv",
+                                new File( System.getProperty("user.home") )
+                        )
+                )
+        );
+        validationLogger.setPrintWriter(pw);
         validationLogger.setToReportPositives( debug );
         this.entityBean = entityBean;
         this.computeBean = computeBean;
