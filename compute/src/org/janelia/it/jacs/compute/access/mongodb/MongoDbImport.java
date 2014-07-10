@@ -46,6 +46,7 @@ import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
@@ -103,7 +104,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection screenSampleCollection;
     protected MongoCollection patternMaskCollection;
     protected MongoCollection flyLineCollection;
-    protected MongoCollection lsmCollection;
+    protected MongoCollection imageCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection ontologyCollection;
@@ -130,7 +131,7 @@ public class MongoDbImport extends AnnotationDAO {
         screenSampleCollection = jongo.getCollection("screenSample");
         patternMaskCollection = jongo.getCollection("patternMask");
         flyLineCollection = jongo.getCollection("flyLine");
-        lsmCollection = jongo.getCollection("lsm");
+        imageCollection = jongo.getCollection("image");
     	fragmentCollection = jongo.getCollection("fragment");
     	annotationCollection = jongo.getCollection("annotation");
     	ontologyCollection = jongo.getCollection("ontology");
@@ -147,10 +148,6 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Adding subjects");
         loadSubjects();
-        
-        log.info("Adding folders");
-        loadWorkspaces();
-
         log.info("Adding fly lines");
         loadFlyLines();
         
@@ -176,7 +173,10 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Adding alignment boards");
         loadAlignmentBoards();
-        
+
+        log.info("Adding folders");
+        loadWorkspaces();
+
         // TODO: add large image viewer workspaces and associated entities
         
         log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
@@ -204,224 +204,6 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
     
-    
-    /* TREE NODES (WORKSPACES, FOLDERS, VIEWS) */
-    
-    private void loadWorkspaces() throws DaoException {
-        Set<Long> visited = new HashSet<Long>();
-        for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
-            String subjectKey = subject.getKey();
-            try {
-                loadWorkspace(subjectKey, visited);
-            }
-            catch (Exception e) {
-                log.error("Error loading workspace for " + subjectKey, e);
-            }
-        }
-    }
-
-    public List<Entity> getCommonRootEntities(String subjectKey) throws Exception {
-        List<Entity> entities = getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-        List<String> subjectKeyList = getSubjectKeys(subjectKey);
-        // We only consider common roots that the user owns, or one of their groups owns. Other common roots
-        // which the user has access to through an ACL are already referenced in the Shared Data folder.
-        // The reason this is a post-processing step, is because we want an accurate ACL on the object from the 
-        // outer fetch join. 
-        List<Entity> commonRoots = new ArrayList<Entity>();
-        if (null != subjectKey) {
-            for (Entity commonRoot : entities) {
-                if (subjectKeyList.contains(commonRoot.getOwnerKey())) {
-                    commonRoots.add(commonRoot);
-                }
-            }
-        }
-        else {
-            commonRoots.addAll(entities);
-        }
-        return commonRoots;
-    }
-    
-    private void loadWorkspace(String subjectKey, Set<Long> visited) throws Exception {
-
-        long start = System.currentTimeMillis();
-
-        log.info("Loading workspace for "+subjectKey);
-
-        Entity workspaceEntity = getDefaultWorkspace(subjectKey);
-        
-        LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
-        Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
-        List<Reference> children = loadRootFolders(rootFolders, visited);
-        
-        Workspace workspace = new Workspace();
-        workspace.setId(workspaceEntity.getId());
-        workspace.setName(workspaceEntity.getName());
-        workspace.setOwnerKey(workspaceEntity.getOwnerKey());
-        workspace.setReaders(getDefaultSubjectKeys(subjectKey));
-        workspace.setWriters(workspace.getReaders());
-        workspace.setCreationDate(workspaceEntity.getCreationDate());
-        workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
-        workspace.setChildren(children);
-        treeNodeCollection.insert(workspace);
-        
-        log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
-    }
-    
-    private List<Reference> loadRootFolders(Deque<Entity> rootFolders, Set<Long> visited) {
-
-        List<Reference> roots = new ArrayList<Reference>();
-        
-        for(Iterator<Entity> i = rootFolders.iterator(); i.hasNext(); ) {
-            Entity folderEntity = i.next();
-            
-            Session session = null;
-            try {
-                long start = System.currentTimeMillis();
-                
-                session = openNewExternalSession();
-                Long nodeId = loadFolderHierarchy(folderEntity, visited, "  ");
-
-                if (nodeId!=null) {
-                    Reference root = new Reference("workspace",nodeId);
-                    roots.add(root);
-                }
-                
-                // Free memory by releasing the reference to this entire entity tree
-                i.remove(); 
-                resetSession();
-
-                log.info("  Loading "+folderEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-            }
-            catch (Throwable e) {
-                log.error("Error loading folder "+folderEntity.getId(),e);
-            }
-            finally {
-                if (session==null) closeExternalSession();
-            }
-        }
-        
-        return roots;
-    }
-    
-    private Long loadFolderHierarchy(Entity folderEntity, Set<Long> visited, String indent) throws Exception {
-
-    	if ("supportingFiles".equals(folderEntity.getName())) {
-    		log.info(indent+"Skipping "+folderEntity.getName());
-    		return null;
-    	}
-    	
-        log.trace(indent+"Loading "+folderEntity.getName());
-        
-    	String colName = getCollectionName(folderEntity.getEntityTypeName());
-    	if (colName==null) {
-    		log.warn("Cannot load top level entity with type: "+folderEntity.getEntityTypeName());
-    		return null;
-    	}
-    	
-        if (visited.contains(folderEntity.getId())) {
-            return folderEntity.getId();
-        }
-        visited.add(folderEntity.getId());
-        
-        TreeNode node = null;
-        if (folderEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null || folderEntity.getOwnerKey().equals("group:flylight")) {
-            node = new MaterializedView();
-        }
-        else {
-            node = new Folder();
-            ((Folder)node).setFilepath(folderEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        }
-        
-        node.setId(folderEntity.getId());
-        node.setName(folderEntity.getName());
-        node.setOwnerKey(folderEntity.getOwnerKey());
-        node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
-        node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
-        node.setCreationDate(folderEntity.getCreationDate());
-        node.setUpdatedDate(folderEntity.getUpdatedDate());
-    
-	    // Using a hash here to eliminate duplicates, especially those caused by folders which contain multiple descendants of the same sample
-	    HashSet<Reference> children = new LinkedHashSet<Reference>();
-	    
-	    // Preprocess all child names and see if we need to do a bulk mapping
-	    Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
-	    
-	    // 1) Case 1: Sub samples
-	    List<Long> subsampleIds = new ArrayList<Long>();
-	    for(Entity childEntity : folderEntity.getOrderedChildren()) {
-	        String childType = childEntity.getEntityTypeName();
-        	String childColName = getCollectionName(childType);
-        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
-        		subsampleIds.add(childEntity.getId());
-        	}
-	    }
-	    if (!subsampleIds.isEmpty()) {
-			List<String> upMapping = new ArrayList<String>();
-			upMapping.add("Sample");
-			List<String> downMapping = new ArrayList<String>();
-			List<MappedId> mappings = getProjectedResults(null, subsampleIds, upMapping, downMapping);
-			Map<Long,Entity> mappedEntities = getMappedEntities(mappings);
-            for(MappedId mappedId : mappings) {
-            	translatedEntities.put(mappedId.getOriginalId(),  mappedEntities.get(mappedId.getOriginalId()));
-            }
-            //log.trace(indent+"Translated "+subsampleIds.size()+ " sub samples to "+translatedEntities.size()+" entities");
-		}
-
-	    for(Entity childEntity : folderEntity.getOrderedChildren()) {
-	    	
-	        String childType = childEntity.getEntityTypeName();
-	        Long childId = childEntity.getId();
-	        if (childType.equals(EntityConstants.TYPE_FOLDER)) {
-	            loadFolderHierarchy(childEntity, visited, indent+"  ");
-	        }
-	        else {
-	        	Entity translatedEntity = translatedEntities.get(childEntity.getId());
-	        	if (translatedEntity!=null) {
-	        		childId = translatedEntity.getId();
-	        	}
-//	        	String childColName = getCollectionName(childType);
-//	        	// TODO: translate unknown entities using "unknown".equals(childColName) but this takes a long time
-//	        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
-//	        		Entity owningEntity = null;
-//	        		Long newChildId = null;
-//	        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
-//	        		// if they referenced a sub-sample, we find the parent sample. Same goes for neuron separations, etc.
-//	        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
-//	        		for (String entityType : entityTranslationPriority) {
-//	        			owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
-//	                	if (owningEntity!=null) {
-//	                		newChildId = owningEntity.getId();
-//	                		logger.info("    Will reference "+entityType+"#"+newChildId+" instead of "+childType+"#"+childId);
-//	                		break;
-//	                	}
-//	        		}
-//	        		if (newChildId!=null) childId = newChildId;
-//	        	}
-	        }
-	        
-	        if (childId!=null) {
-	            String type = getCollectionName(childEntity.getEntityTypeName());
-	            Reference ref = new Reference(type,childId);
-	            children.add(ref);
-	        }
-	    }
-
-	    
-        if (!children.isEmpty()) {
-            node.setChildren(new ArrayList<Reference>(children));
-        }
-
-        treeNodeCollection.insert(node);
-        return node.getId();
-    }
-
-    private Map<Long, Entity> getMappedEntities(List<MappedId> mappings) throws Exception {
-		List<Long> entityIds = new ArrayList<Long>(); 
-		for(MappedId mappedId : mappings) {
-			entityIds.add(mappedId.getMappedId());
-		}
-		return EntityUtils.getEntityMap(getEntitiesInList(null, entityIds));
-	}
 
 	/* FLY LINES */
     
@@ -739,10 +521,10 @@ public class MongoDbImport extends AnnotationDAO {
             for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
                 LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
                 lsmImages.add(lsmImage);
-                lsmReferences.add(new Reference("lsm",lsmImage.getId()));
+                lsmReferences.add(new Reference("image",lsmImage.getId()));
             }
 
-            lsmCollection.insert(lsmImages.toArray());
+            imageCollection.insert(lsmImages.toArray());
             
             SampleTile tile = new SampleTile();
             tile.setName(tileEntity.getName());
@@ -997,23 +779,22 @@ public class MongoDbImport extends AnnotationDAO {
     private LSMImage getLSMImage(Entity sampleEntity, Entity lsmEntity) throws Exception {
 
         LSMImage lsm = new LSMImage();
-        lsm.setId(lsmEntity.getId());
-        lsm.setSampleId(sampleEntity.getId());
-        lsm.setName(lsmEntity.getName());
-        lsm.setOwnerKey(lsmEntity.getOwnerKey());
-        lsm.setReaders(getSubjectKeysWithPermission(lsmEntity, "r"));
-        lsm.setWriters(getSubjectKeysWithPermission(lsmEntity, "w"));
-        lsm.setCreationDate(lsmEntity.getCreationDate());
-        lsm.setUpdatedDate(lsmEntity.getUpdatedDate());
+        populateImage(lsmEntity, lsm);
+        
+        if (sampleEntity!=null) lsm.setSampleId(sampleEntity.getId());
         lsm.setAge(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_AGE));
         lsm.setAnatomicalArea(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
         lsm.setChannelColors(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
         lsm.setChannelDyeNames(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES));
         lsm.setChanSpec(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
         lsm.setEffector(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR));
-        lsm.setLsmFilepath(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        lsm.setGender(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER));
+        lsm.setLine(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE));
+        lsm.setMountingProtocol(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL));
+        lsm.setTissueOrientation(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION));
+        lsm.setObjective(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
+        lsm.setSlideCode(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
         
+        lsm.setGender(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER));
         if (genderConsensus==null) {
         	genderConsensus = lsm.getGender();
         }
@@ -1021,29 +802,38 @@ public class MongoDbImport extends AnnotationDAO {
         	genderConsensus = NO_CONSENSUS_VALUE;
         }
         
-        lsm.setLine(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE));
-        lsm.setMountingProtocol(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL));
-        lsm.setTissueOrientation(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION));
-        String numChannels = lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);
-        if (numChannels!=null) {
-            lsm.setNumChannels(Integer.parseInt(numChannels));
-        }
-        lsm.setObjective(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
-        lsm.setOpticalResolution(cleanRes(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
-        lsm.setPixelResolution(cleanRes(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
         String sageId = lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID);
         if (sageId!=null) {
             lsm.setSageId(Integer.parseInt(sageId));
         }
-        lsm.setSlideCode(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
+
+        return lsm;
+    }
+
+    private void populateImage(Entity imageEntity, Image image) throws Exception {
+
+    	image.setId(imageEntity.getId());
+        image.setName(imageEntity.getName());
+        image.setOwnerKey(imageEntity.getOwnerKey());
+        image.setReaders(getSubjectKeysWithPermission(imageEntity, "r"));
+        image.setWriters(getSubjectKeysWithPermission(imageEntity, "w"));
+        image.setCreationDate(imageEntity.getCreationDate());
+        image.setUpdatedDate(imageEntity.getUpdatedDate());
+        image.setFilepath(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        
+        String numChannels = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);
+        if (numChannels!=null) {
+            image.setNumChannels(Integer.parseInt(numChannels));
+        }
+        image.setObjective(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
+        image.setOpticalResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+        image.setPixelResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
 
         Map<FileType,String> images = new HashMap<FileType,String>();
-        addImage(images,FileType.Stack,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        addImage(images,FileType.ReferenceMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
-        addImage(images,FileType.SignalMip,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
-        lsm.setImages(images);
-        
-        return lsm;
+        addImage(images,FileType.Stack,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        addImage(images,FileType.ReferenceMip,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
+        addImage(images,FileType.SignalMip,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
+        image.setFiles(images);
     }
     
     private NeuronSeparation getNeuronSeparation(Entity sampleEntity, Entity separationEntity) throws Exception {
@@ -1752,6 +1542,262 @@ public class MongoDbImport extends AnnotationDAO {
     	
     	return items;
     }
+
+    
+    /* TREE NODES (WORKSPACES, FOLDERS, VIEWS) */
+    
+    private void loadWorkspaces() throws DaoException {
+        Set<Long> visited = new HashSet<Long>();
+        for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
+            String subjectKey = subject.getKey();
+            try {
+                loadWorkspace(subjectKey, visited);
+            }
+            catch (Exception e) {
+                log.error("Error loading workspace for " + subjectKey, e);
+            }
+        }
+    }
+
+    public List<Entity> getCommonRootEntities(String subjectKey) throws Exception {
+        List<Entity> entities = getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+        List<String> subjectKeyList = getSubjectKeys(subjectKey);
+        // We only consider common roots that the user owns, or one of their groups owns. Other common roots
+        // which the user has access to through an ACL are already referenced in the Shared Data folder.
+        // The reason this is a post-processing step, is because we want an accurate ACL on the object from the 
+        // outer fetch join. 
+        List<Entity> commonRoots = new ArrayList<Entity>();
+        if (null != subjectKey) {
+            for (Entity commonRoot : entities) {
+                if (subjectKeyList.contains(commonRoot.getOwnerKey())) {
+                    commonRoots.add(commonRoot);
+                }
+            }
+        }
+        else {
+            commonRoots.addAll(entities);
+        }
+        return commonRoots;
+    }
+    
+    private void loadWorkspace(String subjectKey, Set<Long> visited) throws Exception {
+
+        long start = System.currentTimeMillis();
+
+        log.info("Loading workspace for "+subjectKey);
+
+        Entity workspaceEntity = getDefaultWorkspace(subjectKey);
+        
+        LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
+        Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
+        List<Reference> children = loadRootFolders(rootFolders, visited);
+        
+        Workspace workspace = new Workspace();
+        workspace.setId(workspaceEntity.getId());
+        workspace.setName(workspaceEntity.getName());
+        workspace.setOwnerKey(workspaceEntity.getOwnerKey());
+        workspace.setReaders(getDefaultSubjectKeys(subjectKey));
+        workspace.setWriters(workspace.getReaders());
+        workspace.setCreationDate(workspaceEntity.getCreationDate());
+        workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
+        workspace.setChildren(children);
+        treeNodeCollection.insert(workspace);
+        
+        log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
+    }
+    
+    private List<Reference> loadRootFolders(Deque<Entity> rootFolders, Set<Long> visited) {
+
+        List<Reference> roots = new ArrayList<Reference>();
+        
+        for(Iterator<Entity> i = rootFolders.iterator(); i.hasNext(); ) {
+            Entity folderEntity = i.next();
+            
+            Session session = null;
+            try {
+                long start = System.currentTimeMillis();
+                
+                session = openNewExternalSession();
+                Long nodeId = loadFolderHierarchy(folderEntity, visited, "  ");
+
+                if (nodeId!=null) {
+                    Reference root = new Reference("workspace",nodeId);
+                    roots.add(root);
+                }
+                
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove(); 
+                resetSession();
+
+                log.info("  Loading "+folderEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+            }
+            catch (Throwable e) {
+                log.error("Error loading folder "+folderEntity.getId(),e);
+            }
+            finally {
+                if (session==null) closeExternalSession();
+            }
+        }
+        
+        return roots;
+    }
+    
+    private Long loadFolderHierarchy(Entity folderEntity, Set<Long> visited, String indent) throws Exception {
+
+    	if ("supportingFiles".equals(folderEntity.getName())) {
+    		log.info(indent+"Skipping "+folderEntity.getName());
+    		return null;
+    	}
+    	
+        log.trace(indent+"Loading "+folderEntity.getName());
+        
+    	String colName = getCollectionName(folderEntity.getEntityTypeName());
+    	if (colName==null) {
+    		log.warn("Cannot load top level entity with type: "+folderEntity.getEntityTypeName());
+    		return null;
+    	}
+    	
+        if (visited.contains(folderEntity.getId())) {
+            return folderEntity.getId();
+        }
+        visited.add(folderEntity.getId());
+        
+        TreeNode node = null;
+        if (folderEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null || folderEntity.getOwnerKey().equals("group:flylight")) {
+            node = new MaterializedView();
+        }
+        else {
+            node = new Folder();
+            ((Folder)node).setFilepath(folderEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        }
+        
+        node.setId(folderEntity.getId());
+        node.setName(folderEntity.getName());
+        node.setOwnerKey(folderEntity.getOwnerKey());
+        node.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
+        node.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
+        node.setCreationDate(folderEntity.getCreationDate());
+        node.setUpdatedDate(folderEntity.getUpdatedDate());
+    
+	    // Using a hash here to eliminate duplicates, especially those caused by folders which contain multiple descendants of the same sample
+	    HashSet<Reference> children = new LinkedHashSet<Reference>();
+	    
+	    // Preprocess all child names and see if we need to do a bulk mapping
+	    Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
+	    
+	    // 1) Case 1: Sub samples
+	    List<Long> subsampleIds = new ArrayList<Long>();
+	    for(Entity childEntity : folderEntity.getOrderedChildren()) {
+	        String childType = childEntity.getEntityTypeName();
+        	String childColName = getCollectionName(childType);
+        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
+        		subsampleIds.add(childEntity.getId());
+        	}
+	    }
+	    if (!subsampleIds.isEmpty()) {
+			List<String> upMapping = new ArrayList<String>();
+			upMapping.add("Sample");
+			List<String> downMapping = new ArrayList<String>();
+			List<MappedId> mappings = getProjectedResults(null, subsampleIds, upMapping, downMapping);
+			Map<Long,Entity> mappedEntities = getMappedEntities(mappings);
+            for(MappedId mappedId : mappings) {
+            	translatedEntities.put(mappedId.getOriginalId(),  mappedEntities.get(mappedId.getOriginalId()));
+            }
+            //log.trace(indent+"Translated "+subsampleIds.size()+ " sub samples to "+translatedEntities.size()+" entities");
+		}
+
+	    for(Entity childEntity : folderEntity.getOrderedChildren()) {
+	    	
+	        String childType = childEntity.getEntityTypeName();
+	        Long childId = childEntity.getId();
+	        if (childType.equals(EntityConstants.TYPE_FOLDER)) {
+	            loadFolderHierarchy(childEntity, visited, indent+"  ");
+	        }
+	        else {
+	        	Entity translatedEntity = translatedEntities.get(childEntity.getId());
+	        	if (translatedEntity!=null) {
+	        		childId = translatedEntity.getId();
+	        	}
+//	        	String childColName = getCollectionName(childType);
+//	        	// TODO: translate unknown entities using "unknown".equals(childColName) but this takes a long time
+//	        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
+//	        		Entity owningEntity = null;
+//	        		Long newChildId = null;
+//	        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
+//	        		// if they referenced a sub-sample, we find the parent sample. Same goes for neuron separations, etc.
+//	        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
+//	        		for (String entityType : entityTranslationPriority) {
+//	        			owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
+//	                	if (owningEntity!=null) {
+//	                		newChildId = owningEntity.getId();
+//	                		logger.info("    Will reference "+entityType+"#"+newChildId+" instead of "+childType+"#"+childId);
+//	                		break;
+//	                	}
+//	        		}
+//	        		if (newChildId!=null) childId = newChildId;
+//	        	}
+	        }
+	        
+	        if (childId!=null) {
+	            String type = getCollectionName(childEntity.getEntityTypeName());
+	            Reference ref = new Reference(type,childId);
+	            
+	            long count = jongo.getCollection(type).count("{_id:#}",childId);
+	            if (count<1) {
+	            	attemptRogueImport(childEntity);
+	            }
+	            
+	            children.add(ref);
+	        }
+	    }
+
+	    
+        if (!children.isEmpty()) {
+            node.setChildren(new ArrayList<Reference>(children));
+        }
+
+        treeNodeCollection.insert(node);
+        return node.getId();
+    }
+
+    private void attemptRogueImport(Entity entity) {
+		
+    	String entityType = entity.getEntityTypeName();
+        String type = getCollectionName(entityType);
+
+        log.info("    Attempting import of rogue entity: "+entityType+"#"+entity.getId());
+        
+        try {
+            if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
+            	LSMImage image = getLSMImage(null, entity);
+            	jongo.getCollection(type).save(image);
+            }
+            else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
+            	Image image = new Image();
+            	populateImage(entity, image);
+            	jongo.getCollection(type).save(image);
+            }
+            else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
+            	Image image = new Image();
+            	populateImage(entity, image);
+            	jongo.getCollection(type).save(image);
+            }
+            else {
+            	log.warn("    Cannot handle rogue entity type: "+entityType+"#"+entity.getId());
+            }
+        }
+    	catch (Exception e) {
+    		log.error("Rogue import failed for "+entity.getId(),e);
+    	}
+	}
+
+	private Map<Long, Entity> getMappedEntities(List<MappedId> mappings) throws Exception {
+		List<Long> entityIds = new ArrayList<Long>(); 
+		for(MappedId mappedId : mappings) {
+			entityIds.add(mappedId.getMappedId());
+		}
+		return EntityUtils.getEntityMap(getEntitiesInList(null, entityIds));
+	}
     
     /* UTILITY METHODS */
 
@@ -1791,7 +1837,7 @@ public class MongoDbImport extends AnnotationDAO {
             return "annotation";
         }
         else if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
-            return "lsm";
+            return "image";
         }
         else if (EntityConstants.TYPE_ONTOLOGY_ROOT.equals(entityType)) {
             return "ontology";
@@ -1810,6 +1856,12 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else if (EntityConstants.TYPE_ALIGNMENT_BOARD.equals(entityType)) {
             return "alignmentBoard";
+        }
+        else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
+            return "image";
+        }
+        else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
+            return "image";
         }
         return "unknown";
     }

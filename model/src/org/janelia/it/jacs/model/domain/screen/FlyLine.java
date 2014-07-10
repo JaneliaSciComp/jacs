@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.model.domain.screen;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
+@MongoMapped(collectionName="flyLine")
 public class FlyLine extends AbstractDomainObject {
 
     private Long representativeId;

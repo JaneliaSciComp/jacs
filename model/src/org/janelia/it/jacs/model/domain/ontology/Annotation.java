@@ -2,9 +2,11 @@ package org.janelia.it.jacs.model.domain.ontology;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
+@MongoMapped(collectionName="annotation")
 public class Annotation extends AbstractDomainObject {
 
     private String targetType;

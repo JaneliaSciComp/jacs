@@ -6,7 +6,9 @@ import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
+@MongoMapped(collectionName="fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasFiles, HasFilepath {
 
     private Long sampleId;
