@@ -14,7 +14,7 @@ import java.util.Set;
  */
 public class SampleProcessingValidator implements TypeValidator {
     private static final String[] REQUIRED_ATTRIBUTE_NAMES = new String[] { EntityConstants.ATTRIBUTE_SUPPORTING_FILES, };
-    private static final String[] REQUIRED_FILE_PATTERNS = new String[] { ".lsm.metadata", "stitched-" };
+    private static final String[] REQUIRED_FILE_PATTERNS = new String[] { ".lsm.metadata",  };
 
     private ValidationLogger validationLogger;
     private SubEntityValidator subEntityValidator;

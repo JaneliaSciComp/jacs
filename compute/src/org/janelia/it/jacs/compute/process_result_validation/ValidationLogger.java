@@ -22,12 +22,17 @@ public class ValidationLogger implements Closeable {
     private Map<Category,List<ReportData>> categoryListMap;
     private Map<String,Long> filePatternToMinSize;
 
+    private boolean __reportPositives;
+
     public ValidationLogger( Logger internalLogger ) {
         this.internalLogger = internalLogger;
         this.filePatternToMinSize = new HashMap<>();
         this.categoryListMap = new TreeMap<>();
         addCategory(GENERAL_CATEGORY_EXCEPTION);
     }
+
+    public boolean isToReportPositives() { return __reportPositives; }
+    public void setToReportPositives( boolean reportPositives ) { __reportPositives = reportPositives; }
 
     /**
      * Setup the minimum file size, given the filePattern.  Can then return for any validation.
@@ -89,6 +94,10 @@ public class ValidationLogger implements Closeable {
         reportData.setEntityType(owningEntityType);
         reportData.setMessage( message );
         categoryListMap.get( testCategory ).add( reportData );
+    }
+
+    public void reportSuccess( Long entityId, String owningEntityType ) {
+        System.out.println("Found a valid " + owningEntityType + " with ID=" + entityId);
     }
 
     /**

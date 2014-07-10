@@ -66,6 +66,7 @@ public class AlignmentResultValidator implements TypeValidator {
     }
 
     private void validateDescendants( Entity entity, Long sampleId ) throws Exception {
+        boolean validGenericAlignmentResult = true;
         Set<Entity> children = entityBean.getChildEntities( entity.getId() );
         for ( Entity child: children ) {
             if ( child.getEntityTypeName().equals( EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT ) ) {
@@ -79,7 +80,7 @@ public class AlignmentResultValidator implements TypeValidator {
                                 Entity grandChild = entityBean.getEntityById( entityData.getChildEntity().getId() );
                                 if ( grandChild.getEntityTypeName().equals( EntityConstants.TYPE_NEURON_FRAGMENT ) ) {
                                     // Need to test the NF assumptions.
-                                    fileValidator.validateFileSet( grandChild, sampleId, REQUIRED_NF_CHILD_FILES );
+                                    validGenericAlignmentResult = fileValidator.validateFileSet( grandChild, sampleId, REQUIRED_NF_CHILD_FILES );
                                 }
                             }
                         }
@@ -113,10 +114,13 @@ public class AlignmentResultValidator implements TypeValidator {
                 validJPA = false;
             }
 
-            if ( validJPA  &&  REPORT_POSITIVES ) {
-                System.out.println("Found a " + JBA_ALIGNMENT_ENTITY_NAME + " with valid QI Score and 3d-Image's sub-files.");
+            if ( validJPA  &&  validationLogger.isToReportPositives() ) {
+                validationLogger.reportSuccess( entity.getId(), JBA_ALIGNMENT_ENTITY_NAME  + " with valid QI Score and 3d-Image's sub-files." );
             }
 
+        }
+        else if ( validGenericAlignmentResult  &&  validationLogger.isToReportPositives() ) {
+            validationLogger.reportSuccess( entity.getId(), EntityConstants.TYPE_ALIGNMENT_RESULT );
         }
     }
 

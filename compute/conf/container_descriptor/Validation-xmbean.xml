@@ -20,14 +20,14 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Optional Dataset Name</description>
-            <name>dataset</name>
-            <type>java.lang.String</type>
+            <description>Starting GUID (any starting point for traversal)</description>
+            <name>guid</name>
+            <type>java.lang.Long</type>
         </parameter>
         <parameter>
-            <description>Optional Sample ID</description>
-            <name>sample</name>
-            <type>java.lang.String</type>
+            <description>Omit Debug Info</description>
+            <name>nodebug</name>
+            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
 

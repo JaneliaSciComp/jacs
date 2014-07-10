@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator;
 
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -10,7 +11,10 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  */
 public class SampleValidator implements TypeValidator {
     private ValidationLogger validationLogger;
+    private EntityBeanLocal entityBean;
     private SubEntityValidator subEntityValidator;
+    private static final ValidationLogger.Category NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE = new ValidationLogger.Category("Image Tiles with Unmatched Sample Processing");
+    private static final String UNMATCHED_TILE_FMT = "At least %d Image Tile instances under sample %d have no matching Sample Processing instance";
     private static final String[] REQUIRED_ATTRIBUTE_NAMES = new String[] {
             EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
             EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE,
@@ -18,14 +22,50 @@ public class SampleValidator implements TypeValidator {
             EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE,
     };
 
-    public SampleValidator( ValidationLogger logger, SubEntityValidator subEntityValidator ) {
+    public SampleValidator( ValidationLogger logger, SubEntityValidator subEntityValidator, EntityBeanLocal entityBean ) {
         this.validationLogger = logger;
+        this.entityBean = entityBean;
         this.subEntityValidator = subEntityValidator;
+        logger.addCategory( NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE );
     }
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
         subEntityValidator.validateSubEntitiesByAttributeName(entity, sampleId, REQUIRED_ATTRIBUTE_NAMES);
+
+        // First, how many image tiles.
+        Entity refreshedSampleEntity = entityBean.getEntityAndChildren( entity.getId() );
+        Entity supportingFiles = refreshedSampleEntity.getChildByAttributeName( EntityConstants.ATTRIBUTE_SUPPORTING_FILES );
+        Entity refreshedSFEntity = entityBean.getEntityAndChildren( supportingFiles.getId() );
+        int unmatchedImageTileCount = 0;
+        for ( Entity child: refreshedSFEntity.getChildren() ) {
+            if ( child.getEntityTypeName().equals( EntityConstants.TYPE_IMAGE_TILE ) ) {
+                unmatchedImageTileCount ++;
+            }
+        }
+
+        // Next: are there enough Sample Processing Results?
+        for ( Entity child: refreshedSampleEntity.getChildren() ) {
+            if ( child.getEntityTypeName().equals( EntityConstants.TYPE_PIPELINE_RUN ) ) {
+                Entity refreshedPipelineRunEntity = entityBean.getEntityAndChildren( child.getId() );
+                for ( Entity grandChild: child.getChildren() ) {
+                    if ( grandChild.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT ) ) {
+                        unmatchedImageTileCount --;
+                    }
+                }
+                break;
+            }
+        }
+
+        if ( unmatchedImageTileCount > 0 ) {
+            validationLogger.reportError(
+                    sampleId,
+                    entity.getId(),
+                    entity.getEntityTypeName(),
+                    NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE,
+                    String.format( UNMATCHED_TILE_FMT, unmatchedImageTileCount, sampleId )
+            );
+        }
     }
 
 }

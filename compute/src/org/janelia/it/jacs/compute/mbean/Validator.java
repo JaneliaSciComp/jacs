@@ -18,14 +18,14 @@ import java.util.HashSet;
 public class Validator implements ValidatorMBean {
     private Logger log = Logger.getLogger(Validator.class);
     @Override
-    public void runValidations(String user, String dataset, String sample) {
+    public void runValidations(String user, Long guid, Boolean nodebug) {
         try {
             String processName = "ValidationServicePipeline";
             String displayName = "Sample Content Validation";
             //NO PARAMS YET
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("data set name", dataset, null));
-            taskParameters.add(new TaskParameter("sample entity id", sample, null));
+            taskParameters.add(new TaskParameter("guid", guid.toString(), null));
+            taskParameters.add(new TaskParameter("nodebug", nodebug.toString(), null));
             saveAndRunTask(user, processName, displayName, taskParameters);
         } catch ( Exception ex ) {
             log.error("Failed to complete validation", ex);

@@ -13,6 +13,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
  * Created by fosterl on 7/1/14.
  */
 public class ImageTileValidator implements TypeValidator {
+    private static final String STITCH_PREFIX = "stitched-";
     private static final ValidationLogger.Category NO_LSM_STACKS = new ValidationLogger.Category("No LSM stacks");
     private ValidationLogger validationLogger;
     private EntityBeanLocal entitybean;
@@ -53,8 +54,8 @@ public class ImageTileValidator implements TypeValidator {
             isValid = false;
         }
 
-        if ( isValid   &&   REPORT_POSITIVES ) {
-            System.out.println("Found a valid Image Tile: " + entity.getId());
+        if ( isValid   &&   validationLogger.isToReportPositives() ) {
+            validationLogger.reportSuccess( entity.getId(), entity.getEntityTypeName() );
         }
     }
 }

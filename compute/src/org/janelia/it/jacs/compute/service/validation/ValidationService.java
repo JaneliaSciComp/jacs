@@ -1,13 +1,12 @@
 package org.janelia.it.jacs.compute.service.validation;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -19,60 +18,68 @@ import java.util.Collection;
 public class ValidationService extends AbstractEntityService {
     private Logger logger = Logger.getLogger(ValidationService.class);
 
-    //private FileDiscoveryHelper fileHelper;
-    private SampleHelper sampleHelper;
     private ValidationEngine validationEngine;
 
-    private Long sampleId;
+    private Long guid;
 
     @Override
     protected void execute() throws Exception {
-        sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        validationEngine = new ValidationEngine(entityBean, computeBean, annotationBean);
-
-        String dataSetName = (String) processData.getItem("DATA_SET_NAME");
-        String sampleEntityIdStr = (String) processData.getItem("SAMPLE_ENTITY_ID");
-        if ( sampleEntityIdStr != null  &&  sampleEntityIdStr.trim().length() > 0 ) {
-            sampleId = Long.parseLong(sampleEntityIdStr);
+        // We'll accept a long if offered, but fall back to String.
+        Object guidObj = processData.getItem("GUID");
+        if ( guidObj == null ) {
+            this.guid = null;
         }
-        logger.info("Running validation, ownerKey=" + ownerKey +
-                ", dataSetName=" + dataSetName + ", sampleId=" + sampleId);
-
-        //this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
-        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-
-        if ( sampleId == null ) {
-            Collection<Entity> dataSets = new ArrayList<>();
-            if ( dataSetName == null || dataSetName.trim().length() == 0 ) {
-                dataSets.addAll(sampleHelper.getDataSets());
-            }
-            else {
-                dataSets.addAll(entityBean.getUserEntitiesByNameAndTypeName(ownerKey, dataSetName, EntityConstants.TYPE_DATA_SET));
-            }
-
-            // Iterate over all data sets.
-            for ( Entity dataSetEntity: dataSets ) {
-                // Look for all the datasets' samples.
-                Collection<Entity> sampleChildEntities = entityBean.getChildEntities(dataSetEntity.getId());
-                for ( Entity sampleChild: sampleChildEntities ) {
-                    traverse(sampleChild.getId());
-                }
+        else if ( guidObj instanceof Long ) {
+            Long guid = (Long) processData.getItem("GUID");
+            if ( guid == null  &&  guid <= 0 ) {
+                this.guid = null;
             }
         }
         else {
-            traverse(sampleId);
+            this.guid = Long.parseLong( guidObj.toString() );
         }
+
+        Boolean nodebug = (Boolean) processData.getItem("NODEBUG");
+
+        // NOTE: the default value for any boolean through JMX (from JBoss, at least) is TRUE.
+        //  Therefore, we want our most-common-case to match TRUE.  So TRUE-> do NOT issue debug info.
+        logger.info(
+                "Running validation, ownerKey=" + ownerKey +
+                ", guid=" + this.guid +
+                ", debug=" + nodebug + "."
+        );
+
+        validationEngine = new ValidationEngine(entityBean, computeBean, annotationBean, (!nodebug));
+
+        //this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
+        //SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        traverseForSamples(this.guid);
+
         // Follow up with category list.  This may be modified at some point, as reports lines are cached
         // within the validating engine, and grouped by their categories on report-back.
         validationEngine.writeCategories();
     }
 
     /** Recursive descent of entity by ID. */
-    private void traverse( Long parentId ) throws Exception {
+    private void traverseForValidation( Long parentId ) throws Exception {
         Collection<Entity> children = entityBean.getChildEntities( parentId );
         for ( Entity child: children ) {
-            validationEngine.validateByType( child, sampleId );
-            traverse(child.getId());
+            validationEngine.validateByType( child, guid );
+            traverseForValidation( child.getId() );
+        }
+    }
+
+    /**  Recursively search for samples within the given tree.  When one is found, traverse it for validation. */
+    private void traverseForSamples(Long guid) throws Exception {
+        Entity entity = entityBean.getEntityAndChildren( guid );
+        if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE ) ) {
+            // Do not look for samples under samples.  Do not recurse further here.
+            traverseForValidation( entity.getId() );
+        }
+        else {
+            for ( Entity child: entity.getChildren() ) {
+                traverseForSamples( child.getId() );
+            }
         }
     }
 }

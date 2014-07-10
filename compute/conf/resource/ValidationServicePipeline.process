@@ -5,17 +5,17 @@
 	<sequence>
 		<!-- Import variables -->
     	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-		    <input name="TASK_PARAMETER_1" value="data set name"/>
-            <input name="PROCESS_VARIABLE_1" value="DATA_SET_NAME"/>
-            <input name="TASK_PARAMETER_2" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_2" value="SAMPLE_ENTITY_ID"/>
-	        <output name="DATA_SET_NAME"/>
-	        <output name="SAMPLE_ENTITY_ID"/>
+		    <input name="TASK_PARAMETER_1" value="guid"/>
+            <input name="PROCESS_VARIABLE_1" value="GUID"/>
+		    <input name="TASK_PARAMETER_2" value="nodebug"/>
+            <input name="PROCESS_VARIABLE_2" value="NODEBUG"/>
+	        <output name="GUID"/>
+	        <output name="NODEBUG"/>
     	</operation>
 
 	    <operation name="Validation Service" processor="org.janelia.it.jacs.compute.service.validation.ValidationService">
-	        <input name="DATA_SET_NAME"/>
-	        <input name="SAMPLE_ENTITY_ID"/>
+	        <input name="GUID"/>
+	        <input name="NODEBUG"/>
 	    </operation>
     </sequence>
 </process>
