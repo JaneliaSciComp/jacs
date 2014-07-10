@@ -910,7 +910,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspaceId="+workspaceId+", entityName="+entityName+")");
         }
         Entity entity = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, entityName);
-        EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         saveOrUpdate(entity);
 		Entity workspace = getEntityById(workspaceId);
 		if (workspace==null) {
@@ -945,6 +944,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 			// No non-owned entities, so add it to the end
 			insertionIndex = index;
 		}
+		promoteToCommonRootIfWorkspaceChild(workspace, entity);
 		return addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
 	}
 	
@@ -2236,7 +2236,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         try {
             EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
-            visitationBuilder = recursive ? visitationBuilder.descendants() : visitationBuilder.root();
+            visitationBuilder = recursive ? visitationBuilder.root().descendants() : visitationBuilder.root();
             visitationBuilder.run(new EntityVisitor() {
                 @Override
                 public void visit(Entity entity) throws Exception {
@@ -2277,8 +2277,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 
                 if (sharedDataFolder==null) {
                     sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
-                    EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
                     EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+                    addRootToWorkspace(granteeKey, getDefaultWorkspace(granteeKey), sharedDataFolder);
                     saveOrUpdate(sharedDataFolder);
                 }
                 
