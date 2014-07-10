@@ -1,15 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
-
-import org.janelia.it.jacs.model.domain.AbstractDomainObject;
-import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
-import org.jongo.marshall.jackson.oid.Id;
-
-public class LSMImage extends AbstractDomainObject implements HasFiles {
+public class LSMImage extends Image {
 
     private Long sampleId;
     private String age;
@@ -17,19 +8,13 @@ public class LSMImage extends AbstractDomainObject implements HasFiles {
     private String channelColors;
     private String channelDyeNames;
     private String chanSpec;
-    private String lsmFilepath;
     private String effector;
     private String gender;
     private String line;
     private String mountingProtocol;
     private String tissueOrientation;
-    private Integer numChannels;
-    private String objective;
-    private String opticalResolution;
-    private String pixelResolution;
     private Integer sageId;
     private String slideCode;
-    private Map<FileType,String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
@@ -69,12 +54,6 @@ public class LSMImage extends AbstractDomainObject implements HasFiles {
     public void setChanSpec(String chanSpec) {
         this.chanSpec = chanSpec;
     }
-    public String getLsmFilepath() {
-        return lsmFilepath;
-    }
-    public void setLsmFilepath(String lsmFilepath) {
-        this.lsmFilepath = lsmFilepath;
-    }
     public String getEffector() {
         return effector;
     }
@@ -105,30 +84,6 @@ public class LSMImage extends AbstractDomainObject implements HasFiles {
     public void setTissueOrientation(String tissueOrientation) {
         this.tissueOrientation = tissueOrientation;
     }
-    public Integer getNumChannels() {
-        return numChannels;
-    }
-    public void setNumChannels(Integer numChannels) {
-        this.numChannels = numChannels;
-    }
-    public String getObjective() {
-        return objective;
-    }
-    public void setObjective(String objective) {
-        this.objective = objective;
-    }
-    public String getOpticalResolution() {
-        return opticalResolution;
-    }
-    public void setOpticalResolution(String opticalResolution) {
-        this.opticalResolution = opticalResolution;
-    }
-    public String getPixelResolution() {
-        return pixelResolution;
-    }
-    public void setPixelResolution(String pixelResolution) {
-        this.pixelResolution = pixelResolution;
-    }
     public Integer getSageId() {
         return sageId;
     }
@@ -141,12 +96,4 @@ public class LSMImage extends AbstractDomainObject implements HasFiles {
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
     }
-    public Map<FileType, String> getFiles() {
-        return images;
-    }
-    public void setImages(Map<FileType, String> images) {
-        this.images = images;
-    }
-    
-    
 }

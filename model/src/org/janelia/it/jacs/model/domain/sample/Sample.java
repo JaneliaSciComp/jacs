@@ -3,7 +3,9 @@ package org.janelia.it.jacs.model.domain.sample;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
+@MongoMapped(collectionName="sample")
 public class Sample extends AbstractDomainObject {
 
     private String age;
