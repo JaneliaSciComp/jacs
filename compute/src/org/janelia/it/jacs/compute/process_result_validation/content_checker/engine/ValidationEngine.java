@@ -29,13 +29,18 @@ public class ValidationEngine {
 
     private Map<String,TypeValidator> validatorMap;
 
+    @SuppressWarnings("unused")
     public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException {
+        this( entityBean, computeBean, annotationBean, debug, null );
+    }
+
+    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug, Long loggerId) throws IOException {
         validationLogger = new ValidationLogger( logger );
         PrintWriter pw = new PrintWriter(
                 new FileWriter(
                         File.createTempFile(
                                 this.getClass().getSimpleName(),
-                                ".report.tsv",
+                                (loggerId == null ? "" : "." + loggerId) + ".report.tsv",
                                 new File( System.getProperty("user.home") )
                         )
                 )

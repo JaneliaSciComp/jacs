@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.service.validation;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -18,8 +17,7 @@ import java.util.Collection;
 public class ValidationService extends AbstractEntityService {
     private Logger logger = Logger.getLogger(ValidationService.class);
 
-    private ValidationEngine validationEngine;
-
+    private Boolean nodebug;
     private Long guid;
 
     @Override
@@ -31,7 +29,7 @@ public class ValidationService extends AbstractEntityService {
         }
         else if ( guidObj instanceof Long ) {
             Long guid = (Long) processData.getItem("GUID");
-            if ( guid == null  &&  guid <= 0 ) {
+            if ( guid == null  ||  guid <= 0 ) {
                 this.guid = null;
             }
         }
@@ -39,7 +37,7 @@ public class ValidationService extends AbstractEntityService {
             this.guid = Long.parseLong( guidObj.toString() );
         }
 
-        Boolean nodebug = (Boolean) processData.getItem("NODEBUG");
+        nodebug = (Boolean) processData.getItem("NODEBUG");
 
         // NOTE: the default value for any boolean through JMX (from JBoss, at least) is TRUE.
         //  Therefore, we want our most-common-case to match TRUE.  So TRUE-> do NOT issue debug info.
@@ -49,26 +47,21 @@ public class ValidationService extends AbstractEntityService {
                 ", debug=" + nodebug + "."
         );
 
-        validationEngine = new ValidationEngine(entityBean, computeBean, annotationBean, (!nodebug));
-
         //this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         //SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         traverseForSamples(this.guid);
 
-        // Follow up with category list.  This may be modified at some point, as reports lines are cached
-        // within the validating engine, and grouped by their categories on report-back.
-        validationEngine.writeCategories();
     }
 
     /** Recursive descent of entity by ID. */
-    private void traverseForValidation( Long parentId, Long sampleId ) throws Exception {
+    private void traverseForValidation( Long parentId, Long sampleId, ValidationEngine validationEngine ) throws Exception {
         Collection<Entity> children = entityBean.getChildEntities( parentId );
         for ( Entity child: children ) {
             if ( child.getId() == 1803764205405347938L) {
                 System.out.println("Found our broken sample.");
             }
             validationEngine.validateByType( child, sampleId );
-            traverseForValidation( child.getId(), sampleId );
+            traverseForValidation( child.getId(), sampleId, validationEngine );
         }
     }
 
@@ -76,8 +69,18 @@ public class ValidationService extends AbstractEntityService {
     private void traverseForSamples(Long guid) throws Exception {
         Entity entity = entityBean.getEntityAndChildren( guid );
         if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE ) ) {
-            // Do not look for samples under samples.  Do not recurse further here.
-            traverseForValidation( entity.getId(), guid );
+
+            ValidationEngine validationEngine;
+            validationEngine = new ValidationEngine(entityBean, computeBean, annotationBean, (!nodebug), guid);
+
+            // Do not look for samples under samples.  Do not recurse further here.  Instead, look for
+            // other things to validate.
+            traverseForValidation( entity.getId(), guid, validationEngine );
+
+            // Follow up with category list.  This may be modified at some point, as reports lines are cached
+            // within the validating engine, and grouped by their categories on report-back.
+            validationEngine.writeCategories();
+
         }
         else {
             for ( Entity child: entity.getChildren() ) {
