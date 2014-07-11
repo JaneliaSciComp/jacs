@@ -2356,7 +2356,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         try {
             final Set<Long> revokedIds = new HashSet<Long>();
             EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
-            visitationBuilder = recursive ? visitationBuilder.descendants() : visitationBuilder.root();
+            visitationBuilder = recursive ? visitationBuilder.root().descendants() : visitationBuilder.root();
             visitationBuilder.run(new EntityVisitor() {
                 @Override
                 public void visit(Entity entity) throws Exception {
