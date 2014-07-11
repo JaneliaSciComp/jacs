@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.validation;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.mbean.Validator;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -64,9 +65,8 @@ public class ValidationService extends AbstractEntityService {
         if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE ) ) {
             // At this point, launch a new copy of this service, providing it the sample ID as start-point.
             // This permits the collection of samples to be processed in parallel.
-
-
-            validateSample( startingId, entity );
+            Validator validator = new Validator();
+            validator.runValidations(ownerKey, entity.getId(), nodebug);
         }
         else {
             for ( Entity child: entity.getChildren() ) {
