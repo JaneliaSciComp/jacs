@@ -93,6 +93,9 @@ public class EntityVistationBuilder {
 			for(EntityData ed : entity.getEntityData()) {
 				visitor.visit(ed);
 			}
+			if (nextFilter!=null) {
+				run(entity, visitor, level+1);
+			}
 		}
 		else if (filter instanceof ChildEntityFilter) {
 			ChildEntityFilter childFilter = (ChildEntityFilter)filter;
