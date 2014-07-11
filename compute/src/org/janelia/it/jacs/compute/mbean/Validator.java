@@ -22,11 +22,12 @@ public class Validator implements ValidatorMBean {
         try {
             String processName = "ValidationServicePipeline";
             String displayName = "Sample Content Validation";
-            //NO PARAMS YET
+
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("guid", guid.toString(), null));
             taskParameters.add(new TaskParameter("nodebug", nodebug.toString(), null));
             saveAndRunTask(user, processName, displayName, taskParameters);
+
         } catch ( Exception ex ) {
             log.error("Failed to complete validation", ex);
         }
