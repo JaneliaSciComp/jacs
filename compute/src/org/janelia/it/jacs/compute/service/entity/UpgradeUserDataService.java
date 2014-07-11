@@ -22,7 +22,6 @@ public class UpgradeUserDataService extends AbstractEntityService {
     
     private static final Logger log = Logger.getLogger(UpgradeUserDataService.class);
     
-    
     public void execute() throws Exception {
         
         final String serverVersion = computeBean.getAppVersion();
@@ -36,6 +35,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
     private void createWorkspaceType() throws Exception {
     	
     	if (entityBean.getEntityTypeByName(EntityConstants.TYPE_WORKSPACE)!=null) {
+    		logger.info("Workspace type already exists, skipping creation step.");
     		return;
     	}
     	
@@ -68,6 +68,23 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
     private void groupSearchResultsIfNecessary() throws Exception {
 
+    	Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
+        populateChildren(workspace);
+        
+        int count = 0;
+    	for(EntityData ed : workspace.getOrderedEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child==null) continue;
+    		if (child.getName().startsWith("Search Results #")) {
+    			count++;
+    		}
+    	}
+    	
+    	if (count<1) {
+    		log.error("No top-level search result folders found for "+ownerKey+", skipping grouping step.");
+    		return;
+    	}
+    	
         Entity topLevelFolder = entityHelper.createOrVerifyRootEntity(EntityConstants.NAME_SEARCH_RESULTS, true, false);
         if (topLevelFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
             EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
@@ -77,14 +94,12 @@ public class UpgradeUserDataService extends AbstractEntityService {
         populateChildren(topLevelFolder);
         
         if (!topLevelFolder.getChildren().isEmpty()) {
-        	log.info("User "+ownerKey+"'s search results folder already has children, skipping search result grouping step.");
+        	log.info("User "+ownerKey+"'s search results folder already has children, skipping grouping step.");
         	return;
         }
         
         List<EntityData> toMove = new ArrayList<EntityData>();
         
-    	Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
-        populateChildren(workspace);
     	for(EntityData ed : workspace.getOrderedEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child==null) continue;
