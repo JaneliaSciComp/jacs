@@ -944,7 +944,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 			// No non-owned entities, so add it to the end
 			insertionIndex = index;
 		}
-		promoteToCommonRootIfWorkspaceChild(workspace, entity);
 		return addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
 	}
 	
@@ -1889,8 +1888,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (parent.getEntityTypeName().equals(EntityConstants.TYPE_WORKSPACE)) {
         	// Making something a child of a workspace makes it a common root
         	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)==null) {
-        		if (isEntityTypeSupportsAttribute(parent.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
-	        		EntityData crEd = newData(parent, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
+        		if (isEntityTypeSupportsAttribute(entity.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
+	        		EntityData crEd = newData(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
 	        		crEd.setValue(EntityConstants.ATTRIBUTE_COMMON_ROOT);
 	        		entity.getEntityData().add(crEd);
 	            	saveOrUpdate(crEd);
@@ -2356,7 +2355,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         try {
             final Set<Long> revokedIds = new HashSet<Long>();
             EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
-            visitationBuilder = recursive ? visitationBuilder.descendants() : visitationBuilder.root();
+            visitationBuilder = recursive ? visitationBuilder.root().descendants() : visitationBuilder.root();
             visitationBuilder.run(new EntityVisitor() {
                 @Override
                 public void visit(Entity entity) throws Exception {
