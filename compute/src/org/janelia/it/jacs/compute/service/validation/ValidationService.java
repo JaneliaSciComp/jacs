@@ -44,7 +44,7 @@ public class ValidationService extends AbstractEntityService {
         logger.info(
                 "Running validation, ownerKey=" + ownerKey +
                 ", guid=" + this.guid +
-                ", debug=" + nodebug + "."
+                ", omitDebugInfo=" + nodebug + "."
         );
 
         //this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);

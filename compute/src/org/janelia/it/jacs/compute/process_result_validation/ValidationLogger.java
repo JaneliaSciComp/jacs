@@ -17,23 +17,33 @@ public class ValidationLogger implements Closeable {
     public static final String EMPTY = "Empty ";
     public static final String FILE_ERROR = "File Error ";
     public static final String MIN_SIZE = "Min Size ";
-    private static final String CATEGORY_BREAK = "\f";
+    private static final String SECTION_BREAK = "\n\n----------------------------------------------------------\n";
     private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tError\tCategory";
     private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s\t%s";
     private static final String CATEGORY_LIST_HEADER = "Category List Follows:";
-    private static final String CATEGORY_LABEL = "CATEGORY: ";
+    private static final String CATEGORY_LABEL = "Category: ";
+    private static final String ENCOUNTERED_TYPE_PREFIX = "Encountered Type: ";
+    private static final String IGNORED_TYPE_PREFIX = "Ignored Type: ";
+    private static final String VALIDATED_LIST_HEADER = "Types Encountered and Validated:";
+    private static final String INGORED_LIST_HEADER = "Types Encountered but NOT Validated:";
     private Logger internalLogger;
     private Map<Category,List<ReportData>> categoryListMap;
+    private Set<String> validatedTypes;
+    private Set<String> unvalidatedTypes;
     private Map<String,Long> filePatternToMinSize;
+    private String description;
 
     private PrintWriter internalWriter;
 
     private boolean __reportPositives;
 
-    public ValidationLogger( Logger internalLogger ) {
+    public ValidationLogger( Logger internalLogger, String description ) {
         this.internalLogger = internalLogger;
+        this.description = description;
         this.filePatternToMinSize = new HashMap<>();
         this.categoryListMap = new TreeMap<>();
+        this.validatedTypes = new TreeSet<>();
+        this.unvalidatedTypes = new TreeSet<>();
         addCategory(GENERAL_CATEGORY_EXCEPTION);
     }
 
@@ -43,6 +53,8 @@ public class ValidationLogger implements Closeable {
 
     public boolean isToReportPositives() { return __reportPositives; }
     public void setToReportPositives( boolean reportPositives ) { __reportPositives = reportPositives; }
+    public void addValidatedType( String type ) { validatedTypes.add( type ); }
+    public void addUnvalidatedType( String type ) { unvalidatedTypes.add( type ); }
 
     /**
      * Setup the minimum file size, given the filePattern.  Can then return for any validation.
@@ -57,7 +69,7 @@ public class ValidationLogger implements Closeable {
      * Tells a validator how long files like this need to be in order to pass muster.
      *
      * @param filePattern ending of file name. Expected to have been trimmmed, not null, case sensitive.
-     * @return
+     * @return smallest allowed size.
      */
     public Long getMinSize( String filePattern ) {
         Long rtnVal = filePatternToMinSize.get(filePattern);
@@ -132,10 +144,26 @@ public class ValidationLogger implements Closeable {
      * File-wise dump for subsequent read by another process.
      */
     private void outputToWriter() {
+        internalWriter.println(description);
+        internalWriter.println(SECTION_BREAK);
+
+        internalWriter.println(VALIDATED_LIST_HEADER);
+        for ( String type: validatedTypes ) {
+            internalWriter.println( ENCOUNTERED_TYPE_PREFIX + type );
+        }
+        internalWriter.println(SECTION_BREAK);
+
+        internalWriter.println(INGORED_LIST_HEADER);
+        for ( String type: unvalidatedTypes ) {
+            internalWriter.println( IGNORED_TYPE_PREFIX + type + " - ignored" );
+        }
+        internalWriter.println(SECTION_BREAK);
+
         internalWriter.println(CATEGORY_LIST_HEADER);
         for ( Category category: categoryListMap.keySet() ) {
             internalWriter.println(CATEGORY_LABEL + category.toString());
         }
+        internalWriter.println(SECTION_BREAK);
 
         for ( Category category: categoryListMap.keySet() ) {
             if ( categoryListMap.get( category ).size() > 0 ) {
@@ -146,7 +174,7 @@ public class ValidationLogger implements Closeable {
                     );
                     internalWriter.println(errorMesage);
                 }
-                internalWriter.print(CATEGORY_BREAK);
+                internalWriter.print(SECTION_BREAK);
             }
         }
     }
@@ -198,10 +226,7 @@ public class ValidationLogger implements Closeable {
          */
         @Override
         public boolean equals( Object o ) {
-            if ( o == null ) {
-                return false;
-            }
-            return o.toString().equals( toString() );
+            return o != null   &&   o instanceof ValidationLogger   &&   o.toString().equals( toString() );
         }
 
         @Override

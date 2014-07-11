@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.process_result_validation.content_checker.en
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator.*;
@@ -13,8 +14,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This can validate things by type.
@@ -30,12 +30,20 @@ public class ValidationEngine {
     private Map<String,TypeValidator> validatorMap;
 
     @SuppressWarnings("unused")
-    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException {
+    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException, ComputeException {
         this( entityBean, computeBean, annotationBean, debug, null );
     }
 
-    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug, Long loggerId) throws IOException {
-        validationLogger = new ValidationLogger( logger );
+    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug, Long loggerId) throws IOException, ComputeException {
+        Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
+        String metaData = String.format(
+                "Validation Report for %s Named %s with ID %d\nProduced by %s",
+                loggerEntity.getEntityTypeName(),
+                loggerEntity.getName(),
+                loggerId,
+                this.getClass().getName()
+        );
+        validationLogger = new ValidationLogger( logger, metaData );
         PrintWriter pw = new PrintWriter(
                 new FileWriter(
                         File.createTempFile(
@@ -46,7 +54,7 @@ public class ValidationEngine {
                 )
         );
         validationLogger.setPrintWriter(pw);
-        validationLogger.setToReportPositives( debug );
+        validationLogger.setToReportPositives(debug);
         this.entityBean = entityBean;
         this.computeBean = computeBean;
         this.annotationBean = annotationBean;
@@ -57,6 +65,7 @@ public class ValidationEngine {
         String entityType = entity.getEntityTypeName();
         TypeValidator validator = validatorMap.get( entityType );
         if ( validator != null ) {
+            validationLogger.addValidatedType(entityType);
             try {
                 validator.validate( entity, sampleId );
             } catch ( Exception ex ) {
@@ -64,6 +73,9 @@ public class ValidationEngine {
                 validationLogger.reportError(entity.getId(), sampleId, EntityConstants.TYPE_SAMPLE, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, "Exception: " + ex.getMessage());
                 throw new RuntimeException("Halting");
             }
+        }
+        else {
+            validationLogger.addUnvalidatedType(entityType);
         }
     }
 
