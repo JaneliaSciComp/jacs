@@ -1735,6 +1735,45 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
     
+    public List<Long> getAllEntityIdsByType(String entityTypeName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getAllEntityIdsByType(entityTypeName=" + entityTypeName + ")");
+        }
+        try {          
+            Connection conn = null;
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            List<Long> resultIdList=new ArrayList<>();
+            try {
+                conn = getJdbcConnection();               
+                StringBuffer sql = new StringBuffer("select et.id from entity et where et.entityTypeName=? order by et.id asc");
+                stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                stmt.setString(1, entityTypeName);               
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Long id = rs.getBigDecimal(1).longValue();
+                    resultIdList.add(id);
+                }
+            }
+            catch (SQLException e) {
+                throw new DaoException(e);
+            }
+            finally {
+                try {
+                    if (rs!=null) rs.close();
+                    if (stmt!=null) stmt.close();
+                    if (conn!=null) conn.close();   
+                }
+                catch (Exception e) {
+                    log.warn("Error closing JDBC connection",e);
+                }
+            }
+            return resultIdList;          
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
 
     /******************************************************************************************************************/
     /** ENTITY LOADING */
