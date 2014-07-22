@@ -13,10 +13,10 @@ import java.util.Map;
  * @author murphys
  */
 public abstract class ActiveVisitor implements Runnable {
-    private Long entityId;
-    private ActiveDataClient activeData;
-    private Map<String, Object> parameterMap;
-    private Map<String, Object> contextMap;
+    protected Long entityId;
+    protected ActiveDataClient activeData;
+    protected Map<String, Object> parameterMap;
+    protected Map<String, Object> contextMap;
     
     public void setEntityId(Long entityId) {
         this.entityId=entityId;

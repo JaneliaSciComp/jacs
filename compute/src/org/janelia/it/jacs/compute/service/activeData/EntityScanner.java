@@ -14,6 +14,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import static org.janelia.it.jacs.compute.service.activeData.SampleScanner.logger;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
  *
@@ -26,6 +31,7 @@ public abstract class EntityScanner {
     public static final String STATUS_PROCESSING = "Processing";
     public static final String STATUS_ERROR = "Error";
     public static final String STATUS_INACTIVE = "Inactive";
+    public static final String STATUS_EPOCH_COMPLETED = "Epoch Completed";
     
     private static final ScheduledThreadPoolExecutor managerPool=new ScheduledThreadPoolExecutor(1);
     private static final ScheduledThreadPoolExecutor scannerPool;
@@ -35,6 +41,8 @@ public abstract class EntityScanner {
     private static ScheduledFuture<?> managerFuture=null;
        
     ActiveDataClient activeData;
+    protected String status = STATUS_INACTIVE;
+    boolean removeAfterEpoch=false;
     
     private List<VisitorFactory> visitorFactoryList=new ArrayList<>();
    
@@ -77,6 +85,10 @@ public abstract class EntityScanner {
         removeActiveDataScanner(this);
     }
     
+    public String getStatus() {
+        return status;
+    }
+    
     public Runnable getRunnableForNextId() throws Exception {
         return new Runnable() {
             @Override
@@ -104,6 +116,35 @@ public abstract class EntityScanner {
         };
     }
     
+    public void setRemoveAfterEpoch(boolean removeAfterEpoch) {
+        this.removeAfterEpoch=removeAfterEpoch;
+    }
+    
+    public boolean getRemoveAfterEpoch() {
+        return removeAfterEpoch;
+    }
+    
+    protected long[] generateIdListByEntityType(Object dataResource, String entityTypeName) {
+      AnnotationBeanLocal annotationBeanLocal = EJBFactory.getLocalAnnotationBean();
+        List<Long> allEntityIdsByType = null;
+        try {
+            allEntityIdsByType = annotationBeanLocal.getAllEntityIdsByType(entityTypeName);
+        } catch (ComputeException ex) {
+            logger.error(ex);
+        }
+        if (allEntityIdsByType == null || allEntityIdsByType.isEmpty()) {
+            return new long[0];
+        } else {
+            long[] result = new long[allEntityIdsByType.size()];
+            int i = 0;
+            for (Long l : allEntityIdsByType) {
+                result[i++] = l;
+            }
+            return result;
+        }         
+    }
+
+    
     // Scanner Management Methods
     
     /*
@@ -125,7 +166,7 @@ public abstract class EntityScanner {
     
     */
     
-    private static void addActiveDataScanner(EntityScanner scanner) throws Exception {
+    public static void addActiveDataScanner(EntityScanner scanner) throws Exception {
         synchronized (scannerList) {
             scannerList.add(scanner);
         }
@@ -134,7 +175,7 @@ public abstract class EntityScanner {
         }
     }
     
-    private static void removeActiveDataScanner(EntityScanner scanner) throws Exception {
+    public static void removeActiveDataScanner(EntityScanner scanner) throws Exception {
         synchronized(scannerList) {
             scannerList.remove(scanner);
         }
@@ -151,20 +192,32 @@ public abstract class EntityScanner {
     private static class ScanManager implements Runnable {
 
         /*
-        Every time the ScanManager wakes up, its job is to make sure the scanner thread
-        pool is loaded up with processing scan jobs, and to add jobs as needed to the pool
-        using the round-robin index.
-        */
+         Every time the ScanManager wakes up, its job is to make sure the scanner thread
+         pool is loaded up with processing scan jobs, and to add jobs as needed to the pool
+         using the round-robin index.
+         */
         @Override
         public void run() {
-            int availableThreadSlots=scannerPool.getCorePoolSize() - scannerPool.getActiveCount();
-            for (int i=0;i<availableThreadSlots;i++) {
-                if (nextScannerIndex>=scannerList.size()) {
-                    nextScannerIndex=0;
+            int availableThreadSlots = scannerPool.getCorePoolSize() - scannerPool.getActiveCount();
+            for (int i = 0; i < availableThreadSlots; i++) {
+                if (nextScannerIndex >= scannerList.size()) {
+                    nextScannerIndex = 0;
                 }
-                EntityScanner scanner=scannerList.get(nextScannerIndex);
+                EntityScanner scanner = scannerList.get(nextScannerIndex);
+                String scannerStatus = scanner.getStatus();
                 try {
-                    scannerPool.submit(scanner.getRunnableForNextId());
+                    if (scannerStatus.equals(STATUS_INACTIVE)
+                            || scannerStatus.equals(STATUS_PROCESSING)) {
+                        scannerPool.submit(scanner.getRunnableForNextId());
+                    } else if (scannerStatus.equals(STATUS_ERROR)) {
+                        logger.error("Skipping scanner signature=" + scanner.getSignature() + " due to error status");
+                        scannerList.remove(scanner);
+                    } else if (scannerStatus.equals(STATUS_EPOCH_COMPLETED)) {
+                        if (scanner.getRemoveAfterEpoch()) {
+                            logger.info("Removing scanner " + scanner.getSignature() + " after completed Epoch");
+                            scannerList.remove(scanner);
+                        }
+                    }
                 } catch (Exception ex) {
                     logger.error(ex);
                 }
