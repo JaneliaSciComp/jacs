@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.janelia.it.jacs.compute.service.activeData.ActiveDataClientSimpleLocal;
 import org.janelia.it.jacs.compute.service.activeData.ActiveTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.SampleScanner;
@@ -35,7 +36,8 @@ public class GeometricIndexService extends AbstractEntityService {
         geometricIndexVisitors.add(testFactory);
         SampleScanner sampleScanner=new SampleScanner(geometricIndexVisitors);
         sampleScanner.setRemoveAfterEpoch(true);
-        EntityScanner.addActiveDataScanner(sampleScanner);
+        sampleScanner.setActiveDataClient(new ActiveDataClientSimpleLocal());
+        sampleScanner.start();
     }
     
 }

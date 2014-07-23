@@ -17,6 +17,10 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 public class SampleScanner extends EntityScanner {
 
     static final Logger logger = Logger.getLogger(SampleScanner.class);
+    
+    public SampleScanner() {
+        super();
+    }
 
     public SampleScanner(List<VisitorFactory> visitorFactoryList) {
         super(visitorFactoryList);

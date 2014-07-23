@@ -30,7 +30,7 @@ public class ActiveDataClientSimpleLocal extends ActiveDataClient implements Act
 
     @Override
     public ActiveDataRegistration registerScanner() throws Exception {
-        return registerScanner(entityScanner.getSignature(), this.getClass().getName());
+        return registerScanner(entityScanner.getSignature(), entityScanner.getClass().getName());
     }
 
     @Override

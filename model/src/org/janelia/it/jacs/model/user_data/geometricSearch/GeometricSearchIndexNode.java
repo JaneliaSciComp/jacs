@@ -13,6 +13,10 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  * @author murphys
  */
 public class GeometricSearchIndexNode extends FileNode {
+    
+    public GeometricSearchIndexNode() {
+        super();
+    }
 
     @Override
     public String getSubDirectory() {

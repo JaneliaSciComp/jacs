@@ -7,7 +7,9 @@
 package org.janelia.it.jacs.compute.mbean;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -15,9 +17,13 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
+import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.User;
 
 /**
  *
@@ -73,20 +79,25 @@ public class GeometricIndexManager implements GeometricIndexManagerMBean {
         @Override
         public void run() {
             logger.info("GeometricIndexManagerThread - run()");
-            ComputeBeanLocal computeBean=EJBFactory.getLocalComputeBean();
+            ComputeBeanRemote computeBean=EJBFactory.getRemoteComputeBean();
             if (indexTask==null) {
                 logger.info("Creating and submitting GeometricIndexTask...");
-                indexTask=new GeometricIndexTask();
+                indexTask=new GeometricIndexTask(new HashSet<Node>(), User.SYSTEM_USER_LOGIN, new ArrayList<Event>(),
+                    new HashSet<TaskParameter>());
                 indexTaskStartTime=new Date().getTime();
                 try {
+                    logger.info("Saving GeometricIndexTask...");
                     indexTask=(GeometricIndexTask) computeBean.saveOrUpdateTask(indexTask);
-                } catch (DaoException ex) {
+                    logger.info("Save done");
+                } catch (Exception ex) {
                     logger.error("Exception saving GeometricIndex task", ex);
                 }
+                logger.info("Next step is submission of GeometricIndexTask");
                 try {
                     logger.info("Submitting GeometricIndexTask id="+indexTask.getObjectId());
                     computeBean.submitJob("GeometricIndex", indexTask.getObjectId());
-                } catch (RemoteException ex) {
+                    logger.info("Submission done");
+                } catch (Exception ex) {
                     logger.error("Exception submitting GeometricIndexTask", ex);
                 }
             } else {
