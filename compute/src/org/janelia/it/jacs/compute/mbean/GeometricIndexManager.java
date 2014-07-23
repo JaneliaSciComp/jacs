@@ -35,20 +35,23 @@ public class GeometricIndexManager implements GeometricIndexManagerMBean {
     private static long indexTaskStartTime=0L;
 
     @Override
-    public void start() {
+    public void startGeometricIndexManager() {
         logger.info("GeometricIndexManager - start()");
         startManager();
     }
 
     @Override
-    public void stop() {
+    public void stopGeometricIndexManager() {
         logger.info("GeometricIndexManager - stop()");
         stopManager();
     }
     
     public static synchronized void startManager() {
         if (managerFuture == null) {
+            logger.info("scheduling GeometricIndexManagerThread");
             managerFuture = managerPool.scheduleWithFixedDelay(new GeometricIndexManagerThread(), 0, MANAGER_DELAY_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        } else {
+            logger.info("managerFuture is non-null - disregarding startManager()");
         }   
     }
     
@@ -64,13 +67,15 @@ public class GeometricIndexManager implements GeometricIndexManagerMBean {
             logger.info("managerFuture is already null - nothing to stop");
         }
     }
-    
+
     private static class GeometricIndexManagerThread implements Runnable {
 
         @Override
         public void run() {
+            logger.info("GeometricIndexManagerThread - run()");
             ComputeBeanLocal computeBean=EJBFactory.getLocalComputeBean();
             if (indexTask==null) {
+                logger.info("Creating and submitting GeometricIndexTask...");
                 indexTask=new GeometricIndexTask();
                 indexTaskStartTime=new Date().getTime();
                 try {
