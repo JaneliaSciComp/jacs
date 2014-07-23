@@ -6,10 +6,26 @@
 
 package org.janelia.it.jacs.model.user_data.geometricSearch;
 
+import org.janelia.it.jacs.model.user_data.FileNode;
+
 /**
  *
  * @author murphys
  */
-public class GeometricSearchResultNode {
+public class GeometricSearchResultNode extends FileNode {
+    
+    public GeometricSearchResultNode() {
+        super();
+    }
+
+    @Override
+    public String getSubDirectory() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String getFilePathByTag(String tag) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
 }

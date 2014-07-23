@@ -50,6 +50,8 @@ public abstract class EntityScanner {
         scannerPool=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
     }
     
+    public EntityScanner() {}
+    
     public EntityScanner(List<VisitorFactory> visitorFactoryList) {
         this.visitorFactoryList=visitorFactoryList;
     }
@@ -78,6 +80,7 @@ public abstract class EntityScanner {
     }
     
     public void start() throws Exception {
+        activeData.registerScanner();
         addActiveDataScanner(this);
     }
     
@@ -110,7 +113,7 @@ public abstract class EntityScanner {
                         }
                     }
                 } catch (Exception ex) {
-                    logger.error(ex);
+                    logger.error(ex, ex);
                 }
             }
         };
@@ -166,7 +169,7 @@ public abstract class EntityScanner {
     
     */
     
-    public static void addActiveDataScanner(EntityScanner scanner) throws Exception {
+    private static void addActiveDataScanner(EntityScanner scanner) throws Exception {
         synchronized (scannerList) {
             scannerList.add(scanner);
         }
@@ -175,7 +178,7 @@ public abstract class EntityScanner {
         }
     }
     
-    public static void removeActiveDataScanner(EntityScanner scanner) throws Exception {
+    private static void removeActiveDataScanner(EntityScanner scanner) throws Exception {
         synchronized(scannerList) {
             scannerList.remove(scanner);
         }
@@ -219,7 +222,7 @@ public abstract class EntityScanner {
                         }
                     }
                 } catch (Exception ex) {
-                    logger.error(ex);
+                    logger.error(ex, ex);
                 }
                 nextScannerIndex++;
             }
