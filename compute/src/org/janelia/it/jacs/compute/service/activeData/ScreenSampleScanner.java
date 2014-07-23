@@ -27,7 +27,7 @@ public class ScreenSampleScanner extends EntityScanner {
     }
 
     @Override
-    public long[] generateIdList(Object dataResource) {
+    public long[] generateIdList(Object dataResource) throws Exception {
         return generateIdListByEntityType(dataResource, EntityConstants.TYPE_SCREEN_SAMPLE);
     }
     

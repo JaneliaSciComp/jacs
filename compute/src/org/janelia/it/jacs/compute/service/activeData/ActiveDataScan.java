@@ -93,7 +93,7 @@ public class ActiveDataScan {
         currentEpochNumSuccessful=0;
         currentEpochNumError=0;
         for (int i=0;i<idArray.length;i++) {
-            byte s=statusMap.get(i);
+            byte s=statusMap.get(idArray[i]);
             if (s==ENTITY_STATUS_PROCESSING) {
                 currentEpochNumProcessing++;
             } else if (s==ENTITY_STATUS_COMPLETED_SUCCESSFULLY) {

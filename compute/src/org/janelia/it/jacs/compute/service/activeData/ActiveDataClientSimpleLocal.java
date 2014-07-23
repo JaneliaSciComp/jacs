@@ -106,7 +106,14 @@ public class ActiveDataClientSimpleLocal extends ActiveDataClient implements Act
         ActiveDataScan scan = scanMap.get(signature);
         if (scan == null) {
             scan = new ActiveDataScan();
-            long[] idArray = es.generateIdList(null /* data resource */);
+            long[] idArray = null;
+            try {
+                idArray = es.generateIdList(null /* data resource */);
+            } catch (Exception ex) {
+                scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_ERROR);
+                logger.error("Error generating ID list", ex);
+                throw ex;
+            }
             scan.setIdArray(idArray);
             scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_PROCESSING);
             logger.info("registerScanner - created new Scan entry for " + signature + " with idList count=" + idArray.length);
