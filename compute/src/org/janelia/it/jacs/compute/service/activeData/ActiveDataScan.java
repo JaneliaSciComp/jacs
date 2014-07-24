@@ -45,7 +45,7 @@ public class ActiveDataScan {
     
     int nextIdIndex=0;
     
-    Map<Long, ActiveDataScannerStats> scannerStatMap=new HashMap<Long, ActiveDataScannerStats>();
+    Map<Long, ActiveDataScannerStats> scannerStatMap=new HashMap<>();
     
     public ActiveDataScan() {
         epochHistory.add(new Date().getTime());
@@ -72,6 +72,7 @@ public class ActiveDataScan {
                 currentEpochNumProcessing,
                 currentEpochNumSuccessful,
                 currentEpochNumError,
+                getIdCount(),
                 statusDescriptor);
         return status;
     }
@@ -93,7 +94,7 @@ public class ActiveDataScan {
         currentEpochNumSuccessful=0;
         currentEpochNumError=0;
         for (int i=0;i<idArray.length;i++) {
-            byte s=statusMap.get(i);
+            byte s=statusMap.get(idArray[i]);
             if (s==ENTITY_STATUS_PROCESSING) {
                 currentEpochNumProcessing++;
             } else if (s==ENTITY_STATUS_COMPLETED_SUCCESSFULLY) {

@@ -58,7 +58,7 @@ public abstract class EntityScanner {
     
     // Scanner Methods
     
-    public abstract long[] generateIdList(Object dataResource);
+    public abstract long[] generateIdList(Object dataResource) throws Exception;
     
     
     public void setActiveDataClient(ActiveDataClient activeDataClient) {
@@ -82,6 +82,7 @@ public abstract class EntityScanner {
     public void start() throws Exception {
         activeData.registerScanner();
         addActiveDataScanner(this);
+        status=STATUS_PROCESSING;
     }
     
     public void stop() throws Exception {
@@ -103,13 +104,23 @@ public abstract class EntityScanner {
                         throw new Exception("Error in ActiveDataScan getNextId()");
                     } else if (entityId == ActiveDataScan.ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY) {
                         logger.info("Current scan completed successfully - skipping processing of nextId");
+                        if (status.equals(STATUS_PROCESSING)){
+                            status=STATUS_EPOCH_COMPLETED;
+                        }
                     } else {
                         Map<String, Object> contextMap=new HashMap<>();
                         for (VisitorFactory vf : visitorFactoryList) {
                             ActiveVisitor av = vf.createInstance();
                             av.setEntityId(entityId);
                             av.setContextMap(contextMap);
-                            av.run();
+                            try {
+                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
+                                av.run();
+                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                            } catch (Exception ex2) {
+                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
+                                logger.error(ex2,ex2);
+                            }
                         }
                     }
                 } catch (Exception ex) {
@@ -127,13 +138,14 @@ public abstract class EntityScanner {
         return removeAfterEpoch;
     }
     
-    protected long[] generateIdListByEntityType(Object dataResource, String entityTypeName) {
+    protected long[] generateIdListByEntityType(Object dataResource, String entityTypeName) throws Exception {
       AnnotationBeanLocal annotationBeanLocal = EJBFactory.getLocalAnnotationBean();
         List<Long> allEntityIdsByType = null;
         try {
             allEntityIdsByType = annotationBeanLocal.getAllEntityIdsByType(entityTypeName);
-        } catch (ComputeException ex) {
-            logger.error(ex);
+        } catch (Exception ex) {
+            logger.error(ex, ex);
+            throw ex;
         }
         if (allEntityIdsByType == null || allEntityIdsByType.isEmpty()) {
             return new long[0];

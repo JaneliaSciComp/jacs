@@ -1746,7 +1746,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             List<Long> resultIdList=new ArrayList<>();
             try {
                 conn = getJdbcConnection();               
-                StringBuffer sql = new StringBuffer("select et.id from entity et where et.entityTypeName=? order by et.id asc");
+                StringBuffer sql = new StringBuffer("select et.id from entity et where et.entity_type=? order by et.id asc");
                 stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                 stmt.setString(1, entityTypeName);               
                 rs = stmt.executeQuery();

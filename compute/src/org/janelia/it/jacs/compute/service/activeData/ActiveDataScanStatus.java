@@ -15,6 +15,7 @@ public class ActiveDataScanStatus {
     private int currentEpochNumProcessing;
     private int currentEpochNumSuccessful;
     private int currentEpochNumError;
+    private int currentEpochIdCount;
     private String statusDescriptor;
 
     public ActiveDataScanStatus(
@@ -22,11 +23,13 @@ public class ActiveDataScanStatus {
             int currentEpochNumProcessing,
             int currentEpochNumSuccessful,
             int currentEpochNumError,
+            int currentEpochIdCount,
             String statusDescriptor) {
         this.epochNumber = epochNumber;
         this.currentEpochNumProcessing = currentEpochNumProcessing;
         this.currentEpochNumSuccessful = currentEpochNumSuccessful;
         this.currentEpochNumError = currentEpochNumError;
+        this.currentEpochIdCount = currentEpochIdCount;
         this.statusDescriptor = statusDescriptor;
     }
 
@@ -48,6 +51,17 @@ public class ActiveDataScanStatus {
 
     public int getCurrentEpochNumError() {
         return currentEpochNumError;
+    }
+    
+    public int getCurrentEpochIdCount() {
+        return currentEpochIdCount;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("epoch=").append(epochNumber).append(" processing=").append(currentEpochNumProcessing).append(" successful=").append(currentEpochNumSuccessful).append(" error=").append(currentEpochNumError).append(" status=").append(statusDescriptor).append(" idcount=").append(currentEpochIdCount);
+        return sb.toString();
     }
     
     
