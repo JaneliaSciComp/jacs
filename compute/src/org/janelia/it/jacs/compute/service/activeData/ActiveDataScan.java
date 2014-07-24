@@ -45,7 +45,7 @@ public class ActiveDataScan {
     
     int nextIdIndex=0;
     
-    Map<Long, ActiveDataScannerStats> scannerStatMap=new HashMap<Long, ActiveDataScannerStats>();
+    Map<Long, ActiveDataScannerStats> scannerStatMap=new HashMap<>();
     
     public ActiveDataScan() {
         epochHistory.add(new Date().getTime());
@@ -72,6 +72,7 @@ public class ActiveDataScan {
                 currentEpochNumProcessing,
                 currentEpochNumSuccessful,
                 currentEpochNumError,
+                getIdCount(),
                 statusDescriptor);
         return status;
     }

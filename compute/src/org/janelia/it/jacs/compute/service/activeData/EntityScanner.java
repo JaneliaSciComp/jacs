@@ -82,6 +82,7 @@ public abstract class EntityScanner {
     public void start() throws Exception {
         activeData.registerScanner();
         addActiveDataScanner(this);
+        status=STATUS_PROCESSING;
     }
     
     public void stop() throws Exception {
@@ -112,7 +113,14 @@ public abstract class EntityScanner {
                             ActiveVisitor av = vf.createInstance();
                             av.setEntityId(entityId);
                             av.setContextMap(contextMap);
-                            av.run();
+                            try {
+                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
+                                av.run();
+                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                            } catch (Exception ex2) {
+                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
+                                logger.error(ex2,ex2);
+                            }
                         }
                     }
                 } catch (Exception ex) {

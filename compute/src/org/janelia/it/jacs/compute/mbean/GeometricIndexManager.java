@@ -101,7 +101,7 @@ public class GeometricIndexManager implements GeometricIndexManagerMBean {
                     logger.error("Exception submitting GeometricIndexTask", ex);
                 }
             } else {
-                logger.info("Information for GeometrixIndexTask created at time="+new Date(indexTaskStartTime));
+                logger.info("Information for GeometricIndexTask created at time="+new Date(indexTaskStartTime));
                 try {
                     List<Event> events=computeBean.getEventsForTask(indexTask.getObjectId());
                     for (Event event : events) {
