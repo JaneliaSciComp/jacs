@@ -93,6 +93,10 @@ public abstract class EntityScanner {
         return status;
     }
     
+    public ActiveDataScanStatus getActiveDataStatus() throws Exception {
+        return activeData.getScanStatus();
+    }
+    
     public Runnable getRunnableForNextId() throws Exception {
         return new Runnable() {
             @Override
@@ -101,6 +105,7 @@ public abstract class EntityScanner {
                 try {
                     entityId = activeData.getNext();
                     if (entityId == ActiveDataScan.ID_CODE_SCAN_ERROR) {
+                        status=STATUS_ERROR;
                         throw new Exception("Error in ActiveDataScan getNextId()");
                     } else if (entityId == ActiveDataScan.ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY) {
                         logger.info("Current scan completed successfully - skipping processing of nextId");
@@ -186,7 +191,7 @@ public abstract class EntityScanner {
             scannerList.add(scanner);
         }
         if (managerFuture == null) {
-            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManager(), 1000, 1000, TimeUnit.MILLISECONDS);
+            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManager(), 100, 100, TimeUnit.MILLISECONDS);
         }
     }
     
