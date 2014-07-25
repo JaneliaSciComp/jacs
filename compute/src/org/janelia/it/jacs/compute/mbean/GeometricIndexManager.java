@@ -6,7 +6,6 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -15,21 +14,22 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
+import org.janelia.it.jacs.compute.service.geometricSearch.GeometricIndexService;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
+import org.jboss.system.ServiceMBeanSupport;
 
 /**
  *
  * @author murphys
  */
-public class GeometricIndexManager implements GeometricIndexManagerMBean {
+public class GeometricIndexManager extends ServiceMBeanSupport implements GeometricIndexManagerMBean {
     
     private static final Logger logger = Logger.getLogger(GeometricIndexManager.class);
     private static final long MANAGER_DELAY_INTERVAL_MINUTES = 1L;
@@ -42,13 +42,13 @@ public class GeometricIndexManager implements GeometricIndexManagerMBean {
 
     @Override
     public void startGeometricIndexManager() {
-        logger.info("GeometricIndexManager - start()");
+        logger.info("GeometricIndexManager - startGeometricIndexManager()");
         startManager();
     }
 
     @Override
     public void stopGeometricIndexManager() {
-        logger.info("GeometricIndexManager - stop()");
+        logger.info("GeometricIndexManager - stopGeometricIndexManager()");
         stopManager();
     }
     
@@ -72,6 +72,29 @@ public class GeometricIndexManager implements GeometricIndexManagerMBean {
         } else {
             logger.info("managerFuture is already null - nothing to stop");
         }
+    }
+
+    @Override
+    public void create() throws Exception {
+        logger.info("create() called");
+    }
+
+    @Override
+    public void destroy() {
+        logger.info("destroy() called");
+    }
+
+    @Override
+    public void start() throws Exception {
+        logger.info("start() called");
+    }
+
+    @Override
+    public void stop() {
+        logger.info("stop() called");
+        managerPool.shutdown();
+        GeometricIndexService.shutdown();
+        EntityScanner.shutdown();
     }
 
     private static class GeometricIndexManagerThread implements Runnable {

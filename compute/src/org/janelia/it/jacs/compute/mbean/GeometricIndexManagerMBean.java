@@ -6,11 +6,13 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
+import org.jboss.system.ServiceMBean;
+
 /**
  *
  * @author murphys
  */
-interface GeometricIndexManagerMBean {
+interface GeometricIndexManagerMBean extends ServiceMBean {
     
     public void startGeometricIndexManager();
     

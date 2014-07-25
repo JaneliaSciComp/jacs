@@ -242,5 +242,9 @@ public abstract class EntityScanner {
 
     }
     
+    public static synchronized void shutdown() {
+        scannerPool.shutdown();
+        managerPool.shutdown();
+    }  
     
 }

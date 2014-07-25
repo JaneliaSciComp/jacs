@@ -11,11 +11,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClient;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClientSimpleLocal;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataScanStatus;
 import org.janelia.it.jacs.compute.service.activeData.ActiveTestVisitor;
-import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.SampleScanner;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -28,7 +31,14 @@ import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
  */
 public class GeometricIndexService extends AbstractEntityService {
     
+    private static final Logger logger = Logger.getLogger(GeometricIndexService.class);
+    
     public static final long MAX_SERVICE_TIME_MS = 1000 * 60 * 60 * 24; // 24 hours
+    
+    private static final ScheduledThreadPoolExecutor managerPool=new ScheduledThreadPoolExecutor(1);
+    private static ScheduledFuture<?> managerFuture=null;
+    private static long startTime=0L;
+    private static ActiveDataClient activeData=null;
 
     @Override
     protected void execute() throws Exception {
@@ -40,20 +50,36 @@ public class GeometricIndexService extends AbstractEntityService {
         geometricIndexVisitors.add(testFactory);
         SampleScanner sampleScanner=new SampleScanner(geometricIndexVisitors);
         sampleScanner.setRemoveAfterEpoch(true);
-        ActiveDataClient activeData = new ActiveDataClientSimpleLocal();
+        activeData = new ActiveDataClientSimpleLocal();
         sampleScanner.setActiveDataClient(activeData);
         sampleScanner.start();
-        long startTime=new Date().getTime();
-        while(sampleScanner.getStatus().equals(EntityScanner.STATUS_PROCESSING)) {
-            Thread.sleep(1000 * 60); // 1 minute
-            if (new Date().getTime() - startTime > MAX_SERVICE_TIME_MS) {
-                throw new Exception("Exceeded max service time");
-            }
-            ActiveDataScanStatus scanStatus=activeData.getScanStatus();
-            logger.info("GeometricIndex: "+scanStatus.toString());
-        }
+        startTime=new Date().getTime();      
+        managerFuture = managerPool.scheduleWithFixedDelay(new GeometricIndexServiceThread(), 0, 1, TimeUnit.MINUTES);
         logger.info("GeometricIndexService scan completed");
         computeBean.saveEvent(indexTask.getObjectId(), Event.COMPLETED_EVENT, "Completed", new Date());
     }
+    
+        private static class GeometricIndexServiceThread implements Runnable {
+            
+            @Override
+            public void run() {
+                if (new Date().getTime() - startTime > MAX_SERVICE_TIME_MS) {
+                    logger.error("Exceeded max service time");
+                }
+                ActiveDataScanStatus scanStatus = null;
+                try {
+                    scanStatus = activeData.getScanStatus();
+                } catch (Exception ex) {
+                    logger.error(ex,ex);
+                }
+                logger.info("GeometricIndex: "+scanStatus.toString());
+            }
+            
+        }
+        
+        public static synchronized void shutdown() {
+            managerPool.shutdown();
+        }
+
     
 }
