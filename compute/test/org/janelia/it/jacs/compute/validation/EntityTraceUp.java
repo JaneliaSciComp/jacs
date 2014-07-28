@@ -3,11 +3,11 @@ package org.janelia.it.jacs.compute.validation;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.junit.Assert;
 import org.junit.Test;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +20,9 @@ import java.util.Set;
  */
 public class EntityTraceUp {
     private static final Long TEST_GUID = 1851591489742700642L;
+    private static final String DEFAULT_SERVER = "jnp://jacs-staging:1199";
     private boolean dumpValues = false;
+    private String server = DEFAULT_SERVER;
 
     @Test
     public void traceUpTest() {
@@ -29,24 +31,13 @@ public class EntityTraceUp {
 
     public void traceUp(Long guid) {
         try {
-            Hashtable<String,String> environment = new Hashtable<>();
-            environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
-            environment.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
-            environment.put(Context.PROVIDER_URL, "jnp://foster-ws:1199");     // TEMP
-            InitialContext context = new InitialContext(environment);
-
-            EntityBeanRemote eobj = (EntityBeanRemote) context.lookup("compute/EntityEJB/remote");
-            System.out.println("\n Entity Attributes Returned:"+eobj.getEntityAttributes().size());
-
-            Assert.assertNotNull(eobj.getEntityAttributes().size());
-
+            EntityBeanRemote eobj = getEntityBeanRemote();
             traverse( guid, eobj, "LEAF" );
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 
     public static void main(String [] args) {
         EntityTraceUp ct = new EntityTraceUp();
@@ -58,6 +49,9 @@ public class EntityTraceUp {
         }
         if ( args.length >= 2 ) {
             ct.setDumpValues( Boolean.parseBoolean(args[1]) );
+        }
+        if ( args.length >= 3 ) {
+            ct.setServer( args[ 2 ] );
         }
         ct.traceUp(guid);
 
@@ -71,6 +65,20 @@ public class EntityTraceUp {
     public void setDumpValues(boolean dumpValues) {
         this.dumpValues = dumpValues;
     }
+
+    public void setServer( String server ) {
+        this.server = server;
+    }
+
+    private EntityBeanRemote getEntityBeanRemote() throws NamingException {
+        Hashtable<String,String> environment = new Hashtable<>();
+        environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+        environment.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
+        environment.put(Context.PROVIDER_URL, server);
+        InitialContext context = new InitialContext(environment);
+        return (EntityBeanRemote) context.lookup("compute/EntityEJB/remote");
+    }
+
     /**
      * Recursively walk up the parentage / ancestry tree to find the root.
      * @param guid target entity id.
