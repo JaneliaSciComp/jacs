@@ -65,8 +65,7 @@ public class SampleValidator implements TypeValidator {
         if ( unmatchedImageTileCount > 0 ) {
             validationLogger.reportError(
                     sampleId,
-                    entity.getId(),
-                    entity.getEntityTypeName(),
+                    entity,
                     NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE,
                     String.format( UNMATCHED_TILE_FMT, unmatchedImageTileCount, sampleId )
             );

@@ -72,7 +72,7 @@ public class SubEntityValidator {
                 childAttribName, entity.getName(), entity.getId(), sampleId
         );
         validationLogger.reportError(
-                sampleId, entity.getId(), entity.getEntityTypeName(), new ValidationLogger.Category(prefix + childAttribName), message
+                sampleId, entity, new ValidationLogger.Category(prefix + childAttribName), message
         );
     }
 

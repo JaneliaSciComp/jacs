@@ -50,7 +50,7 @@ public class ImageTileValidator implements TypeValidator {
         }
 
         if (lsmCount == 0) {
-            validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), NO_LSM_STACKS, "LSMs missing from " + entity.getName() );
+            validationLogger.reportError( sampleId, entity, NO_LSM_STACKS, "LSMs missing from " + entity.getName() );
             isValid = false;
         }
 

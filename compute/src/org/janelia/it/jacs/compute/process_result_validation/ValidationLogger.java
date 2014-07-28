@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.process_result_validation;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.model.entity.Entity;
 
 import java.io.Closeable;
 import java.io.PrintWriter;
@@ -18,8 +19,8 @@ public class ValidationLogger implements Closeable {
     public static final String FILE_ERROR = "File Error ";
     public static final String MIN_SIZE = "Min Size ";
     private static final String SECTION_BREAK = "\n\n----------------------------------------------------------\n";
-    private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tError\tCategory";
-    private static final String VAL_LOG_FMT = "%d\t%d\t%s\t%s\t%s";
+    private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tCreated\tError\tCategory";
+    private static final String VAL_LOG_FMT = "%1$d\t%2$d\t%3$s\t%4$tB %4$te, %4$tY\t%5$s\t%6$s";
     private static final String CATEGORY_LIST_HEADER = "Category List Follows:";
     private static final String CATEGORY_LABEL = "Category: ";
     private static final String ENCOUNTERED_TYPE_PREFIX = "Encountered Type: ";
@@ -103,21 +104,26 @@ public class ValidationLogger implements Closeable {
      *
      * @param sampleId the sample tree containnig the entity being checked.
      * @param owningEntityType what kind of entity is being checked.
-     * @param entityId the GUID of the entity with failure.
+     * @param entity the GUID of the entity with failure.
      * @param testCategory what kind of test.
      * @param message description of failure.
      */
-    public void reportError( Long sampleId, Long entityId, String owningEntityType, Category testCategory, String message ) {
+    public void reportError( Long sampleId, Entity entity, String owningEntityType, Category testCategory, String message ) {
         if ( ! categoryListMap.containsKey(testCategory) ) {
-            throw new UnknownCategoryException( testCategory, sampleId, entityId, message );
+            throw new UnknownCategoryException( testCategory, sampleId, entity.getId(), message );
         }
         ReportData reportData = new ReportData();
+        reportData.setCreationDate( entity.getCreationDate() );
         reportData.setCategory( testCategory );
-        reportData.setEntityId(entityId);
+        reportData.setEntityId(entity.getId());
         reportData.setSampleId(sampleId);
         reportData.setEntityType(owningEntityType);
         reportData.setMessage( message );
         categoryListMap.get( testCategory ).add( reportData );
+    }
+
+    public void reportError( Long sampleId, Entity entity, Category testCategory, String message ) {
+        reportError(sampleId, entity, entity.getEntityTypeName(), testCategory, message);
     }
 
     public void reportSuccess( Long entityId, String owningEntityType ) {
@@ -169,8 +175,10 @@ public class ValidationLogger implements Closeable {
             if ( categoryListMap.get( category ).size() > 0 ) {
                 internalWriter.println(VAL_LOG_HEADER);
                 for ( ReportData reportData: categoryListMap.get( category ) ) {
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime( reportData.getCreationDate() );
                     String errorMesage = String.format(
-                            VAL_LOG_FMT, reportData.getSampleId(), reportData.getEntityId(), reportData.getEntityType(), reportData.getMessage(), reportData.getCategory()
+                            VAL_LOG_FMT, reportData.getSampleId(), reportData.getEntityId(), reportData.getEntityType(), calendar, reportData.getMessage(), reportData.getCategory()
                     );
                     internalWriter.println(errorMesage);
                 }
@@ -189,7 +197,7 @@ public class ValidationLogger implements Closeable {
             internalLogger.info( VAL_LOG_HEADER );
             for ( ReportData reportData: categoryListMap.get( category ) ) {
                 String errorMesage = String.format(
-                        VAL_LOG_FMT, reportData.getSampleId(), reportData.getEntityId(), reportData.getEntityType(), reportData.getMessage(), reportData.getCategory()
+                        VAL_LOG_FMT, reportData.getSampleId(), reportData.getEntityId(), reportData.getEntityType(), reportData.getCreationDate(), reportData.getMessage(), reportData.getCategory()
                 );
                 internalLogger.error( errorMesage );
             }
@@ -247,6 +255,7 @@ public class ValidationLogger implements Closeable {
         private Long entityId;
         private String entityType;
         private String message;
+        private Date creationDate;
 
         public Category getCategory() {
             return category;
@@ -286,6 +295,14 @@ public class ValidationLogger implements Closeable {
 
         public void setMessage(String message) {
             this.message = message;
+        }
+
+        public Date getCreationDate() {
+            return creationDate;
+        }
+
+        public void setCreationDate(Date creationDate) {
+            this.creationDate = creationDate;
         }
     }
 }

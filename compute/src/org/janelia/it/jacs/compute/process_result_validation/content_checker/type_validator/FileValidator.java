@@ -67,7 +67,7 @@ public class FileValidator {
         }
         String prob = TypeValidationHelper.getFileError( filePath, fileType, minLength );
         if ( prob != null ) {
-            validationLogger.reportError( entity.getId(), sampleId, entity.getEntityTypeName(), new ValidationLogger.Category(ValidationLogger.FILE_ERROR + fileType), prob);
+            validationLogger.reportError( sampleId, entity, entity.getEntityTypeName(), new ValidationLogger.Category(ValidationLogger.FILE_ERROR + fileType), prob);
             rtnVal = false;
         }
         return rtnVal;
@@ -85,11 +85,11 @@ public class FileValidator {
     }
 
     private void reportMissingChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), new ValidationLogger.Category(ValidationLogger.MISSING + childAttribName), VAL_MISSING_CHILD + childAttribName );
+        validationLogger.reportError( sampleId, entity, new ValidationLogger.Category(ValidationLogger.MISSING + childAttribName), VAL_MISSING_CHILD + childAttribName );
     }
 
     private void reportEmptyChild( String childAttribName, Long sampleId, Entity entity ) throws Exception {
-        validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), new ValidationLogger.Category(ValidationLogger.EMPTY + childAttribName), VAL_EMPTY_CHILD + childAttribName );
+        validationLogger.reportError( sampleId, entity, new ValidationLogger.Category(ValidationLogger.EMPTY + childAttribName), VAL_EMPTY_CHILD + childAttribName );
     }
 
 }

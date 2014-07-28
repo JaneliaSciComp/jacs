@@ -54,7 +54,7 @@ public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
         // Checking on the fast-load file.
         Entity default3DImage = entity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         if ( default3DImage == null ) {
-            validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), NO_DEFAULT_3D_IMAGE,
+            validationLogger.reportError( sampleId, entity, NO_DEFAULT_3D_IMAGE,
                     String.format( ERROR_RPT_FMT, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, entity.getId() ) );
         }
         else {
@@ -62,7 +62,7 @@ public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
             String default3dImageFile = refreshedEntity.getValueByAttributeName( EntityConstants.ATTRIBUTE_FILE_PATH );
             Entity fastLoad = refreshedEntity.getChildByAttributeName( EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE );
             if ( fastLoad == null ) {
-                validationLogger.reportError( sampleId, entity.getId(), entity.getEntityTypeName(), NO_FAST_LOAD_3D_IMAGE,
+                validationLogger.reportError( sampleId, entity, NO_FAST_LOAD_3D_IMAGE,
                         String.format( ERROR_RPT_FMT, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, entity.getId() ) );
             }
             else {
@@ -79,7 +79,7 @@ public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
         Entity fragments = entity.getChildByAttributeName(EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION);
         if ( fragments == null ) {
             validationLogger.reportError(
-                    sampleId, entity.getId(), entity.getEntityTypeName(), NO_FRAGMENTS,
+                    sampleId, entity, NO_FRAGMENTS,
                     String.format( ERROR_RPT_FMT, EntityConstants.ATTRIBUTE_MASK_ENTITY_COLLECTION, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, entity.getId() ) );
         }
 
@@ -97,7 +97,7 @@ public class NeuronSeparatorPipelineResultValidator implements TypeValidator {
         String value = entity.getValueByAttributeName( attributeName );
         if ( value == null   ||   value.trim().length() == 0 ) {
             validationLogger.reportError(
-                    sampleId, entity.getId(), entity.getEntityTypeName(), category,
+                    sampleId, entity, category,
                     String.format( ERROR_RPT_FMT, attributeName, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT, entity.getId() ) );
         }
     }
