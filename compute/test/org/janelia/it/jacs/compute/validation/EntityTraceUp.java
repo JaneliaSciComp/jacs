@@ -89,7 +89,7 @@ public class EntityTraceUp {
     private void traverse( Long guid, EntityBeanRemote eobj, String breadCrumb ) throws Exception {
         Entity entity = eobj.getEntityAndChildren( null, guid );
         System.out.println("===============================================  " + entity.getName() + " / " + guid );
-        breadCrumb = entity.getEntityTypeName() + " (" + entity.getId() + ")" + " --> " + breadCrumb;
+        breadCrumb = entity.getEntityTypeName() + " (" + entity.getName() + ":" + entity.getId() + ")" + " --> " + breadCrumb;
         System.out.println(breadCrumb);
         System.out.println("Entity Type=" + entity.getEntityTypeName());
         List<EntityData> entityDatas = entity.getOrderedEntityData();
