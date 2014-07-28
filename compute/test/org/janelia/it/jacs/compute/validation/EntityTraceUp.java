@@ -1,9 +1,7 @@
 package org.janelia.it.jacs.compute.validation;
 
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,7 +16,7 @@ import java.util.Set;
  * Trace upward from some entity, all the way to its "root"--that point at which parent == null.  Tell much
  * information about each step along the trace.
  *
- * @Author fosterl
+ * @author fosterl
  */
 public class EntityTraceUp {
     private static final Long TEST_GUID = 1851591489742700642L;
@@ -31,7 +29,7 @@ public class EntityTraceUp {
 
     public void traceUp(Long guid) {
         try {
-            Hashtable environment = new Hashtable();
+            Hashtable<String,String> environment = new Hashtable<>();
             environment.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
             environment.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
             environment.put(Context.PROVIDER_URL, "jnp://foster-ws:1199");     // TEMP
@@ -52,7 +50,7 @@ public class EntityTraceUp {
 
     public static void main(String [] args) {
         EntityTraceUp ct = new EntityTraceUp();
-        Long guid = null;
+        Long guid;
         try {
             guid = Long.parseLong( args[ 0 ] );
         } catch ( Exception ex ) {
@@ -65,6 +63,7 @@ public class EntityTraceUp {
 
     }
 
+    @SuppressWarnings("unused")
     public boolean isDumpValues() {
         return dumpValues;
     }
@@ -74,9 +73,9 @@ public class EntityTraceUp {
     }
     /**
      * Recursively walk up the parentage / ancestry tree to find the root.
-     * @param guid
-     * @param eobj
-     * @param breadCrumb
+     * @param guid target entity id.
+     * @param eobj for obtaining database info.
+     * @param breadCrumb Trace header with full stack of ancestors to this point.
      * @throws Exception
      */
     private void traverse( Long guid, EntityBeanRemote eobj, String breadCrumb ) throws Exception {
