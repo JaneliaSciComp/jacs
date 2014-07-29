@@ -18,13 +18,14 @@ import java.util.HashSet;
 public class Validator implements ValidatorMBean {
     private Logger log = Logger.getLogger(Validator.class);
     @Override
-    public void runValidations(String user, Long guid, Boolean nodebug) {
+    public void runValidations(String user, Long guid, String label, Boolean nodebug) {
         try {
             String processName = "ValidationServicePipeline";
             String displayName = "Sample Content Validation";
 
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("guid", guid.toString(), null));
+            taskParameters.add(new TaskParameter("label", label, null));
             taskParameters.add(new TaskParameter("nodebug", nodebug.toString(), null));
             saveAndRunTask(user, processName, displayName, taskParameters);
 

@@ -12,6 +12,8 @@ import java.util.*;
  * Created by fosterl on 6/27/14.
  */
 public class ValidationLogger implements Closeable {
+    public enum Status { Success, Failure, Unfinished, }
+
     // Refer to the header in interpreting the log.
     public static final Category GENERAL_CATEGORY_EXCEPTION = new Category("Something which threw an exception");
     public static final String MISSING = "Missing ";
@@ -33,6 +35,8 @@ public class ValidationLogger implements Closeable {
     private Set<String> unvalidatedTypes;
     private Map<String,Long> filePatternToMinSize;
     private String description;
+    private int failureCount = 0;
+    private Status finalStatus = Status.Unfinished;
 
     private PrintWriter internalWriter;
 
@@ -120,6 +124,8 @@ public class ValidationLogger implements Closeable {
         reportData.setEntityType(owningEntityType);
         reportData.setMessage( message );
         categoryListMap.get( testCategory ).add( reportData );
+
+        failureCount ++;
     }
 
     public void reportError( Long sampleId, Entity entity, Category testCategory, String message ) {
@@ -144,6 +150,15 @@ public class ValidationLogger implements Closeable {
         }
         categoryListMap = null;
 
+        finalStatus = ( failureCount == 0 ) ? Status.Success : Status.Failure;
+    }
+
+    /** This can be consulted to figure out what to do with the output file. */
+    public Status getFinalStatus() {
+        if ( finalStatus == Status.Unfinished ) {
+            throw new IllegalStateException( "You must first close this class before getting final status." );
+        }
+        return finalStatus;
     }
 
     /**

@@ -10,31 +10,30 @@ import org.janelia.it.jacs.compute.process_result_validation.content_checker.typ
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 
 /**
  * This can validate things by type.
  * Created by fosterl on 6/27/14.
  */
-public class ValidationEngine {
+public class ValidationEngine implements Closeable {
+    public static final String REPORT_FILE_EXTENSION = ".report.tsv";
     private static Logger logger = Logger.getLogger(ValidationEngine.class);
     private ValidationLogger validationLogger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
 
+    private File reportFile;
     private Map<String,TypeValidator> validatorMap;
 
     @SuppressWarnings("unused")
     public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException, ComputeException {
-        this( entityBean, computeBean, annotationBean, debug, null );
+        this( entityBean, computeBean, annotationBean, debug, null, null, "generic" );
     }
 
-    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug, Long loggerId) throws IOException, ComputeException {
+    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug, Long loggerId, Long startingId, String label) throws IOException, ComputeException {
         Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
         String metaData = String.format(
                 "Validation Report for %s Named %s with ID %d\nProduced by %s",
@@ -44,13 +43,24 @@ public class ValidationEngine {
                 this.getClass().getName()
         );
         validationLogger = new ValidationLogger( logger, metaData );
+        File directory = new File(System.getProperty("user.home"));
+        if ( startingId == null ) {
+            directory = new File( directory, "Validation_All" );
+        }
+        else {
+            directory = new File( directory, "Validation_" + label );
+        }
+        if ( ! directory.exists() ) {
+            directory.mkdirs();
+        }
+        reportFile = File.createTempFile(
+                this.getClass().getSimpleName(),
+                (loggerId == null ? "" : "." + loggerId) + REPORT_FILE_EXTENSION,
+                directory
+        );
         PrintWriter pw = new PrintWriter(
                 new FileWriter(
-                        File.createTempFile(
-                                this.getClass().getSimpleName(),
-                                (loggerId == null ? "" : "." + loggerId) + ".report.tsv",
-                                new File( System.getProperty("user.home") )
-                        )
+                        reportFile
                 )
         );
         validationLogger.setPrintWriter(pw);
@@ -70,7 +80,7 @@ public class ValidationEngine {
                 validator.validate( entity, sampleId );
             } catch ( Exception ex ) {
                 ex.printStackTrace();
-                validationLogger.reportError(entity.getId(), sampleId, EntityConstants.TYPE_SAMPLE, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, "Exception: " + ex.getMessage());
+                validationLogger.reportError(sampleId, entity, EntityConstants.TYPE_SAMPLE, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, "Exception: " + ex.getMessage());
                 throw new RuntimeException("Halting");
             }
         }
@@ -79,8 +89,14 @@ public class ValidationEngine {
         }
     }
 
-    public void writeCategories() {
+    public void close() {
         validationLogger.close();
+        renameToReflectStatus(validationLogger.getFinalStatus());
+    }
+
+    private void renameToReflectStatus(ValidationLogger.Status status) {
+        String beforeExt = reportFile.getName().substring( 0 , reportFile.getName().length() - REPORT_FILE_EXTENSION.length() );
+        reportFile.renameTo( new File( reportFile.getParent(), beforeExt + "." + status + REPORT_FILE_EXTENSION ) );
     }
 
     private void createValidatorMap() {
