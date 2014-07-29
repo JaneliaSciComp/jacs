@@ -1,20 +1,24 @@
 <!--
 	Validation service.
 -->
-<process name="Validation Pipeline" processor="queue/shortPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Validation Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 		<!-- Import variables -->
     	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
 		    <input name="TASK_PARAMETER_1" value="guid"/>
             <input name="PROCESS_VARIABLE_1" value="GUID"/>
-		    <input name="TASK_PARAMETER_2" value="nodebug"/>
-            <input name="PROCESS_VARIABLE_2" value="NODEBUG"/>
+		    <input name="TASK_PARAMETER_2" value="label"/>
+            <input name="PROCESS_VARIABLE_2" value="LABEL"/>
+		    <input name="TASK_PARAMETER_3" value="nodebug"/>
+            <input name="PROCESS_VARIABLE_3" value="NODEBUG"/>
 	        <output name="GUID"/>
+	        <output name="LABEL"/>
 	        <output name="NODEBUG"/>
     	</operation>
 
 	    <operation name="Validation Service" processor="org.janelia.it.jacs.compute.service.validation.ValidationService">
 	        <input name="GUID"/>
+	        <input name="LABEL"/>
 	        <input name="NODEBUG"/>
 	    </operation>
     </sequence>
