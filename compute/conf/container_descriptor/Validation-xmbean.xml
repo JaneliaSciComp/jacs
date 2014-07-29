@@ -25,6 +25,11 @@
             <type>java.lang.Long</type>
         </parameter>
         <parameter>
+            <description>One word description of this run (like name or id of data set or sample)</description>
+            <name>label</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
             <description>Omit Debug Info</description>
             <name>nodebug</name>
             <type>java.lang.Boolean</type>
