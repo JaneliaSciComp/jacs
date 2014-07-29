@@ -12,7 +12,6 @@ import org.janelia.it.workstation.shared.util.SWCNode
 
 // constants
 
-
 nNodes = 10;
 
 filename = "/Users/olbrisd/Downloads/myNeuron.swc"
@@ -24,16 +23,15 @@ originz = 0.0;
 stepsize = 100.0
 
 
+def addStraight(int index, SWCNode parentNode, double dx, double dy, double dz) {
+    new SWCNode(index, 0, parentNode.getX() + dx, parentNode.getY() + dy,
+        parentNode.getZ() + dz, 1.0, parentNode.getIndex())
+}
+
 
 // create a fake neuron
-
-// a staight line is a perfectly good neuron
-nodeList = []
-for (i in 1..nNodes) {
-    nodeList << new SWCNode(i, 0, originx + i * stepsize, originy, originz, 1.0, i - 1)
-}
-// this is a hack
-nodeList[0].setParentIndex(-1)
+nodeList = [new SWCNode(1, 0, originx, originy, originz, 1.0, -1)]
+(2..nNodes).each {index -> nodeList << addStraight(index, nodeList[-1], stepsize, 0.0, 0.0)}
 
 
 headerList = []
@@ -45,3 +43,5 @@ neuronData = new SWCData(nodeList, headerList)
 // write it out
 neuronData.write(new File(filename))
 
+// debug: read it back and print it out:
+new File(filename).eachLine {print it + '\n'}
