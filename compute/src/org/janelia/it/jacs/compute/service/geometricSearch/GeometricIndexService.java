@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClient;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClientSimpleLocal;
+import org.janelia.it.jacs.compute.service.activeData.ActiveEntityTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataScan;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataScanStatus;
 import org.janelia.it.jacs.compute.service.activeData.ActiveTestVisitor;
@@ -56,6 +57,8 @@ public class GeometricIndexService extends AbstractEntityService {
         Map<String,Object> parameterMap=new HashMap<>();
         VisitorFactory testFactory=new VisitorFactory(parameterMap, ActiveTestVisitor.class);
         geometricIndexVisitors.add(testFactory);
+        VisitorFactory testEntityFactory=new VisitorFactory(parameterMap, ActiveEntityTestVisitor.class);
+        geometricIndexVisitors.add(testEntityFactory);
         SampleScanner sampleScanner=new SampleScanner(geometricIndexVisitors);
         sampleScanner.setRemoveAfterEpoch(true);
         activeData = new ActiveDataClientSimpleLocal();
