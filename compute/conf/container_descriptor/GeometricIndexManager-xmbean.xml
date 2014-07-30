@@ -21,4 +21,25 @@
         <name>stopGeometricIndexManager</name>
     </operation>
     
+    <operation>
+        <description>create</description>
+        <name>create</name>
+    </operation>
+    
+    <operation>
+        <description>destroy</description>
+        <name>destroy</name>
+    </operation>
+    
+    <operation>
+        <description>start</description>
+        <name>start</name>
+    </operation>
+    
+    <operation>
+        <description>stop</description>
+        <name>stop</name>
+    </operation>
+    
+    
 </mbean>
