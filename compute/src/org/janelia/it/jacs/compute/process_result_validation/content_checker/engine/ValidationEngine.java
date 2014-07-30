@@ -19,6 +19,8 @@ import java.util.*;
  */
 public class ValidationEngine implements Closeable {
     public static final String REPORT_FILE_EXTENSION = ".report.tsv";
+    public static final String VALIDATION_CONSTRICTION_PREFIX = "ONLY VALIDATE: ";
+    public static final String TYPE_OCC_DELIM = "^";
     private static Logger logger = Logger.getLogger(ValidationEngine.class);
     private ValidationLogger validationLogger;
     protected EntityBeanLocal entityBean;
@@ -33,7 +35,15 @@ public class ValidationEngine implements Closeable {
         this( entityBean, computeBean, annotationBean, debug, null, null, "generic" );
     }
 
-    public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug, Long loggerId, Long startingId, String label) throws IOException, ComputeException {
+    public ValidationEngine(
+            EntityBeanLocal entityBean,
+            ComputeBeanLocal computeBean,
+            AnnotationBeanLocal annotationBean,
+            Boolean debug,
+            Long loggerId,
+            Long startingId,
+            String label
+    ) throws IOException, ComputeException {
         Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
         String metaData = String.format(
                 "Validation Report for %s Named %s with ID %d\nProduced by %s",
@@ -69,6 +79,30 @@ public class ValidationEngine implements Closeable {
         this.computeBean = computeBean;
         this.annotationBean = annotationBean;
         createValidatorMap();
+        if ( label.startsWith(VALIDATION_CONSTRICTION_PREFIX) ) {
+            String typeList = label.substring( VALIDATION_CONSTRICTION_PREFIX.length() );
+            Map<String,TypeValidator> smallValidatorMap = new HashMap<>();
+            String[] validatableTypes = typeList.split(TYPE_OCC_DELIM);
+            StringBuilder rejectedTypes = new StringBuilder();
+            for ( String singleType: validatableTypes ) {
+                TypeValidator validator = validatorMap.get( singleType );
+                if ( validator != null ) {
+                    smallValidatorMap.put( singleType, validator );
+                    this.validatorMap = smallValidatorMap;
+                }
+                else {
+                    if ( rejectedTypes.length() > 0 )
+                        rejectedTypes.append(TYPE_OCC_DELIM);
+                    rejectedTypes.append(singleType);
+                }
+            }
+
+            if ( rejectedTypes.length() > 0 ) {
+                throw new IllegalArgumentException(
+                        "Type indicated with " + label + " has unknown types. Specifically " + rejectedTypes + "."
+                );
+            }
+        }
     }
 
     public void validateByType( Entity entity, Long sampleId ) {
@@ -89,6 +123,7 @@ public class ValidationEngine implements Closeable {
         }
     }
 
+    @Override
     public void close() {
         validationLogger.close();
         renameToReflectStatus(validationLogger.getFinalStatus());

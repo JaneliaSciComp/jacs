@@ -24,7 +24,7 @@ public class Validator implements ValidatorMBean {
             String displayName = "Sample Content Validation";
 
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("guid", guid.toString(), null));
+            taskParameters.add(new TaskParameter("guid", guid == null ? null : guid.toString(), null));
             taskParameters.add(new TaskParameter("label", label, null));
             taskParameters.add(new TaskParameter("nodebug", nodebug.toString(), null));
             saveAndRunTask(user, processName, displayName, taskParameters);

@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Validation proceeds from here.
@@ -36,14 +37,24 @@ public class ValidationService extends AbstractEntityService {
                 ", omitDebugInfo=" + nodebug + "."
         );
 
-        //this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
-        //SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        Entity entity = entityBean.getEntityAndChildren(startingId);
-        if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE ) ) {
-            validateSample( startingId, entity );
+        if ( startingId == null ) {
+            List<Entity> foundEntities = entityBean.getEntitiesByTypeName( EntityConstants.TYPE_DATA_SET );
+            for ( Entity foundEntity : foundEntities ) {
+
+                List<Entity> foundSubEntities = entityBean.getEntitiesByNameAndTypeName( null, foundEntity.getName(), EntityConstants.TYPE_FOLDER );
+                for ( Entity subEntity: foundSubEntities ) {
+                    traverseForSamples(subEntity);
+                }
+            }
         }
         else {
-            traverseForSamples(entity);
+            Entity entity = entityBean.getEntityAndChildren(startingId);
+            if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE ) ) {
+                validateSample( startingId, entity );
+            }
+            else {
+                traverseForSamples(entity);
+            }
         }
 
     }
