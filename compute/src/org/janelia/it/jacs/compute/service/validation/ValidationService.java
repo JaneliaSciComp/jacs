@@ -18,9 +18,11 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class ValidationService extends AbstractEntityService {
     private Logger logger = Logger.getLogger(ValidationService.class);
+    private final static String FILE_SEP = System.getProperty("file.separator");
 
     private Boolean nodebug;
     private Long startingId;
+    private String parentName;
     private String label;
 
     @Override
@@ -34,7 +36,8 @@ public class ValidationService extends AbstractEntityService {
         logger.info(
                 "Running validation, ownerKey=" + ownerKey +
                 ", startingId=" + this.startingId +
-                ", omitDebugInfo=" + nodebug + "."
+                ", omitDebugInfo=" + nodebug +
+                ", label=" + label + "."
         );
 
         if ( startingId == null ) {
@@ -42,6 +45,7 @@ public class ValidationService extends AbstractEntityService {
             for ( Entity foundEntity : foundEntities ) {
 
                 List<Entity> foundSubEntities = entityBean.getEntitiesByNameAndTypeName( null, foundEntity.getName(), EntityConstants.TYPE_FOLDER );
+                parentName = foundEntity.getName() + "_" + foundEntity.getId();
                 for ( Entity subEntity: foundSubEntities ) {
                     traverseForSamples(subEntity);
                 }
@@ -84,7 +88,7 @@ public class ValidationService extends AbstractEntityService {
             // At this point, launch a new copy of this service, providing it the sample ID as start-point.
             // This permits the collection of samples to be processed in parallel.
             Validator validator = new Validator();
-            validator.runValidations(ownerKey, entity.getId(), label, nodebug);
+            validator.runValidations(ownerKey, entity.getId(), label + FILE_SEP + parentName, nodebug);
         }
         else {
             for ( Entity child: entity.getChildren() ) {
@@ -104,7 +108,9 @@ public class ValidationService extends AbstractEntityService {
     }
 
     private void validateSample(Long knownSampleId, Entity entity) throws Exception {
-        ValidationEngine validationEngine = new ValidationEngine(entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, startingId, label);
+        ValidationEngine validationEngine = new ValidationEngine(
+                entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, label
+        );
 
         // Do not look for samples under samples.  Do not recurse further here.  Instead, look for
         // other things to validate.

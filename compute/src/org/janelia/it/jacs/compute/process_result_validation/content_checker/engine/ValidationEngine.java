@@ -21,6 +21,7 @@ public class ValidationEngine implements Closeable {
     public static final String REPORT_FILE_EXTENSION = ".report.tsv";
     public static final String VALIDATION_CONSTRICTION_PREFIX = "ONLY VALIDATE: ";
     public static final String TYPE_OCC_DELIM = "^";
+    public static final String FILE_SEPARATOR = System.getProperty("file.separator");
     private static Logger logger = Logger.getLogger(ValidationEngine.class);
     private ValidationLogger validationLogger;
     protected EntityBeanLocal entityBean;
@@ -32,7 +33,7 @@ public class ValidationEngine implements Closeable {
 
     @SuppressWarnings("unused")
     public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException, ComputeException {
-        this( entityBean, computeBean, annotationBean, debug, null, null, "generic" );
+        this( entityBean, computeBean, annotationBean, debug, null, "generic" );
     }
 
     public ValidationEngine(
@@ -41,7 +42,6 @@ public class ValidationEngine implements Closeable {
             AnnotationBeanLocal annotationBean,
             Boolean debug,
             Long loggerId,
-            Long startingId,
             String label
     ) throws IOException, ComputeException {
         Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
@@ -54,12 +54,9 @@ public class ValidationEngine implements Closeable {
         );
         validationLogger = new ValidationLogger( logger, metaData );
         File directory = new File(System.getProperty("user.home"));
-        if ( startingId == null ) {
-            directory = new File( directory, "Validation_All" );
-        }
-        else {
-            directory = new File( directory, "Validation_" + label );
-        }
+
+        // Using this approach to file construction allows the label to contain sub directories.
+        directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + "Validation_" + label );
         if ( ! directory.exists() ) {
             directory.mkdirs();
         }
@@ -80,7 +77,11 @@ public class ValidationEngine implements Closeable {
         this.annotationBean = annotationBean;
         createValidatorMap();
         if ( label.startsWith(VALIDATION_CONSTRICTION_PREFIX) ) {
-            String typeList = label.substring( VALIDATION_CONSTRICTION_PREFIX.length() );
+            int sepPos = label.indexOf( FILE_SEPARATOR );
+            if ( sepPos == -1 ) {
+                sepPos = label.length();
+            }
+            String typeList = label.substring( VALIDATION_CONSTRICTION_PREFIX.length(), sepPos );
             Map<String,TypeValidator> smallValidatorMap = new HashMap<>();
             String[] validatableTypes = typeList.split(TYPE_OCC_DELIM);
             StringBuilder rejectedTypes = new StringBuilder();
