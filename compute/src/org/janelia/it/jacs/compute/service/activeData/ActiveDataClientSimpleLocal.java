@@ -12,8 +12,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.shared.geometricSearch.GeometricIndexManagerModel;
 
 /**
  *
@@ -74,7 +74,7 @@ public class ActiveDataClientSimpleLocal extends ActiveDataClient implements Act
     }
 
     @Override
-    public List<Long> getEpochHistory() throws Exception {
+    public List<ScanEpochRecord> getEpochHistory() throws Exception {
         return getEpochHistory(entityScanner.getSignature());
     }
     
@@ -84,8 +84,18 @@ public class ActiveDataClientSimpleLocal extends ActiveDataClient implements Act
     }
     
     @Override
-    public List<String> getSignatures() {
+    public List<String> getSignatures() throws Exception {
         return getServerSignatures();
+    }
+    
+    @Override
+    public List<GeometricIndexManagerModel> getModel(int epochCount) throws Exception {
+        return getServerModel(epochCount);
+    }   
+    
+    @Override
+    public List<GeometricIndexManagerModel> getModelForScanner(String signature) throws Exception {
+        return getServerModelForScanner(signature);
     }
     
     @Override
@@ -101,22 +111,13 @@ public class ActiveDataClientSimpleLocal extends ActiveDataClient implements Act
     /////////////////////////////////////////////////////////////////////////////////////////////////
     
     private static synchronized ActiveDataRegistration registerScanner(String signature, String entityScannerClassName) throws Exception {
-        Class c = Class.forName(entityScannerClassName);
-        EntityScanner es = (EntityScanner) c.newInstance();
         ActiveDataScan scan = scanMap.get(signature);
         if (scan == null) {
             scan = new ActiveDataScan();
-            long[] idArray = null;
-            try {
-                idArray = es.generateIdList(null /* data resource */);
-            } catch (Exception ex) {
-                scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_ERROR);
-                logger.error("Error generating ID list", ex);
-                throw ex;
-            }
-            scan.setIdArray(idArray);
+            scan.setEntityScannerClassname(entityScannerClassName);
+            scan.updateIdList();
             scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_PROCESSING);
-            logger.info("registerScanner - created new Scan entry for " + signature + " with idList count=" + idArray.length);
+            logger.info("registerScanner - created new Scan entry for " + signature + " with idList count=" + scan.getIdCount());
             scanMap.put(signature, scan);
         } else {
             logger.info("Found scan entry for " + signature + " with idList count=" + scan.getIdCount());
@@ -181,7 +182,7 @@ public class ActiveDataClientSimpleLocal extends ActiveDataClient implements Act
         scan.advanceEpoch();
     }
     
-    private List<Long> getEpochHistory(String signature) throws Exception {
+    private List<ScanEpochRecord> getEpochHistory(String signature) throws Exception {
         ActiveDataScan scan=getAndValidateScan(signature);
         return scan.getEpochHistory();
     }
@@ -225,5 +226,56 @@ public class ActiveDataClientSimpleLocal extends ActiveDataClient implements Act
            lockMap.remove(lockString);
        } 
     }
+    
+    private static List<GeometricIndexManagerModel> getServerModel(int epochCount) throws Exception {
+       List<GeometricIndexManagerModel> modelList=new ArrayList<>();
+       for (String signature : scanMap.keySet()) {
+           modelList.addAll(getServerModelForScanner(signature, epochCount));
+        }
+        Collections.sort(modelList);
+        return modelList;
+    }
+    
+    private static List<GeometricIndexManagerModel> getServerModelForScanner(String signature) throws Exception {
+        ActiveDataScan scan=scanMap.get(signature);
+        int scanCount=scan.getEpochHistory().size()+1;
+        return getServerModelForScanner(signature, scanCount);
+        
+    }
+    
+    private static List<GeometricIndexManagerModel> getServerModelForScanner(String signature, int epochCount) throws Exception {
+        List<GeometricIndexManagerModel> modelList=new ArrayList<>();
+        ActiveDataScan scan = scanMap.get(signature);
+        // First, handle current epoch
+        GeometricIndexManagerModel model = new GeometricIndexManagerModel();
+        ActiveDataScanStatus scanStatus = scan.getStatus();
+        model.setActiveScannerCount(scanStatus.getCurrentEpochNumProcessing());
+        model.setStartTime(scanStatus.getStartTimestamp());
+        model.setScannerSignature(signature);
+        model.setErrorCount(scanStatus.getCurrentEpochNumError());
+        model.setSuccessfulCount(scanStatus.getCurrentEpochNumSuccessful());
+        model.setTotalIdCount(scanStatus.getCurrentEpochIdCount());
+        model.setEndTime(null);
+        modelList.add(model);
+        // Next, handle most recent N epochs
+        List<ScanEpochRecord> epochs = scan.getEpochHistory();
+        for (int i = 0; i < epochCount; i++) {
+            int index = epochs.size() - 1 - i;
+            if (index > -1) {
+                ScanEpochRecord scanRecord = epochs.get(index);
+                GeometricIndexManagerModel m2 = new GeometricIndexManagerModel();
+                m2.setStartTime(scanRecord.getStartTimestamp());
+                m2.setScannerSignature(signature);
+                m2.setErrorCount(scanRecord.getErrorCount());
+                m2.setSuccessfulCount(scanRecord.getSuccessfulCount());
+                m2.setTotalIdCount(scanRecord.getTotalIdCount());
+                m2.setEndTime(scanRecord.getEndTimestamp());
+                modelList.add(m2);
+            }
+        }
+        Collections.sort(modelList);
+        return modelList;
+    }
+
     
 }

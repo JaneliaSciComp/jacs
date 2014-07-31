@@ -12,12 +12,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author murphys
  */
 public class ActiveDataScan {
+    
+    Logger logger = Logger.getLogger(ActiveDataScan.class);
     
     public static final String SCAN_STATUS_UNDEFINED = "Undefined";
     public static final String SCAN_STATUS_PROCESSING = "Processing";
@@ -37,18 +40,20 @@ public class ActiveDataScan {
     private int currentEpochNumSuccessful=0;
     private int currentEpochNumError=0;
     private String statusDescriptor = SCAN_STATUS_UNDEFINED;
+    private String entityScannerClassname;
     
     long[] idArray=null;
     Map<Long,Byte> statusMap = new HashMap<>();
     Map<Long, List<ActiveDataEntityEvent>> eventMap = new HashMap<>();
-    List<Long> epochHistory = new ArrayList<>();
+    List<ScanEpochRecord> epochHistory = new ArrayList<>();
     
     int nextIdIndex=0;
+    long currentEpochStartTimestamp=0L;
     
     Map<Long, ActiveDataScannerStats> scannerStatMap=new HashMap<>();
     
     public ActiveDataScan() {
-        epochHistory.add(new Date().getTime());
+        currentEpochStartTimestamp=new Date().getTime();
     }
     
     public synchronized void setIdArray(long[] idArray) {
@@ -68,6 +73,7 @@ public class ActiveDataScan {
     public ActiveDataScanStatus getStatus() {
         updateStatus();
         ActiveDataScanStatus status=new ActiveDataScanStatus(
+                currentEpochStartTimestamp,
                 epochNumber, 
                 currentEpochNumProcessing,
                 currentEpochNumSuccessful,
@@ -213,19 +219,53 @@ public class ActiveDataScan {
     
     public synchronized void advanceEpoch() throws Exception {
         if(statusDescriptor==SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY) {
+            updateStatus();
+            ScanEpochRecord record=new ScanEpochRecord();
+            record.setStartTimestamp(currentEpochStartTimestamp);
+            record.setEndTimestamp(new Date().getTime());
+            record.setTotalIdCount(idArray.length);
+            record.setSuccessfulCount(currentEpochNumSuccessful);
+            record.setErrorCount(currentEpochNumError);
+            epochHistory.add(record);
             epochNumber++;
-            epochHistory.add(new Date().getTime());
+            currentEpochStartTimestamp=new Date().getTime();
+            updateIdList();
             resetStatus();
             statusDescriptor=SCAN_STATUS_PROCESSING;
+        } else if (statusDescriptor==SCAN_STATUS_PROCESSING) {
+            logger.info("Ignore request for new Epoch since already processing");
+            return;
         } else {
             throw new Exception("Advancing Epoch not permitted unless in completed state");
         }
     }
     
-    public List<Long> getEpochHistory() {
-        List<Long> epochHistoryCopy=new ArrayList<>();
+    public List<ScanEpochRecord> getEpochHistory() {
+        List<ScanEpochRecord> epochHistoryCopy=new ArrayList<>();
         Collections.copy(epochHistory, epochHistoryCopy);
         return epochHistoryCopy;
+    }
+
+    public String getEntityScannerClassname() {
+        return entityScannerClassname;
+    }
+
+    public void setEntityScannerClassname(String entityScannerClassname) {
+        this.entityScannerClassname = entityScannerClassname;
+    }
+    
+    public void updateIdList() throws Exception {
+        Class c = Class.forName(entityScannerClassname);
+        EntityScanner es = (EntityScanner) c.newInstance();
+        long[] idArray = null;
+        try {
+            idArray = es.generateIdList(null /* data resource */);
+        } catch (Exception ex) {
+            setStatusDescriptor(ActiveDataScan.SCAN_STATUS_ERROR);
+            logger.error("Error generating ID list", ex);
+            throw ex;
+        }
+        setIdArray(idArray);
     }
     
 }
