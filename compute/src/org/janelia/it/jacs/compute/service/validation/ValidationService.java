@@ -18,7 +18,7 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class ValidationService extends AbstractEntityService {
     private Logger logger = Logger.getLogger(ValidationService.class);
-    private final static String FILE_SEP = System.getProperty("file.separator");
+    private final static String FILE_SEP = System.getProperty("file.separator");   // Ex: slash in linux or win.
 
     private Boolean nodebug;
     private Long startingId;
@@ -44,8 +44,11 @@ public class ValidationService extends AbstractEntityService {
             List<Entity> foundEntities = entityBean.getEntitiesByTypeName( EntityConstants.TYPE_DATA_SET );
             for ( Entity foundEntity : foundEntities ) {
 
-                List<Entity> foundSubEntities = entityBean.getEntitiesByNameAndTypeName( null, foundEntity.getName(), EntityConstants.TYPE_FOLDER );
-                parentName = foundEntity.getName() + "_" + foundEntity.getId();
+                List<Entity> foundSubEntities = entityBean.getEntitiesByNameAndTypeName(
+                        null, foundEntity.getName(), EntityConstants.TYPE_FOLDER
+                );
+                // We build up a parent name out of the entity name and its ID, but we escape any accidental file-seps.
+                parentName = foundEntity.getName().replace(FILE_SEP, "__") + "_" + foundEntity.getId();
                 for ( Entity subEntity: foundSubEntities ) {
                     traverseForSamples(subEntity);
                 }
