@@ -19,6 +19,14 @@ public class Validator implements ValidatorMBean {
     private Logger log = Logger.getLogger(Validator.class);
     @Override
     public void runValidations(String user, Long guid, String label, Boolean nodebug) {
+        runChildValidations(null, user, guid, label, nodebug);
+    }
+
+    /** 
+    * This has a different name from runValidations() above, to avoid confusion at process-file.
+     * its "parentTaskGuid", however, may be null, in which case, the created task is not a child of any other task.
+     */
+    public void runChildValidations(Long parentTaskGuid, String user, Long guid, String label, Boolean nodebug) {
         try {
             String processName = "ValidationServicePipeline";
             String displayName = "Sample Content Validation";
@@ -27,18 +35,19 @@ public class Validator implements ValidatorMBean {
             taskParameters.add(new TaskParameter("guid", guid == null ? null : guid.toString(), null));
             taskParameters.add(new TaskParameter("label", label, null));
             taskParameters.add(new TaskParameter("nodebug", nodebug.toString(), null));
-            saveAndRunTask(user, processName, displayName, taskParameters);
+
+            // Create the task and run it.
+            GenericTask task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
+                    taskParameters, processName, displayName);
+
+            if ( parentTaskGuid != null ) {
+                task.setParentTaskId( parentTaskGuid );
+            }
+            saveAndRunTask(task);
 
         } catch ( Exception ex ) {
             log.error("Failed to complete validation", ex);
         }
-    }
-
-    // Borrowed from SampleDataManager
-    private void saveAndRunTask(String user, String processName, String displayName, HashSet<TaskParameter> parameters) throws Exception {
-        GenericTask task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
-                parameters, processName, displayName);
-        saveAndRunTask(task);
     }
 
     // Borrowed from SampleDataManager

@@ -91,7 +91,7 @@ public class ValidationService extends AbstractEntityService {
             // At this point, launch a new copy of this service, providing it the sample ID as start-point.
             // This permits the collection of samples to be processed in parallel.
             Validator validator = new Validator();
-            validator.runValidations(ownerKey, entity.getId(), label + FILE_SEP + parentName, nodebug);
+            validator.runChildValidations(task.getObjectId(), ownerKey, entity.getId(), label + FILE_SEP + parentName, nodebug);
         }
         else {
             for ( Entity child: entity.getChildren() ) {
