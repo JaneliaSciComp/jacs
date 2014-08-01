@@ -4,12 +4,16 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.compute.service.geometricSearch;
+package org.janelia.it.jacs.compute.service.activeData;
+
+import java.util.List;
 
 /**
  *
  * @author murphys
  */
-public class ScreenSampleGSVisitor {
-    
+public interface ActiveDataServer {
+
+    public List<String> getSignatures();
+
 }

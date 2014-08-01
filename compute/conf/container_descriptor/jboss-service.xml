@@ -47,10 +47,11 @@
         xmbean-dd="resource:META-INF/PatternSearch-xmbean.xml"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.TiledMicroscopeManager" name="ComputeServer:service=TiledMicroscopeManager"
            xmbean-dd="resource:META-INF/TiledMicroscopeManager-xmbean.xml"/>
-    <mbean code="org.janelia.it.jacs.compute.mbean.Validator" name="ComputeServer:service=Validator"
-           xmbean-dd="resource:META-INF/Validation-xmbean.xml"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.GeometricIndexManager" name="ComputeServer:service=GeometricIndexManager"
-            xmbean-dd="resource:META-INF/GeometricSearchManager-xmbean.xml"/>
+            xmbean-dd="resource:META-INF/GeometricIndexManager-xmbean.xml">
+        <depends>jboss.j2ee:ear=compute.ear,jar=compute.jar,name=ComputeEJB,service=EJB3</depends>
+    </mbean>
+     
     <mbean code="org.jboss.mq.server.jmx.Queue" name="jboss.mq.destination:service=Queue,name=ComputeServer">
         <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
         <depends optional-attribute-name="SecurityManager">jboss.mq:service=SecurityManager</depends>

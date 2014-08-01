@@ -17,6 +17,30 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Solrj" level="project" />
+    <orderEntry type="library" name="GWT-Serializable" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../compute/build/jars/compute-client.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="Model" />
+    <orderEntry type="module" module-name="Shared" />
+    <orderEntry type="module" module-name="ConsoleApplication" />
+    <orderEntry type="library" name="Apache Commons" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-compress-1.8.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
