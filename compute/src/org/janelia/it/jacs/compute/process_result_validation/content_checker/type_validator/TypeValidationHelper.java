@@ -10,22 +10,22 @@ import java.io.File;
 public class TypeValidationHelper {
     private static final String MISSING_FILE_PATH = "File path missing for type %s";
     private static final String MISSING_FILE = "File %s, of type %s, does not exist";
-    private static final String FILE_TOO_SHORT = "File %s is less than minimum of %d";
+    private static final String FILE_TOO_SHORT = "File %s, at %d, is less than minimum of %d";
     public static String getFileError( String fullFilePath, String fileType, long minFileLength ) {
+        String rtnVal = null;
         if ( fullFilePath == null ) {
-            return MISSING_FILE_PATH.format( fileType );
+            rtnVal = String.format( MISSING_FILE_PATH, fileType );
         }
         else {
             File checkFile = new File( fullFilePath );
             if ( ! checkFile.exists() ) {
-                return MISSING_FILE.format( fullFilePath, fileType );
+                rtnVal = String.format( MISSING_FILE, fullFilePath, fileType );
             }
             else if ( minFileLength > 0    &&   checkFile.length() < minFileLength ) {
-                return FILE_TOO_SHORT.format( fullFilePath, minFileLength );
-            }
-            else {
-                return null;
+                rtnVal = String.format( FILE_TOO_SHORT, fullFilePath, checkFile.length(), minFileLength );
             }
         }
+
+        return rtnVal;
     }
 }

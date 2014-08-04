@@ -116,7 +116,7 @@ public class ValidationEngine implements Closeable {
             } catch ( Exception ex ) {
                 ex.printStackTrace();
                 validationLogger.reportError(sampleId, entity, EntityConstants.TYPE_SAMPLE, ValidationLogger.GENERAL_CATEGORY_EXCEPTION, "Exception: " + ex.getMessage());
-                throw new RuntimeException("Halting");
+                throw new RuntimeException("Halting validation run for " + sampleId);
             }
         }
         else {
@@ -139,6 +139,8 @@ public class ValidationEngine implements Closeable {
         validationLogger.setMinSize( EntityConstants.TYPE_IMAGE_2D, 50L );
         validationLogger.setMinSize( EntityConstants.TYPE_MOVIE, 1000L );
         validationLogger.setMinSize( EntityConstants.TYPE_IMAGE_3D, 5000L );
+        validationLogger.setMinSize( ".mask", 92L );  // 10 longs and 3 floats.
+        validationLogger.setMinSize( ".chan", 1L );
         validationLogger.setMinSize( EntityConstants.TYPE_V3D_ANO_FILE, 100000L );
 
         SubEntityValidator subEntityValidator = new SubEntityValidator( validationLogger );
@@ -151,7 +153,7 @@ public class ValidationEngine implements Closeable {
 
         validatorMap.put( EntityConstants.TYPE_IMAGE_2D, new SimpleFilePathValidator( validationLogger, EntityConstants.TYPE_IMAGE_2D) );
         validatorMap.put( EntityConstants.TYPE_MOVIE, new SimpleFilePathValidator( validationLogger, EntityConstants.TYPE_MOVIE) );
-        validatorMap.put( EntityConstants.TYPE_IMAGE_3D, new SimpleFilePathValidator( validationLogger, EntityConstants.TYPE_IMAGE_2D) );
+        validatorMap.put( EntityConstants.TYPE_IMAGE_3D, new SimpleFilePathValidator( validationLogger, EntityConstants.TYPE_IMAGE_3D) );
 
         validatorMap.put( EntityConstants.TYPE_IMAGE_TILE, new ImageTileValidator(validationLogger, subEntityValidator, entityBean) );
         validatorMap.put( EntityConstants.TYPE_LSM_STACK, new LsmValidator(validationLogger ) );

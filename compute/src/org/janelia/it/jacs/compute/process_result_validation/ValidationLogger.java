@@ -85,6 +85,27 @@ public class ValidationLogger implements Closeable {
     }
 
     /**
+     * Tells a validator how long files like this need to be in order to pass muster.
+     *
+     * @param filePattern ending of file name. Expected to have been trimmmed, not null, case sensitive.
+     * @param filePath full path to input file.
+     * @return smallest allowed size.
+     */
+    public Long getMinSize( String filePattern, String filePath ) {
+        int extPos = filePath.lastIndexOf('.');
+        Long rtnVal = filePatternToMinSize.get(filePattern);
+        if ( extPos > -1 ) {
+            String ext = filePath.substring( extPos );
+            rtnVal = filePatternToMinSize.get( ext );
+        }
+
+        if ( rtnVal == null ) {
+            rtnVal = 0L;
+        }
+        return rtnVal;
+    }
+
+    /**
      * Callers must add any category upon which an error is reported, here.  All categories being checked
      * should be recorded here.
      *
@@ -147,6 +168,7 @@ public class ValidationLogger implements Closeable {
         else {
             outputToWriter();
             internalWriter.close();
+            internalWriter = null;
         }
         categoryListMap = null;
 

@@ -47,20 +47,20 @@ public class AlignmentResultValidator implements TypeValidator {
     private ValidationLogger validationLogger;
 
     private FileValidator fileValidator;
-    private SampleProcessingValidator sampleProcessingValidator;
+    //private SampleProcessingValidator sampleProcessingValidator;
 
     public AlignmentResultValidator( ValidationLogger validationLogger, SubEntityValidator subEntityValidator, EntityBeanLocal entityBean ) {
         this.subEntityValidator = subEntityValidator;
         this.entityBean = entityBean;
         this.fileValidator = new FileValidator( validationLogger );
         this.validationLogger = validationLogger;
-        sampleProcessingValidator = new SampleProcessingValidator( validationLogger, subEntityValidator, entityBean );
+        //sampleProcessingValidator = new SampleProcessingValidator( validationLogger, subEntityValidator, entityBean );
     }
 
     @Override
     public void validate(Entity entity, Long sampleId) throws Exception {
         subEntityValidator.validateSubEntitiesByEntityType(entity, sampleId, REQUIRED_CHILD_ENTITY_TYPES, entityBean);
-        sampleProcessingValidator.validateSupportingData(entity, sampleId);     // Same checks required here, as for Sample Processing.
+        //sampleProcessingValidator.validateSupportingData(entity, sampleId);     // Same checks required here, as for Sample Processing.
         fileValidator.validateFileSet( entity, sampleId, REQUIRED_CHILD_FILES );
         validateDescendants(entity, sampleId);
     }

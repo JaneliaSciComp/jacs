@@ -1,12 +1,14 @@
 package org.janelia.it.jacs.compute.service.validation;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.mbean.Validator;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -18,7 +20,6 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class ValidationService extends AbstractEntityService {
     private Logger logger = Logger.getLogger(ValidationService.class);
-    private final static String FILE_SEP = System.getProperty("file.separator");   // Ex: slash in linux or win.
 
     private Boolean nodebug;
     private Long startingId;
@@ -44,11 +45,10 @@ public class ValidationService extends AbstractEntityService {
             List<Entity> foundEntities = entityBean.getEntitiesByTypeName( EntityConstants.TYPE_DATA_SET );
             for ( Entity foundEntity : foundEntities ) {
 
-                List<Entity> foundSubEntities = entityBean.getEntitiesByNameAndTypeName(
-                        null, foundEntity.getName(), EntityConstants.TYPE_FOLDER
-                );
+                List<Entity> foundSubEntities = getLikeNamedFolderEntities(foundEntity);
+
                 // We build up a parent name out of the entity name and its ID, but we escape any accidental file-seps.
-                parentName = foundEntity.getName().replace(FILE_SEP, "__") + "_" + foundEntity.getId();
+                parentName = foundEntity.getName().replace(File.separator, "__") + "_" + foundEntity.getId();
                 for ( Entity subEntity: foundSubEntities ) {
                     traverseForSamples(subEntity);
                 }
@@ -56,6 +56,7 @@ public class ValidationService extends AbstractEntityService {
         }
         else {
             Entity entity = entityBean.getEntityAndChildren(startingId);
+            parentName = entity.getName();
             if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE ) ) {
                 validateSample( startingId, entity );
             }
@@ -64,6 +65,19 @@ public class ValidationService extends AbstractEntityService {
             }
         }
 
+    }
+
+    /**
+     * In order to traverse Data Sets for samples, one must first locate a same-named folder, and traverse that.
+     *
+     * @param foundEntity some data set (only)
+     * @return list of folders with identical names as the found entity.
+     * @throws ComputeException from called methods.
+     */
+    private List<Entity> getLikeNamedFolderEntities(Entity foundEntity) throws ComputeException {
+        return entityBean.getEntitiesByNameAndTypeName(
+                            null, foundEntity.getName(), EntityConstants.TYPE_FOLDER
+                    );
     }
 
     private Long getGuidItem( String itemName ) {
@@ -91,7 +105,14 @@ public class ValidationService extends AbstractEntityService {
             // At this point, launch a new copy of this service, providing it the sample ID as start-point.
             // This permits the collection of samples to be processed in parallel.
             Validator validator = new Validator();
-            validator.runChildValidations(task.getObjectId(), ownerKey, entity.getId(), label + FILE_SEP + parentName, nodebug);
+            validator.runChildValidations(task.getObjectId(), ownerKey, entity.getId(), label + File.separator + parentName, nodebug);
+        }
+        else if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_DATA_SET ) ) {
+            Collection<Entity> traversableEntities = getLikeNamedFolderEntities( entity );
+            for ( Entity traversableEntity: traversableEntities ) {
+                // Case of folder that may contain samples, is just another part of containing if..else clause.
+                traverseForSamples( traversableEntity );
+            }
         }
         else {
             for ( Entity child: entity.getChildren() ) {
@@ -111,15 +132,16 @@ public class ValidationService extends AbstractEntityService {
     }
 
     private void validateSample(Long knownSampleId, Entity entity) throws Exception {
-        ValidationEngine validationEngine = new ValidationEngine(
+
+        try (
+            ValidationEngine validationEngine = new ValidationEngine(
                 entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, label
-        );
+            )
+        ) {
+            // Do not look for samples under samples.  Do not recurse further here.  Instead, look for
+            // other things to validate.
+            traverseForValidation( entity.getId(), knownSampleId, validationEngine );
+        }
 
-        // Do not look for samples under samples.  Do not recurse further here.  Instead, look for
-        // other things to validate.
-        traverseForValidation( entity.getId(), knownSampleId, validationEngine );
-
-        // Signal to the engine that its work is complete.
-        validationEngine.close();
     }
 }

@@ -61,7 +61,7 @@ public class FileValidator {
     public boolean validateFile( String filePath, String fileType, Long sampleId, Entity entity ) throws Exception {
         boolean rtnVal = true;
         validationLogger.addCategory( ValidationLogger.FILE_ERROR + fileType );
-        Long minLength = validationLogger.getMinSize( fileType );
+        Long minLength = validationLogger.getMinSize( fileType, filePath );
         if ( minLength > 0 ) {
             validationLogger.addCategory( ValidationLogger.MIN_SIZE + fileType + " " + minLength );
         }

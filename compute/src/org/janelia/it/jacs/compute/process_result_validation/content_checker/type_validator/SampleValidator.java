@@ -14,7 +14,9 @@ public class SampleValidator implements TypeValidator {
     private EntityBeanLocal entityBean;
     private SubEntityValidator subEntityValidator;
     private static final ValidationLogger.Category NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE = new ValidationLogger.Category("Image Tiles with Unmatched Sample Processing");
+    private static final ValidationLogger.Category NO_SUPPORTING_FILES_CHILD = new ValidationLogger.Category("No Supporting Files");
     private static final String UNMATCHED_TILE_FMT = "At least %d Image Tile instances under sample %d have no matching Sample Processing instance";
+    private static final String NO_SUPPORTING_FILES_FMT = "Sample %d has no supporting files folder.";
     private static final String[] REQUIRED_ATTRIBUTE_NAMES = new String[] {
             EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE,
             EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE,
@@ -27,6 +29,7 @@ public class SampleValidator implements TypeValidator {
         this.entityBean = entityBean;
         this.subEntityValidator = subEntityValidator;
         logger.addCategory( NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE );
+        logger.addCategory( NO_SUPPORTING_FILES_CHILD );
     }
 
     @Override
@@ -36,17 +39,28 @@ public class SampleValidator implements TypeValidator {
         // First, how many image tiles.
         Entity refreshedSampleEntity = entityBean.getEntityAndChildren( entity.getId() );
         Entity supportingFiles = refreshedSampleEntity.getChildByAttributeName( EntityConstants.ATTRIBUTE_SUPPORTING_FILES );
-        Entity refreshedSFEntity = entityBean.getEntityAndChildren( supportingFiles.getId() );
-        int unmatchedImageTileCount = 0;
-        for ( Entity child: refreshedSFEntity.getChildren() ) {
-            if ( child.getEntityTypeName().equals( EntityConstants.TYPE_IMAGE_TILE ) ) {
-                unmatchedImageTileCount ++;
-            }
-        }
-
         boolean reportableSuccess = false;
-        if ( unmatchedImageTileCount > 0 ) {
-            reportableSuccess = true;
+        int unmatchedImageTileCount = 0;
+        if ( supportingFiles == null ) {
+            validationLogger.reportError(
+                    sampleId,
+                    entity,
+                    NO_SUPPORTING_FILES_CHILD,
+                    String.format( NO_SUPPORTING_FILES_FMT, sampleId )
+            );
+        }
+        else {
+            Entity refreshedSFEntity = entityBean.getEntityAndChildren( supportingFiles.getId() );
+            for ( Entity child: refreshedSFEntity.getChildren() ) {
+                if ( child.getEntityTypeName().equals( EntityConstants.TYPE_IMAGE_TILE ) ) {
+                    unmatchedImageTileCount ++;
+                }
+            }
+
+            if ( unmatchedImageTileCount > 0 ) {
+                reportableSuccess = true;
+            }
+
         }
 
         // Next: are there enough Sample Processing Results?
