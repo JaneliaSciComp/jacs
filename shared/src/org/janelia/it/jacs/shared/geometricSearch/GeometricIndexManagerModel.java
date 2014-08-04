@@ -10,7 +10,7 @@ package org.janelia.it.jacs.shared.geometricSearch;
  *
  * @author murphys
  */
-public class GeometricIndexManagerModel implements Comparable {
+public class GeometricIndexManagerModel implements Comparable<GeometricIndexManagerModel> {
     
   String scannerSignature;
   Long  startTime;
@@ -77,8 +77,8 @@ public class GeometricIndexManagerModel implements Comparable {
     }
   
     @Override
-    public int compareTo(Object o) {
-        GeometricIndexManagerModel m2=(GeometricIndexManagerModel)o;
+    public int compareTo(GeometricIndexManagerModel m2) {
+        //GeometricIndexManagerModel m2=(GeometricIndexManagerModel)o;
         if (m2.getStartTime()<startTime) {
             return 1;
         } else if (m2.getStartTime()>startTime) {
