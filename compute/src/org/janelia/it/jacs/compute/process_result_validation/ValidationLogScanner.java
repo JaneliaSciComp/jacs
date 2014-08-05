@@ -2,7 +2,7 @@ package org.janelia.it.jacs.compute.process_result_validation;
 
 import java.io.*;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.TreeMap;
 
 /**
  * Created by fosterl on 8/5/14.
@@ -20,14 +20,17 @@ public class ValidationLogScanner {
     }
 
     public void writeStatisticSummary( PrintWriter writer ) throws IOException {
-        statsMap = new HashMap<>();
+        statsMap = new TreeMap<>();
         fileAcceptor = new ErrorReportAcceptor();
         collectStatistics(startingPoint);
 
         // Note: caller creates the writer, and is expected to close it.
         writer.println("Total error counts for all categories follow.");
         for ( String category: statsMap.keySet() ) {
-            writer.println(String.format("Category '%s' has %d occurrences.", category, statsMap.get( category )));
+            Long total = statsMap.get(category);
+            if ( total > 0 ) {
+                writer.println(String.format("Category '%s' has %d occurrences.", category, total ));
+            }
         }
     }
 
