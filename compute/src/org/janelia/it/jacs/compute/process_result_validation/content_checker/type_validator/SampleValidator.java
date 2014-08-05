@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator;
 
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -23,6 +24,7 @@ public class SampleValidator implements TypeValidator {
             EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE,
             EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE,
     };
+    private Logger logger = Logger.getLogger( SampleValidator.class );
 
     public SampleValidator( ValidationLogger logger, SubEntityValidator subEntityValidator, EntityBeanLocal entityBean ) {
         this.validationLogger = logger;
@@ -63,6 +65,8 @@ public class SampleValidator implements TypeValidator {
 
         }
 
+        int numTiles = unmatchedImageTileCount;
+
         // Next: are there enough Sample Processing Results?
         for ( Entity child: refreshedSampleEntity.getChildren() ) {
             if ( child.getEntityTypeName().equals( EntityConstants.TYPE_PIPELINE_RUN ) ) {
@@ -81,8 +85,11 @@ public class SampleValidator implements TypeValidator {
                     sampleId,
                     entity,
                     NO_SAMPLE_PROCESSING_FOR_IMAGE_TILE,
-                    String.format( UNMATCHED_TILE_FMT, unmatchedImageTileCount, sampleId )
+                    String.format(UNMATCHED_TILE_FMT, unmatchedImageTileCount, sampleId)
             );
+        }
+        else if ( numTiles > 1 ) {
+            logger.info( String.format( "Found a sample %d with %d Image Tiles, all with Sample Processing against them.", sampleId, numTiles) );
         }
 
         if ( validationLogger.isToReportPositives()  &&  reportableSuccess  &&  unmatchedImageTileCount <= 0 ) {

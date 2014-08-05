@@ -4,7 +4,7 @@
           "http://www.jboss.org/j2ee/dtd/jboss_xmbean_1_0.dtd">
 <mbean>
 
-    <description>Subject Management Bean</description>
+    <description>Entity Validation Bean</description>
     <class>org.janelia.it.jacs.compute.mbean.Validator</class>
     <constructor>
         <description>The default constructor</description>
