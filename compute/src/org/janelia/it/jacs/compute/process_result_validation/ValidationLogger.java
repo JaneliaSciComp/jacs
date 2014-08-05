@@ -12,6 +12,9 @@ import java.util.*;
  * Created by fosterl on 6/27/14.
  */
 public class ValidationLogger implements Closeable {
+
+    public static final String CATEGORY_COUNT_FMT = "%2$d\t%1$s";
+
     public enum Status { Success, Failure, Unfinished, }
 
     // Refer to the header in interpreting the log.
@@ -20,11 +23,12 @@ public class ValidationLogger implements Closeable {
     public static final String EMPTY = "Empty ";
     public static final String FILE_ERROR = "File Error ";
     public static final String MIN_SIZE = "Min Size ";
-    private static final String SECTION_BREAK = "\n\n----------------------------------------------------------\n";
+    public static final String SECTION_BREAK_DELIM = "----------------------------------------------------------";
+    public static final String COUNT_BY_CATEGORY_HEADER = SECTION_BREAK_DELIM + "COUNT BY CATEGORY";
+    private static final String SECTION_BREAK = "\n" + SECTION_BREAK_DELIM + "%s\n";
     private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tCreated\tError\tCategory";
     private static final String VAL_LOG_FMT = "%1$d\t%2$d\t%3$s\t%4$tB %4$te, %4$tY\t%5$s\t%6$s";
-    private static final String CATEGORY_LIST_HEADER = "Category List Follows:";
-    private static final String CATEGORY_LABEL = "Category: ";
+    private static final String CATEGORY_LABEL = "Category: %s";
     private static final String ENCOUNTERED_TYPE_PREFIX = "Encountered Type: ";
     private static final String IGNORED_TYPE_PREFIX = "Ignored Type: ";
     private static final String VALIDATED_LIST_HEADER = "Types Encountered and Validated:";
@@ -184,33 +188,42 @@ public class ValidationLogger implements Closeable {
     }
 
     /**
+     * Use this to obtain the exact section break to scan for, in order to locate the error list.
+     * @param category provide this category name, to get its section break in report.
+     * @return a string that can be compared to a section to grab it all.
+     */
+    public static String getErrorSectionBreak(Category category) {
+        return String.format( SECTION_BREAK, "'" + category + "' LIST" );
+    }
+
+    /**
      * File-wise dump for subsequent read by another process.
      */
     private void outputToWriter() {
+        internalWriter.println(String.format(SECTION_BREAK, "DESCRIPTION"));
         internalWriter.println(description);
-        internalWriter.println(SECTION_BREAK);
 
+        internalWriter.println(String.format(SECTION_BREAK, "VALIDATED LIST"));
         internalWriter.println(VALIDATED_LIST_HEADER);
         for ( String type: validatedTypes ) {
             internalWriter.println( ENCOUNTERED_TYPE_PREFIX + type );
         }
-        internalWriter.println(SECTION_BREAK);
 
+        internalWriter.println(String.format(SECTION_BREAK, "IGNORED LIST"));
         internalWriter.println(INGORED_LIST_HEADER);
         for ( String type: unvalidatedTypes ) {
             internalWriter.println( IGNORED_TYPE_PREFIX + type + " - ignored" );
         }
-        internalWriter.println(SECTION_BREAK);
 
-        internalWriter.println(CATEGORY_LIST_HEADER);
+        internalWriter.println(String.format(SECTION_BREAK, "CATEGORY LIST"));
         for ( Category category: categoryListMap.keySet() ) {
-            internalWriter.println(CATEGORY_LABEL + category.toString());
+            internalWriter.println(String.format(CATEGORY_LABEL, category.toString()));
         }
-        internalWriter.println(SECTION_BREAK);
 
+        internalWriter.println(String.format(SECTION_BREAK, "ERROR LIST"));
         for ( Category category: categoryListMap.keySet() ) {
             if ( categoryListMap.get( category ).size() > 0 ) {
-                internalWriter.println(VAL_LOG_HEADER);
+                internalWriter.print(getErrorSectionBreak(category));
                 for ( ReportData reportData: categoryListMap.get( category ) ) {
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTime( reportData.getCreationDate() );
@@ -219,8 +232,12 @@ public class ValidationLogger implements Closeable {
                     );
                     internalWriter.println(errorMesage);
                 }
-                internalWriter.print(SECTION_BREAK);
             }
+        }
+
+        internalWriter.println( COUNT_BY_CATEGORY_HEADER );
+        for ( Category category: categoryListMap.keySet() ) {
+            internalWriter.println( String.format( CATEGORY_COUNT_FMT,  category, categoryListMap.get( category ).size() ) );
         }
     }
 
@@ -228,9 +245,9 @@ public class ValidationLogger implements Closeable {
      * Log-wise dump for programmer examine.
      */
     private void writeToLog() {
-        internalLogger.info(CATEGORY_LIST_HEADER);
+        internalLogger.info("Category List Follows:");
         for ( Category category: categoryListMap.keySet() ) {
-            internalLogger.info(CATEGORY_LABEL + category);
+            internalLogger.info( String.format(CATEGORY_LABEL, category ) );
             internalLogger.info( VAL_LOG_HEADER );
             for ( ReportData reportData: categoryListMap.get( category ) ) {
                 String errorMesage = String.format(
