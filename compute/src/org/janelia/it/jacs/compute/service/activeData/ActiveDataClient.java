@@ -61,7 +61,7 @@ public abstract class ActiveDataClient {
     public abstract void injectEntity(long entityId) throws Exception;
     
     // Gets the timestamps at which each epoch started
-    public abstract List<Long> getEpochHistory() throws Exception;
+    public abstract List<ScanEpochRecord> getEpochHistory() throws Exception;
     
     // Advances to the next epoch, and re-generates id list, also resetting all state
     public abstract void advanceEpoch() throws Exception;

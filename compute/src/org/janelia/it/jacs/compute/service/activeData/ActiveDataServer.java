@@ -7,6 +7,7 @@
 package org.janelia.it.jacs.compute.service.activeData;
 
 import java.util.List;
+import org.janelia.it.jacs.shared.geometricSearch.GeometricIndexManagerModel;
 
 /**
  *
@@ -14,6 +15,10 @@ import java.util.List;
  */
 public interface ActiveDataServer {
 
-    public List<String> getSignatures();
+    public List<String> getSignatures() throws Exception;
+    
+    public List<GeometricIndexManagerModel> getModel(int epochCount) throws Exception;
+    
+    public List<GeometricIndexManagerModel> getModelForScanner(String signature) throws Exception;
 
 }

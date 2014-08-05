@@ -6,11 +6,14 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import java.util.Date;
+
 /**
  *
  * @author murphys
  */
 public class ActiveDataScanStatus {
+    private long startTimestamp;
     private int epochNumber;
     private int currentEpochNumProcessing;
     private int currentEpochNumSuccessful;
@@ -19,18 +22,24 @@ public class ActiveDataScanStatus {
     private String statusDescriptor;
 
     public ActiveDataScanStatus(
+            long startTimestamp,
             int epochNumber, 
             int currentEpochNumProcessing,
             int currentEpochNumSuccessful,
             int currentEpochNumError,
             int currentEpochIdCount,
             String statusDescriptor) {
+        this.startTimestamp = startTimestamp;
         this.epochNumber = epochNumber;
         this.currentEpochNumProcessing = currentEpochNumProcessing;
         this.currentEpochNumSuccessful = currentEpochNumSuccessful;
         this.currentEpochNumError = currentEpochNumError;
         this.currentEpochIdCount = currentEpochIdCount;
         this.statusDescriptor = statusDescriptor;
+    }
+    
+    public long getStartTimestamp() {
+        return startTimestamp;
     }
 
     public int getCurrentEpochNumProcessing() {
@@ -60,7 +69,9 @@ public class ActiveDataScanStatus {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("epoch=").append(epochNumber).append(" processing=").append(currentEpochNumProcessing).append(" successful=").append(currentEpochNumSuccessful).append(" error=").append(currentEpochNumError).append(" status=").append(statusDescriptor).append(" idcount=").append(currentEpochIdCount);
+        sb.append("epoch=").append(epochNumber).append(" start=").append(new Date(startTimestamp)).append(" processing=")
+                .append(currentEpochNumProcessing).append(" successful=").append(currentEpochNumSuccessful).append(" error=")
+                .append(currentEpochNumError).append(" status=").append(statusDescriptor).append(" idcount=").append(currentEpochIdCount);
         return sb.toString();
     }
     
