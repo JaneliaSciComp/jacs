@@ -152,16 +152,18 @@ def createSimpleNeuron = {
  }
 
 
-
-// given all that, you create a neuron by combining low-level
+/*
+// first basic example: you create a neuron by combining low-level
 //  closures, currying out their "fixed" parameters, and passing
 //  them to a neuron builder:
 myBranchCounter = constantBranchCounter.curry(2)
 myStepAdder = constantStepAdder.curry(2.0, 3.0, 5.0)
 myBranchAdder = addBranch.curry(3, myStepAdder)
-// nodeList = createSimpleNeuron(createNeuronRoot(0.0, 0.0, 0.0), myBranchCounter, myBranchAdder, 2)
+nodeList = createSimpleNeuron(createNeuronRoot(0.0, 0.0, 0.0), myBranchCounter, myBranchAdder, 2)
+*/
 
-
+/*
+// more complicated example: create a neuron by alternating branching and nonbranching sections
 // the numbers aren't great here, but it basically works
 nodeList = createComplexNeuron(
     // these numbers correspond to the middle of sample 2014-02-27
@@ -173,6 +175,64 @@ nodeList = createComplexNeuron(
         [constantBranchCounter.curry(2), addBranch.curry(1, angleStepAdder.curry(0.0, 0.5, 100.0))],
         [constantBranchCounter.curry(1), addBranch.curry(5, constantStepAdder.curry(100.0, 0.0, 0.0))]
     ])
+*/
+
+// sample 2014-02-23
+// top middle is close to 7500, 3500, 3200; bottom is at about y = 18000
+// build a neuron that covers a lot of that space, with a controllable
+// total number of nodes
+
+// we can express total number of nodes N in terms of
+//  G generations of B branches, with each branch having S steps:
+// N = S * (B ^ G - 1) / (B - 1)
+// length in steps (if it were straight) L = G * S
+/* useful numbers:
+In [3]: for g in range(3, 11):
+   ...:     for b in range(2, 4):
+   ...:         print (b ** g - 1) / (b - 1),
+   ...:     print
+   ...:
+7 13
+15 40
+31 121
+63 364
+127 1093
+255 3280
+511 9841
+1023 29524
+ */
+
+// N ~ 300, L = 50
+// nGenerations = 5
+// nBranchings = 2
+// nSteps = 10
+// stepsize = 100.0
+
+// halve the stepsize, double the generations from first
+// N ~ 10000, L = 100
+// nGenerations = 10
+// nBranchings = 2
+// nSteps = 10
+// stepsize = 50.0
+
+// aim for something in between:
+// N ~ 1200, L = 70
+nGenerations = 7
+nBranchings = 2
+nSteps = 10
+stepsize = 100.0
+
+creatorList = []
+nGenerations.times {
+    creatorList << [constantBranchCounter.curry(1), addBranch.curry(nSteps, constantStepAdder.curry(0.0, stepsize, 0.0))]
+    creatorList << [constantBranchCounter.curry(nBranchings), addBranch.curry(1, angleStepAdder.curry(0.0, 0.5, stepsize))]
+}
+nodeList = createComplexNeuron(
+    createNeuronRoot(7500.0, 3500.0, 3200.0),
+    creatorList
+)
+
+
 
 
 
@@ -180,5 +240,8 @@ nodeList = createComplexNeuron(
 neuronData = new SWCData(nodeList, defaultHeaderList)
 neuronData.write(new File(filename))
 
-// debug: read it back and print it out:
-new File(filename).eachLine {line -> print line + '\n'}
+// debug: read it back and print it out (or at least part of it...):
+// new File(filename).eachLine {line -> print line + '\n'}
+new File(filename).withReader {reader -> 10.times {println reader.readLine()} }
+
+
