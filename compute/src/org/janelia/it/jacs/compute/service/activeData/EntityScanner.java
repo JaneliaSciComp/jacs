@@ -120,9 +120,15 @@ public abstract class EntityScanner {
                             av.setContextMap(contextMap);
                             try {
                                 activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
-                                av.run();
-                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                                Boolean visitorSucceeded=av.call();
+                                if (!visitorSucceeded) {
+                                    logger.error("Visitor "+av.getClass().getName()+" failed");
+                                    activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
+                                } else {
+                                    activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                                }
                             } catch (Exception ex2) {
+                                logger.error("Caught visitor exception - problem not caught by normal visitor error handler");
                                 activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
                                 logger.error(ex2,ex2);
                             }

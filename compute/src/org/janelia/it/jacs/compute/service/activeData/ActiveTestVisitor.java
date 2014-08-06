@@ -16,8 +16,8 @@ public class ActiveTestVisitor extends ActiveVisitor {
     Logger logger = Logger.getLogger(ActiveTestVisitor.class);
 
     @Override
-    public void run() {
+    public Boolean call() throws Exception {
         logger.info("ActiveTestVisitor run() - entityId="+entityId);
+        return true;
     }
-    
 }
