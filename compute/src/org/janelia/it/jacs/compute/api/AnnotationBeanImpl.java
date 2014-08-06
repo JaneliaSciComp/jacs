@@ -278,6 +278,17 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error paring down entity ids for list", daoe);
         }
 	}
+    
+    @Override
+    public List<Long> getAllEntityIdsByType(String entityTypeName) throws ComputeException {
+        try {
+            return _annotationDAO.getAllEntityIdsByType(entityTypeName);
+        } catch (DaoException daoe) {
+            _logger.error("Error getting entity id list for type=" + entityTypeName);
+            throw new ComputeException("Error getting entity id list for type=" + entityTypeName, daoe);
+        }
+    }
+
 	
     public List<Entity> getCommonRootEntities(String subjectKey) throws ComputeException {
         try {

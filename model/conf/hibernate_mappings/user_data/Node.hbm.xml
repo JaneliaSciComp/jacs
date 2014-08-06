@@ -709,6 +709,18 @@
                       dynamic-insert="true"
                       select-before-update="false">
             </subclass>
+            
+            <subclass name="org.janelia.it.jacs.model.user_data.geometricSearch.GeometricSearchIndexNode" discriminator-value="GeometricSearchIndexNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+            
+            <subclass name="org.janelia.it.jacs.model.user_data.geometricSearch.GeometricSearchResultNode" discriminator-value="GeometricSearchResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
 
             <subclass name="org.janelia.it.jacs.model.user_data.zlatic.ZlaticLabResultNode" discriminator-value="ZlaticLabResultNode"
                       dynamic-update="true"

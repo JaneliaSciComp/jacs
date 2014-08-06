@@ -47,6 +47,8 @@ public interface AnnotationBeanRemote {
     public Set<Long> getCompletedEntityIds(long sessionId) throws ComputeException;
     public long getNumDescendantsAnnotated(Long entityId) throws ComputeException;
     public List<Long> getEntityIdsInAlignmentSpace(String opticalRes, String pixelRes, List<Long> guids) throws ComputeException;
+    public List<Long> getAllEntityIdsByType(String entityTypeName) throws ComputeException;
+
 
     /**
      * @deprecated use getWorkspaces to get the real roots
