@@ -98,7 +98,7 @@ public class ValidationLogScanner {
 
         @Override
         public boolean accept(File file) {
-            return file.getName().endsWith( FAILURE_REPORT_EXT );
+            return file.getName().endsWith( FAILURE_REPORT_EXT ) || file.isDirectory();
         }
     }
 
