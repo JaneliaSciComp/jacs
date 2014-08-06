@@ -63,7 +63,7 @@ public class FileValidator {
         validationLogger.addCategory( ValidationLogger.FILE_ERROR + fileType );
         Long minLength = validationLogger.getMinSize( fileType, filePath );
         if ( minLength > 0 ) {
-            validationLogger.addCategory( ValidationLogger.MIN_SIZE + fileType + " " + minLength );
+            validationLogger.addCategory( ValidationLogger.MIN_SIZE + fileType );
         }
         String prob = TypeValidationHelper.getFileError( filePath, fileType, minLength );
         if ( prob != null ) {
