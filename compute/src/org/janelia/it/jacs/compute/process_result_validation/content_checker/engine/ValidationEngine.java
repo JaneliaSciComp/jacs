@@ -58,7 +58,9 @@ public class ValidationEngine implements Closeable {
         // Using this approach to file construction allows the label to contain sub directories.
         directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + "Validation_" + label );
         if ( ! directory.exists() ) {
-            directory.mkdirs();
+            if ( ! directory.mkdirs() ) {
+                throw new RuntimeException( "Failed to create directory hierarchy. " + directory.getName() );
+            }
         }
         reportFile = File.createTempFile(
                 this.getClass().getSimpleName(),
@@ -132,7 +134,9 @@ public class ValidationEngine implements Closeable {
 
     private void renameToReflectStatus(ValidationLogger.Status status) {
         String beforeExt = reportFile.getName().substring( 0 , reportFile.getName().length() - REPORT_FILE_EXTENSION.length() );
-        reportFile.renameTo( new File( reportFile.getParent(), beforeExt + "." + status + REPORT_FILE_EXTENSION ) );
+        if ( ! reportFile.renameTo( new File( reportFile.getParent(), beforeExt + "." + status + REPORT_FILE_EXTENSION ) ) ) {
+            throw new RuntimeException( "Failed to rename report file to rename status.  " + reportFile.getName() );
+        }
     }
 
     private void createValidatorMap() {
