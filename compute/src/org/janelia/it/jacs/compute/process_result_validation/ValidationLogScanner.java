@@ -1,8 +1,9 @@
 package org.janelia.it.jacs.compute.process_result_validation;
 
 import java.io.*;
-import java.util.Map;
-import java.util.TreeMap;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Created by fosterl on 8/5/14.
@@ -10,9 +11,17 @@ import java.util.TreeMap;
 public class ValidationLogScanner {
 
     public static final String FAILURE_REPORT_EXT = ".Failure.report.tsv";
+    public static final String STD_DATE_FORMAT = "MMMM dd, yyyy";
     private File startingPoint = null;
-    private Map<String,Long> statsMap;
+    private Map<String,StatInfo> statsMap;
     private FileFilter fileAcceptor;
+    public static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(STD_DATE_FORMAT, Locale.US );
+
+    enum SectionReturnVal { EOF, RevertedLine, NO_SECTION;
+        private String revertedLine;
+        public String getRevertedLine() { return revertedLine; }
+        public void setRevertedLine( String revertedLine ) { this.revertedLine = revertedLine; }
+    }
 
     /** The incoming file may be a directory containing logs, or just a log. */
     public ValidationLogScanner( File startingPoint ) {
@@ -27,9 +36,17 @@ public class ValidationLogScanner {
         // Note: caller creates the writer, and is expected to close it.
         writer.println("Total error counts for all categories follow.");
         for ( String category: statsMap.keySet() ) {
-            Long total = statsMap.get(category);
-            if ( total > 0 ) {
-                writer.println(String.format("Category '%s' has %d occurrences.", category, total ));
+            StatInfo info = statsMap.get(category);
+            if ( info.getCount() > 0 ) {
+                writer.println(
+                        String.format(
+                                "Category '%s' has %d occurrences.  Latest occurrence was %s.  Earliest occurence was %s.",
+                                category,
+                                info.getCount(),
+                                DATE_FORMATTER.format( info.getLatestDate() ),
+                                DATE_FORMATTER.format( info.getEarliestDate() )
+                        )
+                );
             }
         }
     }
@@ -51,46 +68,118 @@ public class ValidationLogScanner {
             BufferedReader bufferedReader = new BufferedReader( new FileReader( file ) )
         ) {
             String inline = null;
-            boolean endOfFile = false;
-            while ( (!endOfFile)  &&  null != ( inline = bufferedReader.readLine() )) {
+            inline = bufferedReader.readLine();
+            while ( null != inline ) {
                 inline = inline.trim();
-                if ( inline.length() == 0 )
+                if ( inline.length() == 0 ) {
+                    inline = bufferedReader.readLine();
                     continue;
+                }
 
+                SectionReturnVal returnVal = SectionReturnVal.NO_SECTION;
                 if ( inline.equals(ValidationLogger.COUNT_BY_CATEGORY_HEADER) ) {
-                    endOfFile = accumulateStats( bufferedReader );
+                    returnVal = accumulateCountStats(bufferedReader);
+                }
+
+                if ( inline.startsWith(ValidationLogger.ERROR_ENUM_DELIM) ) {
+                    returnVal = accumulateDateStats(bufferedReader);
+                }
+
+                // May need to back up by one line and use a stashed value, to avoid overlooking sections.
+                if ( returnVal == SectionReturnVal.RevertedLine ) {
+                    inline = returnVal.getRevertedLine();
+                }
+                else if ( returnVal != SectionReturnVal.EOF ) {
+                    inline = bufferedReader.readLine();
+                }
+                else {
+                    inline = null;
                 }
             }
         }
     }
 
     /** @return T=end-of-file encountered. */
-    private boolean accumulateStats( BufferedReader br ) throws IOException {
+    private SectionReturnVal accumulateCountStats(BufferedReader br) throws IOException {
         String inline = null;
-        boolean inCounts = true;
-        while ( inCounts  &&  null != ( inline = br.readLine() ) ) {
+        SectionReturnVal rtnVal = SectionReturnVal.EOF;
+        boolean inSection = true;
+        while ( inSection  &&  null != ( inline = br.readLine() ) ) {
             inline = inline.trim();
             if ( inline.length() == 0 )
                 continue;
 
             if ( inline.startsWith( ValidationLogger.SECTION_BREAK_DELIM )) {
-                inCounts = false;
+                //  Return Control.
+                inSection = false;
+                rtnVal = SectionReturnVal.RevertedLine;
+                rtnVal.setRevertedLine( inline );
             }
             else {
-                String[] countVCat = inline.split("\t");
-                Long count = Long.parseLong( countVCat[ 0 ].trim() );
-                String category = countVCat[ 1 ].trim();
-                Long oldStat = statsMap.get( category );
-                if ( oldStat == null ) {
-                    oldStat = 0L;
-                }
-                count += oldStat;
-                statsMap.put( category, count );
+                String[] fields = inline.split("\t");
+                String category = fields[ fields.length - 1 ];
+                Long count = Long.parseLong(fields[0].trim());
+                StatInfo oldStat = getStatInfo(category);
+                oldStat.setCount( oldStat.getCount() + count );
+                statsMap.put( category, oldStat );
             }
 
         }
-        // If still in the counts, file ended before any other section found.
-        return ! inCounts;
+
+        return rtnVal;
+    }
+
+    private SectionReturnVal accumulateDateStats(BufferedReader br) throws IOException {
+        String inline = null;
+        SectionReturnVal rtnVal = SectionReturnVal.EOF;
+        boolean inSection = true;
+        while ( inSection  &&  null != ( inline = br.readLine() ) ) {
+            inline = inline.trim();
+            if ( inline.length() == 0 )
+                continue;
+
+            if ( inline.startsWith( ValidationLogger.SECTION_BREAK_DELIM )) {
+                //  Return Control.
+                inSection = false;
+                rtnVal = SectionReturnVal.RevertedLine;
+                rtnVal.setRevertedLine( inline );
+            }
+            else {
+                String[] fields = inline.split("\t");
+                String category = fields[ fields.length - 1 ];
+                String dateStr = fields[ 3 ].trim();
+                StatInfo oldStat = getStatInfo(category);
+                Date date = DATE_FORMATTER.parse( dateStr, new ParsePosition(0) );
+                if ( date == null ) {
+                    System.err.println("Error: date " + dateStr + " not parsed.");
+                }
+                if ( date.after(oldStat.getLatestDate()) ) {
+                    oldStat.setLatestDate( date );
+                }
+                if ( date.before( oldStat.getEarliestDate() )) {
+                    oldStat.setEarliestDate( date );
+                }
+                statsMap.put( category, oldStat );
+            }
+
+        }
+
+        return rtnVal;
+    }
+
+    private StatInfo getStatInfo(String category) {
+        StatInfo oldStat = statsMap.get(category);
+        if ( oldStat == null ) {
+            oldStat = new StatInfo();
+            oldStat.setCount( 0L );
+            Date newDate = new Date();
+            newDate.setTime(0L);   // The default is the oldest possible date stamp.  Bound to be superceded.
+            oldStat.setLatestDate(newDate);
+
+            newDate = new Date();
+            oldStat.setEarliestDate(newDate);
+        }
+        return oldStat;
     }
 
     /** This filter only takes things relevant to our file scan. */
@@ -99,6 +188,36 @@ public class ValidationLogScanner {
         @Override
         public boolean accept(File file) {
             return file.getName().endsWith( FAILURE_REPORT_EXT ) || file.isDirectory();
+        }
+    }
+
+    private static class StatInfo {
+        private Long count;
+        private Date latestDate;
+        private Date earliestDate;
+
+        public Long getCount() {
+            return count;
+        }
+
+        public void setCount(Long count) {
+            this.count = count;
+        }
+
+        public Date getLatestDate() {
+            return latestDate;
+        }
+
+        public void setLatestDate(Date latestDate) {
+            this.latestDate = latestDate;
+        }
+
+        public Date getEarliestDate() {
+            return earliestDate;
+        }
+
+        public void setEarliestDate(Date earliestDate) {
+            this.earliestDate = earliestDate;
         }
     }
 

@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 /**

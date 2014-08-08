@@ -24,6 +24,7 @@ public class ValidationLogger implements Closeable {
     public static final String FILE_ERROR = "File Error ";
     public static final String MIN_SIZE = "Min Size ";
     public static final String SECTION_BREAK_DELIM = "----------------------------------------------------------";
+    public static final String ERROR_ENUM_DELIM = SECTION_BREAK_DELIM + "'";
     public static final String COUNT_BY_CATEGORY_HEADER = SECTION_BREAK_DELIM + "COUNT BY CATEGORY";
     private static final String SECTION_BREAK = "\n" + SECTION_BREAK_DELIM + "%s\n";
     private static final String VAL_LOG_HEADER = "Sample\tEntity\tEntityType\tCreated\tError\tCategory";
