@@ -18,8 +18,8 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClient;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClientSimpleLocal;
-import org.janelia.it.jacs.compute.service.activeData.ActiveEntityTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataScan;
+import org.janelia.it.jacs.compute.service.activeData.ActiveEntityTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataScanStatus;
 import org.janelia.it.jacs.compute.service.activeData.ActiveTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
@@ -63,7 +63,15 @@ public class GeometricIndexService extends AbstractEntityService {
         sampleScanner.setRemoveAfterEpoch(true);
         activeData = new ActiveDataClientSimpleLocal();
         sampleScanner.setActiveDataClient(activeData);
+        activeData.setEntityScanner(sampleScanner);
         sampleScanner.start();
+        String scanStatus=activeData.getScanStatus().getStatusDescriptor();
+        if (scanStatus.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
+            logger.info("Scan already active in system - at completed state. Incrementing to next Epoch in this case");
+            activeData.advanceEpoch();
+        } else {
+            logger.info("Proceeding assuming this is the first Epoch with existing scanStatus="+scanStatus);
+        }
         long startTime=new Date().getTime();
         GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, taskDone);
         managerFuture = managerPool.scheduleWithFixedDelay(serviceThread, 0, 1, TimeUnit.MINUTES);
