@@ -135,16 +135,21 @@ public class ActiveDataScan {
     }
     
     public synchronized long getNextId() {
+        logger.info("ActiveDataScan getNextId() - nextIdIndex="+nextIdIndex);
         if (nextIdIndex >= idArray.length) {
+            logger.info("Setting status to SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY");
             statusDescriptor = SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY;
         }
         if (statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
+            logger.info("Returning ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY");
             return ActiveDataScan.ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY;
         } else if (!statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_PROCESSING)) {
+            logger.info("Returning ID_CODE_SCAN_ERROR");
             return ActiveDataScan.ID_CODE_SCAN_ERROR;
         } else {
             long nextId=idArray[nextIdIndex];
             nextIdIndex++;
+            logger.info("Returning next id="+nextId);
             return nextId;
         }
     }

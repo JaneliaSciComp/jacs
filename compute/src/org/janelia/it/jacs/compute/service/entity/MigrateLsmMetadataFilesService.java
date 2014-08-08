@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,6 +16,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
@@ -86,12 +86,7 @@ public class MigrateLsmMetadataFilesService implements IService {
     
     private void migrateLsmMetadata(File sourceDir, File targetDir) throws Exception {
     	
-    	File[] files = sourceDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.endsWith("metadata");
-			}
-		});
+    	File[] files = FileUtil.getFilesWithSuffixes(sourceDir, "metadata");
     	
     	if (files==null || files.length==0) {
     		throw new Exception("Could not find metadata files in "+sourceDir.getAbsolutePath());

@@ -244,7 +244,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
             else if (filename.startsWith("SeparationResult") && filename.endsWith(".pbd")) {
             	resultFiles.add(getOrCreateResultItem(separation, file));
             }
-            else if (filename.equals("mapping_issues.txt")) {
+            else if (filename.startsWith("mapping_issues")) {
             	resultFiles.add(getOrCreateResultItem(separation, file));
             }
             else if (filename.equals("ref.mask")) {
