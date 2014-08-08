@@ -13,6 +13,7 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Run neuron mapping between two inputs. Parameters:
@@ -29,9 +30,13 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class NeuronMappingGridService extends AbstractEntityGridService {
 	
+	public static final String MAPPING_FILE_NAME_PREFIX = "mapping_issues";
+	
     private static final String CONFIG_PREFIX = "neuMapConfiguration.";
     private static final int TIMEOUT_SECONDS = 60 * 60;
 
+    private Long separationId1; 
+    private Long separationId2;
     private String inputFilename1;
     private String inputFilename2;
     
@@ -47,8 +52,8 @@ public class NeuronMappingGridService extends AbstractEntityGridService {
         inputFilename2 = data.getItemAsString("INPUT_FILENAME_2");
         
         if (inputFilename1==null || inputFilename2==null) {
-            Long separationId1 = data.getRequiredItemAsLong("SEPARATION_ID_1");
-            Long separationId2 = data.getRequiredItemAsLong("SEPARATION_ID_2");
+            separationId1 = data.getRequiredItemAsLong("SEPARATION_ID_1");
+            separationId2 = data.getRequiredItemAsLong("SEPARATION_ID_2");
             Entity separation1 = entityBean.getEntityById(separationId1);
             Entity separation2 = entityBean.getEntityById(separationId2);
             inputFilename1 = getLabelFile(separation1);
@@ -159,12 +164,26 @@ public class NeuronMappingGridService extends AbstractEntityGridService {
     	File[] resultFiles = outputDir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
-	            return name.startsWith("mapping_issues.txt");
+	            return name.startsWith(MAPPING_FILE_NAME_PREFIX);
 			}
 		});
 
     	if (resultFiles.length < 1) {
-    		throw new MissingDataException("mapping_issues.txt not found in "+resultFileNode.getDirectoryPath());
+    		throw new MissingDataException("Mapping file not found in "+resultFileNode.getDirectoryPath());
+    	}
+    	
+    	// Copy the mapping file into the target separation directory and it rename it with the source separation id
+    	
+    	File resultFile = resultFiles[0];
+    	    			
+    	File file2 = new File(inputFilename2);
+    	File targetFile = new File(file2.getParentFile(), MAPPING_FILE_NAME_PREFIX+"_"+separationId2+".txt");
+    	
+    	try {
+    		FileUtil.copyFile(resultFile, targetFile);
+    	}
+    	catch (IOException e) {
+    		logger.error("Could not copy result mappig file to target separation directory",e);
     	}
 	}
 }

@@ -7,12 +7,13 @@
 package org.janelia.it.jacs.compute.service.activeData;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  *
  * @author murphys
  */
-public abstract class ActiveVisitor implements Runnable {
+public abstract class ActiveVisitor implements Callable<Boolean> {
     protected Long entityId;
     protected ActiveDataClient activeData;
     protected Map<String, Object> parameterMap;

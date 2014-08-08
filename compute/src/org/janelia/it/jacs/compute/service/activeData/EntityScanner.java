@@ -120,9 +120,15 @@ public abstract class EntityScanner {
                             av.setContextMap(contextMap);
                             try {
                                 activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
-                                av.run();
-                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                                Boolean visitorSucceeded=av.call();
+                                if (!visitorSucceeded) {
+                                    logger.error("Visitor "+av.getClass().getName()+" failed");
+                                    activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
+                                } else {
+                                    activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                                }
                             } catch (Exception ex2) {
+                                logger.error("Caught visitor exception - problem not caught by normal visitor error handler");
                                 activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
                                 logger.error(ex2,ex2);
                             }
@@ -191,21 +197,22 @@ public abstract class EntityScanner {
             scannerList.add(scanner);
         }
         if (managerFuture == null) {
-            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManager(), 100, 100, TimeUnit.MILLISECONDS);
+            logger.info("managerFuture is null - creating new instance within managerPool");
+            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManager(), 50, 50, TimeUnit.MILLISECONDS);
+        } else {
+            logger.info("managerFuture is not null - assuming that a manager instance is running");
         }
     }
     
     private static void removeActiveDataScanner(EntityScanner scanner) throws Exception {
+        logger.info("Removing scanner");
         synchronized(scannerList) {
             scannerList.remove(scanner);
         }
         if (scannerList.isEmpty()) {
-            managerFuture.cancel(false);
-            if (managerFuture.isDone()) {
-                managerFuture=null;
-            } else {
-                throw new Exception("ManagerFuture unexpectedly is not done even after cancellation");
-            }
+            discontinueManagerThread();
+        } else {
+            logger.info("scannerList is not empty, so leaving managerFuture intact");
         }
     }
     
@@ -218,33 +225,61 @@ public abstract class EntityScanner {
          */
         @Override
         public void run() {
+            logger.info("run() starting");
             int availableThreadSlots = scannerPool.getCorePoolSize() - scannerPool.getActiveCount();
+            logger.info("availableThreadSlots=" + availableThreadSlots);
             for (int i = 0; i < availableThreadSlots; i++) {
                 if (nextScannerIndex >= scannerList.size()) {
                     nextScannerIndex = 0;
                 }
-                EntityScanner scanner = scannerList.get(nextScannerIndex);
-                String scannerStatus = scanner.getStatus();
-                try {
-                    if (scannerStatus.equals(STATUS_INACTIVE)
-                            || scannerStatus.equals(STATUS_PROCESSING)) {
-                        scannerPool.submit(scanner.getRunnableForNextId());
-                    } else if (scannerStatus.equals(STATUS_ERROR)) {
-                        logger.error("Skipping scanner signature=" + scanner.getSignature() + " due to error status");
-                        scannerList.remove(scanner);
-                    } else if (scannerStatus.equals(STATUS_EPOCH_COMPLETED)) {
-                        if (scanner.getRemoveAfterEpoch()) {
-                            logger.info("Removing scanner " + scanner.getSignature() + " after completed Epoch");
-                            scannerList.remove(scanner);
+                logger.info("i=" + i + ", nextScannerIndex=" + nextScannerIndex);
+                if (!scannerList.isEmpty()) {
+                    EntityScanner scanner = scannerList.get(nextScannerIndex);
+                    String scannerStatus = scanner.getStatus();
+                    try {
+                        if (scannerStatus.equals(STATUS_INACTIVE)
+                                || scannerStatus.equals(STATUS_PROCESSING)) {
+                            scannerPool.submit(scanner.getRunnableForNextId());
+                        } else if (scannerStatus.equals(STATUS_ERROR)) {
+                            logger.error("Skipping scanner signature=" + scanner.getSignature() + " due to error status");
+                            removeActiveDataScanner(scanner);
+                        } else if (scannerStatus.equals(STATUS_EPOCH_COMPLETED)) {
+                            if (scanner.getRemoveAfterEpoch()) {
+                                logger.info("Removing scanner " + scanner.getSignature() + " after completed Epoch");
+                                removeActiveDataScanner(scanner);
+                            }
                         }
+                    } catch (Exception ex) {
+                        logger.error(ex, ex);
                     }
-                } catch (Exception ex) {
-                    logger.error(ex, ex);
+                } else {
+                    try {
+                        discontinueManagerThread();
+                    } catch (Exception ex) {
+                        logger.error(ex,ex);
+                    }
                 }
-                nextScannerIndex++;
             }
+            nextScannerIndex++;
         }
-
+    }
+    
+    private static synchronized void discontinueManagerThread() throws Exception {
+        if (scannerList.isEmpty()) {
+            logger.info("scannerList is empty, so cancelling managerFuture and setting to null");
+            if (managerFuture != null) {
+                managerFuture.cancel(false);
+                if (managerFuture.isDone()) {
+                    managerFuture = null;
+                } else {
+                    throw new Exception("ManagerFuture unexpectedly is not done even after cancellation");
+                }
+            } else {
+                logger.info("managerFuture is already null - skipping cancellation and nullification");
+            }
+        } else {
+            logger.info("Ignoring request to discontinue ManagerThread since the scannerList is not empty");
+        }
     }
     
     public static synchronized void shutdown() {

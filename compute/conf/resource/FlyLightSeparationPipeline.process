@@ -59,6 +59,7 @@
 	            <input name="SIGNAL_CHANNELS"/>
 				<input name="REFERENCE_CHANNEL"/>
 				<input name="OBJECTIVE"/>
+                <input name="PREVIOUS_SEPARATION_ID"/>
 				<input name="PREVIOUS_RESULT_FILENAME"/>
                 <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
 		    </operation>

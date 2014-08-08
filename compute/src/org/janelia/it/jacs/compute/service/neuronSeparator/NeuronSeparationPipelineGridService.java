@@ -2,16 +2,16 @@ package org.janelia.it.jacs.compute.service.neuronSeparator;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -26,7 +26,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
+public class NeuronSeparationPipelineGridService extends AbstractEntityGridService {
 	
     public static final String NAME = "neuronSeparatorPipeline";
     
@@ -38,6 +38,7 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     private FileNode outputFileNode;
     private String inputFilename;
     private String objective;
+    private Long previousSeparationId;
     private String previousResultFilepath;
     private String signalChannels;
     private String referenceChannel;
@@ -57,26 +58,27 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
         	outputFileNode = resultFileNode;
         }
         
-        inputFilename = (String)processData.getItem("INPUT_FILENAME");
+        inputFilename = data.getItemAsString("INPUT_FILENAME");
         if (inputFilename==null || "".equals(inputFilename)) {
         	throw new ServiceException("Input parameter INPUT_FILENAME may not be empty");
         }
-    	
-        previousResultFilepath = (String)processData.getItem("PREVIOUS_RESULT_FILENAME");
+
+        previousSeparationId = data.getItemAsLong("PREVIOUS_SEPARATION_ID");
+        previousResultFilepath = data.getItemAsString("PREVIOUS_RESULT_FILENAME");
         
-        signalChannels = (String)processData.getItem("SIGNAL_CHANNELS");
+        signalChannels = data.getItemAsString("SIGNAL_CHANNELS");
         if (signalChannels==null) {
         	signalChannels = "0 1 2";
         }
 
-        objective = (String)processData.getItem("OBJECTIVE");
+        objective = data.getItemAsString("OBJECTIVE");
         
-        referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL");
+        referenceChannel = data.getItemAsString("REFERENCE_CHANNEL");
         if (referenceChannel==null) {
         	referenceChannel = "3";
         }
 
-        consolidatedLabelFilepath = (String)processData.getItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
+        consolidatedLabelFilepath = data.getItemAsString("ALIGNED_CONSOLIDATED_LABEL_FILEPATH");        
         
         logger.info("Starting NeuronSeparationPipelineService with taskId=" + task.getObjectId() + " resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath()+
                 " workingDir="+outputFileNode.getDirectoryPath() + " inputFilename="+inputFilename+ " signalChannels="+signalChannels+ " referenceChannel="+referenceChannel+ " objective="+objective+
@@ -152,24 +154,13 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
 	public void postProcess() throws MissingDataException {
 
     	File outputDir = new File(outputFileNode.getDirectoryPath());
-    	File[] coreFiles = outputDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("core");
-			}
-		});
     	
+    	File[] coreFiles = FileUtil.getFilesWithPrefixes(outputDir, "core");    	
     	if (coreFiles.length > 0) {
     		throw new MissingDataException("Neuron separation core dumped for "+resultFileNode.getDirectoryPath());
     	}
-
-    	File[] csFiles = outputDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("Consolidated") || name.equals("SeparationResult.nsp");
-			}
-		});
-
+    	
+    	File[] csFiles = FileUtil.getFilesWithPrefixes(outputDir, "Consolidated", "SeparationResult.nsp");
     	if (csFiles.length < 3) {
     		throw new MissingDataException("SeparationResult, ConsolidatedSignal, and ConsolidatedLabel not found for "+resultFileNode.getDirectoryPath());
     	}
@@ -177,6 +168,18 @@ public class NeuronSeparationPipelineGridService extends SubmitDrmaaJobService {
     	File archiveDir = new File(outputDir, "archive");
     	if (!archiveDir.exists()) {
     		logger.warn("No archive directory was generated at "+archiveDir.getAbsolutePath());
+    	}
+    	
+    	// Copy the mapping file into the target separation directory
+    	if (previousSeparationId!=null) {
+    		File[] mappingFiles = FileUtil.getFilesWithPrefixes(outputDir, NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX);
+	    	if (mappingFiles.length<1) {
+	    		logger.warn("No mapping file found for separation "+outputDir);
+	    	}
+	    	else {
+		    	File resultFile = mappingFiles[0];
+		    	resultFile.renameTo(new File(outputDir, NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+"_"+previousSeparationId+".txt"));
+	    	}
     	}
 	}
 }
