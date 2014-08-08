@@ -1,18 +1,19 @@
 package org.janelia.it.jacs.compute.service.utility;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.model.user_data.FileNode;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Do some operation on any number of files in parallel. Subclasses should override getGridServicePrefixName,
@@ -362,13 +363,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     	FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
     	File file = new File(parentNode.getDirectoryPath());
     	
-    	File[] coreFiles = file.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("core");
-			}
-		});
-    	
+    	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (!ignoreErrors && coreFiles.length > 0) {
 			throw new MissingDataException(getGridServicePrefixName()+" core dumped for "+resultFileNode.getDirectoryPath());
     	}

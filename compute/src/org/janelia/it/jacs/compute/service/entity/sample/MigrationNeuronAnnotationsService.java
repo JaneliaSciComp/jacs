@@ -12,10 +12,12 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronMappingGridService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -76,7 +78,8 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         if (!targetAnnotations.isEmpty()) {
             logger.warn("Target separation ("+targetSeparation.getId()+") already has neuron annotations ("+targetAnnotations.size()+").");
             // TODO: is this an error condition, or should we just warn and proceed?
-            throw new IllegalStateException("Cannot proceed with annotation migration to annotated separation");
+            logger.warn("Cannot proceed with annotation migration to annotated separation");
+            return;
         }
         
         if (sourceAnnotations.isEmpty()) {
@@ -97,7 +100,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
             
         }
         else {
-            Map<Integer,Integer> mapping = getMapping(targetSeparation, resultWasMapped);
+            Map<Integer,Integer> mapping = getMapping(targetSeparation, sourceSeparation.getId(), resultWasMapped);
             if (mapping==null) {
                 throw new IllegalStateException("Unwarped separation has no mapping file: "+targetSeparation.getId());
             }
@@ -241,9 +244,25 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
      * If useMappedIndicies is false, then this method returns this mapping:
      *     Previous index # -> Unmapped index #
      */
-    private Map<Integer,Integer> getMapping(Entity separation, boolean useMappedIndicies) {
+    private Map<Integer,Integer> getMapping(Entity separation, Long sourceSeparationId, boolean useMappedIndicies) {
         String dir = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        File mappingFile = new File(dir,"mapping_issues.txt");
+
+        File separationDir = new File(dir);
+        File[] mappingFiles = FileUtil.getFilesWithPrefixes(separationDir, NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX);
+                
+    	File mappingFile = null;
+    	for(File file : mappingFiles) {
+    		if (file.getName().startsWith(NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+"_"+sourceSeparationId)) {
+    			mappingFile = file;
+    		}
+    	}
+    	
+    	for(File file : mappingFiles) {
+    		if (file.getName().equals(NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+".txt")) {
+    			mappingFile = file;
+    		}
+    	}
+        
         Scanner scanner = null;
         
         try {
