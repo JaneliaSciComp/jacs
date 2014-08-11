@@ -33,7 +33,7 @@ public class ValidationEngine implements Closeable {
 
     @SuppressWarnings("unused")
     public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException, ComputeException {
-        this( entityBean, computeBean, annotationBean, debug, null, "generic" );
+        this( entityBean, computeBean, annotationBean, debug, null, null, "generic" );
     }
 
     public ValidationEngine(
@@ -42,6 +42,7 @@ public class ValidationEngine implements Closeable {
             AnnotationBeanLocal annotationBean,
             Boolean debug,
             Long loggerId,
+            String nodeDirectory,
             String label
     ) throws IOException, ComputeException {
         Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
@@ -53,15 +54,7 @@ public class ValidationEngine implements Closeable {
                 this.getClass().getName()
         );
         validationLogger = new ValidationLogger( logger, metaData );
-        File directory = new File(System.getProperty("user.home"));
-
-        // Using this approach to file construction allows the label to contain sub directories.
-        directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + "Validation_" + label );
-        if ( ! directory.exists() ) {
-            if ( ! directory.mkdirs() ) {
-                throw new RuntimeException( "Failed to create directory hierarchy. " + directory.getName() );
-            }
-        }
+        File directory = getBaseDirectory(label, nodeDirectory);
         reportFile = File.createTempFile(
                 this.getClass().getSimpleName(),
                 (loggerId == null ? "" : "." + loggerId) + REPORT_FILE_EXTENSION,
@@ -110,7 +103,7 @@ public class ValidationEngine implements Closeable {
 
     public void validateByType( Entity entity, Long sampleId ) {
         String entityType = entity.getEntityTypeName();
-        TypeValidator validator = validatorMap.get( entityType );
+        TypeValidator validator = validatorMap.get(entityType);
         if ( validator != null ) {
             validationLogger.addValidatedType(entityType);
             try {
@@ -130,6 +123,32 @@ public class ValidationEngine implements Closeable {
     public void close() {
         validationLogger.close();
         renameToReflectStatus(validationLogger.getFinalStatus());
+    }
+
+    /**
+     * Establishes the directory location into which to put the output log.
+     *
+     * @param label used in establishing a meaningfully-named container directory.
+     * @return directory place to write log.
+     */
+    private File getBaseDirectory(String label, String nodeDirectory) {
+        // Find the top-level task for this validation.
+        File directory = null;
+        if ( nodeDirectory == null ) {
+            directory = new File( System.getProperty("user.home") );
+        }
+        else {
+            directory = new File( nodeDirectory );
+        }
+
+        // Using this approach to file construction allows the label to contain sub directories.
+        directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + "Validation_" + label );
+        if ( ! directory.exists() ) {
+            if ( ! directory.mkdirs() ) {
+                throw new RuntimeException( "Failed to create directory hierarchy. " + directory.getName() );
+            }
+        }
+        return directory;
     }
 
     private void renameToReflectStatus(ValidationLogger.Status status) {

@@ -770,6 +770,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.validation.ValidationRunNode" discriminator-value="ValidationRunNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode" discriminator-value="ReversePsiBlastDatabaseNode"
                       dynamic-update="true"
                       dynamic-insert="true"

@@ -1,14 +1,22 @@
 package org.janelia.it.jacs.compute.service.validation;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.mbean.Validator;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.model.user_data.ap16s.AnalysisPipeline16SResultNode;
+import org.janelia.it.jacs.model.user_data.validation.ValidationRunNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,12 +33,15 @@ public class ValidationService extends AbstractEntityService {
     private Long startingId;
     private String parentName;
     private String label;
+    private ValidationRunNode validationRunNode;
 
     @Override
     protected void execute() throws Exception {
         startingId = getGuidItem( "GUID" );
         nodebug = (Boolean) processData.getItem("NODEBUG");
         label = (String) processData.getItem( "LABEL" );
+
+        createResultFileNode();
 
         // NOTE: the default value for any boolean through JMX (from JBoss, at least) is TRUE.
         //  Therefore, we want our most-common-case to match TRUE.  So TRUE-> do NOT issue debug info.
@@ -131,11 +142,30 @@ public class ValidationService extends AbstractEntityService {
         }
     }
 
+    private Long createResultFileNode() throws DaoException, IOException {
+        // Here, need establish the file node to hold the directory location.
+        validationRunNode = new ValidationRunNode(
+                User.SYSTEM_USER_LOGIN,
+                task,
+                label,                           // name
+                "Validation Run: " + label,      // description
+                Node.VISIBILITY_PUBLIC,          // visibility
+                Node.DIRECTORY_DATA_TYPE,        // data type
+                null                             // relative session path
+        );
+
+        EJBFactory.getLocalComputeBean().saveOrUpdateNode(validationRunNode);
+
+        FileUtil.ensureDirExists(validationRunNode.getDirectoryPath());
+        FileUtil.cleanDirectory(validationRunNode.getDirectoryPath());
+        return validationRunNode.getObjectId();
+    }
+
     private void validateSample(Long knownSampleId, Entity entity) throws Exception {
 
         try (
             ValidationEngine validationEngine = new ValidationEngine(
-                entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, label
+                entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, validationRunNode.getDirectoryPath(), label
             )
         ) {
             // Do not look for samples under samples.  Do not recurse further here.  Instead, look for
