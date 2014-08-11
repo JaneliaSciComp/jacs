@@ -31,10 +31,15 @@ import com.google.common.collect.Multimap;
  */
 public class MigrationNeuronAnnotationsService extends AbstractEntityService {
 
+    private static final String ANNOTATION_MIGRATION_RESULT = "Migration Result";
+    
 	private static final Logger logger = Logger.getLogger(MigrationNeuronAnnotationsService.class);
     
+	private String resultComment;
+	
     public void execute() throws Exception {
 
+    	boolean annotateSample = data.getItemAsBoolean("ANNOTATE_SAMPLE");
         Long sourceSeparationId = data.getRequiredItemAsLong("SOURCE_SEPARATION_ID");
         Long targetSeparationId = data.getRequiredItemAsLong("TARGET_SEPARATION_ID");
         boolean targetIsWarped = data.getItemAsBoolean("TARGET_IS_WARPED"); // default to false
@@ -54,6 +59,24 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         logger.info("Retrieved target separation: "+targetSeparation.getName()+" (id="+targetSeparationId+")");
 
         migrateAnnotations(sourceSeparation, targetSeparation, targetIsWarped);
+        
+        if (annotateSample) {
+	        Entity sample = entityBean.getAncestorWithType(targetSeparation, EntityConstants.TYPE_SAMPLE);
+	        Entity comment = null;
+	        
+	        for(Entity entity : entityBean.getEntitiesByNameAndTypeName(ownerKey, ANNOTATION_MIGRATION_RESULT, EntityConstants.TYPE_ONTOLOGY_ELEMENT)) {
+	            if (comment!=null) {
+	                logger.warn("Found multiple terms with name "+ANNOTATION_MIGRATION_RESULT+" will use "+comment.getId());
+	            }
+	            else {
+	            	comment = entity;
+	            }
+	        }
+	        
+	        OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), comment.getId(), comment.getName(), null, resultComment);
+	        annotationBean.createOntologyAnnotation(ownerKey,annotation);
+        }
+        
     }
     
     /**
@@ -74,11 +97,12 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         
         List<Entity> sourceAnnotations = getAnnotationsForChildren(sourceNeuronCollection);
         List<Entity> targetAnnotations = getAnnotationsForChildren(targetNeuronCollection);
-        
+
         if (!targetAnnotations.isEmpty()) {
             logger.warn("Target separation ("+targetSeparation.getId()+") already has neuron annotations ("+targetAnnotations.size()+").");
             // TODO: is this an error condition, or should we just warn and proceed?
             logger.warn("Cannot proceed with annotation migration to annotated separation");
+            resultComment = "Target neurons already annotated";
             return;
         }
         
@@ -101,11 +125,19 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         }
         else {
             Map<Integer,Integer> mapping = getMapping(targetSeparation, sourceSeparation.getId(), resultWasMapped);
-            if (mapping==null) {
-                throw new IllegalStateException("Unwarped separation has no mapping file: "+targetSeparation.getId());
+            if (mapping!=null) {
+	            logger.info("Retrieved "+mapping.size()+" neuron mappings");
+	            if (!mapping.isEmpty()) {
+	                
+	            	migrateAnnotations(sourceNeuronCollection, targetNeuronCollection, sourceAnnotations, targetAnnotations, mapping);
+	            }
+	            else if (resultComment == null){
+	            	resultComment = "No neuron mappings";
+	            }
             }
-            logger.info("Retrieved "+mapping.size()+" neuron mappings");
-            migrateAnnotations(sourceNeuronCollection, targetNeuronCollection, sourceAnnotations, targetAnnotations, mapping);
+            else if (resultComment == null){
+            	resultComment = "No neuron mapping";
+            }
         }    
     }
     
@@ -144,29 +176,27 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         for(Long neuronEntityId : sourceAnnotationMap.keySet()) {
             Collection<Entity> annotations = sourceAnnotationMap.get(neuronEntityId);
             if (annotations==null) {
-                logger.info("Neuron (id="+neuronEntityId+") has null annotation");
+                logger.warn("Neuron (id="+neuronEntityId+") has null annotation");
                 continue;
             }
-            logger.info("Neuron (id="+neuronEntityId+") has "+annotations.size()+" annotations");
             Number sourceNumber = sourceNeuronNumByEntityId.get(neuronEntityId);
             if (sourceNumber==null) {
-                logger.info("Neuron (id="+neuronEntityId+") has null number");
+                logger.warn("Neuron (id="+neuronEntityId+") has null number");
                 continue;
             }
-            logger.info("Neuron (id="+neuronEntityId+") is number "+sourceNumber+" in the source separation");
             Integer targetNumber = mapping.get(sourceNumber);
             if (targetNumber==null) {
-                logger.info("Neuron (number="+sourceNumber+") has no mapping in the target separation");
+                logger.warn("Neuron (number="+sourceNumber+") has no mapping in the target separation");
                 continue;
             }
-            logger.info("Neuron (id="+neuronEntityId+") is number "+targetNumber+" in the target separation");
             Long targetEntityId = (Long)targetEntityIdByNeuronNum.get(targetNumber);
             if (targetEntityId==null) {
-                logger.info("Neuron (number="+sourceNumber+") has no entity in the target separation");
+                logger.warn("Neuron (number="+sourceNumber+") has no entity in the target separation");
                 continue;
             }
-            logger.info("Neuron (id="+neuronEntityId+") is neuron (id="+targetEntityId+") in the target separation");
-            migrateAnnotations(annotations, targetEntityId);
+            logger.info("Neuron "+sourceNumber+"->"+targetNumber+" ("+neuronEntityId+"->"+targetEntityId+") has "+annotations.size()+" annotations");
+        	migrateAnnotations(annotations, targetEntityId);
+        	resultComment = "Migrated "+annotations.size()+" annotations";
         }
     }
     
@@ -256,11 +286,20 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
     			mappingFile = file;
     		}
     	}
+
+    	if (mappingFile==null) {
+    		// Accept old-style mapping files in cases where the new one is not available (this should never happen, but you never know.)
+	    	for(File file : mappingFiles) {
+	    		if (file.getName().equals(NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+".txt")) {
+	    			mappingFile = file;
+	    		}
+	    	}
+    	}
     	
-    	for(File file : mappingFiles) {
-    		if (file.getName().equals(NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+".txt")) {
-    			mappingFile = file;
-    		}
+    	if (mappingFile==null) {
+        	resultComment = "No neuron mapping file";
+    		logger.error("No mapping file found from source separation "+sourceSeparationId+" to target "+separation.getId());
+    		return null;
     	}
         
         Scanner scanner = null;
@@ -272,6 +311,12 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
 
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
+                if ("ERROR: Input volumes are not the same size".equals(line)) {
+                	resultComment = "Cannot map different sized volumes";
+                	logger.error("Mapping failed because volumes were not the same size");
+                	return null;
+                }
+                
                 Pattern p = Pattern.compile("^Previous index (.*?) : Unmapped index (.*?) : Mapped index (.*?)$");
                 Matcher m = p.matcher(line);
                 if (m.matches()) {
@@ -279,6 +324,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
                     String unmappedIndex = m.group(2);
                     String mappedIndex = m.group(3);
                     String newIndex = useMappedIndicies?mappedIndex:unmappedIndex;
+                    if ("(none)".equals(prevIndex) || "(none)".equals(newIndex)) continue;
                     try {
                         mapping.put(Integer.parseInt(prevIndex), Integer.parseInt(newIndex));
                     }
@@ -286,11 +332,15 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
                         logger.warn("Could not format indexes: "+prevIndex+"->"+newIndex);
                     }
                 }
+                else {
+                	logger.warn("Unexpected format: "+line);
+                }
             }
             return mapping;
         }
         catch (Exception e) {
-            logger.warn("Could not read mapping file: "+mappingFile, e);
+        	resultComment = "Could not read neuron mapping file";
+            logger.warn("Could not read neuron mapping file: "+mappingFile, e);
             return null;
         }
         finally {

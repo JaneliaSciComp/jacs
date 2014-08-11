@@ -59,4 +59,7 @@ public interface WorkstationDataManagerMBean {
     public void addChildFolder(String parentId, String folderName);
     
     public void runBenchmarks();
+    
+    public void runNernaRetiredDataCleanup();
+    
 }

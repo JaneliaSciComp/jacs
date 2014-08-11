@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,6 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
-import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
 import org.janelia.it.jacs.compute.service.entity.OrphanEntityCheckerService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
@@ -777,5 +775,17 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             i += countTree(child.getId());
         }
         return i;
+    }
+    
+    public void runNernaRetiredDataCleanup() {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            Task task = new GenericTask(new HashSet<Node>(), "nerna", new ArrayList<Event>(),
+                    taskParameters, "cleanupRetiredData", "Cleanup Retired Data");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("CleanupRetiredData", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }
