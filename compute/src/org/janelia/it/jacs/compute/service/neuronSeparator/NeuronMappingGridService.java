@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
  * Run neuron mapping between two inputs. Parameters:
@@ -177,13 +178,26 @@ public class NeuronMappingGridService extends AbstractEntityGridService {
     	File resultFile = resultFiles[0];
     	    			
     	File file2 = new File(inputFilename2);
-    	File targetFile = new File(file2.getParentFile(), MAPPING_FILE_NAME_PREFIX+"_"+separationId2+".txt");
+    	File targetFile = new File(file2.getParentFile(), MAPPING_FILE_NAME_PREFIX+"_"+separationId1+".txt");
     	
     	try {
     		FileUtil.copyFile(resultFile, targetFile);
     	}
     	catch (IOException e) {
-    		logger.error("Could not copy result mappig file to target separation directory",e);
+    		logger.error("Could not copy result mapping file to target separation directory",e);
+    	}
+    	
+    	try {
+	    	String script ="chmod g+w "+targetFile.getAbsolutePath();
+	        logger.info("Running: "+script);
+	        SystemCall call = new SystemCall(logger);
+	        int exitCode = call.emulateCommandLine(script.toString(), true, 10);
+	        if (0!=exitCode) {
+	            throw new ServiceException("Chmod failed with exitCode "+exitCode);
+	        }
+    	}
+    	catch (Exception e) {
+    		logger.error("Could not set group write permission on file: "+targetFile.getAbsolutePath());
     	}
 	}
 }
