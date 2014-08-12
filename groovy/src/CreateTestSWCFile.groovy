@@ -177,8 +177,8 @@ nodeList = createComplexNeuron(
     ])
 */
 
-// sample 2014-02-23
-// top middle is close to 7500, 3500, 3200; bottom is at about y = 18000
+// sample 2014-03-14 test
+// top middle is close to 5500, 1800, 1600; bottom is at about y = 10000
 // build a neuron that covers a lot of that space, with a controllable
 // total number of nodes
 
@@ -203,10 +203,10 @@ In [3]: for g in range(3, 11):
  */
 
 // N ~ 300, L = 50
-// nGenerations = 5
-// nBranchings = 2
-// nSteps = 10
-// stepsize = 100.0
+nGenerations = 5
+nBranchings = 2
+nSteps = 10
+stepsize = 100.0
 
 // halve the stepsize, double the generations from first
 // N ~ 10000, L = 100
@@ -217,10 +217,10 @@ In [3]: for g in range(3, 11):
 
 // aim for something in between:
 // N ~ 1200, L = 70
-nGenerations = 7
-nBranchings = 2
-nSteps = 10
-stepsize = 100.0
+// nGenerations = 7
+// nBranchings = 2
+// nSteps = 10
+// stepsize = 100.0
 
 creatorList = []
 nGenerations.times {
@@ -228,7 +228,7 @@ nGenerations.times {
     creatorList << [constantBranchCounter.curry(nBranchings), addBranch.curry(1, angleStepAdder.curry(0.0, 0.5, stepsize))]
 }
 nodeList = createComplexNeuron(
-    createNeuronRoot(7500.0, 3500.0, 3200.0),
+    createNeuronRoot(5500.0, 1800.0, 1600.0),
     creatorList
 )
 
@@ -241,6 +241,7 @@ neuronData = new SWCData(nodeList, defaultHeaderList)
 neuronData.write(new File(filename))
 
 // debug: read it back and print it out (or at least part of it...):
+println nodeList.size() + " total nodes"
 // new File(filename).eachLine {line -> print line + '\n'}
 new File(filename).withReader {reader -> 10.times {println reader.readLine()} }
 
