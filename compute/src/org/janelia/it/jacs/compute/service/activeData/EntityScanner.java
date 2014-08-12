@@ -40,11 +40,12 @@ public abstract class EntityScanner {
     private static final List<EntityScanner> scannerList=new ArrayList<>();
     private static ScheduledFuture<?> managerFuture=null;
        
-    ActiveDataClient activeData;
+    ActiveDataClient activeData=new ActiveDataClientSimpleLocal();
     protected String status = STATUS_INACTIVE;
     boolean removeAfterEpoch=false;
     
     private List<VisitorFactory> visitorFactoryList=new ArrayList<>();
+    private String signature=null;
    
     static {
         scannerPool=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
@@ -60,27 +61,24 @@ public abstract class EntityScanner {
     
     public abstract long[] generateIdList(Object dataResource) throws Exception;
     
-    
-    public void setActiveDataClient(ActiveDataClient activeDataClient) {
-        this.activeData=activeDataClient;
-        activeData.setEntityScanner(this);
-    }
-    
     public List<VisitorFactory> getVisitorFactoryList() {
         return visitorFactoryList;
     }
     
     public String getSignature() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getName());
-        for (VisitorFactory vf : visitorFactoryList) {
-            sb.append(":"+vf.getVisitorClassName());
+        if (signature == null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(this.getClass().getName());
+            for (VisitorFactory vf : visitorFactoryList) {
+                sb.append(":" + vf.getVisitorClassName());
+            }
+            signature = sb.toString();
         }
-        return sb.toString();
+        return signature;
     }
     
     public void start() throws Exception {
-        activeData.registerScanner();
+        activeData.registerScanner(getSignature());
         addActiveDataScanner(this);
         status=STATUS_PROCESSING;
     }
@@ -94,7 +92,7 @@ public abstract class EntityScanner {
     }
     
     public ActiveDataScanStatus getActiveDataStatus() throws Exception {
-        return activeData.getScanStatus();
+        return activeData.getScanStatus(getSignature());
     }
     
     public Runnable getRunnableForNextId() throws Exception {
@@ -103,7 +101,7 @@ public abstract class EntityScanner {
             public void run() {
                 Long entityId;
                 try {
-                    entityId = activeData.getNext();
+                    entityId = activeData.getNext(getSignature());
                     if (entityId == ActiveDataScan.ID_CODE_SCAN_ERROR) {
                         status=STATUS_ERROR;
                         throw new Exception("Error in ActiveDataScan getNextId()");
@@ -119,17 +117,17 @@ public abstract class EntityScanner {
                             av.setEntityId(entityId);
                             av.setContextMap(contextMap);
                             try {
-                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
+                                activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
                                 Boolean visitorSucceeded=av.call();
                                 if (!visitorSucceeded) {
                                     logger.error("Visitor "+av.getClass().getName()+" failed");
-                                    activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
+                                    activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
                                 } else {
-                                    activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                                    activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
                                 }
                             } catch (Exception ex2) {
                                 logger.error("Caught visitor exception - problem not caught by normal visitor error handler");
-                                activeData.setEntityStatus(entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
+                                activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
                                 logger.error(ex2,ex2);
                             }
                         }
@@ -232,7 +230,6 @@ public abstract class EntityScanner {
                 if (nextScannerIndex >= scannerList.size()) {
                     nextScannerIndex = 0;
                 }
-                logger.info("i=" + i + ", nextScannerIndex=" + nextScannerIndex);
                 if (!scannerList.isEmpty()) {
                     EntityScanner scanner = scannerList.get(nextScannerIndex);
                     String scannerStatus = scanner.getStatus();
