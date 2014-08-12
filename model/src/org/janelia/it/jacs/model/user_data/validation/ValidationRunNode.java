@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 /**
  * This type of node holds all files created during a validation run. It 'belongs' to the ultimate parent task,
@@ -15,6 +16,9 @@ import java.io.Serializable;
  * Created by fosterl on 8/11/14.
  */
 public class ValidationRunNode extends FileNode implements Serializable, IsSerializable {
+
+    public static final String PUNCTUATION = "[\\[\\]{}().\\\\/,;:\\-=+|*&^%$#@!~`'?<>@\t\n ]";
+    private static final Pattern PUNCT_PATTERN = Pattern.compile(PUNCTUATION);
 
     /** The no-args c'tor, in case it is required. */
     public ValidationRunNode() {
@@ -34,7 +38,7 @@ public class ValidationRunNode extends FileNode implements Serializable, IsSeria
      *
      */
     public ValidationRunNode( String owner, Task task, String name, String description, String visibility, String dataType, String relativeSessionPath ) {
-        super(owner, task, name, description, visibility, dataType, relativeSessionPath );
+        super(owner, task, sanitizeNodeName(name), description, visibility, dataType, relativeSessionPath );
     }
 
     @Override
@@ -59,6 +63,10 @@ public class ValidationRunNode extends FileNode implements Serializable, IsSeria
             return tmpFiles[0].getAbsolutePath();
         }
         return null;
+    }
+
+    public static String sanitizeNodeName( String nodeName ) {
+        return PUNCT_PATTERN.matcher(nodeName).replaceAll( "_" ).toLowerCase();
     }
 
 }

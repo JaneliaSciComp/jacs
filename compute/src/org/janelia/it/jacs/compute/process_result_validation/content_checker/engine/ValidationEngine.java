@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator.*;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.user_data.validation.ValidationRunNode;
 
 import java.io.*;
 import java.util.*;
@@ -142,7 +143,10 @@ public class ValidationEngine implements Closeable {
         }
 
         // Using this approach to file construction allows the label to contain sub directories.
-        directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + "Validation_" + label );
+        if ( label == null ) {
+            label = "validation";
+        }
+        directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + ValidationRunNode.sanitizeNodeName( label ) );
         if ( ! directory.exists() ) {
             if ( ! directory.mkdirs() ) {
                 throw new RuntimeException( "Failed to create directory hierarchy. " + directory.getName() );

@@ -46,7 +46,8 @@ public class Validator implements ValidatorMBean {
                         .replaceAll("\\\\", "_")
                         .replaceAll(":", "_")
                         .replaceAll(";", "_")
-                        .replaceAll(",", " ")
+                        .replaceAll(",", "_")
+                        .replaceAll(" ", "_")
                 ;
             }
 

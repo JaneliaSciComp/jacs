@@ -11,7 +11,6 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.model.user_data.ap16s.AnalysisPipeline16SResultNode;
 import org.janelia.it.jacs.model.user_data.validation.ValidationRunNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
@@ -41,7 +40,7 @@ public class ValidationService extends AbstractEntityService {
         nodebug = (Boolean) processData.getItem("NODEBUG");
         label = (String) processData.getItem( "LABEL" );
 
-        createResultFileNode();
+        getOrCreateResultNode();
 
         // NOTE: the default value for any boolean through JMX (from JBoss, at least) is TRUE.
         //  Therefore, we want our most-common-case to match TRUE.  So TRUE-> do NOT issue debug info.
@@ -142,22 +141,36 @@ public class ValidationService extends AbstractEntityService {
         }
     }
 
-    private Long createResultFileNode() throws DaoException, IOException {
-        // Here, need establish the file node to hold the directory location.
-        validationRunNode = new ValidationRunNode(
-                User.SYSTEM_USER_LOGIN,
-                task,
-                label,                           // name
-                "Validation Run: " + label,      // description
-                Node.VISIBILITY_PUBLIC,          // visibility
-                Node.DIRECTORY_DATA_TYPE,        // data type
-                null                             // relative session path
-        );
+    /**
+     * Find a result node defined against either this node's parent.  If none such exists, create one.
+     * NOTE: this method relies on a two-level hierarchy among these tasks.  If that changes, this method breaks.
+     *
+     * @return ID of the validation run node.
+     * @throws DaoException thrown by called methods.
+     * @throws IOException thrown by called methods.
+     */
+    private Long getOrCreateResultNode() throws DaoException, IOException {
+        Long parentTaskId = task.getParentTaskId();
+        if ( parentTaskId == null ) {
+            // Here, need establish the file node to hold the directory location.
+            validationRunNode = new ValidationRunNode(
+                    User.SYSTEM_USER_LOGIN,
+                    task,
+                    label,                           // name
+                    "Validation Run: " + label,      // description
+                    Node.VISIBILITY_PUBLIC,          // visibility
+                    Node.DIRECTORY_DATA_TYPE,        // data type
+                    null                             // relative session path
+            );
+            computeBean.saveOrUpdateNode(validationRunNode);
+            FileUtil.ensureDirExists(validationRunNode.getDirectoryPath());
+            FileUtil.cleanDirectory(validationRunNode.getDirectoryPath());
 
-        EJBFactory.getLocalComputeBean().saveOrUpdateNode(validationRunNode);
+        }
+        else {
+            validationRunNode = (ValidationRunNode)computeBean.getResultNodeByTaskId( parentTaskId );
+        }
 
-        FileUtil.ensureDirExists(validationRunNode.getDirectoryPath());
-        FileUtil.cleanDirectory(validationRunNode.getDirectoryPath());
         return validationRunNode.getObjectId();
     }
 
