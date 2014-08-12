@@ -880,7 +880,35 @@ public class FileUtil {
         }
         return fileList;
     }
+    
+    public static File[] getFilesWithPrefixes(File directory, final String... prefixes) {
+    	return directory.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				for(String prefix : prefixes) {
+					if (name.startsWith(prefix)) {
+						return true;
+					}
+				}
+				return false;
+			}
+		});
+    }
 
+    public static File[] getFilesWithSuffixes(File directory, final String... suffixes) {
+    	return directory.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				for(String suffix : suffixes) {
+					if (name.endsWith(suffix)) {
+						return true;
+					}
+				}
+				return false;
+			}
+		});
+    }
+    
     public static File[] getSubDirectories(File dir) {
     	if (!dir.isDirectory()) throw new IllegalArgumentException("Given file is not a directory");
         return dir.listFiles(new FileFilter() {

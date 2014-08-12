@@ -1,17 +1,17 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Purge large files owned by the given sample and block further processing on it.
@@ -75,7 +75,7 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
     
     private void deletePath(String filepath) {
         
-        if (filepath.startsWith(JACS_DATA_DIR) || filepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
+        if (!filepath.startsWith(JACS_DATA_DIR) && !filepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
             logger.warn("Cannot delete path outside of filestore: "+filepath);
             return;
         }

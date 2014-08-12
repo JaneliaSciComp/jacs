@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.SolrBeanRemote;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -31,6 +32,7 @@ public abstract class AbstractEntityService implements IService {
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
+    protected SolrBeanRemote solrBean;
     protected String ownerKey;
     protected EntityHelper entityHelper;
     protected EntityBeanEntityLoader entityLoader;
@@ -46,6 +48,7 @@ public abstract class AbstractEntityService implements IService {
             this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
             this.annotationBean = EJBFactory.getLocalAnnotationBean();
+            this.solrBean = EJBFactory.getLocalSolrBean();
 
             final String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             final Subject subject = computeBean.getSubjectByNameOrKey(ownerName);

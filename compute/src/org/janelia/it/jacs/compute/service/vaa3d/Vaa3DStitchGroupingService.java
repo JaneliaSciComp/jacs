@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
 /**
@@ -99,13 +100,7 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
     	FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
     	File file = new File(parentNode.getDirectoryPath());
     	
-    	File[] coreFiles = file.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("core");
-			}
-		});
-    	
+    	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
     		throw new MissingDataException("Grouping core dumped for "+resultFileNode.getDirectoryPath());
     	}
