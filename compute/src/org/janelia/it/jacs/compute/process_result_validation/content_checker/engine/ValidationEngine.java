@@ -31,6 +31,9 @@ public class ValidationEngine implements Closeable {
 
     private File reportFile;
     private Map<String,TypeValidator> validatorMap;
+    private CharArrayWriter caw;
+    private File directory;
+    private Long loggerId;
 
     @SuppressWarnings("unused")
     public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException, ComputeException {
@@ -55,17 +58,12 @@ public class ValidationEngine implements Closeable {
                 this.getClass().getName()
         );
         validationLogger = new ValidationLogger( logger, metaData );
-        File directory = getBaseDirectory(label, nodeDirectory);
-        reportFile = File.createTempFile(
-                this.getClass().getSimpleName(),
-                (loggerId == null ? "" : "." + loggerId) + REPORT_FILE_EXTENSION,
-                directory
-        );
-        PrintWriter pw = new PrintWriter(
-                new FileWriter(
-                        reportFile
-                )
-        );
+        caw = new CharArrayWriter( 300000 );
+        directory = getBaseDirectory(label, nodeDirectory);
+        this.loggerId = loggerId;
+
+        PrintWriter pw = new PrintWriter( caw );
+
         validationLogger.setPrintWriter(pw);
         validationLogger.setToReportPositives(debug);
         this.entityBean = entityBean;
@@ -100,6 +98,7 @@ public class ValidationEngine implements Closeable {
                 );
             }
         }
+
     }
 
     public void validateByType( Entity entity, Long sampleId ) {
@@ -121,8 +120,12 @@ public class ValidationEngine implements Closeable {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         validationLogger.close();
+        // Dispose of collected information.
+        PrintWriter fpw = getReportFilePrintWriter(loggerId, directory);
+        fpw.print( caw.toString() );
+        fpw.close();
         renameToReflectStatus(validationLogger.getFinalStatus());
     }
 
@@ -146,13 +149,26 @@ public class ValidationEngine implements Closeable {
         if ( label == null ) {
             label = "validation";
         }
-        directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + ValidationRunNode.sanitizeNodeName( label ) );
+        directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + ValidationRunNode.sanitizeDirName( label ) );
         if ( ! directory.exists() ) {
             if ( ! directory.mkdirs() ) {
                 throw new RuntimeException( "Failed to create directory hierarchy. " + directory.getName() );
             }
         }
         return directory;
+    }
+
+    private PrintWriter getReportFilePrintWriter(Long loggerId, File directory) throws IOException {
+        reportFile = File.createTempFile(
+                this.getClass().getSimpleName(),
+                (loggerId == null ? "" : "." + loggerId) + REPORT_FILE_EXTENSION,
+                directory
+        );
+        return new PrintWriter(
+                new FileWriter(
+                        reportFile
+                )
+        );
     }
 
     private void renameToReflectStatus(ValidationLogger.Status status) {

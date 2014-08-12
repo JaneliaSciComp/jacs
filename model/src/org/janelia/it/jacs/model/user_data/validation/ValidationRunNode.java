@@ -17,8 +17,11 @@ import java.util.regex.Pattern;
  */
 public class ValidationRunNode extends FileNode implements Serializable, IsSerializable {
 
-    public static final String PUNCTUATION = "[\\[\\]{}().\\\\/,;:\\-=+|*&^%$#@!~`'?<>@\t\n ]";
+    public static final String PUNCTUATION = "[\\[\\]{}().,;:\\-=+|*&^%$#@!~`'?<>@\t\n \\\\/]";
     private static final Pattern PUNCT_PATTERN = Pattern.compile(PUNCTUATION);
+
+    public static final String NON_FILE_SEP_PUNCT = "[\\[\\]{}().,;:\\-=+|*&^%$#@!~`'?<>@\t\n ]";
+    private static final Pattern NON_FILE_SEP_PUNCT_PATTERN = Pattern.compile(NON_FILE_SEP_PUNCT);
 
     /** The no-args c'tor, in case it is required. */
     public ValidationRunNode() {
@@ -65,8 +68,30 @@ public class ValidationRunNode extends FileNode implements Serializable, IsSeria
         return null;
     }
 
+    /** This makes a node name out of a possibly punctuation-ridden input string. */
     public static String sanitizeNodeName( String nodeName ) {
-        return PUNCT_PATTERN.matcher(nodeName).replaceAll( "_" ).toLowerCase();
+        String noPunct = PUNCT_PATTERN.matcher(nodeName).replaceAll( "_" ).toLowerCase();
+        int firstNonUnder = 0;
+        while ( noPunct.charAt( firstNonUnder ) == '_' )
+            firstNonUnder ++;
+        int lastNonUnder = noPunct.length();
+        while ( noPunct.charAt( lastNonUnder - 1 ) == '_' )
+            lastNonUnder --;
+        String trimEnd = noPunct.substring( firstNonUnder, lastNonUnder );
+        return trimEnd.replaceAll("_+", "_");
+    }
+
+    /** This makes a possibly hierarchical directory name out of a possibly punctuation-ridden input string. */
+    public static String sanitizeDirName( String nodeName ) {
+        String noPunct = NON_FILE_SEP_PUNCT_PATTERN.matcher(nodeName).replaceAll( "_" ).toLowerCase();
+        int firstNonUnder = 0;
+        while ( noPunct.charAt( firstNonUnder ) == '_' )
+            firstNonUnder ++;
+        int lastNonUnder = noPunct.length();
+        while ( noPunct.charAt( lastNonUnder - 1 ) == '_' )
+            lastNonUnder --;
+        String trimEnd = noPunct.substring( firstNonUnder, lastNonUnder );
+        return trimEnd.replaceAll("_+", "_");
     }
 
 }
