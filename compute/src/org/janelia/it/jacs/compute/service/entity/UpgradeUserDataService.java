@@ -35,7 +35,6 @@ public class UpgradeUserDataService extends AbstractEntityService {
     private void createWorkspaceType() throws Exception {
     	
     	if (entityBean.getEntityTypeByName(EntityConstants.TYPE_WORKSPACE)!=null) {
-    		logger.info("Workspace type already exists, skipping creation step.");
     		return;
     	}
     	
@@ -60,7 +59,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         
         int index = 0;
         for(Entity root : roots) {
-        	entityBean.addEntityToParent(ownerKey, newRoot.getId(), root.getId(), index++, EntityConstants.ATTRIBUTE_ENTITY);
+        	entityBean.addEntityToParent(newRoot, root, index++, EntityConstants.ATTRIBUTE_ENTITY, false);
         }
         
         log.info("Created workspace (id="+newRoot.getId()+") for "+ownerKey+" with "+(index+1)+" top-level roots");
@@ -68,6 +67,8 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
     private void groupSearchResultsIfNecessary() throws Exception {
 
+    	if (ownerKey.startsWith("group:")) return;
+    	
     	Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
         populateChildren(workspace);
         
@@ -81,7 +82,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
     	}
     	
     	if (count<1) {
-    		log.error("No top-level search result folders found for "+ownerKey+", skipping grouping step.");
+    		log.info("No top-level search result folders found for "+ownerKey+", skipping grouping step.");
     		return;
     	}
     	

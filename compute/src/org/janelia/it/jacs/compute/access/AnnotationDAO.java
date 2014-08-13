@@ -1853,10 +1853,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+")");
         }
         
-        return addEntityToParent(parent, entity, index, attrName, null);
+        return addEntityToParent(parent, entity, index, attrName, null, true);
     }
 
-    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws DaoException {
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value, boolean workspaceCheck) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+", value="+value+")");
         }
@@ -1871,7 +1871,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         saveOrUpdate(ed);
 
-        workspaceCheck(parent, entity, null);
+        if (workspaceCheck) workspaceCheck(parent, entity, null);
         
         Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
         boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
