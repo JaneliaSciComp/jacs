@@ -954,7 +954,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 				}
 			}
 			
-			// Increment order indexes after insertion point
+			// Ensure that all indexes are correct
 			if (ed.getOrderIndex()!=index) {
 				ed.setOrderIndex(index);
 		        ed.setUpdatedDate(new Date());
