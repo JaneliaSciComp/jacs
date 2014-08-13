@@ -99,7 +99,7 @@ public class ValidationLogScanner {
 
     /** Look for its statistics, and write them as needed. */
     private void getStatsFrom(BufferedReader bufferedReader) throws IOException {
-        String inline = null;
+        String inline;
         inline = bufferedReader.readLine();
         while ( null != inline ) {
             inline = inline.trim();
@@ -132,7 +132,7 @@ public class ValidationLogScanner {
 
     /** @return T=end-of-file encountered. */
     private SectionReturnVal accumulateCountStats(BufferedReader br) throws IOException {
-        String inline = null;
+        String inline;
         SectionReturnVal rtnVal = SectionReturnVal.EOF;
         boolean inSection = true;
         while ( inSection  &&  null != ( inline = br.readLine() ) ) {
@@ -161,16 +161,15 @@ public class ValidationLogScanner {
     }
 
     private BufferedReader packageBuilderIntoReader( StringBuilder sampleBuilder ) throws IOException {
-        BufferedReader br = new BufferedReader(
+       return new BufferedReader(
                 new CharArrayReader(
                         sampleBuilder.toString().toCharArray()
                 )
         );
-        return br;
     }
 
     private SectionReturnVal accumulateDateStats(BufferedReader br) throws IOException {
-        String inline = null;
+        String inline;
         SectionReturnVal rtnVal = SectionReturnVal.EOF;
         boolean inSection = true;
         while ( inSection  &&  null != ( inline = br.readLine() ) ) {
@@ -193,11 +192,13 @@ public class ValidationLogScanner {
                 if ( date == null ) {
                     System.err.println("Error: date " + dateStr + " not parsed.");
                 }
-                if ( date.after(oldStat.getLatestDate()) ) {
-                    oldStat.setLatestDate( date );
-                }
-                if ( date.before( oldStat.getEarliestDate() )) {
-                    oldStat.setEarliestDate( date );
+                else {
+                    if ( date.after(oldStat.getLatestDate()) ) {
+                        oldStat.setLatestDate( date );
+                    }
+                    if ( date.before( oldStat.getEarliestDate() )) {
+                        oldStat.setEarliestDate( date );
+                    }
                 }
                 statsMap.put( category, oldStat );
             }
