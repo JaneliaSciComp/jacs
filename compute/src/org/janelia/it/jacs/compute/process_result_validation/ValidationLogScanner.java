@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
+ * Given a directory hierarchy containing zero or more failure logs, this scanner will find and enumerate all
+ * the different types of errors contained with all of them combined.
+ *
  * Created by fosterl on 8/5/14.
  */
 public class ValidationLogScanner {
