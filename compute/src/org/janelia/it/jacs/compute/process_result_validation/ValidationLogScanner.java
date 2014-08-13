@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.process_result_validation;
 
+import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
+
 import java.io.*;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -62,39 +64,65 @@ public class ValidationLogScanner {
         }
     }
 
-    /** Read the file, look for its statistics, and write them as needed. */
+    /** Read the file, break up into sample-specific readers, handoff to stats collector. */
     private void getStatsFrom(File file) throws IOException {
         try (
             BufferedReader bufferedReader = new BufferedReader( new FileReader( file ) )
         ) {
-            String inline = null;
-            inline = bufferedReader.readLine();
-            while ( null != inline ) {
-                inline = inline.trim();
-                if ( inline.length() == 0 ) {
-                    inline = bufferedReader.readLine();
-                    continue;
-                }
-
-                SectionReturnVal returnVal = SectionReturnVal.NO_SECTION;
-                if ( inline.equals(ValidationLogger.COUNT_BY_CATEGORY_HEADER) ) {
-                    returnVal = accumulateCountStats(bufferedReader);
-                }
-
-                if ( inline.startsWith(ValidationLogger.ERROR_ENUM_DELIM) ) {
-                    returnVal = accumulateDateStats(bufferedReader);
-                }
-
-                // May need to back up by one line and use a stashed value, to avoid overlooking sections.
-                if ( returnVal == SectionReturnVal.RevertedLine ) {
-                    inline = returnVal.getRevertedLine();
-                }
-                else if ( returnVal != SectionReturnVal.EOF ) {
-                    inline = bufferedReader.readLine();
+            String inline;
+            StringBuilder sampleBuilder = new StringBuilder( ValidationEngine.PUTATIVE_MAX_LOG_SIZE );
+            while ( null != ( inline = bufferedReader.readLine() ) ) {
+                if ( inline.contains( ValidationLogger.SAMPLE_BREAK_DELIM ) ) {
+                    getStatsFrom(sampleBuilder);
                 }
                 else {
-                    inline = null;
+                    sampleBuilder.append( inline ).append( "\n" );
                 }
+            }
+
+            getStatsFrom(sampleBuilder);
+        }
+    }
+
+    /** process statistics from a buffer of log information. */
+    private void getStatsFrom(StringBuilder sampleBuilder) throws IOException {
+        if ( sampleBuilder.length() > 0 ) {
+            try ( BufferedReader sampleReader = packageBuilderIntoReader( sampleBuilder ) ) {
+                getStatsFrom( sampleReader );
+            }
+        }
+        sampleBuilder.setLength( 0 );
+    }
+
+    /** Look for its statistics, and write them as needed. */
+    private void getStatsFrom(BufferedReader bufferedReader) throws IOException {
+        String inline = null;
+        inline = bufferedReader.readLine();
+        while ( null != inline ) {
+            inline = inline.trim();
+            if ( inline.length() == 0 ) {
+                inline = bufferedReader.readLine();
+                continue;
+            }
+
+            SectionReturnVal returnVal = SectionReturnVal.NO_SECTION;
+            if ( inline.equals(ValidationLogger.COUNT_BY_CATEGORY_HEADER) ) {
+                returnVal = accumulateCountStats(bufferedReader);
+            }
+
+            if ( inline.startsWith(ValidationLogger.ERROR_ENUM_DELIM) ) {
+                returnVal = accumulateDateStats(bufferedReader);
+            }
+
+            // May need to back up by one line and use a stashed value, to avoid overlooking sections.
+            if ( returnVal == SectionReturnVal.RevertedLine ) {
+                inline = returnVal.getRevertedLine();
+            }
+            else if ( returnVal != SectionReturnVal.EOF ) {
+                inline = bufferedReader.readLine();
+            }
+            else {
+                inline = null;
             }
         }
     }
@@ -127,6 +155,15 @@ public class ValidationLogScanner {
         }
 
         return rtnVal;
+    }
+
+    private BufferedReader packageBuilderIntoReader( StringBuilder sampleBuilder ) throws IOException {
+        BufferedReader br = new BufferedReader(
+                new CharArrayReader(
+                        sampleBuilder.toString().toCharArray()
+                )
+        );
+        return br;
     }
 
     private SectionReturnVal accumulateDateStats(BufferedReader br) throws IOException {

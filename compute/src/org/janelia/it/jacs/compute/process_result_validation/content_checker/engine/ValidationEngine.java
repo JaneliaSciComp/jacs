@@ -12,6 +12,8 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.validation.ValidationRunNode;
 
 import java.io.*;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.*;
 
 /**
@@ -19,17 +21,19 @@ import java.util.*;
  * Created by fosterl on 6/27/14.
  */
 public class ValidationEngine implements Closeable {
+    public static final int PUTATIVE_MAX_LOG_SIZE = 300000;
     public static final String REPORT_FILE_EXTENSION = ".report.tsv";
     public static final String VALIDATION_CONSTRICTION_PREFIX = "ONLY VALIDATE: ";
     public static final String TYPE_OCC_DELIM = "^";
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");
+    private static final int WAIT_PERIOD_INCREMENT = 250;
+    private static final int MAX_RETRIES = 40;
     private static Logger logger = Logger.getLogger(ValidationEngine.class);
     private ValidationLogger validationLogger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected AnnotationBeanLocal annotationBean;
 
-    private File reportFile;
     private Map<String,TypeValidator> validatorMap;
     private CharArrayWriter caw;
     private File directory;
@@ -58,7 +62,7 @@ public class ValidationEngine implements Closeable {
                 this.getClass().getName()
         );
         validationLogger = new ValidationLogger( logger, metaData );
-        caw = new CharArrayWriter( 300000 );
+        caw = new CharArrayWriter( PUTATIVE_MAX_LOG_SIZE );
         directory = getBaseDirectory(label, nodeDirectory);
         this.loggerId = loggerId;
 
@@ -122,11 +126,50 @@ public class ValidationEngine implements Closeable {
     @Override
     public void close() throws IOException {
         validationLogger.close();
+
         // Dispose of collected information.
-        PrintWriter fpw = getReportFilePrintWriter(loggerId, directory);
-        fpw.print( caw.toString() );
-        fpw.close();
-        renameToReflectStatus(validationLogger.getFinalStatus());
+        String fileSectionName = this.getClass().getSimpleName() +
+                (loggerId == null ? "" : "." + loggerId) + ValidationLogger.SAMPLE_BREAK_TAG;
+        File reportFile = new File(
+                directory,
+                directory.getName() + "." + validationLogger.getFinalStatus() + REPORT_FILE_EXTENSION
+        );
+
+        FileLock fileLock = null;
+        int retryNum = 1;
+        int waitPeriod = WAIT_PERIOD_INCREMENT;
+        while ( null == fileLock  &&  retryNum < MAX_RETRIES ) {
+            try ( FileOutputStream fos = new FileOutputStream( reportFile, true ) ) {
+                fileLock = fos.getChannel().tryLock();
+
+                if ( fileLock != null ) {
+                    try ( PrintWriter fpw = new PrintWriter( new OutputStreamWriter( fos) ) ) {
+                        fpw.print( ValidationLogger.SAMPLE_BREAK_DELIM );
+                        fpw.println( fileSectionName );
+                        fpw.print( caw.toString() );
+                        fileLock.release();
+                    }
+                }
+                else {
+                    Thread.sleep( waitPeriod );
+                    waitPeriod += WAIT_PERIOD_INCREMENT;   // Backoff between retries.
+                    logger.info( "Retry number " + retryNum + " sample: " + loggerId );
+                }
+            } catch ( OverlappingFileLockException | InterruptedException ex ) {
+                fileLock = null;
+            }
+            retryNum ++;
+        }
+        if ( fileLock != null ) {
+            // Double-check to release lock.
+            if ( fileLock.isValid() ) {
+                fileLock.release();
+            }
+        }
+        else {
+            throw new RuntimeException("Failed to obtain file lock on " + reportFile + " for sample " + loggerId);
+        }
+
     }
 
     /**
@@ -156,26 +199,6 @@ public class ValidationEngine implements Closeable {
             }
         }
         return directory;
-    }
-
-    private PrintWriter getReportFilePrintWriter(Long loggerId, File directory) throws IOException {
-        reportFile = File.createTempFile(
-                this.getClass().getSimpleName(),
-                (loggerId == null ? "" : "." + loggerId) + REPORT_FILE_EXTENSION,
-                directory
-        );
-        return new PrintWriter(
-                new FileWriter(
-                        reportFile
-                )
-        );
-    }
-
-    private void renameToReflectStatus(ValidationLogger.Status status) {
-        String beforeExt = reportFile.getName().substring( 0 , reportFile.getName().length() - REPORT_FILE_EXTENSION.length() );
-        if ( ! reportFile.renameTo( new File( reportFile.getParent(), beforeExt + "." + status + REPORT_FILE_EXTENSION ) ) ) {
-            throw new RuntimeException( "Failed to rename report file to rename status.  " + reportFile.getName() );
-        }
     }
 
     private void createValidatorMap() {
