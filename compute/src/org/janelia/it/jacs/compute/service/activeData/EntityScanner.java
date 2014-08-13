@@ -33,32 +33,18 @@ public abstract class EntityScanner {
     public static final String STATUS_INACTIVE = "Inactive";
     public static final String STATUS_EPOCH_COMPLETED = "Epoch Completed";
     
-    private static final ScheduledThreadPoolExecutor managerPool=new ScheduledThreadPoolExecutor(1);
-    private static final ScheduledThreadPoolExecutor scannerPool;
-    private static int nextScannerIndex=0;
-    
-    private static final List<EntityScanner> scannerList=new ArrayList<>();
-    private static ScheduledFuture<?> managerFuture=null;
-       
-    ActiveDataClient activeData=new ActiveDataClientSimpleLocal();
     protected String status = STATUS_INACTIVE;
     boolean removeAfterEpoch=false;
     
     private List<VisitorFactory> visitorFactoryList=new ArrayList<>();
     private String signature=null;
-   
-    static {
-        scannerPool=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
-    }
     
     public EntityScanner() {}
     
     public EntityScanner(List<VisitorFactory> visitorFactoryList) {
         this.visitorFactoryList=visitorFactoryList;
     }
-    
-    // Scanner Methods
-    
+       
     public abstract long[] generateIdList(Object dataResource) throws Exception;
     
     public List<VisitorFactory> getVisitorFactoryList() {
@@ -77,66 +63,19 @@ public abstract class EntityScanner {
         return signature;
     }
     
-    public void start() throws Exception {
-        activeData.registerScanner(getSignature());
-        addActiveDataScanner(this);
-        status=STATUS_PROCESSING;
-    }
-    
-    public void stop() throws Exception {
-        removeActiveDataScanner(this);
+    public void setStatus(String status) throws Exception {
+        if (status==STATUS_PROCESSING ||
+            status==STATUS_ERROR ||
+            status==STATUS_INACTIVE ||
+            status==STATUS_EPOCH_COMPLETED) {
+            this.status=status;
+        } else {
+            throw new Exception("Do not recognize status type="+status);
+        }
     }
     
     public String getStatus() {
         return status;
-    }
-    
-    public ActiveDataScanStatus getActiveDataStatus() throws Exception {
-        return activeData.getScanStatus(getSignature());
-    }
-    
-    public Runnable getRunnableForNextId() throws Exception {
-        return new Runnable() {
-            @Override
-            public void run() {
-                Long entityId;
-                try {
-                    entityId = activeData.getNext(getSignature());
-                    if (entityId == ActiveDataScan.ID_CODE_SCAN_ERROR) {
-                        status=STATUS_ERROR;
-                        throw new Exception("Error in ActiveDataScan getNextId()");
-                    } else if (entityId == ActiveDataScan.ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY) {
-                        logger.info("Current scan completed successfully - skipping processing of nextId");
-                        if (status.equals(STATUS_PROCESSING)){
-                            status=STATUS_EPOCH_COMPLETED;
-                        }
-                    } else {
-                        Map<String, Object> contextMap=new HashMap<>();
-                        for (VisitorFactory vf : visitorFactoryList) {
-                            ActiveVisitor av = vf.createInstance();
-                            av.setEntityId(entityId);
-                            av.setContextMap(contextMap);
-                            try {
-                                activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
-                                Boolean visitorSucceeded=av.call();
-                                if (!visitorSucceeded) {
-                                    logger.error("Visitor "+av.getClass().getName()+" failed");
-                                    activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
-                                } else {
-                                    activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
-                                }
-                            } catch (Exception ex2) {
-                                logger.error("Caught visitor exception - problem not caught by normal visitor error handler");
-                                activeData.setEntityStatus(getSignature(), entityId, ActiveDataScan.ENTITY_STATUS_ERROR);
-                                logger.error(ex2,ex2);
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    logger.error(ex, ex);
-                }
-            }
-        };
     }
     
     public void setRemoveAfterEpoch(boolean removeAfterEpoch) {
@@ -167,121 +106,5 @@ public abstract class EntityScanner {
             return result;
         }         
     }
-
-    
-    // Scanner Management Methods
-    
-    /*
-    
-    On each server processing Active Data scanners, there is a single thread pool from which
-    the scanners are executed. The scanners within this thread pool interact with a central 
-    Active Data system to determine the next entity to process, and to determine when all
-    entities associated with the current epoch are done.
-    
-    For a scanner to begin processing, it must (1) have its Active Data client set, and
-    (2) its start() method must be called, which is non-blocking. To stop it, the stop()
-    method is called.
-    
-    The EntityScanner thread pool is of finite size, but there can be an arbitrary number
-    of scanners associated with it on a given jvm.
-    
-    Jobs are submitted to the thread pool in round-robin fashion, keeping the thread pool
-    maximally active. 
-    
-    */
-    
-    private static void addActiveDataScanner(EntityScanner scanner) throws Exception {
-        synchronized (scannerList) {
-            scannerList.add(scanner);
-        }
-        if (managerFuture == null) {
-            logger.info("managerFuture is null - creating new instance within managerPool");
-            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManager(), 50, 50, TimeUnit.MILLISECONDS);
-        } else {
-            logger.info("managerFuture is not null - assuming that a manager instance is running");
-        }
-    }
-    
-    private static void removeActiveDataScanner(EntityScanner scanner) throws Exception {
-        logger.info("Removing scanner");
-        synchronized(scannerList) {
-            scannerList.remove(scanner);
-        }
-        if (scannerList.isEmpty()) {
-            discontinueManagerThread();
-        } else {
-            logger.info("scannerList is not empty, so leaving managerFuture intact");
-        }
-    }
-    
-    private static class ScanManager implements Runnable {
-
-        /*
-         Every time the ScanManager wakes up, its job is to make sure the scanner thread
-         pool is loaded up with processing scan jobs, and to add jobs as needed to the pool
-         using the round-robin index.
-         */
-        @Override
-        public void run() {
-            logger.info("run() starting");
-            int availableThreadSlots = scannerPool.getCorePoolSize() - scannerPool.getActiveCount();
-            logger.info("availableThreadSlots=" + availableThreadSlots);
-            for (int i = 0; i < availableThreadSlots; i++) {
-                if (nextScannerIndex >= scannerList.size()) {
-                    nextScannerIndex = 0;
-                }
-                if (!scannerList.isEmpty()) {
-                    EntityScanner scanner = scannerList.get(nextScannerIndex);
-                    String scannerStatus = scanner.getStatus();
-                    try {
-                        if (scannerStatus.equals(STATUS_INACTIVE)
-                                || scannerStatus.equals(STATUS_PROCESSING)) {
-                            scannerPool.submit(scanner.getRunnableForNextId());
-                        } else if (scannerStatus.equals(STATUS_ERROR)) {
-                            logger.error("Skipping scanner signature=" + scanner.getSignature() + " due to error status");
-                            removeActiveDataScanner(scanner);
-                        } else if (scannerStatus.equals(STATUS_EPOCH_COMPLETED)) {
-                            if (scanner.getRemoveAfterEpoch()) {
-                                logger.info("Removing scanner " + scanner.getSignature() + " after completed Epoch");
-                                removeActiveDataScanner(scanner);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        logger.error(ex, ex);
-                    }
-                } else {
-                    try {
-                        discontinueManagerThread();
-                    } catch (Exception ex) {
-                        logger.error(ex,ex);
-                    }
-                }
-            }
-            nextScannerIndex++;
-        }
-    }
-    
-    private static synchronized void discontinueManagerThread() throws Exception {
-        if (scannerList.isEmpty()) {
-            logger.info("scannerList is empty, so cancelling managerFuture and setting to null");
-            if (managerFuture != null) {
-                managerFuture.cancel(false);
-                if (managerFuture.isDone()) {
-                    managerFuture = null;
-                } else {
-                    throw new Exception("ManagerFuture unexpectedly is not done even after cancellation");
-                }
-            } else {
-                logger.info("managerFuture is already null - skipping cancellation and nullification");
-            }
-        } else {
-            logger.info("Ignoring request to discontinue ManagerThread since the scannerList is not empty");
-        }
-    }
-    
-    public static synchronized void shutdown() {
-        scannerPool.shutdown();
-        managerPool.shutdown();
-    }  
     
 }

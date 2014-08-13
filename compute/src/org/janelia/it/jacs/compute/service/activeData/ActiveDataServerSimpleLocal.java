@@ -42,9 +42,7 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     public void injectEntity(long entityId) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    
+        
     public String getClassnameFromSignature(String signature) throws Exception {
         String[] sigElements=signature.split(":");
         return sigElements[0];
@@ -80,35 +78,41 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     
     @Override
     public Long getNext(String signature) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
-        synchronized(scan) {
-            return scan.getNextId();
+        ActiveDataScan scan = getScan(signature);
+        if (scan != null) {
+            synchronized (scan) {
+                return scan.getNextId();
+            }
         }
+        return null;
     }
     
     @Override
     public ActiveDataScanStatus getScanStatus(String signature) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
-        return scan.getStatus();
+        ActiveDataScan scan=getScan(signature);
+        if (scan!=null) {
+            return scan.getStatus();
+        }
+        return null;
     }
     
     @Override
     public int getEntityStatus(String signature, long entityId) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
+        ActiveDataScan scan=getScan(signature);
+        if (scan==null) {
+            throw new Exception("scan does not exist for signature="+signature);
+        }
         return scan.getEntityStatus(entityId);
     }
     
-    public ActiveDataScan getAndValidateScan(String signature) throws Exception {
+    public ActiveDataScan getScan(String signature) {
         ActiveDataScan scan=scanMap.get(signature);
-        if (scan==null) {
-            throw new Exception("Could not find scan for signature="+signature);
-        }
         return scan;
     }
     
     @Override
     public void setEntityStatus(String signature, long entityId, int statusCode) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
+        ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.setEntityStatus(entityId, statusCode);
         }
@@ -116,7 +120,7 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     
     @Override
     public void addEntityEvent(String signature, long entityId, String descriptor) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
+        ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.addEntityEvent(entityId, descriptor);
         }
@@ -124,20 +128,20 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     
     @Override
     public List<ActiveDataEntityEvent> getEntityEvents(String signature, long entityId) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
+        ActiveDataScan scan=getScan(signature);
         return scan.getEntityEvents(entityId);
     }
     
     @Override
     public void clearEntityEvents(String signature, long entityId) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
+        ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.clearEntityEvents(entityId);
         }
     }
 
     public void advanceEpoch(String signature) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
+        ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.advanceEpoch();
         }
@@ -145,7 +149,7 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     
     @Override
     public List<ScanEpochRecord> getEpochHistory(String signature) throws Exception {
-        ActiveDataScan scan=getAndValidateScan(signature);
+        ActiveDataScan scan=getScan(signature);
         return scan.getEpochHistory();
     }
     
