@@ -47,7 +47,7 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         String[] sigElements=signature.split(":");
         return sigElements[0];
     }
-    
+
     @Override
     public ActiveDataRegistration registerScanner(String signature) throws Exception {
         String entityScannerClassName=getClassnameFromSignature(signature);
@@ -65,16 +65,18 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
             }
             if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_ERROR)) {
                 throw new Exception("Could not register scanner for " + signature + " because status is ERROR");
-            } else {
-                ActiveDataScannerStats scanStats = new ActiveDataScannerStats();
-                long nextScannerIndex = scan.scannerCount();
-                scan.addScanner(nextScannerIndex, scanStats);
-                ActiveDataScanStatus scanStatus = scan.getStatus();
-                ActiveDataRegistration registration = new ActiveDataRegistration(nextScannerIndex, scanStatus);
-                return registration;
+            } else if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
+                scan.advanceEpoch();
             }
+            ActiveDataScannerStats scanStats = new ActiveDataScannerStats();
+            long nextScannerIndex = scan.scannerCount();
+            scan.addScanner(nextScannerIndex, scanStats);
+            ActiveDataScanStatus scanStatus = scan.getStatus();
+            ActiveDataRegistration registration = new ActiveDataRegistration(nextScannerIndex, scanStatus);
+            return registration;
         }
     }
+
     
     @Override
     public Long getNext(String signature) throws Exception {

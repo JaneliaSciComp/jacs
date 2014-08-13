@@ -56,6 +56,7 @@ public class ScannerManager {
     }
     
     public synchronized void addScanner(EntityScanner scanner) throws Exception {
+        logger.info("addScanner() with signature="+scanner.getSignature());
         // Handle new scanner        
         EntityScanner possibleDuplicate=getScannerBySignature(scanner.getSignature());
         if (possibleDuplicate!=null) {
@@ -63,10 +64,13 @@ public class ScannerManager {
         }
         ActiveDataScanStatus scanStatus=activeData.getScanStatus(scanner.getSignature());
         if (scanStatus!=null) {
+            logger.info("scanStatus from activeData is not null, status="+scanStatus);
             if (scanStatus.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
                 logger.info("Scan already active in system - at completed state. Incrementing to next Epoch in this case");
                 activeData.advanceEpoch(scanner.getSignature());
             }
+        } else {
+            logger.info("scanStatus from activeData is null");
         }
         activeData.registerScanner(scanner.getSignature());
         scanner.setStatus(EntityScanner.STATUS_PROCESSING);
