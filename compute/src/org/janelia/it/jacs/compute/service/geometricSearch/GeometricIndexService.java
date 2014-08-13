@@ -24,6 +24,7 @@ import org.janelia.it.jacs.compute.service.activeData.ActiveDataScanStatus;
 import org.janelia.it.jacs.compute.service.activeData.ActiveTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.SampleScanner;
+import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -41,9 +42,7 @@ public class GeometricIndexService extends AbstractEntityService {
     private static List<ServiceState> taskDoneList=new ArrayList<>();
   
     private ScheduledThreadPoolExecutor managerPool=null;
-    private ScheduledFuture<?> managerFuture=null;
-    private ActiveDataClient activeData=null;
-    
+    private ScheduledFuture<?> managerFuture=null;    
     private ServiceState taskDone=new ServiceState();
     
     @Override
@@ -61,17 +60,7 @@ public class GeometricIndexService extends AbstractEntityService {
         geometricIndexVisitors.add(testEntityFactory);
         SampleScanner sampleScanner=new SampleScanner(geometricIndexVisitors);
         sampleScanner.setRemoveAfterEpoch(true);
-        activeData = new ActiveDataClientSimpleLocal();
-        sampleScanner.setActiveDataClient(activeData);
-        activeData.setEntityScanner(sampleScanner);
-        sampleScanner.start();
-        String scanStatus=activeData.getScanStatus().getStatusDescriptor();
-        if (scanStatus.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
-            logger.info("Scan already active in system - at completed state. Incrementing to next Epoch in this case");
-            activeData.advanceEpoch();
-        } else {
-            logger.info("Proceeding assuming this is the first Epoch with existing scanStatus="+scanStatus);
-        }
+        ScannerManager.getInstance().addScanner(sampleScanner);
         long startTime=new Date().getTime();
         GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, taskDone);
         managerFuture = managerPool.scheduleWithFixedDelay(serviceThread, 0, 1, TimeUnit.MINUTES);
@@ -105,7 +94,7 @@ public class GeometricIndexService extends AbstractEntityService {
                 }
                 ActiveDataScanStatus scanStatus=null;
                 try {
-                    scanStatus = sampleScanner.getActiveDataStatus();
+                    scanStatus = ScannerManager.getInstance().getActiveDataStatus(sampleScanner.getSignature());
                     logger.info("scanStatus="+scanStatus);
                     String status=sampleScanner.getStatus();
                     if (status.equals(EntityScanner.STATUS_ERROR)) {

@@ -396,7 +396,6 @@ public class EntityUtils {
 			entity.setCreationDate(newEntity.getCreationDate());
 			entity.setEntityTypeName(newEntity.getEntityTypeName());
 			entity.setOwnerKey(newEntity.getOwnerKey());
-			entity.setNumChildren(newEntity.getNumChildren());
 			entity.setEntityData(newEntity.getEntityData());
     	}
     }
