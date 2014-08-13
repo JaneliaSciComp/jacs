@@ -954,7 +954,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 				}
 			}
 			
-			// Increment order indexes after insertion point
+			// Ensure that all indexes are correct
 			if (ed.getOrderIndex()!=index) {
 				ed.setOrderIndex(index);
 		        ed.setUpdatedDate(new Date());
@@ -1835,7 +1835,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         entity.setUpdatedDate(new Date());
         saveOrUpdate(entity);
-        updateChildCount(entity);
     }
 
     public void saveOrUpdateEntityData(EntityData entityData) throws DaoException {
@@ -1844,7 +1843,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         entityData.setUpdatedDate(new Date());
         saveOrUpdate(entityData);
-        updateChildCount(entityData.getParentEntity());
     }
 
 
@@ -1853,10 +1851,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+")");
         }
         
-        return addEntityToParent(parent, entity, index, attrName, null);
+        return addEntityToParent(parent, entity, index, attrName, null, true);
     }
 
-    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws DaoException {
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value, boolean workspaceCheck) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+", value="+value+")");
         }
@@ -1871,7 +1869,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         saveOrUpdate(ed);
 
-        workspaceCheck(parent, entity, null);
+        if (workspaceCheck) workspaceCheck(parent, entity, null);
         
         Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
         boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
@@ -1886,7 +1884,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         propagatePermissions(parent, entity, true, grantOwnerPermissions);
-        updateChildCount(parent);
         return ed;
     }
 
@@ -1948,8 +1945,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             
             propagatePermissions(parent, entity, true, grantOwnerPermissions);
         }
-        
-        updateChildCount(parent);
     }
     
     /**
@@ -1984,40 +1979,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         			addRootToWorkspace(subjectKey, workspace, entity);
         		}
         	}
-        }
-    }
-    
-    private void updateChildCount(Entity entity) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("updateChildCount(entity.id="+entity.getId()+")");    
-        }
-
-        try {   
-            Session session = getCurrentSession();
-            
-            // We need to pull the count back so that we can update the in-memory model
-            StringBuffer hql = new StringBuffer("select count(*) from EntityData ed ");
-            hql.append("where ed.parentEntity.id=? ");
-            hql.append("and ed.childEntity is not null ");
-            Query query = session.createQuery(hql.toString()).setLong(0, entity.getId());
-            Long count = (Long)query.uniqueResult();
-            Integer intCount = count.intValue();
-            
-            // Update the database
-            hql = new StringBuffer("update Entity set numChildren = :numChildren where id = :entityId");
-            query = session.createQuery(hql.toString());
-            query.setParameter("numChildren", intCount);
-            query.setParameter("entityId", entity.getId());
-            int rows = query.executeUpdate();
-            if (rows!=1) {
-                log.warn("Updating numChildren to "+intCount+" for entity "+entity.getId()+" failed. "+rows+" rows were updated.");
-            }
-            
-            // Update in-memory model
-            entity.setNumChildren(intCount);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
         }
     }
     
@@ -2118,9 +2079,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             parent.getEntityData().remove(entityData);
         }
         genericDelete(entityData);
-        if (parent!=null && hasChild) {
-            updateChildCount(parent);
-        }
     }
 
     public void deleteEntityTree(String subjectKey, Entity entity) throws DaoException {

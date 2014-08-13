@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +12,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Split channels for any number of images. Parameters:
@@ -127,13 +127,7 @@ public class Vaa3DBulkChannelSplitService extends SubmitDrmaaJobService {
     	FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
     	File file = new File(parentNode.getDirectoryPath());
     	
-    	File[] coreFiles = file.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("core");
-			}
-		});
-    	
+    	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
     		throw new MissingDataException("Split channels core dumped");
     	}
