@@ -218,7 +218,21 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws ComputeException {
         try {
         	_annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
-            return _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
+            return _annotationDAO.addEntityToParent(parent, entity, index, attrName, value, true);
+        } 
+        catch (DaoException e) {
+            _logger.error("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(), e);
+            throw new ComputeException("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(),e);
+        }
+    }
+
+    /**
+     * This is a faster, security-free version of the normal addEntityToParent with value, only exposed to local clients.
+     */
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, boolean workspaceCheck) throws ComputeException {
+        try {
+        	_annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
+            return _annotationDAO.addEntityToParent(parent, entity, index, attrName, null, workspaceCheck);
         } 
         catch (DaoException e) {
             _logger.error("Error adding entity (id="+entity.getId()+") to parent "+parent.getId(), e);
@@ -246,7 +260,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             
             _annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             
-            EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName, value);
+            EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName, value, true);
             
             _logger.info(subjectKey+" added entity data "+ed.getId()+" (parent="+parent.getId()+",child="+entity.getId()+")");
             
