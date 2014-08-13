@@ -28,8 +28,6 @@ public class Entity  implements Serializable, IsSerializable {
 
     @XmlTransient
     private Date updatedDate;
-
-    private Integer numChildren = 0;
     
     @XmlElement(name="entityData")
     @XmlElementWrapper(name="entityDataSet")
@@ -122,14 +120,6 @@ public class Entity  implements Serializable, IsSerializable {
         this.ownerKey = ownerKey;
     }
     
-    public Integer getNumChildren() {
-        return numChildren;
-    }
-
-    public void setNumChildren(Integer numChildren) {
-        this.numChildren = numChildren;
-    }
-
     public Set<EntityActorPermission> getEntityActorPermissions() {
         return entityActorPermissions;
     }

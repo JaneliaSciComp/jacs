@@ -21,9 +21,6 @@
         <property name="updatedDate" type="timestamp">
             <column name="updated_date" length="19" />
         </property>
-        <property name="numChildren" type="java.lang.Integer">
-            <column name="num_children" length="11" />
-        </property>
         <set name="entityData" cascade="all" inverse="true" lazy="true" batch-size="100" table="entityData">
             <key column="parent_entity_id" not-null="true"/>
             <one-to-many class="EntityData" />
