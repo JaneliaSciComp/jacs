@@ -135,7 +135,6 @@ public class ActiveDataScan {
     }
     
     public synchronized long getNextId() {
-        logger.info("ActiveDataScan getNextId() - nextIdIndex="+nextIdIndex);
         if (nextIdIndex >= idArray.length) {
             logger.info("Setting status to SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY");
             statusDescriptor = SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY;

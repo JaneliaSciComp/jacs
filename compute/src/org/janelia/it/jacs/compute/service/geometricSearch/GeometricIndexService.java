@@ -24,6 +24,7 @@ import org.janelia.it.jacs.compute.service.activeData.ActiveDataScanStatus;
 import org.janelia.it.jacs.compute.service.activeData.ActiveTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.SampleScanner;
+import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -38,19 +39,17 @@ public class GeometricIndexService extends AbstractEntityService {
     private static final Logger logger = Logger.getLogger(GeometricIndexService.class);
     public static final long MAX_SERVICE_TIME_MS = 1000 * 60 * 60 * 24; // 24 hours
     private static List<ScheduledThreadPoolExecutor> threadPools=new ArrayList<>();
-    private static List<ServiceState> taskDoneList=new ArrayList<>();
+    private static List<ServiceState> stateList=new ArrayList<>();
   
     private ScheduledThreadPoolExecutor managerPool=null;
-    private ScheduledFuture<?> managerFuture=null;
-    private ActiveDataClient activeData=null;
-    
-    private ServiceState taskDone=new ServiceState();
+    private ScheduledFuture<?> managerFuture=null;    
+    private ServiceState serviceState=new ServiceState();
     
     @Override
     protected void execute() throws Exception {
         managerPool=new ScheduledThreadPoolExecutor(1);
         threadPools.add(managerPool);
-        taskDoneList.add(taskDone);
+        stateList.add(serviceState);
         GeometricIndexTask indexTask=(GeometricIndexTask)task;
         EJBFactory.getRemoteComputeBean().saveEvent(indexTask.getObjectId(), Event.RUNNING_EVENT, "Running", new Date());
         List<VisitorFactory> geometricIndexVisitors=new ArrayList<>();
@@ -61,26 +60,20 @@ public class GeometricIndexService extends AbstractEntityService {
         geometricIndexVisitors.add(testEntityFactory);
         SampleScanner sampleScanner=new SampleScanner(geometricIndexVisitors);
         sampleScanner.setRemoveAfterEpoch(true);
-        activeData = new ActiveDataClientSimpleLocal();
-        sampleScanner.setActiveDataClient(activeData);
-        activeData.setEntityScanner(sampleScanner);
-        sampleScanner.start();
-        String scanStatus=activeData.getScanStatus().getStatusDescriptor();
-        if (scanStatus.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
-            logger.info("Scan already active in system - at completed state. Incrementing to next Epoch in this case");
-            activeData.advanceEpoch();
-        } else {
-            logger.info("Proceeding assuming this is the first Epoch with existing scanStatus="+scanStatus);
-        }
+        logger.info("Adding scanner to ScannerManager");
+        ScannerManager.getInstance().addScanner(sampleScanner);
         long startTime=new Date().getTime();
-        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, taskDone);
+        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, serviceState);
         managerFuture = managerPool.scheduleWithFixedDelay(serviceThread, 0, 1, TimeUnit.MINUTES);
-        while(!taskDone.get()) {
+        while(!serviceState.getDone() && !serviceState.getError()) {
             Thread.sleep(1000L);
         }
         managerPool.shutdown();
         threadPools.remove(managerPool);
-        taskDoneList.remove(taskDone);
+        stateList.remove(serviceState);
+        if (serviceState.getError()) {
+            throw new Exception("Error during execution");
+        }
         logger.info("execute() at end");
     }
     
@@ -88,13 +81,13 @@ public class GeometricIndexService extends AbstractEntityService {
             private GeometricIndexTask indexTask;
             private SampleScanner sampleScanner;
             long startTime=0L;
-            ServiceState taskDone;
+            ServiceState taskState;
            
-            public GeometricIndexServiceThread(GeometricIndexTask indexTask, SampleScanner sampleScanner, long startTime, ServiceState taskDone) {
+            public GeometricIndexServiceThread(GeometricIndexTask indexTask, SampleScanner sampleScanner, long startTime, ServiceState taskState) {
                 this.indexTask=indexTask;
                 this.sampleScanner=sampleScanner;
                 this.startTime=startTime;
-                this.taskDone=taskDone;
+                this.taskState=taskState;
             }
             
             @Override
@@ -102,25 +95,28 @@ public class GeometricIndexService extends AbstractEntityService {
                 logger.info("run() called");
                 if (new Date().getTime() - startTime > MAX_SERVICE_TIME_MS) {
                     logger.error("Exceeded max service time");
+                    taskState.setError(true);
                 }
                 ActiveDataScanStatus scanStatus=null;
                 try {
-                    scanStatus = sampleScanner.getActiveDataStatus();
+                    scanStatus = ScannerManager.getInstance().getActiveDataStatus(sampleScanner.getSignature());
                     logger.info("scanStatus="+scanStatus);
                     String status=sampleScanner.getStatus();
                     if (status.equals(EntityScanner.STATUS_ERROR)) {
                         logger.error("sampleScanner status is ERROR");
                         EJBFactory.getRemoteComputeBean().saveEvent(indexTask.getObjectId(), Event.ERROR_EVENT, "sampleScanner error", new Date());
+                        taskState.setError(true);
                     } else if (status.equals(EntityScanner.STATUS_EPOCH_COMPLETED)) {
                         logger.info("sampleScanner completed");
                         EJBFactory.getRemoteComputeBean().saveEvent(indexTask.getObjectId(), Event.COMPLETED_EVENT, "Completed", new Date());
                         logger.info("GeometricIndexService scan completed");
-                        taskDone.set(true);
+                        taskState.setDone(true);
                     } else {
                         logger.info("sampleScanner running - status="+status);
                     }
                 } catch (Exception ex) {
                     logger.error(ex,ex);
+                    taskState.setError(true);
                 }
             }
             
@@ -128,9 +124,9 @@ public class GeometricIndexService extends AbstractEntityService {
         
         public static synchronized void shutdown() {
             logger.info("shutdown()");
-            for (ServiceState taskDone : taskDoneList) {
-                logger.info("Marking taskDone=true");
-                taskDone.set(true);
+            for (ServiceState taskState : stateList) {
+                logger.info("Marking taskState=true");
+                taskState.setDone(true);
             }
             try {
                 Thread.sleep(1000);
@@ -147,15 +143,20 @@ public class GeometricIndexService extends AbstractEntityService {
         }
         
         private static class ServiceState {
-            boolean isDone=false;
+            boolean done=false;
+            boolean error=false;
             
-            public void set(boolean value) {
-                isDone=value;
+            public void setDone(boolean value) {
+                done=value;
             }
             
-            public boolean get() {
-                return isDone;
+            public boolean getDone() {
+                return done;
             }
+
+            public void setError(boolean value) { error=value; }
+
+            public boolean getError() { return error; }
         }
     
 }

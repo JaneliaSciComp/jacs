@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
+import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.geometricSearch.GeometricIndexService;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -32,7 +33,7 @@ import org.jboss.system.ServiceMBeanSupport;
 public class GeometricIndexManager extends ServiceMBeanSupport implements GeometricIndexManagerMBean {
     
     private static final Logger logger = Logger.getLogger(GeometricIndexManager.class);
-    private static final long MANAGER_DELAY_INTERVAL_MINUTES = 3L;
+    private static final long MANAGER_DELAY_INTERVAL_MINUTES = 1L;
     
     private static final ScheduledThreadPoolExecutor managerPool=new ScheduledThreadPoolExecutor(1);
     private static ScheduledFuture<?> managerFuture=null;
@@ -94,7 +95,7 @@ public class GeometricIndexManager extends ServiceMBeanSupport implements Geomet
         logger.info("stop() called");
         managerPool.shutdown();
         GeometricIndexService.shutdown();
-        EntityScanner.shutdown();
+        ScannerManager.getInstance().shutdown();
     }
 
     private static class GeometricIndexManagerThread implements Runnable {

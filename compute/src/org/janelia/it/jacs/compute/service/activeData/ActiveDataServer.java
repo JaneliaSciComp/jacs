@@ -13,7 +13,7 @@ import org.janelia.it.jacs.shared.geometricSearch.GeometricIndexManagerModel;
  *
  * @author murphys
  */
-public interface ActiveDataServer {
+public interface ActiveDataServer extends ActiveDataClient {
 
     public List<String> getSignatures() throws Exception;
     
