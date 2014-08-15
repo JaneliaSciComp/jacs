@@ -31,6 +31,8 @@ public class ValidationService extends AbstractEntityService {
     private Boolean nodebug;
     private Long startingId;
     private String parentName;
+    private String[] specificTypes;
+    private String unprocessedTypesStr;
     private String label;
     private ValidationRunNode validationRunNode;
 
@@ -39,6 +41,10 @@ public class ValidationService extends AbstractEntityService {
         startingId = getGuidItem( "GUID" );
         nodebug = (Boolean) processData.getItem("NODEBUG");
         label = (String) processData.getItem( "LABEL" );
+        unprocessedTypesStr = (String) processData.getItem("TYPES");
+        if ( unprocessedTypesStr != null ) {
+            specificTypes = unprocessedTypesStr.split(",");
+        }
 
         getOrCreateResultNode();
 
@@ -115,7 +121,7 @@ public class ValidationService extends AbstractEntityService {
             // At this point, launch a new copy of this service, providing it the sample ID as start-point.
             // This permits the collection of samples to be processed in parallel.
             Validator validator = new Validator();
-            validator.runChildValidations(task.getObjectId(), ownerKey, entity.getId(), label + File.separator + parentName, nodebug);
+            validator.runChildValidations(task.getObjectId(), ownerKey, entity.getId(), label + File.separator + parentName, unprocessedTypesStr, nodebug);
         }
         else if ( entity.getEntityTypeName().equals( EntityConstants.TYPE_DATA_SET ) ) {
             Collection<Entity> traversableEntities = getLikeNamedFolderEntities( entity );
@@ -178,7 +184,7 @@ public class ValidationService extends AbstractEntityService {
 
         try (
             ValidationEngine validationEngine = new ValidationEngine(
-                entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, validationRunNode.getDirectoryPath(), label
+                entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, validationRunNode.getDirectoryPath(), specificTypes, label
             )
         ) {
             // Do not look for samples under samples.  Do not recurse further here.  Instead, look for

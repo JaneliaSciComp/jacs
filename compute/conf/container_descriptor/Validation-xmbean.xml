@@ -25,8 +25,13 @@
             <type>java.lang.Long</type>
         </parameter>
         <parameter>
-            <description>One word description of this run (like name or id of data set or sample)</description>
+            <description>Description of this run.  Part of directory hierarchy.</description>
             <name>label</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Comma-separated list of EntityTypeNames to be validated</description>
+            <name>types</name>
             <type>java.lang.String</type>
         </parameter>
         <parameter>

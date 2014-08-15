@@ -21,20 +21,21 @@ public class Validator implements ValidatorMBean {
     public transient static final String DEFAULT_DISPLAY_NAME = "Sample Content Validation";
 
     @Override
-    public void runValidations(String user, Long guid, String label, Boolean nodebug) {
-        runChildValidations(null, user, guid, label, nodebug);
+    public void runValidations(String user, Long guid, String label, String types, Boolean nodebug) {
+        runChildValidations(null, user, guid, label, types, nodebug);
     }
 
     /** 
     * This has a different name from runValidations() above, to avoid confusion at process-file.
      * its "parentTaskGuid", however, may be null, in which case, the created task is not a child of any other task.
      */
-    public void runChildValidations(Long parentTaskGuid, String user, Long guid, String label, Boolean nodebug) {
+    public void runChildValidations(Long parentTaskGuid, String user, Long guid, String label, String types, Boolean nodebug) {
         try {
 
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("guid", guid == null ? null : guid.toString(), null));
             taskParameters.add(new TaskParameter("label", label, null));
+            taskParameters.add(new TaskParameter("types", types, null));
             taskParameters.add(new TaskParameter("nodebug", nodebug.toString(), null));
 
             String displayName = DEFAULT_DISPLAY_NAME;

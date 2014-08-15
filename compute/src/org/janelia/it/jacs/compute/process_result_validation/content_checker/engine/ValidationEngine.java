@@ -23,7 +23,6 @@ import java.util.*;
 public class ValidationEngine implements Closeable {
     public static final int PUTATIVE_MAX_LOG_SIZE = 300000;
     public static final String REPORT_FILE_EXTENSION = ".report.tsv";
-    public static final String VALIDATION_CONSTRICTION_PREFIX = "ONLY VALIDATE: ";
     public static final String TYPE_OCC_DELIM = "^";
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");
     private static final int WAIT_PERIOD_INCREMENT = 250;
@@ -41,7 +40,7 @@ public class ValidationEngine implements Closeable {
 
     @SuppressWarnings("unused")
     public ValidationEngine(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, Boolean debug) throws IOException, ComputeException {
-        this( entityBean, computeBean, annotationBean, debug, null, null, "generic" );
+        this( entityBean, computeBean, annotationBean, debug, null, null, null, "generic" );
     }
 
     public ValidationEngine(
@@ -51,6 +50,7 @@ public class ValidationEngine implements Closeable {
             Boolean debug,
             Long loggerId,
             String nodeDirectory,
+            String[] specificTypes,
             String label
     ) throws IOException, ComputeException {
         Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
@@ -74,20 +74,13 @@ public class ValidationEngine implements Closeable {
         this.computeBean = computeBean;
         this.annotationBean = annotationBean;
         createValidatorMap();
-        if ( label.startsWith(VALIDATION_CONSTRICTION_PREFIX) ) {
-            int sepPos = label.indexOf( FILE_SEPARATOR );
-            if ( sepPos == -1 ) {
-                sepPos = label.length();
-            }
-            String typeList = label.substring( VALIDATION_CONSTRICTION_PREFIX.length(), sepPos );
+        if ( specificTypes != null  &&  specificTypes.length > 0 ) {
             Map<String,TypeValidator> smallValidatorMap = new HashMap<>();
-            String[] validatableTypes = typeList.split(TYPE_OCC_DELIM);
             StringBuilder rejectedTypes = new StringBuilder();
-            for ( String singleType: validatableTypes ) {
+            for ( String singleType: specificTypes ) {
                 TypeValidator validator = validatorMap.get( singleType );
                 if ( validator != null ) {
                     smallValidatorMap.put( singleType, validator );
-                    this.validatorMap = smallValidatorMap;
                 }
                 else {
                     if ( rejectedTypes.length() > 0 )
@@ -95,6 +88,7 @@ public class ValidationEngine implements Closeable {
                     rejectedTypes.append(singleType);
                 }
             }
+            this.validatorMap = smallValidatorMap;
 
             if ( rejectedTypes.length() > 0 ) {
                 throw new IllegalArgumentException(

@@ -9,16 +9,20 @@
             <input name="PROCESS_VARIABLE_1" value="GUID"/>
 		    <input name="TASK_PARAMETER_2" value="label"/>
             <input name="PROCESS_VARIABLE_2" value="LABEL"/>
-		    <input name="TASK_PARAMETER_3" value="nodebug"/>
-            <input name="PROCESS_VARIABLE_3" value="NODEBUG"/>
+            <input name="TASK_PARAMETER_3" value="types"/>
+            <input name="PROCESS_VARIABLE_3" value="TYPES"/>
+		    <input name="TASK_PARAMETER_4" value="nodebug"/>
+            <input name="PROCESS_VARIABLE_4" value="NODEBUG"/>
 	        <output name="GUID"/>
 	        <output name="LABEL"/>
+            <output name="TYPES"/>
 	        <output name="NODEBUG"/>
     	</operation>
 
 	    <operation name="Validation Service" processor="org.janelia.it.jacs.compute.service.validation.ValidationService">
 	        <input name="GUID"/>
 	        <input name="LABEL"/>
+            <input name="TYPES"/>
 	        <input name="NODEBUG"/>
 	    </operation>
     </sequence>
