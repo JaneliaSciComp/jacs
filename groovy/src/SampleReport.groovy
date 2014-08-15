@@ -15,10 +15,10 @@ class SampleReportConstants {
     static final OWNER_KEY = "user:"+OWNER
     static final GROUP_KEY = "group:"+GROUP
     static final OUTPUT_HTML = true
-	static final CREATE_FOLDERS = true
+	static final WRITE_DATABASE = false
     static final COLOR_RETIRED = "aaf"
     static final COLOR_ACTIVE = "faa"
-    static final OUTPUT_FILE = "/Users/rokickik/retired_prod." + (OUTPUT_HTML?"html":"txt")
+    static final OUTPUT_FILE = "/Users/rokickik/retired." + (OUTPUT_HTML?"html":"txt")
 	static final OUTPUT_ROOT_NAME = "Retired Duplicates"
 }
 
@@ -35,11 +35,17 @@ f = new JacsUtils(SampleReportConstants.OWNER_KEY, true)
 Multimap<String, Entity> sampleMap = HashMultimap.<String,Entity>create();
 Set<Long> retiredSampleSet = new HashSet<Long>()
 
+println "Adding owned samples"
 addSamples(sampleMap, f.e.getUserEntitiesByTypeName(SampleReportConstants.OWNER_KEY, "Sample"))
+println "Adding group samples"
 addSamples(sampleMap, f.e.getUserEntitiesByTypeName(SampleReportConstants.GROUP_KEY, "Sample"))
 
+println "Adding owned retired samples"
 addRetiredSamples(f, retiredSampleSet, f.getRootEntity(SampleReportConstants.OWNER_KEY, "Retired Data"))
+println "Adding group retired samples"
 addRetiredSamples(f, retiredSampleSet, f.getRootEntity(SampleReportConstants.GROUP_KEY, "Retired Data"))
+
+println "Generating report..."
 
 List<String> keys = new ArrayList<String>(sampleMap.keySet())
 Collections.sort(keys);
@@ -61,7 +67,7 @@ if (SampleReportConstants.OUTPUT_HTML) {
 List<Entity> samplesForDeletion = new ArrayList<Entity>();
 
 def rootFolder = null
-if (SampleReportConstants.CREATE_FOLDERS) {
+if (SampleReportConstants.WRITE_DATABASE) {
 	rootFolder = f.getRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
     if (rootFolder!=null) {
         println "Deleting root folder "+SampleReportConstants.OUTPUT_ROOT_NAME+". This may take a while!"
@@ -91,7 +97,7 @@ for(String key : keys) {
         numSlideCodes++
 		
 		Entity keyFolder = null
-		if (SampleReportConstants.CREATE_FOLDERS) {
+		if (SampleReportConstants.WRITE_DATABASE) {
 			keyFolder = f.verifyOrCreateChildFolder(rootFolder, key)
 		}
 		
@@ -183,12 +189,14 @@ for(String key : keys) {
                 Set annotSet = new HashSet<String>(annotations)
                 if (annotSet.contains("Stitching_error") || annotSet.contains("something_wrong")) {
                     situations.add('stitching')
-                    samplesForDeletion.add(sample)
-                    println("  Stitching error detected. Will delete this sample later.")
+					if (SampleReportConstants.WRITE_DATABASE) {
+	                    samplesForDeletion.add(sample)
+	                    println("  Stitching error detected. Will delete this sample later.")
+					}
                 }
             }
 
-			if (SampleReportConstants.CREATE_FOLDERS) {
+			if (SampleReportConstants.WRITE_DATABASE) {
 				f.addToParent(keyFolder, sample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
 			}
 			
@@ -269,10 +277,12 @@ for(String key : keys) {
     }
 }
 
-println("Deleting unwanted samples...")
-for(Entity sample : samplesForDeletion) {
-    println("Unlinking and deleting "+sample.name)
-    f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
+if (SampleReportConstants.WRITE_DATABASE) {
+	println("Deleting unwanted samples...")
+	for(Entity sample : samplesForDeletion) {
+	    println("Unlinking and deleting "+sample.name)
+	    f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
+	}
 }
 
 if (SampleReportConstants.OUTPUT_HTML) {

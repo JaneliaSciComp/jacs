@@ -6,9 +6,9 @@ import org.janelia.it.jacs.model.TimebasedIdentifierGenerator
 
 // Add the target folderId, custom PrintWriter file for the SQL, whether to include the parent folder, and the target entity_actor_permission values below
 // What folder's items are we sharing?
-def folderId = 1977054414774468615L
+def folderId = 2028272446364188770L
 // Where should we write the SQL strings to?
-def file = new PrintWriter("insert_perms_nerna_mcfocase1_flylight_technical.sql")
+def file = new PrintWriter("insert_perms_dicksonlab_malereference_flylight_technical.sql")
 // Should the parent folder get the permissions so the new children get the same sharing?
 def extendPermissionsToParentFolder = true;
 // Who are we sharing the items with?

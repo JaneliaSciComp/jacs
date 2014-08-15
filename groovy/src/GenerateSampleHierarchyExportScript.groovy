@@ -1,14 +1,9 @@
 
-import static org.janelia.it.jacs.model.entity.EntityConstants.*
-import static org.janelia.it.jacs.shared.utils.EntityUtils.*
 
-import org.apache.solr.client.solrj.SolrQuery
-import org.janelia.it.jacs.compute.api.SolrBeanRemote
-import org.janelia.it.jacs.compute.api.support.SolrResults
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.shared.utils.EntityUtils
-import org.janelia.it.jacs.shared.utils.FileUtil
 
+import static org.janelia.it.jacs.model.entity.EntityConstants.*
 // Globals
 username = "user:leey10";
 rootId = 2016303114637803609;

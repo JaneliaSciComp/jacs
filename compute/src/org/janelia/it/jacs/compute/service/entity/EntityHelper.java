@@ -62,7 +62,7 @@ public class EntityHelper {
      * @return
      * @throws Exception
      */
-    protected Entity verifyOrCreateChildFolder(Entity parentFolder, String childName) throws Exception {
+    public Entity verifyOrCreateChildFolder(Entity parentFolder, String childName) throws Exception {
 
         entityLoader.populateChildren(parentFolder);
         

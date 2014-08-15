@@ -396,7 +396,6 @@ public class EntityUtils {
 			entity.setCreationDate(newEntity.getCreationDate());
 			entity.setEntityTypeName(newEntity.getEntityTypeName());
 			entity.setOwnerKey(newEntity.getOwnerKey());
-			entity.setNumChildren(newEntity.getNumChildren());
 			entity.setEntityData(newEntity.getEntityData());
     	}
     }
@@ -533,7 +532,7 @@ public class EntityUtils {
     }
     
     public static EntityData findChildEntityDataWithNameAndTypeAndOwner(Entity entity, String childName, String type, String owner) {
-		for (EntityData ed : entity.getEntityData()) {
+		for (EntityData ed : entity.getOrderedEntityData()) {
 			Entity child = ed.getChildEntity();
 			if (child!=null) {
 				if ((childName==null||child.getName().equals(childName)) && (type==null||type.equals(child.getEntityTypeName())) && (owner==null||owner.equals(child.getOwnerKey()))) {

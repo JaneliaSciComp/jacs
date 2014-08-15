@@ -494,4 +494,10 @@
     </operation>
     
     
+    <operation>
+        <description>Run cleanup for nerna retired data</description>
+        <name>runNernaRetiredDataCleanup</name>
+    </operation>
+    
+    
 </mbean>

@@ -44,6 +44,7 @@ public interface EntityBeanLocal extends EntityBeanRemote {
     public EntityData saveOrUpdateEntityData(EntityData newData) throws ComputeException;
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName) throws ComputeException;
     public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws ComputeException;
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, boolean fanout) throws ComputeException;
     
     public EntityData updateChildIndex(EntityData entityData, Integer orderIndex) throws ComputeException;
     public EntityData setOrUpdateValue(Long entityId, String attributeName, String value) throws ComputeException;

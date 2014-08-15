@@ -22,7 +22,6 @@ public class UpgradeUserDataService extends AbstractEntityService {
     
     private static final Logger log = Logger.getLogger(UpgradeUserDataService.class);
     
-    
     public void execute() throws Exception {
         
         final String serverVersion = computeBean.getAppVersion();
@@ -31,6 +30,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         createWorkspaceType();
         createWorkspaceIfNecessary();
         groupSearchResultsIfNecessary();
+        renumberWorkspace();
     }
 
     private void createWorkspaceType() throws Exception {
@@ -60,7 +60,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
         
         int index = 0;
         for(Entity root : roots) {
-        	entityBean.addEntityToParent(ownerKey, newRoot.getId(), root.getId(), index++, EntityConstants.ATTRIBUTE_ENTITY);
+        	entityBean.addEntityToParent(newRoot, root, index++, EntityConstants.ATTRIBUTE_ENTITY, false);
         }
         
         log.info("Created workspace (id="+newRoot.getId()+") for "+ownerKey+" with "+(index+1)+" top-level roots");
@@ -68,6 +68,26 @@ public class UpgradeUserDataService extends AbstractEntityService {
 
     private void groupSearchResultsIfNecessary() throws Exception {
 
+    	if (ownerKey.startsWith("group:")) return;
+    	
+    	Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
+        populateChildren(workspace);
+        
+        int count = 0;
+    	for(EntityData ed : workspace.getOrderedEntityData()) {
+    		Entity child = ed.getChildEntity();
+    		if (child==null) continue;
+    		if (!child.getOwnerKey().equals(ownerKey)) continue;
+    		if (child.getName().startsWith("Search Results #")) {
+    			count++;
+    		}
+    	}
+    	
+    	if (count<1) {
+    		log.info("No top-level search result folders found for "+ownerKey+", skipping grouping step.");
+    		return;
+    	}
+    	
         Entity topLevelFolder = entityHelper.createOrVerifyRootEntity(EntityConstants.NAME_SEARCH_RESULTS, true, false);
         if (topLevelFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
             EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
@@ -77,17 +97,16 @@ public class UpgradeUserDataService extends AbstractEntityService {
         populateChildren(topLevelFolder);
         
         if (!topLevelFolder.getChildren().isEmpty()) {
-        	log.info("User "+ownerKey+"'s search results folder already has children, skipping search result grouping step.");
+        	log.info("User "+ownerKey+"'s search results folder already has children, skipping grouping step.");
         	return;
         }
         
         List<EntityData> toMove = new ArrayList<EntityData>();
         
-    	Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
-        populateChildren(workspace);
     	for(EntityData ed : workspace.getOrderedEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child==null) continue;
+    		if (!child.getOwnerKey().equals(ownerKey)) continue;
     		if (child.getName().startsWith("Search Results #")) {
     			
     			// The search result folders are no longer common roots
@@ -113,26 +132,45 @@ public class UpgradeUserDataService extends AbstractEntityService {
     		topLevelFolder.getEntityData().add(ed);
     		entityBean.saveOrUpdateEntityData(ed);
     	}
+    }
+    
+    public void renumberWorkspace() throws Exception {
 
     	// Renumber the remaining workspace children
-    	index = 0;
+    	Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
+        populateChildren(workspace);
+
+        List<EntityData> orderedData = new ArrayList<EntityData>(workspace.getEntityData());
+        Collections.sort(orderedData, new EntityDataRootComparator());
+        
+        int index = 0;
     	for(EntityData ed : workspace.getOrderedEntityData()) {
     		if (ed.getChildEntity()==null) continue;
     		ed.setOrderIndex(index++);
     		entityBean.saveOrUpdateEntityData(ed);
     	}
-    	
     }
     
+    public class EntityDataRootComparator implements Comparator<EntityData> {
+        public int compare(EntityData o1, EntityData o2) {
+        	EntityRootComparator comparator = new EntityRootComparator();
+            return comparator.compare(o1.getChildEntity(), o2.getChildEntity());
+        }
+    };
+    
     public class EntityRootComparator implements Comparator<Entity> {
-        
         public int compare(Entity o1, Entity o2) {
             return ComparisonChain.start()
                 .compareTrueFirst(o1.getOwnerKey().equals(ownerKey), o2.getOwnerKey().equals(ownerKey))
                 .compare(o1.getOwnerKey(), o2.getOwnerKey())
                 .compareTrueFirst(EntityUtils.isProtected(o1), EntityUtils.isProtected(o2))
                 .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_DATA_SETS), o2.getName().equals(EntityConstants.NAME_DATA_SETS))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_RETIRED_DATA), o2.getName().equals(EntityConstants.NAME_RETIRED_DATA))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_BLOCKED_DATA), o2.getName().equals(EntityConstants.NAME_BLOCKED_DATA))
                 .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_SHARED_DATA), o2.getName().equals(EntityConstants.NAME_SHARED_DATA))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_SEARCH_RESULTS), o2.getName().equals(EntityConstants.NAME_SEARCH_RESULTS))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_ALIGNMENT_BOARDS), o2.getName().equals(EntityConstants.NAME_ALIGNMENT_BOARDS))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_SPLIT_PICKING), o2.getName().equals(EntityConstants.NAME_SPLIT_PICKING))
                 .compare(o1.getId(), o2.getId()).result();
         }
     };

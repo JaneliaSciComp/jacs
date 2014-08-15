@@ -45,7 +45,9 @@ import org.janelia.it.jacs.model.ontology.types.Interval;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.annotation.AnnotationSessionTask;
+import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.model.user_data.SubjectRelationship;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.annotation.RelativePatternAnnotationDataManager;
@@ -910,7 +912,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspaceId="+workspaceId+", entityName="+entityName+")");
         }
         Entity entity = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, entityName);
-        EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         saveOrUpdate(entity);
 		Entity workspace = getEntityById(workspaceId);
 		if (workspace==null) {
@@ -924,25 +925,46 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspace.id="+workspace.getId()+", entity.id="+entity.getId()+")");
         }
 		// Find the appropriate place to insert this root, and renumber everything while we're at it.
+        Boolean ingroup = false;
 		Integer insertionIndex = null;
 		int index = 0;
+		
+		loadLazyEntity(subjectKey, workspace, false);
+		
 		for(EntityData ed : workspace.getOrderedEntityData()) {
 			if (ed.getChildEntity()==null) continue;
 			String childOwner = ed.getChildEntity().getOwnerKey();
-			if (insertionIndex==null && !subjectKey.equals(childOwner)) {
-				// Insert the root before the first un-owned entity
-				insertionIndex = index;
-				index++;
+
+			if (ingroup!=null) {
+				if (ingroup) {
+					// We're looking at the correct group, when it ends, we'll insert our entity
+					if (!childOwner.equals(entity.getOwnerKey())) {
+						// Insert the root after the last entity with the same owner
+						insertionIndex = index;
+						index++;
+						// Stop looking
+						ingroup = null;
+					}
+				}
+				else {
+					if (childOwner.equals(entity.getOwnerKey())) {
+						// Now we're looking at the correct group, just need to wait until the end
+						ingroup = true;
+					}
+				}
 			}
+			
+			// Ensure that all indexes are correct
 			if (ed.getOrderIndex()!=index) {
 				ed.setOrderIndex(index);
 		        ed.setUpdatedDate(new Date());
 				saveOrUpdate(ed);
 			}
+			
 			index++;
 		}
 		if (insertionIndex==null) {
-			// No non-owned entities, so add it to the end
+			// No matching entities, so add it to the end
 			insertionIndex = index;
 		}
 		return addEntityToParent(workspace, entity, insertionIndex, EntityConstants.ATTRIBUTE_ENTITY);
@@ -1713,6 +1735,45 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
     
+    public List<Long> getAllEntityIdsByType(String entityTypeName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getAllEntityIdsByType(entityTypeName=" + entityTypeName + ")");
+        }
+        try {          
+            Connection conn = null;
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            List<Long> resultIdList=new ArrayList<>();
+            try {
+                conn = getJdbcConnection();               
+                StringBuffer sql = new StringBuffer("select et.id from entity et where et.entity_type=? order by et.id asc");
+                stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                stmt.setString(1, entityTypeName);               
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Long id = rs.getBigDecimal(1).longValue();
+                    resultIdList.add(id);
+                }
+            }
+            catch (SQLException e) {
+                throw new DaoException(e);
+            }
+            finally {
+                try {
+                    if (rs!=null) rs.close();
+                    if (stmt!=null) stmt.close();
+                    if (conn!=null) conn.close();   
+                }
+                catch (Exception e) {
+                    log.warn("Error closing JDBC connection",e);
+                }
+            }
+            return resultIdList;          
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
 
     /******************************************************************************************************************/
     /** ENTITY LOADING */
@@ -1774,7 +1835,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         entity.setUpdatedDate(new Date());
         saveOrUpdate(entity);
-        updateChildCount(entity);
     }
 
     public void saveOrUpdateEntityData(EntityData entityData) throws DaoException {
@@ -1783,7 +1843,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         entityData.setUpdatedDate(new Date());
         saveOrUpdate(entityData);
-        updateChildCount(entityData.getParentEntity());
     }
 
 
@@ -1792,10 +1851,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+")");
         }
         
-        return addEntityToParent(parent, entity, index, attrName, null);
+        return addEntityToParent(parent, entity, index, attrName, null, true);
     }
 
-    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value) throws DaoException {
+    public EntityData addEntityToParent(Entity parent, Entity entity, Integer index, String attrName, String value, boolean workspaceCheck) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("addEntityToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+", value="+value+")");
         }
@@ -1810,7 +1869,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         saveOrUpdate(ed);
 
-        promoteToCommonRootIfWorkspaceChild(parent, entity);
+        if (workspaceCheck) workspaceCheck(parent, entity, null);
         
         Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
         boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
@@ -1825,7 +1884,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         propagatePermissions(parent, entity, true, grantOwnerPermissions);
-        updateChildCount(parent);
         return ed;
     }
 
@@ -1849,6 +1907,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         Map<Long,Entity> childMap = EntityUtils.getEntityMap(childEntities);
         
         Set<String> subjectKeys = getSubjectKeySet(parent.getOwnerKey());
+
+        Set<SubjectRelationship> groupUsers = null;
+        if (parent.getOwnerKey().startsWith("group:")) {
+			Group group = getGroupByNameOrKey(parent.getOwnerKey());
+			groupUsers = group.getUserRelationships();
+        }
         
         for (Long childId : childrenIds) {
             if (existingChildrenIds.contains(childId)) continue;
@@ -1867,7 +1931,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             saveOrUpdate(ed);
             parent.getEntityData().add(ed);
 
-            promoteToCommonRootIfWorkspaceChild(parent, entity);
+            workspaceCheck(parent, entity, groupUsers);
             
             boolean grantOwnerPermissions = !subjectKeys.contains(entity.getOwnerKey());
             if (grantOwnerPermissions) {
@@ -1881,55 +1945,40 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             
             propagatePermissions(parent, entity, true, grantOwnerPermissions);
         }
-        
-        updateChildCount(parent);
     }
     
-    private void promoteToCommonRootIfWorkspaceChild(Entity parent, Entity entity) throws DaoException {
+    /**
+     * This method checks if the child entity is being added to a workspace and if so, does some necessary cleanup:
+     * 1) make the folder a Common Root for legacy purposes
+     * 2) if the workspace owner is a group, add the folder to all users' workspaces in the group 
+     */
+    private void workspaceCheck(Entity parent, Entity entity, Set<SubjectRelationship> groupUsers) throws DaoException {
         if (parent.getEntityTypeName().equals(EntityConstants.TYPE_WORKSPACE)) {
+        	
         	// Making something a child of a workspace makes it a common root
         	if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT)==null) {
-        		if (isEntityTypeSupportsAttribute(parent.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
-	        		EntityData crEd = newData(parent, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
+        		if (isEntityTypeSupportsAttribute(entity.getEntityTypeName(), EntityConstants.ATTRIBUTE_COMMON_ROOT)) {
+	        		EntityData crEd = newData(entity, EntityConstants.ATTRIBUTE_COMMON_ROOT, entity.getOwnerKey());
 	        		crEd.setValue(EntityConstants.ATTRIBUTE_COMMON_ROOT);
 	        		entity.getEntityData().add(crEd);
 	            	saveOrUpdate(crEd);
         		}
         	}
-        }
-    }
-    
-    private void updateChildCount(Entity entity) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("updateChildCount(entity.id="+entity.getId()+")");    
-        }
-
-        try {   
-            Session session = getCurrentSession();
-            
-            // We need to pull the count back so that we can update the in-memory model
-            StringBuffer hql = new StringBuffer("select count(*) from EntityData ed ");
-            hql.append("where ed.parentEntity.id=? ");
-            hql.append("and ed.childEntity is not null ");
-            Query query = session.createQuery(hql.toString()).setLong(0, entity.getId());
-            Long count = (Long)query.uniqueResult();
-            Integer intCount = count.intValue();
-            
-            // Update the database
-            hql = new StringBuffer("update Entity set numChildren = :numChildren where id = :entityId");
-            query = session.createQuery(hql.toString());
-            query.setParameter("numChildren", intCount);
-            query.setParameter("entityId", entity.getId());
-            int rows = query.executeUpdate();
-            if (rows!=1) {
-                log.warn("Updating numChildren to "+intCount+" for entity "+entity.getId()+" failed. "+rows+" rows were updated.");
-            }
-            
-            // Update in-memory model
-            entity.setNumChildren(intCount);
-        }
-        catch (Exception e) {
-            throw new DaoException(e);
+        	
+        	// "Fan out on write" for group workspaces
+        	if (parent.getOwnerKey().startsWith("group:")) {
+    			log.info("Fan out workspace write for "+parent.getOwnerKey());
+        		if (groupUsers==null) {
+        			Group group = getGroupByNameOrKey(parent.getOwnerKey());
+        			groupUsers = group.getUserRelationships();
+        		}
+        		for(SubjectRelationship rel : groupUsers) {
+        			String subjectKey = rel.getUser().getKey();
+        			log.info("Adding '"+entity.getName()+"' to default workspace for "+subjectKey);
+        			Entity workspace = getDefaultWorkspace(subjectKey);
+        			addRootToWorkspace(subjectKey, workspace, entity);
+        		}
+        	}
         }
     }
     
@@ -2030,9 +2079,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             parent.getEntityData().remove(entityData);
         }
         genericDelete(entityData);
-        if (parent!=null && hasChild) {
-            updateChildCount(parent);
-        }
     }
 
     public void deleteEntityTree(String subjectKey, Entity entity) throws DaoException {
@@ -2236,7 +2282,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         
         try {
             EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
-            visitationBuilder = recursive ? visitationBuilder.descendants() : visitationBuilder.root();
+            visitationBuilder = recursive ? visitationBuilder.root().descendants() : visitationBuilder.root();
             visitationBuilder.run(new EntityVisitor() {
                 @Override
                 public void visit(Entity entity) throws Exception {
@@ -2277,8 +2323,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 
                 if (sharedDataFolder==null) {
                     sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
-                    EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
                     EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+                    addRootToWorkspace(granteeKey, getDefaultWorkspace(granteeKey), sharedDataFolder);
                     saveOrUpdate(sharedDataFolder);
                 }
                 
@@ -2356,7 +2402,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         try {
             final Set<Long> revokedIds = new HashSet<Long>();
             EntityVistationBuilder visitationBuilder = new EntityVistationBuilder(this).startAt(rootEntity);
-            visitationBuilder = recursive ? visitationBuilder.descendants() : visitationBuilder.root();
+            visitationBuilder = recursive ? visitationBuilder.root().descendants() : visitationBuilder.root();
             visitationBuilder.run(new EntityVisitor() {
                 @Override
                 public void visit(Entity entity) throws Exception {

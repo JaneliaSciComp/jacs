@@ -6,10 +6,14 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import javax.ejb.Local;
+
 /**
  *
  * @author murphys
  */
+
+@Local
 interface GeometricSearchBeanLocal extends GeometricSearchBeanRemote {
     
 }

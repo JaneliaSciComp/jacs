@@ -6,10 +6,29 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import java.util.List;
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+
 /**
  *
  * @author murphys
  */
-public class SampleScanner {
+public class SampleScanner extends EntityScanner {
+
+    static final Logger logger = Logger.getLogger(SampleScanner.class);
     
+    public SampleScanner() {
+        super();
+    }
+
+    public SampleScanner(List<VisitorFactory> visitorFactoryList) {
+        super(visitorFactoryList);
+    }
+
+    @Override
+    public long[] generateIdList(Object dataResource) throws Exception {
+        return generateIdListByEntityType(dataResource, EntityConstants.TYPE_SAMPLE);
+    }
+
 }
