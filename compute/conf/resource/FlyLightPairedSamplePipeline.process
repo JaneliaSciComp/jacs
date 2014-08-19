@@ -7,6 +7,15 @@
 
         <input name="PIPELINE_PROCESS"/>
         <input name="20X_MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
+        <input name="20X_ALIGNMENT_ALGORITHMS" value="$V{20X_ALIGNMENT_ALGORITHMS}"/>
+        <input name="20X_ALIGNMENT_ALGORITHM_PARAMS" value="$V{20X_ALIGNMENT_ALGORITHM_PARAMS}"/>
+        <input name="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value="$V{20X_ALIGNMENT_ALGORITHM_RESULT_NAMES}"/>
+        <input name="20X_ANALYSIS_ALGORITHMS" value="$V{20X_ANALYSIS_ALGORITHMS}"/>
+        <input name="63X_MERGE_ALGORITHMS" value="$V{63X_MERGE_ALGORITHMS}"/>
+        <input name="63X_ALIGNMENT_ALGORITHMS" value="$V{63X_ALIGNMENT_ALGORITHMS}"/>
+        <input name="63X_ALIGNMENT_ALGORITHM_PARAMS" value="$V{63X_ALIGNMENT_ALGORITHM_PARAMS}"/>
+        <input name="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value="$V{63X_ALIGNMENT_ALGORITHM_RESULT_NAMES}"/>
+        <input name="63X_ANALYSIS_ALGORITHMS" value="$V{63X_ANALYSIS_ALGORITHMS}"/>
         <input name="CHANNEL_DYE_SPEC_20X"/>
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
         <input name="CHANNEL_DYE_SPEC_63X"/>
@@ -24,16 +33,68 @@
             <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
         </operation>
-        
+
         <!-- Init variables -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="REUSE_ALIGNMENT"/>
+            <input name="20X_MERGE_ALGORITHMS"/>
+            <input name="20X_ALIGNMENT_ALGORITHMS"/>
+            <input name="20X_ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <input name="20X_ANALYSIS_ALGORITHMS"/>
+            <input name="63X_MERGE_ALGORITHMS"/>
+            <input name="63X_ALIGNMENT_ALGORITHMS"/>
+            <input name="63X_ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <input name="63X_ANALYSIS_ALGORITHMS"/>
             <input name="OVERRIDE" value="false"/>
+
             <input name="PROCESS_VARIABLE_1" value="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
+
+            <input name="PROCESS_VARIABLE_2" value="20X_MERGE_ALGORITHMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_2" value="FLYLIGHT_ORDERED"/>
+
+            <input name="PROCESS_VARIABLE_3" value="20X_ALIGNMENT_ALGORITHMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_3" value="CONFIGURED"/>
+
+            <input name="PROCESS_VARIABLE_4" value="20X_ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_4" value="flyalign20x_JBA_Qiscore.sh"/>
+
+            <input name="PROCESS_VARIABLE_5" value="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <input name="PROCESS_VARIABLE_VALUE_5" value="JBA Alignment"/>
+
+            <input name="PROCESS_VARIABLE_6" value="20X_ANALYSIS_ALGORITHMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_6" value="NEURON_SEPARATOR"/>
+
+            <input name="PROCESS_VARIABLE_7" value="63X_MERGE_ALGORITHMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_7" value="FLYLIGHT_ORDERED"/>
+
+            <input name="PROCESS_VARIABLE_8" value="63X_ALIGNMENT_ALGORITHMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_8" value="CONFIGURED_PAIR"/>
+
+            <input name="PROCESS_VARIABLE_9" value="63X_ALIGNMENT_ALGORITHM_PARAMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_9" value="brainalignPolarityPair_ds_dpx_1024px_INT_v2.sh"/>
+
+            <input name="PROCESS_VARIABLE_10" value="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <input name="PROCESS_VARIABLE_VALUE_10" value="Brain 20X/63X Alignment"/>
+
+            <input name="PROCESS_VARIABLE_11" value="63X_ANALYSIS_ALGORITHMS"/>
+            <input name="PROCESS_VARIABLE_VALUE_11" value="NEURON_SEPARATOR"/>
+
             <output name="REUSE_ALIGNMENT"/>
+            <output name="20X_MERGE_ALGORITHMS"/>
+            <output name="20X_ALIGNMENT_ALGORITHMS"/>
+            <output name="20X_ALIGNMENT_ALGORITHM_PARAMS"/>
+            <output name="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <output name="20X_ANALYSIS_ALGORITHMS"/>
+            <output name="63X_MERGE_ALGORITHMS"/>
+            <output name="63X_ALIGNMENT_ALGORITHMS"/>
+            <output name="63X_ALIGNMENT_ALGORITHM_PARAMS"/>
+            <output name="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+            <output name="63X_ANALYSIS_ALGORITHMS"/>
         </operation>
-        
+
         <!-- Get sub-samples -->
         <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
@@ -49,10 +110,10 @@
                 <input name="PIPELINE_NAME" value="Paired Sample Pipeline 20x"/>
                 <input name="MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
                 <input name="STITCH_ALGORITHMS" value=""/>
-                <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED"/>
-                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_JBA_Qiscore.sh"/>
-                <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment"/>
-                <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
+                <input name="ALIGNMENT_ALGORITHMS" value="$V{20X_ALIGNMENT_ALGORITHMS}"/>
+                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="$V{20X_ALIGNMENT_ALGORITHM_PARAMS}"/>
+                <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="$V{20X_ALIGNMENT_ALGORITHM_RESULT_NAMES}"/>
+                <input name="ANALYSIS_ALGORITHMS" value="$V{20X_ANALYSIS_ALGORITHMS}"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
                 <input name="PIPELINE_PROCESS"/>
@@ -67,12 +128,12 @@
             <include name="63x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_63X_ID}"/>
                 <input name="PIPELINE_NAME" value="Paired Sample Pipeline 63x"/>
-                <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
-                <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_PAIR"/>
-                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_ds_dpx_1024px_INT_v2.sh"/>
-                <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="Brain 20X/63X Alignment"/>
-                <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
+                <input name="MERGE_ALGORITHMS" value="$V{63X_MERGE_ALGORITHMS}"/>
+                <input name="ALIGNMENT_ALGORITHMS" value="$V{63X_ALIGNMENT_ALGORITHMS}"/>
+                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="$V{63X_ALIGNMENT_ALGORITHM_PARAMS}"/>
+                <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="$V{63X_ALIGNMENT_ALGORITHM_RESULT_NAMES}"/>
+                <input name="ANALYSIS_ALGORITHMS" value="$V{63X_ANALYSIS_ALGORITHMS}"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
                 <input name="PIPELINE_PROCESS"/>
