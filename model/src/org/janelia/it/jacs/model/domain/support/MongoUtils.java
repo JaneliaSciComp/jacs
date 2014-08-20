@@ -2,6 +2,9 @@ package org.janelia.it.jacs.model.domain.support;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.workspace.Folder;
 import org.reflections.Reflections;
 
 import com.google.common.collect.BiMap;
@@ -39,9 +42,18 @@ public class MongoUtils {
     }
     
 	public static String getCollectionName(DomainObject domainObject) {
-        MongoMapped mongoMappedAnnotation = domainObject.getClass().getAnnotation(MongoMapped.class);
+		return getCollectionName(domainObject.getClass());
+	}
+	
+	public static String getCollectionName(Class<?> domainClazz) {
+        MongoMapped mongoMappedAnnotation = null;
+        Class<?> clazz = domainClazz;
+        while (mongoMappedAnnotation==null && clazz!=null) {
+        	mongoMappedAnnotation = clazz.getAnnotation(MongoMapped.class);
+        	clazz = clazz.getSuperclass();
+        }
         if (mongoMappedAnnotation==null) {
-        	throw new IllegalArgumentException("Cannot get MongoDB collection for object not marked with @MongoMapped annotation: "+domainObject.getClass().getName());
+        	throw new IllegalArgumentException("Cannot get MongoDB collection for class hierarchy not marked with @MongoMapped annotation: "+domainClazz.getName());
         }
         return mongoMappedAnnotation.collectionName();
 	}
@@ -54,8 +66,11 @@ public class MongoUtils {
      * Test Harness
      */
     public static void main(String[] args) {
-    	System.out.println("treeNode: "+MongoUtils.getObjectClass("treeNode"));
-    	System.out.println("sample: "+MongoUtils.getObjectClass("sample"));
-    	System.out.println("image: "+MongoUtils.getObjectClass("image"));
+    	System.out.println("getObjectClass(treeNode): "+MongoUtils.getObjectClass("treeNode"));
+    	System.out.println("getObjectClass(sample): "+MongoUtils.getObjectClass("sample"));
+    	System.out.println("getObjectClass(image): "+MongoUtils.getObjectClass("image"));
+    	System.out.println("getCollectionName(Sample.class): "+MongoUtils.getCollectionName(Sample.class));
+    	System.out.println("getCollectionName(Folder.class): "+MongoUtils.getCollectionName(Folder.class));
+    	System.out.println("getCollectionName(LSMImage): "+MongoUtils.getCollectionName(new LSMImage()));
     }
 }
