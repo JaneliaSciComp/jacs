@@ -54,7 +54,7 @@ public class FileStoragePathPatternTest {
                 "../confocalStacks/{yyyy}/{MM}/{dd}",
                 "confocalStacks",
                 "/confocalStacks/{yyyy}/",
-                "/confocalStacks/./{yyyy}",
+                "/confocalStacks/../{yyyy}",
                 "/confocalStacks/{}{}",
                 "/confocalStacks/{..}",
                 "",

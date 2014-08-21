@@ -32,23 +32,14 @@ public class FileStoragePathPattern {
             throw new IllegalArgumentException("No storage pattern was specified." + PATTERN_EXAMPLE);
         }
 
-        final String canonicalPatternString;
-        try {
-            canonicalPatternString = new File(patternString).getCanonicalPath();
-        } catch (IOException e) {
-            throw new IllegalArgumentException("An invalid storage pattern '" + patternString +
-                                               "' was specified (canonical path could not be derived)."  +
-                                               PATTERN_EXAMPLE, e);
-        }
-
-        if (! patternString.equals(canonicalPatternString)) {
-            throw new IllegalArgumentException("An invalid storage pattern '" + patternString +
-                                               "' was specified (canonical path differs)."  + PATTERN_EXAMPLE);
+        if (patternString.contains("..")) {
+            throw new IllegalArgumentException("Storage pattern '" + patternString +
+                                               "' may not contain '..'."  + PATTERN_EXAMPLE);
         }
 
         final Matcher m = VALIDATION_PATTERN.matcher(patternString);
         if (! m.matches()) {
-            throw new IllegalArgumentException("An invalid storage pattern '" + canonicalPatternString +
+            throw new IllegalArgumentException("An invalid storage pattern '" + patternString +
                                                "' was specified."  + PATTERN_EXAMPLE);
         }
 
