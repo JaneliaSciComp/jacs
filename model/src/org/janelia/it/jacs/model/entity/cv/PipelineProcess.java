@@ -28,6 +28,11 @@ public enum PipelineProcess implements NamedEnum {
     NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
     NernaPolarityCase3("Aljoscha Polarity Case 3 Pipeline"),
 
+    PTR10ProjectionOnly("PTR 10 Projection Only Pipeline"),
+    PTR20JBAAlignment("PTR 20 JBA Alignment Pipeline"),
+    PTR30ANTSAlignment("PTR 30 ANTS Alignment Pipeline"),
+    PTR40NeuronSeparation("PTR 40 Neuron Separation Pipeline"),
+
     SimpsonDescending("Simpson Lab Sensory Descending Alignment Pipeline"),
 
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
