@@ -91,7 +91,7 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
         
         // Find the latest stitched file for this sample 
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
-                .childOfType(EntityConstants.TYPE_PIPELINE_RUN)
+                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
                 .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
                 .childrenOfAttr(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE).last()
                 .run(new EntityVisitor() {
@@ -148,6 +148,7 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
         FileWriter fw = new FileWriter(configFile);
         try {
         	fw.write(outputPrefix + "\n");
+        	fw.write(resultFileNode.getDirectoryPath() + "\n");
             fw.write((inputFile1==null?"":inputFile1) + "\n");
             fw.write((chanSpec1==null?"":chanSpec1) + "\n");
             fw.write((inputFile2==null?"":inputFile2) + "\n");
@@ -165,6 +166,7 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
     private void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read OUTPUT_PREFIX\n");
+        script.append("read OUTPUT_DIR\n");
         script.append("read INPUT_FILE_1\n");
         script.append("read CHAN_SPEC_1\n");
         script.append("read INPUT_FILE_2\n");
@@ -173,8 +175,7 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT")).append("\n");
         script.append("cd "+resultFileNode.getDirectoryPath());
         script.append("\n");
-        script.append("echo \"Parameters: $OUTPUT_PREFIX,$INPUT_FILE_1,$INPUT_FILE_2,$CHAN_SPEC_1,$CHAN_SPEC_2\"\n");
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$INPUT_FILE_1,$CHAN_SPEC_1,$INPUT_FILE_2,$CHAN_SPEC_2");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$INPUT_FILE_1,$CHAN_SPEC_1,$INPUT_FILE_2,$CHAN_SPEC_2");
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");
