@@ -5,27 +5,37 @@
 // 
 // Title, reporter, tile, flp, and heat shock period need to be obtained from the database.
 
-mipFormat = "PNG"; // possible values: Jpeg, PNG, Tiff
+arg = split(getArgument(),",");
+if (arg.length < 1) exit("Missing prefix argument");
+prefix = arg[0];
+if (arg.length < 2) exit("Missing destination directory");
+basedir = arg[1] + '/';
+print("Prefix: "+prefix);
+print("Output directory: "+basedir);
+if ((arg.length == 4) || (arg.length == 6)) {
+  image1 = arg[2];
+  channelspec1 = arg[3];
+  print("Image 1: "+image1);
+  print("Channel spec 1: "+channelspec1);
+  openStack(image1,channelspec1);
+  if (arg.length == 6) {
+    image2 = arg[4];
+    channelspec2 = arg[5];
+    print("Image 2: "+image2);
+    print("Channel spec 2: "+channelspec2);
+    openStack(image2,channelspec2);
+  }
+}
+else {
+  exit("Missing image/channel spec");
+}
+title0 = prefix + "_MIP";
+titleAvi = prefix + ".avi";
 
 setBatchMode(true);
 MinimalParticleSize = 50;
 MaximalParticleSize = 500000;
 MaximalSignalsOccupancy = 128;
-
-argstr = getArgument();
-args = split(argstr,",");
-prefix = args[0];
-inputfile1 = args[1];
-inputfile2 = args[2];
-chanspec1 = args[3];
-chanspec2 = args[4];
-titleMovie = prefix+".avi"
-titleMip = prefix+".png"
-print("Prefix: "+prefix);
-print("Input File 1: "+inputfile1);
-print("Input File 2: "+inputfile2);
-print("ChanSpec 1: "+chanspec1);
-print("ChanSpec 2: "+chanspec2);
 
 //Open two lsm  files (2 channels and 3 channels) or a stitched v3dpbd (4 channels)
 TITLE = getTitle();
@@ -63,7 +73,7 @@ if (endsWith(TITLE, ".v3dpbd")) {
   selectWindow("C2-original");
   rename("C3-2");
   selectWindow("C3-original");
-  rename("C2-1");	
+  rename("C2-1");   
 }
 
 // Z-intensity compesation to ramp singals in neuron channels
@@ -105,7 +115,7 @@ rename(title);
 // Merge, save MIP and AVI
 print("Creating MIP");
 selectWindow("ZRamp");
-close();	
+close();    
 run("Merge Channels...", "c1=C2-2 c2=C3-2 c3=C2-1");
 selectWindow("RGB");
 run("Z Project...", "projection=[Max Intensity]");
@@ -116,14 +126,20 @@ run("Divide...", "value=3");
 run("RGB Color");
 setBatchMode("exit & display");
 imageCalculator("Add", "MAX_RGB","STD_C1-2");
-saveAs(mipFormat,titleMip);
+saveAs("PNG",basedir+title0);
 print("Creating movie");
 selectWindow("C1-2");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","C1-2");
-run("AVI... ", "compression=JPEG frame=20 save=titleMovie");
+run("AVI... ", "compression=JPEG frame=20 save="+basedir+titleAvi);
 run("Close All");
+run("Quit");
 
+
+
+function openStack(image,channelspec) {
+  open(image);
+}
 
 
 function processChannel(channel_name) {

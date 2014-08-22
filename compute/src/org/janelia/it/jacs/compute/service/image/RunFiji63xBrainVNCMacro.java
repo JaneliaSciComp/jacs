@@ -149,8 +149,8 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
         try {
         	fw.write(outputPrefix + "\n");
             fw.write((inputFile1==null?"":inputFile1) + "\n");
-            fw.write((inputFile2==null?"":inputFile2) + "\n");
             fw.write((chanSpec1==null?"":chanSpec1) + "\n");
+            fw.write((inputFile2==null?"":inputFile2) + "\n");
             fw.write((chanSpec2==null?"":chanSpec2) + "\n");
             fw.write((randomPort+configIndex) + "\n");
         }
@@ -166,15 +166,15 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
         StringBuffer script = new StringBuffer();
         script.append("read OUTPUT_PREFIX\n");
         script.append("read INPUT_FILE_1\n");
-        script.append("read INPUT_FILE_2\n");
         script.append("read CHAN_SPEC_1\n");
+        script.append("read INPUT_FILE_2\n");
         script.append("read CHAN_SPEC_2\n");
         script.append("read DISPLAY_PORT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT")).append("\n");
         script.append("cd "+resultFileNode.getDirectoryPath());
         script.append("\n");
         script.append("echo \"Parameters: $OUTPUT_PREFIX,$INPUT_FILE_1,$INPUT_FILE_2,$CHAN_SPEC_1,$CHAN_SPEC_2\"\n");
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$INPUT_FILE_1,$INPUT_FILE_2,$CHAN_SPEC_1,$CHAN_SPEC_2");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$INPUT_FILE_1,$CHAN_SPEC_1,$INPUT_FILE_2,$CHAN_SPEC_2");
         script.append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
         script.append("\n");
