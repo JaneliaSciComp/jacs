@@ -2,18 +2,14 @@ package org.janelia.it.jacs.compute.service.image;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Run a Fiji macro and add the resulting files to the entity model.
@@ -29,10 +25,10 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "fijiConfiguration.";
     
-    private String macroName;
-    private String outputFilePrefix;
-    private Entity sampleEntity;
-    private Entity pipelineRun;
+    protected String macroName;
+    protected String outputFilePrefix;
+    protected Entity sampleEntity;
+    protected Entity pipelineRun;
     
     protected abstract String getMacroParameter(Entity sampleEntity, String outputFilePrefix) throws Exception; 
     
@@ -77,7 +73,6 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
         
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
-        
         script.append("cd "+resultFileNode.getDirectoryPath());
         script.append("\n");
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroFile+" "+getMacroParameter(sampleEntity,outputFilePrefix));
@@ -103,45 +98,4 @@ public abstract class RunFijiMacroService extends AbstractEntityGridService {
     public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
     }
-	
-    @Override
-	public void postProcess() throws MissingDataException {
-
-        FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
-        helper.addFileExclusion("*.log");
-        helper.addFileExclusion("*.oos");
-        helper.addFileExclusion("sge_*");
-        helper.addFileExclusion("temp");
-        helper.addFileExclusion("tmp.*");
-        helper.addFileExclusion("core.*");
-        
-        File outputDir = new File(resultFileNode.getDirectoryPath());
-        
-        File[] files = outputDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith(outputFilePrefix);
-            }
-        });
-        
-        if (files.length==0) {
-            throw new MissingDataException("No output files found in directory "+outputDir);
-        }
-
-        try {
-            helper.addFilesInDirToFolder(pipelineRun, outputDir);    
-            
-            String defaultImageName = outputFilePrefix+"_Brain_MIP.png";
-            Entity default2dImage = EntityUtils.findChildWithName(pipelineRun, defaultImageName);
-            if (default2dImage!=null) {
-                entityHelper.setDefault2dImage(pipelineRun, default2dImage);    
-            }
-            else {
-                logger.warn("Could not find default image: "+defaultImageName);
-            }
-        }
-        catch (Exception e) {
-            throw new MissingDataException("Error discoverying files in "+outputDir,e);
-        }
-	}
 }
