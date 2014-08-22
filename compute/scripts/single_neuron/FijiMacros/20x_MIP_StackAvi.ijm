@@ -1,5 +1,5 @@
 //
-// Fiji macro for generating intensity-normalized Movies and MIPs
+// FIJI macro for generating intensity-normalized Movies and MIPs
 // Images should be 1024x1024
 // Argument should be in this format: "BrainPath,VNCPath,Laser,Gain,ChanSpec"
 // The VNCPath is optional.
@@ -8,7 +8,7 @@
 // /path/to/ImageJ -macro 20x_MIP_StackAvi.ijm out,file_brain.lsm,file_vnc.lsm,3,490,rs
 //
 
-mipFormat = "PNG"; // possible values: Jpeg, PNG
+mipFormat = "PNG"; // possible values: Jpeg, PNG, Tiff
 
 setBatchMode(true);
 argstr = getArgument();
@@ -151,10 +151,8 @@ selectWindow("C2-MAX_Brain");
 run("Divide...", "value=2");
 run("Merge Channels...", "c1=C1-MAX_Brain c2=C2-MAX_Brain create");
 
-//saveAs("Tiff", titleBrain);
 saveAs(mipFormat, titleBrain);
 Stack.setActiveChannels("10");
-//saveAs("Tiff", titleBrainC2);
 saveAs(mipFormat, titleBrainC2);
 close();
 close();
@@ -212,10 +210,8 @@ if(vncImage!="") {
     run("Divide...", "value=2");
     run("Merge Channels...", "c1=C1-MAX_VNC c2=C2-MAX_VNC create");
 
-    //saveAs("Tiff", titleVNC);
     saveAs(mipFormat, titleVNC);
     Stack.setActiveChannels("10");
-    //saveAs("Tiff", titleVNCC2);
     saveAs(mipFormat, titleVNCC2);
     close();
     close();
@@ -257,7 +253,7 @@ function drawLegend(min_intensity, max_intensity, laser, gain, position) {
     // distance from edge of image
     margin = 5;
 
-    // bar dimensions·
+    // bar dimensions
     bar_height = 64;
     bar_width = 10;
 
