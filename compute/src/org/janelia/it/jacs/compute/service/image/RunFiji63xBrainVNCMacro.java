@@ -130,12 +130,12 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
     	}
     	
     	for(LsmPair pair : lsmPairs) {
-    		String inputFile1 = pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    		String inputFile2 = pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    		String chanSpec1 = pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    		String chanSpec2 = pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    		String effector1 = pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
-    		String effector2 = pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+    		String inputFile1 = pair.lsm1==null?null:pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    		String inputFile2 = pair.lsm2==null?null:pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    		String chanSpec1 = pair.lsm1==null?null:pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    		String chanSpec2 = pair.lsm2==null?null:pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    		String effector1 = pair.lsm1==null?null:pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+    		String effector2 = pair.lsm2==null?null:pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
     		if (!effector1.equals(effector2)) {
                 logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
     		}
