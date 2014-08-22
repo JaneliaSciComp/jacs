@@ -124,6 +124,11 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
 
     private void writeInstanceFiles() throws Exception {
 
+    	String sampleName = sampleEntity.getName();
+    	if (sampleName.contains("~")) {
+    		sampleName = sampleName.substring(0, sampleName.indexOf('~'));
+    	}
+    	
     	for(LsmPair pair : lsmPairs) {
     		String inputFile1 = pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     		String inputFile2 = pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -134,10 +139,10 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
     		if (!effector1.equals(effector2)) {
                 logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
     		}
-    		writeInstanceFile(sampleEntity.getName()+"-"+pair.tileName+"-"+effector1, inputFile1, inputFile2, chanSpec1, chanSpec2, configIndex++);
+    		writeInstanceFile(sampleName+"-"+pair.tileName+"-"+effector1, inputFile1, inputFile2, chanSpec1, chanSpec2, configIndex++);
     	}
 
-        this.outputFilePrefix = sampleEntity.getName()+"-stitched";
+        this.outputFilePrefix = sampleName+"-stitched";
 		String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 		String chanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
     	writeInstanceFile(outputFilePrefix, inputFile, null, chanSpec, null, configIndex++);
