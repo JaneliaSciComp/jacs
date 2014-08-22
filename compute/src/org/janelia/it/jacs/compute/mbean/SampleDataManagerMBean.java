@@ -31,6 +31,7 @@ public interface SampleDataManagerMBean {
     // Generic sample processing
     public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName);
     public void applyProcessToSample(String sampleEntityId, String processName);
+    public void applyProcessToSamplesInFolder(String folderId, String processName);
     
     // Upgrade pipelines
     public void runRepairSeparationsPipeline(String user);

@@ -284,6 +284,21 @@
     </operation>
         
     <operation>
+        <description>Apply the given process file to the samples in the given folder</description>
+        <name>applyProcessToSamplesInFolder</name>
+        <parameter>
+           <description>Entity id of the Folder to run (e.g. "1679282451010027618")</description>
+           <name>folderId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
+           <name>processName</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Run a separation for a given result entity</description>
         <name>runNeuronSeparationPipeline</name>
         <parameter>
