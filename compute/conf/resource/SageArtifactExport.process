@@ -14,7 +14,7 @@
             <!-- Spawn a new task to process the Sample -->
             <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
                 <input name="PROCESS_DEF_NAME" value="PipelineConfig_YoshiNormalization20x"/>
-                <input name="DISPLAY_NAME" value="Yoshi Normalization"/>
+                <input name="DISPLAY_NAME" value="Yoshi Normalization 20x"/>
                 <input name="PARAMETER_1_KEY" value="sample entity id"/>
                 <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_20X_ID}"/>
             </operation>
@@ -23,6 +23,14 @@
 
         <!-- Process each 63x sample -->
         <sequence forEach="SAMPLE_63X_ID">
+            
+            <!-- Spawn a new task to process the Sample -->
+            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                <input name="PROCESS_DEF_NAME" value="PipelineConfig_YoshiNormalization63x"/>
+                <input name="DISPLAY_NAME" value="Yoshi Normalization 63x"/>
+                <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_63X_ID}"/>
+            </operation>
             
         </sequence>
         
