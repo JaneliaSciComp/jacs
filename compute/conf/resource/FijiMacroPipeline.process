@@ -9,6 +9,7 @@
         <input name="PIPELINE_PROCESS"/>
         <input name="MACRO_NAME"/>
         <input name="MACRO_CLASS"/>
+        <input name="OBJECTIVE"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -27,12 +28,22 @@
             <input name="PROCESS_VARIABLE_4" value="MACRO_NAME"/>
             <input name="TASK_PARAMETER_5" value="macro class"/>
             <input name="PROCESS_VARIABLE_5" value="MACRO_CLASS"/>
+            <input name="TASK_PARAMETER_6" value="objective"/>
+            <input name="PROCESS_VARIABLE_6" value="OBJECTIVE"/>
 	        <output name="SAMPLE_ENTITY_ID"/>
 	        <output name="PIPELINE_NAME"/>
             <output name="PIPELINE_PROCESS"/>
 	        <output name="MACRO_NAME"/>
             <output name="MACRO_CLASS"/>
+            <output name="OBJECTIVE"/>
 	    </operation>
+        
+        <!-- Make sure we're looking at the sub-sample we want -->
+        <operation name="Ensure Sub-sample" processor="org.janelia.it.jacs.compute.service.entity.sample.EnsureObjectiveSampleService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="OBJECTIVE"/>
+            <output name="SAMPLE_ENTITY_ID"/>
+        </operation>
 
         <!-- Set our status -->
         <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
@@ -48,7 +59,6 @@
             <output name="PIPELINE_RUN_ENTITY_ID"/>
         </operation>
         
-		
         <!-- Create a result node -->
         <operation name="Create Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Normalization"/>

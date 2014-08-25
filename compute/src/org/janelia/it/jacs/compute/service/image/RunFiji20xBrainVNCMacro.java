@@ -1,14 +1,18 @@
 package org.janelia.it.jacs.compute.service.image;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
@@ -172,4 +176,45 @@ public class RunFiji20xBrainVNCMacro extends RunFijiMacroService {
             this.gain = gain;
         }
     }
+	
+    @Override
+	public void postProcess() throws MissingDataException {
+
+        File outputDir = new File(resultFileNode.getDirectoryPath());
+        
+        File[] files = outputDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith(outputFilePrefix);
+            }
+        });
+        
+        if (files.length==0) {
+            throw new MissingDataException("No output files found in directory "+outputDir);
+        }
+        
+        FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
+        helper.addFileExclusion("*.log");
+        helper.addFileExclusion("*.oos");
+        helper.addFileExclusion("sge_*");
+        helper.addFileExclusion("temp");
+        helper.addFileExclusion("tmp.*");
+        helper.addFileExclusion("core.*");
+        
+        try {
+            helper.addFilesInDirToFolder(pipelineRun, outputDir);    
+            
+            String defaultImageName = outputFilePrefix+"_Brain_MIP.png";
+            Entity default2dImage = EntityUtils.findChildWithName(pipelineRun, defaultImageName);
+            if (default2dImage!=null) {
+                entityHelper.setDefault2dImage(pipelineRun, default2dImage);    
+            }
+            else {
+                logger.warn("Could not find default image: "+defaultImageName);
+            }
+        }
+        catch (Exception e) {
+            throw new MissingDataException("Error discoverying files in "+outputDir,e);
+        }
+	}
 }

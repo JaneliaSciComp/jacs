@@ -394,6 +394,30 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    public void applyProcessToSamplesInFolder(String folderId, String processName) {
+        try {
+            Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
+            if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
+            EJBFactory.getLocalEntityBean().loadLazyEntity(entity, false);
+            for(Entity child : entity.getOrderedChildren()) {
+                if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
+                    log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
+                    applyProcessToSamplesInFolder(child.getId().toString(), processName);
+                }
+                else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
+                    log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
+                    applyProcessToSample(child.getId().toString(), processName);  
+                    Thread.sleep(1000); // Sleep so that the logs are a little cleaner
+                }
+                else {
+                    log.info("applyProcessToSamplesInFolder - Ignoring child which is not a folder or sample: "+child.getName()+" (id="+child.getId()+")");
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
+    
     public void runRepairSeparationsPipeline(String user) {
         try {
             String processName = "RepairSeparationsPipeline";
