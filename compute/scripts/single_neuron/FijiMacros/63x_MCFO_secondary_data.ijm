@@ -37,8 +37,7 @@ title0 = prefix + "_MIP";
 titleAvi = prefix + ".avi";
 
 setBatchMode(true);
-MinimalParticleSize = 500;
-MaximalParticleSize = 500000;
+MinimalParticleSize = 2500;
 MaximalSignalsOccupancy = 128;
 
 // Yoshi's naming convention
@@ -186,6 +185,19 @@ function processChannel(channel_name) {
   close();
   selectWindow("Reslice of processing");
   rename("processing");
+
+  selectWindow("processing");
+  run("Reslice [/]...", "output=0.380 start=Right rotate avoid");
+  selectWindow("processing");
+  close();
+  selectWindow("Reslice of processing");
+  rename("processing");
+  performMasking();
+  run("Reslice [/]...", "output=0.188 start=Left flip rotate avoid");
+  selectWindow("processing");
+  close();
+  selectWindow("Reslice of processing");
+  rename("processing");
   performMasking();
   rename(title);
 }
@@ -229,7 +241,7 @@ function performMasking() {
         run("Clear", "slice");
     }
   }             
-  run("Analyze Particles...", "size=MinimalParticleSize-MaximalParticleSize pixel circularity=0.00-1.00 show=Masks clear");
+  run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
   run("Divide...", "value=255.000");
   rename("mask");
   imageCalculator("Multiply create stack", "processing","mask");
