@@ -50,7 +50,7 @@ public class MIPGenerationService extends ParallelFileProcessingService {
     	super.writeShellScript(writer);
         StringBuffer script = new StringBuffer();
         script.append("read EXTRA_OPTIONS\n");
-        script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
+        script.append(Vaa3DHelper.getVaa3dHeadlessGridCommandPrefix());
         script.append("\n");
         script.append(Vaa3DHelper.getFormattedMIPCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$EXTRA_OPTIONS"));
         script.append("\n");

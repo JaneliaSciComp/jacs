@@ -178,12 +178,12 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
         script.append("read CHAN_SPEC_2\n");
         script.append("read DISPLAY_PORT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT")).append("\n");
-        script.append("cd "+resultFileNode.getDirectoryPath());
-        script.append("\n");
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$INPUT_FILE_1,$CHAN_SPEC_1,$INPUT_FILE_2,$CHAN_SPEC_2");
-        script.append("\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
-        script.append("\n");
+        script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
+        script.append(Vaa3DHelper.getEnsureRawFunction()).append("\n");
+        script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_1", "RAW_1")).append("\n");
+        script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_2", "RAW_2")).append("\n");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$RAW_2,$CHAN_SPEC_2").append("\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
     }
     
