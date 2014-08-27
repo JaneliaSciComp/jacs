@@ -25,8 +25,8 @@ public class ValidationEngine implements Closeable {
     public static final String REPORT_FILE_EXTENSION = ".report.tsv";
     public static final String TYPE_OCC_DELIM = "^";
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");
-    private static final int WAIT_PERIOD_INCREMENT = 250;
-    private static final int MAX_RETRIES = 40;
+    private static final int WAIT_PERIOD_INCREMENT = 500;
+    private static final int MAX_RETRIES = 80;
     private static Logger logger = Logger.getLogger(ValidationEngine.class);
     private ValidationLogger validationLogger;
     protected EntityBeanLocal entityBean;
@@ -141,6 +141,7 @@ public class ValidationEngine implements Closeable {
                         fpw.print( ValidationLogger.SAMPLE_BREAK_DELIM );
                         fpw.println( fileSectionName );
                         fpw.print( caw.toString() );
+                        fpw.flush();
                         fileLock.release();
                     }
                 }
@@ -150,6 +151,8 @@ public class ValidationEngine implements Closeable {
                     logger.info( "Retry number " + retryNum + " sample: " + loggerId );
                 }
             } catch ( OverlappingFileLockException | InterruptedException ex ) {
+                logger.error("Exception while trying to print to output stream.  Exception follows.");
+                ex.printStackTrace();
                 fileLock = null;
             }
             retryNum ++;

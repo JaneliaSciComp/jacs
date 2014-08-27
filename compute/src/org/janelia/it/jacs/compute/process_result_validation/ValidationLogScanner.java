@@ -109,12 +109,12 @@ public class ValidationLogScanner {
             }
 
             SectionReturnVal returnVal = SectionReturnVal.NO_SECTION;
-            if ( inline.equals(ValidationLogger.COUNT_BY_CATEGORY_HEADER) ) {
-                returnVal = accumulateCountStats(bufferedReader);
-            }
-
             if ( inline.startsWith(ValidationLogger.ERROR_ENUM_DELIM) ) {
                 returnVal = accumulateDateStats(bufferedReader);
+            }
+
+            if ( inline.equals(ValidationLogger.COUNT_BY_CATEGORY_HEADER) ) {
+                returnVal = accumulateCountStats(bufferedReader);
             }
 
             // May need to back up by one line and use a stashed value, to avoid overlooking sections.
@@ -186,21 +186,26 @@ public class ValidationLogScanner {
             else {
                 String[] fields = inline.split("\t");
                 String category = fields[ fields.length - 1 ];
-                String dateStr = fields[ 3 ].trim();
-                StatInfo oldStat = getStatInfo(category);
-                Date date = DATE_FORMATTER.parse( dateStr, new ParsePosition(0) );
-                if ( date == null ) {
-                    System.err.println("Error: date " + dateStr + " not parsed.");
+                if ( fields.length >= 4 ) {
+                    String dateStr = fields[ 3 ].trim();
+                    StatInfo oldStat = getStatInfo(category);
+                    Date date = DATE_FORMATTER.parse( dateStr, new ParsePosition(0) );
+                    if ( date == null ) {
+                        System.err.println("Error: date " + dateStr + " not parsed.");
+                    }
+                    else {
+                        if ( date.after(oldStat.getLatestDate()) ) {
+                            oldStat.setLatestDate( date );
+                        }
+                        if ( date.before( oldStat.getEarliestDate() )) {
+                            oldStat.setEarliestDate( date );
+                        }
+                    }
+                    statsMap.put( category, oldStat );
                 }
                 else {
-                    if ( date.after(oldStat.getLatestDate()) ) {
-                        oldStat.setLatestDate( date );
-                    }
-                    if ( date.before( oldStat.getEarliestDate() )) {
-                        oldStat.setEarliestDate( date );
-                    }
+                    System.out.println("ERROR: Wrong kind of input line. " + inline);
                 }
-                statsMap.put( category, oldStat );
             }
 
         }
