@@ -40,6 +40,10 @@ public class Vaa3DHelper {
     protected static final String SPLIT_CHANNELS_CMD =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("SplitChannels.ScriptPath");
+
+    protected static final String FFMPEG_CMD =
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+                    SystemConfigurationProperties.getString("FFMPEG.Bin.Path");
     
     protected static final String SCRATCH_DIR =
             SystemConfigurationProperties.getString("computeserver.ClusterScratchDir");
@@ -300,7 +304,11 @@ public class Vaa3DHelper {
         }
         return tmpString;
     }
-
+    
+    public static String getFormattedH264ConvertCommand(String inputFile, String outputFile) {
+    	return FFMPEG_CMD+" -y -r 7 -i \""+inputFile+"\" -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p \""+outputFile+"\"";
+    }
+    
     public static int getRandomPort() {
         return getRandomPort(STARTING_DISPLAY_PORT);
     }
