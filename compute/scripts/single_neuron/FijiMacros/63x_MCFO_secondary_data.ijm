@@ -151,7 +151,7 @@ print("Creating movie");
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
-run("AVI... ", "compression=JPEG frame=20 save="+basedir+titleAvi);
+run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+titleAvi);
 run("Close All");
 run("Quit");
 
@@ -174,6 +174,7 @@ function processChannel(channel_name) {
   selectWindow("original");
   close();
   selectWindow("processing");
+  performMasking();
   run("Reslice [/]...", "output=0.380 start=Top avoid");
   selectWindow("processing");
   close();
@@ -185,31 +186,31 @@ function processChannel(channel_name) {
   close();
   selectWindow("Reslice of processing");
   rename("processing");
-
   selectWindow("processing");
-  run("Reslice [/]...", "output=0.380 start=Right rotate avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
-  performMasking();
-  run("Reslice [/]...", "output=0.188 start=Left flip rotate avoid");
+  run("Reslice [/]...", "output=1.000 start=Right rotate avoid");
   selectWindow("processing");
   close();
   selectWindow("Reslice of processing");
   rename("processing");
   performMasking();
+  run("Reslice [/]...", "output=1.000 start=Left flip rotate avoid");
+  selectWindow("processing");
+  close();
+  selectWindow("Reslice of processing");
+  rename("processing");
+  
   rename(title);
 }
 
 
 function performHistogramStretching() {
   ImageProcessing = getImageID();
+  getDimensions(width, height, channels, slices, frames);
+  W = round(width/10);
   run("Z Project...", "projection=[Max Intensity]");
-  run("Scale...", "x=0.1 y=0.1 width=102 height=102 interpolation=Bilinear average create title=01");
+  run("Size...", "width=W height=W depth=1 constrain average interpolation=Bilinear");
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
-  close();
   close();
   selectImage (ImageProcessing);
   setMinAndMax(min, max);
