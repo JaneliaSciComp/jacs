@@ -13,7 +13,8 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClientSimpleLocal;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataServer;
-import org.janelia.it.jacs.shared.geometricSearch.GeometricIndexManagerModel;
+import org.janelia.it.jacs.compute.service.activeData.ActiveDataServerSimpleLocal;
+import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
@@ -34,7 +35,7 @@ public class GeometricSearchBeanImpl implements GeometricSearchBeanLocal, Geomet
     @Override
     public List<GeometricIndexManagerModel> getManagerModel(int maxRecordCountPerScannerSignature) throws ComputeException {
         try {
-            ActiveDataServer activeData = (ActiveDataServer) new ActiveDataClientSimpleLocal();
+            ActiveDataServer activeData = ActiveDataServerSimpleLocal.getInstance();
             return activeData.getModel(maxRecordCountPerScannerSignature);
         } catch (Exception ex) {
             throw new ComputeException(ex);
@@ -44,7 +45,7 @@ public class GeometricSearchBeanImpl implements GeometricSearchBeanLocal, Geomet
     @Override
     public List<GeometricIndexManagerModel> getManagerModelForScanner(String scannerSignature) throws ComputeException {
        try {
-            ActiveDataServer activeData = (ActiveDataServer) new ActiveDataClientSimpleLocal();
+            ActiveDataServer activeData = ActiveDataServerSimpleLocal.getInstance();
             return activeData.getModelForScanner(scannerSignature);
         } catch (Exception ex) {
             throw new ComputeException(ex);

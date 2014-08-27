@@ -4,21 +4,21 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.shared.geometricSearch;
+package org.janelia.it.jacs.shared.geometric_search;
 
 /**
  *
  * @author murphys
  */
 public class GeometricIndexManagerModel implements Comparable<GeometricIndexManagerModel> {
-    
-  String scannerSignature;
-  Long  startTime;
-  Long  endTime;
-  int totalIdCount;
-  int successfulCount;
-  int errorCount;
-  int activeScannerCount;
+
+    String scannerSignature;
+    Long  startTime;
+    Long  endTime;
+    int totalIdCount;
+    int successfulCount;
+    int errorCount;
+    int activeScannerCount;
 
     public String getScannerSignature() {
         return scannerSignature;
@@ -75,7 +75,7 @@ public class GeometricIndexManagerModel implements Comparable<GeometricIndexMana
     public void setActiveScannerCount(int activeScannerCount) {
         this.activeScannerCount = activeScannerCount;
     }
-  
+
     @Override
     public int compareTo(GeometricIndexManagerModel m2) {
         //GeometricIndexManagerModel m2=(GeometricIndexManagerModel)o;
@@ -87,5 +87,31 @@ public class GeometricIndexManagerModel implements Comparable<GeometricIndexMana
             return m2.getScannerSignature().compareTo(scannerSignature);
         }
     }
-    
+
+    public String getAbbreviatedSignature() {
+        StringBuilder sb=new StringBuilder();
+        if (scannerSignature==null) {
+            return null;
+        }
+        else {
+            String[] cList=scannerSignature.split(":");
+            if (cList.length==0) {
+                return "<no classes>";
+            }
+            for (int i=0;i<cList.length;i++) {
+                String className=cList[i];
+                String[] pList=className.split("\\.");
+                if (pList.length==0) {
+                    sb.append(":");
+                } else {
+                    sb.append(pList[pList.length - 1]);
+                }
+                if (i<cList.length-1) {
+                    sb.append(":");
+                }
+            }
+            return sb.toString();
+        }
+    }
+
 }
