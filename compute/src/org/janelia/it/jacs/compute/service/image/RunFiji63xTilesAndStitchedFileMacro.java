@@ -27,7 +27,7 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
+public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridService {
 
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
     protected static final String FIJI_BIN_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Bin.Path");
