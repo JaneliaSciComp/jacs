@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.validation;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.mbean.Validator;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
