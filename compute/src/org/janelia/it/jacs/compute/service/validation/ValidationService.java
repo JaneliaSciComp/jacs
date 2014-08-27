@@ -42,7 +42,7 @@ public class ValidationService extends AbstractEntityService {
         nodebug = (Boolean) processData.getItem("NODEBUG");
         label = (String) processData.getItem( "LABEL" );
         unprocessedTypesStr = (String) processData.getItem("TYPES");
-        if ( unprocessedTypesStr != null ) {
+        if ( unprocessedTypesStr != null  &&  unprocessedTypesStr.trim().length() > 0 ) {
             specificTypes = unprocessedTypesStr.split(",");
         }
 
@@ -187,6 +187,7 @@ public class ValidationService extends AbstractEntityService {
                 entityBean, computeBean, annotationBean, (!nodebug), knownSampleId, validationRunNode.getDirectoryPath(), specificTypes, label
             )
         ) {
+            validationEngine.validateByType( entity, entity.getId() );
             // Do not look for samples under samples.  Do not recurse further here.  Instead, look for
             // other things to validate.
             traverseForValidation( entity.getId(), knownSampleId, validationEngine );
