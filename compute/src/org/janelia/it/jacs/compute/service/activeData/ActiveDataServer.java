@@ -7,7 +7,7 @@
 package org.janelia.it.jacs.compute.service.activeData;
 
 import java.util.List;
-import org.janelia.it.jacs.shared.geometricSearch.GeometricIndexManagerModel;
+import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 
 /**
  *

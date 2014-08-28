@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.shared.geometricSearch.GeometricIndexManagerModel;
+import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 
 /**
  *

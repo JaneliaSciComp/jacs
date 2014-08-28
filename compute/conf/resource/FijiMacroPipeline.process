@@ -1,5 +1,5 @@
  <!-- 
-      Process a sample using a Fiji macro.
+      Process an objective sample using a Fiji macro.
  -->
  <process name="Fiji Macro Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence name="Main">

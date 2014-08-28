@@ -335,6 +335,7 @@ public class FileDiscoveryHelper extends EntityHelper {
             return EntityConstants.TYPE_MYERS_NEURON_SEPARATION_FILE;
         }
         else if (filenameLowerCase.endsWith(".mp4")
+        		||filenameLowerCase.endsWith(".avi")
                 ||filenameLowerCase.endsWith(".mov")) {
             return EntityConstants.TYPE_MOVIE;
         }

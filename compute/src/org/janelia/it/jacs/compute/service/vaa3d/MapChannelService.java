@@ -29,7 +29,7 @@ public class MapChannelService extends ParallelFileProcessingService {
     protected void writeShellScript(FileWriter writer) throws Exception {
     	super.writeShellScript(writer);
         StringBuffer script = new StringBuffer();
-        script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
+        script.append(Vaa3DHelper.getVaa3dHeadlessGridCommandPrefix());
         script.append("\n");
         script.append(Vaa3DHelper.getMapChannelCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "\"" + mapChannelString + "\""));
         script.append("\n");

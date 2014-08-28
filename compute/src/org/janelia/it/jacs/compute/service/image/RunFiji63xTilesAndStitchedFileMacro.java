@@ -27,7 +27,7 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
+public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridService {
 
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
     protected static final String FIJI_BIN_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Bin.Path");
@@ -178,12 +178,16 @@ public class RunFiji63xBrainVNCMacro extends AbstractEntityGridService {
         script.append("read CHAN_SPEC_2\n");
         script.append("read DISPLAY_PORT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT")).append("\n");
-        script.append("cd "+resultFileNode.getDirectoryPath());
-        script.append("\n");
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$INPUT_FILE_1,$CHAN_SPEC_1,$INPUT_FILE_2,$CHAN_SPEC_2");
-        script.append("\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
-        script.append("\n");
+        script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
+        script.append(Vaa3DHelper.getEnsureRawFunction()).append("\n");
+        script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_1", "RAW_1")).append("\n");
+        script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_2", "RAW_2")).append("\n");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$RAW_2,$CHAN_SPEC_2").append("\n");
+        script.append("for f in *.avi; do\n");
+        script.append("    $fout = ${f%.avi}.mp4\n");
+        script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$f", "$fout")).append("\n");
+        script.append("done\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
     }
     
