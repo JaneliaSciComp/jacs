@@ -94,7 +94,7 @@ if(nImages==2) {
     rename("NeuronC3");
   }
 }
-if (endsWith(TITLE, ".v3dpbd")) {
+else {
   getDimensions(width, height, channels, slices, frames);
   rename("original");
   run("Split Channels");
@@ -109,7 +109,7 @@ if (endsWith(TITLE, ".v3dpbd")) {
   rename("reference");
 }
 
-// Z-intensity compesation to ramp singals in neuron channels
+// Z-intensity compensation to ramp signals in neuron channels
 print("Preparing for Z compensation");
 newImage("Ramp", "32-bit ramp", slices, width, height);
 run("Add...", "value=1 stack");
