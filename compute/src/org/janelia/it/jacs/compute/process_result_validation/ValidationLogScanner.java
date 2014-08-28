@@ -20,6 +20,7 @@ public class ValidationLogScanner {
     private File startingPoint = null;
     private Map<String,StatInfo> statsMap;
     private FileFilter fileAcceptor;
+    private Integer totalFailedSampleCount;
     public static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(STD_DATE_FORMAT, Locale.US );
 
     enum SectionReturnVal { EOF, RevertedLine, NO_SECTION;
@@ -54,6 +55,8 @@ public class ValidationLogScanner {
                 );
             }
         }
+
+        writer.println("Total count of failed samples is " + totalFailedSampleCount);
     }
 
     private void collectStatistics(File currentFile) throws IOException {
@@ -92,6 +95,7 @@ public class ValidationLogScanner {
         if ( sampleBuilder.length() > 0 ) {
             try ( BufferedReader sampleReader = packageBuilderIntoReader( sampleBuilder ) ) {
                 getStatsFrom( sampleReader );
+                totalFailedSampleCount ++;
             }
         }
         sampleBuilder.setLength( 0 );
@@ -204,6 +208,9 @@ public class ValidationLogScanner {
                     statsMap.put( category, oldStat );
                 }
                 else {
+                    // NOTE: if this error shows up, it could mean that a file was mis-written,
+                    // resulting in a section header being omitted, and an abrupt change
+                    // from date-stamped to occurrence-count lines in the file.
                     System.out.println("ERROR: Wrong kind of input line. " + inline);
                 }
             }

@@ -220,6 +220,7 @@ public class ValidationEngine implements Closeable {
 
         validatorMap.put( EntityConstants.TYPE_IMAGE_TILE, new ImageTileValidator(validationLogger, subEntityValidator, entityBean) );
         validatorMap.put( EntityConstants.TYPE_LSM_STACK, new LsmValidator(validationLogger ) );
+        validatorMap.put( EntityConstants.TYPE_PIPELINE_RUN, new PipelineRunValidator( validationLogger, entityBean ) );
     }
 
 }
