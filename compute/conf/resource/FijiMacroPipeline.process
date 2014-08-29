@@ -1,5 +1,5 @@
  <!-- 
-      Process a sample using a Fiji macro.
+      Process an objective sample using a Fiji macro.
  -->
  <process name="Fiji Macro Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence name="Main">
@@ -10,6 +10,8 @@
         <input name="MACRO_NAME"/>
         <input name="MACRO_CLASS"/>
         <input name="OBJECTIVE"/>
+        <input name="MERGED_CHANNEL_SPEC"/>
+        <input name="OUTPUT_COLOR_SPEC"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -58,7 +60,7 @@
             <input name="PIPELINE_PROCESS"/>
             <output name="PIPELINE_RUN_ENTITY_ID"/>
         </operation>
-        
+                    
         <!-- Create a result node -->
         <operation name="Create Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Normalization"/>
@@ -76,6 +78,9 @@
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="MACRO_NAME"/>
+                <input name="BULK_MERGE_PARAMETERS"/>
+                <input name="MERGED_CHANNEL_SPEC"/>
+                <input name="OUTPUT_COLOR_SPEC"/>
             </operation>
         </sequence>
         

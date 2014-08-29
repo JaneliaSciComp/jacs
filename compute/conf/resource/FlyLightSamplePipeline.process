@@ -102,7 +102,6 @@
             
             <!-- Decide which types of processing will be run -->
             <operation name="Choose Sample Area Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSampleAreaPipelineStepsService">
-                <input name="SAMPLE_ENTITY_ID"/>
                 <input name="SAMPLE_AREA"/>
                 <input name="MERGE_ALGORITHMS"/>
                 <input name="STITCH_ALGORITHMS"/>
@@ -173,40 +172,34 @@
     					<output name="BULK_MERGE_PARAMETERS"/>
     					<output name="STITCHED_FILENAME"/>
     					<output name="STACK_FILENAMES"/>
-    					<output name="COPY_FROM_ARCHIVE"/>
     					<output name="SAMPLE_PROCESSING_RESULTS_NAME"/>
     				</operation>
         	    </sequence>
         	    
-            	<sequence if="COPY_FROM_ARCHIVE=true">
-        		    
-        		    <!-- Create a result node for this group -->
-        		    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-        			    <input name="NAME" value="Temp"/>
-        			    <input name="OUTPUT_VAR_NAME" value="LSM_FILE_NODE"/>
-        		        <output name="LSM_FILE_NODE"/>
-        		        <output name="LSM_FILE_NODE_ID"/>
-        		    </operation>
-        		    
-        		    <!-- Get the LSM file paths and update the bulk merge parameters to use the copied files -->
-			        <operation name="Get LSM file paths" processor="org.janelia.it.jacs.compute.service.entity.sample.GetLsmFilePathsService">
-			            <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
-						<input name="BULK_MERGE_PARAMETERS"/>
-                        <output name="BULK_MERGE_PARAMETERS"/>
-                        <output name="LSM_SOURCE_FILE_PATHS"/>
-                        <output name="LSM_TARGET_FILE_PATHS"/>
-    		        </operation>
-        		
-                    <!-- Copy the files from archive -->
-                    <sequence name="Wait Async" waitForAsync="true">
-                        <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
-                            <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
-                            <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
-                            <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
-                            <input name="TARGET_FILE_PATHS" value="$V{LSM_TARGET_FILE_PATHS}"/>
-                        </operation>
-                    </sequence>
-                    
+    		    <!-- Create a result node for this group -->
+    		    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+    			    <input name="NAME" value="Temp"/>
+    			    <input name="OUTPUT_VAR_NAME" value="LSM_FILE_NODE"/>
+    		        <output name="LSM_FILE_NODE"/>
+    		        <output name="LSM_FILE_NODE_ID"/>
+    		    </operation>
+    		    
+    		    <!-- Get the LSM file paths and update the bulk merge parameters to use the copied files -->
+		        <operation name="Get LSM file paths" processor="org.janelia.it.jacs.compute.service.entity.sample.GetLsmFilePathsService">
+					<input name="BULK_MERGE_PARAMETERS"/>
+                    <output name="BULK_MERGE_PARAMETERS"/>
+                    <output name="LSM_SOURCE_FILE_PATHS"/>
+                    <output name="LSM_TARGET_FILE_PATHS"/>
+		        </operation>
+    		
+                <!-- Copy the files from archive -->
+                <sequence name="Wait Async" waitForAsync="true">
+                    <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
+                        <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
+                        <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
+                        <input name="TARGET_FILE_PATHS" value="$V{LSM_TARGET_FILE_PATHS}"/>
+                    </operation>
                 </sequence>
                 
         	    <!-- Asynchronously create the metadata describing the input LSM files -->
@@ -259,16 +252,12 @@
                         <output name="LSM_CHANNEL_MAPPING"/>
                     </operation>
                 </sequence>
-            	
-            	<sequence if="COPY_FROM_ARCHIVE=true">
-            	
-        		    <!-- We're done with the LSMs -->
-        		    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-        		        <input name="FILE_NODE_ID" value="$V{LSM_FILE_NODE_ID}"/>
-        		    </operation>
-        		    
-                </sequence>
-                
+        	            	
+    		    <!-- We're done with the LSMs -->
+    		    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+    		        <input name="FILE_NODE_ID" value="$V{LSM_FILE_NODE_ID}"/>
+    		    </operation>
+    		   
             	<!-- Run stitcher? -->
             	<sequence if="RUN_STITCH=true">
         	

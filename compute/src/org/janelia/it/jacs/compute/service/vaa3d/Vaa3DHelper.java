@@ -17,9 +17,11 @@ public class Vaa3DHelper {
     protected static final int XVFB_RETRIES = 10;
     
     protected static final String COPY_CMD = "cp";
-    
-    protected static final String VAA3D_BASE_CMD = "export LD_LIBRARY_PATH="+
-            SystemConfigurationProperties.getString("VAA3D.LDLibraryPath")+":$LD_LIBRARY_PATH\n"+
+
+    protected static final String VAA3D_LIBRARY_PATH = "export LD_LIBRARY_PATH="+
+            SystemConfigurationProperties.getString("VAA3D.LDLibraryPath")+":$LD_LIBRARY_PATH";
+    		
+    protected static final String VAA3D_BASE_CMD = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("VAA3D.CMD");
 
@@ -38,10 +40,22 @@ public class Vaa3DHelper {
     protected static final String SPLIT_CHANNELS_CMD =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("SplitChannels.ScriptPath");
+
+    protected static final String FFMPEG_CMD =
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+                    SystemConfigurationProperties.getString("FFMPEG.Bin.Path");
     
     protected static final String SCRATCH_DIR =
             SystemConfigurationProperties.getString("computeserver.ClusterScratchDir");
 
+    public static String getVaa3dLibrarySetupCmd() {
+        return VAA3D_LIBRARY_PATH;
+    }
+    
+    public static String getVaa3dExecutableCmd() {
+        return VAA3D_BASE_CMD;
+    }
+    
     public static String getScratchDirCreationScript(String scratchDirVariableName) {
         StringBuffer buf = new StringBuffer();
         buf.append("export TMPDIR=\""+SCRATCH_DIR+"\"\n");
@@ -79,17 +93,17 @@ public class Vaa3DHelper {
     }
     
     public static String getFormattedGrouperCommand(int referenceChannelIndex, String inputDirectoryPath, String outputFilePath) {
-        return VAA3D_BASE_CMD +" -x imageStitch.so -f istitch-grouping -p \"#c "+referenceChannelIndex+"\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
+        return getVaa3dExecutableCmd() +" -x imageStitch.so -f istitch-grouping -p \"#c "+referenceChannelIndex+"\" -i \""+inputDirectoryPath+"\" -o \""+outputFilePath+"\";";
     }
 
     public static String getFormattedSimilarityCommand(String targetPath, String inputListPath, String outputFilePath) {
-        return VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -targetStack \""+targetPath+"\" -subjectStackList \""+inputListPath+"\" -outputSimilarityList  \""+outputFilePath+"\";";
+        return getVaa3dExecutableCmd() +" -cmd screen-pattern-annotator -targetStack \""+targetPath+"\" -subjectStackList \""+inputListPath+"\" -outputSimilarityList  \""+outputFilePath+"\";";
     }
 
     public static String getFormattedStitcherCommand(int referenceChannelIndex, String inputDirectoryPath) {
-        return VAA3D_BASE_CMD +" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c "+referenceChannelIndex+" #si 0\";";
+        return getVaa3dExecutableCmd() +" -x imageStitch.so -f v3dstitch -i \""+inputDirectoryPath+"\" -p \"#c "+referenceChannelIndex+" #si 0\";";
     }
-
+    
     public static String getFormattedBlendCommand(String inputDirectoryPath, String outputFilePath) {
     	StringBuffer buf = new StringBuffer();
     	buf.append("OUTPUT_FILE="+outputFilePath+"\n");
@@ -98,7 +112,7 @@ public class Vaa3DHelper {
     	buf.append("if [ $EXT == \"v3draw\" ]; then\n");
     	buf.append("    mv output.v3draw $OUTPUT_FILE\n");
     	buf.append("else\n");
-    	buf.append("    "+VAA3D_BASE_CMD+" -cmd image-loader -convert output.v3draw $OUTPUT_FILE\n");
+    	buf.append("    "+getVaa3dExecutableCmd()+" -cmd image-loader -convert output.v3draw $OUTPUT_FILE\n");
     	buf.append("    rm -f output.v3draw\n");
     	buf.append("fi\n");	
     	return buf.toString();
@@ -108,9 +122,10 @@ public class Vaa3DHelper {
      * For V3D plugins that are truly headless.
      * @return
      */
-    public static String getHeadlessGridCommandPrefix() {
+    public static String getVaa3dHeadlessGridCommandPrefix() {
         StringBuffer prefix = new StringBuffer();
-        prefix.append("set -o errexit\n");
+        prefix.append("set -o errexit\n\n");
+        prefix.append(getVaa3dLibrarySetupCmd()).append("\n");
         return prefix.toString();
     }
 
@@ -168,7 +183,8 @@ public class Vaa3DHelper {
         prefix.append("    fi\n");
         
         prefix.append("    COUNTER=\"$(( $COUNTER + 1 ))\"\n");
-        prefix.append("done\n");
+        prefix.append("done\n\n");
+        prefix.append(getVaa3dLibrarySetupCmd()).append("\n");
 
         return prefix.toString();
     }
@@ -179,27 +195,27 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
-        String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mip \""+inputFilepath+"\" \""+outputFilepath+"\" "+extraOptions;
+        String cmd = getVaa3dExecutableCmd() +" -cmd image-loader -mip \""+inputFilepath+"\" \""+outputFilepath+"\" "+extraOptions;
         return cmd+" ;";
     }
 
     public static String getMapChannelCommand(String inputFilepath, String outputFilepath, String mapchannelString) throws ServiceException {
-        String cmd = VAA3D_BASE_CMD +" -cmd image-loader -mapchannels \""+inputFilepath+"\" \""+outputFilepath+"\" "+mapchannelString;
+        String cmd = getVaa3dExecutableCmd() +" -cmd image-loader -mapchannels \""+inputFilepath+"\" \""+outputFilepath+"\" "+mapchannelString;
         return cmd+" ;";
     }
 
     public static String getPatternAnnotationCommand(String inputStackFilepath, int patternChannel, String outputPrefix, String resourceDirPath, String outputDirPath) throws ServiceException {
-        String cmd = VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -input \""+inputStackFilepath+"\" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir \""+outputDirPath+"\"";
+        String cmd = getVaa3dExecutableCmd() +" -cmd screen-pattern-annotator -input \""+inputStackFilepath+"\" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir \""+outputDirPath+"\"";
         return cmd+" ;";
     }
 
     public static String getMaskAnnotationCommand(String inputStackFilepath, int patternChannel, String outputPrefix, String resourceDirPath, String outputDirPath) throws ServiceException {
-        String cmd = VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -input \""+inputStackFilepath+"\" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir \""+outputDirPath+"\"";
+        String cmd = getVaa3dExecutableCmd() +" -cmd screen-pattern-annotator -input \""+inputStackFilepath+"\" -pattern_channel "+patternChannel+" -prefix "+outputPrefix+" -resourceDir "+resourceDirPath+" -outputDir \""+outputDirPath+"\"";
         return cmd+" ;";
     }
 
     public static String getMaskGuideCommand(String inputNameIndexFile, String inputRGBFile, String outputMaskGuideDirectory) throws ServiceException {
-        String cmd = VAA3D_BASE_CMD +" -cmd screen-pattern-annotator -inputNameIndexFile \""+inputNameIndexFile+"\" -inputRGBFile "+inputRGBFile+" -outputMaskDirectory "+outputMaskGuideDirectory;
+        String cmd = getVaa3dExecutableCmd() +" -cmd screen-pattern-annotator -inputNameIndexFile \""+inputNameIndexFile+"\" -inputRGBFile "+inputRGBFile+" -outputMaskDirectory "+outputMaskGuideDirectory;
         return cmd+" ;";
     }
 
@@ -208,11 +224,35 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath, String saveTo8bit) throws ServiceException {
-    	return VAA3D_BASE_CMD +" -cmd image-loader -convert"+saveTo8bit+" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
+    	return getVaa3dExecutableCmd() +" -cmd image-loader -convert"+saveTo8bit+" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
     }
 
     public static String getFormattedCopyCommand(String inputFilepath, String outputFilepath) throws ServiceException {
         return COPY_CMD +" \""+inputFilepath+"\" \""+outputFilepath+"\" ;";
+    }
+
+    public static String getEnsureRawFunction() throws ServiceException {
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("ensureRawFile()\n");
+    	sb.append("{\n");
+    	sb.append("    local _WORKING_DIR=\"$1\"\n");
+    	sb.append("    local _FILE=\"$2\"\n");
+    	sb.append("    local _RESULTVAR=\"$3\"\n");
+    	sb.append("    local _EXT=${_FILE#*.}\n");
+    	sb.append("    if [ \"$_EXT\" == \"v3dpbd\" ]; then\n");
+    	sb.append("        local _PBD_FILE=$_FILE\n");
+    	sb.append("        local _FILE_STUB=`basename $_PBD_FILE`\n");
+    	sb.append("        _FILE=\"$_WORKING_DIR/${_FILE_STUB%.*}.v3draw\"\n");
+    	sb.append("        echo \"Converting PBD to RAW format\"\n");
+    	sb.append("        "+getVaa3dExecutableCmd()+" -cmd image-loader -convert \"$_PBD_FILE\" \"$_FILE\"\n");
+    	sb.append("    fi\n");
+    	sb.append("    eval $_RESULTVAR=\"'$_FILE'\"\n");
+    	sb.append("}\n");
+        return sb.toString();
+    }
+
+    public static String getEnsureRawCommand(String workDir, String inputFilepath, String outputVarName) throws ServiceException {
+    	return "ensureRawFile \""+workDir+"\" \""+inputFilepath+"\" "+outputVarName;
     }
     
     /**
@@ -237,21 +277,21 @@ public class Vaa3DHelper {
     
     public static String getFormattedNeuronMergeCommand(String originalImageFilePath, String consolidatedSignalLabelIndexFilePath,
                                                         String commaSeparatedFragmentList, String newOutputMIPPath, String newOutputStackPath) throws ServiceException {
-        return VAA3D_BASE_CMD + " -cmd neuron-fragment-editor -sourceImage \""+originalImageFilePath+"\" -labelIndex \"" +consolidatedSignalLabelIndexFilePath+
+        return getVaa3dExecutableCmd() + " -cmd neuron-fragment-editor -sourceImage \""+originalImageFilePath+"\" -labelIndex \"" +consolidatedSignalLabelIndexFilePath+
                 "\" -fragments "+commaSeparatedFragmentList+" -outputMip \""+newOutputMIPPath+"\" -outputStack \""+newOutputStackPath+"\" ;";
     }
 
     public static String getFormattedCellCounterCommand(String planPath, String convertedFilePath, String cellChannel, String bkgdChannel) {
-        return VAA3D_BASE_CMD + " -cmd cell-counter -cch "+cellChannel+" -bch "+bkgdChannel+" -plan "+planPath+" -i "+convertedFilePath;
+        return getVaa3dExecutableCmd() + " -cmd cell-counter -cch "+cellChannel+" -bch "+bkgdChannel+" -plan "+planPath+" -i "+convertedFilePath;
     }
 
     public static String getFormattedMaskFromStackCommand(String refPath, String outputDir, String outputPrefix, String channel, String threshold) {
-        return VAA3D_BASE_CMD + " -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage \""+refPath+"\" -channel "+channel+" -threshold "+threshold+" -outputDir \""+outputDir+"\" -outputPrefix "+outputPrefix;
+        return getVaa3dExecutableCmd() + " -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage \""+refPath+"\" -channel "+channel+" -threshold "+threshold+" -outputDir \""+outputDir+"\" -outputPrefix "+outputPrefix;
     }
     
     public static String getFormattedMaskSearchCommand(String indexFilePath, String queryChannel, String matrix,
                                                        String maxHits, String skipZeroes, String outputFilePath) {
-        String tmpString = VAA3D_BASE_CMD + " -cmd volume-pattern-index -mode search -indexFile \""+indexFilePath+
+        String tmpString = getVaa3dExecutableCmd() + " -cmd volume-pattern-index -mode search -indexFile \""+indexFilePath+
                 "\" -query $INPUT_FILE -outputFile \""+outputFilePath+"\" -queryChannel "+queryChannel;
         if (null!=matrix && !"".equals(matrix)) {
             tmpString+=" -matrix \""+matrix+"\"";
@@ -264,21 +304,17 @@ public class Vaa3DHelper {
         }
         return tmpString;
     }
-
+    
+    public static String getFormattedH264ConvertCommand(String inputFile, String outputFile) {
+    	return FFMPEG_CMD+" -y -r 7 -i \""+inputFile+"\" -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p \""+outputFile+"\"";
+    }
+    
     public static int getRandomPort() {
         return getRandomPort(STARTING_DISPLAY_PORT);
     }
 
     public static int getRandomPort(int startDisplayPort) {
         return ((int)(100.0 * Math.random()) + startDisplayPort);
-    }
-
-    public static String getVaa3dLibrarySetupCmd() {
-        return "export LD_LIBRARY_PATH=" + SystemConfigurationProperties.getString("VAA3D.LDLibraryPath") + ":$LD_LIBRARY_PATH";
-    }
-
-    public static String getVaa3dExecutableCmd() {
-        return SystemConfigurationProperties.getString("Executables.ModuleBase") + SystemConfigurationProperties.getString("VAA3D.CMD");
     }
 
 }

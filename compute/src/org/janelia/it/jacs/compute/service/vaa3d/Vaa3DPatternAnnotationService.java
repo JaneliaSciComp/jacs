@@ -94,7 +94,7 @@ public class Vaa3DPatternAnnotationService extends SubmitDrmaaJobService {
         script.append("read SAMPLE_NAME\n");
         script.append("read PATTERN_ANNOTATION_PATH\n");
         script.append("read ALIGNED_STACK_PATH\n");
-        script.append(Vaa3DHelper.getHeadlessGridCommandPrefix());
+        script.append(Vaa3DHelper.getVaa3dHeadlessGridCommandPrefix());
         script.append("\n");
         script.append(Vaa3DHelper.getPatternAnnotationCommand("$ALIGNED_STACK_PATH", patternChannel, "$SAMPLE_NAME", "\"" + resourceDirPath + "\"", "$PATTERN_ANNOTATION_PATH"));
         script.append("\n");
