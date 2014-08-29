@@ -20,7 +20,7 @@ public class ValidationLogScanner {
     private File startingPoint = null;
     private Map<String,StatInfo> statsMap;
     private FileFilter fileAcceptor;
-    private Integer totalFailedSampleCount;
+    private Integer totalFailedSampleCount = 0;
     public static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(STD_DATE_FORMAT, Locale.US );
 
     enum SectionReturnVal { EOF, RevertedLine, NO_SECTION;
@@ -46,7 +46,7 @@ public class ValidationLogScanner {
             if ( info.getCount() > 0 ) {
                 writer.println(
                         String.format(
-                                "Category '%s' has %d occurrences.  Latest occurrence was %s.  Earliest occurence was %s.",
+                                "Category '%s' has %d occurrences.  Latest occurrence was %s.  Earliest occurrence was %s.",
                                 category,
                                 info.getCount(),
                                 DATE_FORMATTER.format( info.getLatestDate() ),

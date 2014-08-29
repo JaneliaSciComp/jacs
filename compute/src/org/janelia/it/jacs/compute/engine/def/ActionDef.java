@@ -49,7 +49,7 @@ public abstract class ActionDef implements Serializable {
     private Condition processIfCondition;
 
     /**
-     * If specified, this action will be executed once for each occurence
+     * If specified, this action will be executed once for each occurrence
      * of forEachParam in process data.
      */
     private String forEachParam;
@@ -282,7 +282,7 @@ public abstract class ActionDef implements Serializable {
     }
 
     /**
-     * Return the parameter name that this action would be executed once for each occurence
+     * Return the parameter name that this action would be executed once for each occurrence
      * of it in process data.
      *
      * @return the parameter name
