@@ -102,7 +102,7 @@ print("Creating movie");
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
-run("AVI... ", "compression=JPEG frame=20 save="+basedir+'/'+title0Avi);
+run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
 run("Quit");
 
