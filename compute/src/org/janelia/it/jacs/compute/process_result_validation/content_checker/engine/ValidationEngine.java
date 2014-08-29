@@ -54,11 +54,13 @@ public class ValidationEngine implements Closeable {
             String label
     ) throws IOException, ComputeException {
         Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
+        List<Entity> annotations = annotationBean.getAnnotationsForEntity( loggerEntity.getOwnerKey(), loggerEntity.getId() );
         String metaData = String.format(
-                "Validation Report for %s Named %s with ID %d, owned by %s\nProduced by %s",
+                "Validation Report for %s Named %s with ID %d, having %d annotations, owned by %s\nProduced by %s",
                 loggerEntity.getEntityTypeName(),
                 loggerEntity.getName(),
                 loggerId,
+                annotations.size(),
                 loggerEntity.getOwnerKey(),
                 this.getClass().getName()
         );
