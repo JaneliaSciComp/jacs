@@ -5,12 +5,12 @@
 	<sequence name="Main">
 
         <input name="SAMPLE_ENTITY_ID"/>
+        <input name="OUTPUT_CHANNEL_ORDER"/>
         <input name="PIPELINE_NAME"/>
         <input name="PIPELINE_PROCESS"/>
         <input name="MACRO_NAME"/>
         <input name="MACRO_CLASS"/>
         <input name="OBJECTIVE"/>
-        <input name="MERGED_CHANNEL_SPEC"/>
         <input name="OUTPUT_COLOR_SPEC"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
@@ -79,7 +79,7 @@
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="MACRO_NAME"/>
                 <input name="BULK_MERGE_PARAMETERS"/>
-                <input name="MERGED_CHANNEL_SPEC"/>
+                <input name="OUTPUT_CHANNEL_ORDER"/>
                 <input name="OUTPUT_COLOR_SPEC"/>
             </operation>
         </sequence>

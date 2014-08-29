@@ -23,6 +23,8 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
+import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
@@ -106,9 +108,19 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
             }
 
-            List<String> mergeAlgorithms = (List<String>) data.getItem("MERGE_ALGORITHM");
-            if (mergeAlgorithms != null && !mergeAlgorithms.isEmpty()) {
-                mergeAlgorithm = mergeAlgorithms.get(0);
+            Object mergeAlgoObj = data.getItem("MERGE_ALGORITHM");
+            if (mergeAlgoObj instanceof String) {
+            	mergeAlgorithm = (String)mergeAlgoObj;
+            }
+            else {
+	            List<String> mergeAlgorithms = (List<String>)mergeAlgoObj;
+	            if (mergeAlgorithms != null && !mergeAlgorithms.isEmpty()) {
+	                mergeAlgorithm = mergeAlgorithms.get(0);
+	            }
+            }
+            
+            if (mergeAlgorithm==null) {
+            	logger.warn("Merge algorithm is not specified");
             }
             
             populateMaps();
@@ -556,6 +568,17 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 lsmEntityMap.put(lsmFilename, lsmStack);
                 
                 File jsonFile = new File(metadataFileNode.getDirectoryPath(), lsmFilename+".json");
+                
+                if (!jsonFile.exists()) {
+                	String jsonFilepath = findExistingJson(lsmFilename);
+                	if (jsonFilepath!=null) {
+                		jsonFile = new File(jsonFilepath);
+                	}
+                	else {
+                		throw new Exception("Could not find existing JSON metadata for "+lsmFilename);
+                	}
+                }
+                
                 try {
                     LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
                     contextLogger.info("Parsed metadata from: "+jsonFile);
@@ -567,4 +590,29 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
         }
     }
+
+    /**
+     * Find an existing JSON metadata file for the given LSM. 
+     * TODO: in the future, the JSON metadata filepath should be directly accessible from the LSM, so this code could be much simplified.
+     */
+	private String findExistingJson(final String lsmName) throws Exception {
+		final StringHolder stringHolder = new StringHolder();
+        EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
+                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
+                .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+                .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA).first()
+                .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
+                .run(new EntityVisitor() {
+            public void visit(Entity textFile) throws Exception {
+                if (textFile.getName().startsWith(lsmName) && textFile.getName().endsWith(".json")) {
+                	stringHolder.s = textFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                }
+            }
+        });
+        return stringHolder.s;
+	}
+	
+	private class StringHolder {
+		String s = null;
+	}
 }

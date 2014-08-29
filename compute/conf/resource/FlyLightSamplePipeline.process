@@ -102,6 +102,7 @@
             
             <!-- Decide which types of processing will be run -->
             <operation name="Choose Sample Area Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSampleAreaPipelineStepsService">
+                <input name="SAMPLE_ENTITY_ID"/>
                 <input name="SAMPLE_AREA"/>
                 <input name="MERGE_ALGORITHMS"/>
                 <input name="STITCH_ALGORITHMS"/>

@@ -48,7 +48,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private Entity sampleEntity;
     private Entity pipelineRun;
 
-    private String mergedChanSpec = null;
+    private String outputChannelOrder = null;
     private String outputColorSpec = null;
     private Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
     private List<MergedLsmPair> mergedLsmPairs;
@@ -60,7 +60,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
         
-        this.mergedChanSpec = data.getItemAsString("MERGED_CHANNEL_SPEC");
+        this.outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
         this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
         
         sampleEntity = entityBean.getEntityById(sampleEntityId);
@@ -175,10 +175,16 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     		String chanSpec2 = null;
     		String effector2 = null;
             String outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
+            String colorSpec1 = outputColorSpec;
+            String colorSpec2 = null;
 
     		if (mergedLsmPair.getMergedFilepath()!=null) {
     			inputFile1 = mergedLsmPair.getMergedFilepath();
-    			chanSpec1 = mergedChanSpec;
+    			StringBuilder csSb = new StringBuilder();
+    			for(String channel : outputChannelOrder.split(",")) {
+    				csSb.append(channel.equals("reference")?"r":"s");
+    			}
+    			chanSpec1 = csSb.toString();
     		}
     		else if (mergedLsmPair.getFilepath2()!=null) {
                 File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
@@ -186,6 +192,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         		inputFile2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         		chanSpec2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         		effector2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+        		colorSpec2 = outputColorSpec;
         		if (!effector1.equals(effector2)) {
                     logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
         		}
@@ -196,7 +203,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     					mergedLsmPair.getMergedFilepath());
     		}
 
-    		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, outputColorSpec, outputColorSpec, configIndex++);
+    		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
     	}
 
         this.outputFilePrefix = sampleName+"-stitched";
