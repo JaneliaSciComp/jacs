@@ -108,7 +108,6 @@ public class SampleCleaningService extends AbstractEntityService {
             // Clean up everything else
             deleteUnannotated(processRuns);
         }
-    	
     }
     
     private void deleteUnannotated(List<Entity> toDelete) throws ComputeException {

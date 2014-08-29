@@ -6,14 +6,18 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
+import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -43,8 +47,11 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private String outputFilePrefix;
     private Entity sampleEntity;
     private Entity pipelineRun;
-    
-    private Collection<LsmPair> lsmPairs = new ArrayList<LsmPair>();
+
+    private String mergedChanSpec = null;
+    private String outputColorSpec = null;
+    private Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
+    private List<MergedLsmPair> mergedLsmPairs;
     private Entity stitchedFile;
 
     protected void init(IProcessData processData) throws Exception {
@@ -52,6 +59,9 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
+        
+        this.mergedChanSpec = data.getItemAsString("MERGED_CHANNEL_SPEC");
+        this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
         
         sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
@@ -67,8 +77,23 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         if (pipelineRun == null) {
             throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntityId);
         }
+
+        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
+        if (bulkMergeParamObj==null) {
+        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
+        }
+
+        if (!(bulkMergeParamObj instanceof List)) {
+        	throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
+        }
         
-        logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+    	this.mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+        
+        final boolean gatherLsms = mergedLsmPairs==null;
+        
+        if (gatherLsms) {
+        	this.mergedLsmPairs = new ArrayList<MergedLsmPair>();
+        }
         
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
                 .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
@@ -76,16 +101,22 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
                 .run(new EntityVisitor() {
             public void visit(Entity tile) throws Exception {
             	populateChildren(tile);
-            	LsmPair pair = new LsmPair();
-            	pair.tileName = tile.getName().replaceAll(" ", "_");
+            	String lsm1 = null;
+            	String lsm2 = null;
             	for(Entity lsm : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
-            		if (pair.lsm1==null) pair.lsm1 = lsm;
-            		else if (pair.lsm2==null) pair.lsm2 = lsm;
+                    // The actual filename of the LSM we're dealing with is not compressed
+            		String lsmName = ArchiveUtils.getDecompressedFilepath(lsm.getName());
+            		lsmEntityMap.put(lsmName, lsm);
+            		if (lsm1==null) lsm1 = lsmName;
+            		else if (lsm2==null) lsm2 = lsmName;
             		else {
             			logger.warn("Too many LSMs for tile "+tile.getId()+" in sample "+sampleEntity.getId());
             		}
             	}
-            	lsmPairs.add(pair);
+            	if (gatherLsms) {
+	            	String tileName = tile.getName().replaceAll(" ", "_");
+		        	mergedLsmPairs.add(new MergedLsmPair(lsm1, lsm2, null, tileName));
+            	}
             }
         });
         
@@ -100,13 +131,16 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             }
         });
         
-        if (lsmPairs.isEmpty()) {
+        if (mergedLsmPairs.isEmpty()) {
         	throw new Exception("No LSM pairs found for sample "+sampleEntity.getName());
         }
         
         if (stitchedFile==null) {
         	throw new Exception("No stitched file found for sample "+sampleEntity.getName());
         }
+        
+        logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+
+        		" (id="+sampleEntityId+") with "+mergedLsmPairs.size()+" tiles");
     }
     
     @Override
@@ -129,26 +163,49 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     		sampleName = sampleName.substring(0, sampleName.indexOf('~'));
     	}
     	
-    	for(LsmPair pair : lsmPairs) {
-    		String inputFile1 = pair.lsm1==null?null:pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    		String inputFile2 = pair.lsm2==null?null:pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    		String chanSpec1 = pair.lsm1==null?null:pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    		String chanSpec2 = pair.lsm2==null?null:pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    		String effector1 = pair.lsm1==null?null:pair.lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
-    		String effector2 = pair.lsm2==null?null:pair.lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
-    		if (!effector1.equals(effector2)) {
-                logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
+    	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+
+            File lsm1 = new File(mergedLsmPair.getLsmFilepath1());
+            Entity lsm1Entity = lsmEntityMap.get(lsm1.getName());
+            
+            String inputFile1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    		String chanSpec1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    		String effector1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+    		String inputFile2 = null;
+    		String chanSpec2 = null;
+    		String effector2 = null;
+            String outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
+
+    		if (mergedLsmPair.getMergedFilepath()!=null) {
+    			inputFile1 = mergedLsmPair.getMergedFilepath();
+    			chanSpec1 = mergedChanSpec;
     		}
-    		writeInstanceFile(sampleName+"-"+pair.tileName+"-"+effector1, inputFile1, inputFile2, chanSpec1, chanSpec2, configIndex++);
+    		else if (mergedLsmPair.getFilepath2()!=null) {
+                File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
+                Entity lsm2Entity = lsmEntityMap.get(lsm2.getName());
+        		inputFile2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        		chanSpec2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        		effector2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+        		if (!effector1.equals(effector2)) {
+                    logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
+        		}
+            }
+    		else {
+    			throw new IllegalStateException("Could not write instance file for LSM pair (file1:"+
+    					mergedLsmPair.getFilepath1()+", file2:"+mergedLsmPair.getFilepath1()+" merged:"+
+    					mergedLsmPair.getMergedFilepath());
+    		}
+
+    		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, outputColorSpec, outputColorSpec, configIndex++);
     	}
 
         this.outputFilePrefix = sampleName+"-stitched";
 		String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 		String chanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    	writeInstanceFile(outputFilePrefix, inputFile, null, chanSpec, null, configIndex++);
+    	writeInstanceFile(outputFilePrefix, inputFile, null, chanSpec, null, outputColorSpec, outputColorSpec, configIndex++);
     }
 
-    private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, int configIndex) throws Exception {
+    private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, String colorSpec1, String colorSpec2, int configIndex) throws Exception {
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
@@ -156,8 +213,10 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         	fw.write(resultFileNode.getDirectoryPath() + "\n");
             fw.write((inputFile1==null?"":inputFile1) + "\n");
             fw.write((chanSpec1==null?"":chanSpec1) + "\n");
+            fw.write((colorSpec1==null?"":colorSpec1) + "\n");
             fw.write((inputFile2==null?"":inputFile2) + "\n");
             fw.write((chanSpec2==null?"":chanSpec2) + "\n");
+            fw.write((colorSpec2==null?"":colorSpec2) + "\n");
             fw.write((randomPort+configIndex) + "\n");
         }
         catch (IOException e) {
@@ -174,19 +233,22 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("read OUTPUT_DIR\n");
         script.append("read INPUT_FILE_1\n");
         script.append("read CHAN_SPEC_1\n");
+        script.append("read COLOR_SPEC_1\n");
         script.append("read INPUT_FILE_2\n");
         script.append("read CHAN_SPEC_2\n");
+        script.append("read COLOR_SPEC_2\n");
         script.append("read DISPLAY_PORT\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT")).append("\n");
         script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
         script.append(Vaa3DHelper.getEnsureRawFunction()).append("\n");
         script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_1", "RAW_1")).append("\n");
         script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_2", "RAW_2")).append("\n");
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$RAW_2,$CHAN_SPEC_2").append("\n");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$COLOR_SPEC_1,$RAW_2,$CHAN_SPEC_2,$COLOR_SPEC_2").append("\n");
         script.append("for f in *.avi; do\n");
-        script.append("    $fout = ${f%.avi}.mp4\n");
-        script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$f", "$fout")).append("\n");
-        script.append("done\n");
+        script.append("    fout=${f%.avi}.mp4\n");
+        script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$f", "$fout"));
+        script.append(" && rm $f");
+        script.append("\ndone\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
     }
@@ -241,11 +303,4 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             throw new MissingDataException("Error discoverying files in "+outputDir,e);
         }
 	}
-    
-    private class LsmPair {
-    	String tileName;
-    	Entity lsm1;
-    	Entity lsm2;
-    }
-    
 }
