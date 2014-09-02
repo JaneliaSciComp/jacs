@@ -48,7 +48,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private Entity sampleEntity;
     private Entity pipelineRun;
 
-    private String outputChannelOrder = null;
+    private String mergedChanSpec = null;
     private String outputColorSpec = null;
     private Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
     private List<MergedLsmPair> mergedLsmPairs;
@@ -60,9 +60,15 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
         
-        this.outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
         this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
-        
+
+        String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
+		StringBuilder csSb = new StringBuilder();
+		for(String channel : outputChannelOrder.split(",")) {
+			csSb.append(channel.equals("reference")?"r":"s");
+		}
+		this.mergedChanSpec = csSb.length()>0?csSb.toString():null;
+		
         sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
@@ -138,7 +144,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         if (stitchedFile==null) {
         	throw new Exception("No stitched file found for sample "+sampleEntity.getName());
         }
-        
+		
         logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+
         		" (id="+sampleEntityId+") with "+mergedLsmPairs.size()+" tiles");
     }
@@ -180,11 +186,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
     		if (mergedLsmPair.getMergedFilepath()!=null) {
     			inputFile1 = mergedLsmPair.getMergedFilepath();
-    			StringBuilder csSb = new StringBuilder();
-    			for(String channel : outputChannelOrder.split(",")) {
-    				csSb.append(channel.equals("reference")?"r":"s");
-    			}
-    			chanSpec1 = csSb.toString();
+    			chanSpec1 = mergedChanSpec;
     		}
     		else if (mergedLsmPair.getFilepath2()!=null) {
                 File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
@@ -208,8 +210,10 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
         this.outputFilePrefix = sampleName+"-stitched";
 		String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		String chanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    	writeInstanceFile(outputFilePrefix, inputFile, null, chanSpec, null, outputColorSpec, outputColorSpec, configIndex++);
+		if (mergedChanSpec==null) {
+			mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+		}
+    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
     }
 
     private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, String colorSpec1, String colorSpec2, int configIndex) throws Exception {
@@ -256,6 +260,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$f", "$fout"));
         script.append(" && rm $f");
         script.append("\ndone\n");
+        script.append("rm -f ").append(resultFileNode.getDirectoryPath()).append("/*.v3draw").append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
     }

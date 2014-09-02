@@ -404,7 +404,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
             
             String mapping = generateChannelMapping(inputChannelList, outputChannelList);
-            writeInstanceFiles(mergedLsmPair, mapping, configIndex++);        
+            // TODO: Make sure we're actually doing something. If the file is merged and the channel mapping is 1-to-1, then there's no point in running.
+            // Right now this doesn't work because the SubmitDrmaaJobService doesn't support aborted runs.  
+            //if (!merged || !mapping.replaceAll("([0-9]),\\1,?", "").equals("")) { 
+            	writeInstanceFiles(mergedLsmPair, mapping, configIndex++);
+            //}
         }
         
         createShellScript(writer);
@@ -414,6 +418,29 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         data.putItem("CHANNEL_SPEC", consensusChanSpec);
         data.putItem("SIGNAL_CHANNELS", consensusSignalChannels);
         data.putItem("REFERENCE_CHANNEL", consensusReferenceChannels);
+    }
+
+    private void writeInstanceFiles(MergedLsmPair mergedLsmPair, String mapping, int configIndex) throws Exception {
+        File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
+        FileWriter fw = new FileWriter(configFile);
+        try {
+            if (merged) {
+                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
+                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
+            }
+            else {
+                fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
+                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
+            }
+            fw.write(mapping + "\n");
+            fw.write((randomPort+configIndex) + "\n");
+        }
+        catch (IOException e) {
+        	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
+        }
+        finally {
+            fw.close();
+        }
     }
     
     private int getRefIndex(LSMMetadata lsmMetadata) {
@@ -461,29 +488,6 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
         }
         return tags;
-    }
-
-    private void writeInstanceFiles(MergedLsmPair mergedLsmPair, String mapping, int configIndex) throws Exception {
-        File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
-        FileWriter fw = new FileWriter(configFile);
-        try {
-            if (merged) {
-                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            }
-            else {
-                fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
-                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            }
-            fw.write(mapping + "\n");
-            fw.write((randomPort+configIndex) + "\n");
-        }
-        catch (IOException e) {
-        	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
-        }
-        finally {
-            fw.close();
-        }
     }
     
     private void createShellScript(FileWriter writer) throws Exception {

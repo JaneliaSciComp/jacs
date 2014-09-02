@@ -107,6 +107,7 @@
             <input name="MACRO_CLASS" value="org.janelia.it.jacs.compute.service.image.RunFiji63xTilesAndStitchedFileMacro"/>
             <input name="OBJECTIVE" value="63x"/>
             <input name="OUTPUT_COLOR_SPEC"/>
+            <input name="BULK_MERGE_PARAMETERS"/>
         </include>
         
         <!-- We're done with the LSMs -->
