@@ -13,6 +13,7 @@
         <input name="OBJECTIVE"/>
         <input name="OUTPUT_COLOR_SPEC"/>
         <input name="BULK_MERGE_PARAMETERS"/>
+        <input name="ARCHIVE_FLAG"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -74,7 +75,7 @@
         <sequence name="Wait Async" waitForAsync="true">
             <operation name="Run Fiji Macro" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="$V{MACRO_CLASS}"/>
-                <input name="ARCHIVE_FLAG" value="true"/>
+                <input name="ARCHIVE_FLAG"/>
                 <input name="RESULT_FILE_NODE" value="$V{NORM_FILE_NODE}"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>

@@ -53,6 +53,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
     private List<MergedLsmPair> mergedLsmPairs;
     private Entity stitchedFile;
+    private String effector;
 
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -176,7 +177,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             
             String inputFile1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     		String chanSpec1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    		String effector1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+    		String effector1 = effector = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
     		String inputFile2 = null;
     		String chanSpec2 = null;
     		String effector2 = null;
@@ -197,6 +198,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         		colorSpec2 = outputColorSpec;
         		if (!effector1.equals(effector2)) {
                     logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
+                    effector = "NO_CONSENSUS";
         		}
             }
     		else {
@@ -208,7 +210,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
     	}
 
-        this.outputFilePrefix = sampleName+"-stitched";
+        this.outputFilePrefix = sampleName+"-stitched"+(effector==null?"":"-"+effector);
 		String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 		if (mergedChanSpec==null) {
 			mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
