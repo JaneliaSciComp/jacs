@@ -211,7 +211,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     	}
 
     	// Stitched file is only relevant if there is more than one tile
-		if (configIndex>1) {
+		if (configIndex>2) {
 	        this.outputFilePrefix = sampleName+"-stitched"+(effector==null?"":"-"+effector);
 			String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			if (mergedChanSpec==null) {
