@@ -207,15 +207,18 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     					mergedLsmPair.getMergedFilepath());
     		}
 
-    		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
+			writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
     	}
 
-        this.outputFilePrefix = sampleName+"-stitched"+(effector==null?"":"-"+effector);
-		String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		if (mergedChanSpec==null) {
-			mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    	// Stitched file is only relevant if there is more than one tile
+		if (configIndex>1) {
+	        this.outputFilePrefix = sampleName+"-stitched"+(effector==null?"":"-"+effector);
+			String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			if (mergedChanSpec==null) {
+				mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+			}
+	    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
 		}
-    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
     }
 
     private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, String colorSpec1, String colorSpec2, int configIndex) throws Exception {
