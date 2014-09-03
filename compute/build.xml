@@ -273,6 +273,7 @@
                 <include name="org/janelia/it/jacs/compute/api/SearchBeanRemote.class"/>
             	<include name="org/janelia/it/jacs/compute/api/SolrBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/GenomeContextBeanRemote.class"/>
+                <include name="org/janelia/it/jacs/compute/api/GeometricSearchBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/ComputeException.class"/>
                 <include name="org/janelia/it/jacs/compute/access/DaoException.class"/>
                 <include name="org/janelia/it/jacs/compute/engine/launcher/LauncherException.class"/>

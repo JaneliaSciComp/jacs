@@ -6,11 +6,13 @@
 
 package org.janelia.it.jacs.shared.geometric_search;
 
+import java.io.Serializable;
+
 /**
  *
  * @author murphys
  */
-public class GeometricIndexManagerModel implements Comparable<GeometricIndexManagerModel> {
+public class GeometricIndexManagerModel implements Comparable<GeometricIndexManagerModel>, Serializable {
 
     String scannerSignature;
     Long  startTime;
@@ -79,9 +81,9 @@ public class GeometricIndexManagerModel implements Comparable<GeometricIndexMana
     @Override
     public int compareTo(GeometricIndexManagerModel m2) {
         //GeometricIndexManagerModel m2=(GeometricIndexManagerModel)o;
-        if (m2.getStartTime()<startTime) {
+        if (m2.getStartTime()>startTime) {
             return 1;
-        } else if (m2.getStartTime()>startTime) {
+        } else if (m2.getStartTime()<startTime) {
             return -1;
         } else {
             return m2.getScannerSignature().compareTo(scannerSignature);

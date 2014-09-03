@@ -15,9 +15,9 @@ import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
  * @author murphys
  */
 @Remote
-interface GeometricSearchBeanRemote {
+public interface GeometricSearchBeanRemote {
     
-    List<GeometricIndexManagerModel> getManagerModel(int maxRecordCountPerScannerSignature) throws ComputeException;
-    List<GeometricIndexManagerModel> getManagerModelForScanner(String scannerSignature) throws ComputeException;
+    public List<GeometricIndexManagerModel> getManagerModel(int maxRecordCountPerScannerSignature) throws ComputeException;
+    public List<GeometricIndexManagerModel> getManagerModelForScanner(String scannerSignature) throws ComputeException;
     
 }
