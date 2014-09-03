@@ -68,11 +68,20 @@ public class SampleValidator implements TypeValidator {
             reportableSuccess = false;
         }
 
+        checkAnatomicalAreas(entity, sampleId, refreshedSampleEntity, supportingFiles);
+
+        if ( validationLogger.isToReportPositives()  &&  reportableSuccess ) {
+            validationLogger.reportSuccess( entity.getId(), EntityConstants.TYPE_SAMPLE + " : has one+ pipeline runs matched by sample processing.");
+        }
+    }
+
+    private void checkAnatomicalAreas(Entity entity, Long sampleId, Entity refreshedSampleEntity, Entity supportingFiles) throws ComputeException {
+        Set<String> tilesAnatomicalAreas;
         tilesAnatomicalAreas = getTilesAnatomicalAreas( supportingFiles, sampleId );
         Set<String> sampleProcessingAnatomicalAreas = getSampleProcessingAnatomicalAreas( refreshedSampleEntity, sampleId );
 
         if (! sampleProcessingAnatomicalAreas.equals( tilesAnatomicalAreas ) ) {
-            String sampleProcessingAAStr = StringUtils.getCommaDelimited( sampleProcessingAnatomicalAreas );
+            String sampleProcessingAAStr = StringUtils.getCommaDelimited(sampleProcessingAnatomicalAreas);
             String tilesAAStr = StringUtils.getCommaDelimited( tilesAnatomicalAreas );
 
             validationLogger.reportError(
@@ -82,10 +91,6 @@ public class SampleValidator implements TypeValidator {
                     String.format(UNMATCHED_TILE_FMT, sampleId, tilesAAStr, sampleProcessingAAStr )
             );
             reportableSuccess = false;
-        }
-
-        if ( validationLogger.isToReportPositives()  &&  reportableSuccess ) {
-            validationLogger.reportSuccess( entity.getId(), EntityConstants.TYPE_SAMPLE + " : has one+ pipeline runs matched by sample processing.");
         }
     }
 
@@ -97,7 +102,8 @@ public class SampleValidator implements TypeValidator {
                 if ( child.getEntityTypeName().equals( EntityConstants.TYPE_IMAGE_TILE ) ) {
                     child = entityBean.getEntityAndChildren( child.getId() );
                     String anatomicalArea = child.getValueByAttributeName( EntityConstants.ATTRIBUTE_ANATOMICAL_AREA );
-                    if ( StringUtils.isEmpty( anatomicalArea ) ) {
+                    // NOTE: turning on this check, via the nodebug=false, pushes the majority of all samples into the "failed" category.
+                    if ( validationLogger.isToReportPositives()  &&  StringUtils.isEmpty( anatomicalArea ) ) {
                         anatomicalArea = "[Null Value]";
                         validationLogger.reportError(
                                 sampleId,
@@ -124,8 +130,8 @@ public class SampleValidator implements TypeValidator {
                 if ( grandChild.getEntityTypeName().equals( EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT ) ) {
                     grandChild = entityBean.getEntityAndChildren( grandChild.getId() );
                     String anatomicalArea = grandChild.getValueByAttributeName( EntityConstants.ATTRIBUTE_ANATOMICAL_AREA );
-
-                    if ( StringUtils.isEmpty( anatomicalArea ) ) {
+                    // NOTE: turning on this check, via the nodebug=false, pushes the majority of all samples into the "failed" category.
+                    if ( validationLogger.isToReportPositives()  &&  StringUtils.isEmpty( anatomicalArea ) ) {
                         anatomicalArea = "[Null Value]";
                         validationLogger.reportError(
                                 sampleId,
