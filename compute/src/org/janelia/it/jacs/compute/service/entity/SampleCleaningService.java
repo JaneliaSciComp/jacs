@@ -1,16 +1,20 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.SolrBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
- * Removes unneeded (unannotated, not final) results from Samples. 
+ * Removes redundant (unannotated, not final) results from Samples or Sub-Samples. 
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -18,15 +22,11 @@ public class SampleCleaningService extends AbstractEntityService {
 
     public transient static final String PARAM_testRun = "is test run";
     
-    protected SolrBeanLocal solrBean;
-    
     private boolean isDebug = false;
     private int numSamples = 0;
     private int numRunsDeleted = 0;
     
     public void execute() throws Exception {
-
-        solrBean = EJBFactory.getLocalSolrBean();
 
         String testRun = task.getParameter(PARAM_testRun);
         if (testRun!=null) {
@@ -50,6 +50,15 @@ public class SampleCleaningService extends AbstractEntityService {
     private void processSample(Entity sample) throws Exception {
     	
     	logger.info("Cleaning up sample "+sample.getName());
+    	
+    	List<Entity> subSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
+    	if (!subSamples.isEmpty()) {
+    		// This is a parent sample, process the sub-samples
+    		for (Entity subSample : subSamples) {
+    			processSample(populateChildren(subSample));
+    		}
+    		return;
+    	}
     	
     	List<Entity> runs = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
     	if (runs.isEmpty()) return;
