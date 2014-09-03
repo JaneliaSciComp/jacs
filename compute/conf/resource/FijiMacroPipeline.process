@@ -109,6 +109,7 @@
 			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
 				<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
 				<input name="PROCESSING_EXCEPTION"/>
+                <input name="RESULT_FILE_NODE" value="$V{NORM_FILE_NODE}"/>
 		    </operation>
 		
 	    </exceptionHandler>

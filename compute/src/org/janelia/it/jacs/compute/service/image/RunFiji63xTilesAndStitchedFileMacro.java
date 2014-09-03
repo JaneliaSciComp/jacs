@@ -181,7 +181,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     		String inputFile2 = null;
     		String chanSpec2 = null;
     		String effector2 = null;
-            String outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
+            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
             String colorSpec1 = outputColorSpec;
             String colorSpec2 = null;
 
@@ -285,17 +285,6 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
         File outputDir = new File(resultFileNode.getDirectoryPath());
         
-        File[] files = outputDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith(outputFilePrefix);
-            }
-        });
-        
-        if (files.length==0) {
-            throw new MissingDataException("No output files found in directory "+outputDir);
-        }
-
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         helper.addFileExclusion("*.log");
         helper.addFileExclusion("*.oos");
