@@ -23,6 +23,8 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
+import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
@@ -106,9 +108,19 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
             }
 
-            List<String> mergeAlgorithms = (List<String>) data.getItem("MERGE_ALGORITHM");
-            if (mergeAlgorithms != null && !mergeAlgorithms.isEmpty()) {
-                mergeAlgorithm = mergeAlgorithms.get(0);
+            Object mergeAlgoObj = data.getItem("MERGE_ALGORITHM");
+            if (mergeAlgoObj instanceof String) {
+            	mergeAlgorithm = (String)mergeAlgoObj;
+            }
+            else {
+	            List<String> mergeAlgorithms = (List<String>)mergeAlgoObj;
+	            if (mergeAlgorithms != null && !mergeAlgorithms.isEmpty()) {
+	                mergeAlgorithm = mergeAlgorithms.get(0);
+	            }
+            }
+            
+            if (mergeAlgorithm==null) {
+            	logger.warn("Merge algorithm is not specified");
             }
             
             populateMaps();
@@ -392,7 +404,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
             
             String mapping = generateChannelMapping(inputChannelList, outputChannelList);
-            writeInstanceFiles(mergedLsmPair, mapping, configIndex++);        
+            // TODO: Make sure we're actually doing something. If the file is merged and the channel mapping is 1-to-1, then there's no point in running.
+            // Right now this doesn't work because the SubmitDrmaaJobService doesn't support aborted runs.  
+            //if (!merged || !mapping.replaceAll("([0-9]),\\1,?", "").equals("")) { 
+            	writeInstanceFiles(mergedLsmPair, mapping, configIndex++);
+            //}
         }
         
         createShellScript(writer);
@@ -402,6 +418,29 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         data.putItem("CHANNEL_SPEC", consensusChanSpec);
         data.putItem("SIGNAL_CHANNELS", consensusSignalChannels);
         data.putItem("REFERENCE_CHANNEL", consensusReferenceChannels);
+    }
+
+    private void writeInstanceFiles(MergedLsmPair mergedLsmPair, String mapping, int configIndex) throws Exception {
+        File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
+        FileWriter fw = new FileWriter(configFile);
+        try {
+            if (merged) {
+                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
+                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
+            }
+            else {
+                fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
+                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
+            }
+            fw.write(mapping + "\n");
+            fw.write((randomPort+configIndex) + "\n");
+        }
+        catch (IOException e) {
+        	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
+        }
+        finally {
+            fw.close();
+        }
     }
     
     private int getRefIndex(LSMMetadata lsmMetadata) {
@@ -449,29 +488,6 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
         }
         return tags;
-    }
-
-    private void writeInstanceFiles(MergedLsmPair mergedLsmPair, String mapping, int configIndex) throws Exception {
-        File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
-        FileWriter fw = new FileWriter(configFile);
-        try {
-            if (merged) {
-                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            }
-            else {
-                fw.write(mergedLsmPair.getLsmFilepath1() + "\n");
-                fw.write(mergedLsmPair.getMergedFilepath() + "\n");
-            }
-            fw.write(mapping + "\n");
-            fw.write((randomPort+configIndex) + "\n");
-        }
-        catch (IOException e) {
-        	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
-        }
-        finally {
-            fw.close();
-        }
     }
     
     private void createShellScript(FileWriter writer) throws Exception {
@@ -556,6 +572,17 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 lsmEntityMap.put(lsmFilename, lsmStack);
                 
                 File jsonFile = new File(metadataFileNode.getDirectoryPath(), lsmFilename+".json");
+                
+                if (!jsonFile.exists()) {
+                	String jsonFilepath = findExistingJson(lsmFilename);
+                	if (jsonFilepath!=null) {
+                		jsonFile = new File(jsonFilepath);
+                	}
+                	else {
+                		throw new Exception("Could not find existing JSON metadata for "+lsmFilename);
+                	}
+                }
+                
                 try {
                     LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
                     contextLogger.info("Parsed metadata from: "+jsonFile);
@@ -567,4 +594,29 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
         }
     }
+
+    /**
+     * Find an existing JSON metadata file for the given LSM. 
+     * TODO: in the future, the JSON metadata filepath should be directly accessible from the LSM, so this code could be much simplified.
+     */
+	private String findExistingJson(final String lsmName) throws Exception {
+		final StringHolder stringHolder = new StringHolder();
+        EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
+                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
+                .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+                .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA).first()
+                .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
+                .run(new EntityVisitor() {
+            public void visit(Entity textFile) throws Exception {
+                if (textFile.getName().startsWith(lsmName) && textFile.getName().endsWith(".json")) {
+                	stringHolder.s = textFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                }
+            }
+        });
+        return stringHolder.s;
+	}
+	
+	private class StringHolder {
+		String s = null;
+	}
 }

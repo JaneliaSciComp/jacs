@@ -60,9 +60,15 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
         
-        this.mergedChanSpec = data.getItemAsString("MERGED_CHANNEL_SPEC");
         this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
-        
+
+        String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
+		StringBuilder csSb = new StringBuilder();
+		for(String channel : outputChannelOrder.split(",")) {
+			csSb.append(channel.equals("reference")?"r":"s");
+		}
+		this.mergedChanSpec = csSb.length()>0?csSb.toString():null;
+		
         sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
@@ -138,7 +144,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         if (stitchedFile==null) {
         	throw new Exception("No stitched file found for sample "+sampleEntity.getName());
         }
-        
+		
         logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+
         		" (id="+sampleEntityId+") with "+mergedLsmPairs.size()+" tiles");
     }
@@ -175,6 +181,8 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     		String chanSpec2 = null;
     		String effector2 = null;
             String outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
+            String colorSpec1 = outputColorSpec;
+            String colorSpec2 = null;
 
     		if (mergedLsmPair.getMergedFilepath()!=null) {
     			inputFile1 = mergedLsmPair.getMergedFilepath();
@@ -186,6 +194,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         		inputFile2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         		chanSpec2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         		effector2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+        		colorSpec2 = outputColorSpec;
         		if (!effector1.equals(effector2)) {
                     logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
         		}
@@ -196,13 +205,15 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     					mergedLsmPair.getMergedFilepath());
     		}
 
-    		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, outputColorSpec, outputColorSpec, configIndex++);
+    		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
     	}
 
         this.outputFilePrefix = sampleName+"-stitched";
 		String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		String chanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    	writeInstanceFile(outputFilePrefix, inputFile, null, chanSpec, null, outputColorSpec, outputColorSpec, configIndex++);
+		if (mergedChanSpec==null) {
+			mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+		}
+    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
     }
 
     private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, String colorSpec1, String colorSpec2, int configIndex) throws Exception {
@@ -249,6 +260,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$f", "$fout"));
         script.append(" && rm $f");
         script.append("\ndone\n");
+        script.append("rm -f ").append(resultFileNode.getDirectoryPath()).append("/*.v3draw").append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
     }
