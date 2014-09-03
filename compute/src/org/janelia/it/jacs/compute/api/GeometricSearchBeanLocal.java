@@ -14,6 +14,6 @@ import javax.ejb.Local;
  */
 
 @Local
-interface GeometricSearchBeanLocal extends GeometricSearchBeanRemote {
+public interface GeometricSearchBeanLocal extends GeometricSearchBeanRemote {
     
 }

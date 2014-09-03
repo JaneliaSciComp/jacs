@@ -224,6 +224,7 @@ public class ActiveDataScan {
     public synchronized void advanceEpoch() throws Exception {
         if(statusDescriptor==SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY) {
             updateStatus();
+            logger.info("Creating EpochRecord for scanner="+entityScannerClassname);
             ScanEpochRecord record=new ScanEpochRecord();
             record.setStartTimestamp(currentEpochStartTimestamp);
             record.setEndTimestamp(new Date().getTime());
@@ -246,7 +247,8 @@ public class ActiveDataScan {
     
     public List<ScanEpochRecord> getEpochHistory() {
         List<ScanEpochRecord> epochHistoryCopy=new ArrayList<>();
-        Collections.copy(epochHistory, epochHistoryCopy);
+        epochHistoryCopy.addAll(epochHistory);
+        logger.info("getEpochHistory - count="+epochHistory.size()+" copyCount="+epochHistoryCopy.size());
         return epochHistoryCopy;
     }
 
