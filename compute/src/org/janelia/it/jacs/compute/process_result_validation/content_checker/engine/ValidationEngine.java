@@ -135,29 +135,38 @@ public class ValidationEngine implements Closeable {
         FileLock fileLock = null;
         int retryNum = 1;
         int waitPeriod = WAIT_PERIOD_INCREMENT;
-        while ( null == fileLock  &&  retryNum < MAX_RETRIES ) {
+        boolean writeComplete = false;
+        while ( !writeComplete  &&  retryNum < MAX_RETRIES ) {
             try ( FileOutputStream fos = new FileOutputStream( reportFile, true ) ) {
                 fileLock = fos.getChannel().tryLock();
 
                 if ( fileLock != null ) {
-                    try ( PrintWriter fpw = new PrintWriter( new OutputStreamWriter( fos) ) ) {
+                    try ( PrintWriter fpw = new PrintWriter( new OutputStreamWriter( fos ) ) ) {
                         fpw.print( ValidationLogger.SAMPLE_BREAK_DELIM );
                         fpw.println( fileSectionName );
                         fpw.print( caw.toString() );
                         fpw.flush();
+                        writeComplete = true;
+
                         fileLock.release();
                     }
                 }
-                else {
+
+            } catch ( OverlappingFileLockException ofle ) {
+                logger.info("Overlapping file lock while trying to print to output stream for logger id=" + loggerId);
+                fileLock = null;
+            }
+
+            if ( ! writeComplete ) {
+                try {
                     Thread.sleep( waitPeriod );
                     waitPeriod += WAIT_PERIOD_INCREMENT;   // Backoff between retries.
                     logger.info( "Retry number " + retryNum + " sample: " + loggerId );
+                } catch ( InterruptedException ie ) {
+                    logger.info("Interrupted Exception while trying to print to output stream for logger id=" + loggerId);
                 }
-            } catch ( OverlappingFileLockException | InterruptedException ex ) {
-                logger.error("Exception while trying to print to output stream.  Exception follows.");
-                ex.printStackTrace();
-                fileLock = null;
             }
+
             retryNum ++;
         }
         if ( fileLock != null ) {
