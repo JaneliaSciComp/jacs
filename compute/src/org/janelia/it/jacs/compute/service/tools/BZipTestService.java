@@ -117,10 +117,4 @@ public class BZipTestService extends SubmitDrmaaJobService {
         return resultFileNode;
     }
 
-    @Override
-    protected String getNativeSpecificationOverride() {
-        return "-l archive=true";
-    }
-
-
 }
