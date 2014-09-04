@@ -108,7 +108,6 @@
             <input name="OBJECTIVE" value="63x"/>
             <input name="OUTPUT_COLOR_SPEC"/>
             <input name="BULK_MERGE_PARAMETERS"/>
-            <input name="ARCHIVE_FLAG" value="false"/>
         </include>
         
         <!-- We're done with the LSMs -->
