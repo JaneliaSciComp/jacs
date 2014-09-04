@@ -156,6 +156,11 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Run sample discovery (synchronize to SAGE) before running samples</description>
+            <name>runSampleDiscovery</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Mode(s) for processing (NEW, ERROR, MARKED, ALL, NONE)</description>
             <name>runMode</name>
             <type>java.lang.String</type>
@@ -168,6 +173,11 @@
         <parameter>
             <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Rerun pipelines which already have successful results for a given sample</description>
+            <name>rerunExistingResults</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>

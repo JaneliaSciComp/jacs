@@ -53,6 +53,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
     private List<MergedLsmPair> mergedLsmPairs;
     private Entity stitchedFile;
+    private String effector;
 
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
@@ -176,11 +177,11 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             
             String inputFile1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     		String chanSpec1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    		String effector1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+    		String effector1 = effector = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
     		String inputFile2 = null;
     		String chanSpec2 = null;
     		String effector2 = null;
-            String outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
+            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
             String colorSpec1 = outputColorSpec;
             String colorSpec2 = null;
 
@@ -197,6 +198,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         		colorSpec2 = outputColorSpec;
         		if (!effector1.equals(effector2)) {
                     logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
+                    effector = "NO_CONSENSUS";
         		}
             }
     		else {
@@ -205,15 +207,18 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     					mergedLsmPair.getMergedFilepath());
     		}
 
-    		writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
+			writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
     	}
 
-        this.outputFilePrefix = sampleName+"-stitched";
-		String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		if (mergedChanSpec==null) {
-			mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    	// Stitched file is only relevant if there is more than one tile
+		if (configIndex>2) {
+	        this.outputFilePrefix = sampleName+"-stitched"+(effector==null?"":"-"+effector);
+			String inputFile = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			if (mergedChanSpec==null) {
+				mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+			}
+	    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
 		}
-    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
     }
 
     private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, String colorSpec1, String colorSpec2, int configIndex) throws Exception {
@@ -280,17 +285,6 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
         File outputDir = new File(resultFileNode.getDirectoryPath());
         
-        File[] files = outputDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith(outputFilePrefix);
-            }
-        });
-        
-        if (files.length==0) {
-            throw new MissingDataException("No output files found in directory "+outputDir);
-        }
-
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         helper.addFileExclusion("*.log");
         helper.addFileExclusion("*.oos");

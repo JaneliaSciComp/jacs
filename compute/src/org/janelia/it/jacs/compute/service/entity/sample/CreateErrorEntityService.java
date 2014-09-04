@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.io.File;
+
 import org.hibernate.exception.ExceptionUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -8,27 +10,20 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.io.File;
 
 /**
- * Creates an error entity based on the given exception, and adds it to the root entity.
+ * Creates an Error entity based on the given exception, and adds it to the root entity (usually a Pipeline Run).
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class CreateErrorEntityService extends AbstractEntityService {
 
-    public static final String ERRORS_DIR_NAME = "Error";
-    
+	private static final String ERRORS_DIR_NAME = "Error";
     private static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
     
     public void execute() throws Exception {
             
-    	String rootEntityId = (String)processData.getItem("ROOT_ENTITY_ID");
-    	if (StringUtils.isEmpty(rootEntityId)) {
-    		throw new IllegalArgumentException("ROOT_ENTITY_ID may not be null");
-    	}
+    	String rootEntityId = data.getRequiredItemAsString("ROOT_ENTITY_ID");
 
     	File outputDir = null;
         FileNode resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
@@ -42,7 +37,6 @@ public class CreateErrorEntityService extends AbstractEntityService {
             outputDir = new File(userFilestore, ERRORS_DIR_NAME);
             outputDir.mkdirs();
             logger.warn("No RESULT_FILE_NODE is specified, saving error message to general Errors folder: "+outputDir);
-            
         }
     	
     	Entity rootEntity = entityBean.getEntityById(rootEntityId);

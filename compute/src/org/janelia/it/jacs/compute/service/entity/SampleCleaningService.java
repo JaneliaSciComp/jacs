@@ -1,16 +1,20 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.SolrBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
- * Removes unneeded (unannotated, not final) results from Samples. 
+ * Removes redundant (unannotated, not final) results from Samples or Sub-Samples. 
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -18,15 +22,11 @@ public class SampleCleaningService extends AbstractEntityService {
 
     public transient static final String PARAM_testRun = "is test run";
     
-    protected SolrBeanLocal solrBean;
-    
     private boolean isDebug = false;
     private int numSamples = 0;
     private int numRunsDeleted = 0;
     
     public void execute() throws Exception {
-
-        solrBean = EJBFactory.getLocalSolrBean();
 
         String testRun = task.getParameter(PARAM_testRun);
         if (testRun!=null) {
@@ -122,8 +122,8 @@ public class SampleCleaningService extends AbstractEntityService {
     		toReallyDelete.add(entity);
     	}
 
-    	logger.info("    Found "+toReallyDelete.size()+" non-annotated results for deletion:");
     	if (toReallyDelete.isEmpty()) return;
+    	logger.info("    Found "+toReallyDelete.size()+" non-annotated results for deletion:");
 	
     	if (!isDebug) {
     		int c = 0;

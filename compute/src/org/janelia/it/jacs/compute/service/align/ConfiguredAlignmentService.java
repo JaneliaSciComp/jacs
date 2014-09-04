@@ -69,7 +69,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         writer.write(script);
     }
 
-    protected String getAlignerCommand() {
+    protected String getAlignerCommand() throws ServiceException {
 
         StringBuilder cmd = new StringBuilder();
         cmd.append("sh ").append(ALIGNER_SCRIPT_CMD);
@@ -86,10 +86,19 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             cmd.append(" -z zflip");
         }
         if (input1!=null) {
+        	if (StringUtils.isEmpty(input1.getPixelResolution())) {
+        		throw new ServiceException("Primary input has no pixel resolution");
+        	}
+        	else if (StringUtils.isEmpty(input1.getOpticalResolution())) {
+        		throw new ServiceException("Primary input has no optical resolution");
+        	}
             cmd.append(" -i ").append(getInputParameter(input1));
             if (input1.getInputSeparationFilename()!=null) {
                 cmd.append(" -e ").append(input1.getInputSeparationFilename());
             }
+        }
+        else {
+        	throw new ServiceException("No primary input for alignment");
         }
         if (input2!=null) {
             cmd.append(" -j ").append(getInputParameter(input2));

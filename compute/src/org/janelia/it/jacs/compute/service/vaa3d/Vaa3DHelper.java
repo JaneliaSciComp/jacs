@@ -117,6 +117,10 @@ public class Vaa3DHelper {
     	buf.append("fi\n");	
     	return buf.toString();
     }
+    
+    private static String getHostnameEcho() {
+    	return "echo \"Running on \"`hostname`\n";
+    }
 
     /**
      * For V3D plugins that are truly headless.
@@ -124,6 +128,7 @@ public class Vaa3DHelper {
      */
     public static String getVaa3dHeadlessGridCommandPrefix() {
         StringBuffer prefix = new StringBuffer();
+        prefix.append(getHostnameEcho());
         prefix.append("set -o errexit\n\n");
         prefix.append(getVaa3dLibrarySetupCmd()).append("\n");
         return prefix.toString();
@@ -145,6 +150,7 @@ public class Vaa3DHelper {
         StringBuffer prefix = new StringBuffer();
 
         // Skip ports that are currently in use, or "locked"
+        prefix.append(getHostnameEcho());
         prefix.append("echo \"Finding a port for Xvfb, starting at "+displayPort+"...\"\n");
         prefix.append("PORT="+displayPort+" COUNTER=0 RETRIES="+XVFB_RETRIES+"\n");
         
