@@ -1,45 +1,8 @@
 <process name="Sage Artifact Export" startEvent="pending" processor="queue/largePipelineLauncher" updateProcessStatus="on_success">
 
     <sequence name="Main">
-
+            
         <operation name="Sage Artifact Export" processor="org.janelia.it.jacs.compute.service.entity.SageArtifactExportService">
-            <input name="MODE" value="GET_SAMPLES_NEEDING_ARTIFACTS"/>
-            <output name="SAMPLE_20X_ID"/>
-            <output name="SAMPLE_63X_ID"/>
-        </operation>
-        
-        <!-- Process each 20x sample -->
-        <sequence forEach="SAMPLE_20X_ID">
-            
-            <!-- Spawn a new task to process the Sample -->
-            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-                <input name="PROCESS_DEF_NAME" value="PipelineConfig_YoshiNormalization20x"/>
-                <input name="DISPLAY_NAME" value="Yoshi Normalization 20x"/>
-                <input name="PARAMETER_1_KEY" value="sample entity id"/>
-                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_20X_ID}"/>
-            </operation>
-            
-        </sequence>
-
-        <!-- Process each 63x sample -->
-        <sequence forEach="SAMPLE_63X_ID">
-            
-            <!-- Spawn a new task to process the Sample -->
-            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-                <input name="PROCESS_DEF_NAME" value="PipelineConfig_YoshiNormalization63x"/>
-                <input name="DISPLAY_NAME" value="Yoshi Normalization 63x"/>
-                <input name="PARAMETER_1_KEY" value="sample entity id"/>
-                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_63X_ID}"/>
-            </operation>
-            
-        </sequence>
-        
-        <!-- Wait for subtasks to finish -->
-        <operation name="Wait for Subtasks" processor="org.janelia.it.jacs.compute.service.common.WaitForSubTasksService">
-        </operation>
-        
-        <operation name="Sage Artifact Export" processor="org.janelia.it.jacs.compute.service.entity.SageArtifactExportService">
-            <input name="MODE" value="EXPORT_TO_SAGE"/>
         </operation>
             
     </sequence>

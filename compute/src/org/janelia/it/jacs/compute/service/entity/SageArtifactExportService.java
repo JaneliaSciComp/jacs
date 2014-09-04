@@ -23,16 +23,8 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
 /**
- * Exports workstation artifacts into the SAGE database. This service has two modes, which are used in the 
- * pipeline of the same name:
- * 
- * - GET_SAMPLES_NEEDING_ARTIFACTS: This mode gathers samples which have been annotated for export and filters out
- *     those which have already been exported. It then produces two lists, SAMPLE_20X_ID and SAMPLE_60X_ID, which
- *     contain those samples that still need MBEW artifacts to be generated.
- *     
- * - EXPORT_TO_SAGE: This mode re-gathers the samples which have been annotated for export and then actually
- *     creates corresponding rows in SAGE (unless they already exist). If everything is succcessful, it then annotates
- *     the same as having been exported.
+ * Exports workstation artifacts into the SAGE database for all annotated samples. 
+ * If everything is successful, it then annotates the samples as having been exported.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -47,12 +39,12 @@ public class SageArtifactExportService extends AbstractEntityService {
     private static final String ANNOTATION_EXPORT_63X = "Publish63xToMBEW";
     private static final String ANNOTATION_EXPORTED = "PublishedToMBEW";
     
-    private String mode;
     private SageDAO sage;
     private Map<String,Line> lines = new HashMap<String,Line>();
     private Map<String,List<Integer>> sourceSageImageIdsByArea;
     private Date createDate;
-    
+
+    private Entity publishedTerm;
     private CvTerm productMip;
     private CvTerm productTranslation;
     private CvTerm productTranslationReference;
@@ -62,34 +54,24 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm dimensionX;
     private CvTerm dimensionY;
     private CvTerm dimensionZ;
-    private Entity publishedTerm;
     
     public void execute() throws Exception {
-        
-        this.mode = data.getRequiredItemAsString("MODE");
+    	init();
+        List<Entity> samples = getSamplesForExport(ANNOTATION_EXPORT_20X);
+        samples.addAll(getSamplesForExport(ANNOTATION_EXPORT_63X));
+        exportSamples(samples);
+    }
+    
+    private void init() throws Exception {
 
         for(Entity entity : entityBean.getEntitiesByNameAndTypeName(ownerKey, ANNOTATION_EXPORTED, EntityConstants.TYPE_ONTOLOGY_ELEMENT)) {
             if (publishedTerm!=null) {
-                logger.warn("Found multiple terms with name "+ANNOTATION_EXPORTED+" will use "+publishedTerm.getId());
+                logger.warn("Found multiple terms with name "+ANNOTATION_EXPORTED+". Will use "+publishedTerm.getId());
             }
             else {
                 publishedTerm = entity;
             }
         }
-        
-        if ("GET_SAMPLES_NEEDING_ARTIFACTS".equals(mode)) {
-            List<Entity> samples20x = getSamplesForExport(ANNOTATION_EXPORT_20X);
-            List<Long> sampleIds20x = getSampleIdsNeedingArtifacts(samples20x);
-            data.putItem("SAMPLE_20X_ID", sampleIds20x);
-            List<Entity> samples63x = getSamplesForExport(ANNOTATION_EXPORT_63X);
-            List<Long> sampleIds63x = getSampleIdsNeedingArtifacts(samples63x);
-            data.putItem("SAMPLE_60X_ID", sampleIds63x);
-        }
-        else if ("EXPORT_TO_SAGE".equals(mode)) {
-            List<Entity> samples = getSamplesForExport(ANNOTATION_EXPORT_20X);
-            samples.addAll(getSamplesForExport(ANNOTATION_EXPORT_63X));
-            exportSamples(samples);
-        } 
     }
     
     private List<Entity> getSamplesForExport(String annotationTerm) throws Exception {
@@ -150,27 +132,6 @@ public class SageArtifactExportService extends AbstractEntityService {
             if (objective.getName().equals(childObjective)) {
                 return child;
             }    
-        }
-        return null;
-    }
-    
-    private List<Long> getSampleIdsNeedingArtifacts(List<Entity> samples) throws Exception {
-        List<Long> sampleIds = new ArrayList<Long>();
-        for(Entity sample : samples) {
-            if (getArtifactRun(sample)==null) {
-                logger.info("Sample needs MBEW artifact generation "+sample.getName());
-                sampleIds.add(sample.getId());
-            }
-        }
-        return sampleIds;
-    }
-    
-    private Entity getArtifactRun(Entity sample) throws Exception {
-        entityLoader.populateChildren(sample);
-        for(Entity child : sample.getChildren()) {
-            if (child.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN) && child.getName().startsWith(ARTIFACT_PIPELINE_RUN_PREFIX)) {
-                return child;
-            }
         }
         return null;
     }
@@ -249,6 +210,16 @@ public class SageArtifactExportService extends AbstractEntityService {
             OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), publishedTerm.getId(), publishedTerm.getName(), null, null);
             annotationBean.createOntologyAnnotation(ownerKey,annotation);
         }
+    }
+
+    private Entity getArtifactRun(Entity sample) throws Exception {
+        entityLoader.populateChildren(sample);
+        for(Entity child : sample.getChildren()) {
+            if (child.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN) && child.getName().startsWith(ARTIFACT_PIPELINE_RUN_PREFIX)) {
+                return child;
+            }
+        }
+        return null;
     }
     
     private void exportArtifactsForArea(Entity sample, Entity artifactRun, String area, Line line) throws Exception {
