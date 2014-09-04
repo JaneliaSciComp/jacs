@@ -14,6 +14,7 @@ import java.util.Date;
  */
 public class ActiveDataScanStatus {
     private long startTimestamp;
+    private long endTimestamp;
     private int epochNumber;
     private int currentEpochNumProcessing;
     private int currentEpochNumSuccessful;
@@ -23,6 +24,7 @@ public class ActiveDataScanStatus {
 
     public ActiveDataScanStatus(
             long startTimestamp,
+            long endTimestamp,
             int epochNumber, 
             int currentEpochNumProcessing,
             int currentEpochNumSuccessful,
@@ -30,6 +32,7 @@ public class ActiveDataScanStatus {
             int currentEpochIdCount,
             String statusDescriptor) {
         this.startTimestamp = startTimestamp;
+        this.endTimestamp = endTimestamp;
         this.epochNumber = epochNumber;
         this.currentEpochNumProcessing = currentEpochNumProcessing;
         this.currentEpochNumSuccessful = currentEpochNumSuccessful;
@@ -41,6 +44,8 @@ public class ActiveDataScanStatus {
     public long getStartTimestamp() {
         return startTimestamp;
     }
+
+    public long getEndTimestamp() { return endTimestamp; }
 
     public int getCurrentEpochNumProcessing() {
         return currentEpochNumProcessing;
@@ -69,7 +74,8 @@ public class ActiveDataScanStatus {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("epoch=").append(epochNumber).append(" start=").append(new Date(startTimestamp)).append(" processing=")
+        sb.append("epoch=").append(epochNumber).append(" start=").append(new Date(startTimestamp)).append(" end=")
+                .append(new Date(endTimestamp)).append(" processing=")
                 .append(currentEpochNumProcessing).append(" successful=").append(currentEpochNumSuccessful).append(" error=")
                 .append(currentEpochNumError).append(" status=").append(statusDescriptor).append(" idcount=").append(currentEpochIdCount);
         return sb.toString();

@@ -236,6 +236,11 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         model.setErrorCount(scanStatus.getCurrentEpochNumError());
         model.setSuccessfulCount(scanStatus.getCurrentEpochNumSuccessful());
         model.setTotalIdCount(scanStatus.getCurrentEpochIdCount());
+        if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
+            model.setEndTime(scanStatus.getEndTimestamp());
+        } else {
+            model.setEndTime(null);
+        }
         model.setEndTime(null);
         modelList.add(model);
         // Next, handle most recent N epochs
