@@ -51,15 +51,6 @@ public class SampleCleaningService extends AbstractEntityService {
     	
     	logger.info("Cleaning up sample "+sample.getName());
     	
-    	List<Entity> subSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
-    	if (!subSamples.isEmpty()) {
-    		// This is a parent sample, process the sub-samples
-    		for (Entity subSample : subSamples) {
-    			processSample(populateChildren(subSample));
-    		}
-    		return;
-    	}
-    	
     	List<Entity> runs = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
     	if (runs.isEmpty()) return;
     	
