@@ -131,8 +131,8 @@ public class SampleCleaningService extends AbstractEntityService {
     		toReallyDelete.add(entity);
     	}
 
-    	logger.info("    Found "+toReallyDelete.size()+" non-annotated results for deletion:");
     	if (toReallyDelete.isEmpty()) return;
+    	logger.info("    Found "+toReallyDelete.size()+" non-annotated results for deletion:");
 	
     	if (!isDebug) {
     		int c = 0;
