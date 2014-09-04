@@ -28,6 +28,8 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     
     private final Map<String, ActiveDataScan> scanMap = new HashMap<>();  
     private final Map<String, Long> lockMap = new HashMap<>();
+
+    private Long lastModelUpdateTimestamp=new Long(new Date().getTime());
     
     public static ActiveDataServer getInstance() {
         if (theInstance==null) {
@@ -83,6 +85,7 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan = getScan(signature);
         if (scan != null) {
             synchronized (scan) {
+                lastModelUpdateTimestamp=new Date().getTime();
                 return scan.getNextId();
             }
         }
@@ -117,14 +120,17 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.setEntityStatus(entityId, statusCode);
+            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
     
     @Override
     public void addEntityEvent(String signature, long entityId, String descriptor) throws Exception {
+        lastModelUpdateTimestamp=new Date().getTime();
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.addEntityEvent(entityId, descriptor);
+            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
     
@@ -139,6 +145,7 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.clearEntityEvents(entityId);
+            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
 
@@ -146,6 +153,7 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.advanceEpoch();
+            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
     
@@ -228,6 +236,11 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         model.setErrorCount(scanStatus.getCurrentEpochNumError());
         model.setSuccessfulCount(scanStatus.getCurrentEpochNumSuccessful());
         model.setTotalIdCount(scanStatus.getCurrentEpochIdCount());
+        if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
+            model.setEndTime(scanStatus.getEndTimestamp());
+        } else {
+            model.setEndTime(null);
+        }
         model.setEndTime(null);
         modelList.add(model);
         // Next, handle most recent N epochs
@@ -249,5 +262,10 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         Collections.sort(modelList);
         return modelList;
     }
-    
+
+    public Long getLastModelUpdateTimestamp() throws Exception {
+        return lastModelUpdateTimestamp;
+    }
+
+
 }

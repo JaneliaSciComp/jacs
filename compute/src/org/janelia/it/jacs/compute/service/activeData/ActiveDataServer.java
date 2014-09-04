@@ -21,4 +21,6 @@ public interface ActiveDataServer extends ActiveDataClient {
     
     public List<GeometricIndexManagerModel> getModelForScanner(String signature) throws Exception;
 
+    public Long getLastModelUpdateTimestamp() throws Exception;
+
 }
