@@ -105,8 +105,12 @@ public class AlignmentResultValidator implements TypeValidator {
             }
 
             if ( qiScore == null ) {
+                Entity reportEntity = d3i;
+                if ( reportEntity == null ) {
+                    reportEntity = entity;
+                }
                 validationLogger.reportError(
-                        sampleId, d3i, entity.getEntityTypeName(), MISSING_QI_CATEGORY,
+                        sampleId, reportEntity, entity.getEntityTypeName(), MISSING_QI_CATEGORY,
                         String.format(
                                 MISSING_QI_FMT, entity.getId(), entity.getName(), sampleId
                         )

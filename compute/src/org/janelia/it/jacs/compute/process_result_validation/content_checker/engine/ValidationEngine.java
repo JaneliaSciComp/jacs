@@ -5,6 +5,9 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.engine.launcher.LauncherException;
+import org.janelia.it.jacs.compute.engine.util.JmsUtil;
+import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator.*;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -12,8 +15,6 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.validation.ValidationRunNode;
 
 import java.io.*;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
 import java.util.*;
 
 /**
@@ -25,8 +26,6 @@ public class ValidationEngine implements Closeable {
     public static final String REPORT_FILE_EXTENSION = ".report.tsv";
     public static final String TYPE_OCC_DELIM = "^";
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");
-    private static final int WAIT_PERIOD_INCREMENT = 500;
-    private static final int MAX_RETRIES = 80;
     private static Logger logger = Logger.getLogger(ValidationEngine.class);
     private ValidationLogger validationLogger;
     protected EntityBeanLocal entityBean;
@@ -131,43 +130,16 @@ public class ValidationEngine implements Closeable {
                 directory,
                 directory.getName() + "." + validationLogger.getFinalStatus() + REPORT_FILE_EXTENSION
         );
+        Map<String,String> map = new HashMap<>();
+        map.put( ValidationLogger.FILE_SECTION_NAME_PARAM, fileSectionName );
+        map.put( ValidationLogger.REPORT_FILE_PATH_PARAM, reportFile.getAbsolutePath() );
+        map.put( ValidationLogger.FILE_CONTENT_PARAM, caw.toString() );
+        AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
 
-        FileLock fileLock = null;
-        int retryNum = 1;
-        int waitPeriod = WAIT_PERIOD_INCREMENT;
-        while ( null == fileLock  &&  retryNum < MAX_RETRIES ) {
-            try ( FileOutputStream fos = new FileOutputStream( reportFile, true ) ) {
-                fileLock = fos.getChannel().tryLock();
-
-                if ( fileLock != null ) {
-                    try ( PrintWriter fpw = new PrintWriter( new OutputStreamWriter( fos) ) ) {
-                        fpw.print( ValidationLogger.SAMPLE_BREAK_DELIM );
-                        fpw.println( fileSectionName );
-                        fpw.print( caw.toString() );
-                        fpw.flush();
-                        fileLock.release();
-                    }
-                }
-                else {
-                    Thread.sleep( waitPeriod );
-                    waitPeriod += WAIT_PERIOD_INCREMENT;   // Backoff between retries.
-                    logger.info( "Retry number " + retryNum + " sample: " + loggerId );
-                }
-            } catch ( OverlappingFileLockException | InterruptedException ex ) {
-                logger.error("Exception while trying to print to output stream.  Exception follows.");
-                ex.printStackTrace();
-                fileLock = null;
-            }
-            retryNum ++;
-        }
-        if ( fileLock != null ) {
-            // Double-check to release lock.
-            if ( fileLock.isValid() ) {
-                fileLock.release();
-            }
-        }
-        else {
-            throw new RuntimeException("Failed to obtain file lock on " + reportFile + " for sample " + loggerId);
+        try {
+            JmsUtil.sendMessageToQueue( messageInterface, map, ValidationLogger.NON_CONCURRENT_WRITE_QUEUE );
+        } catch ( LauncherException le ) {
+            throw new IOException( le );
         }
 
     }
@@ -195,7 +167,7 @@ public class ValidationEngine implements Closeable {
         directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + ValidationRunNode.sanitizeDirName( label ) );
         if ( ! directory.exists() ) {
             if ( ! directory.mkdirs() ) {
-                throw new RuntimeException( "Failed to create directory hierarchy. " + directory.getName() );
+                logger.warn( "Failed to create directory hierarchy. " + directory.getName() );
             }
         }
         return directory;

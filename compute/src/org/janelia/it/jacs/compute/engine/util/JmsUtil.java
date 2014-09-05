@@ -15,8 +15,11 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 import javax.ejb.EJBException;
 import javax.jms.JMSException;
+import javax.jms.MapMessage;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
+
+import java.util.Map;
 
 /**
  * This class contains utility methods for sending JMS messages to action processors
@@ -182,6 +185,23 @@ public class JmsUtil {
             queueMessage.setMessageId(jmsMessage.getJMSMessageID());
             logger.debug("Sent message with messageId:" + jmsMessage.getJMSMessageID() + " for taskId:" + processData.getItem(IProcessData.TASK));
             return queueMessage;
+        }
+        catch (Throwable e) {
+            // Cannot proceed further
+            throw new LauncherException(e);
+        }
+    }
+
+    public static void sendMessageToQueue(AsyncMessageInterface messageInterface, Map<String,String> parameters, String queueName) throws LauncherException {
+        try {
+            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+            MapMessage mapMessage = messageInterface.createMapMessage();
+            for ( String paramName: parameters.keySet() ) {
+                mapMessage.setString( paramName, parameters.get( paramName ) );
+            }
+            messageInterface.sendMessageWithinTransaction(mapMessage);
+            messageInterface.commit();
+            messageInterface.endMessageSession();
         }
         catch (Throwable e) {
             // Cannot proceed further
