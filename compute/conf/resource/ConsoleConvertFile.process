@@ -30,7 +30,6 @@
         <sequence name="Convert files" waitForAsync="true" startEvent="running">
             <operation name="Convert files" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
-                <input name="ARCHIVE_FLAG" value="true"/>
                 <input name="IGNORE_ERRORS" value="true"/>
                 <input name="RESULT_FILE_NODE"/>
                 <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>

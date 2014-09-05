@@ -198,7 +198,6 @@
                 <sequence name="Wait Async" waitForAsync="true">
                     <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
                         <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
-                        <input name="ARCHIVE_FLAG" value="true"/>
                         <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
                         <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
                         <input name="TARGET_FILE_PATHS" value="$V{LSM_TARGET_FILE_PATHS}"/>
