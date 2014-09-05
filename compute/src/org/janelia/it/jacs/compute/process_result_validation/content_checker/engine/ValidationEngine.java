@@ -167,7 +167,7 @@ public class ValidationEngine implements Closeable {
         directory = new File( directory.getAbsolutePath() + FILE_SEPARATOR + ValidationRunNode.sanitizeDirName( label ) );
         if ( ! directory.exists() ) {
             if ( ! directory.mkdirs() ) {
-                throw new RuntimeException( "Failed to create directory hierarchy. " + directory.getName() );
+                logger.warn( "Failed to create directory hierarchy. " + directory.getName() );
             }
         }
         return directory;
