@@ -29,7 +29,6 @@
 		    <operation name="Generate Artifacts" processor="queue/gridSubmitAndWait">
 		        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.RepairArtifactsPipelineGridService"/>
 				<input name="RESULT_FILE_NODE"/>
-				<input name="ARCHIVE_FLAG" value="true"/>
 				<input name="RUN_MODE"/>
 				<input name="ENTITY_LIST"/>
 		    </operation>

@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -56,13 +58,6 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm dimensionZ;
     
     public void execute() throws Exception {
-    	init();
-        List<Entity> samples = getSamplesForExport(ANNOTATION_EXPORT_20X);
-        samples.addAll(getSamplesForExport(ANNOTATION_EXPORT_63X));
-        exportSamples(samples);
-    }
-    
-    private void init() throws Exception {
 
         for(Entity entity : entityBean.getEntitiesByNameAndTypeName(ownerKey, ANNOTATION_EXPORTED, EntityConstants.TYPE_ONTOLOGY_ELEMENT)) {
             if (publishedTerm!=null) {
@@ -72,6 +67,26 @@ public class SageArtifactExportService extends AbstractEntityService {
                 publishedTerm = entity;
             }
         }
+        
+        if (publishedTerm==null) {
+            throw new Exception("No ontology term owned by "+ownerKey+" was found with name '"+ANNOTATION_EXPORTED+"'");
+        }
+    	
+        this.sage = new SageDAO(logger);
+        this.createDate = new Date();
+        this.productMip = getCvTermByName("product","projection_all");
+        this.productTranslation = getCvTermByName("product","translation");
+        this.productTranslationReference = getCvTermByName("product","translation_reference");
+        this.propertyPublished = getCvTermByName("light_imagery","published_to");
+        this.source = getCvTermByName("lab","JFRC");
+        this.chanSpec = getCvTermByName("light_imagery","channel_spec");
+        this.dimensionX = getCvTermByName("light_imagery","dimension_x");
+        this.dimensionY = getCvTermByName("light_imagery","dimension_y");
+        this.dimensionZ = getCvTermByName("light_imagery","dimension_z");
+
+        List<Entity> samples = getSamplesForExport(ANNOTATION_EXPORT_20X);
+        samples.addAll(getSamplesForExport(ANNOTATION_EXPORT_63X));
+        exportSamples(samples);
     }
     
     private List<Entity> getSamplesForExport(String annotationTerm) throws Exception {
@@ -137,33 +152,24 @@ public class SageArtifactExportService extends AbstractEntityService {
     }
         
     private void exportSamples(List<Entity> samples) throws Exception {
-        
-        this.sage = new SageDAO(logger);
-        this.createDate = new Date();
-        this.productMip = getCvTermByName("product","projection_all");
-        this.productTranslation = getCvTermByName("product","translation");
-        this.productTranslationReference = getCvTermByName("product","translation_reference");
-        this.propertyPublished = getCvTermByName("light_imagery","published_to");
-        this.source = getCvTermByName("lab","JFRC");
-        this.chanSpec = getCvTermByName("light_imagery","channel_spec");
-        this.dimensionX = getCvTermByName("light_imagery","dimension_x");
-        this.dimensionY = getCvTermByName("light_imagery","dimension_y");
-        this.dimensionZ = getCvTermByName("light_imagery","dimension_z");
-
-        if (publishedTerm==null) {
-            logger.error("No ontology term found with name "+ANNOTATION_EXPORTED+". Exported samples will not be annotated as exported!");
-        }
-        
         for(Entity sample : samples) {
-            exportSample(sample);
+            logger.info("Exporting "+sample.getName());
+            String objective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+        	if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
+                export20xSample(sample);
+        	}
+        	else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
+                export63xSample(sample);
+        	}
+        	else {
+        		logger.warn("Sample with unsupported objective ("+objective+")");
+        	}
             sample.setEntityData(null); // free memory
         }
     }
     
-    private void exportSample(Entity sample) throws Exception {
+    private void export20xSample(Entity sample) throws Exception {
 
-        logger.info("Exporting "+sample.getName());
-        
         // Find fly line
         
         String lineName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
@@ -196,15 +202,15 @@ public class SageArtifactExportService extends AbstractEntityService {
         });
         
         // Collect artifacts for export
-        Entity artifactRun = getArtifactRun(sample);
+        Entity artifactRun = getLatestArtifactRun(sample);
         if (artifactRun==null) {
             logger.error("  Sample has no MBEW artifacts to export");
             return;
         }
         entityLoader.populateChildren(artifactRun);
 
-        exportArtifactsForArea(sample, artifactRun, "Brain", line);
-        exportArtifactsForArea(sample, artifactRun, "VNC", line); 
+        export20xArtifactsForArea(sample, artifactRun, "Brain", line);
+        export20xArtifactsForArea(sample, artifactRun, "VNC", line); 
         
         if (publishedTerm!=null) {
             OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), publishedTerm.getId(), publishedTerm.getName(), null, null);
@@ -212,17 +218,46 @@ public class SageArtifactExportService extends AbstractEntityService {
         }
     }
 
-    private Entity getArtifactRun(Entity sample) throws Exception {
+    private void export63xSample(Entity sample) throws Exception {
+        
+        // Find fly line
+        
+        String lineName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
+        Line line = lines.get(lineName);
+        if (line==null) {
+            line = sage.getLineByName(lineName); 
+            lines.put(lineName, line);
+        }
+        
+        // Collect artifacts for export
+        Entity artifactRun = getLatestArtifactRun(sample);
+        if (artifactRun==null) {
+            logger.error("  Sample has no MBEW artifacts to export");
+            return;
+        }
+        entityLoader.populateChildren(artifactRun);
+
+        export63xArtifactsForArea(sample, artifactRun, line);
+        
+    	// Mark sample as having been published to MBEW
+        OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), publishedTerm.getId(), publishedTerm.getName(), null, null);
+        annotationBean.createOntologyAnnotation(ownerKey,annotation);
+    }
+
+    private Entity getLatestArtifactRun(Entity sample) throws Exception {
         entityLoader.populateChildren(sample);
-        for(Entity child : sample.getChildren()) {
+        List<Entity> children = sample.getOrderedChildren();
+        Collections.reverse(children);
+        for(Entity child : children) {
             if (child.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN) && child.getName().startsWith(ARTIFACT_PIPELINE_RUN_PREFIX)) {
-                return child;
+            	return child;
+            	
             }
         }
         return null;
     }
     
-    private void exportArtifactsForArea(Entity sample, Entity artifactRun, String area, Line line) throws Exception {
+    private void export20xArtifactsForArea(Entity sample, Entity artifactRun, String area, Line line) throws Exception {
 
         List<Integer> sourceSageImageIds = sourceSageImageIdsByArea.get(area);
         if (sourceSageImageIds==null) {
@@ -240,9 +275,11 @@ public class SageArtifactExportService extends AbstractEntityService {
         
         Image sourceImage = null;
         if (sourceSageImageIds.size()==1) {
+        	// Single LSM source image
             sourceImage = sage.getImages(sourceSageImageIds).get(0);
         }
         else {
+        	// Multiple LSMs were merged or stitched to create the artifact, so we need a new primary image in SAGE
             Entity image3d = EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean))
                 .startAt(sample)
                 .childOfType(EntityConstants.TYPE_PIPELINE_RUN)
@@ -272,10 +309,114 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
     }
+
+    private void export63xArtifactsForArea(Entity sample, Entity artifactRun, Line line) throws Exception {
+
+        // Find source ids for the primary sample image
+    	
+        List<Entity> tiles = EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean))
+                .startAt(sample)
+                .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
+                .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
+                .getAll();
+
+    	List<Integer> allSourceSageImageIds = new ArrayList<Integer>();
+    	
+    	logger.info("  Exporting "+tiles.size()+" tiles for "+sample.getName());
+    	
+        // Image tiles
+        for(Entity tile : tiles) {
+
+        	entityLoader.populateChildren(tile);
+        	List<Integer> sourceSageImageIds = new ArrayList<Integer>();
+        	for(Entity lsmStack : tile.getChildren()) {
+        		String sageId = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID);
+        		if (sageId!=null) {
+        			sourceSageImageIds.add(new Integer(sageId));
+        		}
+        	}
+        	
+        	allSourceSageImageIds.addAll(sourceSageImageIds);
+        	        	
+            Image sourceImage = null;
+            if (sourceSageImageIds.size()==1) {
+            	// Single LSM source image
+                sourceImage = sage.getImages(sourceSageImageIds).get(0);
+            }
+            else {
+
+            	String imageName = null;
+            	String chanspec = null;
+            	String pixelRes = null;
+            	
+                for(Entity child : artifactRun.getChildren()) {
+                    String name = child.getName();
+                    if (child.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
+                    	chanspec = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                    	pixelRes = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+                    }
+                    if (name.contains(tile.getName())) {
+                    	imageName = name.substring(0, name.lastIndexOf('.'));
+                    }
+                }
+                
+                if (imageName==null) {
+                	logger.error("Artifacts for tile "+tile.getName()+" not found in artifact run "+artifactRun.getId());
+                	continue;
+                }
+                
+                if (chanspec==null) {
+                	logger.warn("Movie artifact for tile "+tile.getName()+" is missing chanspec");
+                }
+                
+                if (pixelRes==null) {
+                	logger.warn("Movie artifact for tile "+tile.getName()+" is missing pixel resolution");
+                }
+                
+            	// Multiple LSMs were merged or stitched to create the artifact, so we need a new primary image in SAGE
+            	Entity image3d = new Entity();
+            	image3d.setName(imageName);
+            	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, chanspec);
+            	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelRes);
+            	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, null);
+                sourceImage = getOrCreatePrimaryImage(image3d, line, sourceSageImageIds);
+            }
+            
+            create63xSecondaryImages(artifactRun, sourceImage, tile.getName());
+        }
+
+        // Stitched image if there is more than one tile
+        if (tiles.size()>1) {
+	        Entity image3d = EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean))
+	            .startAt(sample)
+	            .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
+	            .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
+	            .childrenOfAttr(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE).getLast();
+
+            Image sourceImage = getOrCreatePrimaryImage(image3d, line, allSourceSageImageIds);
+            create63xSecondaryImages(artifactRun, sourceImage, "stitched");
+        }
+    }
+    
+    private void create63xSecondaryImages(Entity artifactRun, Image sourceImage, String tileName) throws Exception {
+    	logger.info("  Creating secondary images for tile: "+tileName);
+    	String tileTag = "-"+tileName;
+        for(Entity child : artifactRun.getChildren()) {
+            String name = child.getName();
+            if (name.contains(tileTag)) {
+                if (EntityConstants.TYPE_MOVIE.equals(child.getEntityTypeName())) {
+                    getOrCreateSecondaryImage(child, productTranslationReference, sourceImage);
+                }
+                else if (EntityConstants.TYPE_IMAGE_2D.equals(child.getEntityTypeName()) && name.endsWith("_MIP.png")) {
+                    getOrCreateSecondaryImage(child, productMip, sourceImage);
+                }
+            }
+        }
+    }
     
     private Image getOrCreatePrimaryImage(Entity entity, Line line, List<Integer> sourceSageImageIds) throws Exception {
         
-        String imageName = entity.getId()+"-"+entity.getName();
+        String imageName = entity.getId()==null?entity.getName():(entity.getId()+"-"+entity.getName());
         Image image = sage.getImageByName(imageName);
         if (image!=null) {
             // TODO: update image properties?
@@ -336,7 +477,15 @@ public class SageArtifactExportService extends AbstractEntityService {
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         image = new Image(consensusFamily, line, source, imageName, getUrl(path), path, true, true, CREATED_BY, createDate);
         
-        for(CvTerm type : consensusValues.keySet()) {
+        List<CvTerm> keys = new ArrayList<CvTerm>(consensusValues.keySet());
+        Collections.sort(keys, new Comparator<CvTerm>() {
+			@Override
+			public int compare(CvTerm o1, CvTerm o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
+        
+        for(CvTerm type : keys) {
             type.getId(); // ensure that the type id is loaded
             String value = consensusValues.get(type);
             logger.info("      "+type.getName()+": "+value);
@@ -355,18 +504,18 @@ public class SageArtifactExportService extends AbstractEntityService {
         return prop;
     }
     
-    private ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
-    	for(ImageProperty property : image.getImageProperties()) {
-    		if (property.getType().equals(type)) {
-    			property.setValue(value);
-    			return sage.saveImageProperty(property);
-    		}
-    	}
-        ImageProperty prop = new ImageProperty(type, image, value, createDate);
-        image.getImageProperties().add(prop);
-        sage.saveImageProperty(prop);
-        return prop;
-    }
+//    private ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+//    	for(ImageProperty property : image.getImageProperties()) {
+//    		if (property.getType().equals(type)) {
+//    			property.setValue(value);
+//    			return sage.saveImageProperty(property);
+//    		}
+//    	}
+//        ImageProperty prop = new ImageProperty(type, image, value, createDate);
+//        image.getImageProperties().add(prop);
+//        sage.saveImageProperty(prop);
+//        return prop;
+//    }
     
     private SecondaryImage getOrCreateSecondaryImage(Entity entity, CvTerm productType, Image sourceImage) throws Exception {
 
@@ -378,7 +527,6 @@ public class SageArtifactExportService extends AbstractEntityService {
             return secondaryImage;
         }
         
-        
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         secondaryImage = new SecondaryImage(sourceImage, productType, entity.getId()+"-"+entity.getName(), path, getUrl(path), createDate);
         sage.saveSecondaryImage(secondaryImage);
@@ -387,6 +535,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     }
     
     private String getUrl(String filepath) {
+    	if (filepath==null) return null;
         return WEBDAV_PREFIX+filepath;
     }
     
