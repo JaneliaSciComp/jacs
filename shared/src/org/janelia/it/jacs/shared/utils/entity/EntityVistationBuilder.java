@@ -168,6 +168,7 @@ public class EntityVistationBuilder {
     
 	public Entity getLast() throws Exception {
 	    List<Entity> all = getAll();
+	    if (all.isEmpty()) return null;
 	    return all.get(all.size()-1);
 	}
 
