@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -160,7 +162,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                 export63xSample(sample);
         	}
         	else {
-        		logger.warn("Sample with unsupported objective ("+objective+"!="+Objective.OBJECTIVE_63X.name()+")");
+        		logger.warn("Sample with unsupported objective ("+objective+")");
         	}
             sample.setEntityData(null); // free memory
         }
@@ -244,13 +246,15 @@ public class SageArtifactExportService extends AbstractEntityService {
 
     private Entity getLatestArtifactRun(Entity sample) throws Exception {
         entityLoader.populateChildren(sample);
-        Entity artifactRun = null;
-        for(Entity child : sample.getChildren()) {
+        List<Entity> children = sample.getOrderedChildren();
+        Collections.reverse(children);
+        for(Entity child : children) {
             if (child.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN) && child.getName().startsWith(ARTIFACT_PIPELINE_RUN_PREFIX)) {
-            	artifactRun = child;
+            	return child;
+            	
             }
         }
-        return artifactRun;
+        return null;
     }
     
     private void export20xArtifactsForArea(Entity sample, Entity artifactRun, String area, Line line) throws Exception {
@@ -318,6 +322,8 @@ public class SageArtifactExportService extends AbstractEntityService {
 
     	List<Integer> allSourceSageImageIds = new ArrayList<Integer>();
     	
+    	logger.info("  Exporting "+tiles.size()+" tiles for "+sample.getName());
+    	
         // Image tiles
         for(Entity tile : tiles) {
 
@@ -338,50 +344,71 @@ public class SageArtifactExportService extends AbstractEntityService {
                 sourceImage = sage.getImages(sourceSageImageIds).get(0);
             }
             else {
+
+            	String imageName = null;
+            	String chanspec = null;
+            	String pixelRes = null;
+            	
+                for(Entity child : artifactRun.getChildren()) {
+                    String name = child.getName();
+                    if (child.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
+                    	chanspec = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                    	pixelRes = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+                    }
+                    if (name.contains(tile.getName())) {
+                    	imageName = name.substring(0, name.lastIndexOf('.'));
+                    }
+                }
+                
+                if (imageName==null) {
+                	logger.error("Artifacts for tile "+tile.getName()+" not found in artifact run "+artifactRun.getId());
+                	continue;
+                }
+                
+                if (chanspec==null) {
+                	logger.warn("Movie artifact for tile "+tile.getName()+" is missing chanspec");
+                }
+                
+                if (pixelRes==null) {
+                	logger.warn("Movie artifact for tile "+tile.getName()+" is missing pixel resolution");
+                }
+                
             	// Multiple LSMs were merged or stitched to create the artifact, so we need a new primary image in SAGE
             	Entity image3d = new Entity();
-            	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, null);
-            	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, null);
+            	image3d.setName(imageName);
+            	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, chanspec);
+            	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, pixelRes);
             	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, null);
                 sourceImage = getOrCreatePrimaryImage(image3d, line, sourceSageImageIds);
             }
             
-            for(Entity child : artifactRun.getChildren()) {
-                String name = child.getName();
-                if (name.contains(tile.getName())) {
-                    if (name.endsWith(".mp4")) {
-                        getOrCreateSecondaryImage(child, productTranslationReference, sourceImage);
-                        
-                    }
-                    else if (name.endsWith("_MIP.png")) {
-                        getOrCreateSecondaryImage(child, productMip, sourceImage);
-                        
-                    }
-                }
-            }
+            create63xSecondaryImages(artifactRun, sourceImage, tile.getName());
         }
 
         // Stitched image if there is more than one tile
         if (tiles.size()>1) {
 	        Entity image3d = EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean))
 	            .startAt(sample)
-	            .childOfType(EntityConstants.TYPE_PIPELINE_RUN)
-	            .childOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
+	            .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
+	            .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
 	            .childrenOfAttr(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE).getLast();
 
             Image sourceImage = getOrCreatePrimaryImage(image3d, line, allSourceSageImageIds);
-
-            for(Entity child : artifactRun.getChildren()) {
-                String name = child.getName();
-                if (name.contains("-stitched-")) {
-                    if (name.endsWith(".mp4")) {
-                        getOrCreateSecondaryImage(child, productTranslationReference, sourceImage);
-                        
-                    }
-                    else if (name.endsWith("_MIP.png")) {
-                        getOrCreateSecondaryImage(child, productMip, sourceImage);
-                        
-                    }
+            create63xSecondaryImages(artifactRun, sourceImage, "stitched");
+        }
+    }
+    
+    private void create63xSecondaryImages(Entity artifactRun, Image sourceImage, String tileName) throws Exception {
+    	logger.info("  Creating secondary images for tile: "+tileName);
+    	String tileTag = "-"+tileName;
+        for(Entity child : artifactRun.getChildren()) {
+            String name = child.getName();
+            if (name.contains(tileTag)) {
+                if (EntityConstants.TYPE_MOVIE.equals(child.getEntityTypeName())) {
+                    getOrCreateSecondaryImage(child, productTranslationReference, sourceImage);
+                }
+                else if (EntityConstants.TYPE_IMAGE_2D.equals(child.getEntityTypeName()) && name.endsWith("_MIP.png")) {
+                    getOrCreateSecondaryImage(child, productMip, sourceImage);
                 }
             }
         }
@@ -450,7 +477,15 @@ public class SageArtifactExportService extends AbstractEntityService {
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         image = new Image(consensusFamily, line, source, imageName, getUrl(path), path, true, true, CREATED_BY, createDate);
         
-        for(CvTerm type : consensusValues.keySet()) {
+        List<CvTerm> keys = new ArrayList<CvTerm>(consensusValues.keySet());
+        Collections.sort(keys, new Comparator<CvTerm>() {
+			@Override
+			public int compare(CvTerm o1, CvTerm o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
+        
+        for(CvTerm type : keys) {
             type.getId(); // ensure that the type id is loaded
             String value = consensusValues.get(type);
             logger.info("      "+type.getName()+": "+value);
@@ -491,7 +526,6 @@ public class SageArtifactExportService extends AbstractEntityService {
             logger.info("  Secondary image already exists in SAGE as "+secondaryImage.getId()+" with name "+secondaryImage.getName());
             return secondaryImage;
         }
-        
         
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         secondaryImage = new SecondaryImage(sourceImage, productType, entity.getId()+"-"+entity.getName(), path, getUrl(path), createDate);
