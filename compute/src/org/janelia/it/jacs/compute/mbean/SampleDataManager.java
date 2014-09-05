@@ -207,7 +207,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing data set pipelines for "+subjectKey);
-                String ret = runUserDataSetPipelines(subjectKey, null, runMode, reuseProcessing, reuseAlignment, force);
+                String ret = runUserDataSetPipelines(subjectKey, null, true, runMode, reuseProcessing, reuseAlignment, true, force);
                 if (sb.length()>0) sb.append(",\n");
                 sb.append(subjectKey).append(": ").append(ret);
             }
@@ -219,14 +219,24 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public String runUserDataSetPipelines(String user, String dataSetName, String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
+    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean rerunExistingResults, Boolean force) {
         try {
             String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("run mode", runMode, null)); 
-            taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
-            taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+            taskParameters.add(new TaskParameter("run mode", runMode, null));
+            if (runSampleDiscovery!=null) {
+            	taskParameters.add(new TaskParameter("run sample discovery", runSampleDiscovery.toString(), null));
+            }
+            if (reuseProcessing!=null) {
+            	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            }
+            if (reuseAlignment!=null) {
+            	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+            }
+            if (rerunExistingResults!=null) {
+            	taskParameters.add(new TaskParameter("rerun pipelines", rerunExistingResults.toString(), null));
+            }
             if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
                 taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             }

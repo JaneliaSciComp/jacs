@@ -19,5 +19,6 @@ public interface GeometricSearchBeanRemote {
     
     public List<GeometricIndexManagerModel> getManagerModel(int maxRecordCountPerScannerSignature) throws ComputeException;
     public List<GeometricIndexManagerModel> getManagerModelForScanner(String scannerSignature) throws ComputeException;
-    
+    public Long getLastModelUpdateTimestamp() throws ComputeException;
+
 }

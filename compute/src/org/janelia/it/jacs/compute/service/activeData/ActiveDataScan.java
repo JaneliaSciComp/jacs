@@ -49,6 +49,7 @@ public class ActiveDataScan {
     
     int nextIdIndex=0;
     long currentEpochStartTimestamp=0L;
+    long currentEpochEndTimestamp=0L;
     
     Map<Long, ActiveDataScannerStats> scannerStatMap=new HashMap<>();
     
@@ -74,6 +75,7 @@ public class ActiveDataScan {
         updateStatus();
         ActiveDataScanStatus status=new ActiveDataScanStatus(
                 currentEpochStartTimestamp,
+                currentEpochEndTimestamp,
                 epochNumber, 
                 currentEpochNumProcessing,
                 currentEpochNumSuccessful,
@@ -138,6 +140,7 @@ public class ActiveDataScan {
         if (nextIdIndex >= idArray.length) {
             logger.info("Setting status to SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY");
             statusDescriptor = SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY;
+            currentEpochEndTimestamp=new Date().getTime();
         }
         if (statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
             logger.info("Returning ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY");
@@ -227,13 +230,18 @@ public class ActiveDataScan {
             logger.info("Creating EpochRecord for scanner="+entityScannerClassname);
             ScanEpochRecord record=new ScanEpochRecord();
             record.setStartTimestamp(currentEpochStartTimestamp);
-            record.setEndTimestamp(new Date().getTime());
+            if (currentEpochEndTimestamp>currentEpochStartTimestamp) {
+                record.setEndTimestamp(currentEpochEndTimestamp);
+            } else {
+                record.setEndTimestamp(new Date().getTime());
+            }
             record.setTotalIdCount(idArray.length);
             record.setSuccessfulCount(currentEpochNumSuccessful);
             record.setErrorCount(currentEpochNumError);
             epochHistory.add(record);
             epochNumber++;
             currentEpochStartTimestamp=new Date().getTime();
+            currentEpochEndTimestamp=0L;
             updateIdList();
             resetStatus();
             statusDescriptor=SCAN_STATUS_PROCESSING;

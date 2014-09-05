@@ -74,7 +74,6 @@
         <sequence name="Wait Async" waitForAsync="true">
             <operation name="Run Fiji Macro" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="$V{MACRO_CLASS}"/>
-                <input name="ARCHIVE_FLAG" value="true"/>
                 <input name="RESULT_FILE_NODE" value="$V{NORM_FILE_NODE}"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>
@@ -108,6 +107,7 @@
 			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
 				<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
 				<input name="PROCESSING_EXCEPTION"/>
+                <input name="RESULT_FILE_NODE" value="$V{NORM_FILE_NODE}"/>
 		    </operation>
 		
 	    </exceptionHandler>

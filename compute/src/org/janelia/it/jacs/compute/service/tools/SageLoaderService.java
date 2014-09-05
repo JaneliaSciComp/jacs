@@ -157,17 +157,6 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected String getNativeSpecificationOverride() {
-//        return "-l short=true";
-        return "-l archive=true";
-    }
-
-    @Override
-    protected String getAdditionalNativeSpecification() {
-        return "-l archive=true";
-    }
-
-    @Override
     public void postProcess() throws MissingDataException {
         try {
             // reload task from database to avoid Hibernate errors on save
