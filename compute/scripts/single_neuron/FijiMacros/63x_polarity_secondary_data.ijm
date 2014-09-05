@@ -45,28 +45,32 @@ rename("ZRamp");
 selectWindow("Ramp");
 close();
 
-// Process signal channel NeuronC1 (presynaptic)
-print("Processing presynaptic channel");
-selectWindow("signal1");
-title = getTitle();
-rename("original");
-imageCalculator("Multiply create 32-bit stack", "original","ZRamp");
-rename("processing");
-performHistogramStretching();
-selectWindow("original");
-close();
-selectWindow("processing");
-rename(title);
-
-// Process signal channel NeuronC2 (membrane)
-processChannel("signal2");
-run("Duplicate...", "title=signal2_mask duplicate");
-setAutoThreshold("Default dark stack");
-run("Convert to Mask", "method=Default background=Dark black");
-run("Divide...", "value=255 stack");
-imageCalculator("Multiply stack", "signal1","signal2_mask");
-selectWindow("signal2_mask");
-close();
+if (channels > 2) {
+  // Process signal channel NeuronC1 (presynaptic)
+  print("Processing presynaptic channel");
+  selectWindow("signal1");
+  title = getTitle();
+  rename("original");
+  imageCalculator("Multiply create 32-bit stack", "original","ZRamp");
+  rename("processing");
+  performHistogramStretching();
+  selectWindow("original");
+  close();
+  selectWindow("processing");
+  rename(title);
+  // Process signal channel NeuronC2 (membrane)
+  processChannel("signal2");
+  run("Duplicate...", "title=signal2_mask duplicate");
+  setAutoThreshold("Default dark stack");
+  run("Convert to Mask", "method=Default background=Dark black");
+  run("Divide...", "value=255 stack");
+  imageCalculator("Multiply stack", "signal1","signal2_mask");
+  selectWindow("signal2_mask");
+  close();
+}
+else {
+  processChannel("signal1");
+}
 
 // Process reference channel
 print("Processing reference channel");
