@@ -17,9 +17,14 @@ public class ValidationLogScanner {
 
     public static final String FAILURE_REPORT_EXT = ".Failure.report.tsv";
     public static final String STD_DATE_FORMAT = "MMMM dd, yyyy";
+
+    private static final int MAX_DESCRIPTION_DUMP_COUNT = 5;
+
     private File startingPoint = null;
     private Map<String,StatInfo> statsMap;
+    private Map<String,Collection<String>> affectedDescriptionMap;
     private FileFilter fileAcceptor;
+    private String currentDescription;
     private Integer totalFailedSampleCount = 0;
     public static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(STD_DATE_FORMAT, Locale.US );
 
@@ -36,6 +41,7 @@ public class ValidationLogScanner {
 
     public void writeStatisticSummary( PrintWriter writer ) throws IOException {
         statsMap = new TreeMap<>();
+        affectedDescriptionMap = new TreeMap<>();
         fileAcceptor = new ErrorReportAcceptor();
         collectStatistics(startingPoint);
 
@@ -53,6 +59,27 @@ public class ValidationLogScanner {
                                 DATE_FORMATTER.format( info.getEarliestDate() )
                         )
                 );
+            }
+        }
+
+        writer.println();
+        writer.println( "Breakdown of category, versus first few descriptions of affected samples, follows." );
+
+        for ( String category: affectedDescriptionMap.keySet() ) {
+            writer.println(category);
+            Collection<String> affected = affectedDescriptionMap.get( category );
+            if ( affected != null ) {
+                int count = 0;
+                for ( String description: affected ) {
+                    writer.println('\t' + description);
+
+                    // Avoid a deluge.
+                    count++;
+                    if ( count == MAX_DESCRIPTION_DUMP_COUNT ) {
+                        writer.println("...");
+                        break;
+                    }
+                }
             }
         }
 
@@ -112,6 +139,10 @@ public class ValidationLogScanner {
                 continue;
             }
 
+            if ( inline.startsWith( ValidationEngine.REPORT_DESCRIPTION_PREFIX ) ) {
+                currentDescription = inline.trim();
+            }
+
             SectionReturnVal returnVal = SectionReturnVal.NO_SECTION;
             if ( inline.startsWith(ValidationLogger.ERROR_ENUM_DELIM) ) {
                 returnVal = accumulateDateStats(bufferedReader);
@@ -164,6 +195,16 @@ public class ValidationLogScanner {
         return rtnVal;
     }
 
+    /** Add to the list of descriptions-of-samples, affected by a category of failure. */
+    private void accumulateAffectedDescriptions( String category ) {
+        Collection<String> affectedDescriptions = affectedDescriptionMap.get( category );
+        if ( affectedDescriptions == null ) {
+            affectedDescriptions = new HashSet<>();
+            affectedDescriptionMap.put( category, affectedDescriptions );
+        }
+        affectedDescriptions.add( currentDescription );
+    }
+
     private BufferedReader packageBuilderIntoReader( StringBuilder sampleBuilder ) throws IOException {
        return new BufferedReader(
                 new CharArrayReader(
@@ -206,6 +247,7 @@ public class ValidationLogScanner {
                         }
                     }
                     statsMap.put( category, oldStat );
+                    accumulateAffectedDescriptions(category);
                 }
                 else {
                     // NOTE: if this error shows up, it could mean that a file was mis-written,

@@ -22,6 +22,7 @@ import java.util.*;
  * Created by fosterl on 6/27/14.
  */
 public class ValidationEngine implements Closeable {
+    public static final String REPORT_DESCRIPTION_PREFIX = "Validation Report for";
     public static final int PUTATIVE_MAX_LOG_SIZE = 300000;
     public static final String REPORT_FILE_EXTENSION = ".report.tsv";
     public static final String TYPE_OCC_DELIM = "^";
@@ -55,7 +56,7 @@ public class ValidationEngine implements Closeable {
         Entity loggerEntity = entityBean.getEntityAndChildren( loggerId );
         List<Entity> annotations = annotationBean.getAnnotationsForEntity( loggerEntity.getOwnerKey(), loggerEntity.getId() );
         String metaData = String.format(
-                "Validation Report for %s Named %s with ID %d, having %d annotations, owned by %s\nProduced by %s",
+                REPORT_DESCRIPTION_PREFIX + " %s Named %s with ID %d, having %d annotations, owned by %s\nProduced by %s",
                 loggerEntity.getEntityTypeName(),
                 loggerEntity.getName(),
                 loggerId,
