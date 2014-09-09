@@ -5,9 +5,15 @@ import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.shared.utils.EntityUtils
 
+/**
+ * This script goes through samples in Retired Data and finds corresponding unretired samples.
+ * When the sub-samples are the same objects, the unretired (new) samples are deleted, 
+ * and the Retired samples are restored.
+ */
+
 // Globals
-boolean DEBUG = false
-boolean PRINTS = false
+boolean DEBUG = true
+boolean PRINTS = true
 int numSamplesProcessed = 0
 int numTrulyRetired = 0
 
