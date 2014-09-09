@@ -23,7 +23,8 @@ for(Entity sample : f.e.getUserEntitiesByTypeName(subjectKey, TYPE_SAMPLE)) {
 	 
 	Entity supportingData = EntityUtils.findChildWithName(sample, "Supporting Files")
 	if (supportingData==null) {
-		println("  WARNING: could not find supporting files in sample#"+sample.id+" "+sample.name)
+		num = f.a.getNumDescendantsAnnotated(sample.id)
+		println("  WARNING: could not find supporting files in sample#"+sample.id+" "+sample.name+" ("+num+" annotations)")
 		
 		if (!DEBUG) f.e.deleteEntityTreeById(subjectKey, sample.id, true)
 		
