@@ -10,8 +10,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
  */
 
 // Globals
-boolean DEBUG = false
-boolean PRINTS = false
+boolean DEBUG = true
+boolean PRINTS = true
 subjectKey = "user:system"
 f = new JacsUtils(subjectKey, false)
 
