@@ -493,6 +493,15 @@
         <name>runBenchmarks</name>
     </operation>
     
+    <operation>
+        <description>Run Scality benchmarks</description>
+        <name>runScalityBenchmarks</name>
+        <parameter>
+           <description>Entity id to find files for benchmarking</description>
+           <name>entityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
     
     <operation>
         <description>Run cleanup for nerna retired data</description>

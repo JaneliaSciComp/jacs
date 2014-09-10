@@ -1,0 +1,43 @@
+<!-- 
+    Use to the grid to copy any number of entity File Paths to the Scality object store. The entities must support the Scality Path attribute,
+    which will be updated to store the unique path in Scality at which the data is stored. 
+-->
+<process name="Scality grid copy" processor="queue/shortPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence>
+       
+        <input name="ENTITY_ID_LIST"/>
+        <input name="DELETE_SOURCE_FILES"/>
+       
+        <!-- Import variables from the task -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="TASK_PARAMETER_1" value="entity id list"/>
+            <input name="PROCESS_VARIABLE_1" value="ENTITY_ID_LIST"/>
+            <output name="ENTITY_ID_LIST"/>
+        </operation>
+
+        <!-- Create a result node -->
+        <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+            <input name="NAME" value="Temp"/>
+            <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
+            <output name="RESULT_FILE_NODE"/>
+            <output name="RESULT_FILE_NODE_ID"/>
+        </operation>
+        
+        <!-- Copy the files to or from archive -->
+        <sequence name="Wait Async" waitForAsync="true">
+            <operation name="Copy files" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ScalityGridService"/>
+                <input name="RESULT_FILE_NODE"/>
+                <input name="ENTITY_ID_LIST"/>
+                <input name="DELETE_SOURCE_FILES"/>
+            </operation>
+        </sequence>
+        
+        <!-- We're done with the node -->
+        <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+            <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+        </operation>
+        
+    </sequence>
+</process>
