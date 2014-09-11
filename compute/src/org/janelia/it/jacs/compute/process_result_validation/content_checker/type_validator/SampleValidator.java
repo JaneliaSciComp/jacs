@@ -16,6 +16,7 @@ import java.util.TreeSet;
  * Created by fosterl on 6/27/14.
  */
 public class SampleValidator implements TypeValidator {
+    public static final String NULL_VALUE = "[Null Value]";
     private ValidationLogger validationLogger;
     private EntityBeanLocal entityBean;
     private SubEntityValidator subEntityValidator;
@@ -103,15 +104,17 @@ public class SampleValidator implements TypeValidator {
                     child = entityBean.getEntityAndChildren( child.getId() );
                     String anatomicalArea = child.getValueByAttributeName( EntityConstants.ATTRIBUTE_ANATOMICAL_AREA );
                     // NOTE: turning on this check, via the nodebug=false, pushes the majority of all samples into the "failed" category.
-                    if ( validationLogger.isToReportPositives()  &&  StringUtils.isEmpty( anatomicalArea ) ) {
-                        anatomicalArea = "[Null Value]";
-                        validationLogger.reportError(
-                                sampleId,
-                                supportingFiles,
-                                NULL_TILES_ANATOMICAL_AREA,
-                                NULL_ANATAREA_MSG
-                        );
-                        reportableSuccess = false;
+                    if ( StringUtils.isEmpty( anatomicalArea ) ) {
+                        anatomicalArea = NULL_VALUE;
+                        if ( validationLogger.isToReportPositives() ) {
+                            validationLogger.reportError(
+                                    sampleId,
+                                    supportingFiles,
+                                    NULL_TILES_ANATOMICAL_AREA,
+                                    NULL_ANATAREA_MSG
+                            );
+                            reportableSuccess = false;
+                        }
                     }
                     tilesAnatomicalAreas.add( anatomicalArea );
                 }
@@ -131,15 +134,17 @@ public class SampleValidator implements TypeValidator {
                     grandChild = entityBean.getEntityAndChildren( grandChild.getId() );
                     String anatomicalArea = grandChild.getValueByAttributeName( EntityConstants.ATTRIBUTE_ANATOMICAL_AREA );
                     // NOTE: turning on this check, via the nodebug=false, pushes the majority of all samples into the "failed" category.
-                    if ( validationLogger.isToReportPositives()  &&  StringUtils.isEmpty( anatomicalArea ) ) {
-                        anatomicalArea = "[Null Value]";
-                        validationLogger.reportError(
-                                sampleId,
-                                sampleEntity,
-                                NULL_PL_ANATOMICAL_AREA,
-                                NULL_ANATAREA_MSG
-                        );
-                        reportableSuccess = false;
+                    if (  StringUtils.isEmpty( anatomicalArea ) ) {
+                        anatomicalArea = NULL_VALUE;
+                        if ( validationLogger.isToReportPositives() ) {
+                            validationLogger.reportError(
+                                    sampleId,
+                                    grandChild,
+                                    NULL_PL_ANATOMICAL_AREA,
+                                    NULL_ANATAREA_MSG
+                            );
+                            reportableSuccess = false;
+                        }
                     }
                     sampleProcessingAnatomicalAreas.add(anatomicalArea);
                 }

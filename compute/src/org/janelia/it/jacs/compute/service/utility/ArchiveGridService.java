@@ -180,10 +180,5 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
     protected int getRequiredSlots() {
         return 1;
     }
-
-    @Override
-    protected String getAdditionalNativeSpecification() {
-        return "-l archive=true";
-    }
     
 }

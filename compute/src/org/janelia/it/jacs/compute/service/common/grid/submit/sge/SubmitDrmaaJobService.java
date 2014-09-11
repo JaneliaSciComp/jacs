@@ -224,7 +224,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * @return additional flags for the native specification.
      */
     protected String getAdditionalNativeSpecification() {
-        if ("true".equals(processData.getItem("ARCHIVE_FLAG"))) {
+    	Object archiveFlag = processData.getItem("ARCHIVE_FLAG");
+        if (archiveFlag!=null && Boolean.parseBoolean((String)archiveFlag)) {
+        	logger.info("ARCHIVE_FLAG is true, job will run on archive queue");
             return "-l archive=true";    
         }
         return null;

@@ -377,14 +377,14 @@
         <archive path="/common/JUnit-Lib-4.11/hamcrest-core-1.3.jar"/>
     </library>
     <library name="LOCI" systemlibrary="false">
-        <archive path="/common/LOCI/scifio.jar"/>
-        <archive path="/common/LOCI/ome-xml.jar"/>
-        <archive path="/common/LOCI/ome-io.jar"/>
-        <archive path="/common/LOCI/ome_plugins.jar"/>
-        <archive path="/common/LOCI/metakit.jar"/>
-        <archive path="/common/LOCI/loci-common.jar"/>
-        <archive path="/common/LOCI/loci_plugins.jar"/>
         <archive path="/common/LOCI/bio-formats.jar"/>
+        <archive path="/common/LOCI/loci_plugins.jar"/>
+        <archive path="/common/LOCI/loci-common.jar"/>
+        <archive path="/common/LOCI/metakit.jar"/>
+        <archive path="/common/LOCI/ome_plugins.jar"/>
+        <archive path="/common/LOCI/ome-io.jar"/>
+        <archive path="/common/LOCI/ome-xml.jar"/>
+        <archive path="/common/LOCI/scifio.jar"/>
     </library>
     <library name="Logging" systemlibrary="false">
         <archive path="/common/Logging/perf4j-0.9.16-logbackonly.jar"/>

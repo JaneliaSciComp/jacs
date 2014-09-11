@@ -207,6 +207,8 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     					mergedLsmPair.getMergedFilepath());
     		}
 
+			prefixToChanspec.put(outputFilePrefix, mergedChanSpec);
+			prefixToPixelRes.put(outputFilePrefix, lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
 			writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
     	}
 
@@ -217,9 +219,14 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 			if (mergedChanSpec==null) {
 				mergedChanSpec = stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
 			}
+			prefixToChanspec.put(outputFilePrefix, mergedChanSpec);
+			prefixToPixelRes.put(outputFilePrefix, stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
 	    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
 		}
     }
+    
+    private Map<String,String> prefixToChanspec = new HashMap<String,String>();
+    private Map<String,String> prefixToPixelRes = new HashMap<String,String>();
 
     private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, String colorSpec1, String colorSpec2, int configIndex) throws Exception {
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
@@ -304,9 +311,23 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             else {
                 logger.warn("Could not find default image: "+defaultImageName);
             }
+            
+            pipelineRun = entityBean.getEntityAndChildren(pipelineRun.getId());
+            for(Entity artifactEntity : pipelineRun.getOrderedChildren()) {
+            	if (EntityConstants.TYPE_MOVIE.equals(artifactEntity.getEntityTypeName())) {
+            		for(String prefix : prefixToChanspec.keySet()) {
+            			if (artifactEntity.getName().startsWith(prefix)) {
+            				entityBean.setOrUpdateValue(artifactEntity.getId(), EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, prefixToChanspec.get(prefix));
+            				entityBean.setOrUpdateValue(artifactEntity.getId(), EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, prefixToPixelRes.get(prefix));
+            				break;
+            			}
+            		}
+            	}
+            }
+            
         }
         catch (Exception e) {
-            throw new MissingDataException("Error discoverying files in "+outputDir,e);
+            throw new MissingDataException("Error discovering files in "+outputDir,e);
         }
 	}
 }
