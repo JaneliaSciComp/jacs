@@ -6,6 +6,7 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import java.io.File;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -29,6 +30,20 @@ public class SampleScanner extends EntityScanner {
     @Override
     public long[] generateIdList(Object dataResource) throws Exception {
         return generateIdListByEntityType(dataResource, EntityConstants.TYPE_SAMPLE);
+    }
+
+    @Override
+    public void preEpoch(ActiveDataScan scan) throws Exception {
+        File preTestFile = new File(scan.getScanDirectory() + "/" + "preTestFile.txt");
+        logger.info("preEpoch() - preTestFile.txt path="+preTestFile.getAbsolutePath());
+        preTestFile.createNewFile();
+    }
+
+    @Override
+    public void postEpoch(ActiveDataScan scan) throws Exception {
+        File postTestFile = new File(scan.getScanDirectory() + "/" + "postTestFile.txt");
+        logger.info("postEpoch() - postTestFile.txt path="+postTestFile.getAbsolutePath());
+        postTestFile.createNewFile();
     }
 
 }

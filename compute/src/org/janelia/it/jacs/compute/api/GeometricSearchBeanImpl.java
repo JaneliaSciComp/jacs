@@ -53,10 +53,10 @@ public class GeometricSearchBeanImpl implements GeometricSearchBeanLocal, Geomet
     }
 
     @Override
-    public Long getLastModelUpdateTimestamp() throws ComputeException {
+    public Long getModifiedTimestamp(String scannerSignature) throws ComputeException {
         try {
             ActiveDataServer activeData = ActiveDataServerSimpleLocal.getInstance();
-            return activeData.getLastModelUpdateTimestamp();
+            return activeData.getModifiedTimestamp(scannerSignature);
         } catch (Exception ex) {
             throw new ComputeException(ex);
         }
