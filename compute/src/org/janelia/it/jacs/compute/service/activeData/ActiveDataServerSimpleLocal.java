@@ -12,7 +12,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 
 /**
@@ -20,7 +24,9 @@ import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
  * @author murphys
  */
 public class ActiveDataServerSimpleLocal implements ActiveDataServer {
-    
+
+    private final int PRE_AND_POST_THREAD_POOL_SIZE = SystemConfigurationProperties.getInt("ActiveData.PreAndPostThreadPoolSize");
+
     private static final Logger logger = Logger.getLogger(ActiveDataClientSimpleLocal.class);    
     private static final Long LOCK_CHECK_INTERVAL_MS = 5000L; // 5 seconds
     private static final Long LOCK_MAX_WAIT_MS = 1000L * 60L * 60L * 6L; // 6 hours
@@ -29,8 +35,8 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     private final Map<String, ActiveDataScan> scanMap = new HashMap<>();  
     private final Map<String, Long> lockMap = new HashMap<>();
 
-    private Long lastModelUpdateTimestamp=new Long(new Date().getTime());
-    
+    private final ScheduledThreadPoolExecutor preAndPostPool=new ScheduledThreadPoolExecutor(PRE_AND_POST_THREAD_POOL_SIZE);
+
     public static ActiveDataServer getInstance() {
         if (theInstance==null) {
             theInstance=new ActiveDataServerSimpleLocal();
@@ -44,22 +50,16 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     public void injectEntity(long entityId) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-        
-    public String getClassnameFromSignature(String signature) throws Exception {
-        String[] sigElements=signature.split(":");
-        return sigElements[0];
-    }
 
     @Override
     public ActiveDataRegistration registerScanner(String signature) throws Exception {
-        String entityScannerClassName=getClassnameFromSignature(signature);
         synchronized (scanMap) {
             ActiveDataScan scan = scanMap.get(signature);
             if (scan == null) {
                 scan = new ActiveDataScan();
-                scan.setEntityScannerClassname(entityScannerClassName);
+                scan.setSignature(signature);
                 scan.updateIdList();
-                scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_PROCESSING);
+                scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_INITIAL);
                 logger.info("registerScanner - created new Scan entry for " + signature + " with idList count=" + scan.getIdCount());
                 scanMap.put(signature, scan);
             } else {
@@ -67,8 +67,6 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
             }
             if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_ERROR)) {
                 throw new Exception("Could not register scanner for " + signature + " because status is ERROR");
-            } else if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
-                scan.advanceEpoch();
             }
             ActiveDataScannerStats scanStats = new ActiveDataScannerStats();
             long nextScannerIndex = scan.scannerCount();
@@ -85,8 +83,28 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan = getScan(signature);
         if (scan != null) {
             synchronized (scan) {
-                lastModelUpdateTimestamp=new Date().getTime();
-                return scan.getNextId();
+                if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_INITIAL)) {
+                    scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_PRE_EPOCH);
+                    spawnPreEpoch(scan);
+                    return ActiveDataScan.ID_CODE_WAIT;
+                } else if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_PROCESSING)) {
+                    long nextId = scan.getNextId();
+                    if (nextId==ActiveDataScan.ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY) {
+                        scan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_SCANS_COMPLETED);
+                        spawnPostEpoch(scan);
+                        return ActiveDataScan.ID_CODE_WAIT;
+                    } else {
+                        return nextId;
+                    }
+                } else if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_SCANS_COMPLETED) ||
+                           scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_PRE_EPOCH) ||
+                           scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_POST_EPOCH)) {
+                    return ActiveDataScan.ID_CODE_WAIT;
+                } else if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED)) {
+                    return ActiveDataScan.ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY;
+                } else {
+                    return ActiveDataScan.ID_CODE_SCAN_ERROR;
+                }
             }
         }
         return null;
@@ -120,17 +138,14 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.setEntityStatus(entityId, statusCode);
-            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
     
     @Override
     public void addEntityEvent(String signature, long entityId, String descriptor) throws Exception {
-        lastModelUpdateTimestamp=new Date().getTime();
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.addEntityEvent(entityId, descriptor);
-            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
     
@@ -145,7 +160,6 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.clearEntityEvents(entityId);
-            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
 
@@ -153,7 +167,6 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
             scan.advanceEpoch();
-            lastModelUpdateTimestamp=new Date().getTime();
         }
     }
     
@@ -236,12 +249,11 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         model.setErrorCount(scanStatus.getCurrentEpochNumError());
         model.setSuccessfulCount(scanStatus.getCurrentEpochNumSuccessful());
         model.setTotalIdCount(scanStatus.getCurrentEpochIdCount());
-        if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
+        if (scan.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED)) {
             model.setEndTime(scanStatus.getEndTimestamp());
         } else {
             model.setEndTime(null);
         }
-        model.setEndTime(null);
         modelList.add(model);
         // Next, handle most recent N epochs
         List<ScanEpochRecord> epochs = scan.getEpochHistory();
@@ -263,9 +275,19 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         return modelList;
     }
 
-    public Long getLastModelUpdateTimestamp() throws Exception {
-        return lastModelUpdateTimestamp;
+    public Long getModifiedTimestamp(String signature) throws Exception {
+        ActiveDataScan scan=scanMap.get(signature);
+        return scan.getTimestamp();
     }
 
+    @Override
+    public void spawnPreEpoch(ActiveDataScan scan) throws Exception {
+        preAndPostPool.schedule(scan.getPreRunnable(), 0, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void spawnPostEpoch(ActiveDataScan scan) throws Exception {
+        preAndPostPool.schedule(scan.getPostRunnable(), 0, TimeUnit.MILLISECONDS);
+    }
 
 }

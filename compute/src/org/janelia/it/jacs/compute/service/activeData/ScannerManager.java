@@ -65,7 +65,7 @@ public class ScannerManager {
         ActiveDataScanStatus scanStatus=activeData.getScanStatus(scanner.getSignature());
         if (scanStatus!=null) {
             logger.info("scanStatus from activeData is not null, status="+scanStatus);
-            if (scanStatus.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED_SUCCESSFULLY)) {
+            if (scanStatus.getStatusDescriptor().equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED)) {
                 logger.info("Scan already active in system - at completed state. Incrementing to next Epoch in this case");
                 activeData.advanceEpoch(scanner.getSignature());
             }
@@ -98,7 +98,7 @@ public class ScannerManager {
     public ActiveDataScanStatus getActiveDataStatus(String signature) throws Exception {
         return activeData.getScanStatus(signature);
     }
-    
+
     public Runnable getRunnableForNextId(final EntityScanner scanner) throws Exception {
         return new Runnable() {
             @Override
@@ -106,6 +106,7 @@ public class ScannerManager {
                 Long entityId;
                 try {
                     entityId = activeData.getNext(scanner.getSignature());
+                    logger.info("getRunnableForNextId() id="+entityId);
                     if (entityId == ActiveDataScan.ID_CODE_SCAN_ERROR) {
                         scanner.setStatus(EntityScanner.STATUS_ERROR);
                         throw new Exception("Error in ActiveDataScan signature="+scanner.getSignature());
@@ -115,7 +116,11 @@ public class ScannerManager {
                         if (scannerStatus.equals(EntityScanner.STATUS_PROCESSING)){
                             scanner.setStatus(EntityScanner.STATUS_EPOCH_COMPLETED);
                         }
+                    } else if (entityId == ActiveDataScan.ID_CODE_WAIT) {
+                        logger.info("Received ID_CODE_WAIT");
+                        Thread.sleep(1000); // wait 1 second
                     } else { // normal processing case
+                        logger.info("Normal processing case with id="+entityId);
                         Map<String, Object> contextMap=new HashMap<>();
                         for (VisitorFactory vf : scanner.getVisitorFactoryList()) {
                             ActiveVisitor av = vf.createInstance();

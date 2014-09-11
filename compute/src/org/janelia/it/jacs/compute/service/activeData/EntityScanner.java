@@ -46,6 +46,10 @@ public abstract class EntityScanner {
     }
        
     public abstract long[] generateIdList(Object dataResource) throws Exception;
+
+    public void preEpoch(ActiveDataScan scan) throws Exception { return; }
+
+    public void postEpoch(ActiveDataScan scan) throws Exception { return; }
     
     public List<VisitorFactory> getVisitorFactoryList() {
         return visitorFactoryList;
