@@ -1,3 +1,7 @@
+// 63x_polarity_secondary_data.ijm
+// Revision level: 0.3
+// Date released:  2014-09-11
+// Description:
 // Macro for generating MIP and movies from 63x case 3 polarity original lsm
 // files or stitched file
 // - adjust intensity
@@ -10,6 +14,7 @@
 //   image: image path
 //   channelspec: channel specification
 //   colorspec: color specification
+
 
 setBatchMode(true);
 MinimalParticleSize = 2500;
@@ -226,6 +231,9 @@ function performMasking() {
   run("Convert to Mask");
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
+  // Uncomment the following line to disable MaximalSignalsOccupancy processing
+  MaximalSignalsOccupancy = mean * 2;
+  // **************************************************************************
   if (mean>MaximalSignalsOccupancy) {
     selectWindow("MIP");
     close();
@@ -238,21 +246,20 @@ function performMasking() {
     run("Select All");
     getStatistics(area, mean, min, max, std, histogram);
     if (mean>MaximalSignalsOccupancy) {
-        selectWindow("MIP");
-        close();
-        selectWindow("processing");
-        run("Z Project...", "projection=[Max Intensity]");
-        rename("MIP");
-        setAutoThreshold("Default dark");
-        setOption("BlackBackground", true);
-        run("Convert to Mask");
+      selectWindow("MIP");
+      close();
+      selectWindow("processing");
+      run("Z Project...", "projection=[Max Intensity]");
+      rename("MIP");
+      setAutoThreshold("Default dark");
+      setOption("BlackBackground", true);
+      run("Convert to Mask");
+      run("Select All");
+      getStatistics(area, mean, min, max, std, histogram);
+      if (mean>MaximalSignalsOccupancy) {
         run("Select All");
-        getStatistics(area, mean, min, max, std, histogram);
-        if (mean>MaximalSignalsOccupancy) {
-                run("Select All");
-                run("Clear", "slice");
-            }
-        
+        run("Clear", "slice");
+      }
     }
   }             
   run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
