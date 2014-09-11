@@ -90,30 +90,34 @@ public class GeometricIndexManagerModel implements Comparable<GeometricIndexMana
         }
     }
 
-    public String getAbbreviatedSignature() {
+    public static String getAbbreviatedSignature(String fullSignature) {
         StringBuilder sb=new StringBuilder();
-        if (scannerSignature==null) {
+        if (fullSignature==null) {
             return null;
         }
         else {
-            String[] cList=scannerSignature.split(":");
+            String[] cList=fullSignature.split(":");
             if (cList.length==0) {
-                return "<no classes>";
+                return "-no classes-";
             }
             for (int i=0;i<cList.length;i++) {
                 String className=cList[i];
                 String[] pList=className.split("\\.");
                 if (pList.length==0) {
-                    sb.append(":");
+                    sb.append(".");
                 } else {
                     sb.append(pList[pList.length - 1]);
                 }
                 if (i<cList.length-1) {
-                    sb.append(":");
+                    sb.append(".");
                 }
             }
             return sb.toString();
         }
+    }
+
+    public String getAbbreviatedSignature() {
+        return getAbbreviatedSignature(scannerSignature);
     }
 
 }
