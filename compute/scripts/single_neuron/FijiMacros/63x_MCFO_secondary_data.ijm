@@ -41,6 +41,7 @@ else {
 title0 = prefix + "_MIP";
 titleAvi = prefix + ".avi";
 
+run("Colors...", "foreground=white background=black selection=yellow");
 setBatchMode(true);
 MinimalParticleSize = 2500;
 MaximalSignalsOccupancy = 128;

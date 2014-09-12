@@ -15,7 +15,7 @@
 //   channelspec: channel specification
 //   colorspec: color specification
 
-
+run("Colors...", "foreground=white background=black selection=yellow");
 setBatchMode(true);
 MinimalParticleSize = 2500;
 MaximalSignalsOccupancy = 128;
