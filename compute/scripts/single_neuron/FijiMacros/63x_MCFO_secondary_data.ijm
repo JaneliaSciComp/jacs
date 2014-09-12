@@ -1,3 +1,7 @@
+// 63x_mcfo_secondary_data.imj
+// Revision level: 0.1
+// Date released:  2014-09-12
+// Description:
 // Macro for generating MIP and movies from 63x MCFO two original lsm files for one tile.
 // adjust intensity
 // ramp signals in Z axis for neuron channels
@@ -41,6 +45,7 @@ else {
 title0 = prefix + "_MIP";
 titleAvi = prefix + ".avi";
 
+run("Colors...", "foreground=white background=black selection=yellow");
 setBatchMode(true);
 MinimalParticleSize = 2500;
 MaximalSignalsOccupancy = 128;
