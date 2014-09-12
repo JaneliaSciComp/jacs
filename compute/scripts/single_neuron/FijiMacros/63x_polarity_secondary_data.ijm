@@ -1,6 +1,6 @@
-// 63x_polarity_secondary_data.ijm
-// Revision level: 0.3
-// Date released:  2014-09-11
+// 63x_polarity_secondary_data.imj
+// Revision level: 0.5
+// Date released:  2014-09-12
 // Description:
 // Macro for generating MIP and movies from 63x case 3 polarity original lsm
 // files or stitched file
@@ -14,6 +14,7 @@
 //   image: image path
 //   channelspec: channel specification
 //   colorspec: color specification
+
 
 run("Colors...", "foreground=white background=black selection=yellow");
 setBatchMode(true);
@@ -232,7 +233,7 @@ function performMasking() {
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   // Uncomment the following line to disable MaximalSignalsOccupancy processing
-  MaximalSignalsOccupancy = mean * 2;
+  // MaximalSignalsOccupancy = mean * 2;
   // **************************************************************************
   if (mean>MaximalSignalsOccupancy) {
     selectWindow("MIP");
