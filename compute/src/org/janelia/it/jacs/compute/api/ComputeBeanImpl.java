@@ -13,7 +13,12 @@ import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.entity.UserWorkspaceService.EntityDataRootComparator;
+import org.janelia.it.jacs.compute.service.entity.UserWorkspaceService.EntityRootComparator;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
@@ -29,11 +34,14 @@ import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode
 import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
+
+import com.google.common.collect.ComparisonChain;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -41,6 +49,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;

@@ -1,6 +1,10 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -10,7 +14,6 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Local interface to ComputeBeanImpl

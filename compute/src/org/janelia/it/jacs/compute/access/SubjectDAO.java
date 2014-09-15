@@ -1,17 +1,16 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.criterion.Expression;
 import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.SubjectRelationship;
 import org.janelia.it.jacs.model.user_data.User;
-
-import java.util.List;
 
 /**
  * Methods for dealing with subjects such as users and groups.
