@@ -252,14 +252,13 @@ function performMasking() {
       selectWindow("processing");
       run("Z Project...", "projection=[Max Intensity]");
       rename("MIP");
+      // CLAHE and dilate were added to minimize loss of neurites
+      run("Enhance Local Contrast (CLAHE)", "blocksize=50 histogram=256 maximum=3 mask=*None* fast_(less_accurate)");
       setAutoThreshold("Default dark");
       setOption("BlackBackground", true);
       run("Convert to Mask");
-      run("Select All");
-      getStatistics(area, mean, min, max, std, histogram);
-      if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
+      run("Dilate");
+      run("Dilate");
       }
     }
   }             
