@@ -259,7 +259,6 @@ function performMasking() {
       run("Convert to Mask");
       run("Dilate");
       run("Dilate");
-      }
     }
   }             
   run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
