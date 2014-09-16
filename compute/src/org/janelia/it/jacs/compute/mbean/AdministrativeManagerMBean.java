@@ -23,7 +23,5 @@ public interface AdministrativeManagerMBean {
 //    public void login(String userLogin, String password);
 
     public void trashUnknownNodesForUser();
-
-    public void createUser(String username);
 }
 

@@ -107,6 +107,7 @@ run("Divide...", "value=3");
 run("RGB Color");
 setBatchMode("exit & display");
 imageCalculator("Add", "MAX_RGB","STD_reference");
+selectWindow("MAX_RGB");
 saveAs("PNG",basedir+'/'+title0);
 print("Creating movie");
 selectWindow("reference");
@@ -259,7 +260,6 @@ function performMasking() {
       run("Convert to Mask");
       run("Dilate");
       run("Dilate");
-      }
     }
   }             
   run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");

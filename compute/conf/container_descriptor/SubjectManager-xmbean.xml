@@ -12,16 +12,26 @@
     </constructor>
 
     <operation>
+        <description>Create the user with the given name, if it does not already exist.</description>
+        <name>createUser</name>
+        <parameter>
+           <description>User name (e.g. "saffordt")</description>
+           <name>username</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>Create the group with the given name, if it does not already exist.</description>
         <name>createGroup</name>
         <parameter>
            <description>User who should own the group (e.g. "saffordt")</description>
-           <name>groupOwner</name>
+           <name>ownerNameOrKey</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
            <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
+           <name>groupNameOrKey</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -31,7 +41,7 @@
         <name>removeGroup</name>
         <parameter>
            <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
+           <name>groupNameOrKey</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -41,12 +51,12 @@
         <name>addUserToGroup</name>
         <parameter>
            <description>User to add (e.g. "saffordt")</description>
-           <name>groupUser</name>
+           <name>userNameOrKey</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
            <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
+           <name>groupNameOrKey</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -56,12 +66,22 @@
         <name>removeUserFromGroup</name>
         <parameter>
            <description>User to remove (e.g. "saffordt")</description>
-           <name>groupUser</name>
+           <name>userNameOrKey</name>
            <type>java.lang.String</type>
         </parameter>
         <parameter>
            <description>Group name (e.g. "leetlab")</description>
-           <name>groupName</name>
+           <name>groupNameOrKey</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Delete the current workspace for a user and recreate it using common root information.</description>
+        <name>recreateWorkspace</name>
+        <parameter>
+           <description>Subject key for user to recreate workspace for (e.g. "user:saffordt")</description>
+           <name>subjectNameOrKey</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
