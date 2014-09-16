@@ -107,6 +107,7 @@ run("Divide...", "value=3");
 run("RGB Color");
 setBatchMode("exit & display");
 imageCalculator("Add", "MAX_RGB","STD_reference");
+selectWindow("MAX_RGB");
 saveAs("PNG",basedir+'/'+title0);
 print("Creating movie");
 selectWindow("reference");
