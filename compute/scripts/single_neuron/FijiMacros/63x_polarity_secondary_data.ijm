@@ -1,6 +1,6 @@
 // 63x_polarity_secondary_data.imj
-// Revision level: 0.5
-// Date released:  2014-09-12
+// Revision level: 0.6
+// Date released:  2014-09-16
 // Description:
 // Macro for generating MIP and movies from 63x case 3 polarity original lsm
 // files or stitched file
@@ -18,8 +18,8 @@
 
 run("Colors...", "foreground=white background=black selection=yellow");
 setBatchMode(true);
-MinimalParticleSize = 2500;
-MaximalSignalsOccupancy = 128;
+MinimalParticleSize = 10000;
+MaximalSignalsOccupancy = 85;
 
 var width, height, channels, slices, frames;
 var merge_name = "";
@@ -252,16 +252,27 @@ function performMasking() {
       close();
       selectWindow("processing");
       run("Z Project...", "projection=[Max Intensity]");
-      rename("MIP");
-      // CLAHE and dilate were added to minimize loss of neurites
+      rename("MIP1");
       run("Enhance Local Contrast (CLAHE)", "blocksize=50 histogram=256 maximum=3 mask=*None* fast_(less_accurate)");
+      run("Duplicate...", "title=MIP2");
+      setAutoThreshold("MaxEntropy dark");
+      setOption("BlackBackground", true);
+      run("Convert to Mask");
+      selectWindow("MIP1");     	 
       setAutoThreshold("Default dark");
       setOption("BlackBackground", true);
       run("Convert to Mask");
-      run("Dilate");
-      run("Dilate");
+      imageCalculator("Max create", "MIP1","MIP2");
+      rename("MIP"); 
+      selectWindow("MIP1");
+      close();
+      selectWindow("MIP2");
+      close();
     }
-  }             
+  }
+  selectWindow("MIP");  
+  run("Dilate");
+  run("Dilate");    
   run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
   run("Divide...", "value=255.000");
   rename("mask");
