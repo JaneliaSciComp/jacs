@@ -236,7 +236,7 @@ function performHistogramStretching() {
   getStatistics(area, mean, min, max, std, histogram);
   close();
   selectImage (ImageProcessing);
-  setMinAndMax(mean, max);
+  setMinAndMax(min, max);
   run("8-bit");
 }
 
@@ -285,8 +285,10 @@ function performMasking() {
   close();
   selectWindow("MIP34");
   close();
+  
   selectWindow("MIP");  
   run("Dilate");
+  
   run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
   run("Divide...", "value=255.000");
   rename("mask");
