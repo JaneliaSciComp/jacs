@@ -311,8 +311,9 @@ public class Vaa3DHelper {
         return tmpString;
     }
     
-    public static String getFormattedH264ConvertCommand(String inputFile, String outputFile) {
-    	return FFMPEG_CMD+" -y -r 7 -i \""+inputFile+"\" -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p -vf \"scale=trunc(iw/2)*2:trunc(ih/2)*2\" \""+outputFile+"\"";
+    public static String getFormattedH264ConvertCommand(String inputFile, String outputFile, boolean truncateToEvenSize) {
+    	String trunc = truncateToEvenSize? "\"scale=trunc(iw/2)*2:trunc(ih/2)*2\" " : "";
+    	return FFMPEG_CMD+" -y -r 7 -i \""+inputFile+"\" -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p -vf "+trunc+" \""+outputFile+"\"";
     }
     
     public static int getRandomPort() {

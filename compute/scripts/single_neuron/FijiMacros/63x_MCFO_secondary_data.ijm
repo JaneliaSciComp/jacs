@@ -150,10 +150,15 @@ print("Creating movie");
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
+selectWindow("RGB");
+getDimensions(width, height, channels, slices, frames);
+if (height % 2 != 0) {
+    newHeight = height+1;
+    run("Canvas Size...", "width=&width height=&newHeight position=Top-Center");
+}
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
 run("Quit");
-
 
 
 function openStack(image,chanspec) {

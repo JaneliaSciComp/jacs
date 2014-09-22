@@ -270,7 +270,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$COLOR_SPEC_1,$RAW_2,$CHAN_SPEC_2,$COLOR_SPEC_2").append("\n");
         script.append("fin=$OUTPUT_PREFIX.avi\n");
         script.append("fout=$OUTPUT_PREFIX.mp4\n");
-        script.append(Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout")).append(" && rm $fin\n");
+        script.append(Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
         script.append("rm -f ").append(resultFileNode.getDirectoryPath()).append("/*.v3draw").append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
