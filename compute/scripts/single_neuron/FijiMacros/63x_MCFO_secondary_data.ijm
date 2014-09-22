@@ -152,9 +152,16 @@ run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
 selectWindow("RGB");
 getDimensions(width, height, channels, slices, frames);
-if (height % 2 != 0) {
-    newHeight = height+1;
-    run("Canvas Size...", "width=&width height=&newHeight position=Top-Center");
+if (height % 2 != 0 || width % 2 != 0) {
+    newWidth = width;
+    newHeight = height;
+    if (width % 2 != 0) {
+        newWidth = width+1;
+    }
+    if (height % 2 != 0) {
+        newHeight = height+1;
+    }
+    run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
 }
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
