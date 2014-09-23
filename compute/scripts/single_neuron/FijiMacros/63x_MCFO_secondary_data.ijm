@@ -146,12 +146,22 @@ run("RGB Color");
 setBatchMode("exit & display");
 imageCalculator("Add", "MAX_RGB","STD_reference");
 saveAs("PNG",basedir+'/'+title0);
+close();
+selectWindow("STD_reference");
+close();
 print("Creating movie");
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
+rename("FinalMovie");
+selectWindow("RGB");
+close();
+selectWindow("reference");
+close();
+selectWindow("FinalMovie");
 getDimensions(width, height, channels, slices, frames);
 if (height % 2 != 0 || width % 2 != 0) {
+    print("Adjusting canvas size");
     newWidth = width;
     newHeight = height;
     if (width % 2 != 0) {
@@ -162,6 +172,7 @@ if (height % 2 != 0 || width % 2 != 0) {
     }
     run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
 }
+print("Saving AVI");
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
 run("Quit");
