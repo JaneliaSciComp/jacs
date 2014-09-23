@@ -150,7 +150,6 @@ print("Creating movie");
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
-selectWindow("RGB");
 getDimensions(width, height, channels, slices, frames);
 if (height % 2 != 0 || width % 2 != 0) {
     newWidth = width;
