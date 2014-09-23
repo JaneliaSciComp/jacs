@@ -311,7 +311,14 @@ public class Vaa3DHelper {
         return tmpString;
     }
     
-    public static String getFormattedH264ConvertCommand(String inputFile, String outputFile, boolean truncateToEvenSize) {
+    /**
+     * Convert the given input file (usually an AVI, or other supported ffmpeg format) into an H.264 encoded MP4 using ffmpeg. 
+     * @param inputFile
+     * @param outputFile
+     * @param truncateToEvenSize This rescaling is rarely used, because we've modified our Fiji scripts to pad the avi file before h.264 conversion. But it's available as a last resort.
+     * @return
+     */
+    public static String getFormattedH264ConvertCommand(String inputFile, String outputFile, boolean truncateToEvenSize) { 
     	String trunc = truncateToEvenSize? "-vf \"scale=trunc(iw/2)*2:trunc(ih/2)*2\" " : "";
     	return FFMPEG_CMD+" -y -r 7 -i \""+inputFile+"\" -vcodec libx264 -b:v 2000000 -preset slow -tune film -pix_fmt yuv420p "+trunc+" \""+outputFile+"\"";
     }
