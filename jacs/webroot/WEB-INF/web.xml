@@ -12,7 +12,7 @@
 
 	<display-name>JaCS</display-name>
 
-	<description>Janelia Farm Computational Services</description>
+	<description>Janelia Computational Services</description>
 
 	<!--
 	  - Key of the system property that should specify the root directory of this
