@@ -14,6 +14,8 @@ import java.util.HashMap;
  * Created by fosterl on 9/24/14.
  */
 public class TileWalker {
+    private static final int STD_MATRIX_DIMENSION = 5;
+
     private TileBase tileBase;
     private Map<List<Integer>, RawDataHandle> centroidToRawData;
 
@@ -44,11 +46,14 @@ public class TileWalker {
         return centroidToRawData;
     }
 
-    private static final int STD_MATRIX_DIMENSION = 5;
-
     // Origin and far-corner make the opposite corners of the rectangular solid.
     public String getPathForPixel( Integer[] pixelLocation ) throws Exception {
         return null;
+    }
+
+    private Matrix getTransform( Tile tile ) {
+        Double[] transformDouble = tile.getTransform();
+        return make2DSquareMatrix(transformDouble, STD_MATRIX_DIMENSION);
     }
 
     private Integer[] getNmCoords( Integer[] pixelLocation ) throws Exception {
