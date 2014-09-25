@@ -39,7 +39,7 @@
 
         <!--<div id="page_wrapper">-->
         <div id="page_wrapper" style="display:none">
-            <h1>Howard Hughes Medical Institute<br><i>Janelia Farm Computational Services Login</i></h1>
+            <h1>Howard Hughes Medical Institute<br><i>Janelia Computational Services Login</i></h1>
             <p>(Same login/password as email)</p>
 
             <form method="POST" action="j_security_check">

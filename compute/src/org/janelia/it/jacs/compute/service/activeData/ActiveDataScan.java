@@ -40,7 +40,7 @@ public class ActiveDataScan {
     public static final byte ENTITY_STATUS_PROCESSING = 1;
     public static final byte ENTITY_STATUS_COMPLETED_SUCCESSFULLY = 2;
     public static final byte ENTITY_STATUS_ERROR = 3;
-    
+
     public static final long ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY = -1;
     public static final long ID_CODE_SCAN_ERROR = -2;
     public static final long ID_CODE_WAIT = -3;
@@ -54,25 +54,30 @@ public class ActiveDataScan {
     
     long[] idArray=null;
     Map<Long,Byte> statusMap = new HashMap<>();
+    Map<Long,Byte> priorStatusMap = new HashMap<>();
     Map<Long, List<ActiveDataEntityEvent>> eventMap = new HashMap<>();
     List<ScanEpochRecord> epochHistory = new ArrayList<>();
     
     int nextIdIndex=0;
     long currentEpochStartTimestamp=0L;
     long currentEpochEndTimestamp=0L;
+    boolean transferPriorSuccess=true;
     
     Map<Long, ActiveDataScannerStats> scannerStatMap=new HashMap<>();
 
     private Long modifiedTimestamp=new Long(new Date().getTime());
 
-    public ActiveDataScan() {
+    public ActiveDataScan() throws Exception {
         currentEpochStartTimestamp=new Date().getTime();
     }
     
     public synchronized void setIdArray(long[] idArray) {
         this.idArray=idArray;
         for (int i=0;i<idArray.length;i++) {
-            statusMap.put(idArray[i], ENTITY_STATUS_UNDEFINED);
+            Byte tStatus=statusMap.get(idArray[i]);
+            if (tStatus==null) {
+                statusMap.put(idArray[i], ENTITY_STATUS_UNDEFINED);
+            }
         }
     }
     
@@ -110,12 +115,20 @@ public class ActiveDataScan {
     }
     
     private synchronized void resetStatus() {
+        reportSuccessfulCountInStatusMap();
         for (ActiveDataScannerStats ads : scannerStatMap.values()) {
             ads.reset();
         }
         statusDescriptor = SCAN_STATUS_INITIAL;
         nextIdIndex=0;
+        priorStatusMap.clear();
+        int successfulTransferCount=0;
          for (int i=0;i<idArray.length;i++) {
+            Byte transferStatus=statusMap.get(idArray[i]);
+            priorStatusMap.put(idArray[i], transferStatus);
+             if (transferStatus==ENTITY_STATUS_COMPLETED_SUCCESSFULLY) {
+                 successfulTransferCount++;
+             }
             statusMap.put(idArray[i], ENTITY_STATUS_UNDEFINED);
         }
         updateStatus();
@@ -169,11 +182,9 @@ public class ActiveDataScan {
         boolean allEntitiesProcessedForThisScan=(currentEpochNumSuccessful+currentEpochNumError==idArray.length);
         if (nextIdIndex >= idArray.length) {
             if (!allEntitiesProcessedForThisScan) {
-                logger.info("Waiting for last remaining entities to finish processing");
                 return ActiveDataScan.ID_CODE_WAIT;
             } else {
                 if (statusDescriptor.equals(SCAN_STATUS_PROCESSING)) {
-                    logger.info("Setting status to SCAN_STATUS_SCANS_COMPLETED");
                     setStatusDescriptor(SCAN_STATUS_SCANS_COMPLETED);
                 }
             }
@@ -182,18 +193,34 @@ public class ActiveDataScan {
         if (statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_SCANS_COMPLETED) ||
             statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_POST_EPOCH) ||
             statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_EPOCH_COMPLETED)) {
-            logger.info("Returning ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY");
             return ActiveDataScan.ID_CODE_EPOCH_COMPLETED_SUCCESSFULLY;
         } else if (statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_INITIAL) ||
                    statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_PRE_EPOCH)) {
             return ActiveDataScan.ID_CODE_WAIT;
         } else if (!statusDescriptor.equals(ActiveDataScan.SCAN_STATUS_PROCESSING)) {
-            logger.info("Returning ID_CODE_SCAN_ERROR");
             return ActiveDataScan.ID_CODE_SCAN_ERROR;
         } else {
-            long nextId=idArray[nextIdIndex];
-            nextIdIndex++;
-            logger.info("Returning next id="+nextId);
+            long nextId=-1;
+            while(nextId<0) {
+                if (nextIdIndex >= idArray.length) {
+                    return getNextId(); // will trigger handler at top of method
+                }
+                nextId = idArray[nextIdIndex++];
+                if (transferPriorSuccess) {
+                    Byte priorStatus=priorStatusMap.get(nextId);
+                    if (priorStatus!=null) {
+                        if (priorStatus == ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY) {
+                            setEntityStatus(nextId, ActiveDataScan.ENTITY_STATUS_COMPLETED_SUCCESSFULLY);
+                            nextId = -1;
+                        } else {
+                            //logger.info("priorStatus indicated needs to be re-processed: "+nextId);
+                        }
+                    } else {
+                        //logger.info("priorStatus is null for id="+nextId);
+                    }
+                }
+            }
+            //logger.info("Returning next id="+nextId);
             return nextId;
         }
     }
@@ -206,17 +233,18 @@ public class ActiveDataScan {
         return b;
     }
     
-    public synchronized void setEntityStatus(long entityId, int statusCode) throws Exception {
+    public synchronized void setEntityStatus(long entityId, int statusCode) {
         if (isValidEntityCode(statusCode)) {
             byte sc=(byte)statusCode;
+            //logger.info("setEntityStatus id="+entityId+" statusCode="+statusCode);
             statusMap.put(entityId, sc);
             updateTimestamp();
         } else {
-            throw new Exception("Invalid entity status code=" + statusCode);        
+            //logger.error("setEntityStatus invalid code="+statusCode);
         }
     }
     
-    private static boolean isValidEntityCode(int statusCode) throws Exception {
+    private static boolean isValidEntityCode(int statusCode) {
         if (statusCode < 0 || statusCode > 255) {
             return false;
         }
@@ -268,9 +296,21 @@ public class ActiveDataScan {
         }
         updateTimestamp();
     }
+
+    private void reportSuccessfulCountInStatusMap() {
+        int sCount=0;
+        for (Long key : statusMap.keySet()) {
+            Byte v=statusMap.get(key);
+            if (v==ENTITY_STATUS_COMPLETED_SUCCESSFULLY) {
+                sCount++;
+            }
+        }
+        logger.info("reportSuccessfulCountInStatusMap="+sCount);
+    }
     
     public synchronized void advanceEpoch() throws Exception {
         if(statusDescriptor==SCAN_STATUS_EPOCH_COMPLETED) {
+            reportSuccessfulCountInStatusMap();
             updateStatus();
             logger.info("Creating EpochRecord for scanner="+getClassnameFromSignature(signature));
             ScanEpochRecord record=new ScanEpochRecord();
@@ -290,6 +330,7 @@ public class ActiveDataScan {
             updateIdList();
             resetStatus();
             setStatusDescriptor(SCAN_STATUS_INITIAL);
+            reportSuccessfulCountInStatusMap();
         } else if (statusDescriptor==SCAN_STATUS_ERROR) {
             throw new Exception("Advancing Epoch not permitted unless in completed state");
         } else {
@@ -308,13 +349,13 @@ public class ActiveDataScan {
         return signature;
     }
 
-    public void setSignature(String signature) {
+    public void setSignature(String signature) throws Exception {
         this.signature = signature;
+        transferPriorSuccess=getEntityScannerClassInstance().getTransferPriorSuccess();
     }
     
     public void updateIdList() throws Exception {
-        Class c = Class.forName(getClassnameFromSignature(signature));
-        EntityScanner es = (EntityScanner) c.newInstance();
+        EntityScanner es = getEntityScannerClassInstance();
         long[] idArray = null;
         try {
             idArray = es.generateIdList(null /* data resource */);
@@ -345,6 +386,12 @@ public class ActiveDataScan {
         return sigElements[0];
     }
 
+    EntityScanner getEntityScannerClassInstance() throws Exception {
+        Class c = Class.forName(getClassnameFromSignature(signature));
+        EntityScanner es = (EntityScanner) c.newInstance();
+        return es;
+    }
+
     Runnable getPreRunnable() throws Exception {
         final ActiveDataScan thisScan=this;
         return new Runnable() {
@@ -353,8 +400,7 @@ public class ActiveDataScan {
                     String dirPath=getScanDirectory().getAbsolutePath();
                     logger.info("Checking scan dir="+dirPath);
                     FileUtil.ensureDirExists(dirPath);
-                    Class c = Class.forName(getClassnameFromSignature(signature));
-                    EntityScanner es = (EntityScanner) c.newInstance();
+                    EntityScanner es = getEntityScannerClassInstance();
                     es.preEpoch(thisScan);
                     thisScan.setStatusDescriptor(ActiveDataScan.SCAN_STATUS_PROCESSING);
                 }
@@ -374,8 +420,7 @@ public class ActiveDataScan {
             public void run() {
                 try {
                     logger.info("getPostRunnable() run() start");
-                    Class c = Class.forName(getClassnameFromSignature(signature));
-                    EntityScanner es = (EntityScanner) c.newInstance();
+                    EntityScanner es = getEntityScannerClassInstance();
                     logger.info("getPostRunnable() run() calling es.postEpoch()");
                     es.postEpoch(thisScan);
                     logger.info("getPostRunnable() run() setting scan status to SCAN_STATUS_EPOCH_COMPLETED");

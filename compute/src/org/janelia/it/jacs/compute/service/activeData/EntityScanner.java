@@ -35,6 +35,7 @@ public abstract class EntityScanner {
     
     protected String status = STATUS_INACTIVE;
     boolean removeAfterEpoch=false;
+    boolean transferPriorSuccess=true;
     
     private List<VisitorFactory> visitorFactoryList=new ArrayList<>();
     private String signature=null;
@@ -89,6 +90,10 @@ public abstract class EntityScanner {
     public boolean getRemoveAfterEpoch() {
         return removeAfterEpoch;
     }
+
+    public void setTransferPriorSuccess(boolean transferPriorSuccess) { this.transferPriorSuccess=transferPriorSuccess; }
+
+    public boolean getTransferPriorSuccess() { return transferPriorSuccess; }
     
     protected long[] generateIdListByEntityType(Object dataResource, String entityTypeName) throws Exception {
       AnnotationBeanLocal annotationBeanLocal = EJBFactory.getLocalAnnotationBean();
