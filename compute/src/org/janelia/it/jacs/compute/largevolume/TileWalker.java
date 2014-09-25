@@ -44,45 +44,38 @@ public class TileWalker {
         return centroidToRawData;
     }
 
-    private List<Integer> calculateCentroid( Integer[] originInteger, Integer[] shapeInteger ) {
-        if ( shapeInteger.length != originInteger.length ) {
-            throw new IllegalArgumentException("Incompatible matrix sizes: " + shapeInteger.length + " vs " + originInteger.length);
-        }
-        Integer[] farCornerInteger = new Integer[ originInteger.length ];
-        for ( int i = 0; i < originInteger.length; i++ ) {
-            farCornerInteger[ i ] = originInteger[ i ] + shapeInteger[ i ];
-        }
+    private static final int STD_MATRIX_DIMENSION = 5;
 
-        List<Integer> centroid = new ArrayList<>();
-        for ( int i = 0; i < originInteger.length; i++ ) {
-            centroid.add((farCornerInteger[ i ] + originInteger[ i ]) / 2);
-        }
-
-        return centroid;
-    }
-//    private static final int STD_MATRIX_DIMENSION = 5;
-//--Dead code: keep in repos, but eliminate after first checkin.  May prove valuable later.
     // Origin and far-corner make the opposite corners of the rectangular solid.
+    public String getPathForPixel( Integer[] pixelLocation ) throws Exception {
+        return null;
+    }
 
-//            Matrix originMatrix = makeOneDMatrix( originDouble, STD_MATRIX_DIMENSION );
-//
-//            Integer[] endPtInteger = tile.getShape().getDims();
-//            for ( int i = 0; i < 3; i++ ) {
-//                endPtInteger[ i ] += Math.round(originDouble[ i ]);
-//            }
-//            Double[] transformDouble = tile.getTransform();
-//            Matrix transformMatrix = make2DSquareMatrix(transformDouble, STD_MATRIX_DIMENSION);
-//
-//            Matrix endingMatrix = makeOneDMatrix(endPtInteger, STD_MATRIX_DIMENSION);
-//            Matrix beginMatrix = transformMatrix.times(originMatrix);
-//            Matrix endMatrix = transformMatrix.times(endingMatrix);
-//
-//            System.out.println("---------------------------------------------------");
-//            System.out.println("Begin:");
-//            beginMatrix.print( 5, 2 );
-//            System.out.println("End:");
-//            endMatrix.print( 5, 2 );
-//            System.out.println();
+    private Integer[] getNmCoords( Integer[] pixelLocation ) throws Exception {
+        Integer[] originInteger = null;
+        Matrix originMatrix = makeOneDMatrix( originInteger, STD_MATRIX_DIMENSION );
+        Tile tile = null;
+        Integer[] endPtInteger = tile.getShape().getDims();
+        for ( int i = 0; i < 3; i++ ) {
+            endPtInteger[ i ] += Math.round(originInteger[ i ]);
+        }
+        Double[] transformDouble = tile.getTransform();
+        Matrix transformMatrix = make2DSquareMatrix(transformDouble, STD_MATRIX_DIMENSION);
+
+        Matrix endingMatrix = makeOneDMatrix(endPtInteger, STD_MATRIX_DIMENSION);
+        Matrix beginMatrix = transformMatrix.times(originMatrix);
+        Matrix endMatrix = transformMatrix.times(endingMatrix);
+
+        System.out.println("---------------------------------------------------");
+        System.out.println("Begin:");
+        beginMatrix.print( 5, 2 );
+        System.out.println("End:");
+        endMatrix.print( 5, 2 );
+        System.out.println();
+
+        return null;
+    }
+
     /**
      * Makes a 2D Matrix object form a linearly-arranged 2D matrix.  Assumes output should be row-major order.
      *
@@ -115,5 +108,22 @@ public class TileWalker {
         rtnVal[ dim - 1 ] = 1.0;
 
         return new Matrix( rtnVal, dim );
+    }
+
+    private List<Integer> calculateCentroid( Integer[] originInteger, Integer[] shapeInteger ) {
+        if ( shapeInteger.length != originInteger.length ) {
+            throw new IllegalArgumentException("Incompatible matrix sizes: " + shapeInteger.length + " vs " + originInteger.length);
+        }
+        Integer[] farCornerInteger = new Integer[ originInteger.length ];
+        for ( int i = 0; i < originInteger.length; i++ ) {
+            farCornerInteger[ i ] = originInteger[ i ] + shapeInteger[ i ];
+        }
+
+        List<Integer> centroid = new ArrayList<>();
+        for ( int i = 0; i < originInteger.length; i++ ) {
+            centroid.add((farCornerInteger[ i ] + originInteger[ i ]) / 2);
+        }
+
+        return centroid;
     }
 }
