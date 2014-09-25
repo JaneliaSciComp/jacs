@@ -1,3 +1,7 @@
+// 63x_mcfo_secondary_data.imj
+// Revision level: 0.1
+// Date released:  2014-09-12
+// Description:
 // Macro for generating MIP and movies from 63x MCFO two original lsm files for one tile.
 // adjust intensity
 // ramp signals in Z axis for neuron channels
@@ -41,6 +45,7 @@ else {
 title0 = prefix + "_MIP";
 titleAvi = prefix + ".avi";
 
+run("Colors...", "foreground=white background=black selection=yellow");
 setBatchMode(true);
 MinimalParticleSize = 2500;
 MaximalSignalsOccupancy = 128;
@@ -141,14 +146,36 @@ run("RGB Color");
 setBatchMode("exit & display");
 imageCalculator("Add", "MAX_RGB","STD_reference");
 saveAs("PNG",basedir+'/'+title0);
+close();
+selectWindow("STD_reference");
+close();
 print("Creating movie");
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
+rename("FinalMovie");
+selectWindow("RGB");
+close();
+selectWindow("reference");
+close();
+selectWindow("FinalMovie");
+getDimensions(width, height, channels, slices, frames);
+if (height % 2 != 0 || width % 2 != 0) {
+    print("Adjusting canvas size");
+    newWidth = width;
+    newHeight = height;
+    if (width % 2 != 0) {
+        newWidth = width+1;
+    }
+    if (height % 2 != 0) {
+        newHeight = height+1;
+    }
+    run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+}
+print("Saving AVI");
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
 run("Quit");
-
 
 
 function openStack(image,chanspec) {

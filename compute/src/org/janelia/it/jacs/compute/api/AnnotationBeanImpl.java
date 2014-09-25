@@ -1,6 +1,12 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -28,6 +34,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
+
+import com.google.common.collect.ComparisonChain;
 
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -558,4 +566,138 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
             throw new ComputeException("Error adding aligned item: "+child.getName(), e);
         }
     }
+
+    public void createWorkspace(String ownerKey) throws ComputeException {
+
+    	for(Entity workspace : _annotationDAO.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_WORKSPACE)) {
+    		if (workspace.getOwnerKey().equals(ownerKey)) {
+    			_logger.info("User "+ownerKey+" already has at least one workspace, skipping creation step.");
+        		return;
+    		}
+    	}
+    	
+        List<Entity> roots = getCommonRootEntities(ownerKey);
+        Collections.sort(roots, new EntityRootComparator(ownerKey));
+
+        Entity newRoot = _annotationDAO.createEntity(ownerKey, EntityConstants.TYPE_WORKSPACE, EntityConstants.NAME_DEFAULT_WORKSPACE);
+        
+        int index = 0;
+        for(Entity root : roots) {
+        	_annotationDAO.addEntityToParent(newRoot, root, index++, EntityConstants.ATTRIBUTE_ENTITY, null, false);
+        }
+        
+        _logger.info("Created workspace (id="+newRoot.getId()+") for "+ownerKey+" with "+(index+1)+" top-level roots");
+    }
+    
+    public void addGroupWorkspaceToUserWorkspace(String userKey, String groupKey) throws ComputeException {
+        try {
+        	Entity groupWorkspace = _annotationDAO.getDefaultWorkspace(groupKey);
+        	if (groupWorkspace==null) {
+        		_logger.warn("addGroupWorkspaceToUserWorkspace: "+groupKey+" has no default workspace");
+        		return;
+        	}
+        	Entity userWorkspace = _annotationDAO.getDefaultWorkspace(userKey);
+        	if (userWorkspace==null) {
+        		_logger.warn("addGroupWorkspaceToUserWorkspace: "+userKey+" has no default workspace");
+        		return;
+        	}
+        	
+        	List<Long> entityIds = new ArrayList<Long>();
+	    	_annotationDAO.populateChildren(groupWorkspace);
+        	for(Entity commonRoot : groupWorkspace.getOrderedChildren()) {
+        		entityIds.add(commonRoot.getId());
+        	}
+
+        	_logger.info("Adding "+entityIds.size()+" "+groupKey+" entities to "+userKey+" workspace");
+        	_annotationDAO.addChildren(userKey, userWorkspace.getId(), entityIds, EntityConstants.ATTRIBUTE_ENTITY);
+        }
+        catch (Exception e) {
+            _logger.error("Error adding group workspace "+groupKey+" to user "+userKey, e);
+            throw new ComputeException("Error adding group workspace "+groupKey+" to user "+userKey, e);
+        }
+    }
+    
+    public void removeGroupWorkspaceFromUserWorkspace(String userKey, String groupKey) throws ComputeException {
+        try {
+        	Entity userWorkspace = _annotationDAO.getDefaultWorkspace(userKey);
+        	if (userWorkspace==null) {
+        		_logger.warn("addGroupWorkspaceToUserWorkspace: "+userKey+" has no default workspace");
+        		return;
+        	}
+        	
+        	List<EntityData> toRemove = new ArrayList<EntityData>();
+	    	_annotationDAO.populateChildren(userWorkspace);
+        	for(EntityData ed : userWorkspace.getOrderedEntityData()) {
+        		Entity child = ed.getChildEntity();
+        		if (child!=null && child.getOwnerKey().equals(groupKey)) {
+        			toRemove.add(ed);
+        		}
+        	}
+        	
+        	_logger.info("Removing "+toRemove.size()+" "+groupKey+" entities from "+userKey+" workspace");
+        	for(EntityData ed : toRemove) {
+        		_annotationDAO.deleteEntityData(ed);
+        	}
+        	
+        }
+        catch (Exception e) {
+            _logger.error("Error adding group workspace "+groupKey+" to user "+userKey, e);
+            throw new ComputeException("Error adding group workspace "+groupKey+" to user "+userKey, e);
+        }
+    }
+    
+    public void reorderWorkspace(String ownerKey) throws ComputeException {
+
+        try {
+	    	// Renumber the remaining workspace children
+	    	Entity workspace = _annotationDAO.getDefaultWorkspace(ownerKey);
+	    	_annotationDAO.populateChildren(workspace);
+	
+	        List<EntityData> orderedData = new ArrayList<EntityData>(workspace.getEntityData());
+	        Collections.sort(orderedData, new EntityDataRootComparator(ownerKey));
+	        
+	        int index = 0;
+	    	for(EntityData ed : workspace.getOrderedEntityData()) {
+	    		if (ed.getChildEntity()==null) continue;
+	    		ed.setOrderIndex(index++);
+	    		_annotationDAO.saveOrUpdateEntityData(ed);
+	    	}
+        }
+        catch (Exception e) {
+            _logger.error("Error ordering workspace for "+ownerKey, e);
+            throw new ComputeException("Error ordering workspace for "+ownerKey, e);
+        }
+    }
+    
+    private class EntityDataRootComparator implements Comparator<EntityData> {
+    	protected String ownerKey;
+        public EntityDataRootComparator(String ownerKey) {
+			this.ownerKey = ownerKey;
+        }
+        public int compare(EntityData o1, EntityData o2) {
+        	EntityRootComparator comparator = new EntityRootComparator(ownerKey);
+            return comparator.compare(o1.getChildEntity(), o2.getChildEntity());
+        }
+    };
+    
+    private class EntityRootComparator implements Comparator<Entity> {
+    	protected String ownerKey;
+        public EntityRootComparator(String ownerKey) {
+			this.ownerKey = ownerKey;
+        }
+		public int compare(Entity o1, Entity o2) {
+            return ComparisonChain.start()
+                .compareTrueFirst(o1.getOwnerKey().equals(ownerKey), o2.getOwnerKey().equals(ownerKey))
+                .compare(o1.getOwnerKey(), o2.getOwnerKey())
+                .compareTrueFirst(EntityUtils.isProtected(o1), EntityUtils.isProtected(o2))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_DATA_SETS), o2.getName().equals(EntityConstants.NAME_DATA_SETS))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_RETIRED_DATA), o2.getName().equals(EntityConstants.NAME_RETIRED_DATA))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_BLOCKED_DATA), o2.getName().equals(EntityConstants.NAME_BLOCKED_DATA))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_SHARED_DATA), o2.getName().equals(EntityConstants.NAME_SHARED_DATA))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_SEARCH_RESULTS), o2.getName().equals(EntityConstants.NAME_SEARCH_RESULTS))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_ALIGNMENT_BOARDS), o2.getName().equals(EntityConstants.NAME_ALIGNMENT_BOARDS))
+                .compareTrueFirst(o1.getName().equals(EntityConstants.NAME_SPLIT_PICKING), o2.getName().equals(EntityConstants.NAME_SPLIT_PICKING))
+                .compare(o1.getId(), o2.getId()).result();
+        }
+    };
 }

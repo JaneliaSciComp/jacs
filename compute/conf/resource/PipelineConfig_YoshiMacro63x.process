@@ -22,7 +22,15 @@
             <input name="SAMPLE_ENTITY_ID"/>
             <output name="SAMPLE_AREA"/>
         </operation>
-        
+    
+        <!-- Create a result node for this group -->
+        <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+            <input name="NAME" value="Temp"/>
+            <input name="OUTPUT_VAR_NAME" value="MERGE_RESULT_FILE_NODE"/>
+            <output name="MERGE_RESULT_FILE_NODE"/>
+            <output name="MERGE_RESULT_FILE_NODE_ID"/>
+        </operation>
+            
         <sequence forEach="SAMPLE_AREA">
                 
             <!-- Decide which types of processing will be run -->
@@ -31,14 +39,6 @@
                 <input name="SAMPLE_AREA"/>
                 <input name="MERGE_ALGORITHMS" value="$V{MERGE_ALGORITHM}"/>
                 <output name="RUN_MERGE"/>
-            </operation>
-            
-            <!-- Create a result node for this group -->
-            <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-                <input name="NAME" value="Temp"/>
-                <input name="OUTPUT_VAR_NAME" value="MERGE_RESULT_FILE_NODE"/>
-                <output name="MERGE_RESULT_FILE_NODE"/>
-                <output name="MERGE_RESULT_FILE_NODE_ID"/>
             </operation>
             
             <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
@@ -101,7 +101,7 @@
         <include name="Pipeline" process="FijiMacroPipeline">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="OUTPUT_CHANNEL_ORDER"/>
-            <input name="PIPELINE_NAME" value="MBEW Pipeline 63x (v6)"/>
+            <input name="PIPELINE_NAME" value="MBEW Pipeline 63x (v11)"/>
             <input name="PIPELINE_PROCESS"/>
             <input name="MACRO_NAME"/>
             <input name="MACRO_CLASS" value="org.janelia.it.jacs.compute.service.image.RunFiji63xTilesAndStitchedFileMacro"/>

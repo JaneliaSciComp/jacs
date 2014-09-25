@@ -225,28 +225,4 @@ public class AdministrativeManager implements AdministrativeManagerMBean {
 //        }
 //    }
 
-    public void createUser(String username) {
-        try {
-            ComputeBeanLocal cbi = EJBFactory.getLocalComputeBean();
-            User user = cbi.getUserByNameOrKey(username);
-            // If we don't know them, and they authenticated, add to the database and create a location in the filestore
-            if (null == user) {
-                boolean successful = cbi.createUser(username);
-                if (!successful) {
-                    // will not be able to execute any computes, so throw an exception
-                    LOGGER.error("Unable to create directory and/or account for user " + username);
-                }
-                else {
-                    LOGGER.debug("Created directory and/or account for user " + username);
-                }
-            }
-            else {
-                LOGGER.debug("User " + username+" already exists.");
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 }

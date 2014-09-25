@@ -128,7 +128,7 @@ public interface ComputeBeanRemote {
 	public void addUserToGroup(String groupUser, String groupName) throws DaoException;
     public void removeGroup(String groupName) throws DaoException;
     public void removeUserFromGroup(String groupUser, String groupName) throws DaoException;
-
+    
     public UserToolEvent addEventToSession(UserToolEvent userToolEvent);
 
     /**

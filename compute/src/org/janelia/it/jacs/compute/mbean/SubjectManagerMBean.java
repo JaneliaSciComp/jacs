@@ -6,10 +6,12 @@ package org.janelia.it.jacs.compute.mbean;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public interface SubjectManagerMBean {
-       
-    public void createGroup(String groupOwner, String groupName);
-    public void removeGroup(String groupName);
-    public void addUserToGroup(String groupUser, String groupName);
-    public void removeUserFromGroup(String groupUser, String groupName);
+
+    public void createUser(String username);
+    public void createGroup(String ownerNameOrKey, String groupNameOrKey);
+    public void removeGroup(String groupNameOrKey);
+    public void addUserToGroup(String userNameOrKey, String groupNameOrKey);
+    public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey);
+    public void recreateWorkspace(String subjectNameOrKey);
     
 }

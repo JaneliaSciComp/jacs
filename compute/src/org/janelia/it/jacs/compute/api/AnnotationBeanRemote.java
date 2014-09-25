@@ -79,5 +79,9 @@ public interface AnnotationBeanRemote {
     
     public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException;
     public EntityData addAlignedItem(Entity parentEntity, Entity child, String alignedItemName, boolean visible) throws ComputeException;
-    
+
+    public void addGroupWorkspaceToUserWorkspace(String userKey, String groupKey) throws ComputeException;
+    public void removeGroupWorkspaceFromUserWorkspace(String userKey, String groupKey) throws ComputeException;
+    public void createWorkspace(String ownerKey) throws ComputeException;
+    public void reorderWorkspace(String ownerKey) throws ComputeException;
 }

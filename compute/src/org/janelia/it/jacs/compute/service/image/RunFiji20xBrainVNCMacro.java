@@ -14,6 +14,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -114,7 +115,8 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
     }
     
     private void registerLsmAttributes(final Entity sampleEntity, final Entity lsm) throws Exception {
-
+        // The actual filename of the LSM we're dealing with is not compressed
+		final String lsmName = ArchiveUtils.getDecompressedFilepath(lsm.getName());
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
                 .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
                 .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
@@ -122,7 +124,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
                 .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
                 .run(new EntityVisitor() {
             public void visit(Entity textFile) throws Exception {
-                if (textFile.getName().startsWith(lsm.getName()) && textFile.getName().endsWith(".json")) {
+                if (textFile.getName().startsWith(lsmName) && textFile.getName().endsWith(".json")) {
                     jsonFilepath = textFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 }
             }
@@ -211,12 +213,54 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         writeInstanceFiles();
         setJobIncrementStop(1);
 
+        StringBuffer script = new StringBuffer();
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
+        script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
+        
+        // Deal with compressed LSMs by decompressing them to the file node temporarily
+        
+        if (brainFilepath!=null) {
+	        if (brainFilepath.endsWith(".bz2")) {
+	        	File brainFile = new File(brainFilepath);
+	        	File tmpFile = new File(resultFileNode.getDirectoryPath(), ArchiveUtils.getDecompressedFilepath(brainFile.getName()));
+	        	script.append("BRAIN_FILE="+tmpFile.getAbsolutePath()).append("\n");
+	            script.append("echo \"Decompressing Brain LSM\"\n");
+	        	script.append("bzcat "+brainFilepath+" > $BRAIN_FILE\n");
+	        }
+	        else {
+	        	script.append("BRAIN_FILE="+brainFilepath).append("\n");
+	        }
+        }
+
+        if (vncFilepath!=null) {
+	        if (vncFilepath.endsWith(".bz2")) {
+	        	File vncFile = new File(vncFilepath);
+	        	File tmpFile = new File(resultFileNode.getDirectoryPath(), ArchiveUtils.getDecompressedFilepath(vncFile.getName()));
+	        	script.append("VNC_FILE="+tmpFile.getAbsolutePath()).append("\n");
+	        	script.append("echo \"Decompressing VNC LSM\"\n");
+	        	script.append("bzcat "+vncFilepath+" > $VNC_FILE\n");
+	        }
+	        else {
+	        	script.append("VNC_FILE="+vncFilepath).append("\n");
+	        }
+        }
+        
+        // Trap to clean up any LSMs that we may have decompressed here
+        
+        script.append("function cleanLsms {\n");
+        script.append("    rm -f "+resultFileNode.getDirectoryPath()+"/*.lsm\n");
+        script.append("    echo \"Cleaned up temporary files\"\n");
+        script.append("}\n");
+        script.append("trap cleanLsms EXIT\n");
+        
+        // Format parameter string for the Fiji script
+        
         StringBuilder paramSb = new StringBuilder();
         paramSb.append(outputFilePrefix);
         paramSb.append(",");
-        if (brainFilepath!=null) paramSb.append(brainFilepath);
+        paramSb.append("$BRAIN_FILE");
         paramSb.append(",");
-        if (vncFilepath!=null) paramSb.append(vncFilepath);
+        paramSb.append("$VNC_FILE");
         paramSb.append(",");
         paramSb.append(power);
         paramSb.append(",");
@@ -224,14 +268,9 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         paramSb.append(",");
         paramSb.append(chanSpec);
         
-        StringBuffer script = new StringBuffer();
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
-        script.append("cd "+resultFileNode.getDirectoryPath());
-        script.append("\n");
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb);
-        script.append("\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix());
-        script.append("\n");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append("\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
+        
         writer.write(script.toString());
     }
 
