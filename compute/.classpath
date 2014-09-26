@@ -40,5 +40,7 @@
 	<classpathentry kind="lib" path="/common/Neo4j/jersey-bundle-1.12.jar"/>
 	<classpathentry kind="lib" path="lib/opencsv-2.3.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Reflections"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Jama"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Yaml"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>
