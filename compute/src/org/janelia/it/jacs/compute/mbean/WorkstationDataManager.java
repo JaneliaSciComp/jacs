@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
@@ -200,7 +201,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runOrphanCheckerServices(Boolean deleteOrphans) {
         try {
             logger.info("Building list of users with samples...");
-            Set<String> subjectKeys = new HashSet<String>();
+            Set<String> subjectKeys = new TreeSet<String>();
             for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
