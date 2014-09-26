@@ -3,9 +3,11 @@ package org.janelia.it.jacs.compute.largevolume;
 import java.io.*;
 
 /**
+ * Given a base location for "rendered" tiffs, this class can transform an incoming Large Volume Viewer
+ * coordinate into a microscope-scaled coordinate.
  * Created by fosterl on 9/26/14.
  */
-public class TransformParameters {
+public class CoordinateToRawTransform {
     private static final String TRANSFORM_FILE = "transform.txt";
     private static final int MAX_DIGIT_HIERARCHY_LEVEL = 6;
 
@@ -13,8 +15,23 @@ public class TransformParameters {
     private double[] scale = new double[3];
     private int relativeDrillDepth = 0;
 
-    public TransformParameters( File baseLocation ) {
+    public CoordinateToRawTransform(File baseLocation) {
         init( baseLocation );
+    }
+
+    /**
+     * Return the coordinates relative to the microscope stage, that correspond to the screen/Large Volume Viewer
+     * coordinate given.
+     *
+     * @param lvvScreenCoordinate presented to user while working with LVV.
+     * @return nanometer-scale location in 3D.
+     */
+    public int[] getMicroscopeCoordinate( int[] lvvScreenCoordinate ) {
+        int[] rtnval = new int[3];
+        for ( int i = 0; i < lvvScreenCoordinate.length; i++ ) {
+            rtnval[ i ] = origin[ i ] + (lvvScreenCoordinate[ i ] * (int)scale[ i ]);
+        }
+        return rtnval;
     }
 
     /**
@@ -22,13 +39,6 @@ public class TransformParameters {
      */
     public int[] getOrigin() {
         return origin;
-    }
-
-    /**
-     * @param origin the origin to set
-     */
-    public void setOrigin(int[] origin) {
-        this.origin = origin;
     }
 
     /**

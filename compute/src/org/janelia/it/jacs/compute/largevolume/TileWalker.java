@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.largevolume;
 import org.janelia.it.jacs.compute.largevolume.model.Tile;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +18,14 @@ public class TileWalker {
 
     public TileWalker( TileBase tileBase ) {
         this.tileBase = tileBase;
+        interpret();
     }
 
-    public void interpret() {
+    public Map<List<Integer>, RawDataHandle> getCentroidToRawData() {
+        return centroidToRawData;
+    }
+
+    private void interpret() {
         centroidToRawData = new HashMap<>();
         String basePath = tileBase.getPath();
         Integer[] patternArray = new Integer[0];
@@ -39,10 +43,6 @@ public class TileWalker {
             centroidToRawData.put( centroid, rawDataHandle );
         }
 
-    }
-
-    public Map<List<Integer>, RawDataHandle> getCentroidToRawData() {
-        return centroidToRawData;
     }
 
     private List<Integer> calculateCentroid( Integer[] originInteger, Integer[] shapeInteger ) {

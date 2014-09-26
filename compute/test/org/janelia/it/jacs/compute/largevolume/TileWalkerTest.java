@@ -18,6 +18,9 @@ public class TileWalkerTest {
     private static final String BASE_LOCATION = System.getProperty("user.dir") + "/compute/test/resources/largevolume/2014-06-24-Descriptor-stitch1/";
 
     private InputStream inputStream;
+
+    public static final File getBaseLocationFile() { return new File( BASE_LOCATION); }
+
     @Before
     public void setUp() throws Exception {
         inputStream = LargeVolumeYamlTest.getTestFileStream();
@@ -27,7 +30,7 @@ public class TileWalkerTest {
     public void walk() throws Exception {
         // Now, to find and parse the transform.txt file.
         //  Doing a directory drill-down.
-        TransformParameters transformParameters = new TransformParameters( new File( BASE_LOCATION )  );
+        CoordinateToRawTransform transformParameters = new CoordinateToRawTransform( new File( BASE_LOCATION )  );
         System.out.println(
                 String.format(
                         "Transform origin: %,d %,d %,d.  Transform scale: %,f %,f %,f.",
@@ -42,7 +45,6 @@ public class TileWalkerTest {
 
         TileBase tileBase = new TileBaseReader().readTileBase( inputStream );
         TileWalker walker = new TileWalker( tileBase );
-        walker.interpret();
         Map<List<Integer>, RawDataHandle> map = walker.getCentroidToRawData();
         Assert.assertNotNull( "Centroid Map is Null", map );
         int stopCount = 0;

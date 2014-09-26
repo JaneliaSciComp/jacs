@@ -7,7 +7,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.InputStream;
 
 /**
@@ -17,7 +16,6 @@ public class LargeVolumeYamlTest {
     private static final String INFILE_RESOURCE = "/largevolume/2014-06-24-Descriptor-stitch1/tilebase.cache.yml";
     public static final String TILING_PATH = "/tier2/mousebrainmicro/mousebrainmicro/data/2014-06-24/Tiling";
     public static final String FIRST_TILE_RELATIVE_PATH = "/2014-07-05/02/02030";
-    //    private static final String INFILE_RESOURCE = "/largevolume/2014-06-24-Descriptor-stitch1/head.yml";
     private InputStream testStream;
 
     @Before

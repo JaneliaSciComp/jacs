@@ -2,6 +2,9 @@ package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
+import org.janelia.it.jacs.compute.largevolume.RawTiffFetcher;
+import org.janelia.it.jacs.compute.largevolume.TileBaseReader;
+import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -10,6 +13,10 @@ import org.jboss.ejb3.StrictMaxPool;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -256,6 +263,33 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
+    }
+
+    public List<String> getTiffTilePaths(String basePath, int[] viewerCoord) throws ComputeException {
+        List<String> rtnVal = new ArrayList<>();
+        try {
+            File basePathFile = new File( basePath );
+            File yaml = new File( basePathFile, TileBaseReader.STD_TILE_BASE_FILE_NAME );
+            if ( ! yaml.exists()  ||  ! yaml.isFile() ) {
+                _logger.warn("Failed to open yaml file " + yaml);
+            }
+            TileBase tileBase = new TileBaseReader().readTileBase( new FileInputStream( yaml ) );
+            RawTiffFetcher fetcher = new RawTiffFetcher( tileBase, basePathFile );
+            File microscopeFilesDir = fetcher.getMicroscopeFileDir( viewerCoord );
+            if ( microscopeFilesDir == null  ||  ! microscopeFilesDir.exists()  ||  ! microscopeFilesDir.isDirectory() ) {
+                _logger.warn("Failed to open microscope files directory " + microscopeFilesDir);
+            }
+
+            File[] microScopeTiffFiles = fetcher.getMicroscopeFiles( microscopeFilesDir );
+            for ( File microscopeTiffFile: microScopeTiffFiles ) {
+                rtnVal.add(microscopeTiffFile.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            String errorString="Error calling getTiffTilePaths DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+        return rtnVal;
     }
 
 }

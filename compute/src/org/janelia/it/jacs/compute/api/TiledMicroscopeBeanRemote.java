@@ -61,5 +61,6 @@ public interface TiledMicroscopeBeanRemote {
                 List<List<Integer>> pointList) throws ComputeException;
 
     public void deleteAnchoredPath(Long pathID) throws ComputeException;
+    public List<String> getTiffTilePaths(String basePath, int[] viewerCoord) throws ComputeException;
 
 }
