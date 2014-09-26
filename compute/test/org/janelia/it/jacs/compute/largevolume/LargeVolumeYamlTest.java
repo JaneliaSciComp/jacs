@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.InputStream;
 
 /**
@@ -56,4 +57,7 @@ public class LargeVolumeYamlTest {
     public static InputStream getTestFileStream() throws Exception {
         return LargeVolumeYamlTest.class.getResourceAsStream( INFILE_RESOURCE );
     }
+
 }
+
+

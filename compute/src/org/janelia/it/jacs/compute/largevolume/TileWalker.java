@@ -1,9 +1,9 @@
 package org.janelia.it.jacs.compute.largevolume;
 
-import Jama.Matrix;
 import org.janelia.it.jacs.compute.largevolume.model.Tile;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +14,6 @@ import java.util.HashMap;
  * Created by fosterl on 9/24/14.
  */
 public class TileWalker {
-    private static final int STD_MATRIX_DIMENSION = 5;
-
     private TileBase tileBase;
     private Map<List<Integer>, RawDataHandle> centroidToRawData;
 
@@ -40,79 +38,11 @@ public class TileWalker {
             rawDataHandle.setExtent( shapeInteger );
             centroidToRawData.put( centroid, rawDataHandle );
         }
+
     }
 
     public Map<List<Integer>, RawDataHandle> getCentroidToRawData() {
         return centroidToRawData;
-    }
-
-    // Origin and far-corner make the opposite corners of the rectangular solid.
-    public String getPathForPixel( Integer[] pixelLocation ) throws Exception {
-        return null;
-    }
-
-    private Matrix getTransform( Tile tile ) {
-        Double[] transformDouble = tile.getTransform();
-        return make2DSquareMatrix(transformDouble, STD_MATRIX_DIMENSION);
-    }
-
-    private Integer[] getNmCoords( Integer[] pixelLocation ) throws Exception {
-        Integer[] originInteger = null;
-        Matrix originMatrix = makeOneDMatrix( originInteger, STD_MATRIX_DIMENSION );
-        Tile tile = null;
-        Integer[] endPtInteger = tile.getShape().getDims();
-        for ( int i = 0; i < 3; i++ ) {
-            endPtInteger[ i ] += Math.round(originInteger[ i ]);
-        }
-        Double[] transformDouble = tile.getTransform();
-        Matrix transformMatrix = make2DSquareMatrix(transformDouble, STD_MATRIX_DIMENSION);
-
-        Matrix endingMatrix = makeOneDMatrix(endPtInteger, STD_MATRIX_DIMENSION);
-        Matrix beginMatrix = transformMatrix.times(originMatrix);
-        Matrix endMatrix = transformMatrix.times(endingMatrix);
-
-        System.out.println("---------------------------------------------------");
-        System.out.println("Begin:");
-        beginMatrix.print( 5, 2 );
-        System.out.println("End:");
-        endMatrix.print( 5, 2 );
-        System.out.println();
-
-        return null;
-    }
-
-    /**
-     * Makes a 2D Matrix object form a linearly-arranged 2D matrix.  Assumes output should be row-major order.
-     *
-     * @param squareInOneDMatrix input one-D array of Doubles.
-     * @param dim how large are the (square) dimensions?
-     * @return object suitable for matrix ops.
-     */
-    private Matrix make2DSquareMatrix(Double[] squareInOneDMatrix, int dim) {
-        double[][] rtnVal = new double[dim][dim];
-        int i = 0;
-        for ( int row = 0; row < dim; row++ ) {
-            for ( int col = 0; col < dim; col++ ) {
-                rtnVal[ row ][ col ] = squareInOneDMatrix[ i ++ ];
-            }
-        }
-        return new Matrix( rtnVal );
-    }
-
-    private Matrix makeOneDMatrix(Integer[] oneDMatrix, int dim) {
-        int i;
-        double[] rtnVal = new double[ dim ];
-        for ( i = 0; i < oneDMatrix.length; i++ ) {
-            rtnVal[ i ] = oneDMatrix[ i ];
-        }
-
-        // Pad with zeros to the end, then make that 1.
-        for ( ; i < dim - 1; i++ ) {
-            rtnVal[ i ] = 0.0;
-        }
-        rtnVal[ dim - 1 ] = 1.0;
-
-        return new Matrix( rtnVal, dim );
     }
 
     private List<Integer> calculateCentroid( Integer[] originInteger, Integer[] shapeInteger ) {
@@ -131,4 +61,5 @@ public class TileWalker {
 
         return centroid;
     }
+
 }
