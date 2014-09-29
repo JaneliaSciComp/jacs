@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.largevolume;
 
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 
 import java.io.File;
