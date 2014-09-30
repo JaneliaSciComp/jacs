@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronMappingGridService;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -76,7 +77,8 @@ public class CleanupRetiredDataService extends AbstractEntityService {
 		for(String slideCode : slideCodes) {
 		
 		    Collection<Entity> samples = sampleMap.get(slideCode);
-		
+	        if (samples.isEmpty()) continue;
+        	
 		    boolean hasRetired = false;
 		    for(Entity sample : samples) {
 		        if (retiredSampleSet.contains(sample.getId())) {
@@ -106,7 +108,13 @@ public class CleanupRetiredDataService extends AbstractEntityService {
 	                }
 	            }
 	        }
-	
+	        
+        	logger.info("Processing "+slideCode);
+	        logger.info("  Found "+activeSamples.size()+" active samples");
+	        logger.info("  Found "+retiredSamples.size()+" retired samples");
+	        logger.info("  Mapped "+sampleMapping.size()+" retired samples to active samples");
+        	logger.info("  Processing active samples...");
+        	
 	        for(Entity sample : samples) {
 
 	            Collection<Entity> targetSamples = sampleMapping.get(sample);
@@ -195,6 +203,9 @@ public class CleanupRetiredDataService extends AbstractEntityService {
     private boolean lsmSetsMatch(Entity sample1, Entity sample2) throws ComputeException {
         Set<String> set1 = getLsmSet(sample1);
         Set<String> set2 = getLsmSet(sample2);
+        logger.trace("  Comparing LSM sets:");
+        logger.trace("    Set1: "+set1);
+        logger.trace("    Set2: "+set2);
         return set1.containsAll(set2) && set2.containsAll(set1);
     }
 
@@ -207,7 +218,7 @@ public class CleanupRetiredDataService extends AbstractEntityService {
             for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
                 loadChildren(imageTile);
                 for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
-                    lsmSet.add(lsm.getName());
+                	lsmSet.add(ArchiveUtils.getDecompressedFilepath(lsm.getName()));
                 }
             }
         }
