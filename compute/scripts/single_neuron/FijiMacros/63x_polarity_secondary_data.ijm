@@ -1,6 +1,6 @@
 // 63x_polarity_secondary_data.imj
-// Revision level: 0.6
-// Date released:  2014-09-16
+// Revision level: 0.5
+// Date released:  2014-09-17
 // Description:
 // Macro for generating MIP and movies from 63x case 3 polarity original lsm
 // files or stitched file
@@ -18,7 +18,7 @@
 
 run("Colors...", "foreground=white background=black selection=yellow");
 setBatchMode(true);
-MinimalParticleSize = 10000;
+MinimalParticleSize = 1000;
 MaximalSignalsOccupancy = 85;
 
 var width, height, channels, slices, frames;
@@ -63,9 +63,24 @@ if (channels > 2) {
   selectWindow("original");
   close();
   selectWindow("processing");
+  run("Magenta");
+  run("Z Project...", "projection=[Max Intensity]");
+  run("Select All");
+  getStatistics(area, mean, min, max, std, histogram);
+  close();
+  selectWindow("processing");
+  MeanSTD = mean + std;
+  run("Subtract...", "value=MeanSTD stack");
   rename(title);
   // Process signal channel NeuronC2 (membrane)
   processChannel("signal2");
+  run("Green");
+  run("Z Project...", "projection=[Max Intensity]");
+  run("Select All");
+  getStatistics(area, mean, min, max, std, histogram);
+  close();
+  MeanSTD = mean + std;
+  run("Subtract...", "value=MeanSTD stack");
   run("Duplicate...", "title=signal2_mask duplicate");
   setAutoThreshold("Default dark stack");
   run("Convert to Mask", "method=Default background=Dark black");
@@ -109,10 +124,33 @@ setBatchMode("exit & display");
 imageCalculator("Add", "MAX_RGB","STD_reference");
 selectWindow("MAX_RGB");
 saveAs("PNG",basedir+'/'+title0);
+close();
+selectWindow("STD_reference");
+close();
 print("Creating movie");
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
+rename("FinalMovie");
+selectWindow("RGB");
+close();
+selectWindow("reference");
+close();
+selectWindow("FinalMovie");
+getDimensions(width, height, channels, slices, frames);
+if (height % 2 != 0 || width % 2 != 0) {
+    print("Adjusting canvas size");
+    newWidth = width;
+    newHeight = height;
+    if (width % 2 != 0) {
+        newWidth = width+1;
+    }
+    if (height % 2 != 0) {
+        newHeight = height+1;
+    }
+    run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+}
+print("Saving AVI");
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
 run("Quit");
@@ -204,7 +242,6 @@ function processChannel(channel_name) {
   selectWindow("processing");
   close();
   selectWindow("Reslice of processing");
-  rename("processing");
   rename(title);
 }
 
@@ -227,52 +264,51 @@ function performHistogramStretching() {
 function performMasking() {
   selectWindow("processing");
   run("Z Project...", "projection=[Max Intensity]");
-  rename("MIP");
-  setAutoThreshold("Triangle dark");
+  rename("MIP1");
+  run("Enhance Local Contrast (CLAHE)", "blocksize=50 histogram=256 maximum=2 mask=*None*");
+  run("Duplicate...", "title=MIP2");
+  selectWindow("MIP1"); 
+  run("Duplicate...", "title=MIP3");
+  selectWindow("MIP1"); 
+  run("Duplicate...", "title=MIP4");
+  selectWindow("MIP1");
+  setAutoThreshold("MaxEntropy dark");
   setOption("BlackBackground", true);
   run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  // Uncomment the following line to disable MaximalSignalsOccupancy processing
-  // MaximalSignalsOccupancy = mean * 2;
-  // **************************************************************************
-  if (mean>MaximalSignalsOccupancy) {
-    selectWindow("MIP");
-    close();
-    selectWindow("processing");
-    run("Z Project...", "projection=[Max Intensity]");
-    rename("MIP");
-    setAutoThreshold("Li dark");
-    setOption("BlackBackground", true);
-    run("Convert to Mask");
-    run("Select All");
-    getStatistics(area, mean, min, max, std, histogram);
-    if (mean>MaximalSignalsOccupancy) {
-      selectWindow("MIP");
-      close();
-      selectWindow("processing");
-      run("Z Project...", "projection=[Max Intensity]");
-      rename("MIP1");
-      run("Enhance Local Contrast (CLAHE)", "blocksize=50 histogram=256 maximum=3 mask=*None* fast_(less_accurate)");
-      run("Duplicate...", "title=MIP2");
-      setAutoThreshold("MaxEntropy dark");
-      setOption("BlackBackground", true);
-      run("Convert to Mask");
-      selectWindow("MIP1");     	 
-      setAutoThreshold("Default dark");
-      setOption("BlackBackground", true);
-      run("Convert to Mask");
-      imageCalculator("Max create", "MIP1","MIP2");
-      rename("MIP"); 
-      selectWindow("MIP1");
-      close();
-      selectWindow("MIP2");
-      close();
-    }
-  }
+  selectWindow("MIP2");          
+  setAutoThreshold("Default dark");
+  setOption("BlackBackground", true);
+  run("Convert to Mask");
+  selectWindow("MIP3");          
+  setAutoThreshold("Otsu dark");
+  setOption("BlackBackground", true);
+  run("Convert to Mask");
+   selectWindow("MIP4");         
+  setAutoThreshold("Moments dark");
+  setOption("BlackBackground", true);
+  run("Convert to Mask");
+  imageCalculator("Max create", "MIP1","MIP2");
+  rename("MIP12"); 
+  selectWindow("MIP1");
+  close();
+  selectWindow("MIP2");
+  close();
+  imageCalculator("Max create", "MIP3","MIP4");
+  rename("MIP34"); 
+  selectWindow("MIP3");
+  close();
+  selectWindow("MIP4");
+  close();
+  imageCalculator("Max create", "MIP12","MIP34");
+  rename("MIP"); 
+  selectWindow("MIP12");
+  close();
+  selectWindow("MIP34");
+  close();
+  
   selectWindow("MIP");  
   run("Dilate");
-  run("Dilate");    
+  
   run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
   run("Divide...", "value=255.000");
   rename("mask");

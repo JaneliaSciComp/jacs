@@ -6,11 +6,13 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.io.File;
 import java.util.List;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.activeData.ActiveDataClient;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataClientSimpleLocal;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataServer;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataServerSimpleLocal;
@@ -57,6 +59,16 @@ public class GeometricSearchBeanImpl implements GeometricSearchBeanLocal, Geomet
         try {
             ActiveDataServer activeData = ActiveDataServerSimpleLocal.getInstance();
             return activeData.getModifiedTimestamp(scannerSignature);
+        } catch (Exception ex) {
+            throw new ComputeException(ex);
+        }
+    }
+
+    @Override
+    public File getScanDirectory(String scannerSignature) throws ComputeException {
+        try {
+            ActiveDataServerSimpleLocal activeData = (ActiveDataServerSimpleLocal)ActiveDataServerSimpleLocal.getInstance();
+            return activeData.getScanDirectory(scannerSignature);
         } catch (Exception ex) {
             throw new ComputeException(ex);
         }

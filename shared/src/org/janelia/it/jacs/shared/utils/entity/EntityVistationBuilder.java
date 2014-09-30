@@ -67,6 +67,11 @@ public class EntityVistationBuilder {
     	});
     	return entityDatas;
     }
+
+    public EntityVistationBuilder setVisitRootOwnerOwnedEntitiesOnly(boolean ownedOnly) {
+        visitRootOwnerOwnedEntitiesOnly=ownedOnly;
+        return this;
+    }
     
     public void run(EntityVisitor visitor) throws Exception {
     	run(root, visitor, 0);

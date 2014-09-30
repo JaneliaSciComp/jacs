@@ -73,6 +73,10 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
 	            }
 	        }
 	        
+	        if (comment==null) {
+	        	throw new Exception("Could not find annotation text term owned by "+ownerKey+" with name "+ANNOTATION_MIGRATION_RESULT);
+	        }
+	        
 	        OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), comment.getId(), comment.getName(), null, resultComment);
 	        annotationBean.createOntologyAnnotation(ownerKey,annotation);
         }

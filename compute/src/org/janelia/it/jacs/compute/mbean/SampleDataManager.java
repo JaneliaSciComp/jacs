@@ -1,5 +1,12 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -16,12 +23,6 @@ import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -50,7 +51,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runAllSampleMaintenancePipelines() {
         try {
             log.info("Building list of users with samples...");
-            Set<String> subjectKeys = new HashSet<String>();
+            Set<String> subjectKeys = new TreeSet<String>();
             for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
@@ -175,7 +176,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void cancelAllIncompleteDataSetPipelineTasks() {
         try {
             log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new HashSet<String>();
+            Set<String> subjectKeys = new TreeSet<String>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
@@ -198,12 +199,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
         try {
             log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new HashSet<String>();
+            Set<String> subjectKeys = new TreeSet<String>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             log.info("Found users with data sets: "+subjectKeys);
-            
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing data set pipelines for "+subjectKey);

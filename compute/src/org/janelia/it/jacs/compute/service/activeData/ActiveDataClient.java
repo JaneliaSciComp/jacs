@@ -6,6 +6,7 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -59,5 +60,8 @@ public interface ActiveDataClient {
     
     // Advances to the next epoch, and re-generates id list, also resetting all state
     public abstract void advanceEpoch(String signature) throws Exception;
-    
+
+    // Gets the current (corresponding to most recent Epoch) directory for this signature
+    public File getScanDirectory(String scannerSignature) throws Exception;
+
 }

@@ -23,6 +23,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
@@ -267,11 +268,9 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_1", "RAW_1")).append("\n");
         script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_2", "RAW_2")).append("\n");
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$COLOR_SPEC_1,$RAW_2,$CHAN_SPEC_2,$COLOR_SPEC_2").append("\n");
-        script.append("for f in *.avi; do\n");
-        script.append("    fout=${f%.avi}.mp4\n");
-        script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$f", "$fout"));
-        script.append(" && rm $f");
-        script.append("\ndone\n");
+        script.append("fin=$OUTPUT_PREFIX.avi\n");
+        script.append("fout=$OUTPUT_PREFIX.mp4\n");
+        script.append(Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
         script.append("rm -f ").append(resultFileNode.getDirectoryPath()).append("/*.v3draw").append("\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
@@ -279,7 +278,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 24;
+    	return 30;
     }
 
 	@Override
@@ -291,7 +290,12 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 	public void postProcess() throws MissingDataException {
 
         File outputDir = new File(resultFileNode.getDirectoryPath());
-        
+
+    	File[] aviFiles = FileUtil.getFilesWithSuffixes(outputDir, ".avi");
+    	if (aviFiles.length > 0) {
+			throw new MissingDataException("MP4 generation failed for "+resultFileNode.getDirectoryPath());
+    	}
+    	
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         helper.addFileExclusion("*.log");
         helper.addFileExclusion("*.oos");
