@@ -269,6 +269,9 @@
         <archive path="/common/Hibernate-3.2/cglib-2.1.3.jar"/>
         <archive path="/common/Hibernate-3.2/hibernate3.jar"/>
     </library>
+    <library name="Jama" systemlibrary="false">
+        <archive path="/common/jama-1.0.1/Jama-1.0.3.jar"/>
+    </library>
     <library name="JAXB" systemlibrary="false">
         <archive path="/common/JAXB-2.1.5/activation.jar"/>
         <archive path="/common/JAXB-2.1.5/jaxb-api.jar"/>
@@ -580,5 +583,8 @@
     </library>
     <library name="Xuggler" systemlibrary="false">
         <archive path="/common/Xuggler/xuggle-xuggler-5.4.jar"/>
+    </library>
+    <library name="Yaml" systemlibrary="false">
+        <archive path="/common/snakeyaml-1.11/snakeyaml-1.11.jar"/>
     </library>
 </eclipse-userlibraries>

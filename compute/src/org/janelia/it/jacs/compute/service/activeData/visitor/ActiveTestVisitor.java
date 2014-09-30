@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.compute.service.activeData;
+package org.janelia.it.jacs.compute.service.activeData.visitor;
 
 import org.apache.log4j.Logger;
 

@@ -4,21 +4,17 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.compute.service.activeData;
+package org.janelia.it.jacs.compute.service.activeData.scanner;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import static org.janelia.it.jacs.compute.service.activeData.SampleScanner.logger;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+
+import org.janelia.it.jacs.compute.service.activeData.ActiveDataScan;
+import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 
 /**
  *

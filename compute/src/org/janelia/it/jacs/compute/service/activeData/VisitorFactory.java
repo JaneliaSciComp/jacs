@@ -6,6 +6,8 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveVisitor;
+
 import java.util.Map;
 
 /**
