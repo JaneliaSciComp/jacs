@@ -138,13 +138,14 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     		String qiScore = qiScoreBatch.get(alignmentId);
     		if (qiScore!=null) {
     			setImageProperty(sageImage, qiScoreTerm, qiScore);
+    			// FW-2763: Also put the score directly on the LSM entity, for ease of searching/browsing
+        		entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
     		}
 
     		String qmScore = qmScoreBatch.get(alignmentId);
     		if (qmScore!=null) {
     			setImageProperty(sageImage, qmScoreTerm, qmScore);
-    		}
-    		
+    		}	
         }
     }
 

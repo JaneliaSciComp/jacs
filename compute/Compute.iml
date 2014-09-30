@@ -122,6 +122,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="SnakeYaml-11" level="project" />
+    <orderEntry type="library" name="Jama-1.0.3" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

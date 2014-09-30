@@ -31,8 +31,8 @@
             <input name="OVERRIDE" value="false"/>
             <input name="PROCESS_VARIABLE_1" value="RUN_SAMPLE_DISCOVERY"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
-            <input name="PROCESS_VARIABLE_1" value="RERUN_PIPELINES"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
+            <input name="PROCESS_VARIABLE_2" value="RERUN_PIPELINES"/>
+            <input name="PROCESS_VARIABLE_VALUE_2" value="true"/>
             <output name="RUN_SAMPLE_DISCOVERY"/>
             <output name="RERUN_PIPELINES"/>
         </operation>

@@ -1,13 +1,21 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
@@ -18,6 +26,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -1028,7 +1037,7 @@ public class SampleHelper extends EntityHelper {
         
         this.dataSetFolderByIdentifier = new HashMap<String,Entity>();
         this.dataSetEntityByIdentifier = new HashMap<String,Entity>();
-        this.dataSets = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_DATA_SET);
+        this.dataSets = new ArrayList<Entity>(entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_DATA_SET));
 
         if (dataSetNameFilter != null) {
             List<Entity> filteredDataSets = new ArrayList<Entity>();
@@ -1045,6 +1054,13 @@ public class SampleHelper extends EntityHelper {
             logger.info("No data sets found for user: "+ownerKey);
             return;
         }
+        
+        Collections.sort(dataSets, new Comparator<Entity>() {
+			@Override
+			public int compare(Entity o1, Entity o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
 
         logger.info("Preloading data sets...");
         entityLoader.populateChildren(getTopLevelDataSetFolder());
