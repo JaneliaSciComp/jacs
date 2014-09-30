@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.geometricSearch.GeometricIndexService;
 import org.janelia.it.jacs.model.tasks.Event;

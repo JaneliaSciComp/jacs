@@ -4,10 +4,11 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.compute.service.activeData;
+package org.janelia.it.jacs.compute.service.activeData.scanner;
 
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
