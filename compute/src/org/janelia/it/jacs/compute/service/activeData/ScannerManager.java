@@ -14,8 +14,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.service.activeData.scanner.EntityScanner;
+import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveVisitor;
 
 /**
  *
