@@ -50,8 +50,8 @@ public class ActiveDataClientSimpleLocal implements ActiveDataClient {
     }
 
     @Override
-    public void addEntityEvent(String signature, long entityId, String eventDescriptor) throws Exception {
-        server.addEntityEvent(signature, entityId, eventDescriptor);
+    public void addEntityEvent(String signature, long entityId, String eventDescriptor, Object data) throws Exception {
+        server.addEntityEvent(signature, entityId, eventDescriptor, data);
     }
 
     @Override

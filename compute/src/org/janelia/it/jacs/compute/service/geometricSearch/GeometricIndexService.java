@@ -16,6 +16,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.mbean.GeometricIndexManager;
+import org.janelia.it.jacs.compute.service.activeData.scanner.AlignmentSampleScanner;
 import org.janelia.it.jacs.compute.service.activeData.scanner.TextFileScanner;
 import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveEntitySubtreeVisitor;
 import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveEntityTestVisitor;
@@ -26,6 +28,8 @@ import org.janelia.it.jacs.compute.service.activeData.scanner.SampleScanner;
 import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.compute.service.activeData.visitor.AlignmentPropertiesVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentCompletionVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentSetupVisitor;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
@@ -56,13 +60,23 @@ public class GeometricIndexService extends AbstractEntityService {
         Map<String,Object> parameterMap=new HashMap<>();
         long startTime=new Date().getTime();
 
-        VisitorFactory alignTextFileFactory=new VisitorFactory(parameterMap, AlignmentPropertiesVisitor.class);
-        geometricIndexVisitors.add(alignTextFileFactory);
-        TextFileScanner textScanner=new TextFileScanner(geometricIndexVisitors);
-        textScanner.setRemoveAfterEpoch(true);
-        logger.info("Adding scanner to ScannerManager with signature="+textScanner.getSignature());
-        ScannerManager.getInstance().addScanner(textScanner);
-        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, textScanner, startTime, serviceState);
+        VisitorFactory alignmentSetupFactory=new VisitorFactory(parameterMap, AlignmentSetupVisitor.class);
+        VisitorFactory alignmentCompletionFactory=new VisitorFactory(parameterMap, AlignmentCompletionVisitor.class);
+        geometricIndexVisitors.add(alignmentSetupFactory);
+        geometricIndexVisitors.add(alignmentCompletionFactory);
+        AlignmentSampleScanner sampleScanner=new AlignmentSampleScanner(geometricIndexVisitors);
+        sampleScanner.setRemoveAfterEpoch(true);
+        ScannerManager.getInstance().addScanner(sampleScanner);
+        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, serviceState);
+
+
+//        VisitorFactory alignTextFileFactory=new VisitorFactory(parameterMap, AlignmentPropertiesVisitor.class);
+//        geometricIndexVisitors.add(alignTextFileFactory);
+//        TextFileScanner textScanner=new TextFileScanner(geometricIndexVisitors);
+//        textScanner.setRemoveAfterEpoch(true);
+//        logger.info("Adding scanner to ScannerManager with signature="+textScanner.getSignature());
+//        ScannerManager.getInstance().addScanner(textScanner);
+//        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, textScanner, startTime, serviceState);
 
 
 

@@ -20,20 +20,6 @@ import java.util.Set;
 public class ActiveEntitySubtreeVisitor extends ActiveVisitor {
     Logger logger = Logger.getLogger(ActiveEntitySubtreeVisitor.class);
 
-    private class IdentityEntityLoader implements AbstractEntityLoader {
-
-        public Set<EntityData> getParents(Entity entity) throws Exception {
-            // do nothing because we assume already loaded
-            return null;
-        }
-
-        public Entity populateChildren(Entity entity) throws Exception {
-            // do nothing because we assume already loaded
-            return entity;
-        }
-
-    }
-
     public void logAlignmentAttributes(Entity v) {
         Set<EntityData> eds=v.getEntityData();
         for (EntityData ed : eds) {

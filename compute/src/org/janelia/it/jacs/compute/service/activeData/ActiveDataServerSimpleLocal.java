@@ -143,10 +143,10 @@ public class ActiveDataServerSimpleLocal implements ActiveDataClient, ActiveData
     }
     
     @Override
-    public void addEntityEvent(String signature, long entityId, String descriptor) throws Exception {
+    public void addEntityEvent(String signature, long entityId, String descriptor, Object data) throws Exception {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
-            scan.addEntityEvent(entityId, descriptor);
+            scan.addEntityEvent(entityId, descriptor, data);
         }
     }
     

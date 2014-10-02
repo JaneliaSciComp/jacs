@@ -259,7 +259,7 @@ public class ActiveDataScan {
         }
     }
     
-    public synchronized void addEntityEvent(long entityId, String descriptor) throws Exception {
+    public synchronized void addEntityEvent(long entityId, String descriptor, Object data) throws Exception {
         if (descriptor==null) {
             descriptor="";
         }
@@ -272,7 +272,7 @@ public class ActiveDataScan {
             eventList=new ArrayList<>();
             eventMap.put(entityId, eventList);
         }
-        eventList.add(new ActiveDataEntityEvent(descriptor));
+        eventList.add(new ActiveDataEntityEvent(descriptor, data));
         updateTimestamp();
     }
     

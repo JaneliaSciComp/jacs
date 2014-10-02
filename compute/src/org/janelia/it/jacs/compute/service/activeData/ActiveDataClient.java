@@ -45,7 +45,7 @@ public interface ActiveDataClient {
     public abstract void setEntityStatus(String signature, long entityId, int statusCode) throws Exception;
     
     // Add process Event for entity - valid for all Epochs
-    public abstract void addEntityEvent(String signature, long entityId, String eventDescriptor) throws Exception;
+    public abstract void addEntityEvent(String signature, long entityId, String eventDescriptor, Object data) throws Exception;
     
     // Gets the entire Event history for the given Entity, format <timestamp:descriptor>, valid for all Epochs
     public abstract List<ActiveDataEntityEvent> getEntityEvents(String signature, long entityId) throws Exception;
