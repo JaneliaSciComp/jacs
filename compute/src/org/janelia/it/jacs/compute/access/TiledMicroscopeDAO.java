@@ -398,7 +398,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
 
         // do NOT create cycles! new parent cannot be in original annotation's subtree:
-        for (TmGeoAnnotation testAnnotation: annotation.getSubTreeList()) {
+        for (TmGeoAnnotation testAnnotation: neuron.getSubTreeList(annotation)) {
             if (newParentAnnotationID.equals(testAnnotation.getId())) {
                 return;
             }
@@ -442,16 +442,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
 
         // is it already a root?
-        if (newRoot.getParent() == null) {
+        if (newRoot.isRoot()) {
             return;
         }
 
         // from input, follow parents up to current root, keeping them all
         List<TmGeoAnnotation> parentList = new ArrayList<TmGeoAnnotation>();
         TmGeoAnnotation testAnnotation = newRoot;
-        while (testAnnotation.getParent() != null) {
+        while (!testAnnotation.isRoot()) {
             parentList.add(testAnnotation);
-            testAnnotation = testAnnotation.getParent();
+            testAnnotation = neuron.getParentOf(testAnnotation);
         }
         TmGeoAnnotation oldRoot = testAnnotation;
         parentList.add(testAnnotation);
@@ -510,7 +510,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         // is it already a root?  then you can't split it (should have been 
         //  checked before it gets here)
-        if (newRoot.getParent() == null) {
+        if (newRoot.isRoot()) {
             return;
         }
 
@@ -547,16 +547,24 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             return;
         }
 
-        // find root annotation of neurite
+        // find root annotation of neurite; we need the neuron to help us with connectivity
+        TmNeuron oldNeuron;
+        try {
+            oldNeuron = new TmNeuron(oldNeuronEntity);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
         TmGeoAnnotation rootAnnotation = annotation;
-        while (rootAnnotation.getParent() != null) {
-            rootAnnotation = rootAnnotation.getParent();
+        while (!rootAnnotation.isRoot()) {
+            rootAnnotation = oldNeuron.getParentOf(rootAnnotation);
         }
 
         try {
             // move each annotation's entity data to a new entity (the new neuron)
             Entity newNeuronEntity = annotationDAO.getEntityById(newNeuron.getId());
-            for (TmGeoAnnotation ann : rootAnnotation.getSubTreeList()) {
+            for (TmGeoAnnotation ann : oldNeuron.getSubTreeList(rootAnnotation)) {
                 EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, ann.getId());
                 ed.setParentEntity(newNeuronEntity);
                 annotationDAO.saveOrUpdate(ed);
