@@ -41,7 +41,7 @@ import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
 @Path("/")
 public class SecureRestfulWebService {
 
-    private Logger logger = Logger.getLogger(this.getClass());
+    private Logger log = Logger.getLogger(this.getClass());
     
     @Context
     SecurityContext securityContext;
@@ -71,7 +71,7 @@ public class SecureRestfulWebService {
     	String subjectKey = getSubjectKey();
         String context = "getWorkspace: ";
         try {
-        	logger.info("getWorkspace called by "+subjectKey);
+        	log.info("getWorkspace called by "+subjectKey);
             EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
             if (workspaceId==null) {
             	List<Entity> workspaces = entityBean.getWorkspaces(subjectKey);
@@ -93,7 +93,6 @@ public class SecureRestfulWebService {
             }
         } 
         catch (Exception e) {
-            logger.error("getWorkspace failed", e);
             response = getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR, "failed to run", e);
         }
         return response;
@@ -109,7 +108,7 @@ public class SecureRestfulWebService {
     	String subjectKey = getSubjectKey();
         String context = "getEntity: ";
         try {
-        	logger.info("getEntity called by "+subjectKey);
+        	log.info("getEntity called by "+subjectKey);
             EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
         	Entity workspace = entityBean.getEntityById(subjectKey, entityId);
         	if (workspace==null) {
@@ -120,7 +119,6 @@ public class SecureRestfulWebService {
         	}
         } 
         catch (Exception e) {
-            logger.error("getEntity failed", e);
             response = getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR, "failed to run", e);
         }
         return response;
@@ -134,6 +132,57 @@ public class SecureRestfulWebService {
     	return jsonList;
     }
 
+//    @GET
+//    @Path("file/{entityId}")
+//	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+//	public Response getFile(@PathParam("entityId") Long entityId, @Context UriInfo uriInfo) throws Exception {
+//
+//        String context = "getTest: ";
+//
+//		AsyncHttpClientConfig.Builder config = new AsyncHttpClientConfig.Builder();
+//		config.setAllowPoolingConnections(true);
+//		config.setPooledConnectionIdleTimeout(15000);
+//		config.setMaxConnections(1000);
+//		config.setMaxConnectionsPerHost(1000);
+//		final AsyncHttpClient httpClient = new DefaultAsyncHttpClient(config.build());
+//		
+//    	ScalityDAO scality = new ScalityDAO();
+//    	AsyncStreamCoupler coupler = new AsyncStreamCoupler(httpClient);
+//    	try {
+//    		scality.get(coupler, entityId.toString());
+//		}
+//		catch (Exception e) {
+//			return getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR, "Error getting async stream coupler", e);
+//		}
+//    	
+//    	final ServletStreamCoupler finalCoupler = coupler;
+//        
+//		StreamingOutput stream = new StreamingOutput() {
+//			@Override
+//			public void write(OutputStream output) throws IOException, WebApplicationException {
+//				try {
+//					finalCoupler.writeTo(output);
+//				} 
+//				catch (Exception e) {
+//					throw new WebApplicationException(e);
+//				}
+//			}
+//		};
+//		
+//		String contentLength = null;
+//		try {
+//			contentLength = coupler.getContentLength().get();
+//			return Response
+//					.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+//					.header("content-disposition",
+//							"attachment; filename=\"temp.bin\"")
+//					.header("Content-Length", contentLength).build();
+//		}
+//		catch (Exception e) {
+//			return getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR, "Error getting content length header", e);
+//		}
+//	}
+	
     private String getNormalizedBaseUrlString(UriInfo uriInfo) {
         StringBuilder sb = new StringBuilder(uriInfo.getBaseUri().toString());
         if (sb.charAt(sb.length() - 1) != '/') {
@@ -142,12 +191,15 @@ public class SecureRestfulWebService {
         return sb.toString();
     }
 
-    private Response getErrorResponse(String context,
-                                      Response.Status status,
-                                      String errorMessage,
-                                      Exception e)  {
+    private Response getErrorResponse(String context, Response.Status status, String errorMessage)  {
+    	return getErrorResponse(context, status, errorMessage, null);
+    }
+    
+    private Response getErrorResponse(String context, Response.Status status, String errorMessage, Exception e)  {
         final RestfulWebServiceFailure failure = new RestfulWebServiceFailure(errorMessage, e);
-        logger.error(context + errorMessage, e);
+        if (e != null) {
+        	log.error(context + errorMessage, e);
+        }
         return Response.status(status).entity(failure).build();
     }
 
