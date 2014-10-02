@@ -139,9 +139,23 @@ drawLegend(0, MaxBrainC2, laser, gain, 3);
 
 run("Merge Channels...", "c1=C2-Brain c2=C1-Brain create");
 
-run("AVI... ", "compression=JPEG frame=20 save="+titleBrainAvi);
+getDimensions(width, height, channels, slices, frames);
+if (height % 2 != 0 || width % 2 != 0) {
+    print("Adjusting Brain canvas size");
+    newWidth = width;
+    newHeight = height;
+    if (width % 2 != 0) {
+        newWidth = width+1;
+    }
+    if (height % 2 != 0) {
+        newHeight = height+1;
+    }
+    run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+}
+
+run("AVI... ", "compression=Uncompressed frame=20 save="+titleBrainAvi);
 Stack.setActiveChannels("10");
-run("AVI... ", "compression=JPEG frame=20 save="+titleBrainAviC2);
+run("AVI... ", "compression=Uncompressed frame=20 save="+titleBrainAviC2);
 Stack.setActiveChannels("11");
 rename("Brain");
 
@@ -197,10 +211,24 @@ if(vncImage!="") {
     drawLegend(0, MaxBrainC2, laser, gain, 3);
 
     run("Merge Channels...", "c1=C2-VNC c2=C1-VNC create");
+    
+    getDimensions(width, height, channels, slices, frames);
+    if (height % 2 != 0 || width % 2 != 0) {
+        print("Adjusting VNC canvas size");
+        newWidth = width;
+        newHeight = height;
+        if (width % 2 != 0) {
+            newWidth = width+1;
+        }
+        if (height % 2 != 0) {
+            newHeight = height+1;
+        }
+        run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+    }
 
-    run("AVI... ", "compression=JPEG frame=20 save="+titleVNCAvi);
+    run("AVI... ", "compression=Uncompressed frame=20 save="+titleVNCAvi);
     Stack.setActiveChannels("10");
-    run("AVI... ", "compression=JPEG frame=20 save="+titleVNCAviC2);
+    run("AVI... ", "compression=Uncompressed frame=20 save="+titleVNCAviC2);
     Stack.setActiveChannels("11");
     rename("VNC");
 
