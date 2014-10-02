@@ -389,6 +389,7 @@ public class ActiveDataScan {
     EntityScanner getEntityScannerClassInstance() throws Exception {
         Class c = Class.forName(getClassnameFromSignature(signature));
         EntityScanner es = (EntityScanner) c.newInstance();
+        es.setSignatureOnlyForNewInstance(signature);
         return es;
     }
 
@@ -436,6 +437,10 @@ public class ActiveDataScan {
                 }
             }
         };
+    }
+
+    Map<Long, List<ActiveDataEntityEvent>> getEventMap() {
+        return eventMap;
     }
     
 }

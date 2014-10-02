@@ -34,6 +34,19 @@ public class ActiveEntitySubtreeVisitor extends ActiveVisitor {
 
     }
 
+    public void logAlignmentAttributes(Entity v) {
+        Set<EntityData> eds=v.getEntityData();
+        for (EntityData ed : eds) {
+            if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE)) {
+                logger.info("attr ALIGNMENT_SPACE=" + ed.getValue());
+            } else if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)) {
+                logger.info("attr OPTICAL_RESOLUTION=" + ed.getValue());
+            } else if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)) {
+                logger.info("attr PIXEL_RESOLUTION=" + ed.getValue());
+            }
+        }
+    }
+
     @Override
     public Boolean call() throws Exception {
         logger.info("ActiveEntitySubtreeVisitor call() - entityId="+entityId);
@@ -42,23 +55,35 @@ public class ActiveEntitySubtreeVisitor extends ActiveVisitor {
         long endTime=0L;
         try {
             e = EJBFactory.getLocalEntityBean().getEntityTree(entityId);
-
-
+            logger.info(">>>  SAMPLE_ID="+e.getId());
+            final Set<Long> visitedSet=new HashSet<>();
             EntityVistationBuilder.create(new IdentityEntityLoader()).setVisitRootOwnerOwnedEntitiesOnly(false).runRecursively(e, new EntityVisitor() {
-                        public void visit(Entity result) throws Exception {
-                            Set<EntityData> eds = result.getEntityData();
-                            for (EntityData ed : eds) {
-                                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE)) {
-                                    logger.info("Entity id=" + result.getId() + " of type=" + result.getEntityTypeName() + " has ALIGNMENT_SPACE=" + ed.getValue());
-                                } else if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)) {
-                                    logger.info("Entity id=" + result.getId() + " of type=" + result.getEntityTypeName() + " has OPTICAL_RESOLUTION=" + ed.getValue());
-                                } else if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)) {
-                                    logger.info("Entity id=" + result.getId() + " of type=" + result.getEntityTypeName() + " has PIXEL_RESOLUTION=" + ed.getValue());
+                public void visit(Entity v) throws Exception {
+                    if (v.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
+                        logger.info("  >> ALIGNMENT_RESULT="+v.getId()+" NAME="+v.getName());
+                        logAlignmentAttributes(v);
+                        visitedSet.remove(v.getId()); // we want to start sub-search
+                        EntityVistationBuilder.create(new IdentityEntityLoader()).setVisitRootOwnerOwnedEntitiesOnly(false).runRecursively(v, new EntityVisitor() {
+                            public void visit(Entity v2) throws Exception {
+                                if (v2.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+                                    logger.info("   >   NEURON_SEPARATOR_PIPELINE_RESULT=" + v2.getId());
+                                    logAlignmentAttributes(v2);
+                                } else if (v2.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                                    if (v2.getName().endsWith(".chan") || v2.getName().endsWith(".mask")) {
+                                        // skip
+                                    } else {
+                                        logger.info("   >   IMAGE_3D=" + v2.getId() + " NAME=" + v2.getName());
+                                        logAlignmentAttributes(v2);
+                                    }
+                                } else if (v2.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
+                                    logger.info("   >   LSM_STACK=" + v2.getId() + " NAME="+v2.getName());
+                                    logAlignmentAttributes(v2);
                                 }
                             }
-                        }
-                    }, new HashSet<Long>());
-
+                        }, visitedSet);
+                    }
+                }
+            }, visitedSet);
             endTime=new Date().getTime();
         } catch (Exception ex) {
             logger.error("Error getting EntityBean and calling getEntityTree()");

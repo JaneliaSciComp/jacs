@@ -92,6 +92,10 @@ public class ActiveDataClientSimpleLocal implements ActiveDataClient {
     @Override
     public void release(String lockString) throws Exception {
         server.release(lockString);
-    }   
- 
+    }
+
+    @Override
+    public Map<Long, List<ActiveDataEntityEvent>> getEventMap(String signature) { return server.getEventMap(signature); }
+
+
 }

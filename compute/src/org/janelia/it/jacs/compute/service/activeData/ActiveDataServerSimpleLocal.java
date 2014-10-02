@@ -297,4 +297,10 @@ public class ActiveDataServerSimpleLocal implements ActiveDataClient, ActiveData
         preAndPostPool.schedule(scan.getPostRunnable(), 0, TimeUnit.MILLISECONDS);
     }
 
+    @Override
+    public Map<Long, List<ActiveDataEntityEvent>> getEventMap(String signature) {
+        ActiveDataScan scan=scanMap.get(signature);
+        return scan.getEventMap();
+    }
+
 }

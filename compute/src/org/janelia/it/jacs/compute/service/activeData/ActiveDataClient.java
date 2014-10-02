@@ -8,6 +8,7 @@ package org.janelia.it.jacs.compute.service.activeData;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -63,5 +64,8 @@ public interface ActiveDataClient {
 
     // Gets the current (corresponding to most recent Epoch) directory for this signature
     public File getScanDirectory(String scannerSignature) throws Exception;
+
+    // Gets all events for the current Epoch
+    public Map<Long, List<ActiveDataEntityEvent>> getEventMap(String signature) throws Exception;
 
 }

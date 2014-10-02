@@ -7,14 +7,17 @@
 package org.janelia.it.jacs.compute.service.activeData.scanner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 
-import org.janelia.it.jacs.compute.service.activeData.ActiveDataScan;
-import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.service.activeData.*;
+import org.janelia.it.jacs.model.entity.Entity;
 
 /**
  *
@@ -50,6 +53,13 @@ public abstract class EntityScanner {
     
     public List<VisitorFactory> getVisitorFactoryList() {
         return visitorFactoryList;
+    }
+
+    public void setSignatureOnlyForNewInstance(String signature) throws Exception {
+        if (this.signature !=null) {
+            throw new Exception("This method is being mis-used - signature should be null when called");
+        }
+        this.signature=signature;
     }
     
     public String getSignature() {
@@ -110,6 +120,55 @@ public abstract class EntityScanner {
             }
             return result;
         }         
+    }
+
+
+    protected long[] generateIdListByEntityTypeAndName(Object dataResource, String entityTypeName, String entityName) throws Exception {
+        EntityBeanLocal entityBeanLocal = EJBFactory.getLocalEntityBean();
+        List<Entity> entityList = null;
+        try {
+            entityList = entityBeanLocal.getEntitiesByNameAndTypeName(null, entityName, entityTypeName);
+        } catch (Exception ex) {
+            logger.error(ex, ex);
+            throw ex;
+        }
+        if (entityList == null || entityList.isEmpty()) {
+            return new long[0];
+        } else {
+            long[] result = new long[entityList.size()];
+            int i = 0;
+            for (Entity e : entityList) {
+                result[i++] = e.getId();
+            }
+            return result;
+        }
+    }
+
+
+    Map<String, Long> getEventCountMap() {
+        try {
+            ActiveDataClient activeData = (ActiveDataClient) ActiveDataServerSimpleLocal.getInstance();
+            Map<Long, List<ActiveDataEntityEvent>> eventMap = activeData.getEventMap(getSignature());
+            Map<String, Long> eventCountMap=new HashMap<>();
+            for (Long entityId : eventMap.keySet()) {
+                List<ActiveDataEntityEvent> eventList=eventMap.get(entityId);
+                if (eventList!=null) {
+                    for (ActiveDataEntityEvent event : eventList) {
+                        String descriptor=event.getDescriptor();
+                        Long count=eventCountMap.get(descriptor);
+                        if (count==null || count==0L) {
+                            eventCountMap.put(descriptor, 1L);
+                        } else {
+                            eventCountMap.put(descriptor, count+1L);
+                        }
+                    }
+                }
+            }
+            return eventCountMap;
+        } catch (Exception ex) {
+            logger.error("Exception: ", ex);
+            return null;
+        }
     }
     
 }
