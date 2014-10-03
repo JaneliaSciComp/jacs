@@ -29,6 +29,8 @@ import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.compute.service.activeData.visitor.AlignmentPropertiesVisitor;
 import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentCompletionVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentLsmVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentResultVisitor;
 import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentSetupVisitor;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -61,9 +63,15 @@ public class GeometricIndexService extends AbstractEntityService {
         long startTime=new Date().getTime();
 
         VisitorFactory alignmentSetupFactory=new VisitorFactory(parameterMap, AlignmentSetupVisitor.class);
+        VisitorFactory alignmentLsmFactory=new VisitorFactory(parameterMap, AlignmentLsmVisitor.class);
+        VisitorFactory alignmentResultFactory=new VisitorFactory(parameterMap, AlignmentResultVisitor.class);
         VisitorFactory alignmentCompletionFactory=new VisitorFactory(parameterMap, AlignmentCompletionVisitor.class);
+
         geometricIndexVisitors.add(alignmentSetupFactory);
+        geometricIndexVisitors.add(alignmentLsmFactory);
+        geometricIndexVisitors.add(alignmentResultFactory);
         geometricIndexVisitors.add(alignmentCompletionFactory);
+
         AlignmentSampleScanner sampleScanner=new AlignmentSampleScanner(geometricIndexVisitors);
         sampleScanner.setRemoveAfterEpoch(true);
         ScannerManager.getInstance().addScanner(sampleScanner);
@@ -90,7 +98,7 @@ public class GeometricIndexService extends AbstractEntityService {
 //        ScannerManager.getInstance().addScanner(sampleScanner);
 //        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, serviceState);
 
-        managerFuture = managerPool.scheduleWithFixedDelay(serviceThread, 0, 1, TimeUnit.MINUTES);
+        managerFuture = managerPool.scheduleWithFixedDelay(serviceThread, 0, 10, TimeUnit.MINUTES);
         while(!serviceState.getDone() && !serviceState.getError()) {
             Thread.sleep(1000L);
         }

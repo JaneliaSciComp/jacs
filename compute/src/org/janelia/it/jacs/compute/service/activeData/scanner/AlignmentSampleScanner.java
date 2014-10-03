@@ -17,6 +17,7 @@ public class AlignmentSampleScanner extends EntityScanner {
     static final Logger logger = Logger.getLogger(AlignmentSampleScanner.class);
 
     public static final String SAMPLE_INFO = "SAMPLE_INFO";
+    public static final String SAMPLE_ENTITY = "SAMPLE_ENTITY";
 
     public AlignmentSampleScanner() {
         super();
@@ -56,19 +57,21 @@ public class AlignmentSampleScanner extends EntityScanner {
     public static class SampleInfo {
         public Long id;
         public String owner;
+        public String name;
         public String lineDescriptor;
         public String lsm20xPath;
         public String preparationType;
-        List<Lsm63xInfo> lsm63xInfoList;
-        List<AlignmentResult> alignmentResultList;
+        public List<Lsm63xInfo> lsm63xInfoList;
+        public List<AlignmentResult> alignmentResultList;
 
         public String toString() {
             StringBuilder sb=new StringBuilder();
             sb.append("SAMPLE id="+id+"\n");
             sb.append("  OWNER="+owner+"\n");
+            sb.append("  NAME="+name+"\n");
             sb.append("  LINE="+lineDescriptor+"\n");
-            sb.append("  LSM_20x_PATH="+lsm20xPath+"\n");
             sb.append("  PREPARATION="+preparationType+"\n");
+            sb.append("  LSM_20x_PATH="+lsm20xPath+"\n");
             if (lsm63xInfoList!=null) {
                 for (Lsm63xInfo lsm63xInfo : lsm63xInfoList) {
                     sb.append(lsm63xInfo.toString());
@@ -84,8 +87,8 @@ public class AlignmentSampleScanner extends EntityScanner {
     }
 
     public static class Lsm63xInfo {
-        String locationDescription;
-        String path;
+        public String locationDescription;
+        public String path;
 
         public String toString() {
             StringBuilder sb=new StringBuilder();
@@ -98,6 +101,8 @@ public class AlignmentSampleScanner extends EntityScanner {
     public static class AlignmentResult {
         public Long id;
         public String spaceDescriptor;
+        public Float qiByCsv;
+        public Float qualByPropNcc;
         public Float qualityCentral;
         public Float qualityLeftOpticLobe;
         public Float qualityRightOpticLobe;
@@ -108,6 +113,8 @@ public class AlignmentSampleScanner extends EntityScanner {
             StringBuilder sb=new StringBuilder();
             sb.append("  ALIGNMENT_RESULT id="+id+"\n");
             sb.append("    SPACE="+spaceDescriptor+"\n");
+            sb.append("    QI_BY_CSV="+qiByCsv+"\n");
+            sb.append("    QUAL_BY_PROP_NCC="+qualByPropNcc+"\n");
             sb.append("    QUALITY_CENTRAL="+qualityCentral+"\n");
             sb.append("    QUALITY_LEFT_OL="+qualityLeftOpticLobe+"\n");
             sb.append("    QUALITY_RIGHT_OL="+qualityRightOpticLobe+"\n");

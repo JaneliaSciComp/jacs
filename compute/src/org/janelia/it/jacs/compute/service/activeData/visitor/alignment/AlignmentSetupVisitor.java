@@ -24,8 +24,9 @@ public class AlignmentSetupVisitor extends ActiveVisitor {
 
         sampleInfo.id=sampleEntity.getId();
         sampleInfo.owner=sampleEntity.getOwnerKey();
-        sampleInfo.lineDescriptor=sampleEntity.getName();
+        sampleInfo.name=sampleEntity.getName();
 
+        contextMap.put(AlignmentSampleScanner.SAMPLE_ENTITY, sampleEntity);
         contextMap.put(AlignmentSampleScanner.SAMPLE_INFO, sampleInfo);
 
         return true;
