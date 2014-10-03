@@ -30,10 +30,10 @@ public class AlignmentPropertiesVisitor extends ActiveVisitor {
             logger.info("Text file name="+textFileName);
             if (textFileName.equals("AlignedFlyBrain.properties")) {
                 logger.info("HAS_ALIGN=true");
-                activeData.addEntityEvent(signature, entityId, HAS_ALIGN_PROP_NAME+"=true");
+                activeData.addEntityEvent(signature, entityId, HAS_ALIGN_PROP_NAME+"=true", null);
             } else {
                 logger.info("HAS_ALIGN=false");
-                activeData.addEntityEvent(signature, entityId, HAS_ALIGN_PROP_NAME+"=false");
+                activeData.addEntityEvent(signature, entityId, HAS_ALIGN_PROP_NAME+"=false", null);
             }
             return true;
         } else {
