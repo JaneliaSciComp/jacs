@@ -258,4 +258,16 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    public List<String> getTiffTilePaths(String basePath, int[] viewerCoord) throws ComputeException {
+        List<String> rtnVal = null;
+        try {
+            rtnVal = _tiledMicroscopeDAO.getTiffTilePaths(basePath, viewerCoord);
+        } catch (Exception e) {
+            String errorString="Error calling getTiffTilePaths DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(e);
+        }
+        return rtnVal;
+    }
+
 }

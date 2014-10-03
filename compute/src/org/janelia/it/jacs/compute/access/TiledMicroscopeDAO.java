@@ -2,10 +2,15 @@ package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.largevolume.RawTiffFetcher;
+import org.janelia.it.jacs.compute.largevolume.TileBaseReader;
+import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.*;
 
 /**
@@ -393,7 +398,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
 
         // do NOT create cycles! new parent cannot be in original annotation's subtree:
-        for (TmGeoAnnotation testAnnotation: annotation.getSubTreeList()) {
+        for (TmGeoAnnotation testAnnotation: neuron.getSubTreeList(annotation)) {
             if (newParentAnnotationID.equals(testAnnotation.getId())) {
                 return;
             }
@@ -437,16 +442,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
 
         // is it already a root?
-        if (newRoot.getParent() == null) {
+        if (newRoot.isRoot()) {
             return;
         }
 
         // from input, follow parents up to current root, keeping them all
         List<TmGeoAnnotation> parentList = new ArrayList<TmGeoAnnotation>();
         TmGeoAnnotation testAnnotation = newRoot;
-        while (testAnnotation.getParent() != null) {
+        while (!testAnnotation.isRoot()) {
             parentList.add(testAnnotation);
-            testAnnotation = testAnnotation.getParent();
+            testAnnotation = neuron.getParentOf(testAnnotation);
         }
         TmGeoAnnotation oldRoot = testAnnotation;
         parentList.add(testAnnotation);
@@ -505,7 +510,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         // is it already a root?  then you can't split it (should have been 
         //  checked before it gets here)
-        if (newRoot.getParent() == null) {
+        if (newRoot.isRoot()) {
             return;
         }
 
@@ -542,16 +547,24 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             return;
         }
 
-        // find root annotation of neurite
+        // find root annotation of neurite; we need the neuron to help us with connectivity
+        TmNeuron oldNeuron;
+        try {
+            oldNeuron = new TmNeuron(oldNeuronEntity);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
         TmGeoAnnotation rootAnnotation = annotation;
-        while (rootAnnotation.getParent() != null) {
-            rootAnnotation = rootAnnotation.getParent();
+        while (!rootAnnotation.isRoot()) {
+            rootAnnotation = oldNeuron.getParentOf(rootAnnotation);
         }
 
         try {
             // move each annotation's entity data to a new entity (the new neuron)
             Entity newNeuronEntity = annotationDAO.getEntityById(newNeuron.getId());
-            for (TmGeoAnnotation ann : rootAnnotation.getSubTreeList()) {
+            for (TmGeoAnnotation ann : oldNeuron.getSubTreeList(rootAnnotation)) {
                 EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, ann.getId());
                 ed.setParentEntity(newNeuronEntity);
                 annotationDAO.saveOrUpdate(ed);
@@ -745,6 +758,32 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             e.printStackTrace();
             throw new DaoException(e);
         }
+    }
+
+    public List<String> getTiffTilePaths( String basePath, int[] viewerCoord ) throws DaoException {
+        List<String> rtnVal = new ArrayList<>();
+        try {
+            File basePathFile = new File( basePath );
+            File yaml = new File( basePathFile, TileBaseReader.STD_TILE_BASE_FILE_NAME );
+            if ( ! yaml.exists()  ||  ! yaml.isFile() ) {
+                String errorString = "Failed to open yaml file " + yaml;
+                throw new Exception(errorString);
+            }
+            TileBase tileBase = new TileBaseReader().readTileBase( new FileInputStream( yaml ) );
+            RawTiffFetcher fetcher = new RawTiffFetcher( tileBase, basePathFile );
+            File microscopeFilesDir = fetcher.getMicroscopeFileDir( viewerCoord );
+            if ( microscopeFilesDir == null  ||  ! microscopeFilesDir.exists()  ||  ! microscopeFilesDir.isDirectory() ) {
+                String errorString = "Failed to open microscope files directory " + microscopeFilesDir;
+                throw new Exception(errorString);
+            }
+            File[] microScopeTiffFiles = fetcher.getMicroscopeFiles( microscopeFilesDir );
+            for ( File microscopeTiffFile: microScopeTiffFiles ) {
+                rtnVal.add(microscopeTiffFile.getAbsolutePath());
+            }
+        } catch ( Exception ex ) {
+            throw new DaoException(ex);
+        }
+        return rtnVal;
     }
 
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
