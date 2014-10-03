@@ -1,4 +1,4 @@
-//
+//Date released:  2014-10-01
 // FIJI macro for generating intensity-normalized Movies and MIPs
 // Images should be 1024x1024
 // Argument should be in this format: "BrainPath,VNCPath,Laser,Gain,ChanSpec"
@@ -90,7 +90,7 @@ selectWindow("Brain");
 run("Split Channels");
 selectWindow("C1-Brain");
 run("Z Project...", "projection=[Max Intensity]");
-run("Scale...", "x=0.1 y=0.1 width=102 height=102 interpolation=Bilinear average create title=01");
+run("Scale...", "x=0.2 y=0.2 width=204 height=204 interpolation=Bilinear average create title=01");
 run("Select All");
 getStatistics(area, mean, min, max, std, histogram);
 
@@ -113,7 +113,7 @@ if(bitDepth==16){
 
 selectWindow("C2-Brain");
 run("Z Project...", "projection=[Max Intensity]");
-run("Scale...", "x=0.1 y=0.1 width=102 height=102 interpolation=Bilinear average create title=01");
+run("Scale...", "x=0.2 y=0.2 width=204 height=204 interpolation=Bilinear average create title=01");
 run("Select All");
 getStatistics(area, mean, min, max, std, histogram);
 close();
@@ -139,9 +139,23 @@ drawLegend(0, MaxBrainC2, laser, gain, 3);
 
 run("Merge Channels...", "c1=C2-Brain c2=C1-Brain create");
 
-run("AVI... ", "compression=JPEG frame=10 save="+titleBrainAvi);
+getDimensions(width, height, channels, slices, frames);
+if (height % 2 != 0 || width % 2 != 0) {
+    print("Adjusting Brain canvas size");
+    newWidth = width;
+    newHeight = height;
+    if (width % 2 != 0) {
+        newWidth = width+1;
+    }
+    if (height % 2 != 0) {
+        newHeight = height+1;
+    }
+    run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+}
+
+run("AVI... ", "compression=Uncompressed frame=20 save="+titleBrainAvi);
 Stack.setActiveChannels("10");
-run("AVI... ", "compression=JPEG frame=10 save="+titleBrainAviC2);
+run("AVI... ", "compression=Uncompressed frame=20 save="+titleBrainAviC2);
 Stack.setActiveChannels("11");
 rename("Brain");
 
@@ -172,7 +186,7 @@ if(vncImage!="") {
 
     selectWindow("C1-VNC");
     run("Z Project...", "projection=[Max Intensity]");
-    run("Scale...", "x=0.1 y=0.1 width=102 height=102 interpolation=Bilinear average create title=01");
+    run("Scale...", "x=0.2 y=0.2 width=204 height=204 interpolation=Bilinear average create title=01");
     run("Select All");
     getStatistics(area, mean, min, max, std, histogram);
     close();
@@ -197,10 +211,24 @@ if(vncImage!="") {
     drawLegend(0, MaxBrainC2, laser, gain, 3);
 
     run("Merge Channels...", "c1=C2-VNC c2=C1-VNC create");
+    
+    getDimensions(width, height, channels, slices, frames);
+    if (height % 2 != 0 || width % 2 != 0) {
+        print("Adjusting VNC canvas size");
+        newWidth = width;
+        newHeight = height;
+        if (width % 2 != 0) {
+            newWidth = width+1;
+        }
+        if (height % 2 != 0) {
+            newHeight = height+1;
+        }
+        run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+    }
 
-    run("AVI... ", "compression=JPEG frame=10 save="+titleVNCAvi);
+    run("AVI... ", "compression=Uncompressed frame=20 save="+titleVNCAvi);
     Stack.setActiveChannels("10");
-    run("AVI... ", "compression=JPEG frame=10 save="+titleVNCAviC2);
+    run("AVI... ", "compression=Uncompressed frame=20 save="+titleVNCAviC2);
     Stack.setActiveChannels("11");
     rename("VNC");
 

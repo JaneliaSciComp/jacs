@@ -83,12 +83,15 @@ public class TmNeuron implements IsSerializable, Serializable {
                     rootAnnotations.add(ga);
                 }
                 geoAnnotationMap.put(ga.getId(), ga);
+                // these values only set when we do it here, in the context of a neuron
+                ga.setNeuronId(id);
+                ga.setEmptyChildList();
             } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
                 TmAnchoredPath path = new TmAnchoredPath(ed.getValue());
                 anchoredPathMap.put(path.getEndpoints(), path);
             }
         }
-        // Second step to to use child/parent fields to construct graph for
+        // Second step is to link childen to produce the graph for
         //  the GeoAnnotations
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
             Long parentId = ga.getParentId();
@@ -100,15 +103,55 @@ public class TmNeuron implements IsSerializable, Serializable {
                     throw new Exception(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
                 }
                 parent.addChild(ga);
-                ga.setParent(parent);
-            }
-        }
-        // Last step is check to make sure every non-root annotation has a parent
-        for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
-            if (ga.getParent()==null && !ga.getParentId().equals(this.id)) {
-                throw new Exception(String.format("TmGeoAnnotation id = %d unexpectedly does not have a valid parent in neuron id = %d", ga.getId(), id));
             }
         }
     }
+
+    public TmGeoAnnotation getParentOf(TmGeoAnnotation annotation) {
+        if (annotation == null) {
+            return null;
+        }
+        // arguably this should throw an exception (annotation not in neuron)
+        if (!getGeoAnnotationMap().containsKey(annotation.getId())) {
+            return null;
+        }
+        return getGeoAnnotationMap().get(annotation.getParentId());
+    }
+
+    public List<TmGeoAnnotation> getChildrenOf(TmGeoAnnotation annotation) {
+        if (annotation == null) {
+            return null;
+        }
+        // arguably this should throw an exception (annotation not in neuron)
+        if (!getGeoAnnotationMap().containsKey(annotation.getId())) {
+            return null;
+        }
+        ArrayList<TmGeoAnnotation> children = new ArrayList<TmGeoAnnotation>(annotation.getChildIds().size());
+        for (Long childID: annotation.getChildIds()) {
+            children.add(getGeoAnnotationMap().get(childID));
+        }
+        return children;
+    }
+
+    /**
+     * this method returns a list of all children in the subtree of the input
+     * annotation, plus the annotation itself; the order is such that the
+     * annotation itself is first, and each child is guaranteed to appear
+     * after its parent
+     * @return list of annotations in subtree rooted at given annotation
+     */
+    public List<TmGeoAnnotation> getSubTreeList(TmGeoAnnotation annotation) {
+        ArrayList<TmGeoAnnotation> subtreeList = new ArrayList<TmGeoAnnotation>();
+        appendSubTreeList(subtreeList, annotation);
+        return subtreeList;
+    }
+
+    private void appendSubTreeList(List<TmGeoAnnotation> annList, TmGeoAnnotation ann) {
+        annList.add(ann);
+        for (TmGeoAnnotation a: getChildrenOf(ann)) {
+            appendSubTreeList(annList, a);
+        }
+    }
+
 
 }
