@@ -100,11 +100,11 @@ public class TileWalkerTest {
         }
 
         System.out.println(String.format(
-                "Global Max: [%,d %,d %,d]",
+                "Global Max Centroid: [%,d %,d %,d]",
                 maxCoords[0], maxCoords[1], maxCoords[2]
         ));
         System.out.println(String.format(
-                "Global Min: [%,d %,d %,d]",
+                "Global Min Centroid: [%,d %,d %,d]",
                 minCoords[0], minCoords[1], minCoords[2]
         ));
 

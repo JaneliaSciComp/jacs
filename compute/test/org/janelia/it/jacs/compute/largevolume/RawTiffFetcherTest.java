@@ -22,19 +22,17 @@ public class RawTiffFetcherTest {
     @Test
     public void fetch() throws Exception {
         RawTiffFetcher fetcher = new RawTiffFetcher( tileBase, baseLocation );
-        File[] files = new File[ 5 ];
         int[][] coords = {
-            new int[] { 0, 0, 0 },
-            new int[] { 0, 200000, 100000 },
-            new int[] { 300000, 3000000, 300000 },
-            new int[] { 500000, 5000000, 500000 },
-            new int[] { 700000, 7000000, 600000 }
+            new int[] { 16101, 18741, 6643 },
+            new int[] { 14926, 15760, 6401 },
+            new int[] { 14982, 17027, 6401 },
+            new int[] { 16059, 18501, 4906 },
+            new int[] { 26019, 19453, 4906 }
         };
-        files[ 0 ] = fetcher.getMicroscopeFileDir(coords[0]);
-        files[ 1 ] = fetcher.getMicroscopeFileDir(coords[1]);
-        files[ 2 ] = fetcher.getMicroscopeFileDir(coords[2]);
-        files[ 3 ] = fetcher.getMicroscopeFileDir(coords[3]);
-        files[ 4 ] = fetcher.getMicroscopeFileDir(coords[4]);
+        File[] files = new File[ coords.length ];
+        for ( int i = 0; i < coords.length; i++ ) {
+            files[ i ] = fetcher.getMicroscopeFileDir(coords[i]);
+        }
 
         CoordinateToRawTransform transform = new CoordinateToRawTransform( baseLocation );
         for ( int i = 0; i < files.length; i++ ) {

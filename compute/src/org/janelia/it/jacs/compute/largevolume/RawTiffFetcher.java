@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.largevolume;
 
-import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 
 import java.io.File;
@@ -14,6 +13,8 @@ public class RawTiffFetcher {
 
     public static final String TIFF_0_SUFFIX = "-ngc.0.tif";
     public static final String TIFF_1_SUFFIX = "-ngc.1.tif";
+
+    private static final double DISTANCE_DOWN_SCALER = 1000000.0;
     private Map<List<Integer>, RawDataHandle> centroidToRawDataHandle;
     private CoordinateToRawTransform transform;
 
@@ -56,36 +57,55 @@ public class RawTiffFetcher {
      */
     public List<Integer> getClosestCentroid(int[] microScopeCoords) {
         List<Integer> closestCentroid = null;
-        double squareOfClosestDistance = 0;
+        double squareOfClosestDistance = (double)Float.MAX_VALUE;
+int debugI = 0;
         for ( List<Integer> centroid: centroidToRawDataHandle.keySet() ) {
             if ( closestCentroid == null ) {
                 closestCentroid = centroid;
             }
             else {
-                double squareCentroidDistance = getSquareCentroidDistance(centroid, microScopeCoords);
+                double squareCentroidDistance = getCentroidDistanceMetric(centroid, microScopeCoords);
+//if (++debugI % 100 == 0)
+//System.out.println(String.format(
+//        "InputCoords: [%,d %,d %,d].  TestedCentroid: [%,d %,d %,d].  Square of Closest distance is: %f. ("+debugI+")",
+//        microScopeCoords[0],microScopeCoords[1],microScopeCoords[2],
+//        centroid.get(0), centroid.get(1), centroid.get(2),
+//        squareOfClosestDistance
+//    )
+//);
                 if ( squareOfClosestDistance > squareCentroidDistance ) {
                     closestCentroid = centroid;
                     squareOfClosestDistance = squareCentroidDistance;
                 }
             }
         }
+        // debug
+//        System.out.println(String.format(
+//                        "InputCoords: [%,d %,d %,d].  ClosestCentroid: [%,d %,d %,d].  SquareOfClosestDistance: %f.",
+//                        microScopeCoords[0],microScopeCoords[1],microScopeCoords[2],
+//                        closestCentroid.get(0), closestCentroid.get(1), closestCentroid.get(2),
+//                        squareOfClosestDistance
+//                )
+//        );
         return closestCentroid;
     }
 
     /**
      * Note: do not need actual distance, only to know what is the smallest 'distance'.  Therefore,
-     * not bothering to take square root, which would incur more overhead.
+     * not bothering to take square root, which would incur more overhead.  However, do need to scale all the
+     * values by some large number to prevent double overflow.  Distances are significant enough to cause that
+     * if squared.
      *
      * @param centroid how close _to
      * @param coords how close _is
      * @return square of distance
      */
-    public double getSquareCentroidDistance(List<Integer> centroid, int[] coords) {
-        int xDist = centroid.get(0) - coords[0];
-        int yDist = centroid.get(1) - coords[1];
-        int zDist = centroid.get(2) - coords[2];
-        return  xDist * xDist +
-                yDist * yDist +
-                zDist * zDist;
+    public double getCentroidDistanceMetric(List<Integer> centroid, int[] coords) {
+        double xDist = (centroid.get(0) - coords[0]) / DISTANCE_DOWN_SCALER;
+        double yDist = (centroid.get(1) - coords[1]) / DISTANCE_DOWN_SCALER;
+        double zDist = (centroid.get(2) - coords[2]) / DISTANCE_DOWN_SCALER;
+        return  (xDist * xDist) +
+                (yDist * yDist) +
+                (zDist * zDist);
     }
 }
