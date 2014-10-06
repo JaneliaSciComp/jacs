@@ -17,7 +17,7 @@
 
 setBackgroundColor(0,0,0);
 setForegroundColor(255,255,255);
-//setBatchMode(true);
+setBatchMode(true);
 
 var width, height, channels, slices, frames;
 var merge_name = "";
