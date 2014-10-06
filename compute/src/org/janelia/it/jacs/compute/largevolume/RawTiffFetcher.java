@@ -58,35 +58,18 @@ public class RawTiffFetcher {
     public List<Integer> getClosestCentroid(int[] microScopeCoords) {
         List<Integer> closestCentroid = null;
         double squareOfClosestDistance = (double)Float.MAX_VALUE;
-int debugI = 0;
         for ( List<Integer> centroid: centroidToRawDataHandle.keySet() ) {
             if ( closestCentroid == null ) {
                 closestCentroid = centroid;
             }
             else {
                 double squareCentroidDistance = getCentroidDistanceMetric(centroid, microScopeCoords);
-//if (++debugI % 100 == 0)
-//System.out.println(String.format(
-//        "InputCoords: [%,d %,d %,d].  TestedCentroid: [%,d %,d %,d].  Square of Closest distance is: %f. ("+debugI+")",
-//        microScopeCoords[0],microScopeCoords[1],microScopeCoords[2],
-//        centroid.get(0), centroid.get(1), centroid.get(2),
-//        squareOfClosestDistance
-//    )
-//);
                 if ( squareOfClosestDistance > squareCentroidDistance ) {
                     closestCentroid = centroid;
                     squareOfClosestDistance = squareCentroidDistance;
                 }
             }
         }
-        // debug
-//        System.out.println(String.format(
-//                        "InputCoords: [%,d %,d %,d].  ClosestCentroid: [%,d %,d %,d].  SquareOfClosestDistance: %f.",
-//                        microScopeCoords[0],microScopeCoords[1],microScopeCoords[2],
-//                        closestCentroid.get(0), closestCentroid.get(1), closestCentroid.get(2),
-//                        squareOfClosestDistance
-//                )
-//        );
         return closestCentroid;
     }
 
