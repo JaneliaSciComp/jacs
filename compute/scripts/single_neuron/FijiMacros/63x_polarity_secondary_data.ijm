@@ -15,8 +15,9 @@
 //   colorspec: color specification
 
 
-run("Colors...", "foreground=white background=black selection=yellow");
-setBatchMode(true);
+setBackgroundColor(0,0,0);
+setForegroundColor(255,255,255);
+//setBatchMode(true);
 
 var width, height, channels, slices, frames;
 var merge_name = "";
@@ -30,7 +31,7 @@ basedir = arg[1];
 print("Prefix: "+prefix);
 print("Output directory: "+basedir);
 image = arg[2];
-if (image == "") exit ("No image argument!");
+if (image == "") exit("No image argument!");
 channelspec = toLowerCase(arg[3]);
 if (channelspec == "") exit ("No channel specification argument!");
 colorspec = toUpperCase(arg[4]);
@@ -64,7 +65,7 @@ if (channels > 2) {
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   close();
-  run("Subtract...", "value=mean stack");
+  run("Subtract...", "value="+mean+" stack");
   
   run("Magenta");
   rename(title);
@@ -84,7 +85,7 @@ if (channels > 2) {
   selectWindow("signal2_mask");
   close();
   selectWindow("signal2");
-  run("Subtract...", "value=mean stack");
+  run("Subtract...", "value="+mean+" stack");
 }
 else {
   processChannel("signal1");
@@ -93,7 +94,7 @@ else {
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   close();
-  run("Subtract...", "value=mean stack");
+  run("Subtract...", "value="+mean+" stack");
 
 }
 
@@ -152,7 +153,7 @@ if (height % 2 != 0 || width % 2 != 0) {
     if (height % 2 != 0) {
         newHeight = height+1;
     }
-    run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+    run("Canvas Size...", "width="+newWidth+" height="+newHeight+" position=Top-Center");
 }
 print("Saving AVI");
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
@@ -232,7 +233,7 @@ function performHistogramStretching() {
   getDimensions(width, height, channels, slices, frames);
   W = round(width/5);
   run("Z Project...", "projection=[Max Intensity]");
-  run("Size...", "width=W height=W depth=1 constrain average interpolation=Bilinear");
+  run("Size...", "width="+W+" height="+W+" depth=1 constrain average interpolation=Bilinear");
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   close();
