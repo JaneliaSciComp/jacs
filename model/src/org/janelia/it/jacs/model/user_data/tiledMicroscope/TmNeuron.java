@@ -100,7 +100,7 @@ public class TmNeuron implements IsSerializable, Serializable {
             if (!parentId.equals(this.id)) {
                 TmGeoAnnotation parent = geoAnnotationMap.get(parentId);
                 if (parent==null) {
-                    throw new Exception(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
+                    throw new TmConnectivityException(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
                 }
                 parent.addChild(ga);
             }

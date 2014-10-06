@@ -786,6 +786,33 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return rtnVal;
     }
 
+    /**
+     * fix connectivity issues for all neurons in a workspace
+     */
+    private void fixConnectivityWorkspace(Long workspaceID) {
+        for (TmNeuronDescriptor neuronDescriptor: getNeuronsForWorkspace(workspaceID, )) {
+            fixConnectivityNeuron(neuronDescriptor.getId());
+        }
+    }
+
+    /**
+     * fix connectity issues for a neuron (bad parents, since children
+     * aren't stored in the entity data); fix in this case means breaking links
+     */
+    private void fixConnectivityNeuron(Long neuronID) {
+        /*
+        -- will need to load all annotations (just like TmNeuron does),
+            then check for missing parents/children
+        -- when a missing parent is found:
+        --- get entity data
+        --- edit value: set parent ID to neuron ID
+        --- edit attribute name: set to root not tree
+        --- save entity data
+        --- log it!
+         */
+
+    }
+
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
         try {
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
