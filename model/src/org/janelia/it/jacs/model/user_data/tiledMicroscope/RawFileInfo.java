@@ -11,6 +11,7 @@ public class RawFileInfo implements Serializable {
     private File channel0;
     private File channel1;
     private List<Integer> centroid;
+    private Double[] transformMatrix;
 
     public File getChannel0() {
         return channel0;
@@ -34,5 +35,13 @@ public class RawFileInfo implements Serializable {
 
     public void setCentroid(List<Integer> centroid) {
         this.centroid = centroid;
+    }
+
+    public Double[] getTransformMatrix() {
+        return transformMatrix;
+    }
+
+    public void setTransformMatrix(Double[] transformMatrix) {
+        this.transformMatrix = transformMatrix;
     }
 }

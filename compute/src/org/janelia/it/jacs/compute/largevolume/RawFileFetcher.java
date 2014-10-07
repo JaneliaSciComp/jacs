@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.largevolume;
 
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 
@@ -18,6 +19,7 @@ public class RawFileFetcher {
     private static final double DISTANCE_DOWN_SCALER = 1000000.0;
     private Map<List<Integer>, RawDataHandle> centroidToRawDataHandle;
     private CoordinateToRawTransform transform;
+    private Logger logger = Logger.getLogger(RawFileFetcher.class);
 
     public RawFileFetcher(TileBase tileBase, File renderedBaseDirectory) {
         centroidToRawDataHandle = new TileWalker( tileBase ).getCentroidToRawData();
@@ -38,50 +40,23 @@ public class RawFileFetcher {
         RawDataHandle handle = centroidToRawDataHandle.get( closestCentroid );
         File rawFileDir = new File( handle.getBasePath() + handle.getRelativePath() );
         if ( rawFileDir == null  ||  ! rawFileDir.exists()  ||  ! rawFileDir.isDirectory() ) {
-            String errorString = "Failed to open microscope files directory " + rawFileDir;
-            throw new Exception(errorString);
+            logger.error( "Failed to open microscope files directory " + rawFileDir );
         }
 
         RawFileInfo rawFileInfo = new RawFileInfo();
         rawFileInfo.setCentroid( closestCentroid );
         rawFileInfo.setChannel0( new File( rawFileDir, rawFileDir.getName() + TIFF_0_SUFFIX) );
         rawFileInfo.setChannel1( new File( rawFileDir, rawFileDir.getName() + TIFF_1_SUFFIX) );
+        rawFileInfo.setTransformMatrix(handle.getTransformMatrix());
         if ( rawFileInfo.getChannel0() == null  ||  !rawFileInfo.getChannel0().exists() ) {
-            throw new Exception("Failed to find channel 0 tiff file in " + rawFileDir + ".");
+            logger.error("Failed to find channel 0 tiff file in " + rawFileDir + ".");
         }
         if ( rawFileInfo.getChannel1() == null  ||  !rawFileInfo.getChannel1().exists() ) {
-            throw new Exception("Failed to find channel 1 tiff file in " + rawFileDir + ".");
+            logger.error("Failed to find channel 1 tiff file in " + rawFileDir + ".");
         }
 
         return rawFileInfo;
     }
-
-    /**
-     * Returns the directory which should contain the files, which should contain the point indicated
-     * by the LVV coordinates.  Note that this file is specific to the server, and may need to be cached/resolved
-     * on client side.
-     *
-     * @param lvvCoords from large volume viewer.
-     * @return file from the microscope.
-     * @throws Exception from called methods.
-     */
-//    public File getMicroscopeFileDir(int[] lvvCoords) throws Exception {
-//        int[] microScopeCoords = transform.getMicroscopeCoordinate( lvvCoords );
-//        List<Integer> closestCentroid = getClosestCentroid(microScopeCoords);
-//        RawDataHandle handle = centroidToRawDataHandle.get( closestCentroid );
-//        File tiffFile = new File( handle.getBasePath() + handle.getRelativePath() );
-//        return tiffFile;
-//    }
-//
-//    public File[] getMicroscopeFiles( File fileDir ) throws Exception {
-//        String lastLegDirName = fileDir.getName();
-//        File[] rtnVal = new File[] {
-//                new File( fileDir, lastLegDirName + TIFF_0_SUFFIX),
-//                new File( fileDir, lastLegDirName + TIFF_1_SUFFIX ),
-//        };
-//
-//        return rtnVal;
-//    }
 
     /**
      * Given microscope/stage coordinates, return the closest centroid from the centroid set from the tilebase.

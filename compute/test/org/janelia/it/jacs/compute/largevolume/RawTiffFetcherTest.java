@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.largevolume;
 
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,27 +30,29 @@ public class RawTiffFetcherTest {
             new int[] { 16059, 18501, 4906 },
             new int[] { 26019, 19453, 4906 }
         };
-        File[] files = new File[ coords.length ];
+        RawFileInfo[] files = new RawFileInfo[ coords.length ];
         for ( int i = 0; i < coords.length; i++ ) {
-            files[ i ] = fetcher.getMicroscopeFileDir(coords[i]);
+            files[ i ] = fetcher.getNearestFileInfo(coords[i]);
         }
 
         CoordinateToRawTransform transform = new CoordinateToRawTransform( baseLocation );
         for ( int i = 0; i < files.length; i++ ) {
-            System.out.println("Directory " + i + " is " + files[ i ] );
-            File[] tiffFiles = fetcher.getMicroscopeFiles( files[i] );
-            System.out.println("File-0 for " + i + " is " + tiffFiles[ 0 ] );
-            System.out.println("File-1 for " + i + " is " + tiffFiles[ 1 ] );
-
-            int[] scopeCoords = transform.getMicroscopeCoordinate( coords[ i ] );
-            System.out.println(
-                    String.format(
-                            "Translated coordinates from %,d %,d %,d to %,d %,d %,d.",
-                            coords[ i ][ 0 ], coords[ i ][ 1 ], coords[ i ][ 2 ],
-                            scopeCoords[ 0 ], scopeCoords[ 1 ], scopeCoords[ 2 ]
-                    )
-            );
+            printOneFile(fetcher, coords[i], files[i].getChannel0(), files[i].getChannel1(), transform.getMicroscopeCoordinate(coords[i]), i);
         }
+    }
+
+    private void printOneFile(RawFileFetcher fetcher, int[] coord, File file0, File file1, int[] microscopeCoordinate, int i) {
+        System.out.println("Raw File/0 " + i + " is " + file0);
+        System.out.println("Raw File/1 " + i + " is " + file1);
+
+        int[] scopeCoords = microscopeCoordinate;
+        System.out.println(
+                String.format(
+                        "Translated coordinates from %,d %,d %,d to %,d %,d %,d.",
+                        coord[ 0 ], coord[ 1 ], coord[ 2 ],
+                        scopeCoords[ 0 ], scopeCoords[ 1 ], scopeCoords[ 2 ]
+                )
+        );
     }
 
 }
