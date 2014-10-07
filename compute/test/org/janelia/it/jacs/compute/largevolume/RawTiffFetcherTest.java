@@ -21,7 +21,7 @@ public class RawTiffFetcherTest {
 
     @Test
     public void fetch() throws Exception {
-        RawTiffFetcher fetcher = new RawTiffFetcher( tileBase, baseLocation );
+        RawFileFetcher fetcher = new RawFileFetcher( tileBase, baseLocation );
         int[][] coords = {
             new int[] { 16101, 18741, 6643 },
             new int[] { 14926, 15760, 6401 },
