@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 public abstract class ActiveVisitor implements Callable<Boolean> {
     protected Long entityId;
     protected ActiveDataClient activeData;
+    protected String signature;
     protected Map<String, Object> parameterMap;
     protected Map<String, Object> contextMap;
     
@@ -36,5 +37,7 @@ public abstract class ActiveVisitor implements Callable<Boolean> {
     public void setContextMap(Map<String, Object> contextMap) {
         this.contextMap=contextMap;
     }
+
+    public void setSignature(String signature) { this.signature=signature; }
     
 }
