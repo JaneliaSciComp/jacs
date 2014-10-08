@@ -8,6 +8,7 @@ import java.util.List;
  * Created by fosterl on 10/7/14.
  */
 public class RawFileInfo implements Serializable {
+    private static final long serialVersionUID = 1L;
     private File channel0;
     private File channel1;
     private List<Integer> centroid;
