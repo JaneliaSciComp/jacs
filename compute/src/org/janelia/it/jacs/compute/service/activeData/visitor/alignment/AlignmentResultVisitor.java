@@ -139,6 +139,32 @@ public class AlignmentResultVisitor extends ActiveVisitor {
             stackInfo.path=alignedStack.getValueByAttributeName("File Path");
             stackInfo.pixelResolution=alignedStack.getValueByAttributeName("Pixel Resolution");
             stackInfo.opticalResolution=alignedStack.getValueByAttributeName("Optical Resolution");
+
+            String aisString=alignedStack.getValueByAttributeName("Alignment Inconsistency Score");
+            if (aisString!=null) {
+                stackInfo.alignmentInconsistencyScore=new Float(aisString.trim());
+            }
+
+            String aisComboString=alignedStack.getValueByAttributeName("Alignment Inconsistency Scores");
+            if (aisComboString!=null) {
+                String[] spArr=aisComboString.split(",");
+                if (spArr.length==3) {
+                    stackInfo.alignmentInconsistencyScore_0=new Float(spArr[0].trim());
+                    stackInfo.alignmentInconsistencyScore_1=new Float(spArr[1].trim());
+                    stackInfo.alignmentIncosistencyScore_2=new Float(spArr[2].trim());
+                }
+            }
+
+            String mvString=alignedStack.getValueByAttributeName("Alignment Model Violation Score");
+            if (mvString!=null) {
+                stackInfo.alignmentModelViolationScore=new Float(mvString.trim());
+            }
+
+            String nccString=alignedStack.getValueByAttributeName("Alignment Normalized Cross Correlation Score");
+            if (nccString!=null) {
+                stackInfo.alignmentNccScore=new Float(nccString.trim());
+            }
+
             return stackInfo;
         }
     }
