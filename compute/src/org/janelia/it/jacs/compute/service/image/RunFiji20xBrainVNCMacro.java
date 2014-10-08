@@ -76,8 +76,6 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         }
         
         this.outputFilePrefix = sampleEntity.getName();
-        
-        logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
                 .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
@@ -112,6 +110,10 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
                 throw new IllegalStateException("Brain chanspec ("+chanSpec+") does not match VNC chanspec ("+vncChanSpec+")");
             }
         }
+        
+        entityBean.setOrUpdateValue(pipelineRun.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, resultFileNode.getDirectoryPath());
+        
+        logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+" (id="+sampleEntityId+")");
     }
     
     private void registerLsmAttributes(final Entity sampleEntity, final Entity lsm) throws Exception {
@@ -268,7 +270,10 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         paramSb.append(",");
         paramSb.append(chanSpec);
         
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append("\n");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append(" &\n");
+        script.append("fpid=$!\n");
+        
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb", "PORT", "fpid", 30, 3600));
         
         script.append("for fin in *.avi; do\n");
         script.append("    fout=${fin%.avi}.mp4\n");
@@ -320,6 +325,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         helper.addFileExclusion("temp");
         helper.addFileExclusion("tmp.*");
         helper.addFileExclusion("core.*");
+        helper.addFileExclusion("xvfb");
         
         try {
             helper.addFilesInDirToFolder(pipelineRun, outputDir);    

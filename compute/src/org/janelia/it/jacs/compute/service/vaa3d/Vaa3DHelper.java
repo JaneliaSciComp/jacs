@@ -14,6 +14,8 @@ public class Vaa3DHelper {
 
     protected static final int STARTING_DISPLAY_PORT = 5200;
 
+    protected static final String DEFAULT_XVFB_RESOLUTION = "1x1x24";
+    
     protected static final int XVFB_RETRIES = 10;
     
     protected static final String COPY_CMD = "cp";
@@ -54,19 +56,6 @@ public class Vaa3DHelper {
     
     public static String getVaa3dExecutableCmd() {
         return VAA3D_BASE_CMD;
-    }
-    
-    public static String getScratchDirCreationScript(String scratchDirVariableName) {
-        StringBuffer buf = new StringBuffer();
-        buf.append("export TMPDIR=\""+SCRATCH_DIR+"\"\n");
-        buf.append(scratchDirVariableName+"=`mktemp -d`\n");
-        return buf.toString();
-    }
-
-    public static String getScratchDirCleanupScript(String scratchDirVariableName) {
-        StringBuffer buf = new StringBuffer();
-        buf.append("rm -rf $"+scratchDirVariableName+"\n");
-        return buf.toString();
     }
     
     public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath, String multiscanBlendVersion) {
@@ -147,6 +136,10 @@ public class Vaa3DHelper {
     }
 
     public static String getVaa3DGridCommandPrefix(String displayPort) {
+    	return getVaa3DGridCommandPrefix(displayPort, DEFAULT_XVFB_RESOLUTION);
+    }
+    
+    public static String getVaa3DGridCommandPrefix(String displayPort, String xvfbResolution) {
         StringBuffer prefix = new StringBuffer();
 
         // Skip ports that are currently in use, or "locked"
@@ -170,7 +163,7 @@ public class Vaa3DHelper {
         prefix.append("    echo \"Found the first free port: $PORT\"\n");
         
         // Run Xvfb (virtual framebuffer) on the chosen port
-        prefix.append("    /usr/bin/Xvfb :${PORT} -screen 0 1x1x24 -fp /usr/share/X11/fonts/misc > Xvfb.${PORT}.log 2>&1 &\n");
+        prefix.append("    /usr/bin/Xvfb :${PORT} -screen 0 "+xvfbResolution+" -fp /usr/share/X11/fonts/misc > Xvfb.${PORT}.log 2>&1 &\n");
         prefix.append("    echo \"Started Xvfb on port $PORT\"\n");
         
         // Save the PID so that we can kill it when we're done
@@ -200,6 +193,31 @@ public class Vaa3DHelper {
         return "";
     }
 
+
+    public static String getXvfbScreenshotLoop(String outputDir, String xvfbPortVarName, String xvfbPidVarName, int secs, int maxSecs) {
+        StringBuffer script = new StringBuffer();
+        
+	    // Take a screenshot every X seconds
+        script.append("XVFB_SCREENSHOT_DIR=").append(outputDir).append("\n");
+        script.append("mkdir -p $XVFB_SCREENSHOT_DIR\n");
+	    script.append("freq="+secs+"\n");
+	    script.append("t=0\n");
+	    script.append("while kill -0 $"+xvfbPidVarName+" 2> /dev/null; do\n");
+	    script.append("  DISPLAY=:$"+xvfbPortVarName+" import -window root $XVFB_SCREENSHOT_DIR/screenshot_$t.png\n");
+	    script.append("  t=$((t+freq))\n");
+	    script.append("  sleep $freq\n");
+	    
+	    // Don't allow it to run for more than a set amount of time, in case it hangs due to requiring user input
+	    script.append("  if [ \"$t\" -gt "+maxSecs+" ]; then\n");
+	    script.append("    echo \"Killing Xvfb session which has been running for over "+maxSecs+" seconds\"\n");
+	    script.append("    kill $"+xvfbPidVarName+" 2> /dev/null\n");
+	    script.append("  fi\n");
+	    
+		script.append("done\n");
+		
+		return script.toString();
+    }
+    
     public static String getFormattedMIPCommand(String inputFilepath, String outputFilepath, String extraOptions) throws ServiceException {
         String cmd = getVaa3dExecutableCmd() +" -cmd image-loader -mip \""+inputFilepath+"\" \""+outputFilepath+"\" "+extraOptions;
         return cmd+" ;";
