@@ -37,11 +37,11 @@ public class RawTiffFetcherTest {
 
         CoordinateToRawTransform transform = new CoordinateToRawTransform( baseLocation );
         for ( int i = 0; i < files.length; i++ ) {
-            printOneFile(fetcher, coords[i], files[i].getChannel0(), files[i].getChannel1(), transform.getMicroscopeCoordinate(coords[i]), i);
+            printOneFile(coords[i], files[i].getChannel0(), files[i].getChannel1(), transform.getMicroscopeCoordinate(coords[i]), i);
         }
     }
 
-    private void printOneFile(RawFileFetcher fetcher, int[] coord, File file0, File file1, int[] microscopeCoordinate, int i) {
+    private void printOneFile(int[] coord, File file0, File file1, int[] microscopeCoordinate, int i) {
         System.out.println("Raw File/0 " + i + " is " + file0);
         System.out.println("Raw File/1 " + i + " is " + file1);
 
