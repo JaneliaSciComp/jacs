@@ -56,13 +56,13 @@
             <input name="PROCESS_VARIABLE_VALUE_2" value="FLYLIGHT_ORDERED"/>
 
             <input name="PROCESS_VARIABLE_3" value="20X_ALIGNMENT_ALGORITHMS"/>
-            <input name="PROCESS_VARIABLE_VALUE_3" value="CONFIGURED"/>
+            <input name="PROCESS_VARIABLE_VALUE_3" value="CONFIGURED,CONFIGURED_BRAIN_VNC"/>
 
             <input name="PROCESS_VARIABLE_4" value="20X_ALIGNMENT_ALGORITHM_PARAMS"/>
-            <input name="PROCESS_VARIABLE_VALUE_4" value="flyalign20x_JBA_Qiscore.sh"/>
+            <input name="PROCESS_VARIABLE_VALUE_4" value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh"/>
 
             <input name="PROCESS_VARIABLE_5" value="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
-            <input name="PROCESS_VARIABLE_VALUE_5" value="JBA Alignment"/>
+            <input name="PROCESS_VARIABLE_VALUE_5" value="JBA Alignment,Brain/VNC Alignment"/>
 
             <input name="PROCESS_VARIABLE_6" value="20X_ANALYSIS_ALGORITHMS"/>
             <input name="PROCESS_VARIABLE_VALUE_6" value="NEURON_SEPARATOR"/>
