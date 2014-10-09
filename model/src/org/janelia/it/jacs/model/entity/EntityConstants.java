@@ -193,6 +193,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_CHANNEL_SPECIFICATION               = "Channel Specification";
     public static final String ATTRIBUTE_CROSS_LABEL                         = "Cross Label";
     public static final String ATTRIBUTE_DATA_SET_IDENTIFIER                 = "Data Set Identifier";
+    public static final String ATTRIBUTE_LSM_STORAGE_PATTERN                 = "LSM Storage Pattern";
     public static final String ATTRIBUTE_PIPELINE_PROCESS                    = "Pipeline Process";
     public static final String ATTRIBUTE_SAGE_SYNC                           = "SAGE Sync";
     public static final String ATTRIBUTE_SAGE_ID                             = "SAGE Id";

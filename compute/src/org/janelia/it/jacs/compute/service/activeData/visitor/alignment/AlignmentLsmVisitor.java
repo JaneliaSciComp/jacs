@@ -27,6 +27,7 @@ public class AlignmentLsmVisitor extends ActiveVisitor {
         final Set<Long> visitedSet=new HashSet<>();
 
         String lineName=null;
+        String mountingProtocol=null;
 
         // Get all LSMs
         final List<Entity> lsmList=new ArrayList<>();
@@ -57,6 +58,9 @@ public class AlignmentLsmVisitor extends ActiveVisitor {
                     lineName=lsm.getValueByAttributeName("Line");
                 }
             }
+            if (mountingProtocol==null) {
+                mountingProtocol=lsm.getValueByAttributeName("Mounting Protocol");
+            }
         }
 
         // Next, find 63x
@@ -82,6 +86,10 @@ public class AlignmentLsmVisitor extends ActiveVisitor {
 
         if (lineName!=null) {
             sampleInfo.lineDescriptor=lineName;
+        }
+
+        if (mountingProtocol!=null) {
+            sampleInfo.preparationType=mountingProtocol;
         }
 
         return true;

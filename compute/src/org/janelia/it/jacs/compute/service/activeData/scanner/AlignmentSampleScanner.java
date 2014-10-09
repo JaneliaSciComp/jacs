@@ -103,9 +103,6 @@ public class AlignmentSampleScanner extends EntityScanner {
         public String spaceDescriptor;
         public Float qiByCsv;
         public Float qualByPropNcc;
-        public Float qualityCentral;
-        public Float qualityLeftOpticLobe;
-        public Float qualityRightOpticLobe;
         public AlignedStackInfo alignedStackInfo;
         public NeuronSeparationInfo neuronSeparationInfo;
 
@@ -115,9 +112,6 @@ public class AlignmentSampleScanner extends EntityScanner {
             sb.append("    SPACE="+spaceDescriptor+"\n");
             sb.append("    QI_BY_CSV="+qiByCsv+"\n");
             sb.append("    QUAL_BY_PROP_NCC="+qualByPropNcc+"\n");
-            sb.append("    QUALITY_CENTRAL="+qualityCentral+"\n");
-            sb.append("    QUALITY_LEFT_OL="+qualityLeftOpticLobe+"\n");
-            sb.append("    QUALITY_RIGHT_OL="+qualityRightOpticLobe+"\n");
             if (alignedStackInfo!=null) {
                 sb.append(alignedStackInfo.toString());
             }
@@ -133,6 +127,12 @@ public class AlignmentSampleScanner extends EntityScanner {
         public String path;
         public String opticalResolution;
         public String pixelResolution;
+        public Float alignmentInconsistencyScore;
+        public Float alignmentInconsistencyScore_0;
+        public Float alignmentInconsistencyScore_1;
+        public Float alignmentIncosistencyScore_2;
+        public Float alignmentModelViolationScore;
+        public Float alignmentNccScore;
 
         public String toString() {
             StringBuilder sb=new StringBuilder();
@@ -140,6 +140,12 @@ public class AlignmentSampleScanner extends EntityScanner {
             sb.append("      PATH="+path+"\n");
             sb.append("      OPTICAL_RESOLUTION="+opticalResolution+"\n");
             sb.append("      PIXEL_RESOLUTION="+pixelResolution+"\n");
+            sb.append("      INCONSISTENCY_SCORE="+alignmentInconsistencyScore+"\n");
+            sb.append("      INCONSISTENCY_SCORE_0="+alignmentInconsistencyScore_0+"\n");
+            sb.append("      INCONSISTENCY_SCORE_1="+alignmentInconsistencyScore_1+"\n");
+            sb.append("      INCONSISTENCY_SCORE_2="+alignmentIncosistencyScore_2+"\n");
+            sb.append("      MODEL_VIOLATION_SCORE="+alignmentModelViolationScore+"\n");
+            sb.append("      NCC_SCORE="+alignmentNccScore+"\n");
             return sb.toString();
         }
     }
