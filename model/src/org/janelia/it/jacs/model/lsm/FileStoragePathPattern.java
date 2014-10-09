@@ -142,6 +142,30 @@ public class FileStoragePathPattern {
         return storageFile;
     }
 
+    /**
+     * @param  sourceFile  source file to check.
+     *
+     * @return true if the specified source file is in a different location than its derived storage path;
+     *         otherwise false.
+     *
+     * @throws IllegalArgumentException
+     *   if a canonical path cannot be derived for the specified file.
+     */
+    public boolean isLocationDifferent(File sourceFile) throws IllegalArgumentException {
+        final String canonicalSourceFilePath;
+        try {
+            canonicalSourceFilePath = sourceFile.getCanonicalPath();
+        } catch (IOException e) {
+            throw new IllegalArgumentException(
+                    "cannot derive canonical path for " + sourceFile.getAbsolutePath(), e);
+        }
+
+        final File storageFile = getStorageFile(sourceFile);
+        final String storageFilePath = storageFile.getPath();
+
+        return (! canonicalSourceFilePath.equals(storageFilePath));
+    }
+
     private static final Pattern VALIDATION_PATTERN = Pattern.compile("((/[^\\{}/]+)+)(/\\{[\\w]*})*");
 
     private static final String PATTERN_EXAMPLE =

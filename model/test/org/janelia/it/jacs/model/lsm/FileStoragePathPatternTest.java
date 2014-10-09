@@ -101,4 +101,21 @@ public class FileStoragePathPatternTest {
 
     }
 
+    @Test
+    public void testIsLocationDifferent() throws Exception {
+
+        final String sourceBasePath = "/tier2/projtechres/confocalStacks";
+        final String targetBasePath = "/groups/rubin/data0/screen/confocalStacks";
+        final String relativeSourcePath = "1999/01/02/JPTR_1111_2.lsm";
+        FileStoragePathPattern pathPattern =  new FileStoragePathPattern(targetBasePath + "/{yyyy}/{MM}/{dd}");
+
+        File sourceFile = new File(sourceBasePath + '/' + relativeSourcePath);
+        Assert.assertTrue("different location should be identified for " + sourceFile.getAbsolutePath(),
+                          pathPattern.isLocationDifferent(sourceFile));
+
+        sourceFile = new File(targetBasePath + '/' + relativeSourcePath);
+        Assert.assertFalse("different location should NOT be identified for " + sourceFile.getAbsolutePath(),
+                           pathPattern.isLocationDifferent(sourceFile));
+    }
+
 }
