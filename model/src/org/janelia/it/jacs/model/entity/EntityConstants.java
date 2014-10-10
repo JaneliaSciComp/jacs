@@ -129,9 +129,11 @@ public class EntityConstants {
     public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_ALIGNMENT_NCC_SCORE                 = "Alignment Normalized Cross Correlation Score";
-    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Inconsistency Score";
-    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORES                 = "Alignment Inconsistency Scores";
-    public static final String ATTRIBUTE_ALIGNMENT_QM_SCORE                  = "Alignment Model Violation Score";
+    public static final String ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE       = "Alignment Inconsistency Score";
+    public static final String ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORES      = "Alignment Inconsistency Scores";
+    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Qi Score";
+    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORES                 = "Alignment Qi Scores";
+    public static final String ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE     = "Alignment Model Violation Score";
     public static final String ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE              = "Alignment Verify Movie";
     public static final String ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS       = "Alignment Board User Settings";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";

@@ -105,7 +105,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     	if (qiScore!=null) {
         	qiScoreBatch.put(alignment.getId(), qiScore);
     	}
-    	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+    	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
     	if (qmScore!=null) {
         	qmScoreBatch.put(alignment.getId(), qmScore);
     	}

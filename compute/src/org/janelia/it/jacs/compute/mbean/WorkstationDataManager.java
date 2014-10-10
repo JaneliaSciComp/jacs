@@ -762,7 +762,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
                 
 				Entity d3i = alignment.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
 				if (d3i!=null) {
-					qiScore = d3i.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+					qiScore = d3i.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
 				}
 			}
 			
