@@ -169,7 +169,7 @@ public class EntityConstants {
 
     // Anchored path
     // "<id>:<attributeID1>:<attributeID2>:x,y,z:(repeat x,y,z)"
-    public static final String ATTRIBUTE_ANCHORED_PATH                      = "Anchored Path";
+    public static final String ATTRIBUTE_ANCHORED_PATH                       = "Anchored Path";
 
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"
@@ -204,79 +204,14 @@ public class EntityConstants {
     public static final String ATTRIBUTE_MESSAGE                             = "Message";
     
     // Ontology Type Values
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL            = "Interval";
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                = "Enum";
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL             = "Interval";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                 = "Enum";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                 = "Text";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT            = "EnumText";
 
-    /**
-     * @deprecated Not used, replaced with a Sample Status value. This will be removed someday.
-     */
-    public static final String TYPE_PROCESSING_BLOCK                 = "Processing Block";
-    
-    /**
-     * @deprecated Not used, replaced with a Sample Status value. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_PROCESSING_BLOCK                    = "Processing Block";
-    
-    /**
-     * @deprecated Not used. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_METADATA_FILE                       = "Metadata File";
-    
-    /**
-     * @deprecated Not used. This will be removed someday.
-     */
-    public static final String TYPE_MASK_SET                         = "Mask Set";
-
-    /**
-     * @deprecated Not used. This will be removed someday.
-     */
-    public static final String TYPE_MASK                             = "Mask";
-    
-    /**
-     * @deprecated Use permissions instead. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_IS_PUBLIC                           = "Is Public";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_MC_MASK_FILE                     = "MC Mask File";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_MC_CHANNEL_FILE                  = "MC Channels File";
-    
-    /**
-     * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.
-     */
-    public static final String TYPE_TIF_2D                           = "Tif 2D Image";
-
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_TIF_3D                           = "Tif 3D Image";
-
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_STITCHED_V3D_RAW                 	     = "Stitched V3D Raw Stack";
-    
     /**
      * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. This will be removed someday.
      */
-    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
+    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH           = "Default 2D Image File Path";
 
 }
