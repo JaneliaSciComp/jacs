@@ -365,6 +365,14 @@ public class EntityHelper {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, value);
     }
     
+    public void setInconsistencyScore(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, value);
+    }
+    
+    public void setInconsistencyScores(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORES, value);
+    }
+
     public void setQiScore(Entity entity, String value) throws Exception {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, value);
     }
@@ -373,8 +381,8 @@ public class EntityHelper {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORES, value);
     }
     
-    public void setQmScore(Entity entity, String value) throws Exception {
-        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, value);
+    public void setModelViolationScore(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE, value);
     }
     
     public void setNccScore(Entity entity, String value) throws Exception {
