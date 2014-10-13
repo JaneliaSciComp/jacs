@@ -60,11 +60,11 @@
 			</operation>
 			
 	        <sequence forEach="PIPELINE_PROCESS_NAME">
-					
-				<!-- Spawn a new task to process the Sample	-->
+				
+				<!-- Spawn a new task to process the Sample with the given pipeline, and wait for it to finish before running the next pipeline -->
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
 		            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
-		            <!--<input name="PROCESS_DEF_NAME" value="PipelineHarness_SampleDebugger"/>-->
+		            <input name="WAIT_FOR_COMPLETION" value="true"/>
 		            <input name="DISPLAY_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>

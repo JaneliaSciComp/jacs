@@ -75,13 +75,20 @@
 		
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
-        
-            <include name="Process sample" process="GSPS_CompleteSamplePipeline">
-                <input name="SAMPLE_ENTITY_ID"/>
-                <input name="REUSE_PIPELINE_RUNS"/>
-                <input name="REUSE_PROCESSING"/>
-                <input name="REUSE_ALIGNMENT"/>
-            </include>
+    
+            <!-- Spawn a new task to process the Sample -->
+            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                <input name="PROCESS_DEF_NAME" value="GSPS_CompleteSamplePipeline"/>
+                <input name="DISPLAY_NAME" value="GSPS_CompleteSamplePipeline"/>
+                <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+                <input name="PARAMETER_2_KEY" value="reuse pipeline runs"/>
+                <input name="PARAMETER_2_VALUE" value="$V{REUSE_PIPELINE_RUNS}"/>
+                <input name="PARAMETER_3_KEY" value="reuse processing"/>
+                <input name="PARAMETER_3_VALUE" value="$V{REUSE_PROCESSING}"/>
+                <input name="PARAMETER_4_KEY" value="reuse alignment"/>
+                <input name="PARAMETER_4_VALUE" value="$V{REUSE_ALIGNMENT}"/>
+            </operation>
 	        
 	    </sequence>
 
