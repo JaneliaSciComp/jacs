@@ -47,9 +47,10 @@ public class SageArtifactExportService extends AbstractEntityService {
     private Date createDate;
 
     private Entity publishedTerm;
-    private CvTerm productMip;
-    private CvTerm productTranslation;
-    private CvTerm productTranslationReference;
+    private CvTerm productMultichannelMip;
+    private CvTerm productMultichannelTranslation;
+    private CvTerm productSignal1Mip;
+    private CvTerm productSignal1Translation;
     private CvTerm propertyPublished;
     private CvTerm source;
     private CvTerm chanSpec;
@@ -74,9 +75,10 @@ public class SageArtifactExportService extends AbstractEntityService {
     	
         this.sage = new SageDAO(logger);
         this.createDate = new Date();
-        this.productMip = getCvTermByName("product","projection_all");
-        this.productTranslation = getCvTermByName("product","translation");
-        this.productTranslationReference = getCvTermByName("product","translation_reference");
+        this.productMultichannelMip = getCvTermByName("product","multichannel_mip");  
+        this.productMultichannelTranslation = getCvTermByName("product","multichannel_translation");
+        this.productSignal1Mip = getCvTermByName("product","signal1_mip");
+        this.productSignal1Translation = getCvTermByName("product","signal1_translation");
         this.propertyPublished = getCvTermByName("light_imagery","published_to");
         this.source = getCvTermByName("lab","JFRC");
         this.chanSpec = getCvTermByName("light_imagery","channel_spec");
@@ -289,23 +291,30 @@ public class SageArtifactExportService extends AbstractEntityService {
                 .getLast();
             sourceImage = getOrCreatePrimaryImage(image3d, line, sourceSageImageIds);
         }
-        
+
+    	String tileTag = "-"+area;
         for(Entity child : artifactRun.getChildren()) {
             String name = child.getName();
-            if (name.endsWith(area+".avi")) {
-                getOrCreateSecondaryImage(child, productTranslationReference, sourceImage);
-                
+            if (!name.contains(tileTag)) continue;
+        	String type = child.getEntityTypeName();
+            if (EntityConstants.TYPE_IMAGE_2D.equals(type)) {
+            	if (name.contains("Signal")) {
+            		getOrCreateSecondaryImage(child, productSignal1Mip, sourceImage);
+            	}
+            	else {
+            		getOrCreateSecondaryImage(child, productMultichannelMip, sourceImage);
+            	}
             }
-            else if (name.endsWith(area+"_MIP.png")) {
-                getOrCreateSecondaryImage(child, productMip, sourceImage);
-                
-            }
-            else if (name.endsWith(area+"_Signal.avi")) {
-                getOrCreateSecondaryImage(child, productTranslation, sourceImage);
-                
-            }
-            else if (name.endsWith(area+"_MIP_Signal.png")) {
-                // Ignored
+            else if (EntityConstants.TYPE_MOVIE.equals(type)) {
+            	if (name.contains("Signal")) {
+                    getOrCreateSecondaryImage(child, productSignal1Translation, sourceImage);
+            	}
+            	else {
+            		getOrCreateSecondaryImage(child, productMultichannelTranslation, sourceImage);	
+            	}
+            } 
+            else {
+            	logger.trace("Ignoring artifact "+child.getName()+" (id="+child.getId()+")");
             }
         }
     }
@@ -403,13 +412,16 @@ public class SageArtifactExportService extends AbstractEntityService {
     	String tileTag = "-"+tileName;
         for(Entity child : artifactRun.getChildren()) {
             String name = child.getName();
-            if (name.contains(tileTag)) {
-                if (EntityConstants.TYPE_MOVIE.equals(child.getEntityTypeName())) {
-                    getOrCreateSecondaryImage(child, productTranslationReference, sourceImage);
-                }
-                else if (EntityConstants.TYPE_IMAGE_2D.equals(child.getEntityTypeName()) && name.endsWith("_MIP.png")) {
-                    getOrCreateSecondaryImage(child, productMip, sourceImage);
-                }
+            if (!name.contains(tileTag)) continue;
+        	String type = child.getEntityTypeName();
+            if (EntityConstants.TYPE_IMAGE_2D.equals(type)) {
+                getOrCreateSecondaryImage(child, productMultichannelMip, sourceImage);
+            }
+            else if (EntityConstants.TYPE_MOVIE.equals(type)) {
+                getOrCreateSecondaryImage(child, productMultichannelTranslation, sourceImage);
+            }
+            else {
+            	logger.trace("Ignoring artifact "+child.getName()+" (id="+child.getId()+")");
             }
         }
     }

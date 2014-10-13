@@ -63,11 +63,16 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         	processAllAlignments();
         }
         
-        logger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
-        for(String term : Ordering.natural().sortedCopy(numUpdated.keySet())) {
-        	logger.info("  Property "+term);
-	        logger.info("    Num updated: "+numUpdated.get(term));
-	        logger.info("    Num inserted: "+numInserted.get(term));
+        if (numUpdated.isEmpty()) {
+            logger.info("No Qi Scores found "+(alignmentId==null?"":" for "+alignmentId));
+        }
+        else {
+            logger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
+            for(String term : Ordering.natural().sortedCopy(numUpdated.keySet())) {
+            	logger.info("  Property "+term);
+    	        logger.info("    Num updated: "+numUpdated.get(term));
+    	        logger.info("    Num inserted: "+numInserted.get(term));
+            }
         }
     }
     
@@ -128,23 +133,28 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         for(Long lsmId : lsmIdToSageId.keySet()) {
         	Integer sageId = lsmIdToSageId.get(lsmId);
         	if (sageId==null) continue;
+        	
         	Image sageImage = sageImages.get(sageId);
         	if (sageImage==null) {
         		logger.info("Could not find SAGE image "+sageId);
-        		continue;
         	}
+        	
         	Long alignmentId = lsmToAlignment.get(lsmId);
         	
     		String qiScore = qiScoreBatch.get(alignmentId);
     		if (qiScore!=null) {
-    			setImageProperty(sageImage, qiScoreTerm, qiScore);
+    			if (sageImage!=null) {
+    				setImageProperty(sageImage, qiScoreTerm, qiScore);
+    			}
     			// FW-2763: Also put the score directly on the LSM entity, for ease of searching/browsing
         		entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
     		}
 
     		String qmScore = qmScoreBatch.get(alignmentId);
     		if (qmScore!=null) {
-    			setImageProperty(sageImage, qmScoreTerm, qmScore);
+    			if (sageImage!=null) {
+    				setImageProperty(sageImage, qmScoreTerm, qmScore);
+    			}
     		}	
         }
     }

@@ -50,7 +50,6 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private String outputFilePrefix;
     private Entity sampleEntity;
     private Entity pipelineRun;
-
     private String mergedChanSpec = null;
     private String outputColorSpec = null;
     private Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
@@ -63,16 +62,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
-        
-        this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
 
-        String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
-		StringBuilder csSb = new StringBuilder();
-		for(String channel : outputChannelOrder.split(",")) {
-			csSb.append(channel.equals("reference")?"r":"s");
-		}
-		this.mergedChanSpec = csSb.length()>0?csSb.toString():null;
-		
         sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
@@ -88,6 +78,15 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntityId);
         }
 
+        this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
+
+        String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
+		StringBuilder csSb = new StringBuilder();
+		for(String channel : outputChannelOrder.split(",")) {
+			csSb.append(channel.equals("reference")?"r":"s");
+		}
+		this.mergedChanSpec = csSb.length()>0?csSb.toString():null;
+		
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
         if (bulkMergeParamObj==null) {
         	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
