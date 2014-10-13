@@ -41,11 +41,11 @@ print("ChanSpec: "+chanspec);
 
 title0 = prefix;
 titleBrain = title0+"-Brain_MIP";
-titleBrainC2 = titleBrain+"-Signal";
+titleBrainC2 = title0+"-Brain-Signal_MIP";
 titleBrainAvi = title0+"-Brain.avi";
-titleBrainAviC2 = title0+"-Brain-Signal.avi";
+titleBrainAviC2 = title0+"-Brain-Signal.avi"
 titleVNC = title0+"-VNC_MIP";
-titleVNCC2 = titleVNC+"-Signal";
+titleVNCC2 = title0+"-VNC-Signal_MIP";
 titleVNCAvi = title0+"-VNC.avi";
 titleVNCAviC2 = title0+"-VNC-Signal.avi";
 
