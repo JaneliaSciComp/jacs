@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +49,12 @@ public class RawFileFetcher {
         rawFileInfo.setChannel0( new File( rawFileDir, rawFileDir.getName() + TIFF_0_SUFFIX) );
         rawFileInfo.setChannel1( new File( rawFileDir, rawFileDir.getName() + TIFF_1_SUFFIX) );
         rawFileInfo.setTransformMatrix(handle.getTransformMatrix());
+        List<Integer> queryMicroscopeCoords = new ArrayList<>();
+        for ( int coord: microScopeCoords ) {
+            queryMicroscopeCoords.add( coord );
+        }
+        rawFileInfo.setQueryMicroscopeCoords( queryMicroscopeCoords );
+        rawFileInfo.setScale( transform.getScale() );
         if ( rawFileInfo.getChannel0() == null  ||  !rawFileInfo.getChannel0().exists() ) {
             logger.error("Failed to find channel 0 tiff file in " + rawFileDir + ".");
         }
