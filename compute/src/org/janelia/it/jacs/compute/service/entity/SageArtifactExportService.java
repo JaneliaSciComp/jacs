@@ -298,7 +298,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             if (!name.contains(tileTag)) continue;
         	String type = child.getEntityTypeName();
             if (EntityConstants.TYPE_IMAGE_2D.equals(type)) {
-            	if (name.contains("_Signal")) {
+            	if (name.contains("Signal")) {
             		getOrCreateSecondaryImage(child, productSignal1Mip, sourceImage);
             	}
             	else {
@@ -306,7 +306,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             	}
             }
             else if (EntityConstants.TYPE_MOVIE.equals(type)) {
-            	if (name.contains("_Signal")) {
+            	if (name.contains("Signal")) {
                     getOrCreateSecondaryImage(child, productSignal1Translation, sourceImage);
             	}
             	else {
