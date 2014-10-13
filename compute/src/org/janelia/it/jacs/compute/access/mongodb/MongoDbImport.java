@@ -330,9 +330,6 @@ public class MongoDbImport extends AnnotationDAO {
                     || ontologyRootEntity.getName().equals("FlyBase miscellaneous CV")) {
                 continue;
             }
-            if (ontologyRootEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC)!=null) {
-                continue;
-            }
             
             Session session = null;
             try {
