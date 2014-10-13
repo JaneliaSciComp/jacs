@@ -219,7 +219,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean rerunExistingResults, Boolean force) {
+    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
         try {
             String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
@@ -228,14 +228,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (runSampleDiscovery!=null) {
             	taskParameters.add(new TaskParameter("run sample discovery", runSampleDiscovery.toString(), null));
             }
+            if (reusePipelineRuns!=null) {
+            	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
+            }
             if (reuseProcessing!=null) {
             	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
             }
             if (reuseAlignment!=null) {
             	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
-            }
-            if (rerunExistingResults!=null) {
-            	taskParameters.add(new TaskParameter("rerun pipelines", rerunExistingResults.toString(), null));
             }
             if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
                 taskParameters.add(new TaskParameter("data set name", dataSetName, null));
@@ -271,7 +271,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSampleFolder(String folderId, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
@@ -279,11 +279,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    runSampleFolder(child.getId().toString(), reuseProcessing, reuseAlignment);
+                    runSampleFolder(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reuseProcessing, reuseAlignment);  
+                    runSamplePipelines(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
                 else {
@@ -295,7 +295,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSamplePipelines(String sampleId, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
             String displayName = "Sample All Pipelines";
@@ -303,8 +303,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
-            taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
-            taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+            if (reusePipelineRuns!=null) {
+            	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
+            }
+            if (reuseProcessing!=null) {
+            	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            }
+            if (reuseAlignment!=null) {
+            	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+            }
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 

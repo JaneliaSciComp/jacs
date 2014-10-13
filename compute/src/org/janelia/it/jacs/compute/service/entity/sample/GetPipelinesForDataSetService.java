@@ -15,7 +15,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 /**
  * Gets all the pipeline names for a given DATA_SET_IDENTIFIER, and returns them as a list called PIPELINE_PROCESS_NAME.
  * 
- * If RERUN_PIPELINES is specified and is false, then the SAMPLE_ENTITY_ID is checked to see which pipelines have not been 
+ * If REUSE_PIPELINE_RUNS is specified and is true, then the SAMPLE_ENTITY_ID is checked to see which pipelines have not been 
  * run on it to completion, and only those pipelines are returned as part of the PIPELINE_PROCESS_NAME list.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -25,7 +25,7 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
     public void execute() throws Exception {
         
         String dataSetIdentifier = data.getRequiredItemAsString("DATA_SET_IDENTIFIER");
-        boolean rerunPipelines = data.getItemAsBoolean("RERUN_PIPELINES");
+        boolean reusePipelineRuns = data.getItemAsBoolean("REUSE_PIPELINE_RUNS");
         
         Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
 
@@ -42,7 +42,7 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
 
             Set<String> skippedPipelines = new HashSet<String>();
             
-            if (!rerunPipelines) {
+            if (reusePipelineRuns) {
             	// If we don't want to rerun pipelines which already have results, then we have to check if the results are there
             	Long sampleEntityId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
             	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
