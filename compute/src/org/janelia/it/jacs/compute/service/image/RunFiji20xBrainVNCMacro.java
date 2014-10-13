@@ -75,8 +75,12 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
             throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntityId);
         }
         
-        this.outputFilePrefix = sampleEntity.getName();
-
+    	String sampleName = sampleEntity.getName();
+    	if (sampleName.contains("~")) {
+    		sampleName = sampleName.substring(0, sampleName.indexOf('~'));
+    	}
+        this.outputFilePrefix = sampleName;
+    	
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
                 .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
                 .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
@@ -330,7 +334,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         try {
             helper.addFilesInDirToFolder(pipelineRun, outputDir);    
             
-            String defaultImageName = outputFilePrefix+"_Brain_MIP.png";
+            String defaultImageName = outputFilePrefix+"-Brain_MIP.png";
             Entity default2dImage = EntityUtils.findChildWithName(pipelineRun, defaultImageName);
             if (default2dImage!=null) {
                 entityHelper.setDefault2dImage(pipelineRun, default2dImage);    

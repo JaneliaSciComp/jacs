@@ -40,14 +40,14 @@ print("Gain: "+gain);
 print("ChanSpec: "+chanspec);
 
 title0 = prefix;
-titleBrain = title0+"_Brain_MIP";
-titleBrainC2 = titleBrain+"_Signal";
-titleBrainAvi = title0+"_Brain.avi";
-titleBrainAviC2 = title0+"_Brain_Signal.avi";
-titleVNC = title0+"_VNC_MIP";
-titleVNCC2 = titleVNC+"_Signal";
-titleVNCAvi = title0+"_VNC.avi";
-titleVNCAviC2 = title0+"_VNC_Signal.avi";
+titleBrain = title0+"-Brain_MIP";
+titleBrainC2 = titleBrain+"-Signal";
+titleBrainAvi = title0+"-Brain.avi";
+titleBrainAviC2 = title0+"-Brain-Signal.avi";
+titleVNC = title0+"-VNC_MIP";
+titleVNCC2 = titleVNC+"-Signal";
+titleVNCAvi = title0+"-VNC.avi";
+titleVNCAviC2 = title0+"-VNC-Signal.avi";
 
 open(brainImage);
 brainId = getImageID();
