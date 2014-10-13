@@ -64,7 +64,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         }
         
         if (numUpdated.isEmpty()) {
-            logger.info("No Qi Scores found "+(alignmentId==null?"":" for "+alignmentId));
+            logger.info("No Qi Scores updated in SAGE"+(alignmentId==null?"":" for "+alignmentId));
         }
         else {
             logger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
@@ -146,6 +146,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     			if (sageImage!=null) {
     				setImageProperty(sageImage, qiScoreTerm, qiScore);
     			}
+    			logger.info("Updating LSM "+lsmId+" with Qi score "+qiScore);
     			// FW-2763: Also put the score directly on the LSM entity, for ease of searching/browsing
         		entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
     		}
