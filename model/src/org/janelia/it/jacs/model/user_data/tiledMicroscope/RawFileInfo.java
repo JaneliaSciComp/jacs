@@ -13,6 +13,8 @@ public class RawFileInfo implements Serializable {
     private File channel1;
     private List<Integer> centroid;
     private Double[] transformMatrix;
+    private double[] scale;
+    private List<Integer> queryMicroscopeCoords;
 
     public File getChannel0() {
         return channel0;
@@ -44,5 +46,21 @@ public class RawFileInfo implements Serializable {
 
     public void setTransformMatrix(Double[] transformMatrix) {
         this.transformMatrix = transformMatrix;
+    }
+
+    public List<Integer> getQueryMicroscopeCoords() {
+        return queryMicroscopeCoords;
+    }
+
+    public void setQueryMicroscopeCoords(List<Integer> queryMicroscopeCoords) {
+        this.queryMicroscopeCoords = queryMicroscopeCoords;
+    }
+
+    public double[] getScale() {
+        return scale;
+    }
+
+    public void setScale(double[] scale) {
+        this.scale = scale;
     }
 }
