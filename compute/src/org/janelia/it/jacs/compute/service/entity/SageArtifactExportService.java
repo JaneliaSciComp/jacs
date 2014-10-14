@@ -57,6 +57,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm dimensionX;
     private CvTerm dimensionY;
     private CvTerm dimensionZ;
+    private List<String> exportedNames = new ArrayList<String>();
     
     public void execute() throws Exception {
 
@@ -89,6 +90,16 @@ public class SageArtifactExportService extends AbstractEntityService {
         List<Entity> samples = getSamplesForExport(ANNOTATION_EXPORT_20X);
         samples.addAll(getSamplesForExport(ANNOTATION_EXPORT_63X));
         exportSamples(samples);
+        
+        if (!exportedNames.isEmpty()) {
+	        StringBuilder sb = new StringBuilder();
+	        for(String name : exportedNames) {
+	        	if (sb.length()>0) sb.append("\n");
+	        	sb.append(name);
+	        }
+	        logger.info("Exported primary image names:\n"+sb);
+        }
+        
     }
     
     private List<Entity> getSamplesForExport(String annotationTerm) throws Exception {
@@ -279,6 +290,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         if (sourceSageImageIds.size()==1) {
         	// Single LSM source image
             sourceImage = sage.getImages(sourceSageImageIds).get(0);
+            addImageProperty(sourceImage, propertyPublished, PUBLISHED_TO);
         }
         else {
         	// Multiple LSMs were merged or stitched to create the artifact, so we need a new primary image in SAGE
@@ -291,7 +303,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                 .getLast();
             sourceImage = getOrCreatePrimaryImage(image3d, line, sourceSageImageIds);
         }
-
+        
     	String tileTag = "-"+area;
         for(Entity child : artifactRun.getChildren()) {
             String name = child.getName();
@@ -317,6 +329,8 @@ public class SageArtifactExportService extends AbstractEntityService {
             	logger.trace("Ignoring artifact "+child.getName()+" (id="+child.getId()+")");
             }
         }
+        
+        exportedNames.add(sourceImage.getName());
     }
 
     private void export63xArtifactsForArea(Entity sample, Entity artifactRun, Line line) throws Exception {
@@ -351,6 +365,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             if (sourceSageImageIds.size()==1) {
             	// Single LSM source image
                 sourceImage = sage.getImages(sourceSageImageIds).get(0);
+                addImageProperty(sourceImage, propertyPublished, PUBLISHED_TO);
             }
             else {
 
@@ -390,8 +405,9 @@ public class SageArtifactExportService extends AbstractEntityService {
             	image3d.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, null);
                 sourceImage = getOrCreatePrimaryImage(image3d, line, sourceSageImageIds);
             }
-            
+
             create63xSecondaryImages(artifactRun, sourceImage, tile.getName());
+            exportedNames.add(sourceImage.getName());
         }
 
         // Stitched image if there is more than one tile
@@ -404,11 +420,12 @@ public class SageArtifactExportService extends AbstractEntityService {
 
             Image sourceImage = getOrCreatePrimaryImage(image3d, line, allSourceSageImageIds);
             create63xSecondaryImages(artifactRun, sourceImage, "stitched");
+            exportedNames.add(sourceImage.getName());
         }
     }
     
     private void create63xSecondaryImages(Entity artifactRun, Image sourceImage, String tileName) throws Exception {
-    	logger.info("  Creating secondary images for tile: "+tileName);
+    	logger.debug("  Creating secondary images for tile: "+tileName);
     	String tileTag = "-"+tileName;
         for(Entity child : artifactRun.getChildren()) {
             String name = child.getName();
@@ -484,7 +501,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
         
-        logger.info("Exporting "+entity.getName());
+        logger.info("  Exporting "+entity.getName());
 
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         image = new Image(consensusFamily, line, source, imageName, getUrl(path), path, true, true, CREATED_BY, createDate);
@@ -500,7 +517,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         for(CvTerm type : keys) {
             type.getId(); // ensure that the type id is loaded
             String value = consensusValues.get(type);
-            logger.info("      "+type.getName()+": "+value);
+            logger.trace("      "+type.getName()+": "+value);
             if (value == null || value.equals(NO_CONSENSUS)) continue;
             addImageProperty(image, type, value);
         }
