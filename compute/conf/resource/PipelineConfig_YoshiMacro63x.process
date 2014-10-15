@@ -26,9 +26,9 @@
         <!-- Create a result node for this group -->
         <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Temp"/>
-            <input name="OUTPUT_VAR_NAME" value="MERGE_RESULT_FILE_NODE"/>
-            <output name="MERGE_RESULT_FILE_NODE"/>
-            <output name="MERGE_RESULT_FILE_NODE_ID"/>
+            <input name="OUTPUT_VAR_NAME" value="TEMP_RESULT_FILE_NODE"/>
+            <output name="TEMP_RESULT_FILE_NODE"/>
+            <output name="TEMP_RESULT_FILE_NODE_ID"/>
         </operation>
             
         <sequence forEach="SAMPLE_AREA">
@@ -44,7 +44,7 @@
             <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
             <sequence name="Wait Async" waitForAsync="true">
                 <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
-                    <input name="MERGE_RESULT_FILE_NODE"/>
+                    <input name="TEMP_RESULT_FILE_NODE"/>
                     <input name="SAMPLE_ENTITY_ID"/>
                     <input name="SAMPLE_AREA"/>
                     <output name="BULK_MERGE_PARAMETERS"/>
@@ -53,7 +53,7 @@
             
             <!-- Get the LSM file paths and update the bulk merge parameters to use the copied files -->
             <operation name="Get LSM file paths" processor="org.janelia.it.jacs.compute.service.entity.sample.GetLsmFilePathsService">
-                <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+                <input name="RESULT_FILE_NODE" value="$V{TEMP_RESULT_FILE_NODE}"/>
                 <input name="BULK_MERGE_PARAMETERS"/>
                 <output name="BULK_MERGE_PARAMETERS"/>
                 <output name="LSM_SOURCE_FILE_PATHS"/>
@@ -64,7 +64,7 @@
             <sequence name="Wait Async" waitForAsync="true">
                 <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
-                    <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE" value="$V{TEMP_RESULT_FILE_NODE}"/>
                     <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
                     <input name="TARGET_FILE_PATHS" value="$V{LSM_TARGET_FILE_PATHS}"/>
                 </operation>
@@ -74,7 +74,7 @@
             <sequence name="Merge Lsm Pairs" waitForAsync="true">
                 <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
-                    <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE" value="$V{TEMP_RESULT_FILE_NODE}"/>
                     <input name="BULK_MERGE_PARAMETERS"/>
                     <input name="MERGE_ALGORITHM"/>
                 </operation>
@@ -84,7 +84,7 @@
             <sequence name="Convert to sample image" waitForAsync="true">
                 <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
-                    <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE" value="$V{TEMP_RESULT_FILE_NODE}"/>
                     <input name="BULK_MERGE_PARAMETERS"/>
                     <input name="MERGE_ALGORITHM"/>
                     <input name="METADATA_RESULT_FILE_NODE"/>
@@ -112,7 +112,7 @@
         
         <!-- We're done with the LSMs -->
         <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-            <input name="FILE_NODE_ID" value="$V{MERGE_RESULT_FILE_NODE_ID}"/>
+            <input name="FILE_NODE_ID" value="$V{TEMP_RESULT_FILE_NODE_ID}"/>
         </operation>
         
     </sequence>
