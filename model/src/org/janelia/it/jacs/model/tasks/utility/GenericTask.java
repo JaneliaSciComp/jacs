@@ -41,6 +41,15 @@ public class GenericTask extends Task {
     public String getDisplayName() {
         return getJobName();
     }
+
+    public void addProcessToTaskName(String processName) {
+    	if (getTaskName().equals(getJobName())) {
+    		this.taskName = processName;
+    	}
+    	else {
+    		this.taskName += ","+taskName;	
+    	}
+    }
     
     public ParameterVO getParameterVO(String key) throws ParameterException {
         if (key == null)
