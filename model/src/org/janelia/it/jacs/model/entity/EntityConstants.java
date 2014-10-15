@@ -157,6 +157,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
     public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
+    public static final String ATTRIBUTE_SCALITY_URL                         = "Scality URL";
     
     // Geometric Tree
     //

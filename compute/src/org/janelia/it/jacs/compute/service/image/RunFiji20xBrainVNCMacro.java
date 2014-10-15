@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
@@ -54,8 +53,8 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
     private String vncFilepath = "";
     private String chanSpec;
 
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
+    @Override
+    protected void init() throws Exception {
 
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");

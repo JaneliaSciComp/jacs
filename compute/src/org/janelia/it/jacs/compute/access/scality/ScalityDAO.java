@@ -21,25 +21,14 @@ public class ScalityDAO {
 	
     private static final Logger log = Logger.getLogger(ScalityDAO.class);
 
-    private static final int DEFAULT_BUFFER_SIZE = 1024 * 1;
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 2;
     private static final String SCALITY_PATH_NAMESPACE = "JACS";//SystemConfigurationProperties.getString("Scality.Namespace");
     private static final String SCALITY_BASE_URL = "http://s2-jrc:81/proxy";//SystemConfigurationProperties.getString("Scality.BaseURL");
 	private static final String SCALITY_DRIVER = "bparc";//SystemConfigurationProperties.getString("Scality.Driver");
 	
-//	private AsyncHttpClient client;
 	private HttpClient httpClient;
 	
 	public ScalityDAO() {
-//		int timeout = 1000*60*60;
-//		AsyncHttpClientConfig.Builder config = new AsyncHttpClientConfig.Builder();
-//		config.setAllowPoolingConnections(true);
-//		config.setPooledConnectionIdleTimeout(15000);
-//		config.setMaxConnections(1000);
-//		config.setMaxConnectionsPerHost(1000);
-//		config.setRequestTimeout(timeout);
-//		config.setConnectionTimeout(timeout);
-//		config.setReadTimeout(timeout);
-//		this.client = new DefaultAsyncHttpClient(config.build());
         MultiThreadedHttpConnectionManager mgr = new MultiThreadedHttpConnectionManager();
         HttpConnectionManagerParams managerParams = mgr.getParams();
         managerParams.setDefaultMaxConnectionsPerHost(2);
@@ -47,25 +36,6 @@ public class ScalityDAO {
         this.httpClient = new HttpClient(mgr); 
 	}
 	
-//	public void put(String scalityId, String filepath) throws Exception {
-//		final String url = getUrl(scalityId);
-//		log.info("Putting "+url+" from "+filepath);
-//		BoundRequestBuilder put = client.preparePut(url);
-//		put.setBody(new File(filepath));
-//		Response response = put.execute().get();
-//		
-//		log.info("PUT status code: "+response.getStatusCode());
-//		log.info("PUT response body: "+response.getResponseBody());
-//		for (String key : response.getHeaders().keySet()) {
-//			log.info(" "+key+": "+response.getHeaders().get(key));	
-//		}
-//		
-//		if (response.getStatusCode()!=200) {
-//			log.error("Response from Scality: "+response.getResponseBody());
-//			throw new Exception("Put failed for Scality#"+scalityId+" with status code "+response.getStatusCode());
-//		}
-//	}
-
 	public void put(String scalityId, String filepath) throws Exception {
 		PutMethod put = null;
     	try {
@@ -77,11 +47,6 @@ public class ScalityDAO {
 	        long start = System.currentTimeMillis();
 	        
 	        File f = new File(filepath);
-//	        Part[] parts = {
-//	            new StringPart("param_name", "value"),
-//	            new FilePart(f.getName(), f)
-//	        };
-//	        put.setRequestEntity(new MultipartRequestEntity(parts, put.getParams()));
 	        
 	        FileRequestEntity re = new FileRequestEntity(f);
 	    	put.setRequestEntity(re);
@@ -148,53 +113,6 @@ public class ScalityDAO {
 	    }
 	}
 	
-//	public void get(final String scalityId, final String filepath) throws Exception {
-//		final String url = getUrl(scalityId);
-//		final FileOutputStream fos = new FileOutputStream(filepath);
-//		log.info("Getting "+url+" to "+filepath);
-//		
-//		BoundRequestBuilder get = client.prepareGet(url);
-//		ListenableFuture<String> f = get.execute(new AsyncHandler<String>() {
-//			private Throwable t = null ;
-//			@Override
-//			public STATE onStatusReceived(HttpResponseStatus status) throws Exception {
-//				int statusCode = status.getStatusCode();
-//				if (statusCode != 200) {
-//					log.error("Get failed for Scality#"+scalityId+" with status code "+statusCode) ;
-//					return STATE.ABORT;
-//				}
-//				return STATE.CONTINUE;
-//			}
-//
-//			@Override
-//			public STATE onHeadersReceived(HttpResponseHeaders h) throws Exception { 
-//				return STATE.CONTINUE; 
-//			}
-//			
-//			@Override
-//			public STATE onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
-//				fos.write(bodyPart.getBodyPartBytes());
-//				return STATE.CONTINUE;
-//			}
-//
-//			@Override
-//			public String onCompleted() throws Exception {
-//				if(this.t != null)
-//					throw new Exception(t);
-//				fos.close();
-//				return filepath;
-//			}
-//
-//			@Override
-//			public void onThrowable(Throwable t) {
-//				log.error("Get failed for Scality#"+scalityId, t);
-//
-//			}
-//		});
-//		
-//		f.get();	
-//	}
-
 	public void get(final String scalityId, final String filepath) throws Exception {
 		get(scalityId, filepath, DEFAULT_BUFFER_SIZE);
 	}
@@ -232,18 +150,6 @@ public class ScalityDAO {
 		}
     }
 	
-//	public void delete(String scalityId) throws Exception {
-//		final String url = getUrl(scalityId);
-//		log.trace("Deleting "+url);
-//		BoundRequestBuilder delete = client.prepareDelete(url);
-//		Response response = delete.execute().get();
-//		if (response.getStatusCode()!=200) {
-//			log.error("Response from Scality: "+response.getResponseBody());
-//			throw new Exception("Delete failed for Scality#"+scalityId+" with status code "+response.getStatusCode());
-//		}
-//		
-//	}
-
 	public void delete(String scalityId) throws Exception {
 
 		DeleteMethod delete = null;
@@ -267,7 +173,6 @@ public class ScalityDAO {
 	}
 	
 	public void close() {
-//		if (client!=null) client.close();
 	}
 
 	private static long copyBytes(InputStream input, OutputStream output, long length, int bufferSize) throws IOException {
@@ -319,16 +224,16 @@ public class ScalityDAO {
 //		dao.put2("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd");
 //		dao.put2("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd");
 //		dao.put("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd");
-		dao.put("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd");
+		dao.put("1870576927434080358", "/home/rokickik/stitched-1947307635921387618.v3dpbd");
 //		
 //		dao.get("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd2",1024 * 1);
-		dao.get("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd2",1024 * 1);
+		dao.get("1870576927434080358", "/home/rokickik/stitched-1947307635921387618.v3dpbd3");
 //		dao.get2("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd3",1024 * 2);
 //		dao.get2("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd3",1024 * 2);
 //		dao.get2("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd4",1024 * 4);
 //		dao.get2("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd4",1024 * 4);
 	
-		dao.delete("1870576927434080357");
+		dao.delete("1870576927434080358");
 		
 //		13:00:32.508 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 2772074402 bytes at 693 Mbps
 //		13:03:09.861 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 9858181219 bytes at 502 Mbps

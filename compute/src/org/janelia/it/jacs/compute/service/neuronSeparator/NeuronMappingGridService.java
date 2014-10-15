@@ -5,7 +5,6 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
@@ -46,9 +45,9 @@ public class NeuronMappingGridService extends AbstractEntityGridService {
         return "neuMap";
     }
 
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-
+    @Override
+    protected void init() throws Exception {
+    	
         inputFilename1 = data.getItemAsString("INPUT_FILENAME_1");
         inputFilename2 = data.getItemAsString("INPUT_FILENAME_2");
         
