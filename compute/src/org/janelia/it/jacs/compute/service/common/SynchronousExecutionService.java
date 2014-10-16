@@ -15,7 +15,7 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 /**
  * Creates and executes a dynamic process synchronously, with some parameters. Inputs:
  *   PROCESS_DEF_NAME - name of the process definition to execute the task with (also used as Task.taskName)
- *   PARAMETER_{X}_KEY - name of a task parameter
+ *   ADD_TASK_NAME - value to add to the current task's name
  *   PARAMETER_{X}_VALUE - value of the same task parameter 
  *   
  * Invoking process files from within process files:
@@ -48,13 +48,14 @@ public class SynchronousExecutionService implements IService {
         		// Rename the task to include a list of processes that were executed
                 Task task = ProcessDataHelper.getTask(processData);
                 if (task instanceof GenericTask) {
+                	logger.trace("Adding '"+addTaskName+"' to existing task name");
                 	GenericTask genericTask = (GenericTask)task;
-                	genericTask.addProcessToTaskName(processDefName);
-                	
+                	genericTask.addProcessToTaskName(addTaskName);
+                	logger.trace("New task name: "+genericTask.getTaskName());
                 	// Also save the new name to the database. This can't be done with the object above 
                 	// because its already associated with another Hibernate session
                 	GenericTask genericTask2 = (GenericTask)computeBean.getTaskById(task.getObjectId());
-                	genericTask2.addProcessToTaskName(processDefName);
+                	genericTask2.addProcessToTaskName(addTaskName);
                 	computeBean.saveOrUpdateTask(genericTask2);
                 }
                 else {

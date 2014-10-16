@@ -47,7 +47,7 @@ public class GenericTask extends Task {
     		this.taskName = processName;
     	}
     	else {
-    		this.taskName += ","+taskName;	
+    		this.taskName += ","+processName;	
     	}
     }
     

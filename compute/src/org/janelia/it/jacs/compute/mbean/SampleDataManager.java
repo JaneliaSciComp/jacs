@@ -298,7 +298,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
-            String displayName = "Sample All Pipelines";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
@@ -313,7 +312,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             }
             String user = sample.getOwnerKey();
-            saveAndRunTask(user, processName, displayName, taskParameters);
+            saveAndRunTask(user, processName, processName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -323,7 +322,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment) {
         try {
             String processName = "PipelineConfig_"+configurationName;
-            String displayName = "Configured Sample Pipeline";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
@@ -331,7 +329,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
             taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             String user = sample.getOwnerKey();
-            saveAndRunTask(user, processName, displayName, taskParameters);
+            saveAndRunTask(user, processName, processName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
