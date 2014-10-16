@@ -4,8 +4,11 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 
+import Jama.Matrix;
+
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +30,8 @@ public class RawFileFetcher {
         transform = new CoordinateToRawTransform( renderedBaseDirectory );
     }
 
+    private static Map<String,double[][]> baseToInverse = new HashMap<>();
+    
     /**
      * Returned object has files representing the point as two channels of Tiff data, plus
      * metadata required to use them.
@@ -48,12 +53,23 @@ public class RawFileFetcher {
         rawFileInfo.setCentroid( closestCentroid );
         rawFileInfo.setChannel0( new File( rawFileDir, rawFileDir.getName() + TIFF_0_SUFFIX) );
         rawFileInfo.setChannel1( new File( rawFileDir, rawFileDir.getName() + TIFF_1_SUFFIX) );
+
+        double[][] invertedTransform = baseToInverse.get( handle.getBasePath() );
+        if ( invertedTransform == null ) {
+            invertedTransform = getInvertedTransform( handle.getTransformMatrix() );
+            baseToInverse.put( handle.getBasePath(), invertedTransform );
+            rawFileInfo.setInvertedTransform( invertedTransform );
+        }
+        
         rawFileInfo.setTransformMatrix(handle.getTransformMatrix());
+        rawFileInfo.setMinCorner( convertToPrimArray( handle.getMinCorner() ) );
+        rawFileInfo.setExtent( convertToPrimArray( handle.getExtent() ) );
         List<Integer> queryMicroscopeCoords = new ArrayList<>();
         for ( int coord: microScopeCoords ) {
             queryMicroscopeCoords.add( coord );
         }
         rawFileInfo.setQueryMicroscopeCoords( queryMicroscopeCoords );
+        rawFileInfo.setQueryViewCoords( lvvCoords );
         rawFileInfo.setScale( transform.getScale() );
         if ( rawFileInfo.getChannel0() == null  ||  !rawFileInfo.getChannel0().exists() ) {
             logger.error("Failed to find channel 0 tiff file in " + rawFileDir + ".");
@@ -106,5 +122,26 @@ public class RawFileFetcher {
         return  (xDist * xDist) +
                 (yDist * yDist) +
                 (zDist * zDist);
+    }
+    
+    private double[][] getInvertedTransform(Double[] transformMatrix) {
+        double[][] primitiveMatrix = new double[3][3];
+        int origColCount = 5;
+        for ( int row = 0; row < 3; row++ ) {
+            for ( int col = 0; col < 3; col++ ) {
+                primitiveMatrix[ row ][ col ] = 
+                        transformMatrix[ row * origColCount + col ];
+            }
+        }
+        Matrix matrix = new Matrix(primitiveMatrix);
+        return matrix.inverse().getArray();
+    }
+    
+    private int[] convertToPrimArray( Integer[] array ) {
+        int[] rtnVal = new int[ array.length ];
+        for ( int i = 0; i < array.length; i++ ) {
+            rtnVal[ i ] = array[ i ];
+        }
+        return rtnVal;
     }
 }

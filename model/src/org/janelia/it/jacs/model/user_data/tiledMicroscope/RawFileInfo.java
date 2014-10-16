@@ -13,8 +13,12 @@ public class RawFileInfo implements Serializable {
     private File channel1;
     private List<Integer> centroid;
     private Double[] transformMatrix;
+    private double[][] invertedTransform;
     private double[] scale;
+    private int[] minCorner;
+    private int[] extent;
     private List<Integer> queryMicroscopeCoords;
+    private int[] queryViewCoords;
 
     public File getChannel0() {
         return channel0;
@@ -62,5 +66,61 @@ public class RawFileInfo implements Serializable {
 
     public void setScale(double[] scale) {
         this.scale = scale;
+    }
+
+    /**
+     * @return the minCorner
+     */
+    public int[] getMinCorner() {
+        return minCorner;
+    }
+
+    /**
+     * @param minCorner the minCorner to set
+     */
+    public void setMinCorner(int[] minCorner) {
+        this.minCorner = minCorner;
+    }
+
+    /**
+     * @return the extent
+     */
+    public int[] getExtent() {
+        return extent;
+    }
+
+    /**
+     * @param extent the extent to set
+     */
+    public void setExtent(int[] extent) {
+        this.extent = extent;
+    }
+
+    /**
+     * @return the invertedTransform
+     */
+    public double[][] getInvertedTransform() {
+        return invertedTransform;
+    }
+
+    /**
+     * @param invertedTransform the invertedTransform to set
+     */
+    public void setInvertedTransform(double[][] invertedTransform) {
+        this.invertedTransform = invertedTransform;
+    }
+
+    /**
+     * @return the queryViewCoords
+     */
+    public int[] getQueryViewCoords() {
+        return queryViewCoords;
+    }
+
+    /**
+     * @param queryViewCoords the queryViewCoords to set
+     */
+    public void setQueryViewCoords(int[] queryViewCoords) {
+        this.queryViewCoords = queryViewCoords;
     }
 }
