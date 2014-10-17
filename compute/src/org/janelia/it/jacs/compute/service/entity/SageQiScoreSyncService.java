@@ -36,6 +36,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     private CvTerm qmScoreTerm;
     
     private Map<Long,String> qiScoreBatch = new HashMap<Long,String>();
+    private Map<Long,String> inScoreBatch = new HashMap<Long,String>();
     private Map<Long,String> qmScoreBatch = new HashMap<Long,String>();
     
     private Map<String,Integer> numUpdated = new HashMap<String,Integer>();
@@ -87,6 +88,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         	if (qiScoreBatch.size()>=BATCH_SIZE) {
         		processQiScoreBatch();
                 qiScoreBatch.clear();
+                qiScoreBatch.clear();
                 qmScoreBatch.clear();
         	}        	
         }
@@ -109,6 +111,10 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     	String qiScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
     	if (qiScore!=null) {
         	qiScoreBatch.put(alignment.getId(), qiScore);
+    	}
+    	String inScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
+    	if (inScore!=null) {
+        	inScoreBatch.put(alignment.getId(), inScore);
     	}
     	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
     	if (qmScore!=null) {
@@ -147,8 +153,12 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     				setImageProperty(sageImage, qiScoreTerm, qiScore);
     			}
     			logger.info("Updating LSM "+lsmId+" with Qi score "+qiScore);
-    			// FW-2763: Also put the score directly on the LSM entity, for ease of searching/browsing
+    			// FW-2763: Also denormalize the scores directly onto the LSM entity, for ease of searching/browsing
         		entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
+        		String inScore = inScoreBatch.get(alignmentId);
+        		if (inScore != null) {
+        			entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, qiScore);
+        		}
     		}
 
     		String qmScore = qmScoreBatch.get(alignmentId);
