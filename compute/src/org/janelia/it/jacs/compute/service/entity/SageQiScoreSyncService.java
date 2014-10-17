@@ -157,7 +157,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         		entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
         		String inScore = inScoreBatch.get(alignmentId);
         		if (inScore != null) {
-        			entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, qiScore);
+        			entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, inScore);
         		}
     		}
 
