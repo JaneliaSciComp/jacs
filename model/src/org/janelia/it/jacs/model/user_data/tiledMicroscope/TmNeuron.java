@@ -20,8 +20,10 @@ public class TmNeuron implements IsSerializable, Serializable {
     String name;
     Date creationDate;
     Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
-    Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
     List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
+    Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
+
+    Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<Long, TmStructuredTextAnnotation>();
 
     public Long getId() {
         return id;
@@ -48,16 +50,23 @@ public class TmNeuron implements IsSerializable, Serializable {
         return name;
     }
 
+    // maps geo ann ID to geo ann object
     public Map<Long, TmGeoAnnotation> getGeoAnnotationMap() {
         return geoAnnotationMap;
     }
 
+    // maps endpoints of path to path object
     public Map<TmAnchoredPathEndpoints, TmAnchoredPath> getAnchoredPathMap() {
         return anchoredPathMap;
     }
 
     public List<TmGeoAnnotation> getRootAnnotations() {
         return rootAnnotations;
+    }
+
+    // maps ID of parent to text annotation
+    public Map<Long, TmStructuredTextAnnotation> getStructuredTextAnnotationMap() {
+        return textAnnotationMap;
     }
 
     public TmNeuron(Long id, String name) {
@@ -73,7 +82,8 @@ public class TmNeuron implements IsSerializable, Serializable {
         this.name=entity.getName();
         this.creationDate = entity.getCreationDate();
 
-        // First step is to create TmGeoAnnotation and TmAnchoredPath objects
+        // First step is to take all those entity data and put them into the
+        //  appropriate objects, and the objects into the right collections
         for (EntityData ed : entity.getEntityData()) {
             String edAttr = ed.getEntityAttrName();
             if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
@@ -89,6 +99,9 @@ public class TmNeuron implements IsSerializable, Serializable {
             } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
                 TmAnchoredPath path = new TmAnchoredPath(ed.getValue());
                 anchoredPathMap.put(path.getEndpoints(), path);
+            } else if (edAttr.equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
+                TmStructuredTextAnnotation ann = new TmStructuredTextAnnotation(ed.getValue());
+                textAnnotationMap.put(ann.getParentId(), ann);
             }
         }
         // Second step is to link childen to produce the graph for

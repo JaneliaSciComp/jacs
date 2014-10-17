@@ -345,6 +345,62 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    public TmStructuredTextAnnotation addStructuredTextAnnotation(Long neuronID, Long parentID, int parentType, int formatVersion,
+        String data) throws DaoException {
+        
+        try {
+            // get the neuron entity
+            Entity neuron=annotationDAO.getEntityById(neuronID);
+            if (!neuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+                throw new Exception("Id is not valid TmNeuron type =" + neuronID);
+            }
+
+            // parent must be neuron or geoann:
+            if (parentType != TmStructuredTextAnnotation.GEOMETRIC_ANNOTATION &&
+                    parentType != TmStructuredTextAnnotation.NEURON) {
+                throw new Exception("parent must be a geometric annotation or a neuron");
+            }
+
+            EntityData entityData = new EntityData();
+            entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT);
+            entityData.setOwnerKey(neuron.getOwnerKey());
+            entityData.setCreationDate(new Date());
+            entityData.setUpdatedDate(new Date());
+            entityData.setOrderIndex(0);
+            entityData.setParentEntity(neuron);
+            // this is kind of bogus, but it works:
+            entityData.setValue(TMP_GEO_VALUE);
+            annotationDAO.saveOrUpdate(entityData);
+            neuron.getEntityData().add(entityData);
+            annotationDAO.saveOrUpdate(neuron);
+
+            // Find and update value string
+            boolean valueStringUpdated=false;
+            String valueString=null;
+            for (EntityData ed : neuron.getEntityData()) {
+                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
+                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                        valueString = TmStructuredTextAnnotation.toStringFromArguments(ed.getId(), parentID,
+                                parentType, formatVersion, data);
+                        ed.setValue(valueString);
+                        annotationDAO.saveOrUpdate(ed);
+                        valueStringUpdated = true;
+                    }
+                }
+            }
+            if (!valueStringUpdated) {
+                throw new Exception("Could not find temp geo entry to update for value string");
+            }
+            TmStructuredTextAnnotation structeredAnnotation = new TmStructuredTextAnnotation(valueString);
+            return structeredAnnotation;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+
+    }
+
     public void updateAnchoredPath(TmAnchoredPath anchoredPath, Long annotationID1, Long annotationID2,
        List<List<Integer>> pointList) throws DaoException {
         try {
@@ -365,6 +421,20 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             EntityData ed=(EntityData) computeDAO.genericLoad(EntityData.class, geoAnnotation.getId());
             String valueString=TmGeoAnnotation.toStringFromArguments(geoAnnotation.getId(), geoAnnotation.getParentId(),
                     index, x, y, z, comment);
+            ed.setValue(valueString);
+            annotationDAO.saveOrUpdate(ed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public void updateStructuredTextAnnotation(TmStructuredTextAnnotation textAnnotation, String data)
+        throws DaoException {
+        try {
+            EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, textAnnotation.getId());
+            String valueString = TmStructuredTextAnnotation.toStringFromArguments(textAnnotation.getId(),
+                    textAnnotation.getParentId(), textAnnotation.getParentType(), textAnnotation.getFormatVersion(), data);
             ed.setValue(valueString);
             annotationDAO.saveOrUpdate(ed);
         } catch (Exception e) {
@@ -754,6 +824,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public void deleteGeometricAnnotation(Long geoId) throws DaoException {
         try {
             EntityData ed=(EntityData) annotationDAO.genericLoad(EntityData.class, geoId);
+            annotationDAO.genericDelete(ed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+    }
+
+    public void deleteStructuredText(Long annID) throws DaoException {
+        try {
+            EntityData ed=(EntityData) annotationDAO.genericLoad(EntityData.class, annID);
             annotationDAO.genericDelete(ed);
         } catch (Exception e) {
             e.printStackTrace();

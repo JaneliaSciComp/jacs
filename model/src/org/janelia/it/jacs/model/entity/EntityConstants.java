@@ -171,6 +171,10 @@ public class EntityConstants {
     // "<id>:<attributeID1>:<attributeID2>:x,y,z:(repeat x,y,z)"
     public static final String ATTRIBUTE_ANCHORED_PATH                       = "Anchored Path";
 
+    // TmStructuredTextAnnotation
+    // "<id>:<parentId>:<parentType>:<FORMAT_VERSION>:<dataString>"
+    public static final String ATTRIBUTE_STRUCTURED_TEXT                     = "Structured Text";
+
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"
     public static final String ATTRIBUTE_ITEM                                = "Item";            // The actual entity item wrapped by an Aligned Item
