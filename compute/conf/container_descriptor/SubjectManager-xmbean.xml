@@ -31,7 +31,7 @@
         </parameter>
         <parameter>
            <description>Group name (e.g. "leetlab")</description>
-           <name>groupNameOrKey</name>
+           <name>groupName</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
