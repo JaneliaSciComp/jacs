@@ -1,12 +1,11 @@
 // 63x_polarity_secondary_data.imj
 // Revision level: 0.5
-// Date released:  2014-09-17
+// Date released:  2014-10-05
 // Description:
 // Macro for generating MIP and movies from 63x case 3 polarity original lsm
 // files or stitched file
 // - adjust intensity
 // - ramp signals in Z axis for neuron channels
-// - remove speckles based on size in 2D projection from three directions  
 // - mask presynaptic marker channel by membrane channel
 // Input parameters:
 //   prefix: title (usually the line name and tile)
@@ -16,10 +15,9 @@
 //   colorspec: color specification
 
 
-run("Colors...", "foreground=white background=black selection=yellow");
+setBackgroundColor(0,0,0);
+setForegroundColor(255,255,255);
 setBatchMode(true);
-MinimalParticleSize = 1000;
-MaximalSignalsOccupancy = 85;
 
 var width, height, channels, slices, frames;
 var merge_name = "";
@@ -33,7 +31,7 @@ basedir = arg[1];
 print("Prefix: "+prefix);
 print("Output directory: "+basedir);
 image = arg[2];
-if (image == "") exit ("No image argument!");
+if (image == "") exit("No image argument!");
 channelspec = toLowerCase(arg[3]);
 if (channelspec == "") exit ("No channel specification argument!");
 colorspec = toUpperCase(arg[4]);
@@ -63,14 +61,13 @@ if (channels > 2) {
   selectWindow("original");
   close();
   selectWindow("processing");
-  run("Magenta");
   run("Z Project...", "projection=[Max Intensity]");
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   close();
-  selectWindow("processing");
-  MeanSTD = mean + std;
-  run("Subtract...", "value=MeanSTD stack");
+  run("Subtract...", "value="+mean+" stack");
+  
+  run("Magenta");
   rename(title);
   // Process signal channel NeuronC2 (membrane)
   processChannel("signal2");
@@ -79,18 +76,26 @@ if (channels > 2) {
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   close();
-  MeanSTD = mean + std;
-  run("Subtract...", "value=MeanSTD stack");
+  Mean2Std = mean + 2*std;
   run("Duplicate...", "title=signal2_mask duplicate");
-  setAutoThreshold("Default dark stack");
-  run("Convert to Mask", "method=Default background=Dark black");
+  setThreshold(Mean2Std, 255);
+  run("Convert to Mask", "background=Dark black");
   run("Divide...", "value=255 stack");
   imageCalculator("Multiply stack", "signal1","signal2_mask");
   selectWindow("signal2_mask");
   close();
+  selectWindow("signal2");
+  run("Subtract...", "value="+mean+" stack");
 }
 else {
   processChannel("signal1");
+  run("Green");
+  run("Z Project...", "projection=[Max Intensity]");
+  run("Select All");
+  getStatistics(area, mean, min, max, std, histogram);
+  close();
+  run("Subtract...", "value="+mean+" stack");
+
 }
 
 // Process reference channel
@@ -148,7 +153,7 @@ if (height % 2 != 0 || width % 2 != 0) {
     if (height % 2 != 0) {
         newHeight = height+1;
     }
-    run("Canvas Size...", "width=&newWidth height=&newHeight position=Top-Center");
+    run("Canvas Size...", "width="+newWidth+" height="+newHeight+" position=Top-Center");
 }
 print("Saving AVI");
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
@@ -219,29 +224,6 @@ function processChannel(channel_name) {
   selectWindow("original");
   close();
   selectWindow("processing");
-  performMasking();
-  run("Reslice [/]...", "output=0.380 start=Top avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
-  performMasking();
-  run("Reslice [/]...", "output=0.188 start=Top avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
-  selectWindow("processing");
-  run("Reslice [/]...", "output=1.000 start=Right rotate avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
-  performMasking();
-  run("Reslice [/]...", "output=1.000 start=Left flip rotate avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
   rename(title);
 }
 
@@ -251,7 +233,7 @@ function performHistogramStretching() {
   getDimensions(width, height, channels, slices, frames);
   W = round(width/5);
   run("Z Project...", "projection=[Max Intensity]");
-  run("Size...", "width=W height=W depth=1 constrain average interpolation=Bilinear");
+  run("Size...", "width="+W+" height="+W+" depth=1 constrain average interpolation=Bilinear");
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   close();
@@ -261,64 +243,3 @@ function performHistogramStretching() {
 }
 
 
-function performMasking() {
-  selectWindow("processing");
-  run("Z Project...", "projection=[Max Intensity]");
-  rename("MIP1");
-  run("Enhance Local Contrast (CLAHE)", "blocksize=50 histogram=256 maximum=2 mask=*None*");
-  run("Duplicate...", "title=MIP2");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP3");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP4");
-  selectWindow("MIP1");
-  setAutoThreshold("MaxEntropy dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  selectWindow("MIP2");          
-  setAutoThreshold("Default dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  selectWindow("MIP3");          
-  setAutoThreshold("Otsu dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-   selectWindow("MIP4");         
-  setAutoThreshold("Moments dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  imageCalculator("Max create", "MIP1","MIP2");
-  rename("MIP12"); 
-  selectWindow("MIP1");
-  close();
-  selectWindow("MIP2");
-  close();
-  imageCalculator("Max create", "MIP3","MIP4");
-  rename("MIP34"); 
-  selectWindow("MIP3");
-  close();
-  selectWindow("MIP4");
-  close();
-  imageCalculator("Max create", "MIP12","MIP34");
-  rename("MIP"); 
-  selectWindow("MIP12");
-  close();
-  selectWindow("MIP34");
-  close();
-  
-  selectWindow("MIP");  
-  run("Dilate");
-  
-  run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
-  run("Divide...", "value=255.000");
-  rename("mask");
-  imageCalculator("Multiply create stack", "processing","mask");
-  selectWindow("mask");
-  close();
-  selectWindow("MIP");
-  close();
-  selectWindow("processing");
-  close();
-  selectWindow("Result of processing");
-  rename("processing");
-}

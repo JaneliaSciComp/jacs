@@ -268,6 +268,12 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         paramSb.append(chanSpec);
         
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append("\n");
+        
+        script.append("for fin in *.avi; do\n");
+        script.append("    fout=${fin%.avi}.mp4\n");
+        script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
+        script.append("done\n");
+        
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         
         writer.write(script.toString());

@@ -20,21 +20,27 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     Integer index;
     Double x, y, z;
 
-    // parent and children fields only filled in when the annotation is in a neuron!
-    //  I'd like to have a flag that is set when these are correct, but there's no
+    // child and neuron ID fields only filled in when the annotation is in a neuron!
+    //  they are null otherwise
+    // I'd like to have a flag that is set when these are correct, but there's no
     //  way for the GeoAnn to keep it up-to-date, as it's not involved when operations
     //  are performed on other GeoAnns (creation, deletion, update), so the info
     //  would get stale fast
-    TmGeoAnnotation parent=null;
-    List<TmGeoAnnotation> children=new ArrayList<TmGeoAnnotation>();
+    Long neuronId = null;
+    List<Long> childIds = null;
 
-    public TmGeoAnnotation(Long id, String comment, Double x, Double y, Double z, TmGeoAnnotation parent) {
+    // implementation note: at one point we stored the parent and child objects,
+    //  but serializing them for calling remote server routines caused the
+    //  whole tree to get walked recursively, overflowing the stack; so
+    //  now we just use the IDs (FW-2728)
+
+    public TmGeoAnnotation(Long id, String comment, Double x, Double y, Double z, Long parentId) {
         this.id=id;
         this.comment=comment;
         this.x=x;
         this.y=y;
         this.z=z;
-        this.parent=parent;
+        this.parentId=parentId;
     }
 
     public static String toStringFromArguments(Long id, Long parentId, int index, Double x, Double y, Double z, String comment) {
@@ -125,50 +131,15 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         this.z = z;
     }
 
-    public TmGeoAnnotation getParent() {
-        return parent;
-    }
-
-    public void setParent(TmGeoAnnotation parent) {
-        this.parent = parent;
-    }
-
-    public List<TmGeoAnnotation> getChildren() {
-        return children;
-    }
-
-    /**
-     * this method returns a list of all children in the subtree of the current
-     * annotation, plus the annotation itself; the order is such that the
-     * annotation itself is first, and each child is guaranteed to appear
-     * after its parent
-     * @return list of annotations in subtree rooted at current annotation
-     */
-    public List<TmGeoAnnotation> getSubTreeList() {
-        ArrayList<TmGeoAnnotation> subtreeList = new ArrayList<TmGeoAnnotation>();
-        appendSubTreeList(subtreeList, this);
-        return subtreeList;
-    }
-
-    private void appendSubTreeList(List<TmGeoAnnotation> annList, TmGeoAnnotation ann) {
-        annList.add(ann);
-        for (TmGeoAnnotation a: ann.getChildren()) {
-            appendSubTreeList(annList, a);
-        }
-    }
-
-    /**
-     * see getSubTreeList; this version guarantees that the children will
-     * precede the parents instead
-     */
-    public List<TmGeoAnnotation> getSubTreeListReversed() {
-        List<TmGeoAnnotation> tempList = getSubTreeList();
-        // Collections.reverse(tempList);
-        return tempList;
-    }
-
     public void addChild(TmGeoAnnotation child) {
-        children.add(child);
+        if (childIds == null) {
+            setEmptyChildList();
+        }
+        childIds.add(child.getId());
+    }
+
+    public void setEmptyChildList() {
+        childIds = new ArrayList<Long>();
     }
 
     public void setParentId(Long parentId) {
@@ -179,4 +150,29 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         return parentId;
     }
 
+    public List<Long> getChildIds() {
+        return childIds;
+    }
+
+    public Long getNeuronId() {
+        return neuronId;
+    }
+
+    public void setNeuronId(Long neuronId) {
+        this.neuronId = neuronId;
+    }
+
+    public boolean isRoot() {
+        return neuronId != null && parentId.equals(neuronId);
+    }
+
+    public boolean isBranch() {
+        return getChildIds().size() > 1;
+    }
+
+    public boolean isEnd() {
+        return getChildIds().size() == 0;
+    }
+
 }
+
