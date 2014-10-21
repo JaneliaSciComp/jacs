@@ -25,7 +25,7 @@ import com.google.common.collect.Ordering;
  */
 public class SageQiScoreSyncService extends AbstractEntityService {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final int BATCH_SIZE = 1000;
     private static final String ANATOMICAL_AREA = "Brain";
     private static final String QI_SCORE_TERM_NAME = "qi";
@@ -39,6 +39,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     private Map<Long,String> inScoreBatch = new HashMap<Long,String>();
     private Map<Long,String> qmScoreBatch = new HashMap<Long,String>();
     
+    private int numAlignments = 0;
     private Map<String,Integer> numUpdated = new HashMap<String,Integer>();
     private Map<String,Integer> numInserted = new HashMap<String,Integer>();
     
@@ -63,6 +64,8 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         else {
         	processAllAlignments();
         }
+
+        logger.info("Processed "+numAlignments+" JBA Alignments");
         
         if (numUpdated.isEmpty()) {
             logger.info("No Qi Scores updated in SAGE"+(alignmentId==null?"":" for "+alignmentId));
@@ -84,13 +87,13 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         for(Entity jbaAlignment : entityBean.getEntitiesByName("JBA Alignment")) {
         	addQiQmScores(jbaAlignment);
         	jbaAlignment.setEntityData(null);
-        	
         	if (qiScoreBatch.size()>=BATCH_SIZE) {
         		processQiScoreBatch();
                 qiScoreBatch.clear();
-                qiScoreBatch.clear();
+                inScoreBatch.clear();
                 qmScoreBatch.clear();
-        	}        	
+        	}        
+        	numAlignments++;
         }
         processQiScoreBatch();
     }
@@ -154,10 +157,10 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     			}
     			logger.info("Updating LSM "+lsmId+" with Qi score "+qiScore);
     			// FW-2763: Also denormalize the scores directly onto the LSM entity, for ease of searching/browsing
-        		entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
+        		entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
         		String inScore = inScoreBatch.get(alignmentId);
         		if (inScore != null) {
-        			entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, inScore);
+        			entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, inScore);
         		}
     		}
 
