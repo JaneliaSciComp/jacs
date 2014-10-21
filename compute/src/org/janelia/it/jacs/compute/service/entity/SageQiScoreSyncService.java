@@ -140,7 +140,6 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         	}
         	if (!lastGoodRun.getId().equals(pipelineRun.getId())) {
         		logger.warn("Alignment is not part of the last good pipeline run: "+jbaAlignment.getId());
-        		logger.info("  last good: "+lastGoodRun.getId()+", this: "+pipelineRun.getId()+")");
         		continue;
         	}
         	
