@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +18,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import com.google.common.collect.Ordering;
 
@@ -96,6 +99,51 @@ public class SageQiScoreSyncService extends AbstractEntityService {
 		logger.info("Synchronizing all JBA Alignments to SAGE by loading their Qi/Qm scores");
 		
         for(Entity jbaAlignment : entityBean.getEntitiesByName("JBA Alignment")) {
+        	
+        	Entity pipelineRun = entityBean.getAncestorWithType(jbaAlignment, EntityConstants.TYPE_PIPELINE_RUN);
+        	if (pipelineRun==null) {
+        		logger.error("Alignment run has no ancestor pipeline run: "+jbaAlignment.getId());
+        		continue;
+        	}
+        	Entity sample = entityBean.getAncestorWithType(pipelineRun, EntityConstants.TYPE_SAMPLE);
+        	if (sample==null) {
+        		logger.error("Pipeline run has no ancestor sample: "+pipelineRun.getId());
+        		continue;
+        	}
+        	String process = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+        	if (process==null) {
+        		logger.error("Pipeline run has no pipeline process: "+pipelineRun.getId());
+        		continue;
+        	}
+        	populateChildren(sample);
+        	List<Entity> children = sample.getOrderedChildren();
+        	Collections.reverse(children);
+            Entity lastGoodRun = null;
+        	for(Entity run : children) {
+        		if (!run.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
+        			continue;
+        		}
+        		if (!process.equals(run.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS))) {
+        			// This is a different pipeline, ignore it.
+        			continue;
+        		}
+        		populateChildren(run);
+	            Entity error = EntityUtils.getLatestChildOfType(run, EntityConstants.TYPE_ERROR);
+	            if (error==null) {
+	            	lastGoodRun = run;
+	            	break;
+	            }
+        	}
+        	if (lastGoodRun==null) {
+        		logger.warn("Alignment is not part of any good pipeline runs: "+jbaAlignment.getId());
+        		continue;
+        	}
+        	if (!lastGoodRun.getId().equals(pipelineRun.getId())) {
+        		logger.warn("Alignment is not part of the last good pipeline run: "+jbaAlignment.getId());
+        		logger.info("  last good: "+lastGoodRun.getId()+", this: "+pipelineRun.getId()+")");
+        		continue;
+        	}
+        	
         	addQiQmScores(jbaAlignment);
         	jbaAlignment.setEntityData(null);
         	if (qiScoreBatch.size()>=BATCH_SIZE) {
@@ -186,7 +234,6 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         }
         
         if (!isDebug) {
-	        logger.info("Flushing SAGE Hibernate session");
 	        sage.getCurrentSession().flush();
         }
     }
