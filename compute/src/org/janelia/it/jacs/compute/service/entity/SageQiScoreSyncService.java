@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,12 +26,15 @@ import com.google.common.collect.Ordering;
  */
 public class SageQiScoreSyncService extends AbstractEntityService {
 
-	private static final boolean DEBUG = false;
+    public transient static final String PARAM_testRun = "is test run";
+    
 	private static final int BATCH_SIZE = 1000;
     private static final String ANATOMICAL_AREA = "Brain";
     private static final String QI_SCORE_TERM_NAME = "qi";
     private static final String QM_SCORE_TERM_NAME = "qm";
-    
+
+	private boolean isDebug = false;
+	
     private SageDAO sage;
     private CvTerm qiScoreTerm;
     private CvTerm qmScoreTerm;
@@ -48,6 +52,13 @@ public class SageQiScoreSyncService extends AbstractEntityService {
      */
     public void execute() throws Exception {
 
+        String testRun = task.getParameter(PARAM_testRun);
+        if (testRun!=null) {
+        	isDebug = Boolean.parseBoolean(testRun);	
+        }            
+
+        logger.info("Running Qi Score Synchronization (isDebug="+isDebug+")");
+        
         this.sage = new SageDAO(logger);
         this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
         this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
@@ -156,12 +167,14 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     				setImageProperty(sageImage, qiScoreTerm, qiScore);
     			}
     			logger.info("Updating LSM "+lsmId+" with Qi score "+qiScore);
-    			// FW-2763: Also denormalize the scores directly onto the LSM entity, for ease of searching/browsing
-        		entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
-        		String inScore = inScoreBatch.get(alignmentId);
-        		if (inScore != null) {
-        			entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, inScore);
-        		}
+    			if (!isDebug) {
+	    			// FW-2763: Also denormalize the scores directly onto the LSM entity, for ease of searching/browsing
+	        		entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
+	        		String inScore = inScoreBatch.get(alignmentId);
+	        		if (inScore != null) {
+	        			entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, inScore);
+	        		}
+    			}
     		}
 
     		String qmScore = qmScoreBatch.get(alignmentId);
@@ -170,6 +183,11 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     				setImageProperty(sageImage, qmScoreTerm, qmScore);
     			}
     		}	
+        }
+        
+        if (!isDebug) {
+	        logger.info("Flushing SAGE Hibernate session");
+	        sage.getCurrentSession().flush();
         }
     }
 
@@ -219,38 +237,58 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     }
 
 
-	private ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+	private void setImageProperty(Image image, CvTerm type, String value) throws Exception {
+		
+		Set<ImageProperty> toDelete = new HashSet<ImageProperty>();
+		boolean found = false;
     	for(ImageProperty property : image.getImageProperties()) {
-    		if (property.getType().equals(type) && !property.getValue().equals(value)) {
-    			// Update existing property value
-    			logger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
-    			property.setValue(value);
-    			
-    			Integer numUpdatedCount = numUpdated.get(type.getName());
-    			if (numUpdatedCount==null) {
-    				numUpdated.put(type.getName(),1);
+    		if (property.getType().equals(type)) {
+    			if (found) {
+    				toDelete.add(property);
+    			}
+    			if (!property.getValue().equals(value)) {
+	    			// Update existing property value
+	    			logger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
+	    			property.setValue(value);
+	    			
+	    			Integer numUpdatedCount = numUpdated.get(type.getName());
+	    			if (numUpdatedCount==null) {
+	    				numUpdated.put(type.getName(),1);
+	    			}
+	    			else {
+	    				numUpdated.put(type.getName(),numUpdatedCount+1);
+	    			}
+	
+	    	        if (!isDebug) sage.saveImageProperty(property);
     			}
     			else {
-    				numUpdated.put(type.getName(),numUpdatedCount+1);
+    				// Already has the correct value
     			}
-    			
-    			return DEBUG ? null : sage.saveImageProperty(property);
+    			found = true;
     		}
     	}
-    	// Set new property
-        ImageProperty prop = new ImageProperty(type, image, value, new Date());
-        image.getImageProperties().add(prop);
-        if (!DEBUG) sage.saveImageProperty(prop);
-
-		Integer numInsertedCount = numInserted.get(type.getName());
-		if (numInsertedCount==null) {
-			numInserted.put(type.getName(),1);
-		}
-		else {
-			numInserted.put(type.getName(),numInsertedCount+1);
-		}
-		
-        return prop;
+    	
+    	image.getImageProperties().removeAll(toDelete);
+    	for(ImageProperty imageProperty : toDelete) {
+    		logger.info("Deleting redundant image property "+imageProperty.getType().getName()+" for image "+image.getId());
+    		sage.deleteImageProperty(imageProperty);
+    	}
+    	
+    	if (!found) {
+	    	// Set new property
+			logger.info("Setting new "+type.getName()+" value ("+value+") for image "+image.getId()+")");
+	        ImageProperty prop = new ImageProperty(type, image, value, new Date());
+	        image.getImageProperties().add(prop);
+	        if (!isDebug) sage.saveImageProperty(prop);
+	
+			Integer numInsertedCount = numInserted.get(type.getName());
+			if (numInsertedCount==null) {
+				numInserted.put(type.getName(),1);
+			}
+			else {
+				numInserted.put(type.getName(),numInsertedCount+1);
+			}
+    	}
     }
 	
     private CvTerm getCvTermByName(String cvName, String termName) throws DaoException {

@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
 import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -510,11 +511,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runSageQiScoreSync() {
+    public void runSageQiScoreSync(Boolean testRun) {
         try {
             String processName = "SageQiScoreSync";
             String displayName = "Sage Qi Score Sync";
-            saveAndRunTask("system", processName, displayName);
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter(SageQiScoreSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
+            saveAndRunTask("system", processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running SAGE Qi Score Sync", ex);

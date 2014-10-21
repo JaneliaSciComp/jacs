@@ -396,6 +396,11 @@
     <operation>
         <description>Export Qi/Qm scores for all aligned 20x samples to SAGE</description>
         <name>runSageQiScoreSync</name>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
 </mbean>
