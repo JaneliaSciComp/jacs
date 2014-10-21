@@ -248,7 +248,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     			}
     			if (!property.getValue().equals(value)) {
 	    			// Update existing property value
-	    			logger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
+	    			logger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId());
 	    			property.setValue(value);
 	    			
 	    			Integer numUpdatedCount = numUpdated.get(type.getName());
