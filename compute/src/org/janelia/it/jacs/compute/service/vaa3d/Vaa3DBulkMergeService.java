@@ -109,7 +109,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 24;
+    	return 32;
     }
     
 	@Override

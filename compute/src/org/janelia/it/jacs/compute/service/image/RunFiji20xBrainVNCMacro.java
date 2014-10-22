@@ -37,6 +37,9 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
     protected static final String FIJI_BIN_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Bin.Path");
     protected static final String FIJI_MACRO_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Macro.Path");
+    protected static final String SCRATCH_DIR = SystemConfigurationProperties.getString("computeserver.ClusterScratchDir");
+
+	private static final int START_DISPLAY_PORT = 890;
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "fijiConfiguration.";
     private static final String DETECTION_CHANNEL_DYE_PREFIX = "Alexa Fluor ";
@@ -220,16 +223,31 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         setJobIncrementStop(1);
 
         StringBuffer script = new StringBuffer();
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
         script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
         
-        // Deal with compressed LSMs by decompressing them to the file node temporarily
+        // Start Xvfb
+        script.append("DISPLAY_PORT="+Vaa3DHelper.getRandomPort(START_DISPLAY_PORT)).append("\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT", "1280x1024x24")).append("\n");
+
+        // Create temp dir
+        script.append("export TMPDIR=").append(SCRATCH_DIR).append("\n");
+        script.append("mkdir -p $TMPDIR\n");
+        script.append("TEMP_DIR=`mktemp -d`\n");
+        script.append("function cleanTemp {\n");
+        script.append("    rm -rf $TEMP_DIR\n");
+        script.append("    echo \"Cleaned up $TEMP_DIR\"\n");
+        script.append("}\n");
+
+        // Two EXIT handlers
+        script.append("function exitHandler() { cleanXvfb; cleanTemp; }\n");
+        script.append("trap exitHandler EXIT\n");
+        
+        // Deal with compressed LSMs by decompressing them to a temp directory
         
         if (brainFilepath!=null) {
 	        if (brainFilepath.endsWith(".bz2")) {
 	        	File brainFile = new File(brainFilepath);
-	        	File tmpFile = new File(resultFileNode.getDirectoryPath(), ArchiveUtils.getDecompressedFilepath(brainFile.getName()));
-	        	script.append("BRAIN_FILE="+tmpFile.getAbsolutePath()).append("\n");
+	        	script.append("BRAIN_FILE=$TEMP_DIR/"+ArchiveUtils.getDecompressedFilepath(brainFile.getName())).append("\n");
 	            script.append("echo \"Decompressing Brain LSM\"\n");
 	        	script.append("bzcat "+brainFilepath+" > $BRAIN_FILE\n");
 	        }
@@ -241,8 +259,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         if (vncFilepath!=null) {
 	        if (vncFilepath.endsWith(".bz2")) {
 	        	File vncFile = new File(vncFilepath);
-	        	File tmpFile = new File(resultFileNode.getDirectoryPath(), ArchiveUtils.getDecompressedFilepath(vncFile.getName()));
-	        	script.append("VNC_FILE="+tmpFile.getAbsolutePath()).append("\n");
+	        	script.append("VNC_FILE=$TEMP_DIR/"+ArchiveUtils.getDecompressedFilepath(vncFile.getName())).append("\n");
 	        	script.append("echo \"Decompressing VNC LSM\"\n");
 	        	script.append("bzcat "+vncFilepath+" > $VNC_FILE\n");
 	        }
@@ -250,14 +267,6 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
 	        	script.append("VNC_FILE="+vncFilepath).append("\n");
 	        }
         }
-        
-        // Trap to clean up any LSMs that we may have decompressed here
-        
-        script.append("function cleanLsms {\n");
-        script.append("    rm -f "+resultFileNode.getDirectoryPath()+"/*.lsm\n");
-        script.append("    echo \"Cleaned up temporary files\"\n");
-        script.append("}\n");
-        script.append("trap cleanLsms EXIT\n");
         
         // Format parameter string for the Fiji script
         

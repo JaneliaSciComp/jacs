@@ -8,7 +8,7 @@ package org.janelia.it.jacs.compute.mbean;
 public interface SubjectManagerMBean {
 
     public void createUser(String username);
-    public void createGroup(String ownerNameOrKey, String groupNameOrKey);
+    public void createGroup(String ownerNameOrKey, String groupName);
     public void removeGroup(String groupNameOrKey);
     public void addUserToGroup(String userNameOrKey, String groupNameOrKey);
     public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey);

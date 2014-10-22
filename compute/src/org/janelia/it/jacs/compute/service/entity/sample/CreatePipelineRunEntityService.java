@@ -31,7 +31,7 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     		throw new IllegalArgumentException("PIPELINE_PROCESS may not be null");
     	}
     	
-    	Entity sampleEntity = entityBean.getEntityTree(new Long(sampleEntityId));
+    	Entity sampleEntity = entityBean.getEntityById(new Long(sampleEntityId));
     	if (sampleEntity == null) {
     		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
     	}
