@@ -54,14 +54,14 @@ public class RawFileFetcher {
         rawFileInfo.setChannel0( new File( rawFileDir, rawFileDir.getName() + TIFF_0_SUFFIX) );
         rawFileInfo.setChannel1( new File( rawFileDir, rawFileDir.getName() + TIFF_1_SUFFIX) );
 
+        rawFileInfo.setTransformMatrix( this.getSquaredMatrix(handle.getTransformMatrix()) );
         double[][] invertedTransform = baseToInverse.get( handle.getBasePath() );
         if ( invertedTransform == null ) {
-            invertedTransform = getInvertedTransform( handle.getTransformMatrix() );
+            invertedTransform = getInvertedTransform( rawFileInfo.getTransformMatrix() );
             baseToInverse.put( handle.getBasePath(), invertedTransform );
-            rawFileInfo.setInvertedTransform( invertedTransform );
         }
+        rawFileInfo.setInvertedTransform( invertedTransform );
         
-        rawFileInfo.setTransformMatrix(handle.getTransformMatrix());
         rawFileInfo.setMinCorner( convertToPrimArray( handle.getMinCorner() ) );
         rawFileInfo.setExtent( convertToPrimArray( handle.getExtent() ) );
         List<Integer> queryMicroscopeCoords = new ArrayList<>();
@@ -124,15 +124,27 @@ public class RawFileFetcher {
                 (zDist * zDist);
     }
     
-    private double[][] getInvertedTransform(Double[] transformMatrix) {
-        double[][] primitiveMatrix = new double[3][3];
+    private double[][] getSquaredMatrix(Double[] linearMatrix) {
+        int sqMtrxDim = 4;
+        double[][] primitiveMatrix = new double[sqMtrxDim][sqMtrxDim];
         int origColCount = 5;
+        // Weird matrix on input: translation column is last column, rather than
+        // one after x,y,z.
         for ( int row = 0; row < 3; row++ ) {
             for ( int col = 0; col < 3; col++ ) {
                 primitiveMatrix[ row ][ col ] = 
-                        transformMatrix[ row * origColCount + col ];
+                        linearMatrix[ row * origColCount + col ];
             }
         }
+        for ( int row = 0; row < 4; row++ ) {
+            primitiveMatrix[ row ][ 3 ] =
+                    linearMatrix[ row * origColCount + (origColCount - 1) ];
+        }
+        primitiveMatrix[sqMtrxDim - 1][sqMtrxDim - 1] = 1.0; // To satisfy invertible requirement.
+        return primitiveMatrix;
+    }
+    
+    private double[][] getInvertedTransform(double[][] primitiveMatrix) {
         Matrix matrix = new Matrix(primitiveMatrix);
         return matrix.inverse().getArray();
     }

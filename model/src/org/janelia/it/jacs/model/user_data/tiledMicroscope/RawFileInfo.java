@@ -12,7 +12,7 @@ public class RawFileInfo implements Serializable {
     private File channel0;
     private File channel1;
     private List<Integer> centroid;
-    private Double[] transformMatrix;
+    private double[][] transformMatrix;
     private double[][] invertedTransform;
     private double[] scale;
     private int[] minCorner;
@@ -44,11 +44,11 @@ public class RawFileInfo implements Serializable {
         this.centroid = centroid;
     }
 
-    public Double[] getTransformMatrix() {
+    public double[][] getTransformMatrix() {
         return transformMatrix;
     }
 
-    public void setTransformMatrix(Double[] transformMatrix) {
+    public void setTransformMatrix(double[][] transformMatrix) {
         this.transformMatrix = transformMatrix;
     }
 
