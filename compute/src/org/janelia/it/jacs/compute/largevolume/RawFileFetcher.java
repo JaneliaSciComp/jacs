@@ -30,7 +30,7 @@ public class RawFileFetcher {
         transform = new CoordinateToRawTransform( renderedBaseDirectory );
     }
 
-    private static Map<String,double[][]> baseToInverse = new HashMap<>();
+    //private static Map<String,double[][]> baseToInverse = new HashMap<>();
     
     /**
      * Returned object has files representing the point as two channels of Tiff data, plus
@@ -55,11 +55,15 @@ public class RawFileFetcher {
         rawFileInfo.setChannel1( new File( rawFileDir, rawFileDir.getName() + TIFF_1_SUFFIX) );
 
         rawFileInfo.setTransformMatrix( this.getSquaredMatrix(handle.getTransformMatrix()) );
+        /*
+         Caching of this is broken: not sufficient delineation of keys.
         double[][] invertedTransform = baseToInverse.get( handle.getBasePath() );
         if ( invertedTransform == null ) {
             invertedTransform = getInvertedTransform( rawFileInfo.getTransformMatrix() );
             baseToInverse.put( handle.getBasePath(), invertedTransform );
         }
+        */
+        double[][] invertedTransform = getInvertedTransform( rawFileInfo.getTransformMatrix() );
         rawFileInfo.setInvertedTransform( invertedTransform );
         
         rawFileInfo.setMinCorner( convertToPrimArray( handle.getMinCorner() ) );
