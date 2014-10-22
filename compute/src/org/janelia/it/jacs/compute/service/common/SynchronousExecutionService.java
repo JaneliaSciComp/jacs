@@ -8,6 +8,10 @@ import org.janelia.it.jacs.compute.engine.def.ActionDef;
 import org.janelia.it.jacs.compute.engine.def.DefLoader;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.def.SequenceDef;
+import org.janelia.it.jacs.compute.engine.launcher.ILauncher;
+import org.janelia.it.jacs.compute.engine.launcher.LauncherException;
+import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
+import org.janelia.it.jacs.compute.engine.launcher.ProcessorFactory;
 import org.janelia.it.jacs.compute.engine.launcher.SequenceLauncher;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -68,20 +72,22 @@ public class SynchronousExecutionService implements IService {
         	
         	DefLoader loader = new DefLoader();
         	ProcessDef processDef = loader.loadProcessDef(processDefName);
-        	SequenceLauncher launcher = new SequenceLauncher();
 
     		// Every process file we have has a <sequence> as a root, so we run that here
         	// so that the things in the <process> like updateProcessStatus are not triggered.
         	// Otherwise if there are multiple pipelines, the first one may end the task. 
         	for(ActionDef actionDef : processDef.getChildActionDefs()) {
-        		if (actionDef instanceof SequenceDef) {
-            		SequenceDef sequenceDef = (SequenceDef)actionDef;
-                    logger.info("Launching "+processDefName+" synchronously");
-                	launcher.launch(sequenceDef, processData);
-        		}
-        		else {
-        			logger.warn("Skipping action definiton which is not a sequence: "+actionDef.getName()+" ("+actionDef.getClass().getName()+")");
-        		}
+                processData.setActionToProcess(actionDef);
+                switch (actionDef.getActionType()) {
+                    case SEQUENCE:
+                		SequenceDef sequenceDef = (SequenceDef)actionDef;
+                        logger.info("Launching "+processDefName);
+                        ILauncher launcher = ProcessorFactory.createLauncherForSeries(sequenceDef);
+                        launcher.launch(sequenceDef, processData);
+                        break;
+                    default:
+            			logger.warn("Skipping action definiton which is not a sequence: "+actionDef.getName()+" ("+actionDef.getClass().getName()+")");
+                }
         	}
         	
         } 
