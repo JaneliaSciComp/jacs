@@ -110,6 +110,24 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         		logger.error("Pipeline run has no ancestor sample: "+pipelineRun.getId());
         		continue;
         	}
+        	if (sample.getName().contains("~")) {
+        		// Check parent sample for retirement
+	        	Entity parentSample = entityBean.getAncestorWithType(sample, EntityConstants.TYPE_SAMPLE);
+	        	if (parentSample!=null) {
+	            	if (parentSample.getName().endsWith("-Retired")) {
+	            		logger.warn("Alignment is part of retired sample: "+jbaAlignment.getId());
+	            		continue;
+	            	}	
+	        		continue;
+	        	}
+        	}
+        	else {
+        		// Check sample for retirement
+            	if (sample.getName().endsWith("-Retired")) {
+            		logger.warn("Alignment is part of retired sample: "+jbaAlignment.getId());
+            		continue;
+            	}
+        	}
         	String process = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
         	if (process==null) {
         		logger.error("Pipeline run has no pipeline process: "+pipelineRun.getId());
@@ -203,7 +221,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         	
         	Image sageImage = sageImages.get(sageId);
         	if (sageImage==null) {
-        		logger.info("Could not find SAGE image "+sageId);
+        		logger.warn("Could not find SAGE image "+sageId);
         	}
         	
         	Long alignmentId = lsmToAlignment.get(lsmId);
