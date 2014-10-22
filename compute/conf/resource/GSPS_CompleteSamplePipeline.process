@@ -1,7 +1,7 @@
 <!-- 
 	Run all of the pipelines associated with all of the Data Sets that the given Sample is a part of.
 -->
-<process name="GSPS Complete Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="GSPS Complete Sample Pipeline" processor="queue/shortPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
         <input name="SAMPLE_ENTITY_ID"/>
@@ -60,17 +60,22 @@
 			</operation>
 			
 	        <sequence forEach="PIPELINE_PROCESS_NAME">
-				
-                <operation name="Process sample pipeline" processor="org.janelia.it.jacs.compute.service.common.SynchronousExecutionService">
-                    <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
-                    <input name="ADD_TASK_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
-                    <input name="SAMPLE_ENTITY_ID"/>
-                    <input name="REUSE_PROCESSING"/>
-                    <input name="REUSE_ALIGNMENT"/>
-                </operation>
-			         
+					
+				<!-- Spawn a new task to process the Sample	-->
+		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+		            <input name="WAIT_FOR_COMPLETION" value="true"/>
+		            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
+		            <input name="DISPLAY_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
+		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
+		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+                    <input name="PARAMETER_2_KEY" value="reuse processing"/>
+                    <input name="PARAMETER_2_VALUE" value="$V{REUSE_PROCESSING}"/>
+                    <input name="PARAMETER_3_KEY" value="reuse alignment"/>
+                    <input name="PARAMETER_3_VALUE" value="$V{REUSE_ALIGNMENT}"/>
+		        </operation>
+			        
 	    	</sequence>
-		
+		        
     	</sequence>
 		
     </sequence>
