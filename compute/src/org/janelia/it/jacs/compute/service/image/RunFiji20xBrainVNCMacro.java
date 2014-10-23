@@ -173,8 +173,20 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         Collections.sort(detChannels, new Comparator<DetectionChannel>() {
             @Override
             public int compare(DetectionChannel o1, DetectionChannel o2) {
-                Double o1w = Double.parseDouble(o1.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
-                Double o2w = Double.parseDouble(o2.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
+            	Double o1w = null;
+            	if (o1.getDyeName().contains(DETECTION_CHANNEL_DYE_PREFIX)) {
+            		o1w = Double.parseDouble(o1.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
+            	}
+            	else {
+            		o1w = getWavelengthForDye(o1.getDyeName());
+            	}
+            	Double o2w = null;
+            	if (o2.getDyeName().contains(DETECTION_CHANNEL_DYE_PREFIX)) {
+            		o2w = Double.parseDouble(o2.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
+            	}
+            	else {
+            		o1w = getWavelengthForDye(o1.getDyeName());
+            	}
                 return o1w.compareTo(o2w);
             }
         });
@@ -211,6 +223,18 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         }
     }
 
+    private Double getWavelengthForDye(String dyeName) {
+		if ("DY-547".equals(dyeName)) {
+			return new Double(547);
+		}
+		else if ("Cy3".equals(dyeName)) {
+			return new Double(564);
+		}
+		else {
+			logger.warn("Unrecognized dye: "+dyeName+". Using 800 for wavelength.");
+			return new Double(800);
+		}
+    }
     @Override
     protected String getGridServicePrefixName() {
         return "fiji";
