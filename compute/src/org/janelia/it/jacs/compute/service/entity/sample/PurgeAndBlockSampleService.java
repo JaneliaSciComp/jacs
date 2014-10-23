@@ -88,7 +88,7 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
             }
         }
         catch (Exception e) {
-            logger.error("Could not delete filepath: "+filepath,e);
+            logger.error("Could not delete filepath "+filepath+" ("+e.getMessage()+")");
         }
     }
 }
