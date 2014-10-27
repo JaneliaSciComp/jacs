@@ -1,11 +1,8 @@
 import java.text.DecimalFormat
 
-import javax.ejb.EntityContext;
-
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
-import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.model.tasks.Task
 import org.janelia.it.jacs.model.user_data.Subject
 import org.janelia.it.jacs.shared.utils.EntityUtils
