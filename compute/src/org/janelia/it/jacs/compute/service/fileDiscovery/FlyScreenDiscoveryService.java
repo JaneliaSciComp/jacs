@@ -288,7 +288,7 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
                         logger.info("Stack already exists on filesystem");
                         alignedStack=child;
                         alreadyHasStack=true;
-                        String qiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+                        String qiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
                         if (qiScore!=null && qiScore.trim().length()>0) {
                             alreadyHasQualityScores=true;
                             logger.info("Stack already has quality scores");
@@ -311,8 +311,8 @@ public class FlyScreenDiscoveryService extends FileDiscoveryService {
         // The following will capture the new case implicitly
         if (!alreadyHasQualityScores) {
             logger.info("Adding fresh quality scores to stack");
-            alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, alignmentScores[0]);
-            alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE, alignmentScores[1]);
+            alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, alignmentScores[0]);
+            alignedStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE, alignmentScores[1]);
             alignedStack = EJBFactory.getLocalEntityBean().saveOrUpdateEntity(alignedStack);
             logger.info("Saved stack " + alignedStack.getName() + " as "+alignedStack.getId());
         }

@@ -21,8 +21,8 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoveryService {
-    
-    private static DecimalFormat dfScore = new DecimalFormat("#.######");
+
+	private static DecimalFormat dfScore = new DecimalFormat("0.0000");
     
     @Override
     public void execute(IProcessData processData) throws ServiceException {
@@ -96,34 +96,29 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String boundingBox = properties.getProperty("alignment.bounding.box");
                     String objective = properties.getProperty("alignment.objective");
                     String scoreNcc = properties.getProperty("alignment.quality.score.ncc");
-                    String scoreQi = properties.getProperty("alignment.quality.score.qi");
-                    String scoreJbaQi = properties.getProperty("alignment.quality.score.jbaqi");
                     String scoreJbaQm = properties.getProperty("alignment.quality.score.jbaqm");
-                    
-                    String score1MinusQiCsv = null;
-                    List<String> inconsistencyScoreStrs = new ArrayList<String>();
-                    if (!StringUtils.isEmpty(scoreQi)) {
-                        for(String qiScore : Task.listOfStringsFromCsvString(scoreQi)) {
-                            try {
-                                double score = 1 - Double.parseDouble(qiScore);
-                                inconsistencyScoreStrs.add(dfScore.format(score));
-                            }
-                            catch (NumberFormatException e) {
-                                logger.error("Error parsing double: "+e);
-                            }
-                        }
-                        score1MinusQiCsv = Task.csvStringFromCollection(inconsistencyScoreStrs);
-                    }
+                    String scoresQiCsv = properties.getProperty("alignment.quality.score.qi"); // The three comma-delimited scores from QiScore.csv 
                     
                     helper.setAlignmentSpace(stackEntity, alignmentSpace);
                     helper.setOpticalResolution(stackEntity, opticalRes);
                     helper.setPixelResolution(stackEntity, pixelRes);
                     helper.setBoundingBox(stackEntity, boundingBox);
                     helper.setObjective(stackEntity, objective);
-                    helper.setNccScore(stackEntity, scoreNcc);
-                    helper.setQiScores(stackEntity, score1MinusQiCsv);
-                    helper.setQiScore(stackEntity, scoreJbaQi);
-                    helper.setQmScore(stackEntity, scoreJbaQm);
+
+                    // Parse everything else into Doubles to use a consistent decimal format
+
+    				if (!StringUtils.isEmpty(scoreNcc)) {
+    					String formattedScoreNcc = dfScore.format(Double.parseDouble(scoreNcc));
+    					helper.setNccScore(stackEntity, formattedScoreNcc);
+    				}
+
+    				if (!StringUtils.isEmpty(scoreJbaQm)) { 
+    					String formattedScoreJbaQm = dfScore.format(Double.parseDouble(scoreJbaQm));
+    					helper.setModelViolationScore(stackEntity, formattedScoreJbaQm);
+    				}
+    				                    
+                    // Derive all Qi and inconsistency (1-Qi) scores
+                    processQiScoreCsv(stackEntity, scoresQiCsv);
                     
                     if ("true".equals(properties.getProperty("default"))) {
                         defaultAlignmentSpace = alignmentSpace;
@@ -166,5 +161,88 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         
         logger.info("Putting "+hasWarpedSeparation+" in PREWARPED_SEPARATION");
         processData.putItem("PREWARPED_SEPARATION", new Boolean(hasWarpedSeparation));
+    }
+    
+    private void processQiScoreCsv(Entity alignedImage, String scoresQiCsv) throws Exception {
+
+    	if (StringUtils.isEmpty(scoresQiCsv)) return;
+    		
+    	List<Double> qiScores = new ArrayList<Double>();
+    	List<Double> inconsistencyScores = new ArrayList<Double>();
+        for(String scoreQi : Task.listOfStringsFromCsvString(scoresQiCsv)) {
+            try {
+                Double d_scoresQi = Double.parseDouble(scoreQi);
+                qiScores.add(d_scoresQi);
+                inconsistencyScores.add(1-d_scoresQi);
+            }
+            catch (NumberFormatException e) {
+                logger.error("Error parsing double: "+e);
+            }
+        }
+
+        helper.setQiScore(alignedImage, getFormattedWeightedAverage(qiScores));
+        helper.setQiScores(alignedImage, getFormattedCSV(qiScores));
+        helper.setInconsistencyScore(alignedImage, getFormattedWeightedAverage(inconsistencyScores));
+        helper.setInconsistencyScores(alignedImage, getFormattedCSV(inconsistencyScores));
+    }
+    
+    /**
+     * Format the given doubles with the default format and create a comma-separated list with the formatted values.
+     * @param scores
+     * @return
+     */
+    private String getFormattedCSV(List<Double> scores) {
+    	StringBuilder sb = new StringBuilder();
+    	for(Double score : scores) {
+    		if (sb.length()>0) sb.append(",");
+    		sb.append(dfScore.format(score));
+    	}
+    	return sb.toString();
+    }
+
+    /**
+     * @see getJBAWeightedAverage(double, double, double)
+     * @param scores Three individual Qi or Inconsistency (1-Qi) scores
+     * @return Combined Qi
+     */
+    private String getFormattedWeightedAverage(List<Double> scores) {
+    	return dfScore.format(getJBAWeightedAverage(scores));
+    }
+    
+    /**
+     * @see getJBAWeightedAverage(double, double, double)
+     * @param scores Three individual Qi or Inconsistency (1-Qi) scores
+     * @return Combined Qi
+     */
+    private Double getJBAWeightedAverage(List<Double> scores) {
+    	if (scores.size()!=3) {
+    		logger.info("Expected three scores for computing weighted average, but got "+scores.size());
+    		return null;
+    	}
+    	return getJBAWeightedAverage(scores.get(0), scores.get(1), scores.get(2));
+    }
+    
+    /**
+     * Qi is the percentage of landmarks that are matched. Qi scores range from 0 to 1, with 1 being the best possible score in that all landmarks were matched. 
+     * Note that JBA currently provides three Qi scores. The landmark matches yielded by a run of JBA are subdivided into three areas:
+     * <ol>
+     * <li>Left optic lobe (144 possible landmarks)</li>
+     * <li>Central brain (231 possible landmarks)</li>
+     * <li>Right optic lobe (125 possible landmarks)</li>
+     * </ol>
+     * 
+     * Each area will have its own Qi score. These three scores are combined to provide a Qi for the whole brain using the following formula:
+     * 
+     *     Q = Qi(Left optic lobe) * 0.288 + Qi(Central brain) * 0.462 + Qi(Right optic lobe) * 0.25
+     * 
+     * Note that this method works for either Qi or Inconsistency (1-Qi) scores, since the constant weights sum to 1.
+     *  
+     * @param s1 Score for left optic lobe
+     * @param s2 Score for central brain
+     * @param s3 Score for right optic lobe
+     * @return Combined Qi as calculated by the above formula
+     */
+    private double getJBAWeightedAverage(double s1, double s2, double s3) {
+    	return s1 * 0.288 + s2 * 0.462 + s3 * 0.25;
     }
 }

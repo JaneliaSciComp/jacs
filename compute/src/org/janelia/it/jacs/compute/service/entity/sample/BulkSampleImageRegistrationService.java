@@ -30,9 +30,8 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     private boolean isDebug = false;
     
     public void execute() throws Exception {
-        
-        final String serverVersion = computeBean.getAppVersion();
-        logger.info("Updating data model to latest version: "+serverVersion);
+        ;
+        logger.info("Running sample image registration for all "+ownerKey+" samples");
         
         if (isDebug) {
         	logger.info("This is a test run. No entities will be moved or deleted.");
@@ -91,7 +90,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     		}
     	}
     	
-    	logger.info("  Sample is not referenced by owner: "+sample.getName()+" (id="+sample.getId()+")");
+    	logger.warn("  Sample is not referenced by owner: "+sample.getName()+" (id="+sample.getId()+")");
 
     	long numAnnotated = annotationBean.getNumDescendantsAnnotated(sample.getId());
     	if (numAnnotated>0) {
@@ -99,7 +98,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     		return false;
     	}
     	
-    	logger.info("  Removing unreferenced sample entirely: "+sample.getId());
+    	logger.warn("  Removing unreferenced sample entirely: "+sample.getId());
     	
     	if (!isDebug) {
     		entityBean.deleteEntityTreeById(sample.getOwnerKey(), sample.getId(), true);

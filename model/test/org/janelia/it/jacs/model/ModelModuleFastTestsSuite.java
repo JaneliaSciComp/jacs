@@ -9,7 +9,7 @@ import org.junit.runners.Suite;
 
 /**
  * This test suite generates a {@link org.junit.runner.Runner}
- * for all {@link TestCategories.ModelModuleFastTests} tests.
+ * for all {@link TestCategories.FastTests} tests.
  *
  * @author Eric Trautman
  */

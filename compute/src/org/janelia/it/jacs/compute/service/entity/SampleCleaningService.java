@@ -86,7 +86,7 @@ public class SampleCleaningService extends AbstractEntityService {
                 int curr = 0;
                 for(Entity pipelineRun : processRuns) {
                     populateChildren(pipelineRun);
-                    if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
+                    if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)==null) {
                         keeper = curr;
                         break;
                     }
@@ -124,15 +124,17 @@ public class SampleCleaningService extends AbstractEntityService {
 
     	if (toReallyDelete.isEmpty()) return;
     	logger.info("    Found "+toReallyDelete.size()+" non-annotated results for deletion:");
-	
-    	if (!isDebug) {
-    		int c = 0;
-    		for(Entity child : toReallyDelete) {
-    			entityBean.deleteEntityTreeById(ownerKey, child.getId());
-    			c++;
-    			numRunsDeleted++;
+		int c = 0;
+		for(Entity child : toReallyDelete) {
+	    	if (!isDebug) {
+	    		entityBean.deleteEntityTreeById(ownerKey, child.getId());
+	    	}
+    		else {
+    			logger.info("      Would delete tree "+child.getId());
     		}
-        	logger.info("    Deleted "+c+" result trees");
-    	}
+			c++;
+			numRunsDeleted++;
+		}
+    	logger.info("    Deleted "+c+" result trees");
     }
 }

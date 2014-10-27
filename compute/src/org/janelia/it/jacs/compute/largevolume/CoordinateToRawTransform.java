@@ -8,6 +8,8 @@ import java.io.*;
  * Created by fosterl on 9/26/14.
  */
 public class CoordinateToRawTransform {
+    private enum TransformParseType { origin, scale }
+
     private static final String TRANSFORM_FILE = "transform.txt";
     private static final int MAX_DIGIT_HIERARCHY_LEVEL = 6;
 
@@ -29,7 +31,7 @@ public class CoordinateToRawTransform {
     public int[] getMicroscopeCoordinate( int[] lvvScreenCoordinate ) {
         int[] rtnval = new int[3];
         for ( int i = 0; i < lvvScreenCoordinate.length; i++ ) {
-            rtnval[ i ] = origin[ i ] + (lvvScreenCoordinate[ i ] * (int)scale[ i ]);
+            rtnval[ i ] = origin[ i ] + (int)(lvvScreenCoordinate[ i ] * scale[ i ]);
         }
         return rtnval;
     }
@@ -99,9 +101,17 @@ public class CoordinateToRawTransform {
         if ( bottomLevelDigitDir == null ) {
             throw new IllegalArgumentException( "Unable to find a suitable " + TRANSFORM_FILE + " file for transform parameters." );
         }
+        // Parse a bottom-level directory for the scale.
         File[] transformTexts = bottomLevelDigitDir.listFiles(new TransformTextFilter());
-        int setterMask = 0;  // ox=1, sx=2; oy=4, sy=8; oz=16, sz=32
-        try (BufferedReader br = new BufferedReader( new FileReader( transformTexts[ 0 ] ) )) {
+        parseTransform(transformTexts[0], TransformParseType.scale);
+        // Parse a top-level directory for the origin.
+        transformTexts = baseLocation.listFiles(new TransformTextFilter());
+        parseTransform(transformTexts[0], TransformParseType.origin);
+    }
+
+    private void parseTransform(File transformText, TransformParseType parseType) {
+        int setterMask = 0;
+        try (BufferedReader br = new BufferedReader( new FileReader(transformText) )) {
 
             String inline = null;
             while ( null != ( inline = br.readLine() ) ) {
@@ -135,11 +145,13 @@ public class CoordinateToRawTransform {
                         }
                         // Either origin or scale.
                         char type = tag.charAt( 0 );
-                        if ( type == 'o' ) {
+                        if ( type == 'o'  &&  parseType == TransformParseType.origin ) {
                             getOrigin()[ index ] = Integer.parseInt( value );
                         }
-                        else {
-                            getScale()[ index ] = Double.parseDouble( value );
+                        else if ( type == 's' ) {
+                            if ( parseType == TransformParseType.scale ) {
+                                getScale()[ index ] = Double.parseDouble( value );
+                            }
                             maskValue <<= 3;
                         }
                         setterMask |= maskValue;
@@ -152,7 +164,7 @@ public class CoordinateToRawTransform {
 
             // Now, will have set everything.
             if ( setterMask != 0b111111 ) {
-                throw new IllegalArgumentException( "Did not find all required origin and scale parameters from  " + transformTexts[ 0 ] );
+                throw new IllegalArgumentException( "Did not find all required origin and scale parameters from  " + transformText);
             }
 
         } catch ( IOException ioe ) {

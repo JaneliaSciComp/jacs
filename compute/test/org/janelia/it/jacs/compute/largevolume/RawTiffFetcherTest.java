@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.largevolume;
 
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,37 +22,37 @@ public class RawTiffFetcherTest {
 
     @Test
     public void fetch() throws Exception {
-        RawTiffFetcher fetcher = new RawTiffFetcher( tileBase, baseLocation );
-        File[] files = new File[ 5 ];
+        RawFileFetcher fetcher = new RawFileFetcher( tileBase, baseLocation );
         int[][] coords = {
-            new int[] { 0, 0, 0 },
-            new int[] { 0, 200000, 100000 },
-            new int[] { 300000, 3000000, 300000 },
-            new int[] { 500000, 5000000, 500000 },
-            new int[] { 700000, 7000000, 600000 }
+            new int[] { 16101, 18741, 6643 },
+            new int[] { 14926, 15760, 6401 },
+            new int[] { 14982, 17027, 6401 },
+            new int[] { 16059, 18501, 4906 },
+            new int[] { 26019, 19453, 4906 }
         };
-        files[ 0 ] = fetcher.getMicroscopeFileDir(coords[0]);
-        files[ 1 ] = fetcher.getMicroscopeFileDir(coords[1]);
-        files[ 2 ] = fetcher.getMicroscopeFileDir(coords[2]);
-        files[ 3 ] = fetcher.getMicroscopeFileDir(coords[3]);
-        files[ 4 ] = fetcher.getMicroscopeFileDir(coords[4]);
+        RawFileInfo[] files = new RawFileInfo[ coords.length ];
+        for ( int i = 0; i < coords.length; i++ ) {
+            files[ i ] = fetcher.getNearestFileInfo(coords[i]);
+        }
 
         CoordinateToRawTransform transform = new CoordinateToRawTransform( baseLocation );
         for ( int i = 0; i < files.length; i++ ) {
-            System.out.println("Directory " + i + " is " + files[ i ] );
-            File[] tiffFiles = fetcher.getMicroscopeFiles( files[i] );
-            System.out.println("File-0 for " + i + " is " + tiffFiles[ 0 ] );
-            System.out.println("File-1 for " + i + " is " + tiffFiles[ 1 ] );
-
-            int[] scopeCoords = transform.getMicroscopeCoordinate( coords[ i ] );
-            System.out.println(
-                    String.format(
-                            "Translated coordinates from %,d %,d %,d to %,d %,d %,d.",
-                            coords[ i ][ 0 ], coords[ i ][ 1 ], coords[ i ][ 2 ],
-                            scopeCoords[ 0 ], scopeCoords[ 1 ], scopeCoords[ 2 ]
-                    )
-            );
+            printOneFile(coords[i], files[i].getChannel0(), files[i].getChannel1(), transform.getMicroscopeCoordinate(coords[i]), i);
         }
+    }
+
+    private void printOneFile(int[] coord, File file0, File file1, int[] microscopeCoordinate, int i) {
+        System.out.println("Raw File/0 " + i + " is " + file0);
+        System.out.println("Raw File/1 " + i + " is " + file1);
+
+        int[] scopeCoords = microscopeCoordinate;
+        System.out.println(
+                String.format(
+                        "Translated coordinates from %,d %,d %,d to %,d %,d %,d.",
+                        coord[ 0 ], coord[ 1 ], coord[ 2 ],
+                        scopeCoords[ 0 ], scopeCoords[ 1 ], scopeCoords[ 2 ]
+                )
+        );
     }
 
 }

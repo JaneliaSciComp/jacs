@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.api;
 
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 
 import javax.ejb.Remote;
@@ -61,6 +62,15 @@ public interface TiledMicroscopeBeanRemote {
                 List<List<Integer>> pointList) throws ComputeException;
 
     public void deleteAnchoredPath(Long pathID) throws ComputeException;
-    public List<String> getTiffTilePaths(String basePath, int[] viewerCoord) throws ComputeException;
+
+    public TmStructuredTextAnnotation addStructuredTextAnnotation(Long neuronID, Long parentID,
+        int parentType, int formatVersion, String data) throws ComputeException;
+
+    public void updateStructuredTextAnnotation(TmStructuredTextAnnotation textAnnotation, String data)
+        throws ComputeException;
+
+    public void deleteStructuredTextAnnotation(Long annID) throws ComputeException;
+
+    public RawFileInfo getNearestFileInfo(String basePath, int[] viewerCoord) throws ComputeException;
 
 }
