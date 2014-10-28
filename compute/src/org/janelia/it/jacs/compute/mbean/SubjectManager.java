@@ -102,7 +102,9 @@ public class SubjectManager implements SubjectManagerMBean {
     	AnnotationBeanLocal annotateBean = EJBFactory.getLocalAnnotationBean();
     	try {
     		Entity workspace = entityBean.getDefaultWorkspace(subjectKey);
-    		entityBean.deleteEntityTreeById(subjectKey, workspace.getId());
+    		if (workspace!=null) {
+    			entityBean.deleteEntityTreeById(subjectKey, workspace.getId());
+    		}
     		annotateBean.createWorkspace(subjectKey);
     	}
     	catch (Exception e) {

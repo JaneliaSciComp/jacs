@@ -345,6 +345,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    /**
+     * add a structured text annotation to a thing that doesn't have one
+     */
     public TmStructuredTextAnnotation addStructuredTextAnnotation(Long neuronID, Long parentID, int parentType, int formatVersion,
         String data) throws DaoException {
         
@@ -359,6 +362,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (parentType != TmStructuredTextAnnotation.GEOMETRIC_ANNOTATION &&
                     parentType != TmStructuredTextAnnotation.NEURON) {
                 throw new Exception("parent must be a geometric annotation or a neuron");
+            }
+
+            // parent must not already have a structured text annotation
+            if (loadNeuron(neuronID).getStructuredTextAnnotationMap().containsKey(parentID)) {
+                throw new Exception("parent ID already has a structured text annotation; use update, not add");
             }
 
             EntityData entityData = new EntityData();

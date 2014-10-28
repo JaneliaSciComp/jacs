@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveVisitor;
 import org.janelia.it.jacs.compute.service.activeData.visitor.IdentityEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
@@ -53,6 +54,7 @@ public class AlignmentResultVisitor extends ActiveVisitor {
             ar.id=alignmentResult.getId();
             ar.spaceDescriptor=alignmentResult.getValueByAttributeName("Alignment Space");
             AlignmentSampleScanner.AlignedStackInfo stackInfo=getAlignedStackInfo(alignmentResult);
+            AlignmentSampleScanner.NeuronSeparationInfo separationInfo=getNeuronSeparationInfo(alignmentResult);
 
             // Quality by CSV
             List<File> qualityCsvFiles=getQualityCsvFiles(alignmentResult);
@@ -79,6 +81,9 @@ public class AlignmentResultVisitor extends ActiveVisitor {
             }
             if (stackInfo!=null) {
                 ar.alignedStackInfo=stackInfo;
+            }
+            if (separationInfo!=null) {
+                ar.neuronSeparationInfo=separationInfo;
             }
             arList.add(ar);
         }
@@ -141,7 +146,11 @@ public class AlignmentResultVisitor extends ActiveVisitor {
             stackInfo.opticalResolution=alignedStack.getValueByAttributeName("Optical Resolution");
 
             String aisString=alignedStack.getValueByAttributeName("Alignment Inconsistency Score");
+
             if (aisString!=null) {
+                if (aisString.contains(",")) {
+                    logger.error("stackId="+stackInfo.id+" contains commans in pure Float attribute Alignment Inconsistency Score");
+                }
                 stackInfo.alignmentInconsistencyScore=new Float(aisString.trim());
             }
 
@@ -195,6 +204,78 @@ public class AlignmentResultVisitor extends ActiveVisitor {
             }
         }, visitedSet);
     return nccPropFiles;
+    }
+
+    private AlignmentSampleScanner.NeuronSeparationInfo getNeuronSeparationInfo(Entity alignmentResult) throws Exception {
+        // Under "Alignment Result"
+        //         "Neuron Separator Pipeline Result"
+        //           "Supporting Data" called "Supporting Files"
+        //              "Image 3D" called "ConsolidatedLabel.v3dpbd"
+        //              "Image 3D" called "ConsolidatedSignal.v3dpbd"
+        //           "Neuron Fragment Collection" called "Neuron Fragments"
+        //              "Neuron Fragment" called "Neuron Fragment <x>"
+        //                "Mask Image" called "Mask Image" ?
+        final AlignmentSampleScanner.NeuronSeparationInfo sepInfo=new AlignmentSampleScanner.NeuronSeparationInfo();
+        Set<Entity> arChildren=alignmentResult.getChildren();
+        for (Entity separatorResult : arChildren) {
+            if (separatorResult.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+                sepInfo.id=separatorResult.getId();
+                Set<Entity> srChildren=separatorResult.getChildren();
+                for (Entity src : srChildren) {
+                    if (src.getEntityTypeName().equals(EntityConstants.TYPE_SUPPORTING_DATA)) {
+                        final Set<Long> visitedSet=new HashSet<>();
+                        EntityVistationBuilder.create(new IdentityEntityLoader()).setVisitRootOwnerOwnedEntitiesOnly(false).runRecursively(src, new EntityVisitor() {
+                            public void visit(Entity v) throws Exception {
+                                if (v.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D) && v.getName().toLowerCase().contains("consolidated")) {
+                                    if (v.getName().toLowerCase().startsWith("consolidatedlabel")) {
+                                        sepInfo.consolidatedLabelPath = v.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                                    }
+                                    if (v.getName().toLowerCase().startsWith("consolidatedsignal")) {
+                                        sepInfo.consolidatedSignalPath=v.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                                    }
+                                }
+                            }
+                        }, visitedSet);
+                    } else if (src.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION)) {
+                        Set<Entity> fragments=src.getChildren();
+                        for (Entity fragment : fragments) {
+                            if (fragment.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_FRAGMENT)) {
+                                List<AlignmentSampleScanner.NeuronFragmentInfo> fragmentInfoList=sepInfo.fragmentInfoList;
+                                if (fragmentInfoList==null) {
+                                    fragmentInfoList=new ArrayList<>();
+                                    sepInfo.fragmentInfoList=fragmentInfoList;
+                                }
+                                AlignmentSampleScanner.NeuronFragmentInfo fragmentInfo=new AlignmentSampleScanner.NeuronFragmentInfo();
+                                fragmentInfo.id=fragment.getId();
+                                String indexString=fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
+                                if (indexString!=null) {
+                                    fragmentInfo.index=new Integer(indexString.trim());
+                                }
+                                Set<EntityData> fed=fragment.getEntityData();
+                                for (EntityData ed : fed) {
+                                    if (ed.getValue()!=null && ed.getValue().endsWith(".mask")) {
+                                        fragmentInfo.maskPath=ed.getValue();
+                                    }
+                                }
+                                sepInfo.fragmentInfoList.add(fragmentInfo);
+                            }
+                        }
+                        Collections.sort(sepInfo.fragmentInfoList, new Comparator<AlignmentSampleScanner.NeuronFragmentInfo>() {
+                            @Override
+                            public int compare(AlignmentSampleScanner.NeuronFragmentInfo o1, AlignmentSampleScanner.NeuronFragmentInfo o2) {
+                                if (o1.index>o2.index) {
+                                    return -1;
+                                } else {
+                                    return 1;
+                                }
+                            }
+                        });
+                        sepInfo.neuronCount=sepInfo.fragmentInfoList.size();
+                    }
+                }
+            }
+        }
+        return sepInfo;
     }
 
 }

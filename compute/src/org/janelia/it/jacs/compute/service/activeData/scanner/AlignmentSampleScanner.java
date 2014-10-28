@@ -2,7 +2,9 @@ package org.janelia.it.jacs.compute.service.activeData.scanner;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.service.activeData.*;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -18,6 +20,8 @@ public class AlignmentSampleScanner extends EntityScanner {
 
     public static final String SAMPLE_INFO = "SAMPLE_INFO";
     public static final String SAMPLE_ENTITY = "SAMPLE_ENTITY";
+
+    public static final String ALIGNMENT_RESOURCE_DIR = SystemConfigurationProperties.getString("AlignmentResource.Dir");
 
     public AlignmentSampleScanner() {
         super();
@@ -150,14 +154,38 @@ public class AlignmentSampleScanner extends EntityScanner {
         }
     }
 
+    public static class NeuronFragmentInfo {
+        public Long id;
+        public int index;
+        public String maskPath;
+
+        public String toString() {
+            StringBuilder sb=new StringBuilder();
+            sb.append("      FRAGMENT id="+id+"\n");
+            sb.append("        INDEX="+index+"\n");
+            sb.append("        MASK_PATH="+maskPath+"\n");
+            return sb.toString();
+        }
+    }
+
     public static class NeuronSeparationInfo {
         public Long id;
         public Integer neuronCount;
+        public String consolidatedLabelPath;
+        public String consolidatedSignalPath;
+        public List<NeuronFragmentInfo> fragmentInfoList;
 
         public String toString() {
             StringBuilder sb=new StringBuilder();
             sb.append("    NEURON_SEPARATION id="+id+"\n");
             sb.append("      NEURON_COUNT="+neuronCount+"\n");
+            sb.append("      CONSOLIDATED_LABEL="+consolidatedLabelPath+"\n");
+            sb.append("      CONSOLIDATED_SIGNAL="+consolidatedSignalPath+"\n");
+            if (fragmentInfoList!=null && fragmentInfoList.size()>0) {
+                for (NeuronFragmentInfo fragmentInfo : fragmentInfoList) {
+                    sb.append(fragmentInfo.toString());
+                }
+            }
             return sb.toString();
         }
     }
@@ -165,6 +193,33 @@ public class AlignmentSampleScanner extends EntityScanner {
     @Override
     public void preEpoch(ActiveDataScan scan) throws Exception {
         logger.info("preEpoch() called");
+        if (ALIGNMENT_RESOURCE_DIR!=null && ALIGNMENT_RESOURCE_DIR.length()>0) {
+
+            // Alignment Resource Dir
+            logger.info("Checking "+ALIGNMENT_RESOURCE_DIR);
+            FileUtil.ensureDirExists(ALIGNMENT_RESOURCE_DIR);
+
+            // Sample Dir
+            File sampleDir = new File(ALIGNMENT_RESOURCE_DIR+"/"+"samples");
+            logger.info("Checking "+sampleDir.getAbsolutePath());
+            FileUtil.ensureDirExists(sampleDir.getAbsolutePath());
+
+            // Neuron Index Dir
+            File neuronIndexDir = new File(ALIGNMENT_RESOURCE_DIR+"/"+"neuron-index");
+            logger.info("Checking "+neuronIndexDir.getAbsolutePath());
+            FileUtil.ensureDirExists(neuronIndexDir.getAbsolutePath());
+
+            // Screen Index Dir
+            File screenIndexDir = new File(ALIGNMENT_RESOURCE_DIR+"/"+"screen-index");
+            logger.info("Checking "+screenIndexDir.getAbsolutePath());
+            FileUtil.ensureDirExists(screenIndexDir.getAbsolutePath());
+
+            // Compartment Index Dir
+            File compartmentIndexDir = new File(ALIGNMENT_RESOURCE_DIR+"/"+"compartment-index");
+            logger.info("Checking "+compartmentIndexDir.getAbsolutePath());
+            FileUtil.ensureDirExists(compartmentIndexDir.getAbsolutePath());
+
+        }
     }
 
     @Override
