@@ -28,6 +28,7 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
  */
 public class SyncSampleToScalityFuseGridService extends AbstractEntityGridService {
     
+	protected static final String iteration = "5";
 	protected static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     protected static final String CONFIG_PREFIX = "scalityConfiguration.";
 
@@ -38,7 +39,7 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
 
     protected static final String[] NON_SCALITY_PREFIXES = { "/tier2" };
     protected static final String SCALITY_ROOT_PATH = 
-            SystemConfigurationProperties.getString("Root.Scality");
+            SystemConfigurationProperties.getString("Root.Scality.Dir");
     
     protected int configIndex = 1;
     protected Entity sampleEntity;
@@ -71,11 +72,21 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
 	                .childrenOfType(EntityConstants.TYPE_LSM_STACK)
 	                .run(new EntityVisitor() {
 	            public void visit(Entity lsm) throws Exception {
-	            	logger.info("Will move "+lsm.getName());
-	        		entitiesToMove.add(lsm);
+	                // TODO: REMOVE LATER
+	            	// For benchmarking purposes we want big files
+	            	if ("3".equals(lsm.getValueByAttributeName("Num Channels"))) {
+		            	logger.info("Will move "+lsm.getName());
+	            		entitiesToMove.add(lsm);
+	            	}
 	            }
 	        });
         }
+        
+        // TODO: REMOVE LATER
+        // Move just one file per sample to make benchmarking easier
+//        Entity first = entitiesToMove.get(0);
+//        entitiesToMove.clear();
+//        entitiesToMove.add(first);
         
         if (!types.isEmpty()) {
         	logger.warn("Unrecognized file types specified in FILE_TYPES: "+types);
@@ -104,9 +115,35 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
 			return;
 		}
 		
-		int fsi = filepath.indexOf("filestore");
-		String relPath = filepath.substring(fsi);
-		String newPath = SCALITY_ROOT_PATH+relPath;
+		String newPath = null;
+		for(String prefix : NON_SCALITY_PREFIXES) {
+			if (filepath.startsWith(prefix)) {
+//				newPath = filepath.replaceFirst(prefix, SCALITY_ROOT_PATH);
+				newPath = SCALITY_ROOT_PATH+filepath;
+				break;
+			}
+			else if (filepath.startsWith("/groups/flylight/flylight")) {
+		        // TODO: REMOVE LATER
+				// hack for working with outdated val-db
+				File file = new File(filepath);
+				String name = file.getName();
+				name = name.substring(0,name.lastIndexOf('.'));
+				
+				filepath = filepath.replaceFirst("/groups/flylight", "/tier2")+".bz2";
+				newPath = SCALITY_ROOT_PATH+filepath;
+				
+				File newFile = new File(newPath);
+				File newDir = new File(newFile.getParent(), name);
+				File f = new File(newDir, newFile.getName());
+				newPath = f.getAbsolutePath();
+				
+				break;
+			}
+		}
+		
+		if (newPath==null) {
+			throw new Exception("Filepath has unknown prefix: "+filepath);
+		}
 		
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
@@ -126,6 +163,23 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
         StringBuffer script = new StringBuffer();
         script.append("read SOURCE_FILE\n");
         script.append("read TARGET_FILE\n");
+        script.append("cd ").append(resultFileNode.getDirectoryPath()).append("\n");
+        script.append("hostname > hostname\n");
+        script.append("TARGET_DIR=${TARGET_FILE%/*}\n");
+//        script.append("TARGET_FILENAME=$(basename $TARGET_FILE)\n");
+        
+        // TEST HACK
+//        script.append("TARGET_NAME=\"${TARGET_FILENAME%.*}\"");
+//        script.append("TARGET_DIR=$TARGET_DIR/$TARGET_NAME\n");
+//        script.append("TARGET_FILE=$TARGET_DIR/$TARGET_FILENAME\n");
+
+//        script.append("if [ ! -d \"$TARGET_DIR\" ]; then\n");
+//        script.append("  mkdir $TARGET_DIR\n");
+//        script.append("fi\n");
+        script.append("mkdir -p $TARGET_DIR\n");
+        script.append("echo \"Copying $SOURCE_FILE to $TARGET_FILE\"\n");
+
+//        script.append("rsync -a \"$SOURCE_FILE\" \"$TARGET_FILE\"\n");
         script.append("timing=`"+ARCHIVE_SYNC_CMD + " cp \"$SOURCE_FILE\" \"$TARGET_FILE\"`\n");
         script.append("echo \""+TIMING_PREFIX+"$timing\"");
         if (deleteSourceFiles) {
@@ -136,7 +190,7 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     
     @Override
     protected String getNativeSpecificationOverride() {
-    	return "-q 'new.q@h02*'";
+    	return "-q 'test.q@h02*' -pe batch 16";
     }
 
 	@Override
@@ -147,7 +201,10 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     @Override
 	public void postProcess() throws MissingDataException {
 
+        logger.debug("Processing "+resultFileNode.getDirectoryPath());
+        
     	boolean[] hasError = new boolean[entitiesToMove.size()];
+    	String[] timings = new String[entitiesToMove.size()];
     	
         File outputDir = new File(resultFileNode.getDirectoryPath(), "sge_output");
     	File[] outputFiles = FileUtil.getFilesWithPrefixes(outputDir, getGridServicePrefixName());
@@ -157,9 +214,7 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     	}
 
     	for(File outputFile : outputFiles) {
-    		String name = outputFile.getName();
-    		String ext = name.substring(name.lastIndexOf('.'));
-    		int index = Integer.parseInt(ext);
+    		int index = getIndexExtension(outputFile);
     		try {
     			String timingCsv = null;
     			Scanner in = new Scanner(new FileReader(outputFile));
@@ -167,20 +222,11 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     				String line = in.nextLine();
     				if (line.startsWith(TIMING_PREFIX)) {
     					timingCsv = line.substring(TIMING_PREFIX.length());
-    					logger.info("Got timing: ["+timingCsv+"]");
     					break;
     				}
     			}
-    			
     			if (timingCsv!=null) {
-					String[] timingValues = timingCsv.split(",");
-					if (timingValues.length==3) {
-						logger.info("Scality PUT Rate: "+timingValues[2]+" Gbps");
-					}
-					else {
-						hasError[index] = true;
-						logger.warn("Could not parse timing: "+timingCsv);
-					}
+    				timings[index-1] = timingCsv;
     			}
     		}
     		catch (FileNotFoundException e) {
@@ -192,17 +238,17 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     	File[] errorFiles = FileUtil.getFilesWithPrefixes(errorDir, getGridServicePrefixName());
 
     	for(File errorFile : errorFiles) {
-    		int index = getIndex(errorFile);
+    		int index = getIndexExtension(errorFile);
     		if (errorFile.length()>0) {
     			logger.warn("Not empty error file: "+errorFile.getAbsolutePath());
-				hasError[index] = true;
+				hasError[index-1] = true;
     		}
     	}
     	
     	int i=0;
     	for(Entity entity : entitiesToMove) {
-    		if (!hasError[i++]) {
-    			logger.warn("Successfully moved entity "+entity.getName()+" (id="+entity.getId()+")");
+    		if (!hasError[i]) {
+    			logger.debug("Successfully moved entity "+entity.getName()+" (id="+entity.getId()+")");
     			// TODO: update model
     			//String scalityUrl = ScalityDAO.getUrl(""+entity.getId());
     			//entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_URL, scalityUrl);
@@ -210,12 +256,30 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     		else {
     			logger.warn("Error moving entity "+entity.getName()+" (id="+entity.getId()+")");
     		}
+    		i++;
     	}
+    	
+    	i=0;
+    	
+    	StringBuilder sb = new StringBuilder();
+    	for(Entity entity : entitiesToMove) {
+			String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			File file = new File(filepath);
+    		if (!hasError[i]) {
+    			String timingCsv = timings[i];
+    			sb.append("\nScalityBenchmark"+iteration+",PUT,Sofs,"+file.getName()+","+timingCsv);
+        	}
+    		else {
+    			sb.append("\nScalityBenchmark"+iteration+",PUT,Sofs,"+file.getName()+",WriteError");
+    		}
+    		i++;
+    	}
+		logger.info("Timings:"+sb);
 	}
     
-    private int getIndex(File file) {
+    private int getIndexExtension(File file) {
 		String name = file.getName();
-		String ext = name.substring(name.lastIndexOf('.'));
+		String ext = name.substring(name.lastIndexOf('.')+1);
 		return Integer.parseInt(ext);
     }
 }
