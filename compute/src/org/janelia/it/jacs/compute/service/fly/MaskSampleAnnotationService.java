@@ -327,8 +327,8 @@ public class MaskSampleAnnotationService  implements IService {
                     if (child.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
                         if (DEBUG) logger.info("Found Aligned Brain Stack child");
                         stackFile=new File(child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                        QmScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
-                        QiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
+                        QmScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
+                        QiScore=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
                         if (DEBUG) logger.info("QmScore="+QmScore+" QiScore="+QiScore);
                     }
                 }

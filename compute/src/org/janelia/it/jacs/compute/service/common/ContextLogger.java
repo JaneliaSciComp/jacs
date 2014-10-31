@@ -80,6 +80,17 @@ public class ContextLogger {
     }
 
     /**
+     * Logs the specified error message with the current context appended.
+     *
+     * @param  msg   detail message to log.
+     * @param  cause the cause of this error.
+     */
+    public void error(String msg,
+                      Throwable cause) {
+        logger.error(msg + logContext, cause);
+    }
+
+    /**
      * Logs the specified warn message with the current context appended.
      *
      * @param  msg  detail message to log.

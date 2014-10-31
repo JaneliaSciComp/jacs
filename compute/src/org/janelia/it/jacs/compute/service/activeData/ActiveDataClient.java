@@ -6,7 +6,9 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -43,7 +45,7 @@ public interface ActiveDataClient {
     public abstract void setEntityStatus(String signature, long entityId, int statusCode) throws Exception;
     
     // Add process Event for entity - valid for all Epochs
-    public abstract void addEntityEvent(String signature, long entityId, String eventDescriptor) throws Exception;
+    public abstract void addEntityEvent(String signature, long entityId, String eventDescriptor, Object data) throws Exception;
     
     // Gets the entire Event history for the given Entity, format <timestamp:descriptor>, valid for all Epochs
     public abstract List<ActiveDataEntityEvent> getEntityEvents(String signature, long entityId) throws Exception;
@@ -59,5 +61,11 @@ public interface ActiveDataClient {
     
     // Advances to the next epoch, and re-generates id list, also resetting all state
     public abstract void advanceEpoch(String signature) throws Exception;
-    
+
+    // Gets the current (corresponding to most recent Epoch) directory for this signature
+    public File getScanDirectory(String scannerSignature) throws Exception;
+
+    // Gets all events for the current Epoch
+    public Map<Long, List<ActiveDataEntityEvent>> getEventMap(String signature) throws Exception;
+
 }

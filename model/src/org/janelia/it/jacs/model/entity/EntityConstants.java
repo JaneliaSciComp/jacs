@@ -129,9 +129,11 @@ public class EntityConstants {
     public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_ALIGNMENT_NCC_SCORE                 = "Alignment Normalized Cross Correlation Score";
-    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Inconsistency Score";
-    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORES                 = "Alignment Inconsistency Scores";
-    public static final String ATTRIBUTE_ALIGNMENT_QM_SCORE                  = "Alignment Model Violation Score";
+    public static final String ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE       = "Alignment Inconsistency Score";
+    public static final String ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORES      = "Alignment Inconsistency Scores";
+    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORE                  = "Alignment Qi Score";
+    public static final String ATTRIBUTE_ALIGNMENT_QI_SCORES                 = "Alignment Qi Scores";
+    public static final String ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE     = "Alignment Model Violation Score";
     public static final String ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE              = "Alignment Verify Movie";
     public static final String ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS       = "Alignment Board User Settings";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
@@ -167,7 +169,11 @@ public class EntityConstants {
 
     // Anchored path
     // "<id>:<attributeID1>:<attributeID2>:x,y,z:(repeat x,y,z)"
-    public static final String ATTRIBUTE_ANCHORED_PATH                      = "Anchored Path";
+    public static final String ATTRIBUTE_ANCHORED_PATH                       = "Anchored Path";
+
+    // TmStructuredTextAnnotation
+    // "<id>:<parentId>:<parentType>:<FORMAT_VERSION>:<dataString>"
+    public static final String ATTRIBUTE_STRUCTURED_TEXT                     = "Structured Text";
 
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"
@@ -193,6 +199,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_CHANNEL_SPECIFICATION               = "Channel Specification";
     public static final String ATTRIBUTE_CROSS_LABEL                         = "Cross Label";
     public static final String ATTRIBUTE_DATA_SET_IDENTIFIER                 = "Data Set Identifier";
+    public static final String ATTRIBUTE_LSM_STORAGE_PATTERN                 = "LSM Storage Pattern";
     public static final String ATTRIBUTE_PIPELINE_PROCESS                    = "Pipeline Process";
     public static final String ATTRIBUTE_SAGE_SYNC                           = "SAGE Sync";
     public static final String ATTRIBUTE_SAGE_ID                             = "SAGE Id";
@@ -201,79 +208,14 @@ public class EntityConstants {
     public static final String ATTRIBUTE_MESSAGE                             = "Message";
     
     // Ontology Type Values
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL            = "Interval";
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                = "Enum";
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                = "Text";
-    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT           = "EnumText";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL             = "Interval";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM                 = "Enum";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_TEXT                 = "Text";
+    public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT            = "EnumText";
 
-    /**
-     * @deprecated Not used, replaced with a Sample Status value. This will be removed someday.
-     */
-    public static final String TYPE_PROCESSING_BLOCK                 = "Processing Block";
-    
-    /**
-     * @deprecated Not used, replaced with a Sample Status value. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_PROCESSING_BLOCK                    = "Processing Block";
-    
-    /**
-     * @deprecated Not used. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_METADATA_FILE                       = "Metadata File";
-    
-    /**
-     * @deprecated Not used. This will be removed someday.
-     */
-    public static final String TYPE_MASK_SET                         = "Mask Set";
-
-    /**
-     * @deprecated Not used. This will be removed someday.
-     */
-    public static final String TYPE_MASK                             = "Mask";
-    
-    /**
-     * @deprecated Use permissions instead. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_IS_PUBLIC                           = "Is Public";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_MC_MASK_FILE                     = "MC Mask File";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_MC_CHANNEL_FILE                  = "MC Channels File";
-    
-    /**
-     * @deprecated Use ATTRIBUTE_MASK_ENTITY_COLLECTION instead. This will be removed someday.
-     */
-    public static final String ATTRIBUTE_NEURON_FRAGMENTS                    = "Neuron Fragments";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_2D instead. This will be removed someday.
-     */
-    public static final String TYPE_TIF_2D                           = "Tif 2D Image";
-
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_TIF_3D                           = "Tif 3D Image";
-
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_TIF_3D_LABEL_MASK                = "Tif 3D Label Mask";
-    
-    /**
-     * @deprecated Use TYPE_IMAGE_3D instead. This will be removed someday.
-     */
-    public static final String TYPE_STITCHED_V3D_RAW                 	     = "Stitched V3D Raw Stack";
-    
     /**
      * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. This will be removed someday.
      */
-    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
+    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH           = "Default 2D Image File Path";
 
 }

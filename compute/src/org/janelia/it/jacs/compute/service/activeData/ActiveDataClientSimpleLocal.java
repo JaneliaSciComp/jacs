@@ -6,6 +6,7 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -21,7 +22,7 @@ import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
  */
 public class ActiveDataClientSimpleLocal implements ActiveDataClient {
     
-    ActiveDataServer server = ActiveDataServerSimpleLocal.getInstance();
+    ActiveDataServerSimpleLocal server = (ActiveDataServerSimpleLocal)ActiveDataServerSimpleLocal.getInstance();
 
     @Override
     public ActiveDataRegistration registerScanner(String signature) throws Exception {
@@ -49,8 +50,8 @@ public class ActiveDataClientSimpleLocal implements ActiveDataClient {
     }
 
     @Override
-    public void addEntityEvent(String signature, long entityId, String eventDescriptor) throws Exception {
-        server.addEntityEvent(signature, entityId, eventDescriptor);
+    public void addEntityEvent(String signature, long entityId, String eventDescriptor, Object data) throws Exception {
+        server.addEntityEvent(signature, entityId, eventDescriptor, data);
     }
 
     @Override
@@ -77,7 +78,12 @@ public class ActiveDataClientSimpleLocal implements ActiveDataClient {
     public void advanceEpoch(String signature) throws Exception {
         server.advanceEpoch(signature);
     }
-    
+
+    @Override
+    public File getScanDirectory(String scannerSignature) throws Exception {
+        return server.getScanDirectory(scannerSignature);
+    }
+
     @Override
     public void lock(String lockString) throws Exception {
         server.lock(lockString);
@@ -86,6 +92,10 @@ public class ActiveDataClientSimpleLocal implements ActiveDataClient {
     @Override
     public void release(String lockString) throws Exception {
         server.release(lockString);
-    }   
- 
+    }
+
+    @Override
+    public Map<Long, List<ActiveDataEntityEvent>> getEventMap(String signature) { return server.getEventMap(signature); }
+
+
 }

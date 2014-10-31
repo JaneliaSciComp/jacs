@@ -37,6 +37,8 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
     protected static final String FIJI_BIN_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Bin.Path");
     protected static final String FIJI_MACRO_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Macro.Path");
+    protected static final String SCRATCH_DIR = SystemConfigurationProperties.getString("computeserver.ClusterScratchDir");
+    
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 	private static final int START_DISPLAY_PORT = 890;
     private static final String CONFIG_PREFIX = "fijiConfiguration.";
@@ -48,7 +50,6 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private String outputFilePrefix;
     private Entity sampleEntity;
     private Entity pipelineRun;
-
     private String mergedChanSpec = null;
     private String outputColorSpec = null;
     private Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
@@ -61,16 +62,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
-        
-        this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
 
-        String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
-		StringBuilder csSb = new StringBuilder();
-		for(String channel : outputChannelOrder.split(",")) {
-			csSb.append(channel.equals("reference")?"r":"s");
-		}
-		this.mergedChanSpec = csSb.length()>0?csSb.toString():null;
-		
         sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
@@ -86,6 +78,15 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntityId);
         }
 
+        this.outputColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
+
+        String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
+		StringBuilder csSb = new StringBuilder();
+		for(String channel : outputChannelOrder.split(",")) {
+			csSb.append(channel.equals("reference")?"r":"s");
+		}
+		this.mergedChanSpec = csSb.length()>0?csSb.toString():null;
+		
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
         if (bulkMergeParamObj==null) {
         	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
@@ -146,7 +147,9 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         if (stitchedFile==null) {
         	throw new Exception("No stitched file found for sample "+sampleEntity.getName());
         }
-		
+        
+        entityBean.setOrUpdateValue(pipelineRun.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, resultFileNode.getDirectoryPath());
+        
         logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+
         		" (id="+sampleEntityId+") with "+mergedLsmPairs.size()+" tiles");
     }
@@ -262,23 +265,54 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("read CHAN_SPEC_2\n");
         script.append("read COLOR_SPEC_2\n");
         script.append("read DISPLAY_PORT\n");
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT")).append("\n");
-        script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
+        script.append("cd ").append(resultFileNode.getDirectoryPath()).append("\n");
+        
+        // Start Xvfb
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT", "1280x1024x24")).append("\n");
+        
+        // Create temp dir
+        script.append("export TMPDIR=").append(SCRATCH_DIR).append("\n");
+        script.append("mkdir -p $TMPDIR\n");
+        script.append("TEMP_DIR=`mktemp -d`\n");
+        script.append("function cleanTemp {\n");
+        script.append("    rm -rf $TEMP_DIR\n");
+        script.append("    echo \"Cleaned up $TEMP_DIR\"\n");
+        script.append("}\n");
+
+        // Two EXIT handlers
+        script.append("function exitHandler() { cleanXvfb; cleanTemp; }\n");
+        script.append("trap exitHandler EXIT\n");
+        
+        // Prepare
         script.append(Vaa3DHelper.getEnsureRawFunction()).append("\n");
-        script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_1", "RAW_1")).append("\n");
-        script.append(Vaa3DHelper.getEnsureRawCommand(resultFileNode.getDirectoryPath(), "$INPUT_FILE_2", "RAW_2")).append("\n");
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$COLOR_SPEC_1,$RAW_2,$CHAN_SPEC_2,$COLOR_SPEC_2").append("\n");
+        script.append(Vaa3DHelper.getEnsureRawCommand("$TEMP_DIR", "$INPUT_FILE_1", "RAW_1")).append("\n");
+        script.append(Vaa3DHelper.getEnsureRawCommand("$TEMP_DIR", "$INPUT_FILE_2", "RAW_2")).append("\n");
+        script.append("sleep 5\n"); // wait for files to appear
+        script.append("if [ ! -f $RAW_1 ]; then\n");
+        script.append("  echo \"Input file does not exist: $RAW_1\"\n");
+        script.append("  exit 1\n");
+        script.append("fi\n");
+
+        // Run Fiji macro in the background
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$COLOR_SPEC_1,$RAW_2,$CHAN_SPEC_2,$COLOR_SPEC_2").append(" &\n");
+        script.append("fpid=$!\n");
+        
+        // Spy on Xvfb
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb", "PORT", "fpid", 30, 3600));
+        
+		// Convert movies to H.246
         script.append("fin=$OUTPUT_PREFIX.avi\n");
         script.append("fout=$OUTPUT_PREFIX.mp4\n");
         script.append(Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
-        script.append("rm -f ").append(resultFileNode.getDirectoryPath()).append("/*.v3draw").append("\n");
+        
+        // Clean up 
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         writer.write(script.toString());
     }
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 30;
+    	return 40;
     }
 
 	@Override
@@ -295,6 +329,11 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     	if (aviFiles.length > 0) {
 			throw new MissingDataException("MP4 generation failed for "+resultFileNode.getDirectoryPath());
     	}
+
+    	File[] mp4Files = FileUtil.getFilesWithSuffixes(outputDir, ".mp4");
+    	if (mp4Files.length < 1) {
+			throw new MissingDataException("MP4 generation failed for "+resultFileNode.getDirectoryPath());
+    	}
     	
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         helper.addFileExclusion("*.log");
@@ -303,6 +342,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         helper.addFileExclusion("temp");
         helper.addFileExclusion("tmp.*");
         helper.addFileExclusion("core.*");
+        helper.addFileExclusion("xvfb");
         
         try {
             helper.addFilesInDirToFolder(pipelineRun, outputDir);    
@@ -328,7 +368,6 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             		}
             	}
             }
-            
         }
         catch (Exception e) {
             throw new MissingDataException("Error discovering files in "+outputDir,e);

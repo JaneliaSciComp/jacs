@@ -8,15 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/workstation.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Solrj" level="project" />
     <orderEntry type="library" name="GWT-Serializable" level="project" />
     <orderEntry type="module-library">
@@ -35,7 +26,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-compress-1.8.1.jar!/" />
+          <root url="file://$MODULE_DIR$/../ConsoleApplication/ConsoleWrapper/src" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

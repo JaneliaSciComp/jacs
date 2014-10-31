@@ -16,16 +16,22 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.service.activeData.ActiveDataClient;
-import org.janelia.it.jacs.compute.service.activeData.ActiveDataClientSimpleLocal;
-import org.janelia.it.jacs.compute.service.activeData.ActiveDataScan;
-import org.janelia.it.jacs.compute.service.activeData.ActiveEntityTestVisitor;
+import org.janelia.it.jacs.compute.mbean.GeometricIndexManager;
+import org.janelia.it.jacs.compute.service.activeData.scanner.AlignmentSampleScanner;
+import org.janelia.it.jacs.compute.service.activeData.scanner.TextFileScanner;
+import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveEntitySubtreeVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveEntityTestVisitor;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataScanStatus;
-import org.janelia.it.jacs.compute.service.activeData.ActiveTestVisitor;
-import org.janelia.it.jacs.compute.service.activeData.EntityScanner;
-import org.janelia.it.jacs.compute.service.activeData.SampleScanner;
+import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveTestVisitor;
+import org.janelia.it.jacs.compute.service.activeData.scanner.EntityScanner;
+import org.janelia.it.jacs.compute.service.activeData.scanner.SampleScanner;
 import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
+import org.janelia.it.jacs.compute.service.activeData.visitor.AlignmentPropertiesVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentCompletionVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentLsmVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentResultVisitor;
+import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.AlignmentSetupVisitor;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
@@ -54,17 +60,45 @@ public class GeometricIndexService extends AbstractEntityService {
         EJBFactory.getRemoteComputeBean().saveEvent(indexTask.getObjectId(), Event.RUNNING_EVENT, "Running", new Date());
         List<VisitorFactory> geometricIndexVisitors=new ArrayList<>();
         Map<String,Object> parameterMap=new HashMap<>();
-        VisitorFactory testFactory=new VisitorFactory(parameterMap, ActiveTestVisitor.class);
-        geometricIndexVisitors.add(testFactory);
-        VisitorFactory testEntityFactory=new VisitorFactory(parameterMap, ActiveEntityTestVisitor.class);
-        geometricIndexVisitors.add(testEntityFactory);
-        SampleScanner sampleScanner=new SampleScanner(geometricIndexVisitors);
-        sampleScanner.setRemoveAfterEpoch(true);
-        logger.info("Adding scanner to ScannerManager");
-        ScannerManager.getInstance().addScanner(sampleScanner);
         long startTime=new Date().getTime();
+
+        VisitorFactory alignmentSetupFactory=new VisitorFactory(parameterMap, AlignmentSetupVisitor.class);
+        VisitorFactory alignmentLsmFactory=new VisitorFactory(parameterMap, AlignmentLsmVisitor.class);
+        VisitorFactory alignmentResultFactory=new VisitorFactory(parameterMap, AlignmentResultVisitor.class);
+        VisitorFactory alignmentCompletionFactory=new VisitorFactory(parameterMap, AlignmentCompletionVisitor.class);
+
+        geometricIndexVisitors.add(alignmentSetupFactory);
+        geometricIndexVisitors.add(alignmentLsmFactory);
+        geometricIndexVisitors.add(alignmentResultFactory);
+        geometricIndexVisitors.add(alignmentCompletionFactory);
+
+        AlignmentSampleScanner sampleScanner=new AlignmentSampleScanner(geometricIndexVisitors);
+        sampleScanner.setRemoveAfterEpoch(true);
+        ScannerManager.getInstance().addScanner(sampleScanner);
         GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, serviceState);
-        managerFuture = managerPool.scheduleWithFixedDelay(serviceThread, 0, 1, TimeUnit.MINUTES);
+
+
+//        VisitorFactory alignTextFileFactory=new VisitorFactory(parameterMap, AlignmentPropertiesVisitor.class);
+//        geometricIndexVisitors.add(alignTextFileFactory);
+//        TextFileScanner textScanner=new TextFileScanner(geometricIndexVisitors);
+//        textScanner.setRemoveAfterEpoch(true);
+//        logger.info("Adding scanner to ScannerManager with signature="+textScanner.getSignature());
+//        ScannerManager.getInstance().addScanner(textScanner);
+//        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, textScanner, startTime, serviceState);
+
+
+
+//        VisitorFactory testFactory=new VisitorFactory(parameterMap, ActiveTestVisitor.class);
+//        geometricIndexVisitors.add(testFactory);
+//        VisitorFactory testEntityFactory=new VisitorFactory(parameterMap, ActiveEntitySubtreeVisitor.class);
+//        geometricIndexVisitors.add(testEntityFactory);
+//        SampleScanner sampleScanner=new SampleScanner(geometricIndexVisitors);
+//        sampleScanner.setRemoveAfterEpoch(true);
+//        logger.info("Adding scanner to ScannerManager");
+//        ScannerManager.getInstance().addScanner(sampleScanner);
+//        GeometricIndexServiceThread serviceThread=new GeometricIndexServiceThread(indexTask, sampleScanner, startTime, serviceState);
+
+        managerFuture = managerPool.scheduleWithFixedDelay(serviceThread, 0, 10, TimeUnit.MINUTES);
         while(!serviceState.getDone() && !serviceState.getError()) {
             Thread.sleep(1000L);
         }
@@ -79,13 +113,13 @@ public class GeometricIndexService extends AbstractEntityService {
     
         private static class GeometricIndexServiceThread implements Runnable {
             private GeometricIndexTask indexTask;
-            private SampleScanner sampleScanner;
+            private EntityScanner scanner;
             long startTime=0L;
             ServiceState taskState;
            
-            public GeometricIndexServiceThread(GeometricIndexTask indexTask, SampleScanner sampleScanner, long startTime, ServiceState taskState) {
+            public GeometricIndexServiceThread(GeometricIndexTask indexTask, EntityScanner scanner, long startTime, ServiceState taskState) {
                 this.indexTask=indexTask;
-                this.sampleScanner=sampleScanner;
+                this.scanner=scanner;
                 this.startTime=startTime;
                 this.taskState=taskState;
             }
@@ -99,9 +133,9 @@ public class GeometricIndexService extends AbstractEntityService {
                 }
                 ActiveDataScanStatus scanStatus=null;
                 try {
-                    scanStatus = ScannerManager.getInstance().getActiveDataStatus(sampleScanner.getSignature());
+                    scanStatus = ScannerManager.getInstance().getActiveDataStatus(scanner.getSignature());
                     logger.info("scanStatus="+scanStatus);
-                    String status=sampleScanner.getStatus();
+                    String status=scanner.getStatus();
                     if (status.equals(EntityScanner.STATUS_ERROR)) {
                         logger.error("sampleScanner status is ERROR");
                         EJBFactory.getRemoteComputeBean().saveEvent(indexTask.getObjectId(), Event.ERROR_EVENT, "sampleScanner error", new Date());

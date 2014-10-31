@@ -8,12 +8,12 @@ package org.janelia.it.jacs.compute.service.activeData;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.activeData.scanner.EntityScanner;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -259,7 +259,7 @@ public class ActiveDataScan {
         }
     }
     
-    public synchronized void addEntityEvent(long entityId, String descriptor) throws Exception {
+    public synchronized void addEntityEvent(long entityId, String descriptor, Object data) throws Exception {
         if (descriptor==null) {
             descriptor="";
         }
@@ -272,7 +272,7 @@ public class ActiveDataScan {
             eventList=new ArrayList<>();
             eventMap.put(entityId, eventList);
         }
-        eventList.add(new ActiveDataEntityEvent(descriptor));
+        eventList.add(new ActiveDataEntityEvent(descriptor, data));
         updateTimestamp();
     }
     
@@ -389,6 +389,7 @@ public class ActiveDataScan {
     EntityScanner getEntityScannerClassInstance() throws Exception {
         Class c = Class.forName(getClassnameFromSignature(signature));
         EntityScanner es = (EntityScanner) c.newInstance();
+        es.setSignatureOnlyForNewInstance(signature);
         return es;
     }
 
@@ -436,6 +437,10 @@ public class ActiveDataScan {
                 }
             }
         };
+    }
+
+    Map<Long, List<ActiveDataEntityEvent>> getEventMap() {
+        return eventMap;
     }
     
 }

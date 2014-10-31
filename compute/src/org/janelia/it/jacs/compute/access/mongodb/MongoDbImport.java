@@ -299,6 +299,13 @@ public class MongoDbImport extends AnnotationDAO {
 
         for(Iterator<Entity> i = dataSets.iterator(); i.hasNext(); ) {
             Entity dataSetEntity = i.next();
+            // Skip these unused/large ontologies
+            if (ontologyRootEntity.getName().equals("Fly anatomy") 
+                    || ontologyRootEntity.getName().equals("Fly Taxonomy") 
+                    || ontologyRootEntity.getName().equals("CARO") 
+                    || ontologyRootEntity.getName().equals("FlyBase miscellaneous CV")) {
+                continue;
+            }
             
             try {
                 long start = System.currentTimeMillis();

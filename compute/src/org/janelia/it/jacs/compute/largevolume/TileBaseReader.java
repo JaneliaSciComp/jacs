@@ -12,6 +12,7 @@ import java.io.InputStream;
  * Created by fosterl on 9/24/14.
  */
 public class TileBaseReader {
+    public static final String STD_TILE_BASE_FILE_NAME = "tilebase.cache.yml";
     public TileBase readTileBase( InputStream inputStream ) throws Exception {
         Yaml yaml = new Yaml( new Constructor( TileBase.class ) );
         TileBase tileBase = (TileBase)yaml.load( inputStream );

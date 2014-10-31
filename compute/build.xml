@@ -73,8 +73,10 @@
 			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Neo4j" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/jama-1.0.1" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/snakeyaml-1.11" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
         	<fileset file="${common.dir}/GWT/gwt-servlet.jar"/>

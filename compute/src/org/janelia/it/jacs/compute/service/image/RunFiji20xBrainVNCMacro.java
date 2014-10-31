@@ -37,6 +37,9 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
     protected static final String FIJI_BIN_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Bin.Path");
     protected static final String FIJI_MACRO_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Macro.Path");
+    protected static final String SCRATCH_DIR = SystemConfigurationProperties.getString("computeserver.ClusterScratchDir");
+
+	private static final int START_DISPLAY_PORT = 890;
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "fijiConfiguration.";
     private static final String DETECTION_CHANNEL_DYE_PREFIX = "Alexa Fluor ";
@@ -75,10 +78,12 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
             throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunEntityId);
         }
         
-        this.outputFilePrefix = sampleEntity.getName();
-        
-        logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+" (id="+sampleEntityId+")");
-
+    	String sampleName = sampleEntity.getName();
+    	if (sampleName.contains("~")) {
+    		sampleName = sampleName.substring(0, sampleName.indexOf('~'));
+    	}
+        this.outputFilePrefix = sampleName;
+    	
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
                 .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
                 .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
@@ -112,6 +117,10 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
                 throw new IllegalStateException("Brain chanspec ("+chanSpec+") does not match VNC chanspec ("+vncChanSpec+")");
             }
         }
+        
+        entityBean.setOrUpdateValue(pipelineRun.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, resultFileNode.getDirectoryPath());
+        
+        logger.info("Running Fiji macro "+macroName+" for sample "+sampleEntity.getName()+" (id="+sampleEntityId+")");
     }
     
     private void registerLsmAttributes(final Entity sampleEntity, final Entity lsm) throws Exception {
@@ -164,8 +173,20 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         Collections.sort(detChannels, new Comparator<DetectionChannel>() {
             @Override
             public int compare(DetectionChannel o1, DetectionChannel o2) {
-                Double o1w = Double.parseDouble(o1.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
-                Double o2w = Double.parseDouble(o2.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
+            	Double o1w = null;
+            	if (o1.getDyeName().contains(DETECTION_CHANNEL_DYE_PREFIX)) {
+            		o1w = Double.parseDouble(o1.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
+            	}
+            	else {
+            		o1w = getWavelengthForDye(o1.getDyeName());
+            	}
+            	Double o2w = null;
+            	if (o2.getDyeName().contains(DETECTION_CHANNEL_DYE_PREFIX)) {
+            		o2w = Double.parseDouble(o2.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
+            	}
+            	else {
+            		o1w = getWavelengthForDye(o1.getDyeName());
+            	}
                 return o1w.compareTo(o2w);
             }
         });
@@ -202,6 +223,18 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         }
     }
 
+    private Double getWavelengthForDye(String dyeName) {
+		if ("DY-547".equals(dyeName)) {
+			return new Double(547);
+		}
+		else if ("Cy3".equals(dyeName)) {
+			return new Double(564);
+		}
+		else {
+			logger.warn("Unrecognized dye: "+dyeName+". Using 800 for wavelength.");
+			return new Double(800);
+		}
+    }
     @Override
     protected String getGridServicePrefixName() {
         return "fiji";
@@ -214,16 +247,31 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         setJobIncrementStop(1);
 
         StringBuffer script = new StringBuffer();
-        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix()).append("\n");
         script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
         
-        // Deal with compressed LSMs by decompressing them to the file node temporarily
+        // Start Xvfb
+        script.append("DISPLAY_PORT="+Vaa3DHelper.getRandomPort(START_DISPLAY_PORT)).append("\n");
+        script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT", "1280x1024x24")).append("\n");
+
+        // Create temp dir
+        script.append("export TMPDIR=").append(SCRATCH_DIR).append("\n");
+        script.append("mkdir -p $TMPDIR\n");
+        script.append("TEMP_DIR=`mktemp -d`\n");
+        script.append("function cleanTemp {\n");
+        script.append("    rm -rf $TEMP_DIR\n");
+        script.append("    echo \"Cleaned up $TEMP_DIR\"\n");
+        script.append("}\n");
+
+        // Two EXIT handlers
+        script.append("function exitHandler() { cleanXvfb; cleanTemp; }\n");
+        script.append("trap exitHandler EXIT\n");
+        
+        // Deal with compressed LSMs by decompressing them to a temp directory
         
         if (brainFilepath!=null) {
 	        if (brainFilepath.endsWith(".bz2")) {
 	        	File brainFile = new File(brainFilepath);
-	        	File tmpFile = new File(resultFileNode.getDirectoryPath(), ArchiveUtils.getDecompressedFilepath(brainFile.getName()));
-	        	script.append("BRAIN_FILE="+tmpFile.getAbsolutePath()).append("\n");
+	        	script.append("BRAIN_FILE=$TEMP_DIR/"+ArchiveUtils.getDecompressedFilepath(brainFile.getName())).append("\n");
 	            script.append("echo \"Decompressing Brain LSM\"\n");
 	        	script.append("bzcat "+brainFilepath+" > $BRAIN_FILE\n");
 	        }
@@ -235,8 +283,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         if (vncFilepath!=null) {
 	        if (vncFilepath.endsWith(".bz2")) {
 	        	File vncFile = new File(vncFilepath);
-	        	File tmpFile = new File(resultFileNode.getDirectoryPath(), ArchiveUtils.getDecompressedFilepath(vncFile.getName()));
-	        	script.append("VNC_FILE="+tmpFile.getAbsolutePath()).append("\n");
+	        	script.append("VNC_FILE=$TEMP_DIR/"+ArchiveUtils.getDecompressedFilepath(vncFile.getName())).append("\n");
 	        	script.append("echo \"Decompressing VNC LSM\"\n");
 	        	script.append("bzcat "+vncFilepath+" > $VNC_FILE\n");
 	        }
@@ -244,14 +291,6 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
 	        	script.append("VNC_FILE="+vncFilepath).append("\n");
 	        }
         }
-        
-        // Trap to clean up any LSMs that we may have decompressed here
-        
-        script.append("function cleanLsms {\n");
-        script.append("    rm -f "+resultFileNode.getDirectoryPath()+"/*.lsm\n");
-        script.append("    echo \"Cleaned up temporary files\"\n");
-        script.append("}\n");
-        script.append("trap cleanLsms EXIT\n");
         
         // Format parameter string for the Fiji script
         
@@ -268,7 +307,16 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         paramSb.append(",");
         paramSb.append(chanSpec);
         
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append("\n");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append(" &\n");
+        script.append("fpid=$!\n");
+        
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb", "PORT", "fpid", 30, 3600));
+        
+        script.append("for fin in *.avi; do\n");
+        script.append("    fout=${fin%.avi}.mp4\n");
+        script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
+        script.append("done\n");
+        
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         
         writer.write(script.toString());
@@ -314,11 +362,12 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         helper.addFileExclusion("temp");
         helper.addFileExclusion("tmp.*");
         helper.addFileExclusion("core.*");
+        helper.addFileExclusion("xvfb");
         
         try {
             helper.addFilesInDirToFolder(pipelineRun, outputDir);    
             
-            String defaultImageName = outputFilePrefix+"_Brain_MIP.png";
+            String defaultImageName = outputFilePrefix+"-Brain_MIP.png";
             Entity default2dImage = EntityUtils.findChildWithName(pipelineRun, defaultImageName);
             if (default2dImage!=null) {
                 entityHelper.setDefault2dImage(pipelineRun, default2dImage);    

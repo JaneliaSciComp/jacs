@@ -6,6 +6,7 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -23,7 +24,7 @@ import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
  *
  * @author murphys
  */
-public class ActiveDataServerSimpleLocal implements ActiveDataServer {
+public class ActiveDataServerSimpleLocal implements ActiveDataClient, ActiveDataServer {
 
     private final int PRE_AND_POST_THREAD_POOL_SIZE = SystemConfigurationProperties.getInt("ActiveData.PreAndPostThreadPoolSize");
 
@@ -142,10 +143,10 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     }
     
     @Override
-    public void addEntityEvent(String signature, long entityId, String descriptor) throws Exception {
+    public void addEntityEvent(String signature, long entityId, String descriptor, Object data) throws Exception {
         ActiveDataScan scan=getScan(signature);
         synchronized(scan) {
-            scan.addEntityEvent(entityId, descriptor);
+            scan.addEntityEvent(entityId, descriptor, data);
         }
     }
     
@@ -182,6 +183,12 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
         sortedSignatures.addAll(scanMap.keySet());
         Collections.sort(sortedSignatures);
         return sortedSignatures;
+    }
+
+    @Override
+    public File getScanDirectory(String scannerSignature) {
+        ActiveDataScan scan=getScan(scannerSignature);
+        return scan.getScanDirectory();
     }
 
     @Override
@@ -288,6 +295,12 @@ public class ActiveDataServerSimpleLocal implements ActiveDataServer {
     @Override
     public void spawnPostEpoch(ActiveDataScan scan) throws Exception {
         preAndPostPool.schedule(scan.getPostRunnable(), 0, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public Map<Long, List<ActiveDataEntityEvent>> getEventMap(String signature) {
+        ActiveDataScan scan=scanMap.get(signature);
+        return scan.getEventMap();
     }
 
 }

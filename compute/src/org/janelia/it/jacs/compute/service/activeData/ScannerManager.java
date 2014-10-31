@@ -14,8 +14,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.service.activeData.scanner.EntityScanner;
+import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveVisitor;
 
 /**
  *
@@ -43,7 +43,7 @@ public class ScannerManager {
     }
     
     private ScannerManager() {
-        scannerPool=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors());
+        scannerPool=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors()*2);
     }
     
     public EntityScanner getScannerBySignature(String signature) {
@@ -80,7 +80,7 @@ public class ScannerManager {
         // Re-start manager if necessary
         if (managerFuture == null) {
             logger.info("managerFuture is null - creating new instance within managerPool");
-            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManagerThread(), 50, 50, TimeUnit.MILLISECONDS);
+            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManagerThread(), 10, 10, TimeUnit.MILLISECONDS);
         } else {
             logger.info("managerFuture is not null - assuming that a manager instance is running");
         }
@@ -121,12 +121,14 @@ public class ScannerManager {
                         Thread.sleep(1000); // wait 1 second
                     } else { // normal processing case
                         logger.info("Normal processing case with id="+entityId);
+                        String scannerSignature=scanner.getSignature();
                         Map<String, Object> contextMap=new HashMap<>();
                         for (VisitorFactory vf : scanner.getVisitorFactoryList()) {
                             ActiveVisitor av = vf.createInstance();
                             av.setEntityId(entityId);
                             av.setContextMap(contextMap);
-                            String scannerSignature=scanner.getSignature();
+                            av.setActiveDataClient(activeData);
+                            av.setSignature(scannerSignature);
                             try {
                                 activeData.setEntityStatus(scannerSignature, entityId, ActiveDataScan.ENTITY_STATUS_PROCESSING);
                                 Boolean visitorSucceeded=av.call();

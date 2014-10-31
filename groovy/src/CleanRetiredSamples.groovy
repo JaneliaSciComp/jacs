@@ -6,7 +6,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 
 boolean DEBUG = false
 
-String ownerKey = "group:flylight"
+String ownerKey = "user:asoy"
 f = new JacsUtils(ownerKey, false)
 
 int numProcessed = 0
@@ -38,7 +38,7 @@ println "Processed "+numProcessed+" samples. Found "+toDelete.size()+" candidate
 if (!DEBUG) {
     println "DELETING SAMPLES:"
     for(Entity sample in toDelete) {
-        f.e.deleteEntityTreeById(sample.ownerKey, sample.id)
+        f.e.deleteEntityTreeById(sample.ownerKey, sample.id, true)
     }
 }
 

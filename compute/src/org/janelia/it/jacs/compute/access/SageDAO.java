@@ -335,6 +335,19 @@ public class SageDAO {
         return (List<Image>) query.list();
     }
 
+    public void deleteImageProperty(ImageProperty imageProperty) throws DaoException {
+        try {
+        	Image image = imageProperty.getImage();
+        	if (image!=null) {
+        		image.getImageProperties().remove(imageProperty);
+        	}
+            getCurrentSession().delete(imageProperty);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error deleting image property in SAGE", e);
+        }
+    }
+    
     public ImageProperty saveImageProperty(ImageProperty imageProperty) throws DaoException {
     	if (imageProperty.getImage()==null) {
     		throw new DaoException("Image property is not associated with an image");

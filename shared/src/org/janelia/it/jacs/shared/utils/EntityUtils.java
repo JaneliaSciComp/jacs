@@ -430,17 +430,14 @@ public class EntityUtils {
                         type.equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK) ||
                         type.equals(EntityConstants.TYPE_LSM_STACK) ||
                         type.equals(EntityConstants.TYPE_SWC_FILE) ||
-                        type.equals(EntityConstants.TYPE_V3D_ANO_FILE) ||
-                        type.equals(EntityConstants.TYPE_STITCHED_V3D_RAW) ||
-                        type.equals(EntityConstants.TYPE_TIF_3D)) {
+                        type.equals(EntityConstants.TYPE_V3D_ANO_FILE)) {
                     path = getFilePath(entity);
                     log.debug("at 'type-test' attempt, found " + path);
                 }
             }
             else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)) {
                 // If the entity is a 2D image, just return its path
-                if (type.equals(EntityConstants.TYPE_IMAGE_2D) ||
-                        type.equals(EntityConstants.TYPE_TIF_2D)) {
+                if (type.equals(EntityConstants.TYPE_IMAGE_2D)) {
                     path = getFilePath(entity);
                 }
             }

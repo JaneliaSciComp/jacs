@@ -8,6 +8,7 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 
@@ -42,16 +43,18 @@ public class SubjectManager implements SubjectManagerMBean {
         }
     }
     
-    public void createGroup(String ownerNameOrKey, String groupNameOrKey) {
-    	String ownerKey = getKeyForSubjectNameOrKey(ownerNameOrKey);
-    	String groupKey = getKeyForSubjectNameOrKey(groupNameOrKey);
-    	ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
-    	try {
-    		computeBean.createGroup(ownerKey, groupKey);
-    	}
-    	catch (DaoException e) {
-    		// Already printed by the ComputeBean
-    	}
+    public void createGroup(String ownerNameOrKey, String groupName) {
+        final String ownerKey = getKeyForSubjectNameOrKey(ownerNameOrKey);
+        final ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
+        try {
+            final Group group = computeBean.createGroup(ownerKey, groupName);
+            log.info("Created group with key '" + group.getKey() + "' for name '" + group.getName() + "'");
+            final AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
+            annotationBean.createWorkspace(group.getKey());
+            log.info("Created workspace for key '" + group.getKey() + "'");
+        } catch (Exception e) {
+            // Already printed by the EntityBeanLocal and AnnotationBeanLocal
+        }
     }
     
     public void removeGroup(String groupNameOrKey) {
@@ -99,7 +102,9 @@ public class SubjectManager implements SubjectManagerMBean {
     	AnnotationBeanLocal annotateBean = EJBFactory.getLocalAnnotationBean();
     	try {
     		Entity workspace = entityBean.getDefaultWorkspace(subjectKey);
-    		entityBean.deleteEntityTreeById(subjectKey, workspace.getId());
+    		if (workspace!=null) {
+    			entityBean.deleteEntityTreeById(subjectKey, workspace.getId());
+    		}
     		annotateBean.createWorkspace(subjectKey);
     	}
     	catch (Exception e) {

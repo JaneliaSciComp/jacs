@@ -1,8 +1,11 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +18,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 import com.google.common.collect.Ordering;
 
@@ -25,19 +29,24 @@ import com.google.common.collect.Ordering;
  */
 public class SageQiScoreSyncService extends AbstractEntityService {
 
-	private static final boolean DEBUG = true;
+    public transient static final String PARAM_testRun = "is test run";
+    
 	private static final int BATCH_SIZE = 1000;
     private static final String ANATOMICAL_AREA = "Brain";
     private static final String QI_SCORE_TERM_NAME = "qi";
     private static final String QM_SCORE_TERM_NAME = "qm";
-    
+
+	private boolean isDebug = false;
+	
     private SageDAO sage;
     private CvTerm qiScoreTerm;
     private CvTerm qmScoreTerm;
     
     private Map<Long,String> qiScoreBatch = new HashMap<Long,String>();
+    private Map<Long,String> inScoreBatch = new HashMap<Long,String>();
     private Map<Long,String> qmScoreBatch = new HashMap<Long,String>();
     
+    private int numAlignments = 0;
     private Map<String,Integer> numUpdated = new HashMap<String,Integer>();
     private Map<String,Integer> numInserted = new HashMap<String,Integer>();
     
@@ -46,6 +55,13 @@ public class SageQiScoreSyncService extends AbstractEntityService {
      */
     public void execute() throws Exception {
 
+        String testRun = task.getParameter(PARAM_testRun);
+        if (testRun!=null) {
+        	isDebug = Boolean.parseBoolean(testRun);	
+        }            
+
+        logger.info("Running Qi Score Synchronization (isDebug="+isDebug+")");
+        
         this.sage = new SageDAO(logger);
         this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
         this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
@@ -62,12 +78,19 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         else {
         	processAllAlignments();
         }
+
+        logger.info("Processed "+numAlignments+" JBA Alignments");
         
-        logger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
-        for(String term : Ordering.natural().sortedCopy(numUpdated.keySet())) {
-        	logger.info("  Property "+term);
-	        logger.info("    Num updated: "+numUpdated.get(term));
-	        logger.info("    Num inserted: "+numInserted.get(term));
+        if (numUpdated.isEmpty()) {
+            logger.info("No Qi Scores updated in SAGE"+(alignmentId==null?"":" for "+alignmentId));
+        }
+        else {
+            logger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
+            for(String term : Ordering.natural().sortedCopy(numUpdated.keySet())) {
+            	logger.info("  Property "+term);
+    	        logger.info("    Num updated: "+numUpdated.get(term));
+    	        logger.info("    Num inserted: "+numInserted.get(term));
+            }
         }
     }
     
@@ -76,14 +99,77 @@ public class SageQiScoreSyncService extends AbstractEntityService {
 		logger.info("Synchronizing all JBA Alignments to SAGE by loading their Qi/Qm scores");
 		
         for(Entity jbaAlignment : entityBean.getEntitiesByName("JBA Alignment")) {
+        	
+        	Entity pipelineRun = entityBean.getAncestorWithType(jbaAlignment, EntityConstants.TYPE_PIPELINE_RUN);
+        	if (pipelineRun==null) {
+        		logger.error("Alignment run has no ancestor pipeline run: "+jbaAlignment.getId());
+        		continue;
+        	}
+        	Entity sample = entityBean.getAncestorWithType(pipelineRun, EntityConstants.TYPE_SAMPLE);
+        	if (sample==null) {
+        		logger.error("Pipeline run has no ancestor sample: "+pipelineRun.getId());
+        		continue;
+        	}
+        	if (sample.getName().contains("~")) {
+        		// Check parent sample for retirement
+	        	Entity parentSample = entityBean.getAncestorWithType(sample, EntityConstants.TYPE_SAMPLE);
+	        	if (parentSample!=null) {
+	            	if (parentSample.getName().endsWith("-Retired")) {
+	            		logger.warn("Alignment is part of retired sample: "+jbaAlignment.getId());
+	            		continue;
+	            	}	
+	        		continue;
+	        	}
+        	}
+        	else {
+        		// Check sample for retirement
+            	if (sample.getName().endsWith("-Retired")) {
+            		logger.warn("Alignment is part of retired sample: "+jbaAlignment.getId());
+            		continue;
+            	}
+        	}
+        	String process = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+        	if (process==null) {
+        		logger.error("Pipeline run has no pipeline process: "+pipelineRun.getId());
+        		continue;
+        	}
+        	populateChildren(sample);
+        	List<Entity> children = sample.getOrderedChildren();
+        	Collections.reverse(children);
+            Entity lastGoodRun = null;
+        	for(Entity run : children) {
+        		if (!run.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
+        			continue;
+        		}
+        		if (!process.equals(run.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS))) {
+        			// This is a different pipeline, ignore it.
+        			continue;
+        		}
+        		populateChildren(run);
+	            Entity error = EntityUtils.getLatestChildOfType(run, EntityConstants.TYPE_ERROR);
+	            if (error==null) {
+	            	lastGoodRun = run;
+	            	break;
+	            }
+        	}
+        	if (lastGoodRun==null) {
+        		logger.warn("Alignment is not part of any good pipeline runs: "+jbaAlignment.getId());
+        		continue;
+        	}
+        	if (!lastGoodRun.getId().equals(pipelineRun.getId())) {
+        		logger.warn("Alignment is not part of the last good pipeline run: "+jbaAlignment.getId());
+        		continue;
+        	}
+        	
         	addQiQmScores(jbaAlignment);
         	jbaAlignment.setEntityData(null);
-        	
         	if (qiScoreBatch.size()>=BATCH_SIZE) {
         		processQiScoreBatch();
                 qiScoreBatch.clear();
+                inScoreBatch.clear();
                 qmScoreBatch.clear();
-        	}        	
+        	}        
+        	numAlignments++;
         }
         processQiScoreBatch();
     }
@@ -105,7 +191,11 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     	if (qiScore!=null) {
         	qiScoreBatch.put(alignment.getId(), qiScore);
     	}
-    	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+    	String inScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
+    	if (inScore!=null) {
+        	inScoreBatch.put(alignment.getId(), inScore);
+    	}
+    	String qmScore = alignedImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
     	if (qmScore!=null) {
         	qmScoreBatch.put(alignment.getId(), qmScore);
     	}
@@ -128,24 +218,40 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         for(Long lsmId : lsmIdToSageId.keySet()) {
         	Integer sageId = lsmIdToSageId.get(lsmId);
         	if (sageId==null) continue;
+        	
         	Image sageImage = sageImages.get(sageId);
         	if (sageImage==null) {
-        		logger.info("Could not find SAGE image "+sageId);
-        		continue;
+        		logger.warn("Could not find SAGE image "+sageId);
         	}
+        	
         	Long alignmentId = lsmToAlignment.get(lsmId);
         	
     		String qiScore = qiScoreBatch.get(alignmentId);
     		if (qiScore!=null) {
-    			setImageProperty(sageImage, qiScoreTerm, qiScore);
-    			// FW-2763: Also put the score directly on the LSM entity, for ease of searching/browsing
-        		entityBean.setOrUpdateValue(ownerKey, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
+    			if (sageImage!=null) {
+    				setImageProperty(sageImage, qiScoreTerm, qiScore);
+    			}
+    			logger.info("Updating LSM "+lsmId+" with Qi score "+qiScore);
+    			if (!isDebug) {
+	    			// FW-2763: Also denormalize the scores directly onto the LSM entity, for ease of searching/browsing
+	        		entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
+	        		String inScore = inScoreBatch.get(alignmentId);
+	        		if (inScore != null) {
+	        			entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE, inScore);
+	        		}
+    			}
     		}
 
     		String qmScore = qmScoreBatch.get(alignmentId);
     		if (qmScore!=null) {
-    			setImageProperty(sageImage, qmScoreTerm, qmScore);
+    			if (sageImage!=null) {
+    				setImageProperty(sageImage, qmScoreTerm, qmScore);
+    			}
     		}	
+        }
+        
+        if (!isDebug) {
+	        sage.getCurrentSession().flush();
         }
     }
 
@@ -195,38 +301,58 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     }
 
 
-	private ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+	private void setImageProperty(Image image, CvTerm type, String value) throws Exception {
+		
+		Set<ImageProperty> toDelete = new HashSet<ImageProperty>();
+		boolean found = false;
     	for(ImageProperty property : image.getImageProperties()) {
-    		if (property.getType().equals(type) && !property.getValue().equals(value)) {
-    			// Update existing property value
-    			logger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
-    			property.setValue(value);
-    			
-    			Integer numUpdatedCount = numUpdated.get(type.getName());
-    			if (numUpdatedCount==null) {
-    				numUpdated.put(type.getName(),1);
+    		if (property.getType().equals(type)) {
+    			if (found) {
+    				toDelete.add(property);
+    			}
+    			if (!property.getValue().equals(value)) {
+	    			// Update existing property value
+	    			logger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId());
+	    			property.setValue(value);
+	    			
+	    			Integer numUpdatedCount = numUpdated.get(type.getName());
+	    			if (numUpdatedCount==null) {
+	    				numUpdated.put(type.getName(),1);
+	    			}
+	    			else {
+	    				numUpdated.put(type.getName(),numUpdatedCount+1);
+	    			}
+	
+	    	        if (!isDebug) sage.saveImageProperty(property);
     			}
     			else {
-    				numUpdated.put(type.getName(),numUpdatedCount+1);
+    				// Already has the correct value
     			}
-    			
-    			return DEBUG ? null : sage.saveImageProperty(property);
+    			found = true;
     		}
     	}
-    	// Set new property
-        ImageProperty prop = new ImageProperty(type, image, value, new Date());
-        image.getImageProperties().add(prop);
-        if (!DEBUG) sage.saveImageProperty(prop);
-
-		Integer numInsertedCount = numInserted.get(type.getName());
-		if (numInsertedCount==null) {
-			numInserted.put(type.getName(),1);
-		}
-		else {
-			numInserted.put(type.getName(),numInsertedCount+1);
-		}
-		
-        return prop;
+    	
+    	image.getImageProperties().removeAll(toDelete);
+    	for(ImageProperty imageProperty : toDelete) {
+    		logger.info("Deleting redundant image property "+imageProperty.getType().getName()+" for image "+image.getId());
+    		sage.deleteImageProperty(imageProperty);
+    	}
+    	
+    	if (!found) {
+	    	// Set new property
+			logger.info("Setting new "+type.getName()+" value ("+value+") for image "+image.getId()+")");
+	        ImageProperty prop = new ImageProperty(type, image, value, new Date());
+	        image.getImageProperties().add(prop);
+	        if (!isDebug) sage.saveImageProperty(prop);
+	
+			Integer numInsertedCount = numInserted.get(type.getName());
+			if (numInsertedCount==null) {
+				numInserted.put(type.getName(),1);
+			}
+			else {
+				numInserted.put(type.getName(),numInsertedCount+1);
+			}
+    	}
     }
 	
     private CvTerm getCvTermByName(String cvName, String termName) throws DaoException {
