@@ -299,13 +299,6 @@ public class MongoDbImport extends AnnotationDAO {
 
         for(Iterator<Entity> i = dataSets.iterator(); i.hasNext(); ) {
             Entity dataSetEntity = i.next();
-            // Skip these unused/large ontologies
-            if (ontologyRootEntity.getName().equals("Fly anatomy") 
-                    || ontologyRootEntity.getName().equals("Fly Taxonomy") 
-                    || ontologyRootEntity.getName().equals("CARO") 
-                    || ontologyRootEntity.getName().equals("FlyBase miscellaneous CV")) {
-                continue;
-            }
             
             try {
                 long start = System.currentTimeMillis();
@@ -761,7 +754,7 @@ public class MongoDbImport extends AnnotationDAO {
         if (!StringUtils.isEmpty(qiScore)) {
         	scores.put(AlignmentScoreType.Inconsistency,qiScore);
         }
-        String qmScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QM_SCORE);
+        String qmScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
         if (!StringUtils.isEmpty(qmScore)) {
         	scores.put(AlignmentScoreType.ModelViolation,qmScore);
         }
@@ -1092,9 +1085,6 @@ public class MongoDbImport extends AnnotationDAO {
                     || ontologyRootEntity.getName().equals("Fly Taxonomy") 
                     || ontologyRootEntity.getName().equals("CARO") 
                     || ontologyRootEntity.getName().equals("FlyBase miscellaneous CV")) {
-                continue;
-            }
-            if (ontologyRootEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PUBLIC)!=null) {
                 continue;
             }
             
