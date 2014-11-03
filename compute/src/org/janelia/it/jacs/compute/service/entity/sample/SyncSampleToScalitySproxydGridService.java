@@ -73,7 +73,7 @@ public class SyncSampleToScalitySproxydGridService extends SyncSampleToScalityFu
         script.append("hostname > hostname\n");
         script.append("echo \"Copying $FILE_PATH to $SCALITY_URL\"\n");
         script.append("timing=`"+ARCHIVE_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
-        script.append("echo \""+TIMING_PREFIX+"$timing\"");
+        script.append("echo \"$timing\"");
         if (deleteSourceFiles) {
             script.append(REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
         }

@@ -18,11 +18,14 @@ numbytes = statinfo.st_size
 st = time.time()
 
 if cmd=="GET":
-    os.system("curl -X GET %s > %s" % (source, target))
-else if cmd=="PUT":
+    os.system("curl -sS -X GET %s > %s" % (source, target))
+elif cmd=="PUT":
     shm = "/dev/shm/tmp"
-    os.system("%s -a %s %s"%(cmd, source, shm))
-    os.system("curl -X PUT %s --data-binary @%s" % (target, shm))
+    os.system("cp -a %s %s"%(source, shm))
+    os.system("curl -sS -X PUT %s --data-binary @%s" % (target, shm))
+else:
+    print("Command must be GET or PUT.")
+    sys.exit(1)
 
 elapsed = time.time()-st
 
