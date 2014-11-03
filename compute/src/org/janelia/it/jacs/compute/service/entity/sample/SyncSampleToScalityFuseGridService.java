@@ -28,7 +28,7 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
  */
 public class SyncSampleToScalityFuseGridService extends AbstractEntityGridService {
     
-	protected static final String iteration = "6";
+	protected static final String ITERATION = "7";
 	protected static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     protected static final String CONFIG_PREFIX = "scalityConfiguration.";
 
@@ -44,7 +44,7 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     protected int configIndex = 1;
     protected Entity sampleEntity;
     protected List<Entity> entitiesToMove = new ArrayList<Entity>();
-    private boolean deleteSourceFiles = false;
+    protected boolean deleteSourceFiles = false;
 
     @Override
     protected void init() throws Exception {
@@ -260,24 +260,23 @@ public class SyncSampleToScalityFuseGridService extends AbstractEntityGridServic
     	}
     	
     	i=0;
-    	
     	StringBuilder sb = new StringBuilder();
     	for(Entity entity : entitiesToMove) {
 			String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			File file = new File(filepath);
     		if (!hasError[i]) {
     			String timingCsv = timings[i];
-    			sb.append("\nScalityBenchmark"+iteration+",PUT,Sofs,"+file.getName()+","+timingCsv);
+    			sb.append("\nScalityBenchmark"+ITERATION+",PUT,Sofs,"+file.getName()+","+timingCsv);
         	}
     		else {
-    			sb.append("\nScalityBenchmark"+iteration+",PUT,Sofs,"+file.getName()+",WriteError");
+    			sb.append("\nScalityBenchmark"+ITERATION+",PUT,Sofs,"+file.getName()+",WriteError");
     		}
     		i++;
     	}
 		logger.info("Timings:"+sb);
 	}
     
-    private int getIndexExtension(File file) {
+    protected int getIndexExtension(File file) {
 		String name = file.getName();
 		String ext = name.substring(name.lastIndexOf('.')+1);
 		return Integer.parseInt(ext);
