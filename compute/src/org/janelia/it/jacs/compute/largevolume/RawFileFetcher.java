@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import Jama.Matrix;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,8 +25,20 @@ public class RawFileFetcher {
     private Map<List<Integer>, RawDataHandle> centroidToRawDataHandle;
     private CoordinateToRawTransform transform;
     private Logger logger = Logger.getLogger(RawFileFetcher.class);
+    private final static Map<String,RawFileFetcher> fetcherMap = new HashMap<>();
+    
+    public static RawFileFetcher getRawFileFetcher( String basePath ) throws Exception {
+        RawFileFetcher fetcher = fetcherMap.get( basePath );
+        if ( fetcher == null ) {
+            fetcher = new RawFileFetcher( basePath );
+            fetcherMap.put( basePath, fetcher );
+        }
+        return fetcher;
+    }
 
-    public RawFileFetcher(TileBase tileBase, File renderedBaseDirectory) {
+    private RawFileFetcher(String basePath) throws Exception {
+        File renderedBaseDirectory = new File( basePath );
+        TileBase tileBase = getTileBase(renderedBaseDirectory);
         centroidToRawDataHandle = new TileWalker( tileBase ).getCentroidToRawData();
         transform = new CoordinateToRawTransform( renderedBaseDirectory );
     }
@@ -45,7 +58,7 @@ public class RawFileFetcher {
         List<Integer> closestCentroid = getClosestCentroid(microScopeCoords);
         RawDataHandle handle = centroidToRawDataHandle.get( closestCentroid );
         File rawFileDir = new File( handle.getBasePath() + handle.getRelativePath() );
-        if ( rawFileDir == null  ||  ! rawFileDir.exists()  ||  ! rawFileDir.isDirectory() ) {
+        if ( ! rawFileDir.exists()  ||  ! rawFileDir.isDirectory() ) {
             logger.error( "Failed to open microscope files directory " + rawFileDir );
         }
 
@@ -146,6 +159,16 @@ public class RawFileFetcher {
         }
         primitiveMatrix[sqMtrxDim - 1][sqMtrxDim - 1] = 1.0; // To satisfy invertible requirement.
         return primitiveMatrix;
+    }
+    
+    private TileBase getTileBase(File renderedBaseDirectory) throws Exception {
+        File yaml = new File(renderedBaseDirectory, TileBaseReader.STD_TILE_BASE_FILE_NAME);
+        if (!yaml.exists() || !yaml.isFile()) {
+            String errorString = "Failed to open yaml file " + yaml;
+            throw new Exception(errorString);
+        }
+        TileBase tileBase = new TileBaseReader().readTileBase(new FileInputStream(yaml));
+        return tileBase;
     }
     
     private double[][] getInvertedTransform(double[][] primitiveMatrix) {

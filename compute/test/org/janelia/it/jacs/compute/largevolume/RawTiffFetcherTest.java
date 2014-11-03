@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.largevolume;
 
-import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,17 +11,14 @@ import java.io.File;
  */
 public class RawTiffFetcherTest {
     private File baseLocation;
-    private TileBase tileBase;
 
     @Before
     public void setup() throws Exception {
-        tileBase = new TileBaseReader().readTileBase( LargeVolumeYamlTest.getTestFileStream() );
-        baseLocation = TileWalkerTest.getBaseLocationFile();
     }
 
     @Test
     public void fetch() throws Exception {
-        RawFileFetcher fetcher = new RawFileFetcher( tileBase, baseLocation );
+        RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( TileWalkerTest.getBaseLocationFile().getAbsolutePath() );
         int[][] coords = {
             new int[] { 16101, 18741, 6643 },
             new int[] { 14926, 15760, 6401 },
