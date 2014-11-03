@@ -28,7 +28,7 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
  */
 public class SyncSampleToScalityFuseGridService extends AbstractEntityGridService {
     
-	protected static final String iteration = "5";
+	protected static final String iteration = "6";
 	protected static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     protected static final String CONFIG_PREFIX = "scalityConfiguration.";
 

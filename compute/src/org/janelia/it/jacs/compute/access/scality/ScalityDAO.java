@@ -212,7 +212,7 @@ public class ScalityDAO {
 	}
 	
 	public static long getKbps(long bytes, long millis) {
-		return (bytes*8) / (millis/1000) / 1000;
+		return Math.round(((double)bytes*8) / ((double)millis/1000) / 1000);
 	}
 	
 	public static void main(String[] args) throws Exception {
