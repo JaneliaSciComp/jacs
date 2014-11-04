@@ -29,9 +29,9 @@ public interface SampleDataManagerMBean {
     public void runNeuronSeparationMapping(String separationId1, String separationId2);
     
     // Generic sample processing
-    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName);
-    public void applyProcessToSample(String sampleEntityId, String processName);
-    public void applyProcessToSamplesInFolder(String folderId, String processName);
+    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParam);
+    public void applyProcessToSample(String sampleEntityId, String processName, String extraParam);
+    public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParam);
     
     // Upgrade pipelines
     public void runRepairSeparationsPipeline(String user);
