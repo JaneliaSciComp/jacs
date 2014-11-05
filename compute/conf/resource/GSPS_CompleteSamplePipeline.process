@@ -70,10 +70,12 @@
 		            <input name="DISPLAY_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
-                    <input name="PARAMETER_2_KEY" value="reuse processing"/>
-                    <input name="PARAMETER_2_VALUE" value="$V{REUSE_PROCESSING}"/>
-                    <input name="PARAMETER_3_KEY" value="reuse alignment"/>
-                    <input name="PARAMETER_3_VALUE" value="$V{REUSE_ALIGNMENT}"/>
+                    <input name="PARAMETER_2_KEY" value="reuse pipeline runs"/>
+                    <input name="PARAMETER_2_VALUE" value="$V{REUSE_PIPELINE_RUNS}"/>
+                    <input name="PARAMETER_3_KEY" value="reuse processing"/>
+                    <input name="PARAMETER_3_VALUE" value="$V{REUSE_PROCESSING}"/>
+                    <input name="PARAMETER_4_KEY" value="reuse alignment"/>
+                    <input name="PARAMETER_4_VALUE" value="$V{REUSE_ALIGNMENT}"/>
 		        </operation>
 			        
 	    	</sequence>
