@@ -26,16 +26,17 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class GetObjectiveSamplesService extends AbstractEntityService {
 
+	private List<String> pipelines20x = null; 
+	private List<String> pipelines40x = null; 
+	private List<String> pipelines63x = null;
+	private boolean run20x = true;
+	private boolean run40x = true;
+	private boolean run63x = true;
+	
     public void execute() throws Exception {
 
-    	List<String> pipelines20x = null; 
-    	List<String> pipelines40x = null; 
-    	List<String> pipelines63x = null;
+        boolean reusePipelineRuns = data.getItemAsBoolean("REUSE_PIPELINE_RUNS");
     	
-    	boolean run20x = true;
-    	boolean run40x = true;
-    	boolean run63x = true;
-
     	String objectiveList = data.getItemAsString("RUN_OBJECTIVES");
     	if (objectiveList!=null) {
 			logger.info("Will only run the objectives provided by RUN_OBJECTIVES: "+objectiveList);
@@ -92,17 +93,17 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
                 objective = subSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
                 subSampleId = subSample.getId().toString();
                 if (run20x && Objective.OBJECTIVE_20X.getName().equals(objective)) {
-                	if (!sampleHasAllPipelines(subSample, pipelines20x)) {
+                	if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines20x)) {
                         data.putItem("SAMPLE_20X_ID", subSampleId);
                 	}
                 } 
                 else if (run40x && Objective.OBJECTIVE_40X.getName().equals(objective)) {
-                    if (!sampleHasAllPipelines(subSample, pipelines40x)) {
+                    if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines40x)) {
                         data.putItem("SAMPLE_63X_ID", subSampleId);
                 	}
                 } 
                 else if (run63x && Objective.OBJECTIVE_63X.getName().equals(objective)) {
-                	if (!sampleHasAllPipelines(subSample, pipelines63x)) {
+                	if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines63x)) {
                         data.putItem("SAMPLE_63X_ID", subSampleId);
                 	}
                 }
