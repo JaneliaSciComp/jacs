@@ -103,7 +103,7 @@ print("Processing reference channel");
 selectWindow("reference");
 title = getTitle();
 performHistogramStretching();
-run("Divide...", "value=1.5 stack");
+run("Divide...", "value=2 stack");
 run("8-bit");
 rename(title);
 
