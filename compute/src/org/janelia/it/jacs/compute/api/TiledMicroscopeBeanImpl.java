@@ -242,7 +242,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         try {
             _tiledMicroscopeDAO.updateAnchoredPath(anchoredPath, annotationID1, annotationID2, pointlist);
         } catch (Exception e) {
-            String errorString="Error calling updateAnchoredPathin DAO layer: " + e.getMessage();
+            String errorString="Error calling updateAnchoredPath in DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
@@ -252,18 +252,51 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         try {
             _tiledMicroscopeDAO.deleteAnchoredPath(pathID);
         } catch (Exception e) {
-            String errorString="Error calling deleteAnchoredPathin DAO layer: " + e.getMessage();
+            String errorString="Error calling deleteAnchoredPath in DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
     }
 
-    public List<String> getTiffTilePaths(String basePath, int[] viewerCoord) throws ComputeException {
-        List<String> rtnVal = null;
+    public TmStructuredTextAnnotation addStructuredTextAnnotation(Long neuronID, Long parentID,
+        int parentType, int formatVersion, String data) throws ComputeException {
         try {
-            rtnVal = _tiledMicroscopeDAO.getTiffTilePaths(basePath, viewerCoord);
+            return _tiledMicroscopeDAO.addStructuredTextAnnotation(neuronID,
+                    parentID, parentType, formatVersion, data);
         } catch (Exception e) {
-            String errorString="Error calling getTiffTilePaths DAO layer: " + e.getMessage();
+            String errorString="Error calling addStructuredTextAnnotation in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public void updateStructuredTextAnnotation(TmStructuredTextAnnotation textAnnotation, String data)
+            throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.updateStructuredTextAnnotation(textAnnotation, data);
+        } catch (Exception e) {
+            String errorString="Error calling udpateStructuredTextAnnotation in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public void deleteStructuredTextAnnotation(Long annID) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.deleteStructuredText(annID);
+        } catch (Exception e) {
+            String errorString="Error calling deleteStructuredTextAnnotation in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+
+    public RawFileInfo getNearestFileInfo(String basePath, int[] viewerCoord) throws ComputeException {
+        RawFileInfo rtnVal = null;
+        try {
+            rtnVal = _tiledMicroscopeDAO.getNearestFileInfo(basePath, viewerCoord);
+        } catch (Exception e) {
+            String errorString="Error calling getNearestFileInfo DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(e);
         }

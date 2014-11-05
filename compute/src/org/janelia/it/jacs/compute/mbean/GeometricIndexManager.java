@@ -32,7 +32,7 @@ import org.jboss.system.ServiceMBeanSupport;
 public class GeometricIndexManager extends ServiceMBeanSupport implements GeometricIndexManagerMBean {
     
     private static final Logger logger = Logger.getLogger(GeometricIndexManager.class);
-    private static final long MANAGER_DELAY_INTERVAL_MINUTES = 1L;
+    private static final long MANAGER_DELAY_INTERVAL_MINUTES = 60L;
     
     private static final ScheduledThreadPoolExecutor managerPool=new ScheduledThreadPoolExecutor(1);
     private static ScheduledFuture<?> managerFuture=null;

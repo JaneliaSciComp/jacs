@@ -14,7 +14,9 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 /**
  * Extracts sub-samples based on their objective.
  * 
- * If RERUN_PIPELINES is provided as false then some additional variable are processed:
+ * If RUN_OBJECTIVES is provided as a CSV list of objectives (e.g. "20x,63x") then anything that is not in the list is not run. Otherwise all objectives are run.
+ * 
+ * The pipelines to run for each objective are given by:
  * PIPELINES_TO_RUN_20X, PIPELINES_TO_RUN_40X. and PIPELINES_TO_RUN_63X
  * 
  * If a sub-sample already has results for all the pipelines given by its respective variable then its id is not output, 
@@ -29,23 +31,53 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	List<String> pipelines20x = null; 
     	List<String> pipelines40x = null; 
     	List<String> pipelines63x = null;
-    	boolean rerun = data.getItemAsBoolean("RERUN_PIPELINES");
     	
-    	if (!rerun) {
-    		String pipelineStr20x = data.getItemAsString("PIPELINES_TO_RUN_20X");
-    		if (pipelineStr20x!=null) {
-    			pipelines20x = Task.listOfStringsFromCsvString(pipelineStr20x);
+    	boolean run20x = true;
+    	boolean run40x = true;
+    	boolean run63x = true;
+
+    	String objectiveList = data.getItemAsString("RUN_OBJECTIVES");
+    	if (objectiveList!=null) {
+			logger.info("Will only run the objectives provided by RUN_OBJECTIVES: "+objectiveList);
+    		Set<String> objectiveSet = new HashSet<String>();
+    		for(String objective : Task.listOfStringsFromCsvString(objectiveList)) {
+    			objectiveSet.add(objective);
     		}
-    		String pipelineStr40x = data.getItemAsString("PIPELINES_TO_RUN_40X");
-    		if (pipelineStr40x!=null) {
-    			pipelines40x = Task.listOfStringsFromCsvString(pipelineStr40x);
-    		}
-    		String pipelineStr63x = data.getItemAsString("PIPELINES_TO_RUN_63X");
-    		if (pipelineStr63x!=null) {
-    			pipelines63x = Task.listOfStringsFromCsvString(pipelineStr63x);
-    		}
+			if (!objectiveSet.contains(Objective.OBJECTIVE_20X.getName())) {
+				run20x = false;
+			}
+			if (!objectiveSet.contains(Objective.OBJECTIVE_40X.getName())) {
+				run40x = false;
+			}
+			if (!objectiveSet.contains(Objective.OBJECTIVE_63X.getName())) {
+				run63x = false;
+			}
     	}
     	
+    	if (run20x) {
+			String pipelineStr20x = data.getItemAsString("PIPELINES_TO_RUN_20X");
+			if (pipelineStr20x!=null) {
+				logger.info("Will run these 20x pipelines: "+pipelineStr20x);
+				pipelines20x = Task.listOfStringsFromCsvString(pipelineStr20x);
+			}
+    	}
+    	
+    	if (run40x) {
+			String pipelineStr40x = data.getItemAsString("PIPELINES_TO_RUN_40X");
+			if (pipelineStr40x!=null) {
+				logger.info("Will run these 40x pipelines: "+pipelineStr40x);
+				pipelines40x = Task.listOfStringsFromCsvString(pipelineStr40x);
+			}
+    	}
+    	
+    	if (run63x) {
+			String pipelineStr63x = data.getItemAsString("PIPELINES_TO_RUN_63X");
+			if (pipelineStr63x!=null) {
+				logger.info("Will run these 63x pipelines: "+pipelineStr63x);
+				pipelines63x = Task.listOfStringsFromCsvString(pipelineStr63x);
+			}
+    	}
+	
         final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
         populateChildren(sampleEntity);
         final List<Entity> subSamples = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_SAMPLE);
@@ -59,18 +91,18 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
             for (Entity subSample : subSamples) {
                 objective = subSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
                 subSampleId = subSample.getId().toString();
-                if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
-                	if (rerun || !sampleHasAllPipelines(subSample, pipelines20x)) {
+                if (run20x && Objective.OBJECTIVE_20X.getName().equals(objective)) {
+                	if (!sampleHasAllPipelines(subSample, pipelines20x)) {
                         data.putItem("SAMPLE_20X_ID", subSampleId);
                 	}
                 } 
-                else if (Objective.OBJECTIVE_40X.getName().equals(objective)) {
-                    if (rerun || !sampleHasAllPipelines(subSample, pipelines40x)) {
+                else if (run40x && Objective.OBJECTIVE_40X.getName().equals(objective)) {
+                    if (!sampleHasAllPipelines(subSample, pipelines40x)) {
                         data.putItem("SAMPLE_63X_ID", subSampleId);
                 	}
                 } 
-                else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
-                	if (rerun || !sampleHasAllPipelines(subSample, pipelines63x)) {
+                else if (run63x && Objective.OBJECTIVE_63X.getName().equals(objective)) {
+                	if (!sampleHasAllPipelines(subSample, pipelines63x)) {
                         data.putItem("SAMPLE_63X_ID", subSampleId);
                 	}
                 }
@@ -83,7 +115,6 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
             if (objective != null) {
                 data.putItem("SAMPLE_" + objective.toUpperCase() + "_ID", sampleEntity.getId().toString());
             }
-
         }
     }
 

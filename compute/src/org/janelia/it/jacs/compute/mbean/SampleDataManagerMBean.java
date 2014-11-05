@@ -21,17 +21,17 @@ public interface SampleDataManagerMBean {
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void cancelAllIncompleteDataSetPipelineTasks();
     public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force);
-    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean rerunExistingResults, Boolean force);
-    public void runSampleFolder(String folderId, Boolean reuseProcessing, Boolean reuseAlignment);
-    public void runSamplePipelines(String sampleId, Boolean reuseProcessing, Boolean reuseAlignment);
+    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force);
+    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment);
+    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment);
     public void runNeuronSeparationPipeline(String resultEntityId);
     public void runNeuronSeparationMapping(String separationId1, String separationId2);
     
     // Generic sample processing
-    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName);
-    public void applyProcessToSample(String sampleEntityId, String processName);
-    public void applyProcessToSamplesInFolder(String folderId, String processName);
+    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParam);
+    public void applyProcessToSample(String sampleEntityId, String processName, String extraParam);
+    public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParam);
     
     // Upgrade pipelines
     public void runRepairSeparationsPipeline(String user);
@@ -42,5 +42,5 @@ public interface SampleDataManagerMBean {
     // SAGE database
     public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab, String debug, String lock);
     public void runSageArtifactExport(String user);
-    public void runSageQiScoreSync();
+    public void runSageQiScoreSync(Boolean testRun);
 }

@@ -166,18 +166,18 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results</description>
+            <description>Reuse existing pipeline runs</description>
+            <name>reusePipelineRuns</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results</description>
+            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
             <name>reuseAlignment</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
-            <description>Rerun pipelines which already have successful results for a given sample</description>
-            <name>rerunExistingResults</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
@@ -197,12 +197,17 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results</description>
+            <description>Reuse existing pipeline runs</description>
+            <name>reusePipelineRuns</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results</description>
+            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -217,12 +222,17 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results</description>
+            <description>Reuse existing pipeline runs</description>
+            <name>reusePipelineRuns</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results</description>
+            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -276,6 +286,11 @@
            <name>processName</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <name>extraParam</name>
+           <type>java.lang.String</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -291,6 +306,11 @@
            <name>processName</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <name>extraParam</name>
+           <type>java.lang.String</type>
+        </parameter>
     </operation>
         
     <operation>
@@ -304,6 +324,11 @@
         <parameter>
            <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
            <name>processName</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <name>extraParam</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -386,6 +411,11 @@
     <operation>
         <description>Export Qi/Qm scores for all aligned 20x samples to SAGE</description>
         <name>runSageQiScoreSync</name>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
 </mbean>

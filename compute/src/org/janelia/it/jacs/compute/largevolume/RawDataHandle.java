@@ -9,6 +9,7 @@ public class RawDataHandle {
     private Integer[] centroid;
     private Integer[] minCorner;
     private Integer[] extent;
+    private Double[] transformMatrix;
 
     public String getBasePath() {
         return basePath;
@@ -48,5 +49,13 @@ public class RawDataHandle {
 
     public void setExtent(Integer[] extent) {
         this.extent = extent;
+    }
+
+    public Double[] getTransformMatrix() {
+        return transformMatrix;
+    }
+
+    public void setTransformMatrix(Double[] transformMatrix) {
+        this.transformMatrix = transformMatrix;
     }
 }

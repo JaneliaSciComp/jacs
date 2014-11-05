@@ -40,6 +40,7 @@ public class TileWalker {
             rawDataHandle.setCentroid( centroid.toArray( patternArray ) );
             rawDataHandle.setMinCorner( originInteger );
             rawDataHandle.setExtent( shapeInteger );
+            rawDataHandle.setTransformMatrix( tile.getTransform() );
             centroidToRawData.put( centroid, rawDataHandle );
         }
 

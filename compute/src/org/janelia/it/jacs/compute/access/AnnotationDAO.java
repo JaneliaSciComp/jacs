@@ -896,7 +896,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 			throw new DaoException("More than one default workspace exists for "+subjectKey);
 		}
 		else if (workspaces.isEmpty()) {
-			throw new DaoException("No default workspace exists for "+subjectKey);
+			log.warn("No default workspace exists for "+subjectKey);
+			return null;
 		}
 		return workspaces.get(0);
     }

@@ -1,10 +1,10 @@
 <process name="PTR 30 ANTS Alignment" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
     
-        <include name="Pipeline" process="FlyLightPairedSample">
+        <include name="Pipeline" process="FlyLightPairedSamplePipeline">
             <input name="PIPELINE_PROCESS" value="FlyLightPairedSample"/>
 
-            <!-- use default JBA 20x alignment -->
+            <!-- use default JBA and ANTS 20x alignment -->
 
             <!-- no 20x neuron separation -->
             <input name="20X_ANALYSIS_ALGORITHMS" value=""/>
