@@ -2,7 +2,7 @@ import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.shared.utils.EntityUtils
 
-class CleanMislabeledPipelineRunsScript {
+class CleanMisnamedPipelineRunsScript {
 	
 	private static final boolean DEBUG = false;
 	private final JacsUtils f;
@@ -10,7 +10,7 @@ class CleanMislabeledPipelineRunsScript {
 	private String[] dataSetIdentifiers = [ "dicksonlab_vt_gal4_screen", "dicksonlab_vt_lexa_screen", "ditp_initial_splits", "knappj_ihc_optimizing" ]
 	private int numUpdated;
 	
-	public CleanMislabeledPipelineRunsScript() {
+	public CleanMisnamedPipelineRunsScript() {
 		f = new JacsUtils(null, false)
 	}
 	
@@ -70,5 +70,5 @@ class CleanMislabeledPipelineRunsScript {
 	}
 }
 
-CleanMislabeledPipelineRunsScript script = new CleanMislabeledPipelineRunsScript();
+CleanMisnamedPipelineRunsScript script = new CleanMisnamedPipelineRunsScript();
 script.run();
