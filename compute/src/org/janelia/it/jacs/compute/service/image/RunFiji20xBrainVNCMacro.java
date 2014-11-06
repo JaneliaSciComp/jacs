@@ -310,7 +310,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append(" &\n");
         script.append("fpid=$!\n");
         
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb", "PORT", "fpid", 30, 3600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 3600));
         
         script.append("for fin in *.avi; do\n");
         script.append("    fout=${fin%.avi}.mp4\n");
