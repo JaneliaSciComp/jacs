@@ -1,6 +1,6 @@
 // 63x_mcfo_secondary_data.imj
 // Revision level: 0.1
-// Date released:  2014-10-01
+// Date released:  2014-11-06
 // Description:
 // Macro for generating MIP and movies from 63x MCFO two original lsm files for one tile.
 // adjust intensity
@@ -17,9 +17,6 @@
 //   channelspec2: 2nd image channel specification (optional if 1st image is a .pbd)
 //   colorspec2: 2nd image color specification
 
-
-MinimalParticleSize = 1000;
-MaximalSignalsOccupancy = 40;
 
 setBackgroundColor(0,0,0);
 setForegroundColor(255,255,255);
@@ -49,7 +46,6 @@ if ((arg.length == 5) || (arg.length == 8)) {
 else {
   exit("Missing image/channel spec");
 }
-
 titleMIP = prefix + "_MIP";
 titleAvi = prefix + ".avi";
 titleSignalMIP = prefix + "-Signal_MIP";
@@ -132,7 +128,7 @@ print("Processing reference channel");
 selectWindow("reference");
 title = getTitle();
 performHistogramStretching();
-run("Divide...", "value=1.5 stack");
+run("Divide...", "value=2 stack");
 run("8-bit");
 rename(title);
 
@@ -181,10 +177,12 @@ run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
 run("Quit");
 
+
 function openStack(image,chanspec) {
   open(image);
   print(image+" "+chanspec);
 }
+
 
 function processChannel(channel_name) {
   selectWindow(channel_name);
@@ -198,32 +196,11 @@ function processChannel(channel_name) {
   close();
   selectWindow("processing");
   performMasking();
-  run("Reslice [/]...", "output=0.380 start=Top avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
-  performMasking();
-  run("Reslice [/]...", "output=0.188 start=Top avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
-  selectWindow("processing");
-  run("Reslice [/]...", "output=1.000 start=Right rotate avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
-  performMasking();
-  run("Reslice [/]...", "output=1.000 start=Left flip rotate avoid");
-  selectWindow("processing");
-  close();
-  selectWindow("Reslice of processing");
-  rename("processing");
+
   
   rename(title);
 }
+
 
 function performHistogramStretching() {
   ImageProcessing = getImageID();
@@ -242,164 +219,14 @@ function performHistogramStretching() {
 function performMasking() {
   selectWindow("processing");
   run("Z Project...", "projection=[Max Intensity]");
-  rename("MIP1");
-  run("Enhance Local Contrast (CLAHE)", "blocksize=50 histogram=256 maximum=2 mask=*None*");
-  run("Duplicate...", "title=MIP2");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP3");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP4");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP5");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP6");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP7");
-  selectWindow("MIP1"); 
-  run("Duplicate...", "title=MIP8");
-  selectWindow("MIP1");
-  setAutoThreshold("MaxEntropy dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
+  close();
+  if (mean>25) {
         run("Select All");
         run("Clear", "slice");
     }
-  selectWindow("MIP2");          
-  setAutoThreshold("Default dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  selectWindow("MIP3");          
-  setAutoThreshold("Otsu dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  selectWindow("MIP4");         
-  setAutoThreshold("Moments dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  selectWindow("MIP5");         
-  setAutoThreshold("Li dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  selectWindow("MIP6");         
-  setAutoThreshold("Yen dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  selectWindow("MIP7");         
-  setAutoThreshold("Triangle dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  selectWindow("MIP8");         
-  setAutoThreshold("Huang dark");
-  setOption("BlackBackground", true);
-  run("Convert to Mask");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>MaximalSignalsOccupancy) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  imageCalculator("Max create", "MIP1","MIP2");
-  rename("MIP12"); 
-  selectWindow("MIP1");
-  close();
-  selectWindow("MIP2");
-  close();
-  imageCalculator("Max create", "MIP3","MIP4");
-  rename("MIP34"); 
-  selectWindow("MIP3");
-  close();
-  selectWindow("MIP4");
-  close();
-  imageCalculator("Max create", "MIP5","MIP6");
-  rename("MIP56"); 
-  selectWindow("MIP5");
-  close();
-  selectWindow("MIP6");
-  close();
-  imageCalculator("Max create", "MIP7","MIP8");
-  rename("MIP78"); 
-  selectWindow("MIP7");
-  close();
-  selectWindow("MIP8");
-  close();
-  imageCalculator("Max create", "MIP12","MIP34");
-  rename("MIP1234"); 
-  selectWindow("MIP12");
-  close();
-  selectWindow("MIP34");
-  close();
-  imageCalculator("Max create", "MIP56","MIP78");
-  rename("MIP5678"); 
-  selectWindow("MIP56");
-  close();
-  selectWindow("MIP78");
-  close();
-  imageCalculator("Max create", "MIP1234","MIP5678");
-  rename("MIP"); 
-  selectWindow("MIP1234");
-  close();
-  selectWindow("MIP5678");
-  close();
-  selectWindow("MIP");  
-  run("Dilate");
-  run("Dilate");
-  run("Select All");
-  getStatistics(area, mean, min, max, std, histogram);
-  if (mean>85) {
-        run("Select All");
-        run("Clear", "slice");
-    }
-  run("Analyze Particles...", "size=MinimalParticleSize-Infinity pixel circularity=0.00-1.00 show=Masks clear");
-  run("Divide...", "value=255.000");
-  rename("mask");
-  imageCalculator("Multiply create stack", "processing","mask");
-  selectWindow("mask");
-  close();
-  selectWindow("MIP");
-  close();
-  selectWindow("processing");
-  close();
-  selectWindow("Result of processing");
-  rename("processing");
+
 }
 
 function padImageDimensions(window_name) {
@@ -418,3 +245,4 @@ function padImageDimensions(window_name) {
     run("Canvas Size...", "width="+newWidth+" height="+newHeight+" position=Top-Center"); 
   }
 }
+
