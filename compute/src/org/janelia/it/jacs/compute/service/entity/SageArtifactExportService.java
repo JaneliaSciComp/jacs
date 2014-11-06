@@ -49,6 +49,8 @@ public class SageArtifactExportService extends AbstractEntityService {
     private Entity publishedTerm;
     private CvTerm productMultichannelMip;
     private CvTerm productMultichannelTranslation;
+    private CvTerm productSignalsMip;
+    private CvTerm productSignalsTranslation;
     private CvTerm productSignal1Mip;
     private CvTerm productSignal1Translation;
     private CvTerm propertyPublished;
@@ -78,6 +80,8 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.createDate = new Date();
         this.productMultichannelMip = getCvTermByName("product","multichannel_mip");  
         this.productMultichannelTranslation = getCvTermByName("product","multichannel_translation");
+        this.productSignalsMip = getCvTermByName("product","signals_mip");
+        this.productSignalsTranslation = getCvTermByName("product","signals_translation");
         this.productSignal1Mip = getCvTermByName("product","signal1_mip");
         this.productSignal1Translation = getCvTermByName("product","signal1_translation");
         this.propertyPublished = getCvTermByName("light_imagery","published_to");
@@ -432,11 +436,21 @@ public class SageArtifactExportService extends AbstractEntityService {
             if (!name.contains(tileTag)) continue;
         	String type = child.getEntityTypeName();
             if (EntityConstants.TYPE_IMAGE_2D.equals(type)) {
-                getOrCreateSecondaryImage(child, productMultichannelMip, sourceImage);
+            	if (name.contains("Signal")) {
+            		getOrCreateSecondaryImage(child, productSignalsMip, sourceImage);
+            	}
+            	else {
+            		getOrCreateSecondaryImage(child, productMultichannelMip, sourceImage);
+            	}
             }
             else if (EntityConstants.TYPE_MOVIE.equals(type)) {
-                getOrCreateSecondaryImage(child, productMultichannelTranslation, sourceImage);
-            }
+            	if (name.contains("Signal")) {
+                    getOrCreateSecondaryImage(child, productSignalsTranslation, sourceImage);
+            	}
+            	else {
+            		getOrCreateSecondaryImage(child, productMultichannelTranslation, sourceImage);	
+            	}
+            } 
             else {
             	logger.trace("Ignoring artifact "+child.getName()+" (id="+child.getId()+")");
             }

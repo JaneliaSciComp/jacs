@@ -198,12 +198,13 @@ public class Vaa3DHelper {
         StringBuffer script = new StringBuffer();
         
 	    // Take a screenshot every X seconds
-        script.append("XVFB_SCREENSHOT_DIR=").append(outputDir).append("\n");
+        script.append("XVFB_SCREENSHOT_DIR=\"").append(outputDir).append("\"\n");
         script.append("mkdir -p $XVFB_SCREENSHOT_DIR\n");
 	    script.append("freq="+secs+"\n");
 	    script.append("t=0\n");
 	    script.append("while kill -0 $"+xvfbPidVarName+" 2> /dev/null; do\n");
 	    script.append("  DISPLAY=:$"+xvfbPortVarName+" import -window root $XVFB_SCREENSHOT_DIR/screenshot_$t.png\n");
+	    script.append("  freq=$((t+10))\n");
 	    script.append("  t=$((t+freq))\n");
 	    script.append("  sleep $freq\n");
 	    
