@@ -191,13 +191,13 @@ function processChannel(channel_name) {
   rename("original");
   imageCalculator("Multiply create 32-bit stack", "original","ZRamp");
   rename("processing");
-  performHistogramStretching();
   selectWindow("original");
   close();
+
   selectWindow("processing");
   performMasking();
-
-  
+  selectWindow("processing");
+  performHistogramStretching();
   rename(title);
 }
 
