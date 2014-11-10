@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;

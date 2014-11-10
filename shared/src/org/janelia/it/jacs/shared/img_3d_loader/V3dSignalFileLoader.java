@@ -1,6 +1,6 @@
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
-import org.janelia.it.workstation.gui.viewer3d.stream.V3dRawImageStream;
+import org.janelia.it.jacs.shared.image.stream.V3dRawImageStream;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;

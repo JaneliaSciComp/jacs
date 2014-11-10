@@ -1,10 +1,10 @@
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
-import org.janelia.it.workstation.gui.viewer3d.stream.V3dRawImageStream;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
+import org.janelia.it.jacs.shared.image.stream.V3dRawImageStream;
 
 /**
  * Created with IntelliJ IDEA.

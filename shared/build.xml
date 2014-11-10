@@ -53,9 +53,12 @@
             <pathelement location="${common.module}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
             <!--<fileset dir="${common.module}/JAXB/" includes="*.jar"/>-->
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
-        	<fileset dir="${common.module}/Apache-Commons/" includes="*.jar"/>
-        	<fileset dir="${common.module}/Guava/" includes="*.jar"/>
-        	<fileset dir="${common.module}/Logging/" includes="*.jar"/>
+            <fileset dir="${common.module}/Apache-Commons/" includes="*.jar"/>
+            <fileset dir="${common.module}/Guava/" includes="*.jar"/>
+            <fileset dir="${common.module}/Logging/" includes="*.jar"/>
+            <fileset dir="${common.module}/jama-1.0.1/" includes="*.jar"/>
+            <fileset dir="${common.module}/Xuggler/" includes="*.jar"/>
+            <fileset dir="${common.module}/LOCI/" includes="*.jar"/>
             <fileset dir="${common.module}/Solrj/" includes="*.jar"/>
             <pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>
             <fileset dir="${common.dir}/Hibernate-3.2" includes="hibernate3.jar"/>

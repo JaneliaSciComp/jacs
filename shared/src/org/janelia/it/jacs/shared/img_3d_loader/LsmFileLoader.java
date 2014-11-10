@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
 import loci.formats.in.ZeissLSMReader;
 
