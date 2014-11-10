@@ -1,6 +1,6 @@
 // 63x_mcfo_secondary_data.imj
 // Revision level: 0.1
-// Date released:  2014-11-06
+// Date released:  2014-11-08
 // Description:
 // Macro for generating MIP and movies from 63x MCFO two original lsm files for one tile.
 // adjust intensity
@@ -222,7 +222,7 @@ function performMasking() {
   run("Select All");
   getStatistics(area, mean, min, max, std, histogram);
   close();
-  if (mean>25) {
+  if (mean>15) {
         run("Select All");
         run("Clear", "slice");
     }
@@ -245,4 +245,3 @@ function padImageDimensions(window_name) {
     run("Canvas Size...", "width="+newWidth+" height="+newHeight+" position=Top-Center"); 
   }
 }
-
