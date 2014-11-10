@@ -153,11 +153,18 @@
     <target name="shared-jar" depends="compile, make-jars-dir">
         <delete file="${build.jars.dir}/${jar.name}" />
         <!-- unjar dependencies -->
+        <mkdir dir="${build.unzipped.dir}" />
+        <unjar src="lib/jai_codec.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        <unjar src="lib/jai_core.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+
         <jar destfile="${build.jars.dir}/${jar.name}" >
             <fileset dir="${basedir}/../shared/build/classes">
                 <include name="**/*.class"/>
                 <include name="**/Shared.gwt.xml"/>
                 <exclude name="**/util-conf/log4j.properties"/>
+            </fileset>
+            <fileset dir="${build.unzipped.dir}">
+                <include name="**"/>
             </fileset>
             <!-- Java source files needed for GWT compilation -->
             <fileset dir="${basedir}/../shared/src">
