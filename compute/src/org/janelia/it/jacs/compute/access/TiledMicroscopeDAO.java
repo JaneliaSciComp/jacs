@@ -850,11 +850,13 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         Map<Integer,byte[]> rtnVal = new HashMap<>();
         try {
             // Get the bean of data around the point of interest.
+            log.info( "Getting nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath );
             RawFileInfo rawFileInfo =
                     getNearestFileInfo(basePath, viewerCoord);
             if ( rawFileInfo == null ) {
                 throw new Exception("Failed to find any tiff files in " + basePath + "." );
             }
+            log.info( "Got nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath );
 
             // Grab the channels.
             TifVolumeFileLoader loader = new TifVolumeFileLoader();
@@ -869,12 +871,15 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     rawFileInfo.getQueryMicroscopeCoords()
             );
 
+            log.info( "Loading volume file 0 for coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath + " as " + rawFileInfo.getChannel0().getAbsolutePath() );
             loader.loadVolumeFile( rawFileInfo.getChannel0().getAbsolutePath() );
             rtnVal.put( 0, loader.getTextureByteArray() );
 
+            log.info( "Loading volume file 1 for coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath + " as " + rawFileInfo.getChannel1().getAbsolutePath() );
             loader.loadVolumeFile( rawFileInfo.getChannel1().getAbsolutePath() );
             rtnVal.put( 1, loader.getTextureByteArray() );
 
+            log.info( "Returning volume data for coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath );
         } catch ( Exception ex ) {
             ex.printStackTrace();
             throw new DaoException(ex);

@@ -6,11 +6,7 @@
 
 package org.janelia.it.jacs.shared.img_3d_loader;
 
-import com.sun.media.jai.codec.ImageCodec;
-import com.sun.media.jai.codec.ImageDecoder;
-import com.sun.media.jai.codec.MemoryCacheSeekableStream;
-import com.sun.media.jai.codec.SeekableStream;
-import com.sun.media.jai.codec.TIFFDecodeParam;
+import com.sun.media.jai.codec.*;
 
 import javax.media.jai.NullOpImage;
 import javax.media.jai.OpImage;
@@ -21,7 +17,6 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -42,6 +37,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
     private int sheetCountFromFile;
     
     private static final Logger logger = Logger.getLogger(TifVolumeFileLoader.class);
+    public static final int LOAD_SIZE = 8 * 1024 * 1024;
 
     /**
      * Sets maximum size in all dimensions, to add to outgoing image.
@@ -67,6 +63,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
         setUnCachedFileName(fileName);
         
         final File file = new File(fileName);
+        logger.info("Loading the subset of images.");
         Collection<BufferedImage> allImages = loadTIFF( file );
         if ( allImages == null ) {
             throw new Exception("Failed to read data from " + fileName + ".");
@@ -81,6 +78,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
         int expectedWidth = SENTINAL_INT_VAL;
         int expectedHeight = SENTINAL_INT_VAL;
 
+        logger.info("Traversing images.");
         // Initial values.
         int zOffset = 0;
         int targetOffset = 0;
@@ -109,7 +107,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
                     setSx( zSlice.getWidth() );
                     setSy( zSlice.getHeight() );
                     setSz( allImages.size() );
-                    sheetSize = captureAndUsePageDimensions( allImages.size(), file.length() );
+                    sheetSize = initializeStorage(file.length());
                 }
             }
             else {
@@ -119,7 +117,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
                             zSlice.getWidth() + " has dimensions which do not match previous width * height of " + expectedWidth + " * " + expectedHeight );
                 }
             }
-            
+
             // Store only things that are within the targetted depth.
             if ( subsetHelper == null ) {
                 storeToBuffer(targetOffset++, sheetSize, zSlice);
@@ -131,7 +129,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
         }
     }
     
-    public int captureAndUsePageDimensions(final int zCount, final long fileLength) {
+    public int initializeStorage(final long fileLength) {
         setPixelBytes((int)Math.floor( fileLength / ((getSx()*getSy()) * getSz()) ));
         if ( getPixelBytes() == 4 ) {
             setArgbTextureIntArray(new int[ getSx() * getSy() * getSz() ]);
@@ -186,19 +184,25 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
         try {
             BufferedImage wholeImage = null;
 
-            byte[] bytes = readBytes(file);            
-            SeekableStream s = new MemoryCacheSeekableStream( new ByteArrayInputStream( bytes ) );
-            //SeekableStream s = new FileSeekableStream(file);
-            
+            logger.info("In loadTIFF " + file + " Reading bytes in chunks...");
+            byte[] bytes = readBytes(file);
+            logger.info("In loadTIFF " + file + " Seekable stream wrap...");
+            SeekableStream s = new ByteArraySeekableStream(bytes);
+//            SeekableStream s = new MemoryCacheSeekableStream( new ByteArrayInputStream( bytes ) );
+//            SeekableStream s = new MemoryCacheSeekableStream( new FileInputStream( file ) );
+
             TIFFDecodeParam param = null;
+            logger.info("In loadTIFF " + file + " create codec...");
             ImageDecoder dec = ImageCodec.createImageDecoder("tiff", s, param);
+            logger.info("In loadTIFF " + file + " getting number of pages...");
             int maxPage = dec.getNumPages();
             sheetCountFromFile = maxPage;            
             if ( subsetHelper != null ) {
                 subsetHelper.setSourceDepth( sheetCountFromFile );
                 subsetHelper.calculateBoundingZ( sheetCountFromFile );
             }
-            
+
+            logger.info("In loadTIFF " + file + " NullOpImage loop.");
             for (int imageToLoad = 0; imageToLoad < maxPage; imageToLoad++) {
                 if ( subsetHelper == null  ||  subsetHelper.inZSubset( imageToLoad ) ) {
                     RenderedImage op
@@ -210,7 +214,9 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
                     imageCollection.add(wholeImage);
                 }
             }
-            
+            logger.info("In loadTIFF " + file + " returning image collection.");
+            s.close();
+
             return imageCollection;
 
 
@@ -224,8 +230,16 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
 
     private byte[] readBytes(File file) throws IOException {
         byte[] bytes = new byte[ (int)file.length() ];
+        int nextPos = 0;
         try (FileInputStream fis = new FileInputStream( file )) {
-            fis.read(bytes);
+            int bytesRead;
+            int bytesToRead = LOAD_SIZE;
+            while ( -1 != ( bytesRead = fis.read( bytes, nextPos, bytesToRead ) ) ) {
+                nextPos += bytesRead;
+                if ( nextPos + bytesToRead > file.length() ) {
+                    nextPos = (int)(file.length() - nextPos);
+                }
+            }
         }
         return bytes;
     }

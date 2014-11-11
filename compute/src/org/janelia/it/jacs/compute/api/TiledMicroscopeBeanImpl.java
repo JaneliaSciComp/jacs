@@ -28,7 +28,7 @@ import java.util.Map;
 @PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledMicroscopeBeanRemote {
 
-    private static final Logger _logger = Logger.getLogger(AnnotationBeanImpl.class);
+    private static final Logger _logger = Logger.getLogger(TiledMicroscopeBeanImpl.class);
 
     private final TiledMicroscopeDAO _tiledMicroscopeDAO = new TiledMicroscopeDAO(_logger);
 
