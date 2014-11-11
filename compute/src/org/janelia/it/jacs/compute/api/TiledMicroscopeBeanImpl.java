@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.jboss.annotation.ejb.PoolClass;
@@ -11,6 +12,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,6 +32,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
 
     private final TiledMicroscopeDAO _tiledMicroscopeDAO = new TiledMicroscopeDAO(_logger);
 
+    @Override
     public void createTiledMicroscopeEntityTypes() throws ComputeException {
         try {
             _tiledMicroscopeDAO.createTiledMicroscopeEntityTypes();
@@ -41,6 +44,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmWorkspace createTiledMicroscopeWorkspace(Long parentId, Long brainSampleId, String name, String ownerKey) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.createTiledMicroscopeWorkspace(parentId, brainSampleId, name, ownerKey);
@@ -51,6 +55,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.createTiledMicroscopeNeuron(workspaceId, name);
@@ -61,6 +66,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmSample createTiledMicroscopeSample(String user, String sampleName, String pathToRenderFolder) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.createTiledMicroscopeSample(user, sampleName, pathToRenderFolder);
@@ -72,6 +78,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException {
         try {
@@ -83,6 +90,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void reparentGeometricAnnotation(TmGeoAnnotation annotation, Long newParentAnnotationID,
                                             TmNeuron neuron) throws ComputeException {
         try {
@@ -94,6 +102,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void rerootNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws ComputeException {
         try {
             _tiledMicroscopeDAO.rerootNeurite(neuron, newRoot);
@@ -104,6 +113,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void splitNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws ComputeException {
         try {
             _tiledMicroscopeDAO.splitNeurite(neuron, newRoot);
@@ -114,6 +124,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void moveNeurite(TmGeoAnnotation annotation, TmNeuron newNeuron) throws ComputeException {
         try {
             _tiledMicroscopeDAO.moveNeurite(annotation, newNeuron);
@@ -124,6 +135,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
                                           int index, double x, double y, double z, String comment) throws ComputeException {
         try {
@@ -135,6 +147,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.getWorkspacesForBrainSample(brainSampleId, ownerKey);
@@ -145,6 +158,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public List<TmNeuronDescriptor> getNeuronsForWorkspace(Long workspaceId, String ownerKey) throws ComputeException {
         try {
             return getNeuronsForWorkspace(workspaceId, ownerKey);
@@ -155,6 +169,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void removeWorkspacePreference(Long workspaceId, String key) throws ComputeException {
         try {
             _tiledMicroscopeDAO.removeWorkspacePreference(workspaceId, key);
@@ -165,6 +180,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void createOrUpdateWorkspacePreference(Long workspaceId, String key, String value) throws ComputeException {
         try {
             _tiledMicroscopeDAO.createOrUpdateWorkspacePreference(workspaceId, key, value);
@@ -175,6 +191,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void deleteNeuron(String ownerKey, Long neuronId) throws ComputeException {
         try {
             _tiledMicroscopeDAO.deleteNeuron(ownerKey, neuronId);
@@ -185,6 +202,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void deleteWorkspace(String ownerKey, Long workspaceId) throws ComputeException {
         try {
             _tiledMicroscopeDAO.deleteWorkspace(ownerKey, workspaceId);
@@ -195,6 +213,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void deleteGeometricAnnotation(Long geoId) throws ComputeException {
         try {
             _tiledMicroscopeDAO.deleteGeometricAnnotation(geoId);
@@ -205,6 +224,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmWorkspace loadWorkspace(Long workspaceId) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.loadWorkspace(workspaceId);
@@ -215,6 +235,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmNeuron loadNeuron(Long neuronId) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.loadNeuron(neuronId);
@@ -225,6 +246,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmAnchoredPath addAnchoredPath(Long neuronID, Long annotationID1, Long annotationID2,
         List<List<Integer>> pointlist) throws ComputeException {
         try {
@@ -237,6 +259,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void updateAnchoredPath(TmAnchoredPath anchoredPath, Long annotationID1, Long annotationID2,
         List<List<Integer>> pointlist) throws ComputeException {
         try {
@@ -248,6 +271,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void deleteAnchoredPath(Long pathID) throws ComputeException {
         try {
             _tiledMicroscopeDAO.deleteAnchoredPath(pathID);
@@ -258,6 +282,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public TmStructuredTextAnnotation addStructuredTextAnnotation(Long neuronID, Long parentID,
         int parentType, int formatVersion, String data) throws ComputeException {
         try {
@@ -270,6 +295,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void updateStructuredTextAnnotation(TmStructuredTextAnnotation textAnnotation, String data)
             throws ComputeException {
         try {
@@ -281,6 +307,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public void deleteStructuredTextAnnotation(Long annID) throws ComputeException {
         try {
             _tiledMicroscopeDAO.deleteStructuredText(annID);
@@ -291,12 +318,27 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
     public RawFileInfo getNearestFileInfo(String basePath, int[] viewerCoord) throws ComputeException {
         RawFileInfo rtnVal = null;
         try {
             rtnVal = _tiledMicroscopeDAO.getNearestFileInfo(basePath, viewerCoord);
         } catch (Exception e) {
             String errorString="Error calling getNearestFileInfo DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(e);
+        }
+        return rtnVal;
+    }
+
+    @Override
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws ComputeException {
+        Map<Integer,byte[]> rtnVal = null;
+        try {
+            rtnVal = _tiledMicroscopeDAO.getTextureBytes(basePath, viewerCoord, cubicDim);
+
+        } catch (Exception e) {
+            String errorString="Error calling getTextureByteArray DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(e);
         }
