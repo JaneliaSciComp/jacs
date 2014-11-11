@@ -63,7 +63,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
         setUnCachedFileName(fileName);
         
         final File file = new File(fileName);
-        logger.info("Loading the subset of images.");
+        logger.debug("Loading the subset of images.");
         Collection<BufferedImage> allImages = loadTIFF( file );
         if ( allImages == null ) {
             throw new Exception("Failed to read data from " + fileName + ".");
@@ -78,7 +78,7 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
         int expectedWidth = SENTINAL_INT_VAL;
         int expectedHeight = SENTINAL_INT_VAL;
 
-        logger.info("Traversing images.");
+        logger.debug("Traversing images.");
         // Initial values.
         int zOffset = 0;
         int targetOffset = 0;
@@ -183,18 +183,12 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
         Collection<BufferedImage> imageCollection = new ArrayList<>();
         try {
             BufferedImage wholeImage = null;
-
-            logger.info("In loadTIFF " + file + " Reading bytes in chunks...");
-            byte[] bytes = readBytes(file);
-            logger.info("In loadTIFF " + file + " Seekable stream wrap...");
-            SeekableStream s = new ByteArraySeekableStream(bytes);
-//            SeekableStream s = new MemoryCacheSeekableStream( new ByteArrayInputStream( bytes ) );
-//            SeekableStream s = new MemoryCacheSeekableStream( new FileInputStream( file ) );
+            SeekableStream s = new FileSeekableStream(file);
 
             TIFFDecodeParam param = null;
-            logger.info("In loadTIFF " + file + " create codec...");
+            logger.debug("In loadTIFF " + file + " create codec...");
             ImageDecoder dec = ImageCodec.createImageDecoder("tiff", s, param);
-            logger.info("In loadTIFF " + file + " getting number of pages...");
+            logger.debug("In loadTIFF " + file + " getting number of pages...");
             int maxPage = dec.getNumPages();
             sheetCountFromFile = maxPage;            
             if ( subsetHelper != null ) {
@@ -202,7 +196,8 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
                 subsetHelper.calculateBoundingZ( sheetCountFromFile );
             }
 
-            logger.info("In loadTIFF " + file + " NullOpImage loop.");
+            if ( logger.isDebugEnabled() )
+                logger.debug("In loadTIFF " + file + " NullOpImage loop.");
             for (int imageToLoad = 0; imageToLoad < maxPage; imageToLoad++) {
                 if ( subsetHelper == null  ||  subsetHelper.inZSubset( imageToLoad ) ) {
                     RenderedImage op
@@ -213,8 +208,10 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
                     wholeImage = renderedToBuffered(op);
                     imageCollection.add(wholeImage);
                 }
+                if ( logger.isDebugEnabled() )
+                    logger.debug("In loadTIFF " + file + " NullOpImage completed: " + imageToLoad);
             }
-            logger.info("In loadTIFF " + file + " returning image collection.");
+            logger.debug("In loadTIFF " + file + " returning image collection.");
             s.close();
 
             return imageCollection;
@@ -226,22 +223,6 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
             return null;
         }
 
-    }    
-
-    private byte[] readBytes(File file) throws IOException {
-        byte[] bytes = new byte[ (int)file.length() ];
-        int nextPos = 0;
-        try (FileInputStream fis = new FileInputStream( file )) {
-            int bytesRead;
-            int bytesToRead = LOAD_SIZE;
-            while ( -1 != ( bytesRead = fis.read( bytes, nextPos, bytesToRead ) ) ) {
-                nextPos += bytesRead;
-                if ( nextPos + bytesToRead > file.length() ) {
-                    nextPos = (int)(file.length() - nextPos);
-                }
-            }
-        }
-        return bytes;
     }
             
     /**
