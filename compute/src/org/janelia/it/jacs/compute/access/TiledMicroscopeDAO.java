@@ -4,14 +4,11 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
-import org.janelia.it.jacs.compute.largevolume.TileBaseReader;
-import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
+import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.*;
 
 /**
@@ -849,49 +846,58 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws DaoException {
+        Map<Integer,byte[]> rtnVal = new HashMap<>();
+        try {
+            // Get the bean of data around the point of interest.
+            if ( log.isDebugEnabled() ) {
+                log.debug("Getting nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath);
+            }
+            RawFileInfo rawFileInfo =
+                    getNearestFileInfo(basePath, viewerCoord);
+            if ( rawFileInfo == null ) {
+                throw new Exception("Failed to find any tiff files in " + basePath + "." );
+            }
+            if ( log.isDebugEnabled() ) {
+                log.info("Got nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath);
+            }
+
+            // Grab the channels.
+            TifVolumeFileLoader loader = new TifVolumeFileLoader();
+            if ( cubicDim > -1 ) {
+                loader.setCubicOutputDimension(cubicDim);
+            }
+            loader.setConversionCharacteristics(
+                    rawFileInfo.getTransformMatrix(),
+                    rawFileInfo.getInvertedTransform(),
+                    rawFileInfo.getMinCorner(),
+                    rawFileInfo.getExtent(),
+                    rawFileInfo.getQueryMicroscopeCoords()
+            );
+
+            loader.loadVolumeFile( rawFileInfo.getChannel0().getAbsolutePath() );
+            rtnVal.put( 0, loader.getTextureByteArray() );
+
+            loader.loadVolumeFile( rawFileInfo.getChannel1().getAbsolutePath() );
+            rtnVal.put( 1, loader.getTextureByteArray() );
+
+        } catch ( Exception ex ) {
+            ex.printStackTrace();
+            throw new DaoException(ex);
+        }
+        return rtnVal;
+    }
+
     public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
         RawFileInfo rtnVal = null;
         try {
-            File basePathFile = new File( basePath );
-            File yaml = new File( basePathFile, TileBaseReader.STD_TILE_BASE_FILE_NAME );
-            if ( ! yaml.exists()  ||  ! yaml.isFile() ) {
-                String errorString = "Failed to open yaml file " + yaml;
-                throw new Exception(errorString);
-            }
-            TileBase tileBase = new TileBaseReader().readTileBase( new FileInputStream( yaml ) );
-            RawFileFetcher fetcher = new RawFileFetcher( tileBase, basePathFile );
+            RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
             rtnVal = fetcher.getNearestFileInfo( viewerCoord );
         } catch ( Exception ex ) {
             throw new DaoException(ex);
         }
         return rtnVal;
     }
-
-//    public List<String> getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
-//        List<String> rtnVal = new ArrayList<>();
-//        try {
-//            File basePathFile = new File( basePath );
-//            File yaml = new File( basePathFile, TileBaseReader.STD_TILE_BASE_FILE_NAME );
-//            if ( ! yaml.exists()  ||  ! yaml.isFile() ) {
-//                String errorString = "Failed to open yaml file " + yaml;
-//                throw new Exception(errorString);
-//            }
-//            TileBase tileBase = new TileBaseReader().readTileBase( new FileInputStream( yaml ) );
-//            RawFileFetcher fetcher = new RawFileFetcher( tileBase, basePathFile );
-//            File microscopeFilesDir = fetcher.getMicroscopeFileDir( viewerCoord );
-//            if ( microscopeFilesDir == null  ||  ! microscopeFilesDir.exists()  ||  ! microscopeFilesDir.isDirectory() ) {
-//                String errorString = "Failed to open microscope files directory " + microscopeFilesDir;
-//                throw new Exception(errorString);
-//            }
-//            File[] microScopeTiffFiles = fetcher.getMicroscopeFiles( microscopeFilesDir );
-//            for ( File microscopeTiffFile: microScopeTiffFiles ) {
-//                rtnVal.add(microscopeTiffFile.getAbsolutePath());
-//            }
-//        } catch ( Exception ex ) {
-//            throw new DaoException(ex);
-//        }
-//        return rtnVal;
-//    }
 
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
         try {

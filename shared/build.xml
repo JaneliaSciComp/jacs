@@ -53,9 +53,12 @@
             <pathelement location="${common.module}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
             <!--<fileset dir="${common.module}/JAXB/" includes="*.jar"/>-->
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
-        	<fileset dir="${common.module}/Apache-Commons/" includes="*.jar"/>
-        	<fileset dir="${common.module}/Guava/" includes="*.jar"/>
-        	<fileset dir="${common.module}/Logging/" includes="*.jar"/>
+            <fileset dir="${common.module}/Apache-Commons/" includes="*.jar"/>
+            <fileset dir="${common.module}/Guava/" includes="*.jar"/>
+            <fileset dir="${common.module}/Logging/" includes="*.jar"/>
+            <fileset dir="${common.module}/jama-1.0.1/" includes="*.jar"/>
+            <fileset dir="${common.module}/Xuggler/" includes="*.jar"/>
+            <fileset dir="${common.module}/LOCI/" includes="*.jar"/>
             <fileset dir="${common.module}/Solrj/" includes="*.jar"/>
             <pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>
             <fileset dir="${common.dir}/Hibernate-3.2" includes="hibernate3.jar"/>
@@ -150,11 +153,18 @@
     <target name="shared-jar" depends="compile, make-jars-dir">
         <delete file="${build.jars.dir}/${jar.name}" />
         <!-- unjar dependencies -->
+        <mkdir dir="${build.unzipped.dir}" />
+        <unjar src="lib/jai_codec.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        <unjar src="lib/jai_core.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+
         <jar destfile="${build.jars.dir}/${jar.name}" >
             <fileset dir="${basedir}/../shared/build/classes">
                 <include name="**/*.class"/>
                 <include name="**/Shared.gwt.xml"/>
                 <exclude name="**/util-conf/log4j.properties"/>
+            </fileset>
+            <fileset dir="${build.unzipped.dir}">
+                <include name="**"/>
             </fileset>
             <!-- Java source files needed for GWT compilation -->
             <fileset dir="${basedir}/../shared/src">

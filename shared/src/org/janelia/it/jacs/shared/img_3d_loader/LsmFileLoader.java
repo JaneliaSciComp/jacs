@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
 import loci.formats.in.ZeissLSMReader;
 
@@ -13,7 +13,7 @@ import loci.formats.in.ZeissLSMReader;
 public class LsmFileLoader extends LociFileLoader {
     @Override
     public void loadVolumeFile( String volumeFileName ) throws Exception {
-        this.unCachedFileName = volumeFileName;
+        this.setUnCachedFileName(volumeFileName);
         super.loadLociReader( new ZeissLSMReader() );
     }
 }

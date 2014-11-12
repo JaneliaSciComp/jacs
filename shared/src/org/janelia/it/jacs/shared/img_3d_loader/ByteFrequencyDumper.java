@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
 /**
  * Created with IntelliJ IDEA.

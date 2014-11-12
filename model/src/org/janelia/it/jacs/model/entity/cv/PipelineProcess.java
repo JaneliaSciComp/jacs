@@ -48,7 +48,6 @@ public enum PipelineProcess implements NamedEnum {
     YoshiMBPolarityCase2("Yoshi MB Polarity Case 2 Pipeline"),
     YoshiMBPolarityCase3("Yoshi MB Polarity Case 3 Pipeline"),
     YoshiMBPolarityCase4("Yoshi MB Polarity Case 4 Pipeline"),
-    YoshiMBPolarityCase4nm("Yoshi MB Polarity Case 4 Pipeline No 20x Membrane"),
     YoshiMBSplitMCFOCase1("Yoshi MB Split MCFO Case 1 Pipeline"),
     YoshiMacroPolarityCase1("Yoshi Polarity Case 1 Macro Pipeline"),
     YoshiMacroPolarityCase2("Yoshi Polarity Case 2 Macro Pipeline"),

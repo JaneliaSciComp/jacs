@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
 import com.xuggle.mediatool.IMediaReader;
 import com.xuggle.mediatool.MediaListenerAdapter;
@@ -9,8 +9,6 @@ import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IContainer;
 import com.xuggle.xuggler.IStream;
 import com.xuggle.xuggler.IStreamCoder;
-import org.janelia.it.workstation.gui.viewer3d.texture.TextureDataBean;
-import org.janelia.it.workstation.gui.viewer3d.texture.TextureDataI;
 
 import java.awt.image.BufferedImage;
 
@@ -20,17 +18,12 @@ import java.awt.image.BufferedImage;
  * Date: 2/6/13
  * Time: 3:33 PM
  *
- *
+ * Pull MPEG / MP4 file contents inot memory.
  */
-public class MpegFileLoader extends TextureDataBuilder implements VolumeFileLoaderI {
-    @Override
-    protected TextureDataI createTextureDataBean() {
-        return new TextureDataBean(argbTextureIntArray, sx, sy, sz );
-    }
-
+public class MpegFileLoader extends LociFileLoader {
     @Override
     public void loadVolumeFile( String fileName ) {
-        this.unCachedFileName = fileName;
+        setUnCachedFileName(fileName);
         loadMpegVideo( fileName );
     }
 
@@ -62,13 +55,12 @@ public class MpegFileLoader extends TextureDataBuilder implements VolumeFileLoad
                     continue;
                 double frameRate = coder.getFrameRate().getDouble();
                 frameIndex = 0;
-                sx = sy = sz = 0;
-                sx = coder.getWidth();
-                sy = coder.getHeight();
-                sz = (int)(frameRate * duration / 1e6 + 0.5);
-                argbTextureIntArray = new int[sx*sy*sz];
-                channelCount = 3;
-                pixelBytes = 4;
+                setSx(coder.getWidth());
+                setSy(coder.getHeight());
+                setSz((int)(frameRate * duration / 1e6 + 0.5));
+                initArgbTextureIntArray();
+                setChannelCount(3);
+                setPixelBytes(4);
                 return;
             }
         }
@@ -91,13 +83,16 @@ public class MpegFileLoader extends TextureDataBuilder implements VolumeFileLoad
 
     private void storeFramePixels(int frameIndex, BufferedImage image) {
         // System.out.println("Reading frame " + frameIndex);
+        int sx = getSx();
+        int sy = getSy();
         int offset = frameIndex * sx * sy;
         image.getRGB(0, 0, sx, sy,
-                argbTextureIntArray,
+                getArgbTextureIntArray(),
                 offset, sx);
     }
 
     private void zeroColors() {
+        int[] argbTextureIntArray = getArgbTextureIntArray();
         int numVoxels = argbTextureIntArray.length;
         for (int v = 0; v < numVoxels; ++v)
             argbTextureIntArray[v] = 0;

@@ -36,8 +36,12 @@ channelspec = toLowerCase(arg[3]);
 if (channelspec == "") exit ("No channel specification argument!");
 colorspec = toUpperCase(arg[4]);
 if (colorspec == "") exit ("No color specification argument!");
-title0 = prefix + "_MIP";
+
+titleMIP = prefix + "_MIP";
 titleAvi = prefix + ".avi";
+titleSignalMIP = prefix + "-Signal_MIP";
+titleSignalAvi = prefix + "-Signal.avi";
+
 openStack();
 
 // Z-intensity compesation to ramp signals in neuron channels
@@ -103,12 +107,14 @@ print("Processing reference channel");
 selectWindow("reference");
 title = getTitle();
 performHistogramStretching();
-run("Divide...", "value=1.5 stack");
+run("Divide...", "value=2 stack");
 run("8-bit");
 rename(title);
 
 // Merge, save MIP and AVI
-print("Creating MIP");
+
+print("Creating MIPs");
+
 selectWindow("ZRamp");
 close();    
 run("Merge Channels...", merge_name+" ignore");
@@ -126,13 +132,25 @@ run("8-bit");
 run("Divide...", "value=3");
 run("RGB Color");
 setBatchMode("exit & display");
+selectWindow("MAX_RGB");
+saveAs("PNG",basedir+'/'+titleSignalMIP);
+rename("MAX_RGB");
 imageCalculator("Add", "MAX_RGB","STD_reference");
 selectWindow("MAX_RGB");
-saveAs("PNG",basedir+'/'+title0);
+saveAs("PNG",basedir+'/'+titleMIP);
 close();
 selectWindow("STD_reference");
 close();
-print("Creating movie");
+
+print("Creating movies");
+
+selectWindow("RGB");
+run("Duplicate...", "title=SignalMovie duplicate");
+padImageDimensions("SignalMovie");
+print("Saving Signal AVI");
+run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleSignalAvi);
+close();
+
 selectWindow("reference");
 run("RGB Color");
 imageCalculator("Add create stack", "RGB","reference");
@@ -141,20 +159,7 @@ selectWindow("RGB");
 close();
 selectWindow("reference");
 close();
-selectWindow("FinalMovie");
-getDimensions(width, height, channels, slices, frames);
-if (height % 2 != 0 || width % 2 != 0) {
-    print("Adjusting canvas size");
-    newWidth = width;
-    newHeight = height;
-    if (width % 2 != 0) {
-        newWidth = width+1;
-    }
-    if (height % 2 != 0) {
-        newHeight = height+1;
-    }
-    run("Canvas Size...", "width="+newWidth+" height="+newHeight+" position=Top-Center");
-}
+padImageDimensions("FinalMovie");
 print("Saving AVI");
 run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
 run("Close All");
@@ -212,7 +217,6 @@ function openStack() {
   }
 }
 
-
 function processChannel(channel_name) {
   selectWindow(channel_name);
   print("Processing signal channel "+channel_name);
@@ -226,7 +230,6 @@ function processChannel(channel_name) {
   selectWindow("processing");
   rename(title);
 }
-
 
 function performHistogramStretching() {
   ImageProcessing = getImageID();
@@ -242,4 +245,20 @@ function performHistogramStretching() {
   run("8-bit");
 }
 
+function padImageDimensions(window_name) {
+  selectWindow(window_name);
+  getDimensions(width, height, channels, slices, frames);
+  if (height % 2 != 0 || width % 2 != 0) {
+    print("Adjusting canvas size for "+window_name);
+    newWidth = width;
+    newHeight = height;
+    if (width % 2 != 0) {
+        newWidth = width+1;
+    }
+    if (height % 2 != 0) {
+        newHeight = height+1;
+    }
+    run("Canvas Size...", "width="+newWidth+" height="+newHeight+" position=Top-Center"); 
+  }
+}
 

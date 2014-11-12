@@ -11,6 +11,7 @@
 
             <!-- ALIGNMENT_ALGORITHM_PARAMS identifies script in /groups/jacs/jacsHosts/servers/[instance-name]/executables/scripts/brainaligner/ -->
             <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flybrainaligner20x_ditp_JBA.sh"/>
+            <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment"/>
 
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
 
