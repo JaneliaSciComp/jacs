@@ -83,6 +83,16 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="LOCI" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/xuggle-xuggler-5.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
@@ -275,4 +285,3 @@
     </option>
   </component>
 </module>
-
