@@ -12,7 +12,7 @@ public class SampleTile implements HasFiles {
     private String name;
     private String anatomicalArea;
     private List<Reference> lsmReferences;
-    private Map<FileType, String> images;
+    private Map<FileType, String> files;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getName() {
@@ -40,11 +40,11 @@ public class SampleTile implements HasFiles {
     }
 
     public Map<FileType, String> getFiles() {
-        return images;
+        return files;
     }
 
-    public void setImages(Map<FileType, String> images) {
-        this.images = images;
+    public void setFiles(Map<FileType, String> files) {
+        this.files = files;
     }
 
 }

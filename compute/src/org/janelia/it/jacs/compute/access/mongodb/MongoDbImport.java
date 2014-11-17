@@ -28,6 +28,7 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.api.support.MappedId;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -114,6 +115,7 @@ public class MongoDbImport extends AnnotationDAO {
 
     // Load state
     private String genderConsensus = null;
+    private Map<String,String> lsmJsonFiles = new HashMap<String,String>(); 
     
     public MongoDbImport(String serverUrl, String databaseName) throws UnknownHostException {
         super(logger);
@@ -472,6 +474,9 @@ public class MongoDbImport extends AnnotationDAO {
         // Reset consensus values
         this.genderConsensus = null;
         
+        // Reset JSON file map
+        lsmJsonFiles.clear();
+        
         List<Entity> objSampleEntities = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_SAMPLE);
         if (objSampleEntities.isEmpty()) {
             String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
@@ -520,31 +525,6 @@ public class MongoDbImport extends AnnotationDAO {
             log.warn("  Sample has no supporting data: "+sampleEntity.getId());
             return null;
         }
-        
-        List<SampleTile> tiles = new ArrayList<SampleTile>();
-        populateChildren(supportingDataEntity);
-        for(Entity tileEntity : supportingDataEntity.getOrderedChildren()) {
-            
-            List<LSMImage> lsmImages = new ArrayList<LSMImage>();
-            List<Reference> lsmReferences = new ArrayList<Reference>();
-            
-            populateChildren(tileEntity);
-            for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
-                LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
-                lsmImages.add(lsmImage);
-                lsmReferences.add(new Reference("image",lsmImage.getId()));
-            }
-
-            imageCollection.insert(lsmImages.toArray());
-            
-            SampleTile tile = new SampleTile();
-            tile.setName(tileEntity.getName());
-            tile.setAnatomicalArea(tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
-            tile.setLsmReferences(lsmReferences);
-            tiles.add(tile);
-        }
-        
-        sample.setTiles(tiles);
 
         List<SamplePipelineRun> runs = new ArrayList<SamplePipelineRun>();
         for(Entity runEntity : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
@@ -647,6 +627,37 @@ public class MongoDbImport extends AnnotationDAO {
         }
 
         sample.setPipelineRuns(runs);
+
+        List<SampleTile> tiles = new ArrayList<SampleTile>();
+        populateChildren(supportingDataEntity);
+        for(Entity tileEntity : supportingDataEntity.getOrderedChildren()) {
+            
+            List<LSMImage> lsmImages = new ArrayList<LSMImage>();
+            List<Reference> lsmReferences = new ArrayList<Reference>();
+            
+            populateChildren(tileEntity);
+            for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
+                LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
+                lsmImages.add(lsmImage);
+                lsmReferences.add(new Reference("image",lsmImage.getId()));
+            }
+
+            imageCollection.insert(lsmImages.toArray());
+            
+
+            Map<FileType,String> images = new HashMap<FileType,String>();
+            addImage(images,FileType.ReferenceMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
+            addImage(images,FileType.SignalMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
+            
+            SampleTile tile = new SampleTile();
+            tile.setName(tileEntity.getName());
+            tile.setAnatomicalArea(tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
+            tile.setLsmReferences(lsmReferences);
+            tile.setFiles(images);
+            tiles.add(tile);
+        }
+        
+        sample.setTiles(tiles);
         
         return sample;
     }
@@ -681,7 +692,8 @@ public class MongoDbImport extends AnnotationDAO {
         		String childName = child.getName();
         		String childFilepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         		if (childName.endsWith("lsm.json")) {
-        			// TODO: keep track of these and associate them with the lsm documents
+        			String name = ArchiveUtils.getDecompressedFilepath(childName);
+        			lsmJsonFiles.put(name, childFilepath);
         		}
         	}
         }
@@ -800,6 +812,12 @@ public class MongoDbImport extends AnnotationDAO {
         LSMImage lsm = new LSMImage();
         populateImage(lsmEntity, lsm);
         
+        String name = ArchiveUtils.getDecompressedFilepath(lsm.getName());
+        String jsonFilepath = lsmJsonFiles.get(name);
+        if (jsonFilepath!=null) {
+            addImage(lsm.getFiles(),FileType.LsmMetadata,jsonFilepath);
+        }
+        
         if (sampleEntity!=null) lsm.setSampleId(sampleEntity.getId());
         lsm.setAge(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_AGE));
         lsm.setAnatomicalArea(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
@@ -902,7 +920,7 @@ public class MongoDbImport extends AnnotationDAO {
         neuronFragment.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         
         Map<FileType,String> images = new HashMap<FileType,String>();
-        addImage(images,FileType.Mip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        addImage(images,FileType.SignalMip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
         addImage(images,FileType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
         addImage(images,FileType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
         neuronFragment.setImages(images);
@@ -1013,7 +1031,7 @@ public class MongoDbImport extends AnnotationDAO {
         Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         if (alignedStack!=null) {
             addImage(images,FileType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            addImage(images,FileType.Mip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+            addImage(images,FileType.CompleteMip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         screenSample.setImages(images);
         
