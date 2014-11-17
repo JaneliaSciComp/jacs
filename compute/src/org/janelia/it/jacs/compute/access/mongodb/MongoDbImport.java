@@ -93,7 +93,7 @@ public class MongoDbImport extends AnnotationDAO {
 	protected static final int ANNOTATION_BATCH_SIZE = 1000;
 	protected static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
 
-    private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE, EntityConstants.TYPE_LSM_STACK };
+    private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE };
     
 	protected SubjectDAO subjectDao;
     protected Jongo jongo;
@@ -148,6 +148,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Adding subjects");
         loadSubjects();
+        
         log.info("Adding fly lines");
         loadFlyLines();
         
@@ -211,12 +212,13 @@ public class MongoDbImport extends AnnotationDAO {
         long start = System.currentTimeMillis();
         Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE));
         resetSession();
-        loadFlyLines(lines);
-        log.info("Loading " + lines.size() + " fly lines took " + (System.currentTimeMillis() - start) + " ms");
+        int loaded = loadFlyLines(lines);
+        log.info("Loading " + loaded + " fly lines took " + (System.currentTimeMillis() - start) + " ms");
     }
     
-    private void loadFlyLines(Deque<Entity> flyLines) {
+    private int loadFlyLines(Deque<Entity> flyLines) {
 
+    	int loaded = 0;
         for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
             Entity flyLineEntity = i.next();
             // Skip these samples
@@ -238,6 +240,7 @@ public class MongoDbImport extends AnnotationDAO {
 
                 if (flyLine!=null) {
                     log.info("  Loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                    loaded++;
                 }
                 else {
                     log.info("  Failure loading "+flyLineEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -247,6 +250,8 @@ public class MongoDbImport extends AnnotationDAO {
                 log.error("Error loading fly line "+flyLineEntity.getId(),e);
             }
         }
+        
+        return loaded;
     }
 
     private FlyLine getFlyLineObject(Entity flyLineEntity) {
@@ -289,14 +294,15 @@ public class MongoDbImport extends AnnotationDAO {
 
     private void loadDataSets() throws DaoException {
         long start = System.currentTimeMillis();
-        Deque<Entity> lines = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET));
+        Deque<Entity> dataSets = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET));
         resetSession();
-        loadDataSets(lines);
-        log.info("Loading " + lines.size() + " data sets took " + (System.currentTimeMillis() - start) + " ms");
+        int loaded = loadDataSets(dataSets);
+        log.info("Loading " + loaded + " data sets took " + (System.currentTimeMillis() - start) + " ms");
     }
     
-    private void loadDataSets(Deque<Entity> dataSets) {
+    private int loadDataSets(Deque<Entity> dataSets) {
 
+    	int loaded = 0;
         for(Iterator<Entity> i = dataSets.iterator(); i.hasNext(); ) {
             Entity dataSetEntity = i.next();
             
@@ -313,6 +319,7 @@ public class MongoDbImport extends AnnotationDAO {
 
                 if (dataSet!=null) {
                     log.info("  Loading "+dataSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                    loaded++;
                 }
                 else {
                     log.info("  Failure loading "+dataSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -322,6 +329,8 @@ public class MongoDbImport extends AnnotationDAO {
                 log.error("Error loading dataset "+dataSetEntity.getId(),e);
             }
         }
+        
+        return loaded;
     }
 
     private DataSet getDataSetObject(Entity dataSetEntity) {
@@ -384,18 +393,20 @@ public class MongoDbImport extends AnnotationDAO {
         Deque<Entity> samples = new LinkedList<Entity>(getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_SAMPLE));
         log.info("Got "+samples.size()+" samples for "+subjectKey);
         resetSession();
-        loadSamples(samples);
-        log.info("Loading " + samples.size() + " samples for " + subjectKey + " took "
+        int loaded = loadSamples(samples);
+        log.info("Loading " + loaded + " samples for " + subjectKey + " took "
                 + (System.currentTimeMillis() - start) + " ms");
     }
     
     private int loadSamples(Deque<Entity> samples) {
 
-        int c = 0;
+        int loaded = 0;
         for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
             Entity sampleEntity = i.next();
             // Skip sub-samples
             if (sampleEntity.getName().contains("~")) continue;
+            // Skip retired samples
+            if (sampleEntity.getName().endsWith("-Retired")) continue;
             
             try {
                 long start = System.currentTimeMillis();
@@ -410,6 +421,7 @@ public class MongoDbImport extends AnnotationDAO {
 
                 if (sample!=null) {
                     log.info("  Loading "+sampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                    loaded++;
                 }
                 else {
                     log.info("  Failure loading "+sampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -418,10 +430,9 @@ public class MongoDbImport extends AnnotationDAO {
             catch (Throwable e) {
                 log.error("Error loading sample "+sampleEntity.getId(),e);
             }
-            c++;
         }
         
-        return c;
+        return loaded;
     }
 
     private Sample getSampleObject(Entity sampleEntity) throws Exception {
@@ -746,17 +757,25 @@ public class MongoDbImport extends AnnotationDAO {
         result.setOpticalResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
         
         Map<AlignmentScoreType,String> scores = new HashMap<AlignmentScoreType,String>();
-        String qiScores = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORES);
-        if (!StringUtils.isEmpty(qiScores)) {
-        	scores.put(AlignmentScoreType.InconsistencyByRegion,qiScores);
-        }
         String qiScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
         if (!StringUtils.isEmpty(qiScore)) {
-        	scores.put(AlignmentScoreType.Inconsistency,qiScore);
+        	scores.put(AlignmentScoreType.Qi,qiScore);
+        }
+        String qiScores = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORES);
+        if (!StringUtils.isEmpty(qiScores)) {
+        	scores.put(AlignmentScoreType.QiByRegion,qiScores);
         }
         String qmScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
         if (!StringUtils.isEmpty(qmScore)) {
         	scores.put(AlignmentScoreType.ModelViolation,qmScore);
+        }
+        String incScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
+        if (!StringUtils.isEmpty(incScore)) {
+        	scores.put(AlignmentScoreType.Inconsistency,incScore);
+        }
+        String incScores = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORES);
+        if (!StringUtils.isEmpty(incScores)) {
+        	scores.put(AlignmentScoreType.InconsistencyByRegion,incScores);
         }
         String nccScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_NCC_SCORE);
         if (!StringUtils.isEmpty(qmScore)) {
@@ -905,11 +924,11 @@ public class MongoDbImport extends AnnotationDAO {
                 long start = System.currentTimeMillis();
                 populateChildren(flyLine);
                 Deque<Entity> screenSamples = new LinkedList<Entity>(EntityUtils.getChildrenOfType(flyLine, EntityConstants.TYPE_SCREEN_SAMPLE));
-                loadScreenSamples(flyLine, screenSamples);
+                int loaded = loadScreenSamples(flyLine, screenSamples);
                 // Free memory 
                 i.remove();
                 resetSession();
-                log.info("  Loading "+flyLine.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                log.info("  Loading "+loaded+" screen samples took "+(System.currentTimeMillis()-start)+" ms");
             }
             catch (Exception e) {
                 log.error("Error loading screen samples for fly line " + flyLine.getName(), e);
@@ -919,7 +938,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private int loadScreenSamples(Entity flyLineEntity, Deque<Entity> samples) {
 
-        int c = 0;
+        int loaded = 0;
         for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
             Entity screenSampleEntity = i.next();
             
@@ -931,6 +950,7 @@ public class MongoDbImport extends AnnotationDAO {
                 }
                 if (screenSample!=null) {
                     log.info("  Loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                    loaded++;
                 }
                 else {
                     log.info("  Failure loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -939,10 +959,9 @@ public class MongoDbImport extends AnnotationDAO {
             catch (Throwable e) {
                 log.error("Error loading screen sample "+screenSampleEntity.getId(),e);
             }
-            c++;
         }
         
-        return c;
+        return loaded;
     }
     
     private ScreenSample getScreenSampleObject(Entity flyLineEntity, Entity screenSampleEntity) throws Exception {
@@ -1070,13 +1089,15 @@ public class MongoDbImport extends AnnotationDAO {
     /* ONTOLOGIES */
     
     private void loadOntologies() throws DaoException {
+        long start = System.currentTimeMillis();
         Deque<Entity> ontologyRoots = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_ONTOLOGY_ROOT));
-        loadOntologies(ontologyRoots);
+        int loaded = loadOntologies(ontologyRoots);
+        log.info("  Loading "+loaded+" ontologies took "+(System.currentTimeMillis()-start)+" ms");
     }
 
     private int loadOntologies(Deque<Entity> ontologyRoots) {
 
-        int c = 0;
+        int loaded = 0;
         for(Iterator<Entity> i = ontologyRoots.iterator(); i.hasNext(); ) {
             Entity ontologyRootEntity = i.next();
 
@@ -1102,6 +1123,7 @@ public class MongoDbImport extends AnnotationDAO {
 
                 if (ontology!=null) {
                     log.info("  Loading "+ontologyRootEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                    loaded++;
                 }
                 else {
                     log.info("  Failure loading "+ontologyRootEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -1114,11 +1136,9 @@ public class MongoDbImport extends AnnotationDAO {
             finally {
                 if (session==null) closeExternalSession();
             }
-            
-            c++;
         }
         
-        return c;
+        return loaded;
     }
 
     private Ontology getOntology(Entity ontologyEntity) throws Exception {
@@ -1331,13 +1351,15 @@ public class MongoDbImport extends AnnotationDAO {
     /* COMPARTMENT SETS */
     
     private void loadCompartmentSets() throws DaoException {
+        long start = System.currentTimeMillis();
         Deque<Entity> compartmentSets = new LinkedList<Entity>(getEntitiesByTypeName(null, EntityConstants.TYPE_COMPARTMENT_SET));
-        loadCompartmentSets(compartmentSets);
+        int loaded = loadCompartmentSets(compartmentSets);
+        log.info("  Loading "+loaded+" compartment sets took "+(System.currentTimeMillis()-start)+" ms");
     }
 
     private int loadCompartmentSets(Deque<Entity> ontologyRoots) {
 
-        int c = 0;
+        int loaded = 0;
         for(Iterator<Entity> i = ontologyRoots.iterator(); i.hasNext(); ) {
             Entity compartmentSetEntity = i.next();
 
@@ -1355,6 +1377,7 @@ public class MongoDbImport extends AnnotationDAO {
 
                 if (compartmentSet!=null) {
                     log.info("  Loading "+compartmentSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
+                    loaded++;
                 }
                 else {
                     log.info("  Failure loading "+compartmentSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -1367,11 +1390,9 @@ public class MongoDbImport extends AnnotationDAO {
             finally {
                 if (session==null) closeExternalSession();
             }
-            
-            c++;
         }
         
-        return c;
+        return loaded;
     }
 
     private CompartmentSet getCompartmentSet(Entity compartmentSetEntity) throws Exception {
@@ -1555,27 +1576,6 @@ public class MongoDbImport extends AnnotationDAO {
             }
         }
     }
-
-    public List<Entity> getCommonRootEntities(String subjectKey) throws Exception {
-        List<Entity> entities = getEntitiesWithTag(subjectKey, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-        List<String> subjectKeyList = getSubjectKeys(subjectKey);
-        // We only consider common roots that the user owns, or one of their groups owns. Other common roots
-        // which the user has access to through an ACL are already referenced in the Shared Data folder.
-        // The reason this is a post-processing step, is because we want an accurate ACL on the object from the 
-        // outer fetch join. 
-        List<Entity> commonRoots = new ArrayList<Entity>();
-        if (null != subjectKey) {
-            for (Entity commonRoot : entities) {
-                if (subjectKeyList.contains(commonRoot.getOwnerKey())) {
-                    commonRoots.add(commonRoot);
-                }
-            }
-        }
-        else {
-            commonRoots.addAll(entities);
-        }
-        return commonRoots;
-    }
     
     private void loadWorkspace(String subjectKey, Set<Long> visited) throws Exception {
 
@@ -1584,6 +1584,10 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Loading workspace for "+subjectKey);
 
         Entity workspaceEntity = getDefaultWorkspace(subjectKey);
+        if (workspaceEntity==null) {
+        	log.error("Could not find default workspace for "+subjectKey);	
+        	return;
+        }
         
         LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
         Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
@@ -1715,24 +1719,24 @@ public class MongoDbImport extends AnnotationDAO {
 	        	if (translatedEntity!=null) {
 	        		childId = translatedEntity.getId();
 	        	}
-//	        	String childColName = getCollectionName(childType);
+	        	String childColName = getCollectionName(childType);
 //	        	// TODO: translate unknown entities using "unknown".equals(childColName) but this takes a long time
-//	        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
-//	        		Entity owningEntity = null;
-//	        		Long newChildId = null;
-//	        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
-//	        		// if they referenced a sub-sample, we find the parent sample. Same goes for neuron separations, etc.
-//	        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
-//	        		for (String entityType : entityTranslationPriority) {
-//	        			owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
-//	                	if (owningEntity!=null) {
-//	                		newChildId = owningEntity.getId();
-//	                		logger.info("    Will reference "+entityType+"#"+newChildId+" instead of "+childType+"#"+childId);
-//	                		break;
-//	                	}
-//	        		}
-//	        		if (newChildId!=null) childId = newChildId;
-//	        	}
+	        	if (("sample".equals(childColName) && childEntity.getName().contains("~"))) {
+	        		Entity owningEntity = null;
+	        		Long newChildId = null;
+	        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
+	        		// if they referenced a sub-sample, we find the parent sample. Same goes for neuron separations, etc.
+	        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
+	        		for (String entityType : entityTranslationPriority) {
+	        			owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
+	                	if (owningEntity!=null) {
+	                		newChildId = owningEntity.getId();
+	                		logger.info("    Will reference "+entityType+"#"+newChildId+" instead of "+childType+"#"+childId);
+	                		break;
+	                	}
+	        		}
+	        		if (newChildId!=null) childId = newChildId;
+	        	}
 	        }
 	        
 	        if (childId!=null) {
@@ -1833,9 +1837,6 @@ public class MongoDbImport extends AnnotationDAO {
         else if (EntityConstants.TYPE_ANNOTATION.equals(entityType)) {
             return "annotation";
         }
-        else if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
-            return "image";
-        }
         else if (EntityConstants.TYPE_ONTOLOGY_ROOT.equals(entityType)) {
             return "ontology";
         }
@@ -1853,6 +1854,9 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else if (EntityConstants.TYPE_ALIGNMENT_BOARD.equals(entityType)) {
             return "alignmentBoard";
+        }
+        else if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
+            return "image";
         }
         else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
             return "image";
