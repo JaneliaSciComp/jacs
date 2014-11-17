@@ -6,6 +6,6 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 
 public interface HasFiles {
 
-    public abstract Map<FileType,String> getFiles();
+    public abstract Map<FileType, String> getFiles();
 
 }

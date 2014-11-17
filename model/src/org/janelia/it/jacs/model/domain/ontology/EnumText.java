@@ -3,7 +3,7 @@ package org.janelia.it.jacs.model.domain.ontology;
 public class EnumText extends OntologyTerm {
 
     private Long valueEnumId;
-    
+
     public EnumText() {
     }
 
@@ -20,7 +20,6 @@ public class EnumText extends OntologyTerm {
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-
     public Long getValueEnumId() {
         return valueEnumId;
     }

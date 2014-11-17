@@ -10,8 +10,9 @@ public class Folder extends TreeNode implements HasFilepath {
     public String getFilepath() {
         return filepath;
     }
+
     public void setFilepath(String filepath) {
         this.filepath = filepath;
     }
-    
+
 }

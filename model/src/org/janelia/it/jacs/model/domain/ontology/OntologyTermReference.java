@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
 public class OntologyTermReference {
-    
+
     private Long ontologyId;
     private Long ontologyTermId;
 
@@ -9,7 +9,6 @@ public class OntologyTermReference {
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-
     public Long getOntologyId() {
         return ontologyId;
     }
@@ -24,5 +23,5 @@ public class OntologyTermReference {
 
     public void setOntologyTermId(Long ontologyTermId) {
         this.ontologyTermId = ontologyTermId;
-    }   
+    }
 }

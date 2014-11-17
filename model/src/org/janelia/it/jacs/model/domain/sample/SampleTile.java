@@ -8,38 +8,43 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
 public class SampleTile implements HasFiles {
-    
+
     private String name;
     private String anatomicalArea;
     private List<Reference> lsmReferences;
-    private Map<FileType,String> images;
+    private Map<FileType, String> images;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
     public String getName() {
         return name;
     }
+
     public void setName(String name) {
         this.name = name;
     }
+
     public String getAnatomicalArea() {
         return anatomicalArea;
     }
+
     public void setAnatomicalArea(String anatomicalArea) {
         this.anatomicalArea = anatomicalArea;
     }
+
     public List<Reference> getLsmReferences() {
         return lsmReferences;
     }
+
     public void setLsmReferences(List<Reference> lsmReferences) {
         this.lsmReferences = lsmReferences;
     }
+
     public Map<FileType, String> getFiles() {
         return images;
     }
+
     public void setImages(Map<FileType, String> images) {
         this.images = images;
     }
-    
-    
+
 }

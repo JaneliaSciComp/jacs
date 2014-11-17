@@ -5,7 +5,7 @@ public class Text extends OntologyTerm {
     public boolean allowsChildren() {
         return true;
     }
-    
+
     public String getTypeName() {
         return "Text";
     }

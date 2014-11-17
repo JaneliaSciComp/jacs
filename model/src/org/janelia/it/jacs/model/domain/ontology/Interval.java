@@ -7,11 +7,11 @@ public class Interval extends OntologyTerm {
 
     public Interval() {
     }
-    
+
     public Interval(Long lowerBound, Long upperBound) {
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
-        if (lowerBound.compareTo(upperBound) >= 0) {
+        if (lowerBound.compareTo(upperBound)>=0) {
             throw new IllegalArgumentException("Lower bound must be less than upper bound");
         }
     }
@@ -25,7 +25,6 @@ public class Interval extends OntologyTerm {
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
     public Long getLowerBound() {
         return lowerBound;
     }

@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.model.domain.enums;
 
 /**
- * The type of image to show for given sample. 
- * 
+ * The type of image to show for given sample.
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public enum SampleImageType {
@@ -12,7 +12,7 @@ public enum SampleImageType {
     Unaligned63x("Unaligned 63x"),
     Aligned20x("Aligned 20x"),
     Aligned63x("Aligned 63x");
-    
+
     private String name;
 
     private SampleImageType(String name) {
@@ -22,7 +22,7 @@ public enum SampleImageType {
     public String getName() {
         return name;
     }
-    
+
     @Override
     public String toString() {
         return name;

@@ -6,7 +6,7 @@ import org.jongo.marshall.jackson.oid.Id;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonTypeInfo(use= JsonTypeInfo.Id.CLASS,property="class")
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public abstract class OntologyTerm {
 
     @Id
@@ -15,11 +15,10 @@ public abstract class OntologyTerm {
     private List<OntologyTerm> terms;
 
     public abstract boolean allowsChildren();
-    
+
     public abstract String getTypeName();
-    
+
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
     public Long getId() {
         return id;
     }
@@ -39,7 +38,7 @@ public abstract class OntologyTerm {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public String getName() {
         return name;
     }

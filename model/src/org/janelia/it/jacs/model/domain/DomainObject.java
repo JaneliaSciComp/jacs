@@ -6,9 +6,9 @@ import java.util.Set;
 public interface DomainObject {
 
     public Long getId();
-    
+
     public void setId(Long id);
-    
+
     public abstract String getOwnerKey();
 
     public abstract void setOwnerKey(String ownerKey);
@@ -22,10 +22,10 @@ public interface DomainObject {
     public abstract void setWriters(Set<String> writers);
 
     public Date getCreationDate();
-    
+
     public void setCreationDate(Date creationDate);
-    
+
     public Date getUpdatedDate();
-    
+
     public void setUpdatedDate(Date updatedDate);
 }
