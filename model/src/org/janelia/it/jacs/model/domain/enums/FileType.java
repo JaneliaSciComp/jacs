@@ -8,7 +8,7 @@ package org.janelia.it.jacs.model.domain.enums;
 public enum FileType {
 
     Stack(false, false),
-    Mip(true, false),
+    CompleteMip(true, false),
     SignalMip(true, false),
     ReferenceMip(true, false),
     HeatmapMip(true, false),
