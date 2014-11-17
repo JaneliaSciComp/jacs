@@ -922,7 +922,22 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
         try {
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
-            TmWorkspace workspace=new TmWorkspace(workspaceEntity);
+            // see notes in TmNeuron() on the connectivity retry scheme
+            TmWorkspace workspace = null;
+            boolean connectivityException;
+            try {
+                workspace = new TmWorkspace(workspaceEntity);
+                connectivityException = false;
+            }
+            catch (TmConnectivityException e) {
+                e.printStackTrace();
+                connectivityException = true;
+            }
+            if (connectivityException) {
+                fixConnectivityWorkspace(workspaceId);
+                workspaceEntity = annotationDAO.getEntityById(workspaceId);
+                workspace = new TmWorkspace(workspaceEntity);
+            }
             return workspace;
         } catch (Exception e) {
             e.printStackTrace();
@@ -933,13 +948,29 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmNeuron loadNeuron(Long neuronId) throws DaoException {
         try {
             Entity neuronEntity = annotationDAO.getEntityById(neuronId);
-            TmNeuron neuron=new TmNeuron(neuronEntity);
+            TmNeuron neuron = null;
+            // fixing potential connectivity errors is inelegant; we try
+            //  once, then let the exception bubble up the second time;
+            //  I did the if-statement because I was worried about
+            //  putting the retry in the catch, for fear of infinite recursion
+            boolean connectivityException;
+            try {
+                neuron = new TmNeuron(neuronEntity);
+                connectivityException = false;
+            }
+            catch (TmConnectivityException e) {
+                connectivityException = true;
+            }
+            if (connectivityException) {
+                fixConnectivityNeuron(neuronId);
+                neuronEntity = annotationDAO.getEntityById(neuronId);
+                neuron = new TmNeuron(neuronEntity);
+            }
             return neuron;
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
         }
     }
-
 
 }
