@@ -46,7 +46,7 @@ public class DomainDAO {
 
     private static final Logger log = Logger.getLogger(DomainDAO.class);
 
-    private static final String[] domainTypes = {"treeNode","sample","screenSample","patternMask","flyLine","lsm","fragment","annotation","ontology"};
+    private static final String[] domainTypes = {"treeNode","sample","screenSample","patternMask","flyLine","image","fragment","annotation","ontology"};
     private static final Class<?>[] domainClasses = {TreeNode.class,Sample.class,ScreenSample.class,PatternMask.class,FlyLine.class,LSMImage.class,NeuronFragment.class,Annotation.class,Ontology.class};
 
     private Map<String,Class<? extends DomainObject>> domainClassMap;
@@ -59,7 +59,7 @@ public class DomainDAO {
     protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
     protected MongoCollection patternMaskCollection;
-    protected MongoCollection lsmCollection;
+    protected MongoCollection imageCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection ontologyCollection;
@@ -79,7 +79,7 @@ public class DomainDAO {
         sampleCollection = jongo.getCollection("sample");
         screenSampleCollection = jongo.getCollection("screenSample");
         patternMaskCollection = jongo.getCollection("patternMask");
-        lsmCollection = jongo.getCollection("lsm");
+        imageCollection = jongo.getCollection("image");
         fragmentCollection = jongo.getCollection("fragment");
         annotationCollection = jongo.getCollection("annotation");
         ontologyCollection = jongo.getCollection("ontology");
@@ -214,7 +214,7 @@ public class DomainDAO {
         
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(lsmCollection.find("{sampleId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
+        return toList(imageCollection.find("{sampleId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
     }
     
     public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
@@ -328,7 +328,7 @@ public class DomainDAO {
             log.info("Changing permissions on all fragments and lsms associated with samples: "+logIds);
             WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
             log.info("Updated permissions on "+wr1.getN()+" fragments");
-            WriteResult wr2 = lsmCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+            WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
             log.info("Updated permissions on "+wr2.getN()+" lsms");
         }
         else if ("screenSample".equals(type)) {
