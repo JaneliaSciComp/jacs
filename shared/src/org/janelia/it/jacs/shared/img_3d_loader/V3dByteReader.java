@@ -1,10 +1,10 @@
-package org.janelia.it.workstation.gui.viewer3d.loader;
+package org.janelia.it.jacs.shared.img_3d_loader;
 
-import org.janelia.it.workstation.gui.viewer3d.stream.V3dRawImageStream;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
+import org.janelia.it.jacs.shared.image.stream.V3dRawImageStream;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,7 +35,7 @@ public class V3dByteReader {
             throws IOException {
         textureByteArray = new byte[(sx * sy * sz) * pixelBytes];
 
-        Set<Integer> values = new TreeSet<Integer>();
+        Set<Integer> values = new TreeSet<>();
         for (int z = 0; z < sz; z ++ ) {
             int zOffset = z * sx * sy;
             sliceStream.loadNextSlice();
@@ -70,7 +70,7 @@ public class V3dByteReader {
             throws IOException {
         textureByteArray = new byte[(sx * sy * sz)];
 
-        Set<Integer> values = new TreeSet<Integer>();
+        Set<Integer> values = new TreeSet<>();
         for (int z = 0; z < sz; z ++ ) {
             int zOffset = z * sx * sy;
             sliceStream.loadNextSlice();
@@ -104,7 +104,7 @@ public class V3dByteReader {
 
         int pixelBytes = 4;
         textureByteArray = new byte[(sx * sy * sz) * pixelBytes];
-        Set<Integer> values = new TreeSet<Integer>();
+        Set<Integer> values = new TreeSet<>();
         for (int z = 0; z < sz; z ++ ) {
             int zOffset = z * sx * sy;
             sliceStream.loadNextSlice();

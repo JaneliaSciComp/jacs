@@ -32,6 +32,7 @@
             <input name="STITCH_ALGORITHMS" value=""/> <!-- no stitch -->
             <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_JBA_Qiscore.sh"/>
+            <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment"/>
             <!-- skip alignment for VNC images -->
             <input name="SKIP_ALIGNMENT_TILE_FILTER" value="(?i).*(ventral_nerve_cord).*"/>
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>

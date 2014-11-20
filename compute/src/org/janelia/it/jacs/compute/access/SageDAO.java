@@ -369,6 +369,10 @@ public class SageDAO {
     }
 
 	public ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+		return setImageProperty(image, type, value, new Date());
+	}
+	
+	public ImageProperty setImageProperty(Image image, CvTerm type, String value, Date createDate) throws Exception {
     	for(ImageProperty property : image.getImageProperties()) {
     		if (property.getType().equals(type) && !property.getValue().equals(value)) {
     			// Update existing property value
@@ -378,7 +382,7 @@ public class SageDAO {
     		}
     	}
     	// Set new property
-        ImageProperty prop = new ImageProperty(type, image, value, new Date());
+        ImageProperty prop = new ImageProperty(type, image, value, createDate);
         image.getImageProperties().add(prop);
         saveImageProperty(prop);
         return prop;

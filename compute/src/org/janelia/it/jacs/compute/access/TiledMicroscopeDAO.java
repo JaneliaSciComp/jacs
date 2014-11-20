@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
+import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
 import java.util.*;
 
@@ -843,6 +844,48 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             e.printStackTrace();
             throw new DaoException(e);
         }
+    }
+
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws DaoException {
+        Map<Integer,byte[]> rtnVal = new HashMap<>();
+        try {
+            // Get the bean of data around the point of interest.
+            if ( log.isDebugEnabled() ) {
+                log.debug("Getting nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath);
+            }
+            RawFileInfo rawFileInfo =
+                    getNearestFileInfo(basePath, viewerCoord);
+            if ( rawFileInfo == null ) {
+                throw new Exception("Failed to find any tiff files in " + basePath + "." );
+            }
+            if ( log.isDebugEnabled() ) {
+                log.info("Got nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath);
+            }
+
+            // Grab the channels.
+            TifVolumeFileLoader loader = new TifVolumeFileLoader();
+            if ( cubicDim > -1 ) {
+                loader.setCubicOutputDimension(cubicDim);
+            }
+            loader.setConversionCharacteristics(
+                    rawFileInfo.getTransformMatrix(),
+                    rawFileInfo.getInvertedTransform(),
+                    rawFileInfo.getMinCorner(),
+                    rawFileInfo.getExtent(),
+                    rawFileInfo.getQueryMicroscopeCoords()
+            );
+
+            loader.loadVolumeFile( rawFileInfo.getChannel0().getAbsolutePath() );
+            rtnVal.put( 0, loader.getTextureByteArray() );
+
+            loader.loadVolumeFile( rawFileInfo.getChannel1().getAbsolutePath() );
+            rtnVal.put( 1, loader.getTextureByteArray() );
+
+        } catch ( Exception ex ) {
+            ex.printStackTrace();
+            throw new DaoException(ex);
+        }
+        return rtnVal;
     }
 
     public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {

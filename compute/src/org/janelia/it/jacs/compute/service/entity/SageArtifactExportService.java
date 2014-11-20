@@ -25,7 +25,7 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
 /**
- * Exports workstation artifacts into the SAGE database for all annotated samples. 
+ * Synchronizes workstation artifacts into the SAGE database for all annotated samples. 
  * If everything is successful, it then annotates the samples as having been exported.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -49,6 +49,8 @@ public class SageArtifactExportService extends AbstractEntityService {
     private Entity publishedTerm;
     private CvTerm productMultichannelMip;
     private CvTerm productMultichannelTranslation;
+    private CvTerm productSignalsMip;
+    private CvTerm productSignalsTranslation;
     private CvTerm productSignal1Mip;
     private CvTerm productSignal1Translation;
     private CvTerm propertyPublished;
@@ -78,6 +80,8 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.createDate = new Date();
         this.productMultichannelMip = getCvTermByName("product","multichannel_mip");  
         this.productMultichannelTranslation = getCvTermByName("product","multichannel_translation");
+        this.productSignalsMip = getCvTermByName("product","signals_mip");
+        this.productSignalsTranslation = getCvTermByName("product","signals_translation");
         this.productSignal1Mip = getCvTermByName("product","signal1_mip");
         this.productSignal1Translation = getCvTermByName("product","signal1_translation");
         this.propertyPublished = getCvTermByName("light_imagery","published_to");
@@ -118,7 +122,8 @@ public class SageArtifactExportService extends AbstractEntityService {
                     logger.warn("  Entity annotated with '"+annotationTerm+"' does not have a 20x sample: "+sample.getId());
                 }
                 else {
-                    addIfNotAlreadyExported(samples, os);   
+                    logger.info("  Sample will be synchronized to SAGE: "+os.getName());
+                    samples.add(os);    
                 }
             }
             else if (ANNOTATION_EXPORT_63X.equals(annotationTerm)) {
@@ -127,26 +132,12 @@ public class SageArtifactExportService extends AbstractEntityService {
                     logger.warn("  Entity annotated with '"+annotationTerm+"' does not have a 63x sample: "+sample.getId());
                 }
                 else {
-                    addIfNotAlreadyExported(samples, os);
+                    logger.info("  Sample will be synchronized to SAGE: "+os.getName());
+                    samples.add(os);  
                 }
             }   
         }
         return samples;
-    }
-    
-    private void addIfNotAlreadyExported(List<Entity> samples, Entity sample) throws Exception {
-        if (publishedTerm!=null) {
-            for(Entity annotation : annotationBean.getAnnotationsForEntity(ownerKey, sample.getId())) {
-                String keyEntityId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
-                if (keyEntityId!=null && keyEntityId.equals(publishedTerm.getId().toString())) {
-                    logger.info("  Sample was already exported: "+sample.getName());
-                    return;
-                }
-            }
-        }
-        
-        logger.info("  Sample will be exported: "+sample.getName());
-        samples.add(sample);    
     }
     
     private Entity getObjectiveSample(Entity sample, Objective objective) throws Exception {
@@ -166,7 +157,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         
     private void exportSamples(List<Entity> samples) throws Exception {
         for(Entity sample : samples) {
-            logger.info("Exporting "+sample.getName());
+            logger.info("Synchronizing "+sample.getName());
             String objective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
         	if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                 export20xSample(sample);
@@ -222,19 +213,17 @@ public class SageArtifactExportService extends AbstractEntityService {
         }
         entityLoader.populateChildren(artifactRun);
 
-        export20xArtifactsForArea(sample, artifactRun, "Brain", line);
-        export20xArtifactsForArea(sample, artifactRun, "VNC", line); 
+        // Export to SAGE
+        synchronize20xArtifactsForArea(sample, artifactRun, "Brain", line);
+        synchronize20xArtifactsForArea(sample, artifactRun, "VNC", line); 
         
-        if (publishedTerm!=null) {
-            OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), publishedTerm.getId(), publishedTerm.getName(), null, null);
-            annotationBean.createOntologyAnnotation(ownerKey,annotation);
-        }
+        // Annotate as published
+    	annotateIfNecessary(sample);
     }
-
+    
     private void export63xSample(Entity sample) throws Exception {
         
         // Find fly line
-        
         String lineName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
         Line line = lines.get(lineName);
         if (line==null) {
@@ -250,13 +239,13 @@ public class SageArtifactExportService extends AbstractEntityService {
         }
         entityLoader.populateChildren(artifactRun);
 
-        export63xArtifactsForArea(sample, artifactRun, line);
+        // Export to SAGE
+        synchronize63xArtifactsForArea(sample, artifactRun, line);
         
-    	// Mark sample as having been published to MBEW
-        OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), publishedTerm.getId(), publishedTerm.getName(), null, null);
-        annotationBean.createOntologyAnnotation(ownerKey,annotation);
+        // Annotate as published
+    	annotateIfNecessary(sample);
     }
-
+    
     private Entity getLatestArtifactRun(Entity sample) throws Exception {
         entityLoader.populateChildren(sample);
         List<Entity> children = sample.getOrderedChildren();
@@ -270,7 +259,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         return null;
     }
     
-    private void export20xArtifactsForArea(Entity sample, Entity artifactRun, String area, Line line) throws Exception {
+    private void synchronize20xArtifactsForArea(Entity sample, Entity artifactRun, String area, Line line) throws Exception {
 
         List<Integer> sourceSageImageIds = sourceSageImageIdsByArea.get(area);
         if (sourceSageImageIds==null) {
@@ -289,8 +278,13 @@ public class SageArtifactExportService extends AbstractEntityService {
         Image sourceImage = null;
         if (sourceSageImageIds.size()==1) {
         	// Single LSM source image
-            sourceImage = sage.getImages(sourceSageImageIds).get(0);
-            addImageProperty(sourceImage, propertyPublished, PUBLISHED_TO);
+        	List<Image> images = sage.getImages(sourceSageImageIds);
+        	if (images.isEmpty()) {
+        		logger.error("Could not find SAGE image with id: "+sourceSageImageIds.get(0));
+        		return;
+        	}
+            sourceImage = images.get(0);
+            sage.setImageProperty(sourceImage, propertyPublished, PUBLISHED_TO, createDate);
         }
         else {
         	// Multiple LSMs were merged or stitched to create the artifact, so we need a new primary image in SAGE
@@ -304,36 +298,12 @@ public class SageArtifactExportService extends AbstractEntityService {
             sourceImage = getOrCreatePrimaryImage(image3d, line, sourceSageImageIds);
         }
         
-    	String tileTag = "-"+area;
-        for(Entity child : artifactRun.getChildren()) {
-            String name = child.getName();
-            if (!name.contains(tileTag)) continue;
-        	String type = child.getEntityTypeName();
-            if (EntityConstants.TYPE_IMAGE_2D.equals(type)) {
-            	if (name.contains("Signal")) {
-            		getOrCreateSecondaryImage(child, productSignal1Mip, sourceImage);
-            	}
-            	else {
-            		getOrCreateSecondaryImage(child, productMultichannelMip, sourceImage);
-            	}
-            }
-            else if (EntityConstants.TYPE_MOVIE.equals(type)) {
-            	if (name.contains("Signal")) {
-                    getOrCreateSecondaryImage(child, productSignal1Translation, sourceImage);
-            	}
-            	else {
-            		getOrCreateSecondaryImage(child, productMultichannelTranslation, sourceImage);	
-            	}
-            } 
-            else {
-            	logger.trace("Ignoring artifact "+child.getName()+" (id="+child.getId()+")");
-            }
-        }
+        synchronizeSecondaryImages(artifactRun, sourceImage, area, "20x");
         
         exportedNames.add(sourceImage.getName());
     }
-
-    private void export63xArtifactsForArea(Entity sample, Entity artifactRun, Line line) throws Exception {
+    
+    private void synchronize63xArtifactsForArea(Entity sample, Entity artifactRun, Line line) throws Exception {
 
         // Find source ids for the primary sample image
     	
@@ -345,7 +315,7 @@ public class SageArtifactExportService extends AbstractEntityService {
 
     	List<Integer> allSourceSageImageIds = new ArrayList<Integer>();
     	
-    	logger.info("  Exporting "+tiles.size()+" tiles for "+sample.getName());
+    	logger.trace("  Synchronizing "+tiles.size()+" tiles for "+sample.getName());
     	
         // Image tiles
         for(Entity tile : tiles) {
@@ -364,8 +334,13 @@ public class SageArtifactExportService extends AbstractEntityService {
             Image sourceImage = null;
             if (sourceSageImageIds.size()==1) {
             	// Single LSM source image
-                sourceImage = sage.getImages(sourceSageImageIds).get(0);
-                addImageProperty(sourceImage, propertyPublished, PUBLISHED_TO);
+            	List<Image> images = sage.getImages(sourceSageImageIds);
+            	if (images.isEmpty()) {
+            		logger.error("Could not find SAGE image with id: "+sourceSageImageIds.get(0));
+            		continue;
+            	}
+                sourceImage = images.get(0);
+                sage.setImageProperty(sourceImage, propertyPublished, PUBLISHED_TO, createDate);
             }
             else {
 
@@ -378,9 +353,9 @@ public class SageArtifactExportService extends AbstractEntityService {
                     if (child.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
                     	chanspec = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
                     	pixelRes = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-                    }
-                    if (name.contains(tile.getName())) {
-                    	imageName = name.substring(0, name.lastIndexOf('.'));
+                        if (name.contains(tile.getName()) && !name.contains("Signal")) {
+                        	imageName = name.substring(0, name.lastIndexOf('.'));
+                        }
                     }
                 }
                 
@@ -406,7 +381,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                 sourceImage = getOrCreatePrimaryImage(image3d, line, sourceSageImageIds);
             }
 
-            create63xSecondaryImages(artifactRun, sourceImage, tile.getName());
+            synchronizeSecondaryImages(artifactRun, sourceImage, tile.getName(), "63x");
             exportedNames.add(sourceImage.getName());
         }
 
@@ -419,24 +394,34 @@ public class SageArtifactExportService extends AbstractEntityService {
 	            .childrenOfAttr(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE).getLast();
 
             Image sourceImage = getOrCreatePrimaryImage(image3d, line, allSourceSageImageIds);
-            create63xSecondaryImages(artifactRun, sourceImage, "stitched");
+            synchronizeSecondaryImages(artifactRun, sourceImage, "stitched", "63x");
             exportedNames.add(sourceImage.getName());
         }
     }
     
-    private void create63xSecondaryImages(Entity artifactRun, Image sourceImage, String tileName) throws Exception {
-    	logger.debug("  Creating secondary images for tile: "+tileName);
+    private void synchronizeSecondaryImages(Entity artifactRun, Image sourceImage, String tileName, String objective) throws Exception {
+    	logger.debug("  Synchronizing secondary images for tile: "+tileName);
     	String tileTag = "-"+tileName;
         for(Entity child : artifactRun.getChildren()) {
             String name = child.getName();
             if (!name.contains(tileTag)) continue;
         	String type = child.getEntityTypeName();
             if (EntityConstants.TYPE_IMAGE_2D.equals(type)) {
-                getOrCreateSecondaryImage(child, productMultichannelMip, sourceImage);
+            	if (name.contains("Signal")) {
+             		getOrCreateSecondaryImage(child, "20x".equals(objective)?productSignal1Mip:productSignalsMip, sourceImage);
+            	}
+            	else {
+            		getOrCreateSecondaryImage(child, productMultichannelMip, sourceImage);
+            	}
             }
             else if (EntityConstants.TYPE_MOVIE.equals(type)) {
-                getOrCreateSecondaryImage(child, productMultichannelTranslation, sourceImage);
-            }
+            	if (name.contains("Signal")) {
+             		getOrCreateSecondaryImage(child, "20x".equals(objective)?productSignal1Translation:productSignalsTranslation, sourceImage);
+            	}
+            	else {
+            		getOrCreateSecondaryImage(child, productMultichannelTranslation, sourceImage);	
+            	}
+            } 
             else {
             	logger.trace("Ignoring artifact "+child.getName()+" (id="+child.getId()+")");
             }
@@ -447,11 +432,6 @@ public class SageArtifactExportService extends AbstractEntityService {
         
         String imageName = entity.getId()==null?entity.getName():(entity.getId()+"-"+entity.getName());
         Image image = sage.getImageByName(imageName);
-        if (image!=null) {
-            // TODO: update image properties?
-            logger.info("  Image already exists in SAGE as "+image.getId()+" with name "+image.getName());
-            return image;
-        }
         
         Map<CvTerm,String> consensusValues = new HashMap<CvTerm,String>();
         CvTerm consensusFamily = null;
@@ -501,10 +481,26 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
         
-        logger.info("  Exporting "+entity.getName());
-
+        logger.info("  Synchronizing "+entity.getName());
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        image = new Image(consensusFamily, line, source, imageName, getUrl(path), path, true, true, CREATED_BY, createDate);
+        String url = getUrl(path);
+        
+        if (image!=null) {
+        	image.setFamily(consensusFamily);
+        	image.setLine(line);
+        	image.setSource(source);
+        	image.setUrl(url);
+        	image.setRepresentative(true);
+        	image.setDisplay(true);
+        	image.setCreatedBy(CREATED_BY);
+            image = sage.saveImage(image);
+            logger.info("    Updated SAGE primary image "+image.getId()+" with name "+image.getName());
+        }
+        else {
+            image = new Image(consensusFamily, line, source, imageName, url, path, true, true, CREATED_BY, createDate);
+            image = sage.saveImage(image);
+            logger.info("    Created SAGE primary image "+image.getId()+" with name "+image.getName());
+        }
         
         List<CvTerm> keys = new ArrayList<CvTerm>(consensusValues.keySet());
         Collections.sort(keys, new Comparator<CvTerm>() {
@@ -519,48 +515,53 @@ public class SageArtifactExportService extends AbstractEntityService {
             String value = consensusValues.get(type);
             logger.trace("      "+type.getName()+": "+value);
             if (value == null || value.equals(NO_CONSENSUS)) continue;
-            addImageProperty(image, type, value);
+            sage.setImageProperty(image, type, value, createDate);
         }
         
-        image = sage.saveImage(image);
-        logger.info("  Created SAGE primary image "+image.getId()+" with name "+image.getName());
         return image;
     }
     
-    private ImageProperty addImageProperty(Image image, CvTerm type, String value) {
-        ImageProperty prop = new ImageProperty(type, image, value, createDate);
-        image.getImageProperties().add(prop);
-        return prop;
-    }
-    
-//    private ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
-//    	for(ImageProperty property : image.getImageProperties()) {
-//    		if (property.getType().equals(type)) {
-//    			property.setValue(value);
-//    			return sage.saveImageProperty(property);
-//    		}
-//    	}
-//        ImageProperty prop = new ImageProperty(type, image, value, createDate);
-//        image.getImageProperties().add(prop);
-//        sage.saveImageProperty(prop);
-//        return prop;
-//    }
-    
     private SecondaryImage getOrCreateSecondaryImage(Entity entity, CvTerm productType, Image sourceImage) throws Exception {
-
         String imageName = entity.getId()+"-"+entity.getName();
+        String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        String url = getUrl(path);
+        
         SecondaryImage secondaryImage = sage.getSecondaryImageByName(imageName);
+        
         if (secondaryImage!=null) {
-            // TODO: update image properties?
-            logger.info("  Secondary image already exists in SAGE as "+secondaryImage.getId()+" with name "+secondaryImage.getName());
-            return secondaryImage;
+            secondaryImage.setPath(path);
+            secondaryImage.setUrl(url);
+            sage.saveSecondaryImage(secondaryImage);
+            logger.info("    Updated SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
+        }
+        else {
+            secondaryImage = new SecondaryImage(sourceImage, productType, imageName, path, getUrl(path), createDate);
+            sage.saveSecondaryImage(secondaryImage);
+            logger.info("    Created SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
         }
         
-        String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        secondaryImage = new SecondaryImage(sourceImage, productType, entity.getId()+"-"+entity.getName(), path, getUrl(path), createDate);
-        sage.saveSecondaryImage(secondaryImage);
-        logger.info("  Created SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
         return secondaryImage;
+    }
+
+	/**
+	 * Mark sample as having been published 
+	 * @param sample
+	 * @throws Exception
+	 */
+    private void annotateIfNecessary(Entity sample) throws Exception {
+    	if (publishedTerm==null) {
+    		return;
+    	}
+        for(Entity annotation : annotationBean.getAnnotationsForEntity(ownerKey, sample.getId())) {
+            String keyEntityId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            if (keyEntityId!=null && keyEntityId.equals(publishedTerm.getId().toString())) {
+                logger.trace("  Sample was already exported: "+sample.getName());
+                return;
+            }
+        }
+
+        OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), publishedTerm.getId(), publishedTerm.getName(), null, null);
+        annotationBean.createOntologyAnnotation(ownerKey,annotation);
     }
     
     private String getUrl(String filepath) {

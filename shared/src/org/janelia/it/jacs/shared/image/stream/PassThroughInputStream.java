@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.viewer3d.stream;
+package org.janelia.it.jacs.shared.image.stream;
 
 import java.io.FilterInputStream;
 import java.io.InputStream;

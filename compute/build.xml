@@ -26,6 +26,7 @@
     <!-- Import all the generic module targets -->
 
     <import file="../buildprocess/build-module.xml"/>
+    <tstamp prefix="start"/>
 
     <property file="../buildprocess/config/${user.name}.properties" />
     <property name="localname" value="compute"/>
@@ -61,11 +62,11 @@
     </target>
 
     <target name="local-jar" depends="local-compile, compile, make-jars-dir" unless="manifest.classpath">  
-  
     	<property name="dep.dir" value="${build.jars.dir}/lib"/>
         <delete dir="${dep.dir}"/>
         <mkdir dir="${dep.dir}" />
-			
+
+        <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
 		<path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
@@ -81,6 +82,7 @@
 			<fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
         	<fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
 			<fileset file="${common.dir}/Spring/jxl.jar"/>
+            <fileset dir="${basedir}/../shared/lib" includes="**/jai*.jar"/>
         </path>
     		
     	<copy todir="${dep.dir}" flatten="true">
@@ -100,7 +102,7 @@
             <fileset dir="${basedir}/conf/resource" includes="*.process"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
                 <attribute name="Class-Path" value="${manifest.classpath}"/>
             </manifest>
         </jar>
@@ -113,14 +115,14 @@
 	</target>
 
     <target name="test-jar" depends="local-compile">
-		<jar destfile="${build.jars.dir}/${test.jar.name}" >
+        <jar destfile="${build.jars.dir}/${test.jar.name}" >
             <fileset dir="${basedir}/test/conf/fasta" />
             <fileset dir="${basedir}/test/conf/process" includes="*.process"/>
             <fileset dir="${basedir}/test/conf/process/xmlpersist"  includes="*.process"/>
             <fileset dir="${basedir}/test/conf/parameter" />
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </jar>
 	</target>
@@ -160,7 +162,7 @@
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${build.unzipped.dir}/META-INF">
                 <include name="services/**"/>
@@ -190,7 +192,7 @@
             <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </war>
         <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
@@ -204,7 +206,7 @@
 
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </war>
     </target>
@@ -219,9 +221,6 @@
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.sar"/>
             <fileset file="${basedir}/build/jars/${localname}.har"/>
-            <fileset dir="${basedir}/../shared/lib">
-                <include name="**/*.jar"/>
-            </fileset>
             <zipfileset dir="${dep.dir}" prefix="lib"/>
             <fileset dir="${jacs.properties.dir}">
                 <include name="jacs.properties"/>
@@ -232,14 +231,13 @@
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}" includes="jboss-app.xml"/>
         </ear>
     </target>
     <!-- Defines the set of targets that should be run to completely build this module. -->
 	<target name="build" depends="local-jar">
-        <tstamp/>
         <!-- build .har file for Hibernate-service -->
         <jar jarfile="${basedir}/build/jars/${localname}.har">
             <fileset dir="${basedir}/../model/conf/hibernate_mappings">
@@ -250,7 +248,7 @@
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}" includes="hibernate-service.xml"/>
         </jar>
@@ -258,7 +256,7 @@
         <jar jarfile="${basedir}/build/jars/${localname}.sar">
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}">
             	<include name="jboss-service.xml"/>
@@ -287,7 +285,7 @@
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </jar>
 

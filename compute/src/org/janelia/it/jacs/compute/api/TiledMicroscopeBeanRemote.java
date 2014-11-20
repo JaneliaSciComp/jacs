@@ -5,6 +5,7 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 
 import javax.ejb.Remote;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -73,4 +74,5 @@ public interface TiledMicroscopeBeanRemote {
 
     public RawFileInfo getNearestFileInfo(String basePath, int[] viewerCoord) throws ComputeException;
 
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws ComputeException;
 }
