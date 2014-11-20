@@ -1640,7 +1640,7 @@ public class MongoDbImport extends AnnotationDAO {
                 Long nodeId = loadFolderHierarchy(folderEntity, visited, "  ");
 
                 if (nodeId!=null) {
-                    Reference root = new Reference("workspace",nodeId);
+                    Reference root = new Reference("treeNode",nodeId);
                     roots.add(root);
                 }
                 
