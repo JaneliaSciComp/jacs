@@ -947,7 +947,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new DaoException(e);
             }
             if (annotation != null && !parentSet.contains(annotation.getParentId())) {
-                log.info("found missing parent for " + annotation.getId());
+                log.info(annotation.getId() + " had missing parent; promoted to root");
 
                 // when a missing parent is found:
                 //     edit value: set parent ID to neuron ID
