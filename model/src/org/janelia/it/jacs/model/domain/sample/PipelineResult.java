@@ -7,6 +7,7 @@ import java.util.List;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class PipelineResult implements HasFilepath {
@@ -19,35 +20,45 @@ public class PipelineResult implements HasFilepath {
     public boolean hasError() {
         return error!=null;
     }
-
-    private PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
+    
+    private PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type, boolean mustHaveFiles) {
         if (results==null) {
             return null;
         }
         for (int i = results.size()-1; i>=0; i--) {
             PipelineResult result = results.get(i);
-            if (type.isAssignableFrom(result.getClass())) {
-                return result;
+            if (type==null || type.isAssignableFrom(result.getClass())) {
+                if (!mustHaveFiles || result instanceof HasFiles) {
+                    return result;
+                }
             }
         }
         return null;
     }
 
+    public PipelineResult getLatestResult() {
+        return getLatestResultOfType(null, false);
+    }
+
+    public HasFiles getLatestResultWithFiles() {
+        return (HasFiles)getLatestResultOfType(null, true);
+    }
+    
     public SampleProcessingResult getLatestProcessingResult() {
-        return (SampleProcessingResult) getLatestResultOfType(SampleProcessingResult.class);
+        return (SampleProcessingResult) getLatestResultOfType(SampleProcessingResult.class, false);
     }
 
     public SampleAlignmentResult getLatestAlignmentResult() {
-        return (SampleAlignmentResult) getLatestResultOfType(SampleAlignmentResult.class);
+        return (SampleAlignmentResult) getLatestResultOfType(SampleAlignmentResult.class, false);
     }
 
     public NeuronSeparation getLatestSeparationResult() {
-        return (NeuronSeparation) getLatestResultOfType(NeuronSeparation.class);
+        return (NeuronSeparation) getLatestResultOfType(NeuronSeparation.class, false);
     }
 
     public void addResult(PipelineResult result) {
         if (results==null) {
-            this.results = new ArrayList<PipelineResult>();
+            this.results = new ArrayList<>();
         }
         results.add(result);
     }

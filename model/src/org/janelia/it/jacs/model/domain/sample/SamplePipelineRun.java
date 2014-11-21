@@ -4,7 +4,7 @@ public class SamplePipelineRun extends PipelineResult {
 
     private String name;
     private String pipelineProcess;
-
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getName() {
         return name;

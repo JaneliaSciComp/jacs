@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
@@ -19,6 +22,18 @@ public class Sample extends AbstractDomainObject {
     private String visited;
     private Map<String, ObjectiveSample> objectives;
 
+    public List<String> getOrderedObjectives() {
+        if (objectives==null || objectives.isEmpty()) return null;
+        List<String> sortedObjectives = new ArrayList<>(objectives.keySet());
+        Collections.sort(sortedObjectives);
+        return sortedObjectives;
+    }
+    
+    public ObjectiveSample getObjectiveSample(String objective) {
+        if (objectives==null) return null;
+        return objectives.get(objective);
+    }
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getAge() {
         return age;

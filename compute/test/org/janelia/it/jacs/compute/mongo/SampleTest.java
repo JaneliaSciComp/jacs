@@ -187,23 +187,8 @@ public class SampleTest extends MongoDbTest {
             Assert.assertNotNull(subject.getKey());
         }
     }
-
-    @Test
-    public void runBenchmarks2() throws Exception {
-
-    	String subjectKey = "user:nerna";
-    	
-    	
-        long start = System.currentTimeMillis();
-    	TreeNode node = dao.getTreeNodeById(subjectKey, 2047903283699253346L);
-    	List<DomainObject> children = dao.getDomainObjects(subjectKey, node.getChildren());
-        System.out.println("getting VT MCFO Case 1 samples took "+(System.currentTimeMillis()-start)+" ms");
-    	
-    	
-
-    }
     
-    //@Test
+    @Test
     public void runBenchmarks() throws Exception {
 
         long start = System.currentTimeMillis();
