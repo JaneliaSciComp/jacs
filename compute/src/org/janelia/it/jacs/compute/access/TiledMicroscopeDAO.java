@@ -899,10 +899,88 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return rtnVal;
     }
 
+    /**
+     * fix connectivity issues for all neurons in a workspace
+     */
+    private void fixConnectivityWorkspace(Long workspaceID) throws DaoException {
+        // remember, can't load workspace object, because that's what we're fixing!
+        Entity entity = annotationDAO.getEntityById(workspaceID);
+        for (TmNeuronDescriptor neuronDescriptor: getNeuronsForWorkspace(workspaceID, entity.getOwnerKey())) {
+            fixConnectivityNeuron(neuronDescriptor.getId());
+        }
+    }
+
+    /**
+     * fix connectity issues for a neuron (bad parents, since children
+     * aren't stored in the entity data); fix in this case means breaking links
+     */
+    private void fixConnectivityNeuron(Long neuronID) throws DaoException {
+        // remember, can't load neuron or workspace objects, because those are what we're fixing!
+
+        log.info("attempting to fix connectivity for neuron " + neuronID);
+
+        // first we need to load all annotations (just like TmNeuron does);
+        //  then we can loop over them again and check for missing parents/children
+        ArrayList<EntityData> annList = new ArrayList<>();
+        HashSet<Long> parentSet = new HashSet<>();
+        Entity neuronEntity = annotationDAO.getEntityById(neuronID);
+        for (EntityData ed: neuronEntity.getEntityData()) {
+            String attributeName = ed.getEntityAttrName();
+            if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
+                attributeName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                parentSet.add(ed.getId());
+                // no need to check roots; they are children of neurons
+                if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                    annList.add(ed);
+                }
+            }
+        }
+
+        for (EntityData ed: annList) {
+            // I really don't get why we launder everything to DaoException, but
+            //  that seems to be the pattern:
+            TmGeoAnnotation annotation;
+            try {
+                annotation = new TmGeoAnnotation(ed.getValue());
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new DaoException(e);
+            }
+            if (annotation != null && !parentSet.contains(annotation.getParentId())) {
+                log.info(annotation.getId() + " had missing parent; promoted to root");
+
+                // when a missing parent is found:
+                //     edit value: set parent ID to neuron ID
+                //     edit attribute name: set to root not tree
+                String valueString=TmGeoAnnotation.toStringFromArguments(annotation.getId(),
+                    neuronID, annotation.getIndex(), annotation.getX(), annotation.getY(),
+                    annotation.getZ(), annotation.getComment());
+                ed.setValue(valueString);
+                ed.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+                annotationDAO.saveOrUpdate(ed);
+            }
+        }
+    }
+
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
         try {
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
-            TmWorkspace workspace=new TmWorkspace(workspaceEntity);
+            // see notes in TmNeuron() on the connectivity retry scheme
+            TmWorkspace workspace = null;
+            boolean connectivityException;
+            try {
+                workspace = new TmWorkspace(workspaceEntity);
+                connectivityException = false;
+            }
+            catch (TmConnectivityException e) {
+                e.printStackTrace();
+                connectivityException = true;
+            }
+            if (connectivityException) {
+                fixConnectivityWorkspace(workspaceId);
+                workspaceEntity = annotationDAO.getEntityById(workspaceId);
+                workspace = new TmWorkspace(workspaceEntity);
+            }
             return workspace;
         } catch (Exception e) {
             e.printStackTrace();
@@ -913,13 +991,29 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmNeuron loadNeuron(Long neuronId) throws DaoException {
         try {
             Entity neuronEntity = annotationDAO.getEntityById(neuronId);
-            TmNeuron neuron=new TmNeuron(neuronEntity);
+            TmNeuron neuron = null;
+            // fixing potential connectivity errors is inelegant; we try
+            //  once, then let the exception bubble up the second time;
+            //  I did the if-statement because I was worried about
+            //  putting the retry in the catch, for fear of infinite recursion
+            boolean connectivityException;
+            try {
+                neuron = new TmNeuron(neuronEntity);
+                connectivityException = false;
+            }
+            catch (TmConnectivityException e) {
+                connectivityException = true;
+            }
+            if (connectivityException) {
+                fixConnectivityNeuron(neuronId);
+                neuronEntity = annotationDAO.getEntityById(neuronId);
+                neuron = new TmNeuron(neuronEntity);
+            }
             return neuron;
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
         }
     }
-
 
 }

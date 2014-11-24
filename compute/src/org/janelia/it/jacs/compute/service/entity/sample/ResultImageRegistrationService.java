@@ -1,11 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -21,6 +15,12 @@ import org.janelia.it.jacs.model.entity.cv.SampleImageType;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Start at some result entity within a Pipeline run, and look for 2d images corresponding to 3d images. These 
@@ -326,6 +326,9 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         case Latest: return true;
         case Unaligned20x: return alignmentSpace==null && Objective.OBJECTIVE_20X.getName().equals(objectiveName);
         case Unaligned63x: return alignmentSpace==null && Objective.OBJECTIVE_63X.getName().equals(objectiveName);
+		// This code walks the tree and the 63X will be visited last in both cases that match
+		case LatestUnaligned: return alignmentSpace==null;
+		case LatestAligned: return alignmentSpace!=null;
         case Aligned20x: return alignmentSpace!=null && Objective.OBJECTIVE_20X.getName().equals(objectiveName);
         case Aligned63x: return alignmentSpace!=null && Objective.OBJECTIVE_63X.getName().equals(objectiveName);
         }
