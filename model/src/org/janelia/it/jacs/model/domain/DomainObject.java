@@ -9,6 +9,10 @@ public interface DomainObject {
 
     public void setId(Long id);
 
+    public String getName();
+
+    public void setName(String name);
+    
     public abstract String getOwnerKey();
 
     public abstract void setOwnerKey(String ownerKey);
