@@ -1095,10 +1095,16 @@ public class MongoDbImport extends AnnotationDAO {
         mask.setMaskSetName(maskSetName);
         mask.setIntensityScore(intensity);
         mask.setDistributionScore(distribution);
-
+        
+        String default2dImageFilepath = maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
+        if (default2dImageFilepath==null) {
+        	default2dImageFilepath = maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+        }
+        
+        
         Map<FileType,String> images = new HashMap<FileType,String>();
         addImage(images,FileType.Stack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-        addImage(images,FileType.HeatmapMip,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        addImage(images,FileType.HeatmapMip,getRelativeFilename(mask,default2dImageFilepath));
         mask.setImages(images);
         return mask;
     }
