@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.jboss.annotation.ejb.PoolClass;
@@ -13,6 +12,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.List;
 import java.util.Map;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
 /**
  * Created with IntelliJ IDEA.
@@ -343,6 +343,19 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
             throw new ComputeException(e);
         }
         return rtnVal;
+    }
+    
+    @Override
+    public CoordinateToRawTransform getTransform( String basePath ) throws ComputeException {
+        CoordinateToRawTransform transform = null;
+        try {
+            transform = _tiledMicroscopeDAO.getTransform(basePath);
+        } catch (Exception e) {
+            String errorString="Error calling getTransform DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(e);
+        }
+        return transform;
     }
 
 }

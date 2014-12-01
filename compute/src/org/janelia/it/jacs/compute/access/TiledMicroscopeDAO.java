@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
 import java.util.*;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
 /**
  * Created with IntelliJ IDEA.
@@ -897,6 +898,15 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             throw new DaoException(ex);
         }
         return rtnVal;
+    }
+    
+    public CoordinateToRawTransform getTransform( String basePath ) throws DaoException {
+        try {
+            RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
+            return fetcher.getTransform();
+        } catch ( Exception ex ) {
+            throw new DaoException(ex);
+        }
     }
 
     /**

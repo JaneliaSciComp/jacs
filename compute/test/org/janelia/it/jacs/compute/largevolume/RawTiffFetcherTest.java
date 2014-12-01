@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.largevolume;
 
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.junit.Before;
 import org.junit.Test;
