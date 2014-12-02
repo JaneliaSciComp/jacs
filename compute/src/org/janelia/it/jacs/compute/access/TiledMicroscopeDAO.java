@@ -889,7 +889,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return rtnVal;
     }
 
-    public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
+    public CoordinateToRawTransform getTransform( String basePath ) throws DaoException {
+        try {
+            RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
+            return fetcher.getTransform();
+        } catch ( Exception ex ) {
+            throw new DaoException(ex);
+        }
+    }
+
+    private RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
         RawFileInfo rtnVal = null;
         try {
             RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
@@ -900,15 +909,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return rtnVal;
     }
     
-    public CoordinateToRawTransform getTransform( String basePath ) throws DaoException {
-        try {
-            RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
-            return fetcher.getTransform();
-        } catch ( Exception ex ) {
-            throw new DaoException(ex);
-        }
-    }
-
     /**
      * fix connectivity issues for all neurons in a workspace
      */

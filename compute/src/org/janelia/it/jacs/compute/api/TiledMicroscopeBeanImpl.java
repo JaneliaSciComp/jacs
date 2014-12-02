@@ -319,19 +319,6 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
 
     @Override
-    public RawFileInfo getNearestFileInfo(String basePath, int[] viewerCoord) throws ComputeException {
-        RawFileInfo rtnVal = null;
-        try {
-            rtnVal = _tiledMicroscopeDAO.getNearestFileInfo(basePath, viewerCoord);
-        } catch (Exception e) {
-            String errorString="Error calling getNearestFileInfo DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(e);
-        }
-        return rtnVal;
-    }
-
-    @Override
     public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws ComputeException {
         Map<Integer,byte[]> rtnVal = null;
         try {

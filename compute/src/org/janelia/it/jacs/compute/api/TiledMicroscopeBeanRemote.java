@@ -73,8 +73,6 @@ public interface TiledMicroscopeBeanRemote {
 
     public void deleteStructuredTextAnnotation(Long annID) throws ComputeException;
 
-    public RawFileInfo getNearestFileInfo(String basePath, int[] viewerCoord) throws ComputeException;
-
     public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws ComputeException;
 
     public CoordinateToRawTransform getTransform( String basePath ) throws ComputeException;
