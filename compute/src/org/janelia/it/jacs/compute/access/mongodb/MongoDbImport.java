@@ -37,8 +37,8 @@ import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.enums.SampleImageType;
-import org.janelia.it.jacs.model.domain.gui.AlignmentBoard;
-import org.janelia.it.jacs.model.domain.gui.AlignmentBoardItem;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoardItem;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.EnumText;
@@ -150,9 +150,12 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Adding subjects");
         loadSubjects();
-        
-        log.info("Adding fly lines");
-        loadFlyLines();
+
+        log.info("Adding ontologies");
+        loadOntologies(); // must come before loadAnnotations to populate the term maps
+
+        log.info("Adding annotations");
+        loadAnnotations();
         
         log.info("Adding data sets");
         loadDataSets();
@@ -162,15 +165,12 @@ public class MongoDbImport extends AnnotationDAO {
         // TODO: handle pattern mask results in samples (knappj)
         loadSamples();
 
+        log.info("Adding fly lines");
+        loadFlyLines();
+        
         log.info("Adding screen data");
         loadScreenData();
         
-        log.info("Adding ontologies");
-        loadOntologies(); // must come before loadAnnotations to populate the term maps
-        
-        log.info("Adding annotations");
-        loadAnnotations();
-
         log.info("Adding compartment sets");
         loadCompartmentSets();
 
@@ -191,6 +191,7 @@ public class MongoDbImport extends AnnotationDAO {
         getSession().clear();
         log.trace("Flushing and clearing the session took "+(System.currentTimeMillis()-start)+" ms");
     }
+    
     
     /* SUBJECT */
     
@@ -1256,22 +1257,26 @@ public class MongoDbImport extends AnnotationDAO {
             
             StringBuilder sql = new StringBuilder();
             sql.append("select a.id, a.name, a.owner_key, a.creation_date, a.updated_date, target.id, target.entity_type, ");
-            sql.append("  ked.child_entity_id keyId, ved.child_entity_id valueId ");
+            sql.append("ked.value, ved.value, keed.child_entity_id, veed.child_entity_id ");
             sql.append("from entity a ");
             sql.append("join entityData ted on ted.parent_entity_id=a.id and ted.entity_att=? ");
             sql.append("join entity target on ted.value=target.id "); 
             sql.append("left outer join entityData ked on ked.parent_entity_id=a.id and ked.entity_att=? ");
             sql.append("left outer join entityData ved on ved.parent_entity_id=a.id and ved.entity_att=? ");
+            sql.append("left outer join entityData keed on keed.parent_entity_id=a.id and keed.entity_att=? ");
+            sql.append("left outer join entityData veed on veed.parent_entity_id=a.id and veed.entity_att=? ");
             sql.append("where a.entity_type=? ");
-            sql.append("and a.owner_key not in ('user:jenetta','group:flylight') ");
+            //sql.append("and a.owner_key not in ('user:jenetta','group:flylight') ");
             
             stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             stmt.setFetchSize(Integer.MIN_VALUE);
             
             stmt.setString(1, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-            stmt.setString(2, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
-            stmt.setString(3, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
-            stmt.setString(4, EntityConstants.TYPE_ANNOTATION);
+	        stmt.setString(2, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
+	        stmt.setString(3, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+            stmt.setString(4, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            stmt.setString(5, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_ENTITY_ID);
+            stmt.setString(6, EntityConstants.TYPE_ANNOTATION);
             
             rs = stmt.executeQuery();
             int i = 0;
@@ -1283,8 +1288,10 @@ public class MongoDbImport extends AnnotationDAO {
                 Date updatedDate = rs.getTimestamp(5);
                 Long targetId = rs.getBigDecimal(6).longValue();
                 String targetType = rs.getString(7);
-                String keyIdStr = rs.getString(8);
-                String valueIdStr = rs.getString(8);
+                String keyStr = rs.getString(8);
+                String valueStr = rs.getString(9);
+                String keyIdStr = rs.getString(10);
+                String valueIdStr = rs.getString(11);
                 
                 Long keyId = null;
                 if (!StringUtils.isEmpty(keyIdStr)) {
@@ -1307,7 +1314,7 @@ public class MongoDbImport extends AnnotationDAO {
                 }
                 
                 Annotation annotation = getAnnotation(annotationId, annotationName, owner, 
-                		creationDate, updatedDate, targetId, targetType, keyId, valueId);
+                		creationDate, updatedDate, targetId, targetType, keyId, valueId, keyStr, valueStr);
                 queue.add(annotation);
                 
                 if (queue.size()>ANNOTATION_BATCH_SIZE) {
@@ -1340,7 +1347,7 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     private Annotation getAnnotation(Long annotationId, String annotationName, String ownerKey, Date creationDate, Date updatedDate,
-            Long targetId, String targetType, Long keyId, Long valueId) {
+            Long targetId, String targetType, Long keyId, Long valueId, String key, String value) {
         
         Annotation annotation = new Annotation();
         annotation.setId(annotationId);
@@ -1350,6 +1357,8 @@ public class MongoDbImport extends AnnotationDAO {
         annotation.setWriters(annotation.getReaders());
         annotation.setCreationDate(creationDate);
         annotation.setUpdatedDate(updatedDate);
+        annotation.setKey(key);
+        annotation.setValue(value);
         
         if (keyId!=null) {
             OntologyTermReference keyTerm = new OntologyTermReference();

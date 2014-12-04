@@ -135,7 +135,7 @@ public class LargeOperations {
 				annots.add(new SimpleAnnotation(annotationName, key, value, owner));
 				putValue(annotationMapCache, entityId, annots);
 				i++;
-                }
+            }
 			logger.info("    Processed "+i+" annotations on "+annotationMapCache.getSize()+" targets");
     	}
     	catch (SQLException e) {

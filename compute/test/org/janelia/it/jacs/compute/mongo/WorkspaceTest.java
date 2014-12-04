@@ -21,7 +21,7 @@ public class WorkspaceTest extends MongoDbTest {
     
     @Test
     public void testSubjects() {
-        for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {
+        for(Subject subject : dao.getCollectionByName("subject").find().as(Subject.class)) {
             Assert.assertNotNull(subject.getId());
             Assert.assertNotNull(subject.getKey());
         }

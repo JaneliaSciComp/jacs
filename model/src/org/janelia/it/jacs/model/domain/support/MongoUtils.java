@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.model.domain.support;
 
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
@@ -58,6 +60,10 @@ public class MongoUtils {
         return mongoMappedAnnotation.collectionName();
     }
 
+    public static Set<String> getCollectionNames() {
+    	return typeClasses.keySet();
+    }
+    
     public static Class<? extends DomainObject> getObjectClass(String collectionName) {
         return typeClasses.get(collectionName);
     }

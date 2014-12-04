@@ -93,7 +93,7 @@ public class SolrDAO extends AnnotationDAO {
             }
     	}
     }
-    
+        
     public void indexAllEntities(Map<String, SageTerm> sageVocab) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("indexAllEntities(sageVocab.size="+sageVocab.size()+")");
@@ -105,9 +105,8 @@ public class SolrDAO extends AnnotationDAO {
     	
     	this.sageVocab = sageVocab;
     	this.usedSageVocab = new HashSet<SageTerm>();
-    	
+
     	log.info("Building disk-based entity maps");
-    	
     	this.largeOp = new LargeOperations(this);
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
@@ -296,7 +295,7 @@ public class SolrDAO extends AnnotationDAO {
     	commit();
     }
     
-    private void index(List<SolrInputDocument> docs) throws DaoException {
+    protected void index(List<SolrInputDocument> docs) throws DaoException {
     	init();
     	if (docs==null||docs.isEmpty()) return;
     	try {

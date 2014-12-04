@@ -14,6 +14,8 @@ public class Annotation extends AbstractDomainObject {
     private Reference target;
     private OntologyTermReference keyTerm;
     private OntologyTermReference valueTerm;
+    private String key;
+    private String value;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getTargetType() {
@@ -47,4 +49,20 @@ public class Annotation extends AbstractDomainObject {
     public void setValueTerm(OntologyTermReference valueTerm) {
         this.valueTerm = valueTerm;
     }
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getValue() {
+		return value;
+	}
+
+	public void setValue(String value) {
+		this.value = value;
+	}
 }

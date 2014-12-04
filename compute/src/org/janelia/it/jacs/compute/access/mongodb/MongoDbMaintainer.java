@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.support.MongoUtils;
 import org.jongo.MongoCollection;
 
 import com.google.common.collect.HashMultimap;
@@ -40,22 +41,22 @@ public class MongoDbMaintainer {
         log.info("Refreshing denormalized permissions");
 
         Multimap<String,String> groupMap = HashMultimap.<String,String>create();
-        for(Subject subject : domainDao.getCollection("subject").find().as(Subject.class)) {
+        for(Subject subject : domainDao.getCollectionByName("subject").find().as(Subject.class)) {
             for(String groupKey : subject.getGroups()) {
                 groupMap.put(groupKey, subject.getKey());
             }
         }
         
-        Map<String,Class<? extends DomainObject>> domainClassMap = domainDao.getDomainClassMap();
-        for(String domainType : domainClassMap.keySet()) {
-            log.info("Refreshing denormalized permissions for "+domainType);
+        Set<String> collectionNames = MongoUtils.getCollectionNames();
+        for(String collectionName : collectionNames) {
+            log.info("Refreshing denormalized permissions for "+collectionName);
             
-            MongoCollection collection = domainDao.getCollection(domainType);
-            Class domainClass = domainClassMap.get(domainType);
+            MongoCollection collection = domainDao.getCollectionByName(collectionName);
+            Class domainClass = MongoUtils.getObjectClass(collectionName);
             Iterable iterable = collection.find().as(domainClass);
             
             if (iterable==null) {
-                log.info("Could not iterate collection "+domainType+" as "+domainClass);
+                log.info("Could not iterate collection "+collectionName+" as "+domainClass);
                 continue;
             }
             
@@ -75,31 +76,31 @@ public class MongoDbMaintainer {
         long start = System.currentTimeMillis();
         log.info("Ensuring indexes");
 
-        MongoCollection treeNodeCollection = domainDao.getCollection("treeNode");
+        MongoCollection treeNodeCollection = domainDao.getCollectionByName("treeNode");
         ensureDomainIndexes(treeNodeCollection);
         treeNodeCollection.ensureIndex("{name:1}");
         treeNodeCollection.ensureIndex("{class:1}");
         treeNodeCollection.ensureIndex("{class:1,writers:1}");
         treeNodeCollection.ensureIndex("{class:1,readers:1}");
 
-        MongoCollection ontologyCollection = domainDao.getCollection("ontology");
+        MongoCollection ontologyCollection = domainDao.getCollectionByName("ontology");
         ensureDomainIndexes(ontologyCollection);
         ontologyCollection.ensureIndex("{name:1}");
 
-        MongoCollection sampleCollection = domainDao.getCollection("sample");
+        MongoCollection sampleCollection = domainDao.getCollectionByName("sample");
         ensureDomainIndexes(sampleCollection);
         sampleCollection.ensureIndex("{name:1}");
         sampleCollection.ensureIndex("{dataSet:1}");
         sampleCollection.ensureIndex("{line:1}");
         
-        MongoCollection fragmentCollection = domainDao.getCollection("fragment");
+        MongoCollection fragmentCollection = domainDao.getCollectionByName("fragment");
         ensureDomainIndexes(fragmentCollection);
         fragmentCollection.ensureIndex("{separationId:1}");
         fragmentCollection.ensureIndex("{sampleId:1}");
         fragmentCollection.ensureIndex("{sampleId:1,writers:1}");
         fragmentCollection.ensureIndex("{sampleId:1,readers:1}");
 
-        MongoCollection lsmCollection = domainDao.getCollection("lsm");
+        MongoCollection lsmCollection = domainDao.getCollectionByName("lsm");
         ensureDomainIndexes(lsmCollection);
         lsmCollection.ensureIndex("{sageId:1}");
         lsmCollection.ensureIndex("{slideCode:1}");
@@ -108,21 +109,21 @@ public class MongoDbMaintainer {
         lsmCollection.ensureIndex("{sampleId:1,writers:1}");
         lsmCollection.ensureIndex("{sampleId:1,readers:1}");
 
-        MongoCollection flyLineCollection = domainDao.getCollection("flyLine");
+        MongoCollection flyLineCollection = domainDao.getCollectionByName("flyLine");
         ensureDomainIndexes(flyLineCollection);
         flyLineCollection.ensureIndex("{robotId:1}");
 
-        MongoCollection screenSampleCollection = domainDao.getCollection("screenSample");
+        MongoCollection screenSampleCollection = domainDao.getCollectionByName("screenSample");
         ensureDomainIndexes(screenSampleCollection);
         screenSampleCollection.ensureIndex("{flyLine:1}");
 
-        MongoCollection patternMaskCollection = domainDao.getCollection("patternMask");
+        MongoCollection patternMaskCollection = domainDao.getCollectionByName("patternMask");
         ensureDomainIndexes(patternMaskCollection);
         patternMaskCollection.ensureIndex("{screenSampleId:1}");
         patternMaskCollection.ensureIndex("{screenSampleId:1,writers:1}");
         patternMaskCollection.ensureIndex("{screenSampleId:1,readers:1}");
 
-        MongoCollection annotationCollection = domainDao.getCollection("annotation");
+        MongoCollection annotationCollection = domainDao.getCollectionByName("annotation");
         ensureDomainIndexes(annotationCollection);
         annotationCollection.ensureIndex("{targetId:1}");
         annotationCollection.ensureIndex("{targetId:1,writers:1}");

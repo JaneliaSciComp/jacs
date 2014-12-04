@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.model.domain.gui;
+package org.janelia.it.jacs.model.domain.gui.alignment_board;
 
 import java.util.List;
 

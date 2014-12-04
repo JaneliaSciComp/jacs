@@ -163,11 +163,18 @@ public class ReflectionHelper {
      */
     public static Object getUsingGetter(Object obj, String fieldName) 
             throws Exception {
-        String methodName = getAccessor("get", fieldName);
-        return obj.getClass().getMethod(methodName, EMPTY_ARGS_TYPES).invoke(
-            obj, EMPTY_ARGS_VALUES);
+        return getGetter(obj.getClass(), fieldName).invoke(obj, EMPTY_ARGS_VALUES);
     }
 
+    /**
+     * Get the public getter method for the given field.
+     */
+    public static Method getGetter(Class<?> clazz, String fieldName) 
+			throws Exception {
+        String methodName = getAccessor("get", fieldName);
+        return clazz.getMethod(methodName, EMPTY_ARGS_TYPES);
+    }
+    
     /**
      * Set the given attribute on the specified object, using the public setter method.
      */

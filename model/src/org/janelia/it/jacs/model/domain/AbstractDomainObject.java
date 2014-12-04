@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.domain;
 import java.util.Date;
 import java.util.Set;
 
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.jongo.marshall.jackson.oid.Id;
 
 /**
@@ -15,12 +16,24 @@ import org.jongo.marshall.jackson.oid.Id;
 public abstract class AbstractDomainObject implements DomainObject {
 
     @Id
+    @SearchAttribute(key="id",label="GUID")
     private Long id;
+    
+    @SearchAttribute(key="name",label="Name")
     private String name;
+    
+    @SearchAttribute(key="username",label="Owner",facet=true)
     private String ownerKey;
+
+    @SearchAttribute(key="subjects",label="Subjects")
     private Set<String> readers;
+    
     private Set<String> writers;
+
+    @SearchAttribute(key="creation_date",label="Creation Date")
     private Date creationDate;
+
+    @SearchAttribute(key="updated_date",label="Updated Date")
     private Date updatedDate;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
