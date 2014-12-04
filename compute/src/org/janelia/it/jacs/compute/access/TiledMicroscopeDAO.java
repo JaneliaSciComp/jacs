@@ -868,9 +868,15 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if ( cubicDim > -1 ) {
                 loader.setCubicOutputDimension(cubicDim);
             }
+            double[][] identity = new double[][] {
+                    { 1, 0, 0, 0 },
+                    { 0, 1, 0, 0 },
+                    { 0, 0, 1, 0 },
+                    { 0, 0, 0, 1 }
+            };
             loader.setConversionCharacteristics(
-                    rawFileInfo.getTransformMatrix(),
-                    rawFileInfo.getInvertedTransform(),
+                    identity,
+                    identity,
                     rawFileInfo.getMinCorner(),
                     rawFileInfo.getExtent(),
                     rawFileInfo.getQueryMicroscopeCoords()
