@@ -23,9 +23,7 @@ import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
 
 /**
  * Large, memory-bound operations which need to be done on disk using EhCache, lest we run out of heap space.
@@ -236,7 +234,7 @@ public class LargeOperations {
 
     private static final HashSet<Long> EMPTY_SET = new HashSet<Long>();
 //    boolean debugAncestors = false;
-    private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
+    protected Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
 
     	Cache ancestorMapCache = caches.get(ANCESTOR_MAP);
     	
@@ -375,7 +373,7 @@ public class LargeOperations {
     	putValue(getCache(cacheName), key, value);
     }
 
-    private Cache getCache(String cacheName) {
+    protected Cache getCache(String cacheName) {
     	if (caches.containsKey(cacheName)) {
     		return caches.get(cacheName);
     	}
@@ -384,12 +382,12 @@ public class LargeOperations {
     	}
     }
     
-    private Object getValue(Cache cache, Object key) {
+    protected Object getValue(Cache cache, Object key) {
 		Element e = cache.get(key);
 		return e!=null ? e.getObjectValue() : null;
     }
 
-    private void putValue(Cache cache, Object key, Object value) {
+    protected void putValue(Cache cache, Object key, Object value) {
 		Element e = new Element(key, value);
 		cache.put(e);
     }

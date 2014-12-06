@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,15 +25,16 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;
+import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
-import org.janelia.it.jacs.shared.solr.SageTerm;
-import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
-import org.janelia.it.jacs.shared.solr.SolrResults;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.solr.SageTerm;
+import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
+import org.janelia.it.jacs.shared.solr.SolrResults;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
@@ -48,11 +50,14 @@ import org.jboss.ejb3.StrictMaxPool;
 //@Interceptors({UsageInterceptor.class})
 @PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
-
+	
+	private static final Logger log = Logger.getLogger(SolrBeanImpl.class);
+	
     public static final String SOLR_EJB_PROP = "SolrEJB.Name";
-    
-    private static final Logger log = Logger.getLogger(SolrBeanImpl.class);
 
+    private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
+    private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
+    
     private void updateIndex(Long entityId) {
     	IndexingHelper.updateIndex(entityId);
     }
@@ -70,21 +75,21 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	log.info("Got "+sageVocab.size()+" vocabulary terms from SAGE web service");
     	
     	try {
-    		SolrDAO solrDAO = new SolrDAO(log, true, true);
+    		SolrConnector solrConnector = new SolrConnector(MONGO_SERVER_URL, MONGO_DATABASE);
     		if (clearIndex) {
-    			solrDAO.clearIndex();
+    			solrConnector.clearIndex();
     		}
-    		solrDAO.indexAllEntities(sageVocab);
+    		solrConnector.indexAllDocuments(sageVocab);
     	}
-    	catch (DaoException e) {
-            log.error("Error indexing all entities",e);
-    		throw new ComputeException("Error indexing all entities",e);
+    	catch (UnknownHostException e) {
+            log.error("Error connecting to Mongo",e);
+    		throw new ComputeException("Error connecting to Mongo",e);
     	}
     }
 
     public void indexAllEntitiesInTree(Long entityId) throws ComputeException {
-    	AnnotationDAO _annotationDAO = new AnnotationDAO(log);
-    	Entity root = _annotationDAO.getEntityById(entityId);
+    	AnnotationDAO annotationDAO = new AnnotationDAO(log);
+    	Entity root = annotationDAO.getEntityById(entityId);
     	indexAllEntitiesInTree(root, new HashSet<Long>());
     }
 
@@ -106,21 +111,41 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     
     // TODO: move this to its own bean, or rename this one
     public void mongoAllDomainObjects(boolean clearDb) throws ComputeException {
+    	
+    	long t1=0,t2=0,t3=0,t4=0,t5=0;
+    	
         try {
-            String serverUrl = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-            String databaseName = SystemConfigurationProperties.getString("MongoDB.Database");
+
+            t1 = System.currentTimeMillis(); 
             
-            MongoDbImport mongoDbImport = new MongoDbImport(serverUrl, databaseName);
+            MongoDbImport mongoDbImport = new MongoDbImport(MONGO_SERVER_URL, MONGO_DATABASE);
             if (clearDb) mongoDbImport.dropDatabase();
             mongoDbImport.loadAllEntities();
+
+            t2 = System.currentTimeMillis(); 
             
-            MongoDbMaintainer refresh = new MongoDbMaintainer(serverUrl, databaseName);
+            MongoDbMaintainer refresh = new MongoDbMaintainer(MONGO_SERVER_URL, MONGO_DATABASE);
             refresh.refreshPermissions();
+            
+            t3 = System.currentTimeMillis();
+            
             refresh.ensureIndexes();
+
+            t4 = System.currentTimeMillis(); 
+            
+            indexAllEntities(true);
+            
+            t5 = System.currentTimeMillis();
         }
         catch (Exception e) {
             log.error("Error loading into MongoDB",e);
             throw new ComputeException("Error loading into MongoDB",e);
+        }
+        finally {
+        	if (t2>0) log.info("Loading MongoDB took "+((double)(t2-t1)/1000/60/60)+" hours");
+	        if (t3>0) log.info("Refreshing MongoDB permissions took "+((double)(t3-t2)/1000/60/60)+" hours");
+	        if (t4>0) log.info("Ensuring MongoDB indexes took "+((double)(t4-t3)/1000/60/60)+" hours");
+	        if (t5>0) log.info("Indexing MongoDB to Solr took "+((double)(t5-t4)/1000/60/60)+" hours");
         }
     }
 

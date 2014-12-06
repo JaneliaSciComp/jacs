@@ -8,6 +8,8 @@ package org.janelia.it.jacs.model.domain.enums;
 public enum SampleImageType {
 
     Latest("Latest"),
+    LatestUnaligned("Latest Unaligned"),
+    LatestAligned("Latest Aligned"),
     Unaligned20x("Unaligned 20x"),
     Unaligned63x("Unaligned 63x"),
     Aligned20x("Aligned 20x"),

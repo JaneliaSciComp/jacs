@@ -15,6 +15,10 @@ public class TreeNode extends AbstractDomainObject {
 
     private List<Reference> children;
 
+    public boolean hasChildren() {
+    	return children!=null && !children.isEmpty();
+    }
+    
     public int getNumChildren() {
         return children==null ? 0 : children.size();
     }

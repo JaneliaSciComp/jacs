@@ -6,7 +6,6 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.workspace.Folder;
 import org.reflections.Reflections;
 
 import com.google.common.collect.BiMap;
@@ -76,7 +75,6 @@ public class MongoUtils {
         System.out.println("getObjectClass(sample): "+MongoUtils.getObjectClass("sample"));
         System.out.println("getObjectClass(image): "+MongoUtils.getObjectClass("image"));
         System.out.println("getCollectionName(Sample.class): "+MongoUtils.getCollectionName(Sample.class));
-        System.out.println("getCollectionName(Folder.class): "+MongoUtils.getCollectionName(Folder.class));
         System.out.println("getCollectionName(LSMImage): "+MongoUtils.getCollectionName(new LSMImage()));
     }
 }

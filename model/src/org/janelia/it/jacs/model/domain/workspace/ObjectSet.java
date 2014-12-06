@@ -12,6 +12,10 @@ public class ObjectSet extends AbstractDomainObject {
     private String targetType;
     private List<Long> members;
 
+    public boolean hasMembers() {
+    	return members!=null && !members.isEmpty();
+    }
+    
     public int getNumMembers() {
         return members==null ? 0 : members.size();
     }

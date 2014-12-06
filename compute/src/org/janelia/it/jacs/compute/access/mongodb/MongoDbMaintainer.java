@@ -1,8 +1,6 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;

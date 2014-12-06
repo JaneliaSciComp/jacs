@@ -17,7 +17,6 @@ import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
-import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.screen.PatternMask;
@@ -105,6 +104,10 @@ public class DomainDAO {
     
     public MongoCollection getCollectionByName(String collectionName) {
         return jongo.getCollection(collectionName);
+    }
+
+    public MongoCollection getCollectionByClass(Class<?> domainClass) {
+        return jongo.getCollection(getCollectionName(domainClass));
     }
     
     /** 
@@ -483,10 +486,14 @@ public class DomainDAO {
     /**
      * Get the domain objects of the given type 
      */
+    public <T extends DomainObject> Iterable<T> getDomainObjects(Class<T> domainClass) { 
+        return getCollectionByClass(domainClass).find().as(domainClass);
+    }
+    
+    /**
+     * Get the domain objects of the given type 
+     */
     public Iterable<? extends DomainObject> getDomainObjects(String type) {
-        // TODO: remove this after the next db load fixes it
-        if ("workspace".equals(type)) type = "treeNode"; 
-        
         Class<? extends DomainObject> clazz = getObjectClass(type);
         if (clazz==null) {
         	log.error("No object type for "+type);
@@ -500,8 +507,6 @@ public class DomainDAO {
      * Get the raw domain objects of the given type 
      */
     public Iterable<DBObject> getRawObjects(String type) {
-        // TODO: remove this after the next db load fixes it
-        if ("workspace".equals(type)) type = "treeNode";
         return getCollectionByName(type).find().map(new RawResultHandler<DBObject>());
     }
     

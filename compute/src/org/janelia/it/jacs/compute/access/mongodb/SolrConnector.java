@@ -17,6 +17,7 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
+import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
@@ -68,8 +69,7 @@ public class SolrConnector extends SolrDAO {
     	this.usedSageVocab = new HashSet<SageTerm>();
 
     	log.info("Building disk-based entity maps");
-    	this.largeOp = new LargeOperations(this);
-    	// TODO: do this for domain objects instead
+    	this.largeOp = new MongoLargeOperations(dao);
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
     	largeOp.buildSageImagePropMap();
