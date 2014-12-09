@@ -306,7 +306,7 @@ public class SolrDAO extends AnnotationDAO {
 		}
     }
 
-    private void swapBuildCore() throws Exception {
+    protected void swapBuildCore() throws Exception {
     	CoreAdminRequest car = new CoreAdminRequest();
     	car.setCoreName(SOLR_BUILD_CORE);
     	car.setOtherCoreName(SOLR_MAIN_CORE);
@@ -314,7 +314,7 @@ public class SolrDAO extends AnnotationDAO {
     	car.process(new CommonsHttpSolrServer(SOLR_SERVER_URL));
     }
     
-    private List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
+    protected List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
     	
     	String dt = SolrDocTypeEnum.SAGE_TERM.toString();
     	

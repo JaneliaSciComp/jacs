@@ -486,7 +486,7 @@ public class DomainDAO {
     /**
      * Get the domain objects of the given type 
      */
-    public <T extends DomainObject> Iterable<T> getDomainObjects(Class<T> domainClass) { 
+    public <T extends DomainObject> Iterable<T> getDomainObjects(Class<T> domainClass) {
         return getCollectionByClass(domainClass).find().as(domainClass);
     }
     

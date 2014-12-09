@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.enums.SampleImageType;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
+@MongoMapped(collectionName = "dataSet")
 public class DataSet extends AbstractDomainObject {
 
     private String identifier;

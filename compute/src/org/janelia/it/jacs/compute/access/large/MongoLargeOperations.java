@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.access.large;
 
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,6 +17,7 @@ import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
@@ -29,7 +32,7 @@ import org.janelia.it.jacs.model.domain.workspace.TreeNode;
  */
 public class MongoLargeOperations extends LargeOperations {
 	
-    private static final Logger logger = Logger.getLogger(MongoLargeOperations.class);
+    private static final Logger log = Logger.getLogger(MongoLargeOperations.class);
 
     private DomainDAO dao; 
 
@@ -43,7 +46,7 @@ public class MongoLargeOperations extends LargeOperations {
      */
     public void buildAnnotationMap() throws DaoException {
 
-    	logger.info("Building annotation map of all entities and annotations");
+    	log.info("Building annotation map of all entities and annotations");
     	Cache annotationMapCache = caches.get(ANNOTATION_MAP);  
 
 		int i = 0;
@@ -61,8 +64,8 @@ public class MongoLargeOperations extends LargeOperations {
 			i++;
     	}
     	
-		logger.info("    Processed "+i+" annotations on "+annotationMapCache.getSize()+" targets");
-        logger.info("    Done, annotationMap.size="+annotationMapCache.getSize());
+		log.info("    Processed "+i+" annotations on "+annotationMapCache.getSize()+" targets");
+        log.info("    Done, annotationMap.size="+annotationMapCache.getSize());
     }
 
 	/**
@@ -71,7 +74,7 @@ public class MongoLargeOperations extends LargeOperations {
      */
     public void buildAncestorMap() throws DaoException {
 
-    	logger.info("Building ancestor map for all entities");
+    	log.info("Building ancestor map for all entities");
     	Cache ancestorMapCache = caches.get(ANCESTOR_MAP);
     	
     	for(Iterator<TreeNode> iterator = dao.getDomainObjects(TreeNode.class).iterator(); iterator.hasNext(); ) {
@@ -90,23 +93,23 @@ public class MongoLargeOperations extends LargeOperations {
     		}
     	}
 
-    	logger.info("    Loaded entity graph, now to find the ancestors...");
+    	log.info("    Loaded entity graph, now to find the ancestors...");
 
     	for(Object entityIdObj : ancestorMapCache.getKeys()) {
     		calculateAncestors((Long)entityIdObj, new HashSet<Long>(), 0);
         }
 
-    	logger.info("    Verifying ancestors...");
+    	log.info("    Verifying ancestors...");
 
     	for(Object entityIdObj : ancestorMapCache.getKeys()) {
     		Long entityId = (Long)entityIdObj;
     		AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, entityId);
     		if (!ancestorSet.isComplete()) {
-    			logger.warn("Incomplete ancestor set for "+entityId);
+    			log.warn("Incomplete ancestor set for "+entityId);
     		}
         }
 
-    	logger.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
+    	log.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
     }
 
     /**
@@ -115,28 +118,49 @@ public class MongoLargeOperations extends LargeOperations {
      */
     public void buildSageImagePropMap() throws DaoException {
     	
-    	logger.info("Building property map for all Sage images");
-    	SageDAO sage = new SageDAO(logger);
+    	SageDAO sage = new SageDAO(log);
 
+    	log.info("Building LSM filename lookup table...");
+		Map<String,Long> lsmLookup = new HashMap<String,Long>();
+    	for(Iterator<LSMImage> lsmIterator = dao.getCollectionByClass(LSMImage.class).find("{class:#}",LSMImage.class.getName()).as(LSMImage.class).iterator(); lsmIterator.hasNext(); ) {
+    		LSMImage image = lsmIterator.next();
+    		String stackFilepath = image.getFiles().get(FileType.Stack);
+    		if (stackFilepath==null) {
+    			log.warn("LSMImage missing filepath: "+image.getId());
+    			continue;
+    		}
+        	String[] path = stackFilepath.split("/"); // take just the filename
+        	String filename = path[path.length-1];
+    		lsmLookup.put(filename, image.getId());
+    	}
+    	log.info("Got "+lsmLookup.size()+" LSM filenames");
+
+    	log.info("Building property map for all Sage images");
     	for(Iterator<DataSet> iterator = dao.getDomainObjects(DataSet.class).iterator(); iterator.hasNext(); ) {
     		DataSet dataSet = iterator.next();
     		String dataSetIdentifier = dataSet.getIdentifier();
-    		logger.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
-        	ResultSetIterator rsIterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
-    		while (iterator.hasNext()) {
-        		Map<String,Object> row = rsIterator.next();
-				associateImageProperties(row);
+    		log.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
+
+        	ResultSetIterator rsIterator = null;
+        	try {
+            	rsIterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
+        		while (rsIterator.hasNext()) {
+            		Map<String,Object> row = rsIterator.next();
+                	String imagePath = (String)row.get("path");
+                	String[] path = imagePath.split("/"); // take just the filename
+                	String filename = path[path.length-1];
+                	putValue(SAGE_IMAGEPROP_MAP, lsmLookup.get(filename), row);
+            	}
         	}
-    	}
-    }
-    
-    private void associateImageProperties(Map<String,Object> imageProps) throws DaoException {
-    	String imagePath = (String)imageProps.get("path");
-    	String[] path = imagePath.split("/"); // take just the filename
-    	String filename = path[path.length-1];
-    	for(Iterator<LSMImage> iterator = dao.getCollectionByClass(LSMImage.class).find("{'files.Stack':#}",filename).projection("{_id:1}").as(LSMImage.class).iterator(); iterator.hasNext(); ) {
-    		LSMImage image = iterator.next();
-    		putValue(SAGE_IMAGEPROP_MAP, image.getId(), imageProps);
+        	catch (RuntimeException e) {
+        		if (e.getCause() instanceof SQLException) {
+        			throw new DaoException(e);
+        		}
+        		throw e;
+        	}
+            finally {
+            	if (rsIterator!=null) rsIterator.close();
+            }
     	}
     }
 }

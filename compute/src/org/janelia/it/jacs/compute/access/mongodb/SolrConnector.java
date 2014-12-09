@@ -45,7 +45,9 @@ public class SolrConnector extends SolrDAO {
 
     private static final Logger log = Logger.getLogger(SolrConnector.class);
 
-    private static final String JANELIA_MODEL_PACKAGE = "org.janelia.it.jacs.model.domain";
+    protected static final String JANELIA_MODEL_PACKAGE = "org.janelia.it.jacs.model.domain";
+    protected static final int SOLR_LOADER_BATCH_SIZE = 1000;
+    protected static final int SOLR_LOADER_COMMIT_SIZE = 10000;
     
     private DomainDAO dao; 
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
@@ -70,9 +72,9 @@ public class SolrConnector extends SolrDAO {
 
     	log.info("Building disk-based entity maps");
     	this.largeOp = new MongoLargeOperations(dao);
+    	largeOp.buildSageImagePropMap();
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
-    	largeOp.buildSageImagePropMap();
 
 		Reflections reflections = new Reflections(JANELIA_MODEL_PACKAGE);
 		Set<Class<?>> searchClasses = reflections.getTypesAnnotatedWith(SearchType.class);
@@ -90,13 +92,6 @@ public class SolrConnector extends SolrDAO {
 	    	log.info("    Processing results");
 			while(iterator.hasNext()) {
 				DomainObject domainObject = iterator.next();
-				
-	        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, domainObject.getId());
-	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, domainObject.getId());
-	        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
-	        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, domainObject.getId());
-	        	
-				docs.add(createDocument(null, domainObject, fields, annotations, ancestors, sageProps));
 
 				if (i>0) {
 	            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
@@ -109,8 +104,37 @@ public class SolrConnector extends SolrDAO {
             			commit();
             		}
 				}
+				
+	        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, domainObject.getId());
+	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, domainObject.getId());
+	        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
+	        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, domainObject.getId());
+	        	
+				docs.add(createDocument(null, domainObject, fields, annotations, ancestors, sageProps));
+        		log.info("    Have "+docs.size()+" docs (i="+i+")");
+
+				i++;
 			}
 		}
+
+    	if (!docs.isEmpty()) {
+    		log.info("    Adding "+docs.size()+" docs (i="+i+")");
+    		index(docs);
+    	}
+    	
+        try {
+        	log.info("Indexing Sage vocabularies");
+        	index(createSageDocs(usedSageVocab));
+        	
+    		commit();
+    		optimize();
+        	log.info("Completed indexing "+i+" objects");
+            swapBuildCore();
+            log.info("Build core swapped to main core. The new index is now live.");
+        }
+        catch (Exception e) {
+        	throw new DaoException(e);
+        }
 	}
 	
 	private SolrInputDocument createDocument(SolrDocument existingDoc, DomainObject domainObject, Set<Field> fields, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,Object> sageProps) throws DaoException {
@@ -199,7 +223,8 @@ public class SolrConnector extends SolrDAO {
 		fullTextStrings.clear();
 		findStrings(domainObject, true);
 		for(String key : fullTextStrings.keySet()) {
-			doc.setField(key+"_d_txt", fullTextStrings.get(key), 1.0f);
+			// Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
+			doc.setField(key+"_d_txt", new ArrayList<String>(fullTextStrings.get(key)), 1.0f);
 		}
 		
 		return doc;
