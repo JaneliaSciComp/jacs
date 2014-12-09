@@ -111,7 +111,7 @@
         </include>
         
         <!-- We're done with the LSMs -->
-        <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+        <operation name="Delete Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.DeleteFileNodeService">
             <input name="FILE_NODE_ID" value="$V{MERGE_RESULT_FILE_NODE_ID}"/>
         </operation>
         
