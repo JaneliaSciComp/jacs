@@ -16,13 +16,20 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.screen.PatternMask;
 import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.support.MongoUtils;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.jongo.Jongo;
@@ -34,7 +41,6 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
@@ -77,9 +83,11 @@ public class DomainDAO {
     	if (username!=null && password!=null) {
 	    	MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
 	    	this.m = new MongoClient(new ServerAddress(serverUrl), Arrays.asList(credential));
+	    	log.info("Connected to MongoDB ("+databaseName+"@"+serverUrl+") as user "+username);
     	}
     	else {
     		this.m = new MongoClient(serverUrl);
+	    	log.info("Connected to MongoDB ("+databaseName+"@"+serverUrl+")");
     	}
     	
         m.setWriteConcern(WriteConcern.JOURNALED);
@@ -88,20 +96,20 @@ public class DomainDAO {
                     .enable(MapperFeature.AUTO_DETECT_GETTERS)
                     .enable(MapperFeature.AUTO_DETECT_SETTERS)
                     .build());
-        this.subjectCollection = jongo.getCollection("subject");
-        this.treeNodeCollection = jongo.getCollection("treeNode");
-        this.objectSetCollection = jongo.getCollection("objectSet");
-        this.dataSetCollection = jongo.getCollection("dataSet");
-        this.sampleCollection = jongo.getCollection("sample");
-        this.screenSampleCollection = jongo.getCollection("screenSample");
-        this.patternMaskCollection = jongo.getCollection("patternMask");
-        this.flyLineCollection = jongo.getCollection("flyLine");
-        this.imageCollection = jongo.getCollection("image");
-        this.fragmentCollection = jongo.getCollection("fragment");
-        this.annotationCollection = jongo.getCollection("annotation");
-        this.ontologyCollection = jongo.getCollection("ontology");
-    	this.compartmentSetCollection = jongo.getCollection("compartmentSet");
-    	this.alignmentBoardCollection = jongo.getCollection("alignmentBoard");
+    	this.subjectCollection = getCollectionByClass(Subject.class);
+    	this.treeNodeCollection = getCollectionByClass(TreeNode.class);
+    	this.objectSetCollection = getCollectionByClass(ObjectSet.class);
+    	this.dataSetCollection = getCollectionByClass(DataSet.class);
+    	this.sampleCollection = getCollectionByClass(Sample.class);
+    	this.screenSampleCollection = getCollectionByClass(ScreenSample.class);
+    	this.patternMaskCollection = getCollectionByClass(PatternMask.class);
+    	this.flyLineCollection = getCollectionByClass(FlyLine.class);
+        this.imageCollection = getCollectionByClass(Image.class);
+        this.fragmentCollection = getCollectionByClass(NeuronFragment.class);
+        this.annotationCollection = getCollectionByClass(Annotation.class);
+        this.ontologyCollection = getCollectionByClass(Ontology.class);
+        this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
+        this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
     }
     
     public Jongo getJongo() {
@@ -417,7 +425,6 @@ public class DomainDAO {
             patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}}",granteeKey);
         }
     }
-    
 
     public void save(String subjectKey, DomainObject domainObject) throws Exception {
         String type = getCollectionName(domainObject);

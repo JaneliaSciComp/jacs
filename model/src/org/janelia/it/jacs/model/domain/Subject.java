@@ -2,8 +2,10 @@ package org.janelia.it.jacs.model.domain;
 
 import java.util.Set;
 
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.jongo.marshall.jackson.oid.Id;
 
+@MongoMapped(collectionName = "subject")
 public class Subject {
 
     @Id

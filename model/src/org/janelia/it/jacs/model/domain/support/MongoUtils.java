@@ -11,6 +11,11 @@ import org.reflections.Reflections;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
+/**
+ * Utilities for finding out about Mongo DB domain objects through annotations. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class MongoUtils {
 
     private static final Logger log = Logger.getLogger(MongoUtils.class);
