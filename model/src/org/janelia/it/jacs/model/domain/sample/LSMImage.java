@@ -1,19 +1,47 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
+
+@SearchType(key="image",label="Image")
 public class LSMImage extends Image {
 
     private Long sampleId;
+    
+    @SearchAttribute(key="age_txt",label="Age",facet=true)
     private String age;
+
+    @SearchAttribute(key="anatomical_area_txt",label="Anatomical Area",facet=true)
     private String anatomicalArea;
+
+    @SearchAttribute(key="channel_colors_txt",label="Channel Colors")
     private String channelColors;
+
+    @SearchAttribute(key="channel_dyes_txt",label="Channel Dye Names")
     private String channelDyeNames;
+
+    @SearchAttribute(key="channel_spec_txt",label="Channel Specification")
     private String chanSpec;
+
+    @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
+
+    @SearchAttribute(key="gender_txt",label="Gender",facet=true)
     private String gender;
+
+    @SearchAttribute(key="line_txt",label="Fly Line")    
     private String line;
+
+    @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol",facet=true)
     private String mountingProtocol;
+
+    @SearchAttribute(key="orientation_txt",label="Tissue Orientation")
     private String tissueOrientation;
+
+    @SearchAttribute(key="sage_id_i",label="SAGE Id")
     private Integer sageId;
+
+    @SearchAttribute(key="slide_code_txt",label="Slide Code")
     private String slideCode;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */

@@ -21,9 +21,11 @@ import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
@@ -45,16 +47,22 @@ public class SolrConnector extends SolrDAO {
 
     private static final Logger log = Logger.getLogger(SolrConnector.class);
 
+    private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
+    private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
+    private static String MONGO_USERNAME = SystemConfigurationProperties.getString("MongoDB.Username");
+    private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
+    
     protected static final String JANELIA_MODEL_PACKAGE = "org.janelia.it.jacs.model.domain";
     protected static final int SOLR_LOADER_BATCH_SIZE = 1000;
     protected static final int SOLR_LOADER_COMMIT_SIZE = 10000;
     
     private DomainDAO dao; 
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
+    private Class<?> currContext;
     
-    public SolrConnector(String serverUrl, String databaseName) throws UnknownHostException {
+    public SolrConnector() throws UnknownHostException {
     	super(log, true, true);
-		this.dao = new DomainDAO(serverUrl, databaseName);
+		this.dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
     }
     
 	public void indexAllDocuments(Map<String, SageTerm> sageVocab) throws DaoException {
@@ -83,6 +91,7 @@ public class SolrConnector extends SolrDAO {
         
 		for (Class<?> clazz : searchClasses) {
 
+			this.currContext = clazz;
 	    	log.info("Getting objects of type "+clazz.getName());
 	    	
 			String type = dao.getCollectionName(clazz);
@@ -111,7 +120,6 @@ public class SolrConnector extends SolrDAO {
 	        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, domainObject.getId());
 	        	
 				docs.add(createDocument(null, domainObject, fields, annotations, ancestors, sageProps));
-        		log.info("    Have "+docs.size()+" docs (i="+i+")");
 
 				i++;
 			}
@@ -147,7 +155,7 @@ public class SolrConnector extends SolrDAO {
     	doc.setField("doc_type", SolrDocTypeEnum.DOCUMENT.toString(), 1.0f);
     	doc.setField("entity_type", searchTypeAnnot.label(), 1.0f);
 
-		log.info("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
+		log.trace("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
     	
 		Map<String,Object> attrs = new HashMap<String,Object>();
 		
@@ -245,7 +253,7 @@ public class SolrConnector extends SolrDAO {
 				}
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+				log.error("Error finding strings",e);
 			}
 		}
 	}
@@ -308,7 +316,23 @@ public class SolrConnector extends SolrDAO {
 	}
 	
 	private void addFullTextString(String key, String value) {
+		if (key==null || value==null) return;
+		
+		// Don't index permissions
 		if ("readers".equals(key) || "writers".equals(key) || "ownerKey".equals(key)) return;
+
+		// Optimization rules for indexing specific domain classes
+		if (currContext==Sample.class) {
+			if ("files".equals(key)) {
+				// Don't index Neuron Fragment files
+				if (value.startsWith("neuronSeparatorPipeline")|| value.contains("maskChan")) return;
+			}
+			if ("name".equals(key)) {
+				// Don't index Neuron Fragment names
+				if (value.startsWith("Neuron Fragment ")) return;
+			}
+		}
+		
 		fullTextStrings.put(key, value);
 	}
 

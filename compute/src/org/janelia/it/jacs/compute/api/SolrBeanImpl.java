@@ -54,9 +54,6 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	private static final Logger log = Logger.getLogger(SolrBeanImpl.class);
 	
     public static final String SOLR_EJB_PROP = "SolrEJB.Name";
-
-    private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-    private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
     
     private void updateIndex(Long entityId) {
     	IndexingHelper.updateIndex(entityId);
@@ -75,7 +72,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	log.info("Got "+sageVocab.size()+" vocabulary terms from SAGE web service");
     	
     	try {
-    		SolrConnector solrConnector = new SolrConnector(MONGO_SERVER_URL, MONGO_DATABASE);
+    		SolrConnector solrConnector = new SolrConnector();
     		if (clearIndex) {
     			solrConnector.clearIndex();
     		}
@@ -115,16 +112,15 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     	long t1=0,t2=0,t3=0,t4=0,t5=0;
     	
         try {
-
             t1 = System.currentTimeMillis(); 
             
-            MongoDbImport mongoDbImport = new MongoDbImport(MONGO_SERVER_URL, MONGO_DATABASE);
+            MongoDbImport mongoDbImport = new MongoDbImport();
             if (clearDb) mongoDbImport.dropDatabase();
             mongoDbImport.loadAllEntities();
 
             t2 = System.currentTimeMillis(); 
             
-            MongoDbMaintainer refresh = new MongoDbMaintainer(MONGO_SERVER_URL, MONGO_DATABASE);
+            MongoDbMaintainer refresh = new MongoDbMaintainer();
             refresh.refreshPermissions();
             
             t3 = System.currentTimeMillis();

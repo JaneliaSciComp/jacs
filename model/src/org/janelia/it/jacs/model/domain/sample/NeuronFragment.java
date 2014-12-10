@@ -3,42 +3,52 @@ package org.janelia.it.jacs.model.domain.sample;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @MongoMapped(collectionName = "fragment")
+@SearchType(key="neuronFragment",label="Neuron Fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasFiles, HasFilepath {
 
-    private Long sampleId;
-    private Long separationId;
+    private Reference sample;
+    private Reference separation;
+        
+    @SearchAttribute(key="number_i",label="Number")
     private Integer number;
+    
+    @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
+    
     private Map<FileType, String> files;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public Long getSampleId() {
-        return sampleId;
-    }
-
-    public void setSampleId(Long sampleId) {
-        this.sampleId = sampleId;
-    }
-
-    public Long getSeparationId() {
-        return separationId;
-    }
-
-    public void setSeparationId(Long separationId) {
-        this.separationId = separationId;
-    }
-
+    
     public Integer getNumber() {
         return number;
     }
 
-    public void setNumber(Integer number) {
+    public Reference getSample() {
+		return sample;
+	}
+
+	public void setSample(Reference sample) {
+		this.sample = sample;
+	}
+
+	public Reference getSeparation() {
+		return separation;
+	}
+
+	public void setSeparation(Reference separation) {
+		this.separation = separation;
+	}
+
+	public void setNumber(Integer number) {
         this.number = number;
     }
 

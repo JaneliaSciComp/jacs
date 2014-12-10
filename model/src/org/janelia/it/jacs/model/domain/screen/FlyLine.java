@@ -1,47 +1,56 @@
 package org.janelia.it.jacs.model.domain.screen;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @MongoMapped(collectionName = "flyLine")
+@SearchType(key="flyLine",label="Fly Line")
 public class FlyLine extends AbstractDomainObject {
 
-    private Long representativeId;
-    private Long balancedLineId;
-    private Long originalLineId;
+    private Reference representativeScreenSample;
+    private Reference balancedLine;
+    private Reference originalLine;
+
+    @SearchAttribute(key="robot_id_i",label="Robot Id")
     private Integer robotId;
+    
+    @SearchAttribute(key="split_part_txt",label="Split Part",facet=true)
     private String splitPart;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public Long getRepresentativeId() {
-        return representativeId;
-    }
-
-    public void setRepresentativeId(Long representativeId) {
-        this.representativeId = representativeId;
-    }
-
-    public Long getBalancedLineId() {
-        return balancedLineId;
-    }
-
-    public void setBalancedLineId(Long balancedLineId) {
-        this.balancedLineId = balancedLineId;
-    }
-
-    public Long getOriginalLineId() {
-        return originalLineId;
-    }
-
-    public void setOriginalLineId(Long originalLineId) {
-        this.originalLineId = originalLineId;
-    }
-
+    
     public Integer getRobotId() {
         return robotId;
     }
+    
+	public Reference getRepresentativeScreenSample() {
+		return representativeScreenSample;
+	}
 
-    public void setRobotId(Integer robotId) {
+	public void setRepresentativeScreenSample(Reference representativeScreenSample) {
+		this.representativeScreenSample = representativeScreenSample;
+	}
+
+	public Reference getBalancedLine() {
+		return balancedLine;
+	}
+
+	public void setBalancedLine(Reference balancedLine) {
+		this.balancedLine = balancedLine;
+	}
+
+	public Reference getOriginalLine() {
+		return originalLine;
+	}
+
+	public void setOriginalLine(Reference originalLine) {
+		this.originalLine = originalLine;
+	}
+
+	public void setRobotId(Integer robotId) {
         this.robotId = robotId;
     }
 

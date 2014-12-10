@@ -8,14 +8,21 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @MongoMapped(collectionName = "screenSample")
+@SearchType(key="screenSample",label="Screen Sample")
 public class ScreenSample extends AbstractDomainObject implements HasFiles, HasFilepath {
 
-    private String flyLine;
+    @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
+    
+    @SearchAttribute(key="flyline_txt",label="Fly Line")
+    private String flyLine;
+    
     private Map<FileType, String> images;
-    private ReverseReference masks;
+    private ReverseReference patternMasks;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getFilepath() {
@@ -42,11 +49,11 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
         this.flyLine = flyLine;
     }
 
-    public ReverseReference getMasks() {
-        return masks;
+    public ReverseReference getPatternMasks() {
+        return patternMasks;
     }
 
-    public void setMasks(ReverseReference masks) {
-        this.masks = masks;
+    public void setPatternMasks(ReverseReference patternMasks) {
+        this.patternMasks = patternMasks;
     }
 }

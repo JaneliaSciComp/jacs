@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,6 +37,8 @@ import com.google.common.collect.Multimap;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 
@@ -49,41 +52,64 @@ public class DomainDAO {
     private static final Logger log = Logger.getLogger(DomainDAO.class);
     
     protected MongoClient m;
-    protected DB db;
     protected Jongo jongo;
     protected MongoCollection subjectCollection;
     protected MongoCollection treeNodeCollection;
+    protected MongoCollection objectSetCollection;
+    protected MongoCollection dataSetCollection;
     protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
     protected MongoCollection patternMaskCollection;
+    protected MongoCollection flyLineCollection;
     protected MongoCollection imageCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection ontologyCollection;
+    protected MongoCollection compartmentSetCollection;
+    protected MongoCollection alignmentBoardCollection;
     
     public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
-        m = new MongoClient(serverUrl);
+    	this(serverUrl, databaseName, null, null);	
+    }
+    
+    public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
+    	    	
+    	if (username!=null && password!=null) {
+	    	MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
+	    	this.m = new MongoClient(new ServerAddress(serverUrl), Arrays.asList(credential));
+    	}
+    	else {
+    		this.m = new MongoClient(serverUrl);
+    	}
+    	
         m.setWriteConcern(WriteConcern.JOURNALED);
-        //m.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
-        db = m.getDB(databaseName);
-        jongo = new Jongo(db, 
+        this.jongo = new Jongo(m.getDB(databaseName), 
                 new JacksonMapper.Builder()
                     .enable(MapperFeature.AUTO_DETECT_GETTERS)
                     .enable(MapperFeature.AUTO_DETECT_SETTERS)
                     .build());
-        subjectCollection = jongo.getCollection("subject");
-        treeNodeCollection = jongo.getCollection("treeNode");
-        sampleCollection = jongo.getCollection("sample");
-        screenSampleCollection = jongo.getCollection("screenSample");
-        patternMaskCollection = jongo.getCollection("patternMask");
-        imageCollection = jongo.getCollection("image");
-        fragmentCollection = jongo.getCollection("fragment");
-        annotationCollection = jongo.getCollection("annotation");
-        ontologyCollection = jongo.getCollection("ontology");
+        this.subjectCollection = jongo.getCollection("subject");
+        this.treeNodeCollection = jongo.getCollection("treeNode");
+        this.objectSetCollection = jongo.getCollection("objectSet");
+        this.dataSetCollection = jongo.getCollection("dataSet");
+        this.sampleCollection = jongo.getCollection("sample");
+        this.screenSampleCollection = jongo.getCollection("screenSample");
+        this.patternMaskCollection = jongo.getCollection("patternMask");
+        this.flyLineCollection = jongo.getCollection("flyLine");
+        this.imageCollection = jongo.getCollection("image");
+        this.fragmentCollection = jongo.getCollection("fragment");
+        this.annotationCollection = jongo.getCollection("annotation");
+        this.ontologyCollection = jongo.getCollection("ontology");
+    	this.compartmentSetCollection = jongo.getCollection("compartmentSet");
+    	this.alignmentBoardCollection = jongo.getCollection("alignmentBoard");
     }
     
     public Jongo getJongo() {
         return jongo;
+    }
+    
+    public MongoClient getMongo() {
+    	return m;
     }
     
     public void setWriteConcern(WriteConcern writeConcern) {
