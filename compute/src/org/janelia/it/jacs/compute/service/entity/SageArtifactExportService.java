@@ -32,9 +32,10 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
  */
 public class SageArtifactExportService extends AbstractEntityService {
 
+	public static final String CREATED_BY = "Janelia Workstation";
+	
     private static final String WEBDAV_PREFIX = "http://jacs-webdav.int.janelia.org/WebDAV";
     private static final String NO_CONSENSUS = "No Consensus";
-    private static final String CREATED_BY = "Janelia Workstation";
     private static final String PUBLISHED_TO = "MBEW";
     private static final String ARTIFACT_PIPELINE_RUN_PREFIX = "MBEW Pipeline";
     private static final String ANNOTATION_EXPORT_20X = "Publish20xToMBEW";
