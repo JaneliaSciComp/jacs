@@ -12,11 +12,11 @@ import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @MongoMapped(collectionName = "fragment")
-@SearchType(key="neuronFragment",label="Neuron Fragment")
+@SearchType(key="fragment",label="Neuron Fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasFiles, HasFilepath {
 
     private Reference sample;
-    private Reference separation;
+    private Long separationId;
         
     @SearchAttribute(key="number_i",label="Number")
     private Integer number;
@@ -40,15 +40,15 @@ public class NeuronFragment extends AbstractDomainObject implements HasFiles, Ha
 		this.sample = sample;
 	}
 
-	public Reference getSeparation() {
-		return separation;
-	}
+	public Long getSeparationId() {
+        return separationId;
+    }
 
-	public void setSeparation(Reference separation) {
-		this.separation = separation;
-	}
-
-	public void setNumber(Integer number) {
+    public void setSeparationId(Long separationId) {
+        this.separationId = separationId;
+    }
+    
+    public void setNumber(Integer number) {
         this.number = number;
     }
 
@@ -64,8 +64,8 @@ public class NeuronFragment extends AbstractDomainObject implements HasFiles, Ha
         return files;
     }
 
-    public void setImages(Map<FileType, String> images) {
-        this.files = images;
+    public void setFiles(Map<FileType, String> files) {
+        this.files = files;
     }
 
 }

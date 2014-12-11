@@ -59,20 +59,21 @@ public class DomainDAO {
     
     protected MongoClient m;
     protected Jongo jongo;
-    protected MongoCollection subjectCollection;
-    protected MongoCollection treeNodeCollection;
-    protected MongoCollection objectSetCollection;
+
+    protected MongoCollection alignmentBoardCollection;
+    protected MongoCollection annotationCollection;
+    protected MongoCollection compartmentSetCollection;
     protected MongoCollection dataSetCollection;
+    protected MongoCollection flyLineCollection;
+    protected MongoCollection fragmentCollection;
+    protected MongoCollection imageCollection;
+    protected MongoCollection objectSetCollection;
+    protected MongoCollection ontologyCollection;
+    protected MongoCollection patternMaskCollection;
     protected MongoCollection sampleCollection;
     protected MongoCollection screenSampleCollection;
-    protected MongoCollection patternMaskCollection;
-    protected MongoCollection flyLineCollection;
-    protected MongoCollection imageCollection;
-    protected MongoCollection fragmentCollection;
-    protected MongoCollection annotationCollection;
-    protected MongoCollection ontologyCollection;
-    protected MongoCollection compartmentSetCollection;
-    protected MongoCollection alignmentBoardCollection;
+    protected MongoCollection subjectCollection;
+    protected MongoCollection treeNodeCollection;
     
     public DomainDAO(String serverUrl, String databaseName) throws UnknownHostException {
     	this(serverUrl, databaseName, null, null);	
@@ -96,20 +97,20 @@ public class DomainDAO {
                     .enable(MapperFeature.AUTO_DETECT_GETTERS)
                     .enable(MapperFeature.AUTO_DETECT_SETTERS)
                     .build());
+        this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
+        this.annotationCollection = getCollectionByClass(Annotation.class);
+        this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
+        this.dataSetCollection = getCollectionByClass(DataSet.class);
+        this.flyLineCollection = getCollectionByClass(FlyLine.class);
+        this.fragmentCollection = getCollectionByClass(NeuronFragment.class);
+        this.imageCollection = getCollectionByClass(Image.class);
+        this.objectSetCollection = getCollectionByClass(ObjectSet.class);
+        this.ontologyCollection = getCollectionByClass(Ontology.class);
+        this.patternMaskCollection = getCollectionByClass(PatternMask.class);
+        this.sampleCollection = getCollectionByClass(Sample.class);
+        this.screenSampleCollection = getCollectionByClass(ScreenSample.class);
     	this.subjectCollection = getCollectionByClass(Subject.class);
     	this.treeNodeCollection = getCollectionByClass(TreeNode.class);
-    	this.objectSetCollection = getCollectionByClass(ObjectSet.class);
-    	this.dataSetCollection = getCollectionByClass(DataSet.class);
-    	this.sampleCollection = getCollectionByClass(Sample.class);
-    	this.screenSampleCollection = getCollectionByClass(ScreenSample.class);
-    	this.patternMaskCollection = getCollectionByClass(PatternMask.class);
-    	this.flyLineCollection = getCollectionByClass(FlyLine.class);
-        this.imageCollection = getCollectionByClass(Image.class);
-        this.fragmentCollection = getCollectionByClass(NeuronFragment.class);
-        this.annotationCollection = getCollectionByClass(Annotation.class);
-        this.ontologyCollection = getCollectionByClass(Ontology.class);
-        this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
-        this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
     }
     
     public Jongo getJongo() {
@@ -239,8 +240,7 @@ public class DomainDAO {
 
         Class<? extends DomainObject> clazz = getObjectClass(type);
         if (clazz==null) {
-        	log.error("No object type for "+type);
-        	return new ArrayList<DomainObject>();
+            throw new IllegalArgumentException("No object type for "+type);
         }
         
         Iterable<? extends DomainObject> iterable = null;
@@ -263,10 +263,10 @@ public class DomainDAO {
 
         Iterable<? extends DomainObject> iterable = null;
         if (subjects==null) {
-        	iterable = getCollectionByName(type).find("{"+reverseRef.getReferenceAttr()+":#}", reverseRef.getReferenceId()).as(getObjectClass(type));
+        	iterable = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#}", reverseRef.getReferenceId()).as(getObjectClass(type));
         }
         else {
-        	iterable = getCollectionByName(type).find("{"+reverseRef.getReferenceAttr()+":#,readers:{$in:#}}", reverseRef.getReferenceId(), subjects).as(getObjectClass(type));
+        	iterable = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#,readers:{$in:#}}", reverseRef.getReferenceId(), subjects).as(getObjectClass(type));
         }
         
         List<DomainObject> list = toList(iterable);
@@ -529,8 +529,7 @@ public class DomainDAO {
     public Iterable<? extends DomainObject> getDomainObjects(String type) {
         Class<? extends DomainObject> clazz = getObjectClass(type);
         if (clazz==null) {
-        	log.error("No object type for "+type);
-        	return new ArrayList<DomainObject>();
+        	throw new IllegalArgumentException("No object type for "+type);
         }
 
         return getCollectionByName(type).find().as(clazz);

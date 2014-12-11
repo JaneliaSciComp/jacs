@@ -26,6 +26,7 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
@@ -53,8 +54,8 @@ public class SolrConnector extends SolrDAO {
     private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
     
     protected static final String JANELIA_MODEL_PACKAGE = "org.janelia.it.jacs.model.domain";
-    protected static final int SOLR_LOADER_BATCH_SIZE = 1000;
-    protected static final int SOLR_LOADER_COMMIT_SIZE = 10000;
+    protected static final int SOLR_LOADER_BATCH_SIZE = 10000;
+    protected static final int SOLR_LOADER_COMMIT_SIZE = 100000;
     
     private DomainDAO dao; 
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
@@ -151,9 +152,10 @@ public class SolrConnector extends SolrDAO {
 
 		Class<?> clazz = domainObject.getClass();
 		SearchType searchTypeAnnot = clazz.getAnnotation(SearchType.class);
+		MongoMapped mongoMappedAnnot = clazz.getAnnotation(MongoMapped.class);
 		
     	doc.setField("doc_type", SolrDocTypeEnum.DOCUMENT.toString(), 1.0f);
-    	doc.setField("entity_type", searchTypeAnnot.label(), 1.0f);
+    	doc.setField("entity_type", searchTypeAnnot.key(), 1.0f);
 
 		log.trace("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
     	
@@ -229,7 +231,7 @@ public class SolrConnector extends SolrDAO {
     	}
     	
 		fullTextStrings.clear();
-		findStrings(domainObject, true);
+		findStrings(mongoMappedAnnot.collectionName(), domainObject, true);
 		for(String key : fullTextStrings.keySet()) {
 			// Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
 			doc.setField(key+"_d_txt", new ArrayList<String>(fullTextStrings.get(key)), 1.0f);
@@ -238,18 +240,18 @@ public class SolrConnector extends SolrDAO {
 		return doc;
 	}
 	
-	private void findStrings(Object object, boolean ignoreSearchAttrs) {
+	private void findStrings(String rootType, Object object, boolean ignoreSearchAttrs) {
 		
 		if (object==null) return;
 		Class<?> clazz = object.getClass();
-
+        
 		for(Field field : ReflectionUtils.getAllFields(clazz)) {
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			if (ignoreSearchAttrs && searchAttributeAnnot!=null) continue;
 			try {
 				Object childObj = ReflectionHelper.getFieldValue(object, field.getName());
 				if (childObj!=null) {
-					findStrings(field.getName(), childObj);
+					findStrings(rootType, field.getName(), childObj);
 				}
 			}
 			catch (Exception e) {
@@ -258,7 +260,7 @@ public class SolrConnector extends SolrDAO {
 		}
 	}
 	
-	private void findStrings(String fieldName, Object object) throws Exception {
+	private void findStrings(String rootType, String fieldName, Object object) throws Exception {
 
 		if (object==null) return;
 
@@ -280,35 +282,43 @@ public class SolrConnector extends SolrDAO {
 			Map map = (Map)object;
 			for(Object key : map.keySet()) {
 				Object value = map.get(key);
-				findStrings(fieldName, value);
+				findStrings(rootType, fieldName, value);
 			}
 		}
 		else if (object instanceof List) {
 			List list = (List)object;
 			for(Object value : list) {
-				findStrings(fieldName, value);
+				findStrings(rootType, fieldName, value);
 			}
 		}
 		else if (object instanceof Set) {
 			Set set = (Set)object;
 			for(Object value : set) {
-				findStrings(fieldName, value);
+				findStrings(rootType, fieldName, value);
 			}
 		}
 		else if (object instanceof Reference) {
 			Reference ref = (Reference)object;
+			if (ref.getTargetType().equals(rootType)) {
+                // Would take us back to the root type
+                return;
+            }
 			DomainObject obj = dao.getDomainObject(null, ref);
-			findStrings(obj, false);
+			findStrings(rootType, obj, false);
 		}
 		else if (object instanceof ReverseReference) {
 			ReverseReference ref = (ReverseReference)object;
+			if (ref.getReferringType().equals(rootType)) {
+			    // Would take us back to the root type
+			    return;
+			}
 			List<DomainObject> objs = dao.getDomainObjects(null, ref);
 			for(DomainObject obj : objs) {
-				findStrings(obj, false);	
+				findStrings(rootType, obj, false);	
 			}
 		}
 		else if (childClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {		
-			findStrings(object, false);
+			findStrings(rootType, object, false);
 		}
 		else {
 			log.warn("Encountered unknown class: "+childClass.getName());

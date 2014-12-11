@@ -230,11 +230,6 @@ public class MongoDbImport extends AnnotationDAO {
     	int loaded = 0;
         for(Iterator<Entity> i = flyLines.iterator(); i.hasNext(); ) {
             Entity flyLineEntity = i.next();
-            // Skip these samples
-            if (flyLineEntity.getName().contains("~")) continue;
-            if (EntityConstants.VALUE_ERROR.equals(flyLineEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
-                continue;
-            }
             
             try {
                 long start = System.currentTimeMillis();
@@ -263,7 +258,10 @@ public class MongoDbImport extends AnnotationDAO {
         return loaded;
     }
 
-    private FlyLine getFlyLineObject(Entity flyLineEntity) {
+    private FlyLine getFlyLineObject(Entity flyLineEntity) throws Exception {
+
+        populateChildren(flyLineEntity);
+        
         FlyLine flyline = new FlyLine();
         flyline.setId(flyLineEntity.getId());
         flyline.setName(flyLineEntity.getName());
@@ -829,7 +827,7 @@ public class MongoDbImport extends AnnotationDAO {
             addImage(lsm.getFiles(),FileType.LsmMetadata,jsonFilepath);
         }
         
-        if (sampleEntity!=null) lsm.setSampleId(sampleEntity.getId());
+        if (sampleEntity!=null) lsm.setSample(getReference(sampleEntity));
         lsm.setAge(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_AGE));
         lsm.setAnatomicalArea(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
         lsm.setChannelColors(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
@@ -911,7 +909,7 @@ public class MongoDbImport extends AnnotationDAO {
         ReverseReference fragmentsReference = new ReverseReference();
         fragmentsReference.setCount(new Long(neuronFragments.size()));
         fragmentsReference.setReferringType("fragment");
-        fragmentsReference.setReferenceAttr("separationId");
+        fragmentsReference.setReferenceAttr("separation.targetId");
         fragmentsReference.setReferenceId(separationEntity.getId());
         
         NeuronSeparation neuronSeparation = new NeuronSeparation();
@@ -937,14 +935,14 @@ public class MongoDbImport extends AnnotationDAO {
         if (number!=null) {
             neuronFragment.setNumber(Integer.parseInt(number));
         }
-        neuronFragment.setSeparation(getReference(separationEntity));
+        neuronFragment.setSeparationId(separationEntity.getId());
         neuronFragment.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         
         Map<FileType,String> images = new HashMap<FileType,String>();
         addImage(images,FileType.SignalMip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
         addImage(images,FileType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
         addImage(images,FileType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
-        neuronFragment.setImages(images);
+        neuronFragment.setFiles(images);
         
         return neuronFragment;
     }
@@ -1057,7 +1055,7 @@ public class MongoDbImport extends AnnotationDAO {
         ReverseReference masksRef = new ReverseReference();
         masksRef.setCount(new Long(masks.size()));
         masksRef.setReferringType("patternMask");
-        masksRef.setReferenceAttr("screenSampleId");
+        masksRef.setReferenceAttr("screenSample.targetId");
         masksRef.setReferenceId(screenSample.getId());
         screenSample.setPatternMasks(masksRef);
         
@@ -1789,7 +1787,7 @@ public class MongoDbImport extends AnnotationDAO {
 		objectSet.setTargetType(getCollectionName(maxCountType));
 				
 		if (maxCount!=totalNumChildren) {
-			log.warn(indent+"  Importing "+maxCount+" entities of type "+maxCountType+" in folder "+folderEntity.getId());
+			log.info(indent+"  Importing "+maxCount+" entities of type "+maxCountType+" in folder "+folderEntity.getId());
 			for(String type : typeCounts.keySet()) {
 				Integer count = typeCounts.get(type);
 				if (!type.equals(maxCountType)) {
@@ -1809,28 +1807,30 @@ public class MongoDbImport extends AnnotationDAO {
 
 	    // --------------------------------------------------------------------------------
 	    // 3) Preprocess all children and see if we need to do a bulk mapping
-	    Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
-	    
-	    // Case 1: Sub samples
-	    List<Long> subsampleIds = new ArrayList<Long>();
-	    for(Entity childEntity : entityMembers) {
-	        String childType = childEntity.getEntityTypeName();
-        	if ((childType.equals(EntityConstants.TYPE_SAMPLE) && childEntity.getName().contains("~"))) {
-        		subsampleIds.add(childEntity.getId());
-        	}
-	    }
-	    if (!subsampleIds.isEmpty()) {
-			List<String> upMapping = new ArrayList<String>();
-			upMapping.add("Sample");
-			List<String> downMapping = new ArrayList<String>();
-			List<MappedId> mappings = getProjectedResults(null, subsampleIds, upMapping, downMapping);
-			Map<Long,Entity> mappedEntities = getMappedEntities(mappings);
-            for(MappedId mappedId : mappings) {
-            	translatedEntities.put(mappedId.getOriginalId(),  mappedEntities.get(mappedId.getOriginalId()));
-            }
-            if (subsampleIds.size()!=translatedEntities.size()) {
-            	log.warn(indent+"  Translated "+subsampleIds.size()+ " sub samples to "+translatedEntities.size()+" parent samples");	
-            }
+		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
+		
+		if (EntityConstants.TYPE_SAMPLE.equals(maxCountType)) {    
+		    // Case 1: Sub samples
+		    List<Long> subsampleIds = new ArrayList<Long>();
+		    for(Entity childEntity : entityMembers) {
+		        String childType = childEntity.getEntityTypeName();
+	        	if ((childType.equals(EntityConstants.TYPE_SAMPLE) && childEntity.getName().contains("~"))) {
+	        		subsampleIds.add(childEntity.getId());
+	        	}
+		    }
+		    if (!subsampleIds.isEmpty()) {
+				List<String> upMapping = new ArrayList<String>();
+				upMapping.add("Sample");
+				List<String> downMapping = new ArrayList<String>();
+				List<MappedId> mappings = getProjectedResults(null, subsampleIds, upMapping, downMapping);
+				Map<Long,Entity> mappedEntities = getMappedEntities(mappings);
+	            for(MappedId mappedId : mappings) {
+	            	translatedEntities.put(mappedId.getOriginalId(),  mappedEntities.get(mappedId.getOriginalId()));
+	            }
+	            if (subsampleIds.size()!=translatedEntities.size()) {
+	            	log.warn(indent+"  Translated "+subsampleIds.size()+ " sub samples to "+translatedEntities.size()+" parent samples");	
+	            }
+			}
 		}
 	    
 	    // --------------------------------------------------------------------------------
@@ -1841,44 +1841,40 @@ public class MongoDbImport extends AnnotationDAO {
 	    	
 	        String childType = childEntity.getEntityTypeName();
         	String childColName = getCollectionName(childType);
-	        Long childId = childEntity.getId();
+        	
+        	Entity importEntity = childEntity;
+	        Long importEntityId = childEntity.getId();
 	        
         	Entity translatedEntity = translatedEntities.get(childEntity.getId());
         	if (translatedEntity!=null) {
         		// already translate this above
-        		logger.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+childType+"#"+childId);
-        		childId = translatedEntity.getId();
+        		logger.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+childType+"#"+importEntityId);
+        		importEntityId = translatedEntity.getId();
         	}
-        	else {
-	        	if (TRANSLATE_ENTITIES && "unknown".equals(childColName)) {
-	        		Long newChildId = null;
-	        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
-	        		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
-	        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
-	        		for (String entityType : entityTranslationPriority) {
-	        			Entity owningEntity = getAncestorWithType(childEntity.getOwnerKey(), childId, entityType);
-	                	if (owningEntity!=null) {
-	                		newChildId = owningEntity.getId();
-	                		logger.info(indent+"  Will reference "+entityType+"#"+newChildId+" instead of unknown "+childType+"#"+childId);
-	                		break;
-	                	}
-	        		}
-	        		if (newChildId!=null) childId = newChildId;
-	        	}
+        	else if (TRANSLATE_ENTITIES && "unknown".equals(childColName)) {
+        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
+        		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
+        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
+        		for (String entityType : entityTranslationPriority) {
+        			Entity owningEntity = getAncestorWithType(childEntity.getOwnerKey(), importEntityId, entityType);
+                	if (owningEntity!=null) {
+                		importEntity = owningEntity;
+                		importEntityId = owningEntity.getId();
+                		logger.info(indent+"  Will reference "+entityType+"#"+importEntityId+" instead of unknown "+childType+"#"+importEntityId);
+                		break;
+                	}
+        		}
         	}
         
-	        if (childId!=null) {
-	            String type = getCollectionName(childType);
-	            if (INSERT_ROGUE_ENTITIES) {
-		            // Attempt imports of rogue entities such as images which are not part of samples
-		            if (!childType.equals(EntityConstants.TYPE_SAMPLE) && !childType.equals(EntityConstants.TYPE_NEURON_FRAGMENT)) { 
-			            long count = dao.getCollectionByName(type).count("{_id:#}",childId);
-			            if (count<1) {
-			            	attemptRogueImport(childEntity, indent);
-			            }
+	        if (importEntity!=null) {
+	            String type = getCollectionName(importEntity.getEntityTypeName());
+	            if (INSERT_ROGUE_ENTITIES && !"unknown".equals(type)) {
+		            // Attempt imports of rogue entities which map to domain objects, but which have not been loaded by any other part of the import procedure
+		            if (dao.getCollectionByName(type).count("{_id:#}",importEntityId)<1) {
+		            	attemptRogueImport(importEntity, indent);
 		            }
 	            }
-	            memberIds.add(childId);
+	            memberIds.add(importEntityId);
 	        }
 	    }
 

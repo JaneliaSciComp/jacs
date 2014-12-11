@@ -1,12 +1,13 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @SearchType(key="image",label="Image")
 public class LSMImage extends Image {
 
-    private Long sampleId;
+    private Reference sample;
     
     @SearchAttribute(key="age_txt",label="Age",facet=true)
     private String age;
@@ -45,16 +46,16 @@ public class LSMImage extends Image {
     private String slideCode;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public Long getSampleId() {
-        return sampleId;
-    }
-
-    public void setSampleId(Long sampleId) {
-        this.sampleId = sampleId;
-    }
-
     public String getAge() {
         return age;
+    }
+
+    public Reference getSample() {
+        return sample;
+    }
+
+    public void setSample(Reference sample) {
+        this.sample = sample;
     }
 
     public void setAge(String age) {
