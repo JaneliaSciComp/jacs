@@ -298,7 +298,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("fpid=$!\n");
         
         // Spy on Xvfb
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 3600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 7200));
         
 		// Convert movies to H.246
         script.append("fin=$OUTPUT_PREFIX.avi\n");
