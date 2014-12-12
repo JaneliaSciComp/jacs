@@ -77,6 +77,7 @@ class ForceDefault2dImagesScript {
 		if (runs.isEmpty()) return;
 
 		// Pick the 2d image to use. Either the one that matches the prefix given, or just the latest
+		Entity latest2dImage = null;
 		Entity forced2dImage = null;
 		for(Entity pipelineRun : runs) {
 			f.loadChildren(pipelineRun)
@@ -85,13 +86,14 @@ class ForceDefault2dImagesScript {
 			String process = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
 			if (process.startsWith(pipelinePrefix)) {
 				forced2dImage = imageEd.getChildEntity();
-				println "  Forcing "+pipelineRun.name+" with "+forced2dImage
-				break;
+				//println "  Forcing "+pipelineRun.name+" (image.id="+forced2dImage.id+")"
 			}
-			forced2dImage = imageEd.getChildEntity();
+			latest2dImage = imageEd.getChildEntity();
 		}
-		
-		setDefault2dImage(sample, forced2dImage)
+		if (forced2dImage) {
+			latest2dImage = forced2dImage;
+		}
+		setDefault2dImage(sample, latest2dImage)
 		return forced2dImage
 	}
 	
@@ -105,8 +107,8 @@ class ForceDefault2dImagesScript {
 	
 	public void setImageIfNecessary(Entity entity, String attributeName, Entity image) throws ComputeException {
 		if (image==null || entity==null) return;
-		EntityData currImage = entity.getEntityDataByAttributeName(attributeName);
-		if (currImage==null || currImage.getChildEntity()==null || !currImage.getId().equals(image.getId())) {
+		EntityData currImageEd = entity.getEntityDataByAttributeName(attributeName);
+		if (currImageEd==null || currImageEd.getChildEntity()==null || !currImageEd.getChildEntity().getId().equals(image.getId())) {
 			setImage(entity, attributeName, image);
 		}
 	}

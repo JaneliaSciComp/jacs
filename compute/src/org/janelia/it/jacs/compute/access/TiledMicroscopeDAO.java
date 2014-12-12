@@ -611,7 +611,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     }
 
     /**
-     * move the neurite containing the input annotation to the specified neuron
+     * move the neurite containing the input annotation to the specified neuron;
+     * moves TmStructuredTextAnnotations but not anchored paths (you should
+     * delete and recalc those)
      *
      * @throws DaoException
      */
@@ -645,6 +647,13 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, ann.getId());
                 ed.setParentEntity(newNeuronEntity);
                 annotationDAO.saveOrUpdate(ed);
+                // move any TmStructuredTextAnnotations as well:
+                if (oldNeuron.getStructuredTextAnnotationMap().containsKey(ann.getId())) {
+                    TmStructuredTextAnnotation note = oldNeuron.getStructuredTextAnnotationMap().get(ann.getId());
+                    ed = (EntityData) computeDAO.genericLoad(EntityData.class, note.getId());
+                    ed.setParentEntity(newNeuronEntity);
+                    annotationDAO.saveOrUpdate(ed);
+                }
             }
 
             // if it's the root, also change its parent annotation to the new neuron

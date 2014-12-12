@@ -315,7 +315,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 40;
+    	return 88;
     }
 
 	@Override

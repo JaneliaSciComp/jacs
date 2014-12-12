@@ -31,6 +31,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
+import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.sage.CvTerm;
@@ -536,6 +537,7 @@ public class SageDAO {
             "left outer join image_property_vw cross_barcode on i.id = cross_barcode.image_id and cross_barcode.type = 'cross_barcode' " +
             "where i.display=true and i.path is not null " +
             "and data_set.value=? " +
+            "and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
             "order by slide_code.value, i.path";
 
     private static final String ALL_IMAGE_PROPERTY_SQL_1 =
@@ -550,6 +552,7 @@ public class SageDAO {
             "  inner join image_property_vw ip2 on (ip2.image_id=i.id and ip2.type='data_set' and ip2.value=?)" +
             "  inner join image_property_vw ip3 on (ip3.image_id=i.id and ip3.type='slide_code' and ip3.value is not null)" +
             "  where i.display=true and i.path is not null" +
+            "  and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
             ") image_vw on (ip1.image_id = image_vw.id) " +
             "group by image_vw.id ";
 
