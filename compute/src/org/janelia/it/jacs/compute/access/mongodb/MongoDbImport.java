@@ -86,7 +86,7 @@ import com.mongodb.WriteConcern;
  */
 public class MongoDbImport extends AnnotationDAO {
 
-    private static final Logger logger = Logger.getLogger(MongoDbMaintainer.class);
+    private static final Logger logger = Logger.getLogger(MongoDbImport.class);
 
     private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
     private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
@@ -1869,10 +1869,13 @@ public class MongoDbImport extends AnnotationDAO {
 	        if (importEntity!=null) {
 	            String type = getCollectionName(importEntity.getEntityTypeName());
 	            if (INSERT_ROGUE_ENTITIES && !"unknown".equals(type)) {
-		            // Attempt imports of rogue entities which map to domain objects, but which have not been loaded by any other part of the import procedure
-		            if (dao.getCollectionByName(type).count("{_id:#}",importEntityId)<1) {
-		            	attemptRogueImport(importEntity, indent);
-		            }
+	                // A minor optimization, since we can only do rogue imports on images
+	                if ("image".equals(type)) {
+    		            // Attempt imports of rogue entities which map to domain objects, but which have not been loaded by any other part of the import procedure
+    		            if (dao.getCollectionByName(type).count("{_id:#}",importEntityId)<1) {
+    		            	attemptRogueImport(importEntity, indent);
+    		            }
+	                }
 	            }
 	            memberIds.add(importEntityId);
 	        }
