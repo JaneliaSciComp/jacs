@@ -643,8 +643,10 @@ public class MongoDbImport extends AnnotationDAO {
             populateChildren(tileEntity);
             for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
                 LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
-                lsmImages.add(lsmImage);
-                lsmReferences.add(getReference(lsmEntity));
+                if (lsmImage!=null) {
+                    lsmImages.add(lsmImage);
+                    lsmReferences.add(getReference(lsmEntity));
+                }
             }
 
             imageCollection.insert(lsmImages.toArray());
@@ -820,6 +822,11 @@ public class MongoDbImport extends AnnotationDAO {
     private LSMImage getLSMImage(Entity sampleEntity, Entity lsmEntity) throws Exception {
 
         LSMImage lsm = (LSMImage)getImage(lsmEntity);
+        // An LSM file must have a stack file path
+        if (lsm.getFiles().get(FileType.Stack)==null) {
+            log.error("LSM cannot be imported because it has no filepath: "+lsmEntity.getId());
+            return null;
+        }
         
         String name = ArchiveUtils.getDecompressedFilepath(lsm.getName());
         String jsonFilepath = lsmJsonFiles.get(name);
@@ -909,7 +916,7 @@ public class MongoDbImport extends AnnotationDAO {
         ReverseReference fragmentsReference = new ReverseReference();
         fragmentsReference.setCount(new Long(neuronFragments.size()));
         fragmentsReference.setReferringType("fragment");
-        fragmentsReference.setReferenceAttr("separation.targetId");
+        fragmentsReference.setReferenceAttr("separationId");
         fragmentsReference.setReferenceId(separationEntity.getId());
         
         NeuronSeparation neuronSeparation = new NeuronSeparation();
@@ -1899,7 +1906,9 @@ public class MongoDbImport extends AnnotationDAO {
         try {
             if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
             	LSMImage image = getLSMImage(null, entity);
-            	dao.getCollectionByName(type).save(image);
+            	if (image!=null) {
+            	    dao.getCollectionByName(type).save(image);
+            	}
             }
             else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
             	Image image = getImage(entity);

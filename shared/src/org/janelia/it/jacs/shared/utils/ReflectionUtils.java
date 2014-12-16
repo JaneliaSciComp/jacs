@@ -80,8 +80,7 @@ public class ReflectionUtils {
         throw new NoSuchFieldException(fieldName);
     }
     
-    private static String getAccessor(String prefix, String attributeName) 
-            throws NoSuchMethodException {
+    private static String getAccessor(String prefix, String attributeName) {
         String firstChar = attributeName.substring(0, 1).toUpperCase();
         return prefix+firstChar+attributeName.substring(1);
     }

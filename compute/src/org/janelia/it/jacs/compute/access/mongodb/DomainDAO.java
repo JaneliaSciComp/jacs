@@ -34,6 +34,7 @@ import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
+import org.jongo.MongoCursor;
 import org.jongo.RawResultHandler;
 import org.jongo.marshall.jackson.JacksonMapper;
 
@@ -159,9 +160,9 @@ public class DomainDAO {
     /**
      * Create a list of the result set in iteration order.
      */
-    private <T> List<T> toList(Iterable<? extends T> iterable) {
+    private <T> List<T> toList(MongoCursor<? extends T> cursor) {
         List<T> list = new ArrayList<T>();
-        for(T item : iterable) {
+        for(T item : cursor) {
             list.add(item);
         }
         return list;
@@ -170,10 +171,10 @@ public class DomainDAO {
     /**
      * Create a list of the result set in the order of the given id list.
      */
-    private List<DomainObject> toList(Iterable<? extends DomainObject> iterable, Collection<Long> ids) {
+    private List<DomainObject> toList(MongoCursor<? extends DomainObject> cursor, Collection<Long> ids) {
         List<DomainObject> list = new ArrayList<DomainObject>(ids.size());
         Map<Long,DomainObject> map = new HashMap<Long,DomainObject>(ids.size());
-        for(DomainObject item : iterable) {
+        for(DomainObject item : cursor) {
             map.put(item.getId(), item);
         }
         for(Long id : ids) {
@@ -243,16 +244,16 @@ public class DomainDAO {
             throw new IllegalArgumentException("No object type for "+type);
         }
         
-        Iterable<? extends DomainObject> iterable = null;
+        MongoCursor<? extends DomainObject> cursor = null;
         if (subjects==null) {
-        	iterable = getCollectionByName(type).find("{_id:{$in:#}}", ids).as(clazz);
+        	cursor = getCollectionByName(type).find("{_id:{$in:#}}", ids).as(clazz);
         }
         else {
-        	iterable = getCollectionByName(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(clazz);	
+        	cursor = getCollectionByName(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(clazz);	
         }
         
         
-        List<DomainObject> list = toList(iterable, ids);
+        List<DomainObject> list = toList(cursor, ids);
         log.trace("Getting "+list.size()+" "+type+" objects took "+(System.currentTimeMillis()-start)+" ms");
         return list;
     }
@@ -261,15 +262,15 @@ public class DomainDAO {
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
         String type = reverseRef.getReferringType();
 
-        Iterable<? extends DomainObject> iterable = null;
+        MongoCursor<? extends DomainObject> cursor = null;
         if (subjects==null) {
-        	iterable = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#}", reverseRef.getReferenceId()).as(getObjectClass(type));
+        	cursor = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#}", reverseRef.getReferenceId()).as(getObjectClass(type));
         }
         else {
-        	iterable = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#,readers:{$in:#}}", reverseRef.getReferenceId(), subjects).as(getObjectClass(type));
+        	cursor = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#,readers:{$in:#}}", reverseRef.getReferenceId(), subjects).as(getObjectClass(type));
         }
         
-        List<DomainObject> list = toList(iterable);
+        List<DomainObject> list = toList(cursor);
         if (list.size()!=reverseRef.getCount()) {
             log.warn("Reverse reference ("+reverseRef.getReferringType()+":"+reverseRef.getReferenceAttr()+":"+reverseRef.getReferenceId()+
                     ") denormalized count ("+reverseRef.getCount()+") does not match actual count ("+list.size()+")");
@@ -280,15 +281,15 @@ public class DomainDAO {
     public List<Annotation> getAnnotations(String subjectKey, Long targetId) {
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
 
-        Iterable<Annotation> iterable = null;
+        MongoCursor<Annotation> cursor = null;
         if (subjects==null) {
-        	iterable = annotationCollection.find("{targetId:#}",targetId).as(Annotation.class);
+        	cursor = annotationCollection.find("{targetId:#}",targetId).as(Annotation.class);
         }
         else {
-        	iterable = annotationCollection.find("{targetId:#,readers:{$in:#}}",targetId,subjects).as(Annotation.class);
+        	cursor = annotationCollection.find("{targetId:#,readers:{$in:#}}",targetId,subjects).as(Annotation.class);
         }
         
-        return toList(iterable);
+        return toList(cursor);
     }
     
     public List<Annotation> getAnnotations(String subjectKey, Collection<Long> targetIds) {
@@ -519,28 +520,28 @@ public class DomainDAO {
     /**
      * Get the domain objects of the given type 
      */
-    public <T extends DomainObject> Iterable<T> getDomainObjects(Class<T> domainClass) {
+    public <T extends DomainObject> MongoCursor<T> getDomainObjects(Class<T> domainClass) {
         return getCollectionByClass(domainClass).find().as(domainClass);
     }
     
     /**
      * Get the domain objects of the given type 
      */
-    public Iterable<? extends DomainObject> getDomainObjects(String type) {
-        Class<? extends DomainObject> clazz = getObjectClass(type);
-        if (clazz==null) {
-        	throw new IllegalArgumentException("No object type for "+type);
-        }
-
-        return getCollectionByName(type).find().as(clazz);
-    }
+//    public MongoCursor<? extends DomainObject> getDomainObjects(String type) {
+//        Class<? extends DomainObject> clazz = getObjectClass(type);
+//        if (clazz==null) {
+//        	throw new IllegalArgumentException("No object type for "+type);
+//        }
+//
+//        return getCollectionByName(type).find().as(clazz);
+//    }
 
     /**
      * Get the raw domain objects of the given type 
      */
-    public Iterable<DBObject> getRawObjects(String type) {
-        return getCollectionByName(type).find().map(new RawResultHandler<DBObject>());
-    }
+//    public MongoCursor<DBObject> getRawObjects(String type) {
+//        return getCollectionByName(type).find().map(new RawResultHandler<DBObject>());
+//    }
     
     public static void main(String[] args) throws Exception {
         

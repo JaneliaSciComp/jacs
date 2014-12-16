@@ -25,6 +25,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
@@ -33,11 +34,14 @@ import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrUtils;
+import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.mongodb.Bytes;
+import com.mongodb.DBCursor;
 
 /**
  * A connector for loading the full text Solr index from the data in the Mongo Database. 
@@ -97,11 +101,17 @@ public class SolrConnector extends SolrDAO {
 	    	
 			String type = dao.getCollectionName(clazz);
 			Set<Field> fields = ReflectionUtils.getAllFields(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
-			
-			Iterator<? extends DomainObject> iterator = dao.getDomainObjects(type).iterator();
+
+			Iterator<?> iterator = dao.getCollectionByName(type).find("{$or:[{class:{$exists:0}},{class:#}]}",clazz.getName()).with(new QueryModifier() {
+                public void modify(DBCursor cursor) {
+                    log.info("Setting query option: no timeout");
+                    cursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+                }
+	        }).as(clazz).iterator();
+	        
 	    	log.info("    Processing results");
 			while(iterator.hasNext()) {
-				DomainObject domainObject = iterator.next();
+				DomainObject domainObject = (DomainObject)iterator.next();
 
 				if (i>0) {
 	            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
@@ -119,17 +129,17 @@ public class SolrConnector extends SolrDAO {
 	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, domainObject.getId());
 	        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
 	        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, domainObject.getId());
-	        	
 				docs.add(createDocument(null, domainObject, fields, annotations, ancestors, sageProps));
 
 				i++;
 			}
-		}
 
-    	if (!docs.isEmpty()) {
-    		log.info("    Adding "+docs.size()+" docs (i="+i+")");
-    		index(docs);
-    	}
+	        if (!docs.isEmpty()) {
+	            log.info("    Adding "+docs.size()+" docs (i="+i+")");
+	            index(docs);
+	            docs.clear();
+	        }
+		}
     	
         try {
         	log.info("Indexing Sage vocabularies");
@@ -152,12 +162,11 @@ public class SolrConnector extends SolrDAO {
 
 		Class<?> clazz = domainObject.getClass();
 		SearchType searchTypeAnnot = clazz.getAnnotation(SearchType.class);
-		MongoMapped mongoMappedAnnot = clazz.getAnnotation(MongoMapped.class);
 		
     	doc.setField("doc_type", SolrDocTypeEnum.DOCUMENT.toString(), 1.0f);
     	doc.setField("entity_type", searchTypeAnnot.key(), 1.0f);
 
-		log.trace("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
+		log.info("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
     	
 		Map<String,Object> attrs = new HashMap<String,Object>();
 		
@@ -231,7 +240,7 @@ public class SolrConnector extends SolrDAO {
     	}
     	
 		fullTextStrings.clear();
-		findStrings(mongoMappedAnnot.collectionName(), domainObject, true);
+		findStrings(new HashSet<String>(), domainObject, true, "  ");
 		for(String key : fullTextStrings.keySet()) {
 			// Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
 			doc.setField(key+"_d_txt", new ArrayList<String>(fullTextStrings.get(key)), 1.0f);
@@ -240,19 +249,38 @@ public class SolrConnector extends SolrDAO {
 		return doc;
 	}
 	
-	private void findStrings(String rootType, Object object, boolean ignoreSearchAttrs) {
+	/**
+	 * Find all the searchable strings in the given domain object graph. 
+	 * @param visited set of object keys (class#id) that we have already visited, so that we don't get stuck in an infinite loop
+	 * @param object the root object of the object graph to traverse
+	 * @param ignoreSearchAttrs should we ignore attributes of the root object which are marked with the @SearchAttribute annotation?
+	 */
+	private void findStrings(Set<String> visited, Object object, boolean ignoreSearchAttrs, String indent) {
 		
 		if (object==null) return;
 		Class<?> clazz = object.getClass();
-        
+				
+        log.info(indent+"indexing "+clazz.getName());
+		
+		try {
+    		Object id = org.janelia.it.jacs.shared.utils.ReflectionUtils.get(object, "id");
+            String key = clazz.getName()+"#"+id;
+            if (visited.contains(key)) return;
+            visited.add(key);
+		}
+		catch (NoSuchMethodException e) {
+		    // Not everything has an id. In cases where an object does not have an id, we don't need to worry 
+		    // about having visited before, because it's part of an object that does have an id. 
+		}
+		catch (Exception e) {
+		    log.error("Error checking visited status",e);
+		}
+		
 		for(Field field : ReflectionUtils.getAllFields(clazz)) {
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			if (ignoreSearchAttrs && searchAttributeAnnot!=null) continue;
 			try {
-				Object childObj = ReflectionHelper.getFieldValue(object, field.getName());
-				if (childObj!=null) {
-					findStrings(rootType, field.getName(), childObj);
-				}
+				findStrings(visited, object, field.getName(), indent);
 			}
 			catch (Exception e) {
 				log.error("Error finding strings",e);
@@ -260,65 +288,69 @@ public class SolrConnector extends SolrDAO {
 		}
 	}
 	
-	private void findStrings(String rootType, String fieldName, Object object) throws Exception {
+	private void findStrings(Set<String> visited, Object object, String fieldName, String indent) throws Exception {
 
 		if (object==null) return;
 
-		Class<?> childClass = object.getClass();
+		Object childObj = null;
+        Class<?> childClass = null;
+        Field field = null;
+        
+		if (fieldName==null) {
+		    childObj = object;
+		    childClass = object.getClass();
+		}
+		else {
+	        field = ReflectionHelper.getField(object, fieldName);
+	        childClass = field.getType();
+		}
 		
-		if (object instanceof String) {
-			addFullTextString(fieldName, object.toString());
+		if (String.class.isAssignableFrom(childClass)) {
+            if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
+			addFullTextString(fieldName, childObj.toString());
 		}
-		else if (object instanceof Long) {
-			// Ignore longs in object graphs
+		else if (childClass.getName().startsWith("java.")) {
+			// Ignore other Java objects like Dates and Booleans 
 		}
-		else if (object instanceof Integer) {
-			// Ignore integers in object graphs
-		}
-		else if (object instanceof Date) {
-			// Ignore dates inside object graphs
-		}
-		else if (object instanceof Map) {
-			Map map = (Map)object;
+		else if (Map.class.isAssignableFrom(childClass)) {
+		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
+			Map map = (Map)childObj;
 			for(Object key : map.keySet()) {
 				Object value = map.get(key);
-				findStrings(rootType, fieldName, value);
+				findStrings(visited, value, null, indent+"  ");
 			}
 		}
-		else if (object instanceof List) {
-			List list = (List)object;
+		else if (List.class.isAssignableFrom(childClass)) {
+		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
+			List list = (List)childObj;
 			for(Object value : list) {
-				findStrings(rootType, fieldName, value);
+                findStrings(visited, value, null, indent+"  ");
 			}
 		}
-		else if (object instanceof Set) {
-			Set set = (Set)object;
+		else if (Set.class.isAssignableFrom(childClass)) {
+		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
+			Set set = (Set)childObj;
 			for(Object value : set) {
-				findStrings(rootType, fieldName, value);
+                findStrings(visited, value, null, indent+"  ");
 			}
 		}
-		else if (object instanceof Reference) {
-			Reference ref = (Reference)object;
-			if (ref.getTargetType().equals(rootType)) {
-                // Would take us back to the root type
-                return;
-            }
-			DomainObject obj = dao.getDomainObject(null, ref);
-			findStrings(rootType, obj, false);
+		else if (Reference.class.isAssignableFrom(childClass)) {
+//          if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
+//			Reference ref = (Reference)childObj;
+//			DomainObject obj = dao.getDomainObject(null, ref);
+//			findStrings(visited, obj, false);
 		}
-		else if (object instanceof ReverseReference) {
-			ReverseReference ref = (ReverseReference)object;
-			if (ref.getReferringType().equals(rootType)) {
-			    // Would take us back to the root type
-			    return;
-			}
-			List<DomainObject> objs = dao.getDomainObjects(null, ref);
-			for(DomainObject obj : objs) {
-				findStrings(rootType, obj, false);	
-			}
+		else if (ReverseReference.class.isAssignableFrom(childClass)) {
+//          if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
+//			ReverseReference ref = (ReverseReference)childObj;
+//			List<DomainObject> objs = dao.getDomainObjects(null, ref);
+//			for(DomainObject obj : objs) {
+//				findStrings(visited, obj, false);	
+//			}
 		}
-		else if (childClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {		
-			findStrings(rootType, object, false);
+		else if (childClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {	
+		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
+			findStrings(visited, childObj, false, indent+"  ");
 		}
 		else {
 			log.warn("Encountered unknown class: "+childClass.getName());

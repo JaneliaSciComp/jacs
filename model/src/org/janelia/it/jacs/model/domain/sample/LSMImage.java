@@ -4,7 +4,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
-@SearchType(key="image",label="Image")
+@SearchType(key="lsmImage",label="LSM Image")
 public class LSMImage extends Image {
 
     private Reference sample;

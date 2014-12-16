@@ -22,6 +22,7 @@ import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.jongo.MongoCursor;
 
 /**
  * Large, memory-bound operations which need to be done on disk using EhCache, lest we run out of heap space.
@@ -122,7 +123,8 @@ public class MongoLargeOperations extends LargeOperations {
 
     	log.info("Building LSM filename lookup table...");
 		Map<String,Long> lsmLookup = new HashMap<String,Long>();
-    	for(Iterator<LSMImage> lsmIterator = dao.getCollectionByClass(LSMImage.class).find("{class:#}",LSMImage.class.getName()).as(LSMImage.class).iterator(); lsmIterator.hasNext(); ) {
+		MongoCursor<LSMImage> cursor = dao.getCollectionByClass(LSMImage.class).find("{class:#}",LSMImage.class.getName()).as(LSMImage.class);
+    	for(Iterator<LSMImage> lsmIterator = cursor.iterator(); lsmIterator.hasNext(); ) {
     		LSMImage image = lsmIterator.next();
     		String stackFilepath = image.getFiles().get(FileType.Stack);
     		if (stackFilepath==null) {
