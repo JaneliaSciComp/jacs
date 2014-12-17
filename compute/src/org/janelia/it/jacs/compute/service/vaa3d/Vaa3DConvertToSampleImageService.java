@@ -275,36 +275,61 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     else {
                         // Channels were reordered to RGB order by the merge step, and the reference was moved to the end
                         contextLogger.info("  Using RGB merge algorithm");
-                        
+
                         String redTag = null;
                         String greenTag = null;
                         String blueTag = null;
                         String refTag = null;
                         
                         List<String> tags = new ArrayList<String>(unmergedChannelList);
+
+                        // The RGB merge algorithm discards the second reference
+                        tags.remove("r1");
                         
                         List<Channel> allChannels = new ArrayList<Channel>();
                         allChannels.addAll(lsm1Metadata.getChannels());
                         allChannels.addAll(lsm2Metadata.getChannels());
                         
                         for(Channel channel : allChannels) {
-                            String tag = tags.remove(0);
                             String color = channel.getColor();
+                            if (tags.isEmpty()) {
+                            	contextLogger.error("    Ran out of tags while processing channel with color "+color);
+                            	break;
+                            }
                             if ("#FF0000".equalsIgnoreCase(color)) {
-                                redTag = tag;
+                                redTag = tags.remove(0);
                             }
                             else if ("#00FF00".equalsIgnoreCase(color)) {
-                                greenTag = tag;
+                                greenTag = tags.remove(0);
                             }
                             else if ("#0000FF".equalsIgnoreCase(color)) {
-                                blueTag = tag;
+                                blueTag = tags.remove(0);
                             }
                             else if (refTag==null) {
-                                refTag = tag;
+                                refTag = tags.remove(0);
                             }
                         }
 
-                        contextLogger.info("    Found RGB tags: "+redTag+","+greenTag+","+blueTag+" and Ref tag:"+refTag);
+                        if (!tags.isEmpty()) {
+                        	// Fill in any missing color channels with the left over tags. 
+                        	// This is a bit of a hack to deal with bad data. It should never happen if the LSM metadata is good. 
+                        	contextLogger.info("    Leftover tags: "+tags);
+                            if (!tags.isEmpty() && redTag==null) {
+                            	redTag = tags.remove(0);
+                            	contextLogger.warn("    Overriding tag for red channel: "+redTag);
+                            }
+                            if (!tags.isEmpty() && greenTag==null) {
+                            	greenTag = tags.remove(0);
+                            	contextLogger.warn("    Overriding tag for green channel: "+greenTag);
+                            }
+                            if (!tags.isEmpty() && blueTag==null) {
+                            	blueTag = tags.remove(0);
+                            	contextLogger.warn("    Overriding tag for blue channel: "+blueTag);
+                            }
+                        }
+                        
+                        
+                        contextLogger.info("    Found RGB tags "+redTag+","+greenTag+","+blueTag+" and Reference tag "+refTag);
                         
                         inputChannelList.add(redTag);
                         inputChannelList.add(greenTag);
