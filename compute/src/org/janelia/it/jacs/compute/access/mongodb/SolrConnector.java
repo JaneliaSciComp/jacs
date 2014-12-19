@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.access.mongodb;
 import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,10 +24,9 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.janelia.it.jacs.shared.solr.SageTerm;
@@ -58,12 +56,15 @@ public class SolrConnector extends SolrDAO {
     private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
     
     protected static final String JANELIA_MODEL_PACKAGE = "org.janelia.it.jacs.model.domain";
-    protected static final int SOLR_LOADER_BATCH_SIZE = 10000;
-    protected static final int SOLR_LOADER_COMMIT_SIZE = 100000;
+    protected static final int SOLR_LOADER_BATCH_SIZE = 5000;
+    protected static final int SOLR_LOADER_COMMIT_SIZE = 10000;
     
-    private DomainDAO dao; 
-    private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
+    private DomainDAO dao;
+    
+    // Current indexing context
     private Class<?> currContext;
+    private Set<SimpleAnnotation> annotations = new HashSet<SimpleAnnotation>();
+    private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
     
     public SolrConnector() throws UnknownHostException {
     	super(log, true, true);
@@ -92,7 +93,7 @@ public class SolrConnector extends SolrDAO {
 		Reflections reflections = new Reflections(JANELIA_MODEL_PACKAGE);
 		Set<Class<?>> searchClasses = reflections.getTypesAnnotatedWith(SearchType.class);
     	List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
-        int i = 0;
+        int total = 0;
         
 		for (Class<?> clazz : searchClasses) {
 
@@ -104,11 +105,11 @@ public class SolrConnector extends SolrDAO {
 
 			Iterator<?> iterator = dao.getCollectionByName(type).find("{$or:[{class:{$exists:0}},{class:#}]}",clazz.getName()).with(new QueryModifier() {
                 public void modify(DBCursor cursor) {
-                    log.info("Setting query option: no timeout");
                     cursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
                 }
 	        }).as(clazz).iterator();
-	        
+
+            int i = 0;
 	    	log.info("    Processing results");
 			while(iterator.hasNext()) {
 				DomainObject domainObject = (DomainObject)iterator.next();
@@ -125,13 +126,13 @@ public class SolrConnector extends SolrDAO {
             		}
 				}
 				
-	        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, domainObject.getId());
 	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, domainObject.getId());
 	        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
 	        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, domainObject.getId());
-				docs.add(createDocument(null, domainObject, fields, annotations, ancestors, sageProps));
+	        	docs.add(createDocument(null, domainObject, fields, ancestors, sageProps));
 
 				i++;
+				total++;
 			}
 
 	        if (!docs.isEmpty()) {
@@ -147,7 +148,7 @@ public class SolrConnector extends SolrDAO {
         	
     		commit();
     		optimize();
-        	log.info("Completed indexing "+i+" objects");
+        	log.info("Completed indexing "+total+" objects");
             swapBuildCore();
             log.info("Build core swapped to main core. The new index is now live.");
         }
@@ -156,7 +157,7 @@ public class SolrConnector extends SolrDAO {
         }
 	}
 	
-	private SolrInputDocument createDocument(SolrDocument existingDoc, DomainObject domainObject, Set<Field> fields, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,Object> sageProps) throws DaoException {
+	private SolrInputDocument createDocument(SolrDocument existingDoc, DomainObject domainObject, Set<Field> fields, Set<Long> ancestorIds, Map<String,Object> sageProps) throws DaoException {
 
     	SolrInputDocument doc = existingDoc==null ? new SolrInputDocument() : ClientUtils.toSolrInputDocument(existingDoc);
 
@@ -166,7 +167,7 @@ public class SolrConnector extends SolrDAO {
     	doc.setField("doc_type", SolrDocTypeEnum.DOCUMENT.toString(), 1.0f);
     	doc.setField("entity_type", searchTypeAnnot.key(), 1.0f);
 
-		log.info("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
+//		log.info("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
     	
 		Map<String,Object> attrs = new HashMap<String,Object>();
 		
@@ -225,12 +226,6 @@ public class SolrConnector extends SolrDAO {
     			doc.addField(key, value, 1.0f);	
     		}
     	}
-    			
-    	if (annotations != null) {
-			for(SimpleAnnotation annotation : annotations) {        
-				doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
-			}
-    	}
 
     	if (ancestorIds != null) {
     		if (existingDoc!=null) {
@@ -239,12 +234,19 @@ public class SolrConnector extends SolrDAO {
     		doc.addField("ancestor_ids", ancestorIds, 0.2f);
     	}
     	
+    	// Clear state before calling findStrings to populate it
+    	annotations.clear();
 		fullTextStrings.clear();
-		findStrings(new HashSet<String>(), domainObject, true, "  ");
+		
+		findStrings(new HashSet<String>(), domainObject, domainObject, true, "  ");
 		for(String key : fullTextStrings.keySet()) {
 			// Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
 			doc.setField(key+"_d_txt", new ArrayList<String>(fullTextStrings.get(key)), 1.0f);
 		}
+                
+        for(SimpleAnnotation annotation : annotations) {        
+            doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
+        }
 		
 		return doc;
 	}
@@ -255,18 +257,27 @@ public class SolrConnector extends SolrDAO {
 	 * @param object the root object of the object graph to traverse
 	 * @param ignoreSearchAttrs should we ignore attributes of the root object which are marked with the @SearchAttribute annotation?
 	 */
-	private void findStrings(Set<String> visited, Object object, boolean ignoreSearchAttrs, String indent) {
+	private void findStrings(Set<String> visited, Object rootObject, Object object, boolean ignoreSearchAttrs, String indent) {
 		
 		if (object==null) return;
 		Class<?> clazz = object.getClass();
 				
         log.info(indent+"indexing "+clazz.getName());
-		
+        
 		try {
-    		Object id = org.janelia.it.jacs.shared.utils.ReflectionUtils.get(object, "id");
+		    Long id = (Long)org.janelia.it.jacs.shared.utils.ReflectionUtils.get(object, "id");
             String key = clazz.getName()+"#"+id;
             if (visited.contains(key)) return;
             visited.add(key);
+            
+            // It has an id and it's a domain object, then we must add its annotations
+            if (DomainObject.class.isAssignableFrom(clazz)) {
+                log.trace(indent+"adding annotations for "+clazz+"#"+id);
+                Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, id);
+                if (objectAnnotations!=null) {
+                    annotations.addAll(objectAnnotations);
+                }
+            }
 		}
 		catch (NoSuchMethodException e) {
 		    // Not everything has an id. In cases where an object does not have an id, we don't need to worry 
@@ -280,7 +291,7 @@ public class SolrConnector extends SolrDAO {
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			if (ignoreSearchAttrs && searchAttributeAnnot!=null) continue;
 			try {
-				findStrings(visited, object, field.getName(), indent);
+				findStrings(visited, rootObject, object, field, indent);
 			}
 			catch (Exception e) {
 				log.error("Error finding strings",e);
@@ -288,70 +299,94 @@ public class SolrConnector extends SolrDAO {
 		}
 	}
 	
-	private void findStrings(Set<String> visited, Object object, String fieldName, String indent) throws Exception {
+	private void findStrings(Set<String> visited, Object rootObject, Object object, Field field, String indent) throws Exception {
 
 		if (object==null) return;
-
 		Object childObj = null;
         Class<?> childClass = null;
-        Field field = null;
         
-		if (fieldName==null) {
+		if (field==null) {
 		    childObj = object;
 		    childClass = object.getClass();
+	        log.info(indent+"indexing "+object+" of type "+childClass.getName());
 		}
 		else {
-	        field = ReflectionHelper.getField(object, fieldName);
+	        SearchTraversal searchTraversal = field.getAnnotation(SearchTraversal.class);
+	        if (searchTraversal!=null) {
+	            boolean found = false;
+	            for(Class<?> allowedClass : searchTraversal.value()) {
+	                if (allowedClass.equals(rootObject.getClass())) {
+	                    found = true;
+	                    break;
+	                }
+	            }
+	            if (!found) {
+	                return;
+	            }
+	        }
 	        childClass = field.getType();
+	        log.info(indent+"indexing field "+field.getName()+" from "+object+" of type "+childClass.getName());
 		}
 		
 		if (String.class.isAssignableFrom(childClass)) {
             if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-			addFullTextString(fieldName, childObj.toString());
-		}
-		else if (childClass.getName().startsWith("java.")) {
-			// Ignore other Java objects like Dates and Booleans 
+            if (childObj!=null) {
+                addFullTextString(field.getName(), childObj.toString());
+            }
 		}
 		else if (Map.class.isAssignableFrom(childClass)) {
 		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-			Map map = (Map)childObj;
-			for(Object key : map.keySet()) {
-				Object value = map.get(key);
-				findStrings(visited, value, null, indent+"  ");
+            if (childObj!=null) {
+                Map map = (Map)childObj;
+    			for(Object key : map.keySet()) {
+    				Object value = map.get(key);
+    				findStrings(visited, rootObject, value, null, indent+"  ");
+    			}
 			}
 		}
 		else if (List.class.isAssignableFrom(childClass)) {
 		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-			List list = (List)childObj;
-			for(Object value : list) {
-                findStrings(visited, value, null, indent+"  ");
-			}
+		    if (childObj!=null) {
+    			List list = (List)childObj;
+    			for(Object value : list) {
+                    findStrings(visited, rootObject, value, null, indent+"  ");
+    			}
+		    }
 		}
 		else if (Set.class.isAssignableFrom(childClass)) {
 		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-			Set set = (Set)childObj;
-			for(Object value : set) {
-                findStrings(visited, value, null, indent+"  ");
-			}
+		    if (childObj!=null) {
+    			Set set = (Set)childObj;
+    			for(Object value : set) {
+                    findStrings(visited, rootObject, value, null, indent+"  ");
+    			}
+		    }
 		}
 		else if (Reference.class.isAssignableFrom(childClass)) {
-//          if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-//			Reference ref = (Reference)childObj;
-//			DomainObject obj = dao.getDomainObject(null, ref);
-//			findStrings(visited, obj, false);
-		}
+            if (childObj == null) childObj = ReflectionHelper.getFieldValue(object, field);
+            if (childObj!=null) {
+                Reference ref = (Reference) childObj;
+                DomainObject obj = dao.getDomainObject(null, ref);
+                findStrings(visited, rootObject, obj, false, indent + "  ");
+            }
+        } 
 		else if (ReverseReference.class.isAssignableFrom(childClass)) {
-//          if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-//			ReverseReference ref = (ReverseReference)childObj;
-//			List<DomainObject> objs = dao.getDomainObjects(null, ref);
-//			for(DomainObject obj : objs) {
-//				findStrings(visited, obj, false);	
-//			}
+            if (childObj == null) childObj = ReflectionHelper.getFieldValue(object, field);
+            if (childObj!=null) {
+                ReverseReference ref = (ReverseReference) childObj;
+                List<DomainObject> objs = dao.getDomainObjects(null, ref);
+                for (DomainObject obj : objs) {
+                    findStrings(visited, rootObject, obj, false, indent + "  ");
+                }
+            }
 		}
 		else if (childClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {	
 		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-			findStrings(visited, childObj, false, indent+"  ");
+			findStrings(visited, rootObject, childObj, false, indent+"  ");
 		}
+        else if (childClass.getName().startsWith("java.")) {
+            // Ignore other Java objects like Dates and Booleans 
+        }
 		else {
 			log.warn("Encountered unknown class: "+childClass.getName());
 		}
@@ -369,7 +404,7 @@ public class SolrConnector extends SolrDAO {
 				// Don't index Neuron Fragment files
 				if (value.startsWith("neuronSeparatorPipeline")|| value.contains("maskChan")) return;
 			}
-			if ("name".equals(key)) {
+			else if ("name".equals(key)) {
 				// Don't index Neuron Fragment names
 				if (value.startsWith("Neuron Fragment ")) return;
 			}

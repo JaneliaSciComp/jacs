@@ -6,11 +6,13 @@ import java.util.Map;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 
 public class SampleTile implements HasFiles {
 
     private String name;
     private String anatomicalArea;
+    @SearchTraversal({Sample.class})
     private List<Reference> lsmReferences;
     private Map<FileType, String> files;
 

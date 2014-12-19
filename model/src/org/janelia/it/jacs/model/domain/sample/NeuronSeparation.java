@@ -1,12 +1,14 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import org.janelia.it.jacs.model.domain.ReverseReference;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 public class NeuronSeparation extends PipelineResult {
 
     private String name;
+    @SearchTraversal({Sample.class})
     @JsonUnwrapped
     private ReverseReference fragments;
 

@@ -111,7 +111,8 @@ public class MongoDbMaintainer {
 
         MongoCollection fragmentCollection = dao.getCollectionByName("fragment");
         ensureDomainIndexes(fragmentCollection);
-        fragmentCollection.ensureIndex("{'separation.targetId':1}");
+        fragmentCollection.ensureIndex("{separationId:1}");
+        fragmentCollection.ensureIndex("{separationId:1,readers:1}");
         fragmentCollection.ensureIndex("{'sample.targetId':1}");
         fragmentCollection.ensureIndex("{'sample.targetId':1,readers:1}");
 

@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @MongoMapped(collectionName = "screenSample")
@@ -20,9 +21,11 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
     
     @SearchAttribute(key="flyline_txt",label="Fly Line")
     private String flyLine;
+
+    @SearchTraversal({ScreenSample.class})
+    private ReverseReference patternMasks;
     
     private Map<FileType, String> images;
-    private ReverseReference patternMasks;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getFilepath() {
@@ -31,14 +34,6 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
 
     public void setFilepath(String filepath) {
         this.filepath = filepath;
-    }
-
-    public Map<FileType, String> getFiles() {
-        return images;
-    }
-
-    public void setImages(Map<FileType, String> images) {
-        this.images = images;
     }
 
     public String getFlyLine() {
@@ -55,5 +50,13 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
 
     public void setPatternMasks(ReverseReference patternMasks) {
         this.patternMasks = patternMasks;
+    }
+
+    public Map<FileType, String> getFiles() {
+        return images;
+    }
+
+    public void setImages(Map<FileType, String> images) {
+        this.images = images;
     }
 }
