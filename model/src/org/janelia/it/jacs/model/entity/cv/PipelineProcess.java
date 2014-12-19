@@ -40,10 +40,8 @@ public enum PipelineProcess implements NamedEnum {
 
     YoshiMB63xFlpout1024pxINT("Yoshi MB Flp-out 63x 1024px INTensity Pipeline"),
     YoshiMB63xFlpout512pxINT("Yoshi MB Flp-out 63x 512px INTensity Pipeline"),
-    YoshiMB63xFlpout512pxLM("Yoshi MB Flp-out 63x 512px LandMark Pipeline"),
     YoshiMB63xLexAGal41024pxINT("Yoshi MB LexA-GAL4 63x 1024px INTensity Pipeline"),
     YoshiMB63xLexAGal4512pxINT("Yoshi MB LexA-GAL4 63x 512px INTensity Pipeline"),
-    YoshiMB63xLexAGal4512pxLM("Yoshi MB LexA-GAL4 63x 512px LandMark Pipeline"),
     YoshiMBPolarityCase1("Yoshi MB Polarity Case 1 Pipeline"),
     YoshiMBPolarityCase2("Yoshi MB Polarity Case 2 Pipeline"),
     YoshiMBPolarityCase3("Yoshi MB Polarity Case 3 Pipeline"),
