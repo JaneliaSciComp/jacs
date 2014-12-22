@@ -87,7 +87,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
             this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
-            this.warpNeurons = ! data.getItemAsBoolean("WARP_NEURONS");
+            this.warpNeurons = !"false".equals((String)processData.getItem("WARP_NEURONS"));
 
             @SuppressWarnings("unchecked")
             List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREAS");
