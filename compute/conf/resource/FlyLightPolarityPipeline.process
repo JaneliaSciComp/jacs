@@ -71,7 +71,7 @@
                 <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_PAIR"/>
-                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_ds_dpx_1024px_INT.sh"/>
+                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_ds_dpx_1024px_INT_v2.sh"/>
                 <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="Brain 20X/63X Alignment"/>
                 <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
