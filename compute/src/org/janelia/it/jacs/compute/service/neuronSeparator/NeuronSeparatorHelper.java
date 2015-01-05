@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.service.neuronSeparator;
 
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Common utility functions for generating command lines to call the Neuron Separator and its related utilities.
@@ -70,5 +72,14 @@ public class NeuronSeparatorHelper {
         script.append("export NFE_MAX_THREAD_COUNT="+numThreads+"\n");
         script.append("sh "+MIP_CREATOR_SCRIPT+" $OUTPUT_DIR png $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\"");
         return script.toString();
+	}
+	
+	public static Entity getSeparationResult(Entity supportingFiles) {
+        for(Entity file : supportingFiles.getChildren()) {
+            if ("SeparationResultUnmapped.nsp".equals(file.getName()) || "SeparationResult.nsp".equals(file.getName())) {
+                return file;
+            }
+        }
+        return null;
 	}
 }
