@@ -14,6 +14,7 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -101,6 +102,12 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         	throw new ServiceException("No primary input for alignment");
         }
         if (input2!=null) {
+        	if (StringUtils.isEmpty(input2.getPixelResolution())) {
+        		throw new ServiceException("Secondary input has no pixel resolution");
+        	}
+        	else if (StringUtils.isEmpty(input2.getOpticalResolution())) {
+        		throw new ServiceException("Secondary input has no optical resolution");
+        	}
             cmd.append(" -j ").append(getInputParameter(input2));
             if (input2.getInputSeparationFilename()!=null) {
                 cmd.append(" -f ").append(input2.getInputSeparationFilename());
@@ -119,6 +126,11 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
     @Override
     protected int getRequiredMemoryInGB() {
+    	if (Objective.OBJECTIVE_20X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
+    		// If this is only a 20x alignment, we can probably get away with half a node.
+    		return 64;
+    	}
+    	// For most alignments we just take the full node because we don't know the exact memory requirements. 
         return 128;
     }
 
@@ -162,7 +174,8 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                 if ("true".equals(properties.getProperty("default"))) {
                     if (defaultFilename == null) {
                         defaultFilename = canonicalPath;
-                    } else {
+                    } 
+                    else {
                         contextLogger.warn("default flag is true for both " + defaultFilename +
                                            " and " + canonicalPath + " (ignoring flag for second file)");
                     }
