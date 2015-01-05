@@ -2,7 +2,6 @@
 	<sequence>
 	    
 	    <input name="PIPELINE_PROCESS"/>
-        <input name="20X_MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
         <input name="CHANNEL_DYE_SPEC_20X"/>
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
 	    <input name="CHANNEL_DYE_SPEC_63X"/>
@@ -48,8 +47,8 @@
             <include name="20x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_20X_ID}"/>
                 <input name="PIPELINE_NAME" value="Polarity Pipeline 20x"/>
-                <input name="MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
-                <input name="STITCH_ALGORITHMS" value=""/>
+                <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
+                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED,CONFIGURED_BRAIN_VNC"/>
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh"/>
                 <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment,Brain/VNC Alignment"/>
