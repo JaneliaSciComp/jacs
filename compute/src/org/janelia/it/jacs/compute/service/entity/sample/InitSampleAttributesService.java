@@ -28,7 +28,10 @@ public class InitSampleAttributesService extends AbstractEntityService {
 
         final List<AnatomicalArea> sampleAreas = getSampleAreas(sampleEntity);
         if (sampleAreas != null) {
+            // Singular for the for loop
             data.putItem("SAMPLE_AREA", sampleAreas);
+            // Plural for normal usage (e.g. in the alignment pipeline)
+            data.putItem("SAMPLE_AREAS", sampleAreas);
         }
     }
 
