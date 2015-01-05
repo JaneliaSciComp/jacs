@@ -153,6 +153,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             annotationDAO.saveOrUpdateEntity(sample);
             log.debug("Saved sample as " + sample.getId());
             annotationDAO.addEntityToParent(folder, sample, folder.getMaxOrderIndex() + 1, EntityConstants.ATTRIBUTE_ENTITY);
+            annotationDAO.addRootToWorkspace(subjectKey,  annotationDAO.getDefaultWorkspace(subjectKey), folder);
             return new TmSample(sample);
         }
         catch (Exception e) {
