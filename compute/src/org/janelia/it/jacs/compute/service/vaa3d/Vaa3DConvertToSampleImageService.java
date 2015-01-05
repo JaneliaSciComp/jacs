@@ -366,10 +366,12 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             contextLogger.info("Output channel order: "+outputChannelList);
 
             List<Integer> channelMapping = new ArrayList<Integer>();
-            for(String outputTag : outputChannelList) {
+            for(Iterator<String> iterator = outputChannelList.iterator(); iterator.hasNext(); ) {
+            	String outputTag = iterator.next();
                 int originalIndex = unmergedChannelList.indexOf(outputTag);
                 if (originalIndex<0) {
-                    throw new IllegalStateException("Cannot find requested output channel in the input LSMs: "+outputTag);
+                	contextLogger.warn("Cannot find output channel in the input LSMs: "+outputTag);
+                	iterator.remove();
                 }
                 channelMapping.add(originalIndex);
             }
@@ -532,8 +534,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     
     private String generateChannelMapping(List<String> inputChannelList, List<String> outputChannelList) throws Exception {
 
-        contextLogger.info("Input channels: "+inputChannelList);
-        contextLogger.info("Output channels: "+outputChannelList);
+        contextLogger.debug("Input channels: "+inputChannelList);
+        contextLogger.debug("Output channels: "+outputChannelList);
         
         Map<String,Integer> sourceIndexMap = new HashMap<String,Integer>();
         int index = 0;
