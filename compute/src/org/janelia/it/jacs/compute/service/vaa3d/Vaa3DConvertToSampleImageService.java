@@ -373,7 +373,9 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 	contextLogger.warn("Cannot find output channel in the input LSMs: "+outputTag);
                 	iterator.remove();
                 }
-                channelMapping.add(originalIndex);
+                else {
+                	channelMapping.add(originalIndex);
+                }
             }
             
             String channelMappingStr = Task.csvStringFromCollection(channelMapping);
