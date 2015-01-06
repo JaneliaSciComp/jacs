@@ -319,10 +319,10 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
 
     @Override
-    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws ComputeException {
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int[] dimensions ) throws ComputeException {
         Map<Integer,byte[]> rtnVal = null;
         try {
-            rtnVal = _tiledMicroscopeDAO.getTextureBytes(basePath, viewerCoord, cubicDim);
+            rtnVal = _tiledMicroscopeDAO.getTextureBytes(basePath, viewerCoord, dimensions);
 
         } catch (Exception e) {
             String errorString="Error calling getTextureByteArray DAO layer: " + e.getMessage();

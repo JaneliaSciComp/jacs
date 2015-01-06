@@ -857,7 +857,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws DaoException {
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int[] dimensions ) throws DaoException {
         Map<Integer,byte[]> rtnVal = new HashMap<>();
         try {
             // Get the bean of data around the point of interest.
@@ -875,18 +875,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
             // Grab the channels.
             TifVolumeFileLoader loader = new TifVolumeFileLoader();
-            if ( cubicDim > -1 ) {
-                loader.setCubicOutputDimension(cubicDim);
+            if ( dimensions != null ) {
+                loader.setOutputDimensions(dimensions);
             }
-            double[][] identity = new double[][] {
-                    { 1, 0, 0, 0 },
-                    { 0, 1, 0, 0 },
-                    { 0, 0, 1, 0 },
-                    { 0, 0, 0, 1 }
-            };
             loader.setConversionCharacteristics(
-                    identity,
-                    identity,
+                    rawFileInfo.getTransformMatrix(),
+                    rawFileInfo.getInvertedTransform(),
                     rawFileInfo.getMinCorner(),
                     rawFileInfo.getExtent(),
                     rawFileInfo.getQueryMicroscopeCoords()
