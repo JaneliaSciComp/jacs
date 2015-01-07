@@ -22,7 +22,7 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
     @SearchAttribute(key="flyline_txt",label="Fly Line")
     private String flyLine;
 
-    @SearchTraversal({ScreenSample.class})
+    @SearchTraversal({})
     private ReverseReference patternMasks;
     
     private Map<FileType, String> images;

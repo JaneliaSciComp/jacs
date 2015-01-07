@@ -2,11 +2,13 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
-@SearchType(key="lsmImage",label="LSM Image")
+//@SearchType(key="lsmImage",label="LSM Image")
 public class LSMImage extends Image {
 
+    @SearchTraversal({})
     private Reference sample;
     
     @SearchAttribute(key="age_txt",label="Age",facet=true)

@@ -98,4 +98,9 @@ public class ReverseReference {
         }
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return "ReverseReference[" + referringType + "." + referenceAttr + "=" + referenceId + "]";
+    }
 }

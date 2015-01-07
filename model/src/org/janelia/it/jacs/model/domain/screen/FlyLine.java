@@ -4,14 +4,20 @@ import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @MongoMapped(collectionName = "flyLine")
 @SearchType(key="flyLine",label="Fly Line")
 public class FlyLine extends AbstractDomainObject {
 
+    @SearchTraversal({})
     private Reference representativeScreenSample;
+    
+    @SearchTraversal({})
     private Reference balancedLine;
+    
+    @SearchTraversal({})
     private Reference originalLine;
 
     @SearchAttribute(key="robot_id_i",label="Robot Id")

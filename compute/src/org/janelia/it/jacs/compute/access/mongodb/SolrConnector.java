@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.access.mongodb;
 import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,7 +25,6 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
@@ -36,7 +36,9 @@ import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.mongodb.Bytes;
 import com.mongodb.DBCursor;
@@ -60,6 +62,9 @@ public class SolrConnector extends SolrDAO {
     protected static final int SOLR_LOADER_COMMIT_SIZE = 10000;
     
     private DomainDAO dao;
+    
+    // Caches
+    Map<Class<?>, List<Field>> classFields = new HashMap<Class<?>,List<Field>>();
     
     // Current indexing context
     private Class<?> currContext;
@@ -98,6 +103,9 @@ public class SolrConnector extends SolrDAO {
 		for (Class<?> clazz : searchClasses) {
 
 			this.currContext = clazz;
+
+            long start = System.currentTimeMillis();
+            
 	    	log.info("Getting objects of type "+clazz.getName());
 	    	
 			String type = dao.getCollectionName(clazz);
@@ -113,7 +121,7 @@ public class SolrConnector extends SolrDAO {
 	    	log.info("    Processing results");
 			while(iterator.hasNext()) {
 				DomainObject domainObject = (DomainObject)iterator.next();
-
+				
 				if (i>0) {
 	            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
 	            		log.info("    Adding "+docs.size()+" docs (i="+i+")");
@@ -140,6 +148,8 @@ public class SolrConnector extends SolrDAO {
 	            index(docs);
 	            docs.clear();
 	        }
+
+            log.info("  Indexing '"+type+"' took "+(System.currentTimeMillis()-start)+" ms");
 		}
     	
         try {
@@ -239,6 +249,7 @@ public class SolrConnector extends SolrDAO {
 		fullTextStrings.clear();
 		
 		findStrings(new HashSet<String>(), domainObject, domainObject, true, "  ");
+		
 		for(String key : fullTextStrings.keySet()) {
 			// Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
 			doc.setField(key+"_d_txt", new ArrayList<String>(fullTextStrings.get(key)), 1.0f);
@@ -250,7 +261,7 @@ public class SolrConnector extends SolrDAO {
 		
 		return doc;
 	}
-	
+		
 	/**
 	 * Find all the searchable strings in the given domain object graph. 
 	 * @param visited set of object keys (class#id) that we have already visited, so that we don't get stuck in an infinite loop
@@ -262,126 +273,107 @@ public class SolrConnector extends SolrDAO {
 		if (object==null) return;
 		Class<?> clazz = object.getClass();
 				
-        log.info(indent+"indexing "+clazz.getName());
+        log.debug(indent+"indexing "+clazz.getName());
         
-		try {
-		    Long id = (Long)org.janelia.it.jacs.shared.utils.ReflectionUtils.get(object, "id");
+        if (object instanceof DomainObject) {
+            DomainObject domainObject = (DomainObject)object;
+            Long id = domainObject.getId();
             String key = clazz.getName()+"#"+id;
-            if (visited.contains(key)) return;
-            visited.add(key);
-            
-            // It has an id and it's a domain object, then we must add its annotations
-            if (DomainObject.class.isAssignableFrom(clazz)) {
-                log.trace(indent+"adding annotations for "+clazz+"#"+id);
-                Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, id);
-                if (objectAnnotations!=null) {
-                    annotations.addAll(objectAnnotations);
-                }
+            if (visited.contains(key)) {
+                return;
             }
-		}
-		catch (NoSuchMethodException e) {
-		    // Not everything has an id. In cases where an object does not have an id, we don't need to worry 
-		    // about having visited before, because it's part of an object that does have an id. 
-		}
-		catch (Exception e) {
-		    log.error("Error checking visited status",e);
+            visited.add(key);
+            Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, id);
+            if (objectAnnotations!=null) {
+                annotations.addAll(objectAnnotations);
+            }
+        }
+		
+		List<Field> fields = classFields.get(clazz);
+		if (fields == null) {
+		    fields = new ArrayList<>(ReflectionUtils.getAllFields(clazz));
+		    classFields.put(clazz, fields);
 		}
 		
-		for(Field field : ReflectionUtils.getAllFields(clazz)) {
+		for(Field field : fields) {
+            // Don't index permissions
+            if ("readers".equals(field.getName()) || "writers".equals(field.getName()) || "ownerKey".equals(field.getName())) continue;
+            
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			if (ignoreSearchAttrs && searchAttributeAnnot!=null) continue;
+			
 			try {
-				findStrings(visited, rootObject, object, field, indent);
+				findStrings(visited, rootObject, object, field, indent+"  ");
 			}
 			catch (Exception e) {
-				log.error("Error finding strings",e);
+				log.error(indent+"Error finding strings for field "+field.getName(),e);
 			}
 		}
 	}
 	
+	/**
+	 * Find strings in the specified field of the given object. 
+	 * @param visited
+	 * @param rootObject
+	 * @param object
+	 * @param field
+	 * @param indent
+	 * @throws Exception
+	 */
 	private void findStrings(Set<String> visited, Object rootObject, Object object, Field field, String indent) throws Exception {
 
 		if (object==null) return;
-		Object childObj = null;
-        Class<?> childClass = null;
+
+        if (!isTraversable(field, rootObject)) {
+            return;
+        }
         
-		if (field==null) {
-		    childObj = object;
-		    childClass = object.getClass();
-	        log.info(indent+"indexing "+object+" of type "+childClass.getName());
-		}
-		else {
-	        SearchTraversal searchTraversal = field.getAnnotation(SearchTraversal.class);
-	        if (searchTraversal!=null) {
-	            boolean found = false;
-	            for(Class<?> allowedClass : searchTraversal.value()) {
-	                if (allowedClass.equals(rootObject.getClass())) {
-	                    found = true;
-	                    break;
-	                }
-	            }
-	            if (!found) {
-	                return;
-	            }
-	        }
-	        childClass = field.getType();
-	        log.info(indent+"indexing field "+field.getName()+" from "+object+" of type "+childClass.getName());
-		}
+        if (object instanceof String) {
+            addFullTextString(field.getName(), (String)object);
+            return;
+        }
+        
+        log.debug(indent+"indexing "+object+"."+field.getName());
+
+        Object childObj = ReflectionHelper.getFieldValue(object, field);
+        if (childObj==null) return;
+        Class<?> childClass = childObj.getClass();
 		
-		if (String.class.isAssignableFrom(childClass)) {
-            if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-            if (childObj!=null) {
-                addFullTextString(field.getName(), childObj.toString());
+		if (childObj instanceof String) {
+            addFullTextString(field.getName(), childObj.toString());
+		}
+		else if (childObj instanceof Map) {
+            Map map = (Map)childObj;
+            findStrings(visited, rootObject, object, field, map.values(), indent+"  ");
+		}
+		else if (childObj instanceof List) {
+			List list = (List)childObj;
+			findStrings(visited, rootObject, object, field, list, indent+"  ");
+		}
+		else if (childObj instanceof Set) {
+			Set set = (Set)childObj;
+            findStrings(visited, rootObject, object, field, set, indent+"  ");
+		}
+		else if (childObj instanceof Reference) {
+            Reference ref = (Reference) childObj;
+            // Don't fetch objects which we've already visited
+            String key = dao.getObjectClass(ref.getTargetType()).getName()+"#"+ref.getTargetId();
+            if (visited.contains(key)) {
+                return;
             }
-		}
-		else if (Map.class.isAssignableFrom(childClass)) {
-		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-            if (childObj!=null) {
-                Map map = (Map)childObj;
-    			for(Object key : map.keySet()) {
-    				Object value = map.get(key);
-    				findStrings(visited, rootObject, value, null, indent+"  ");
-    			}
-			}
-		}
-		else if (List.class.isAssignableFrom(childClass)) {
-		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-		    if (childObj!=null) {
-    			List list = (List)childObj;
-    			for(Object value : list) {
-                    findStrings(visited, rootObject, value, null, indent+"  ");
-    			}
-		    }
-		}
-		else if (Set.class.isAssignableFrom(childClass)) {
-		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
-		    if (childObj!=null) {
-    			Set set = (Set)childObj;
-    			for(Object value : set) {
-                    findStrings(visited, rootObject, value, null, indent+"  ");
-    			}
-		    }
-		}
-		else if (Reference.class.isAssignableFrom(childClass)) {
-            if (childObj == null) childObj = ReflectionHelper.getFieldValue(object, field);
-            if (childObj!=null) {
-                Reference ref = (Reference) childObj;
-                DomainObject obj = dao.getDomainObject(null, ref);
-                findStrings(visited, rootObject, obj, false, indent + "  ");
-            }
+            log.trace(indent+"fetching reference "+ref);
+            DomainObject obj = dao.getDomainObject(null, ref);
+            findStrings(visited, rootObject, obj, false, indent + "  ");
         } 
-		else if (ReverseReference.class.isAssignableFrom(childClass)) {
-            if (childObj == null) childObj = ReflectionHelper.getFieldValue(object, field);
-            if (childObj!=null) {
-                ReverseReference ref = (ReverseReference) childObj;
-                List<DomainObject> objs = dao.getDomainObjects(null, ref);
-                for (DomainObject obj : objs) {
-                    findStrings(visited, rootObject, obj, false, indent + "  ");
-                }
+		else if (childObj instanceof ReverseReference) {
+            ReverseReference ref = (ReverseReference) childObj;
+            log.trace(indent+"fetching reverse reference"+ref);
+            List<DomainObject> objs = dao.getDomainObjects(null, ref);
+            for (DomainObject obj : objs) {
+                findStrings(visited, rootObject, obj, false, indent + "  ");
             }
 		}
 		else if (childClass.getName().startsWith(JANELIA_MODEL_PACKAGE)) {	
-		    if (childObj==null) childObj = ReflectionHelper.getFieldValue(object, field);
 			findStrings(visited, rootObject, childObj, false, indent+"  ");
 		}
         else if (childClass.getName().startsWith("java.")) {
@@ -392,22 +384,59 @@ public class SolrConnector extends SolrDAO {
 		}
 	}
 	
+	private boolean isTraversable(Field field, Object rootObject) {
+        SearchTraversal searchTraversal = field.getAnnotation(SearchTraversal.class);
+        
+        // Default to traversing every unannotated field
+        if (searchTraversal==null) return true;
+        
+        for(Class<?> allowedClass : searchTraversal.value()) {
+            if (allowedClass.equals(rootObject.getClass())) {
+                return true;
+            }
+        }
+        // Annotation exists, but this field is not traversable from the given root object
+        return false;
+	}
+
+	/**
+	 * Find strings in the field of the given object, which reduces to the given collection. 
+	 * @param visited
+	 * @param rootObject
+	 * @param object
+	 * @param field
+	 * @param collection
+	 * @param indent
+	 * @throws Exception
+	 */
+    private void findStrings(Set<String> visited, Object rootObject, Object object, Field field, Collection<?> collection, String indent) throws Exception {
+        
+        log.debug(indent+"indexing collection "+object+"."+field.getName());
+        
+        for(Object collectionObject : collection) {
+            Class<?> clazz = collectionObject.getClass();
+            if (clazz.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
+                findStrings(visited, rootObject, collectionObject, false, indent+"  ");
+            }
+            else if (collectionObject instanceof String) {
+                findStrings(visited, rootObject, collectionObject, field, indent+"  ");   
+            }
+            else {
+                log.warn("Encountered collection with objects of type "+clazz.getName());
+            }
+        }   
+    }
+	
 	private void addFullTextString(String key, String value) {
 		if (key==null || value==null) return;
-		
-		// Don't index permissions
-		if ("readers".equals(key) || "writers".equals(key) || "ownerKey".equals(key)) return;
 
-		// Optimization rules for indexing specific domain classes
-		if (currContext==Sample.class) {
-			if ("files".equals(key)) {
-				// Don't index Neuron Fragment files
-				if (value.startsWith("neuronSeparatorPipeline")|| value.contains("maskChan")) return;
-			}
-			else if ("name".equals(key)) {
-				// Don't index Neuron Fragment names
-				if (value.startsWith("Neuron Fragment ")) return;
-			}
+		if ("files".equals(key)) {
+			// Don't index Neuron Fragment files
+			if (value.startsWith("neuronSeparatorPipeline")|| value.contains("maskChan")) return;
+		}
+		else if ("name".equals(key)) {
+			// Don't index Neuron Fragment names
+			if (value.startsWith("Neuron Fragment ")) return;
 		}
 		
 		fullTextStrings.put(key, value);

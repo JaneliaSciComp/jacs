@@ -77,4 +77,8 @@ public class Reference {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "Reference[" + targetType + "#" + targetId + "]";
+    }
 }

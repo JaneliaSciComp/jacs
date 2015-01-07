@@ -9,13 +9,14 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
-import org.janelia.it.jacs.model.domain.support.SearchType;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 
 @MongoMapped(collectionName = "fragment")
-@SearchType(key="fragment",label="Neuron Fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasFiles, HasFilepath {
 
+    @SearchTraversal({NeuronFragment.class})
     private Reference sample;
+    
     private Long separationId;
         
     @SearchAttribute(key="number_i",label="Number")
