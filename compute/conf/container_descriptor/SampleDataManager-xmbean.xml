@@ -287,7 +287,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
            <name>extraParam</name>
            <type>java.lang.String</type>
         </parameter>
@@ -307,7 +307,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
            <name>extraParam</name>
            <type>java.lang.String</type>
         </parameter>
@@ -327,7 +327,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
            <name>extraParam</name>
            <type>java.lang.String</type>
         </parameter>
