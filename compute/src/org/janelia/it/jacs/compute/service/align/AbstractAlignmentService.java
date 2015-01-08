@@ -111,7 +111,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             
             if (!alignmentInputFiles.isEmpty()) {
 	            setConsensusValues();
-	            putOutputVars(input1.getChannelSpec(), input1.getChannelColors(), alignmentInputFiles);
+	            putOutputVars(alignmentInputFiles);
             }
         } 
         catch (Exception e) {
@@ -193,13 +193,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         contextLogger.info("Found " + type + ": " + input);
     }
 
-    protected void putOutputVars(String chanSpec, String channelColors, List<AlignmentInputFile> alignmentInputFiles) {
-        data.putItem("CHANNEL_SPEC", chanSpec);
-        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
-        data.putItem("SIGNAL_CHANNELS", signalChannels);
-        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
-        data.putItem("REFERENCE_CHANNEL", referenceChannels);
-        data.putItem("CHANNEL_COLORS", channelColors);
+    protected void putOutputVars(List<AlignmentInputFile> alignmentInputFiles) {
         data.putItem("ALIGNMENT_INPUTS", alignmentInputFiles);
         
         if (!archivedFiles.isEmpty()) {

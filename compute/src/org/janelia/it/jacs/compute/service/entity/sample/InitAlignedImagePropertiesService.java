@@ -46,6 +46,20 @@ public class InitAlignedImagePropertiesService extends AbstractEntityService {
             processData.putItem("OBJECTIVE", objective);
         }        
 
+        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
+        
+        String chanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+        if (signalChannels!=null) {
+            logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
+            processData.putItem("SIGNAL_CHANNELS", signalChannels);
+        }        
+        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+        if (referenceChannels!=null) {
+            logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
+            processData.putItem("REFERENCE_CHANNEL", referenceChannels);
+        }        
+        
         Entity alignedLabel = image.getChildByAttributeName(EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL);
         if (alignedLabel!=null) {
             String filepath = alignedLabel.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
