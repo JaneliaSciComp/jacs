@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -46,15 +47,13 @@ public class InitAlignedImagePropertiesService extends AbstractEntityService {
             processData.putItem("OBJECTIVE", objective);
         }        
 
-        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
-        
         String chanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+        final String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
         if (signalChannels!=null) {
             logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
             processData.putItem("SIGNAL_CHANNELS", signalChannels);
         }        
-        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+        final String referenceChannels = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
         if (referenceChannels!=null) {
             logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
             processData.putItem("REFERENCE_CHANNEL", referenceChannels);

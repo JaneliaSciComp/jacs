@@ -30,10 +30,10 @@ public abstract class LegacyAlignmentService extends AbstractAlignmentService {
     protected int getRequiredMemoryInGB() {
 
     	// For large input files we need more memory
-    	File inputFile = new File(input1.getInputFilename());
+    	File inputFile = new File(input1.getFilepath());
     	long fileSize = inputFile.length();
-    	if ((input1.getInputFilename().endsWith("raw") && fileSize>LARGE_FILE_SIZE_THRESHOLD_UNCOMPRESSED) || 
-    			(input1.getInputFilename().endsWith("pbd") && fileSize>LARGE_FILE_SIZE_THRESHOLD_COMPRESSED)) {
+    	if ((input1.getFilepath().endsWith("raw") && fileSize>LARGE_FILE_SIZE_THRESHOLD_UNCOMPRESSED) || 
+    			(input1.getFilepath().endsWith("pbd") && fileSize>LARGE_FILE_SIZE_THRESHOLD_COMPRESSED)) {
     		logger.info("Input file size "+fileSize+" exceeds threshold. Will use 16 nodes for processing.");
     		return 96;
     	}
@@ -44,13 +44,13 @@ public abstract class LegacyAlignmentService extends AbstractAlignmentService {
 
     @Override
     public void postProcess() throws MissingDataException {
-
         File outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
-        
-        processData.putItem("ALIGNED_FILENAME", outputFile.getAbsolutePath());
-        
-        List<String> filenames = new ArrayList<String>();
-        filenames.add(outputFile.getAbsolutePath());
-        processData.putItem("ALIGNED_FILENAMES", filenames);
+        List<ImageStack> outputImages = new ArrayList<>();
+        ImageStack outputImage = new ImageStack();
+        outputImage.setFilepath(outputFile.getAbsolutePath());
+        outputImage.setChannelSpec(input1.getChannelSpec());
+        outputImages.add(outputImage);
+        data.putItem("ALIGNED_IMAGES", outputImages);
+        processData.putItem("ALIGNED_FILENAME", outputImage.getFilepath());
     }
 }

@@ -1,8 +1,14 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -19,11 +25,9 @@ public class InitSampleAttributesService extends AbstractEntityService {
 
         final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
         final String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        final SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+        final String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
         data.putItem("SIGNAL_CHANNELS", signalChannels);
-
-        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+        final String referenceChannels = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
         data.putItem("REFERENCE_CHANNEL", referenceChannels);
 
         final List<AnatomicalArea> sampleAreas = getSampleAreas(sampleEntity);

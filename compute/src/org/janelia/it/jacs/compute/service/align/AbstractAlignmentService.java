@@ -35,11 +35,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  *   SAMPLE_AREAS - the sample areas within the sample to be processed
  *  
  * Outputs:
- *   ALIGNED_FILENAMES - a list of all of the aligned output files
+ *   ALIGNED_IMAGES - a list of all of the aligned output files as ImageStack objects
  *   ALIGNED_FILENAME - the main aligned output file
- *   CHANNEL_SPEC - the channel specification for the main aligned output file
- *   SIGNAL_CHANNELS - the signal channels for the main aligned output file
- *   REFERENCE_CHANNEL - the reference channels for the main aligned output file
  *  
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -230,11 +227,11 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
     protected void checkForArchival(AlignmentInputFile input) throws Exception {
 
-        if (input.getInputFilename().startsWith(ARCHIVE_PREFIX)) {
-            archivedFiles.add(input.getInputFilename());
-            String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getInputFilename()).getName()).getAbsolutePath();
+        if (input.getFilepath().startsWith(ARCHIVE_PREFIX)) {
+            archivedFiles.add(input.getFilepath());
+            String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getFilepath()).getName()).getAbsolutePath();
             targetFiles.add(newInput);
-            input.setInputFilename(newInput);
+            input.setFilepath(newInput);
         }
         
         if (input.getInputSeparationFilename()!=null) {
@@ -320,25 +317,10 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         return TIMEOUT_SECONDS;
     }
     
+	/**
+	 * Every subclass must override this to verify its results and
+	 * populate ALIGNED_IMAGES and ALIGNED_FILENAME.
+	 */
     @Override
-	public void postProcess() throws MissingDataException {
-
-        File outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
-        
-        File alignDir = new File(resultFileNode.getDirectoryPath());
-    	File[] coreFiles = alignDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("core");
-			}
-		});
-
-    	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Brain alignment core dumped for "+resultFileNode.getDirectoryPath());
-    	}
-
-    	if (! outputFile.exists()) {
-    		throw new MissingDataException("Output file not found: "+outputFile.getAbsolutePath());
-    	}
-	}
+	public abstract void postProcess() throws MissingDataException;
 }

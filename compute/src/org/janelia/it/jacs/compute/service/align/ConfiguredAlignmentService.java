@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -11,6 +14,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -117,7 +121,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     }
 
     protected String getInputParameter(AlignmentInputFile input) {
-        return StringUtils.emptyIfNull(input.getInputFilename()) + "," +
+        return StringUtils.emptyIfNull(input.getFilepath()) + "," +
                StringUtils.emptyIfNull(input.getNumChannels()) + "," +
                StringUtils.emptyIfNull(input.getRefChannelOneIndexed()) + "," +
                StringUtils.emptyIfNull(input.getOpticalResolution()) + "," +
@@ -153,24 +157,23 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                 contextLogger.info("postProcess: '.properties' file(s) are " + propertiesFiles);
             }
 
-            List<String> filenames = new ArrayList<>();
+            List<ImageStack> outputFiles = new ArrayList<>();
             String defaultFilename = null;
-            String canonicalPath;
             File propertyFileDir;
 
             for (File propertiesFile : propertiesFiles) {
+            	
                 Properties properties = new Properties();
                 properties.load(new FileReader(propertiesFile));
 
                 propertyFileDir = propertiesFile.getParentFile();
-                String filename = properties.getProperty("alignment.stack.filename");
-                File file = new File(propertyFileDir, filename);
+                String stackFilename = properties.getProperty("alignment.stack.filename");
+                File file = new File(propertyFileDir, stackFilename);
                 if (!file.exists()) {
                     throw new MissingDataException("Alignment stack file does not exist: " + file.getAbsolutePath());
                 }
 
-                canonicalPath = file.getCanonicalPath();
-                filenames.add(canonicalPath);
+                String canonicalPath = file.getCanonicalPath();
                 if ("true".equals(properties.getProperty("default"))) {
                     if (defaultFilename == null) {
                         defaultFilename = canonicalPath;
@@ -180,17 +183,40 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                                            " and " + canonicalPath + " (ignoring flag for second file)");
                     }
                 }
+                
+                String channels = properties.getProperty("alignment.image.channels");
+                if (channels==null) {
+                	logger.warn("Alignment output does not contain 'alignment.image.channels' property, cannot continue processing.");
+                	continue;
+                }
+                
+                String refchan = properties.getProperty("alignment.image.refchan");
+                if (refchan==null) {
+                	logger.warn("Alignment output does not contain 'alignment.image.refchan' property, cannot continue processing.");
+                	continue;
+                }
+
+                String channelSpec = null;
+            	int numChannels = Integer.parseInt(channels);
+            	int refChannel = Integer.parseInt(refchan);
+            	channelSpec = ChanSpecUtils.createChanSpec(numChannels, refChannel);
+                
+                ImageStack outputFile = new ImageStack();
+                outputFile.setFilepath(canonicalPath);
+                outputFile.setChannelSpec(channelSpec);
+            	
+                outputFiles.add(outputFile);
             }
 
-            if (filenames.isEmpty()) {
+            if (outputFiles.isEmpty()) {
                 throw new MissingDataException("No outputs defined for alignment: " + outputDir);
             }
 
-            data.putItem("ALIGNED_FILENAMES", filenames);
+            data.putItem("ALIGNED_IMAGES", outputFiles);
 
             if (defaultFilename == null) {
                 contextLogger.warn("No default output defined for alignment: " + outputDir);
-                defaultFilename = filenames.get(0);
+                defaultFilename = outputFiles.get(0).getFilepath();
             }
 
             data.putItem("ALIGNED_FILENAME", defaultFilename);

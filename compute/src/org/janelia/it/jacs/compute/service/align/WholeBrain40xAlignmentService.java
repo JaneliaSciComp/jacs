@@ -25,7 +25,7 @@ public class WholeBrain40xAlignmentService extends LegacyAlignmentService {
     	
 		logger.info("Starting "+getClass().getName()+" with taskId=" + task.getObjectId() + " resultNodeId="
 				+ resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() + " workingDir="
-				+ resultFileNode.getDirectoryPath() + " inputFilename=" + input1.getInputFilename());
+				+ resultFileNode.getDirectoryPath() + " inputFilename=" + input1.getFilepath());
 
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n");
@@ -33,7 +33,7 @@ public class WholeBrain40xAlignmentService extends LegacyAlignmentService {
         script.append("cd " + resultFileNode.getDirectoryPath() + "\n ");
 		script.append("sh " + EXECUTABLE_DIR + ALIGNER_SCRIPT_CMD +
             " " +  EXECUTABLE_DIR + TEMPLATE_DIR +
-            " " + input1.getInputFilename() + 
+            " " + input1.getFilepath() + 
             " " + resultFileNode.getDirectoryPath()+"/Aligned.v3draw" +
             " \"" + input1.getOpticalResolution() + "\"\n");
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix() + "\n");

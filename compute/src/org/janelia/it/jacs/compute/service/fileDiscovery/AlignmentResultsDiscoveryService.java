@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -67,6 +68,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     
                     logger.info("Got properties file: "+resultItem.getName());
                     File propertiesFile = new File(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                    
                     Properties properties = new Properties();
                     properties.load(new FileReader(propertiesFile));
                     
@@ -111,7 +113,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String channelSpec = null;
                 	int numChannels = Integer.parseInt(channels);
                 	int refChannel = Integer.parseInt(refchan);
-                	channelSpec = createChanSpec(numChannels, refChannel);
+                	channelSpec = ChanSpecUtils.createChanSpec(numChannels, refChannel);
                     
                     helper.setChannelSpec(stackEntity, channelSpec);
                     helper.setAlignmentSpace(stackEntity, alignmentSpace);
@@ -169,19 +171,6 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         logger.info("Putting "+hasWarpedSeparation+" in PREWARPED_SEPARATION");
         processData.putItem("PREWARPED_SEPARATION", new Boolean(hasWarpedSeparation));
     }
-    
-    private String createChanSpec(int numChannels, int refChannel) {
-		StringBuilder sb = new StringBuilder();
-		for(int i=1; i<=numChannels; i++) {
-			if (i==refChannel) {
-				sb.append("r");
-			}
-			else {
-				sb.append("s");
-			}
-		}
-		return sb.toString();
-	}
     
 	private void processQiScoreCsv(Entity alignedImage, String scoresQiCsv) throws Exception {
 

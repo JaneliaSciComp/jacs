@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -113,7 +114,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
         
         String objective = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
         String chanSpec = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        int refChan = chanSpec.indexOf('r')+1;
+        String refChan = ChanSpecUtils.getReferenceChannelCSV(chanSpec);
         
         String template = objective.equals("20x") ? template20x : template63x;
         

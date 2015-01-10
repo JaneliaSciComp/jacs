@@ -3,7 +3,13 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -16,6 +22,7 @@ import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.MergeAlgorithm;
@@ -252,7 +259,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2Entity, refIndex2);
                     contextLogger.info("  Input spec 2: "+chanSpec2);
                     
-                    unmergedChannelList.addAll(convertChanSpecToList(chanSpec1+chanSpec2));
+                    unmergedChannelList.addAll(ChanSpecUtils.convertChanSpecToList(chanSpec1+chanSpec2));
                     
                     if (MergeAlgorithm.FLYLIGHT_ORDERED.getName().equals(mergeAlgorithm)) {
                         
@@ -260,7 +267,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 
                         String chanSpec = chanSpec1.replaceAll("r", "")+chanSpec2.replaceAll("r", "")+"r";
                         contextLogger.info("  Using ordered merge algorithm with chanspec: "+chanSpec);
-                        inputChannelList.addAll(convertChanSpecToList(chanSpec));
+                        inputChannelList.addAll(ChanSpecUtils.convertChanSpecToList(chanSpec));
                         
                         // The output channel spec is defined by the sample (usually set during SAGE sync) and is 
                         // probably the same. If the output spec is not defined by the sample, then the input spec is used.
@@ -269,7 +276,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                             outputChannelList.addAll(inputChannelList);
                         }
                         else {
-                            outputChannelList.addAll(convertChanSpecToList(outputChanSpec));
+                            outputChannelList.addAll(ChanSpecUtils.convertChanSpecToList(outputChanSpec));
                         }
                     }
                     else {
@@ -343,9 +350,9 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 else {
                     contextLogger.info("  Using unmerged algorithm");
                     
-                    unmergedChannelList.addAll(convertChanSpecToList(chanSpec1));
+                    unmergedChannelList.addAll(ChanSpecUtils.convertChanSpecToList(chanSpec1));
                     // When there is no merging, then the input chan spec is equal to the LSM's chan spec. 
-                    inputChannelList.addAll(convertChanSpecToList(chanSpec1));
+                    inputChannelList.addAll(ChanSpecUtils.convertChanSpecToList(chanSpec1));
 
                     // The output channel spec is defined by the sample (usually set during SAGE sync) and is 
                     // probably the same. If the output spec is not defined by the sample, then the reference channel 
@@ -353,10 +360,10 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     
                     if (outputChanSpec==null) {
                         String chanSpec = chanSpec1.replaceAll("r", "")+"r";
-                        outputChannelList.addAll(convertChanSpecToList(chanSpec));
+                        outputChannelList.addAll(ChanSpecUtils.convertChanSpecToList(chanSpec));
                     }
                     else {
-                        outputChannelList.addAll(convertChanSpecToList(outputChanSpec));
+                        outputChannelList.addAll(ChanSpecUtils.convertChanSpecToList(outputChanSpec));
                     }
                 }
             }
@@ -483,6 +490,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         }
         return refIndex;
     }
+    
     private void collectDyes(LSMMetadata lsmMetadata, Collection<String> referenceDyes, Collection<String> signalDyes, Collection<String> allDyes) {
 
         for(Channel channel : lsmMetadata.getChannels()) {
@@ -560,29 +568,6 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 
         contextLogger.info("Channel mapping string: "+mapChannelString);
         return mapChannelString.toString();
-    }
-    
-    private List<String> convertChanSpecToList(String chanSpec) { 
-
-        int s = 0;
-        int r = 0;
-        List<String> channelList = new ArrayList<String>();
-        for(int sourceIndex=0; sourceIndex<chanSpec.length(); sourceIndex++) {
-            char imageChanCode = chanSpec.charAt(sourceIndex);
-            switch (imageChanCode) {
-            case 's':
-                channelList.add("s"+s);
-                s++;
-                break;
-            case 'r':
-                channelList.add("r"+r);
-                r++;
-                break;
-            default:
-                throw new IllegalStateException("Unknown channel code: "+imageChanCode);
-            }
-        }
-        return channelList;
     }
     
     private void populateMaps() throws Exception {
