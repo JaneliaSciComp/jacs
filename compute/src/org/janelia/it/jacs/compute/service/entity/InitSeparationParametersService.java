@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -149,7 +150,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
         return null;
     }
     
-    protected String getPrevResultFilename(Entity separation) throws Exception {
+    public String getPrevResultFilename(Entity separation) throws Exception {
 
         logger.info("Getting previous result from separation with id="+separation.getId());
         
@@ -163,14 +164,7 @@ public class InitSeparationParametersService extends AbstractEntityService {
         
         populateChildren(supportingFiles);
         
-        Entity prevResultFile = null;
-        for(Entity file : supportingFiles.getChildren()) {
-            if (file.getName().equals("SeparationResultUnmapped.nsp") || file.getName().equals("SeparationResult.nsp")) {
-                prevResultFile = file;
-                break;
-            }
-        }
-        
+        Entity prevResultFile = NeuronSeparatorHelper.getSeparationResult(supportingFiles);
         if (prevResultFile!=null) {
             String filepath = EntityUtils.getFilePath(prevResultFile);
             if (filepath!=null && !"".equals(filepath)) {

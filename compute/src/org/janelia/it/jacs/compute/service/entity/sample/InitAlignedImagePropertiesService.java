@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -46,6 +47,18 @@ public class InitAlignedImagePropertiesService extends AbstractEntityService {
             processData.putItem("OBJECTIVE", objective);
         }        
 
+        String chanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        final String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
+        if (signalChannels!=null) {
+            logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
+            processData.putItem("SIGNAL_CHANNELS", signalChannels);
+        }        
+        final String referenceChannels = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
+        if (referenceChannels!=null) {
+            logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
+            processData.putItem("REFERENCE_CHANNEL", referenceChannels);
+        }        
+        
         Entity alignedLabel = image.getChildByAttributeName(EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL);
         if (alignedLabel!=null) {
             String filepath = alignedLabel.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);

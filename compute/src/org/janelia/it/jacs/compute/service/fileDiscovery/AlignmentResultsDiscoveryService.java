@@ -3,10 +3,15 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 import java.io.File;
 import java.io.FileReader;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -36,15 +41,8 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         if (!alignmentResult.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
             throw new IllegalStateException("Expected Alignment Result as input");
         }
-
-        super.processFolderForData(alignmentResult);
-
-        String channelColors = (String)processData.getItem("CHANNEL_COLORS");
         
-        String channelSpec = (String)processData.getItem("CHANNEL_SPEC");
-        if (StringUtils.isEmpty(channelSpec)) {
-            throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
-        }
+        super.processFolderForData(alignmentResult);
         
         boolean hasConsensusAlignmentSpace = true;
         String defaultAlignmentSpace = null;
@@ -70,6 +68,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     
                     logger.info("Got properties file: "+resultItem.getName());
                     File propertiesFile = new File(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                    
                     Properties properties = new Properties();
                     properties.load(new FileReader(propertiesFile));
                     
@@ -89,6 +88,18 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                         Entity verifyEntity = verifyEntityEd.getChildEntity();
                         helper.addToParent(stackEntity, verifyEntity, 0, EntityConstants.ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE);
                     }
+
+                    String channels = properties.getProperty("alignment.image.channels");
+                    if (channels==null) {
+                    	logger.warn("Alignment output does not contain 'alignment.image.channels' property, cannot continue processing.");
+                    	continue;
+                    }
+                    
+                    String refchan = properties.getProperty("alignment.image.refchan");
+                    if (refchan==null) {
+                    	logger.warn("Alignment output does not contain 'alignment.image.refchan' property, cannot continue processing.");
+                    	continue;
+                    }
                     
                     String alignmentSpace = properties.getProperty("alignment.space.name");
                     String opticalRes = properties.getProperty("alignment.resolution.voxels");
@@ -98,7 +109,13 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String scoreNcc = properties.getProperty("alignment.quality.score.ncc");
                     String scoreJbaQm = properties.getProperty("alignment.quality.score.jbaqm");
                     String scoresQiCsv = properties.getProperty("alignment.quality.score.qi"); // The three comma-delimited scores from QiScore.csv 
+
+                    String channelSpec = null;
+                	int numChannels = Integer.parseInt(channels);
+                	int refChannel = Integer.parseInt(refchan);
+                	channelSpec = ChanSpecUtils.createChanSpec(numChannels, refChannel);
                     
+                    helper.setChannelSpec(stackEntity, channelSpec);
                     helper.setAlignmentSpace(stackEntity, alignmentSpace);
                     helper.setOpticalResolution(stackEntity, opticalRes);
                     helper.setPixelResolution(stackEntity, pixelRes);
@@ -141,14 +158,6 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     }
                 }
             }
-            else if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
-                helper.setChannelSpec(resultItem, channelSpec);
-                if (!StringUtils.isEmpty(channelColors)) {
-                    logger.info("Setting channel colors for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelColors);
-                    helper.setChannelColors(resultItem, channelColors);
-                }
-            }
         }   
         
         if (hasConsensusAlignmentSpace && consensusAlignmentSpace!=null) {
@@ -163,7 +172,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         processData.putItem("PREWARPED_SEPARATION", new Boolean(hasWarpedSeparation));
     }
     
-    private void processQiScoreCsv(Entity alignedImage, String scoresQiCsv) throws Exception {
+	private void processQiScoreCsv(Entity alignedImage, String scoresQiCsv) throws Exception {
 
     	if (StringUtils.isEmpty(scoresQiCsv)) return;
     		

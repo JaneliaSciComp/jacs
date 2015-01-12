@@ -1,15 +1,13 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import java.util.Collections;
+import java.util.List;
+
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A configured aligner which takes additional parameters to align the 63x image to a whole brain 20x image.
@@ -17,34 +15,23 @@ import java.util.List;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
-    
-    private static final String BRAIN_AREA = "Brain";
-
+        
     @Override
-    public void populateInputVariables(IProcessData processData) throws ServiceException {
-        super.populateInputVariables(processData);
-        try {
-            if (Objective.OBJECTIVE_63X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
-                // Already within the 63x sample, we need the parent
-                Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-                if (parentSample==null) {
-                    throw new IllegalStateException("Parent sample is null for 63x sample: "+sampleEntity.getId());
-                }
-                initParameters(parentSample);
+    protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
+    	// Ignore sample areas, and get the sample pair (20x/63x)
+
+    	Entity sample = sampleEntity;
+        if (Objective.OBJECTIVE_63X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
+            // Already within the 63x sample, we need the parent
+            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
+            if (parentSample==null) {
+                throw new IllegalStateException("Parent sample is null for 63x sample: "+sampleEntity.getId());
             }
-            else {
-                initParameters(sampleEntity);    
-            }
-        } 
-        catch (Exception e) {
-            throw new ServiceException(e);
+            sample = parentSample;
         }
-    }
-    
-    private void initParameters(Entity sample) throws Exception {
-
+        
         entityLoader.populateChildren(sample);
-
+        
         final List<Entity> sampleList = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
         contextLogger.info("initParameters: found " + sampleList.size() + " objective samples for entity " + sample);
 
@@ -53,7 +40,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                 contextLogger.info("Found 20x sub-sample: "+objectiveSample.getName());
-                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
+                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, "Brain");
                 input2 = buildInputFromResult("second input (20x stack)", result);
             }
             else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
@@ -66,17 +53,11 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                 }
             }
         }
+    }
 
-        List<AlignmentInputFile> alignmentInputFiles = new ArrayList<>();
-        alignmentInputFiles.add(input1);
-        alignmentInputFiles.add(input2);
-        
-        if (input1!=null) checkForArchival(input1);
-        if (input2!=null) checkForArchival(input2);
-        
-        if (input1!=null) {
-            putOutputVars(input1.getChannelSpec(), input1.getChannelColors(), alignmentInputFiles);
-        }
+    @Override
+    protected void setConsensusValues() throws Exception {
+    	// Do nothing, since we build our consensus values while populating the inputs
     }
     
     private Entity getLatestResultOfType(Entity objectiveSample, String resultType, String anatomicalArea) throws Exception {
@@ -110,30 +91,25 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         return null;
     }
 
-    private AlignmentInputFile buildInputFromResult(String inputType,
-                                                    Entity sampleProcessingResult) throws Exception {
+    private AlignmentInputFile buildInputFromResult(String inputType, Entity sampleProcessingResult) throws Exception {
 
+        if (sampleProcessingResult==null) return null;
         AlignmentInputFile inputFile = null;
 
-        if (sampleProcessingResult != null) {
-
-            final Entity image = sampleProcessingResult.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-            if (image != null) {
-
-                inputFile = new AlignmentInputFile();
-                inputFile.setPropertiesFromEntity(image);
-
-                if (warpNeurons) {
-                    inputFile.setInputSeparationFilename(getConsolidatedLabel(sampleProcessingResult));
-                }
-
-                logInputFound(inputType, inputFile);
-
-            } else {
-                contextLogger.error("Could not find default 3d image for result " + sampleProcessingResult +
-                                    " (id=" + sampleProcessingResult.getId() + ")");
+        final Entity image = sampleProcessingResult.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+        if (image != null) {
+            inputFile = new AlignmentInputFile();
+            inputFile.setPropertiesFromEntity(image);
+            if (warpNeurons) {
+                inputFile.setInputSeparationFilename(getConsolidatedLabel(sampleProcessingResult));
             }
+            logInputFound(inputType, inputFile);
+        } 
+        else {
+            contextLogger.error("Could not find default 3d image for result " + sampleProcessingResult +
+                                " (id=" + sampleProcessingResult.getId() + ")");
         }
+        
         return inputFile;
     }
 }

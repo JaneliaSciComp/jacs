@@ -113,6 +113,8 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         if [ ! -s "SeparationResult.nsp" ]; then
             echo "~ Mapping was not successful, proceeding with unmapped result"
             RESULT='SeparationResultUnmapped.nsp'
+            # remove the generated empty file, to avoid confusing things
+            rm -f SeparationResult.nsp
         fi
     else
         RESULT='SeparationResultUnmapped.nsp'
