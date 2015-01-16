@@ -23,10 +23,12 @@ public class H264FileLoader extends AbstractVolumeFileLoader {
     
     @Override
     public void loadVolumeFile(String filename) throws Exception {
+        setUnCachedFileName(filename);        
         FFMpegLoader movie = new FFMpegLoader(filename);
         try {
             ByteGatherAcceptor acceptor = populateAcceptor(movie);
-            dumpMeta(acceptor);
+            captureData(acceptor);
+            //dumpMeta(acceptor);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -52,15 +54,27 @@ public class H264FileLoader extends AbstractVolumeFileLoader {
     
     @SuppressWarnings("unused")
     private void dumpMeta(ByteGatherAcceptor acceptor) {
+        int[] freqs = new int[256];
         if (acceptor.isPopulated()) {
             System.out.println("Total bytes read is " + acceptor.getTotalSize());
             List<byte[]> bytes = acceptor.getBytes();
             // DEBUG: check byte content.
             for (byte[] nextBytes : bytes) {
+                for (byte nextByte: nextBytes) {
+                    int temp = nextByte;
+                    if (temp < 0) {
+                        temp += 256;
+                    }
+                    freqs[temp] ++;
+                }
                 System.out.print(" " + nextBytes.length);
             }
             System.out.println();
             System.out.println("Total pages is " + bytes.size());
+            System.out.println("Byte Frequencies");
+            for (int i = 0; i < freqs.length; i++) {
+                System.out.println("Frequence of letter " + i + " is " + freqs[i]);
+            }
         }
     }
 
@@ -87,4 +101,21 @@ public class H264FileLoader extends AbstractVolumeFileLoader {
         return acceptor;
     }
     
+    private void captureData(ByteGatherAcceptor acceptor) throws Exception {
+        setSx( acceptor.getWidth() );
+        setSy( acceptor.getHeight() );
+        setSz( acceptor.getNumPages() );
+        setPixelBytes(acceptor.getPixelBytes());
+        long totalSize = acceptor.getTotalSize();
+        if (totalSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("The input file is too large to be represented here.  Size is " + totalSize);
+        }
+        byte[] texByteArr = new byte[ (int)acceptor.getTotalSize() ];
+        int nextPos = 0;
+        for (byte[] nextBytes: acceptor.getBytes() ) {
+            System.arraycopy(nextBytes, 0, texByteArr, nextPos, nextBytes.length);
+            nextPos += nextBytes.length;
+        }
+        setTextureByteArray(texByteArr);
+    }
 }
