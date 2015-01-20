@@ -8,9 +8,6 @@ package org.janelia.it.jacs.shared.img_3d_loader;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.bytedeco.javacpp.BytePointer;
 
 /**
@@ -19,7 +16,6 @@ import org.bytedeco.javacpp.BytePointer;
  */
 public class ByteGatherAcceptor implements FFMPGByteAcceptor {
 
-    private static final int N_THREADS = 32;
     private List<byte[]> pages = new ArrayList<>();
     private long totalSize = 0;
     private int width;
@@ -47,23 +43,9 @@ public class ByteGatherAcceptor implements FFMPGByteAcceptor {
         // Write pixel data
         final int pagesize = elementWidth * height;        
         final byte[] bytes = new byte[pagesize];
-        ExecutorService executorService = Executors.newFixedThreadPool(N_THREADS);
         for (int y = 0; y < height; y++) {
-            final int fY = y;
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    int lineInPagePos = fY * linesize;
-                    data.position(lineInPagePos).get(bytes, lineInPagePos, linesize);
-                }
-            };
-            executorService.submit(runnable);
-        }
-        executorService.shutdown();
-        try {
-            executorService.awaitTermination(5, TimeUnit.MINUTES);
-        } catch ( InterruptedException ie ) {
-            throw new RuntimeException(ie);
+            int lineInPagePos = y * linesize;
+            data.position(lineInPagePos).get(bytes, lineInPagePos, linesize);
         }
         
         totalSize += bytes.length;
