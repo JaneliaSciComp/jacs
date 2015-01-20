@@ -8,6 +8,9 @@ package org.janelia.it.jacs.shared.img_3d_loader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.bytedeco.javacpp.BytePointer;
 
 /**
@@ -16,8 +19,8 @@ import org.bytedeco.javacpp.BytePointer;
  */
 public class ByteGatherAcceptor implements FFMPGByteAcceptor {
 
+    private static final int N_THREADS = 32;
     private List<byte[]> pages = new ArrayList<>();
-    private int pagePos = 0;
     private long totalSize = 0;
     private int width;
     private int height;
@@ -37,25 +40,38 @@ public class ByteGatherAcceptor implements FFMPGByteAcceptor {
      * @param height number of lines in the page.
      */
     @Override
-    public void accept(BytePointer data, int linesize, int width, int height) {
-        pagePos = 0;  //Nota Bene: had forgotten to do this, and the error
-                      // that manifested itself resembled a JNI error.
+    public void accept(final BytePointer data, final int linesize, final int width, int height) {
         final int elementWidth = width * getPixelBytes();
         setWidth(width);
         setHeight(height);
         // Write pixel data
         final int pagesize = elementWidth * height;        
-        byte[] bytes = new byte[pagesize];
+        final byte[] bytes = new byte[pagesize];
+        ExecutorService executorService = Executors.newFixedThreadPool(N_THREADS);
         for (int y = 0; y < height; y++) {
-            data.position(y * linesize).get(bytes, pagePos, linesize);
-            pagePos += linesize;
+            final int fY = y;
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    int lineInPagePos = fY * linesize;
+                    data.position(lineInPagePos).get(bytes, lineInPagePos, linesize);
+                }
+            };
+            executorService.submit(runnable);
         }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(5, TimeUnit.MINUTES);
+        } catch ( InterruptedException ie ) {
+            throw new RuntimeException(ie);
+        }
+        
         totalSize += bytes.length;
         pages.add( bytes );
     }
     
     public boolean isPopulated() {
-        return pagePos > 0;
+        return pages.size() > 0;
     }
     
     /**
