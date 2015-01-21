@@ -82,16 +82,25 @@ public class SampleHelper extends EntityHelper {
     }
     
     /**
-     * Set the visited flag on a given entity.
-     * @param entity
+     * Set the visited flag on a given sample entity and clear the desync status if it is set.
+     * @param sample
      * @return
      * @throws Exception
      */
-    public Entity setVisited(Entity entity) throws Exception {
-        if (!EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_VISITED)) {
-            throw new IllegalStateException("Could not set visited flag for "+entity.getName());
+    public Entity setVisited(Entity sample) throws Exception {
+        if (!EntityUtils.addAttributeAsTag(sample, EntityConstants.ATTRIBUTE_VISITED)) {
+            throw new IllegalStateException("Could not set visited flag for "+sample.getName());
         }
-        return entityBean.saveOrUpdateEntity(entity);
+        sample = entityBean.saveOrUpdateEntity(sample);
+        
+        EntityData statusEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        if (statusEd!=null && EntityConstants.VALUE_DESYNC.equals(statusEd.getValue())) {
+            // This sample is no longer desynchronized, so delete its desync status
+            sample.getEntityData().remove(statusEd);
+            entityBean.deleteEntityData(statusEd);
+        }
+        
+        return sample;
     }
 
     public void setDataSetNameFilter(String dataSetNameFilter) {

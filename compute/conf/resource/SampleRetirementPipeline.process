@@ -1,0 +1,11 @@
+<!-- 
+	Retire all the samples which are in "Desync" status for the given user.
+-->
+<process name="Sample Retirement Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    
+		<operation name="Sample Retirement" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleRetirementService">
+		</operation>
+		
+    </sequence>
+</process>
