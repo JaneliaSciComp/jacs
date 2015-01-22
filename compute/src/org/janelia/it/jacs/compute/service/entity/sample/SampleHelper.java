@@ -50,8 +50,8 @@ public class SampleHelper extends EntityHelper {
     private Entity blockedDataFolder;
     private List<Entity> dataSets;
     private String dataSetNameFilter;
-    private Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
-    private Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
+    private Map<String,Entity> dataSetFolderByIdentifier;
+    private Map<String,Entity> dataSetEntityByIdentifier;
     private Set<Long> samplesToAnnex = new HashSet<Long>();
     private int numSamplesCreated = 0;
     private int numSamplesUpdated = 0;
@@ -983,11 +983,17 @@ public class SampleHelper extends EntityHelper {
         return numSamplesMovedToBlockedFolder;
     }
 
-    public Map<String, Entity> getDataSetFolderByIdentifierMap() {
+    public Map<String, Entity> getDataSetFolderByIdentifierMap() throws Exception {
+        if (dataSetFolderByIdentifier==null) {
+            loadDataSets();
+        }
         return dataSetFolderByIdentifier;
     }
 
-    public Map<String, Entity> getDataSetEntityByIdentifierMap() {
+    public Map<String, Entity> getDataSetEntityByIdentifierMap() throws Exception {
+        if (dataSetEntityByIdentifier==null) {
+            loadDataSets();
+        }
         return dataSetEntityByIdentifier;
     }
 

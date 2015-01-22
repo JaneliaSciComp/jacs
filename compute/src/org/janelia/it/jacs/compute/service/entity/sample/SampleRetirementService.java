@@ -20,11 +20,13 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 public class SampleRetirementService extends AbstractEntityService {
 
 	private static final Logger logger = Logger.getLogger(SampleRetirementService.class);
-
 	private static final String RETIRED_SUFFIX = "-Retired";
 	
+	// Settings
+	protected boolean isDebug = false;
+
+	// Helpers
     protected SampleHelper sampleHelper;
-    protected boolean isDebug = true;
     
     // Processing state
     protected Set<Long> visited = new HashSet<>();
@@ -74,7 +76,7 @@ public class SampleRetirementService extends AbstractEntityService {
                         continue;
                     }
                     counter++;
-					logger.info("Processing sample "+counter+" of "+samples.size());
+					logger.info("Processing sample "+counter+" of "+samples.size()+": "+sample.getName()+" (id="+sample.getId()+")");
 					retireSample(sample);
                 }
                 catch (Exception e) {
@@ -99,7 +101,6 @@ public class SampleRetirementService extends AbstractEntityService {
     	if (visited.contains(sample.getId())) return;
     	visited.add(sample.getId());
     	
-		logger.info("Processing "+sample.getName()+" (id="+sample.getId()+")");
 		numSamples++;
 
 		String dataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
@@ -107,14 +108,14 @@ public class SampleRetirementService extends AbstractEntityService {
         
         EntityData ed = EntityUtils.findChildEntityDataWithChildId(dataSetFolder, sample.getId());
         if (ed==null) {
-            logger.info("  Adding to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
+            logger.info("  Adding to '"+retiredDataFolder.getName()+"' folder");
             if (!isDebug) {
                 retiredDataFolder.getEntityData().add(ed);
                 entityBean.addEntityToParent(retiredDataFolder, sample, retiredDataFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
         }
         else {
-            logger.info("  Moving to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
+            logger.info("  Moving from '"+dataSetFolder.getName()+"' to '"+retiredDataFolder.getName()+"'");
             if (!isDebug) {
                 dataSetFolder.getEntityData().remove(ed);
                 retiredDataFolder.getEntityData().add(ed);
@@ -125,10 +126,12 @@ public class SampleRetirementService extends AbstractEntityService {
         
         // Update sample status
         sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_RETIRED);
+        logger.info("  Setting sample status to "+EntityConstants.VALUE_RETIRED);
         
         // Update the sample name if necessary
         if (!sample.getName().endsWith(RETIRED_SUFFIX)) {
             sample.setName(sample.getName()+RETIRED_SUFFIX);
+            logger.info("  Renaming sample to "+sample.getName());
         }
 
         if (!isDebug) {

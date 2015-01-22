@@ -146,8 +146,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runSampleRetirement(String user) {
         try {
-            String processName = "SampleRetirementService";
-            String displayName = "Sample Retirement Service";
+            String processName = "SampleRetirementPipeline";
+            String displayName = "Sample Retirement Pipeline";
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
