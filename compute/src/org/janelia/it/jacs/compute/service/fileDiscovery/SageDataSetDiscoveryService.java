@@ -27,7 +27,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected String dataSetName = null;
 
     protected int sageRowsProcessed = 0;
-    protected int samplesMovedToRetiredFolder = 0;
+    protected int samplesMarkedDesync = 0;
     
     public void execute() throws Exception {
 
@@ -55,7 +55,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 logger.info("Processing data set: "+dataSet.getName());
                 processSageDataSet(dataSet);
                 sampleHelper.annexSamples();
-                cleanUnvisitedSamples(dataSet);
+                markDesyncedSamples(dataSet);
                 fixOrderIndices(dataSet);
             }
         }
@@ -64,7 +64,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
         		" samples to their corresponding data set folders. Annexed "+sampleHelper.getNumSamplesAnnexed()+
         		" samples, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
-        		" samples to Blocked Data folder, and moved "+samplesMovedToRetiredFolder+" samples to the Retired Data folder.");
+        		" samples to Blocked Data folder, and marked "+samplesMarkedDesync+" samples as desynced.");
     }
     
     /**
@@ -213,12 +213,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         sampleHelper.createOrUpdateSample(null, slideCode, dataSet, tileGroupList);
     }
     
-    protected void cleanUnvisitedSamples(Entity dataSet) throws Exception {
+    protected void markDesyncedSamples(Entity dataSet) throws Exception {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
         if (dataSetFolder==null) return;
         
-        logger.info("Cleaning unvisited samples in dataSet: "+dataSet.getName());
+        logger.info("Marking desynchronized samples in dataSet: "+dataSet.getName());
 
         // Make sure to fetch fresh samples, so that we have the latest visited flags
         Map<Long, Entity> samples = new HashMap<Long, Entity>();
@@ -226,14 +226,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             if (entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
                 samples.put(entity.getId(), entity);    
             }   
-        }
-        
-        Set<Long> retiredIds = new HashSet<Long>();
-        Entity retiredDataFolder = sampleHelper.getRetiredDataFolder();
-        for(EntityData ed : retiredDataFolder.getEntityData()) {
-            if (ed.getChildEntity()!=null) {
-                retiredIds.add(ed.getChildEntity().getId());
-            }
         }
         
         List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
@@ -244,26 +236,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             Entity sample = samples.get(tmpChildEntity.getId());
             if (sample==null || !sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
-                // Sample was not visited this time around, it should be:
-                if (retiredIds.contains(sample.getId())) {
-                    logger.info("  Sample was already retired. Removing from data folder: "+sample.getName()+" (id="+sample.getId()+")");   
-                    entityBean.deleteEntityData(ed);
+                // Sample was not visited this time around, it should be marked as desynchronized, and eventually retired
+                boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS));
+                // Ignore blocked samples, they don't need to be synchronized 
+                if (!blocked) {
+                    logger.info("  Marking unvisited sample as desynced: "+sample.getName()+" (id="+sample.getId()+")");
+                    entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_DESYNC);
                 }
-                else {
-                    entityBean.loadLazyEntity(sample, false);
-                    boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS));
-                    // Ignore blocked samples, they don't need to be retired
-                    if (!blocked) {
-                        logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
-                        dataSetFolder.getEntityData().remove(ed);
-                        retiredDataFolder.getEntityData().add(ed);
-                        ed.setParentEntity(retiredDataFolder);
-                        entityBean.saveOrUpdateEntityData(ed);
-                        sample.setName(sample.getName()+"-Retired");
-                        entityBean.saveOrUpdateEntity(sample);
-                    }
-                }
-                samplesMovedToRetiredFolder++;
+                samplesMarkedDesync++;
             }
         }
     }
