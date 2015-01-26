@@ -19,6 +19,7 @@ import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -49,8 +50,8 @@ public class SampleHelper extends EntityHelper {
     private Entity blockedDataFolder;
     private List<Entity> dataSets;
     private String dataSetNameFilter;
-    private Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
-    private Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
+    private Map<String,Entity> dataSetFolderByIdentifier;
+    private Map<String,Entity> dataSetEntityByIdentifier;
     private Set<Long> samplesToAnnex = new HashSet<Long>();
     private int numSamplesCreated = 0;
     private int numSamplesUpdated = 0;
@@ -81,16 +82,25 @@ public class SampleHelper extends EntityHelper {
     }
     
     /**
-     * Set the visited flag on a given entity.
-     * @param entity
+     * Set the visited flag on a given sample entity and clear the desync status if it is set.
+     * @param sample
      * @return
      * @throws Exception
      */
-    public Entity setVisited(Entity entity) throws Exception {
-        if (!EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_VISITED)) {
-            throw new IllegalStateException("Could not set visited flag for "+entity.getName());
+    public Entity setVisited(Entity sample) throws Exception {
+        if (!EntityUtils.addAttributeAsTag(sample, EntityConstants.ATTRIBUTE_VISITED)) {
+            throw new IllegalStateException("Could not set visited flag for "+sample.getName());
         }
-        return entityBean.saveOrUpdateEntity(entity);
+        sample = entityBean.saveOrUpdateEntity(sample);
+        
+        EntityData statusEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        if (statusEd!=null && EntityConstants.VALUE_DESYNC.equals(statusEd.getValue())) {
+            // This sample is no longer desynchronized, so delete its desync status
+            sample.getEntityData().remove(statusEd);
+            entityBean.deleteEntityData(statusEd);
+        }
+        
+        return sample;
     }
 
     public void setDataSetNameFilter(String dataSetNameFilter) {
@@ -158,7 +168,8 @@ public class SampleHelper extends EntityHelper {
             
             // Figure out the number of channels that should be in the final merged/stitched sample
             int sampleNumSignals = getNumSignalChannels(tileGroupList);
-            String sampleChannelSpec = getDefaultChanSpec(sampleNumSignals+1, sampleNumSignals);
+            int sampleNumChannels = sampleNumSignals+1;
+            String sampleChannelSpec = ChanSpecUtils.createChanSpec(sampleNumChannels, sampleNumChannels);
             logger.info("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
             
             // Find the sample, if it exists, or create a new one.
@@ -722,25 +733,6 @@ public class SampleHelper extends EntityHelper {
         return lsmStack;
     }
     
-    /**
-     * Returns a default channel specification (reference channel last) for the given number of channels.
-     * @param numSignals
-     * @return
-     */
-    public String getDefaultChanSpec(int numChannels, Integer refIndex) {
-        if (refIndex==null) refIndex = 0;
-        int numSignals = numChannels-1;
-        StringBuilder buf = new StringBuilder();
-        for(int j=0; j<numSignals+1; j++) {
-            if (refIndex!=null && refIndex==j) {
-                buf.append("r");
-            }
-            else {
-                buf.append("s");    
-            }
-        }
-        return buf.toString();
-    }
     
     /**
      * Return the channel specification for the LSM (or create a default one using the number of channels).
@@ -757,7 +749,7 @@ public class SampleHelper extends EntityHelper {
         String numChannelsStr = lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);
         if (!StringUtils.isEmpty(numChannelsStr)) {
             try {
-                return getDefaultChanSpec(Integer.parseInt(numChannelsStr), refIndex);    
+            	return ChanSpecUtils.createChanSpec(Integer.parseInt(numChannelsStr), refIndex+1);    
             }
             catch (NumberFormatException e) {
                 logger.warn("Could not parse Num Channels ('"+numChannelsStr+"') on LSM entity with id="+lsmEntity.getId());
@@ -846,37 +838,6 @@ public class SampleHelper extends EntityHelper {
             }
         }
         return consensus;
-    }
-
-    /**
-     * Returns a space-delimited list of channel indexes containing signal channels.
-     * @param channelSpec channel specification (e.g. "rsss")
-     * @return zero-indexed signal channels (e.g. "1 2 3")
-     */
-    public String getSignalChannelIndexes(String channelSpec) {
-        return getChannelIndexes(channelSpec, 's');
-    }
-
-    /**
-     * Returns a space-delimited list of channel indexes containing reference channels.
-     * @param channelSpec channel specification (e.g. rsss)
-     * @return zero-indexed reference channels (e.g. "0")
-     */
-    public String getReferenceChannelIndexes(String channelSpec) {
-        return getChannelIndexes(channelSpec, 'r');
-    }
-    
-    private String getChannelIndexes(String channelSpec, char channelCode) {
-        StringBuilder builder = new StringBuilder();
-        if (channelSpec!=null) {
-            for(int i=0; i<channelSpec.length(); i++) {
-                if (channelSpec.charAt(i) == channelCode) {
-                    if (builder.length()>0) builder.append(" ");
-                    builder.append(""+i);
-                }
-            }
-        }
-        return builder.toString();
     }
 
     /**
@@ -1022,11 +983,17 @@ public class SampleHelper extends EntityHelper {
         return numSamplesMovedToBlockedFolder;
     }
 
-    public Map<String, Entity> getDataSetFolderByIdentifierMap() {
+    public Map<String, Entity> getDataSetFolderByIdentifierMap() throws Exception {
+        if (dataSetFolderByIdentifier==null) {
+            loadDataSets();
+        }
         return dataSetFolderByIdentifier;
     }
 
-    public Map<String, Entity> getDataSetEntityByIdentifierMap() {
+    public Map<String, Entity> getDataSetEntityByIdentifierMap() throws Exception {
+        if (dataSetEntityByIdentifier==null) {
+            loadDataSets();
+        }
         return dataSetEntityByIdentifier;
     }
 

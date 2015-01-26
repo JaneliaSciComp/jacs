@@ -143,8 +143,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 folder = folders.iterator().next();
             }
             else {
-                folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
-                annotationDAO.saveOrUpdateEntity(folder);
+                folder = annotationDAO.createFolderInDefaultWorkspace(subjectKey, folderName).getChildEntity();
             }
 
             Entity sample = newEntity(sampleName, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);

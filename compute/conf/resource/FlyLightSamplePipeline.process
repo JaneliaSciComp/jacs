@@ -95,6 +95,7 @@
         <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
         <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <output name="SAMPLE_AREAS"/>
             <output name="SAMPLE_AREA"/>
         </operation>
 		
@@ -390,7 +391,7 @@
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
             <input name="SAMPLE_ENTITY_ID"/>
-            <input name="SAMPLE_AREA"/>
+            <input name="SAMPLE_AREAS"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
             <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
@@ -410,7 +411,7 @@
                     <include name="Brain Alignment" process="FlyLightAlignmentPipeline">
                         <input name="PIPELINE_RUN_ENTITY_ID"/>
                         <input name="SAMPLE_ENTITY_ID"/>
-                        <input name="SAMPLE_AREAS" value="$V{SAMPLE_AREA}"/>
+                        <input name="SAMPLE_AREAS"/>
                         <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
                         <input name="RUN_ANALYSIS"/>
                         <input name="RUN_ALIGNMENT"/>

@@ -902,11 +902,44 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 		return workspaces.get(0);
     }
 
+    public EntityData addRootToDefaultWorkspace(String subjectKey, Entity entity) throws DaoException {
+        Entity workspace = getDefaultWorkspace(subjectKey);
+        if (workspace==null) {
+            throw new DaoException("No default workspace exists for "+subjectKey);
+        }
+        return addRootToWorkspace(subjectKey, workspace, entity);
+    }
+    
+    public EntityData addRootToDefaultWorkspace(String subjectKey, Long entityId) throws DaoException {
+        Entity workspace = getDefaultWorkspace(subjectKey);
+        if (workspace==null) {
+            throw new DaoException("No default workspace exists for "+subjectKey);
+        }
+        Entity entity = getEntityById(entityId);
+        if (entity==null) {
+            throw new DaoException("No such entity with id "+entityId);
+        }
+        return addRootToWorkspace(subjectKey, workspace, entity);
+    }
+    
 	public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws DaoException {
 		Entity workspace = getEntityById(workspaceId);
 		Entity entity = getEntityById(entityId);
 		return addRootToWorkspace(subjectKey, workspace, entity);
 	}
+
+    public EntityData createFolderInDefaultWorkspace(String subjectKey, String entityName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("createFolderInDefaultWorkspace(subjectKey="+subjectKey+", entityName="+entityName+")");
+        }
+        Entity entity = createEntity(subjectKey, EntityConstants.TYPE_FOLDER, entityName);
+        saveOrUpdate(entity);
+        Entity workspace = getDefaultWorkspace(subjectKey);
+        if (workspace==null) {
+            throw new DaoException("No default workspace for user "+subjectKey);
+        }
+        return addRootToWorkspace(subjectKey, workspace, entity);
+    }
 	
 	public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws DaoException {
         if (log.isTraceEnabled()) {
@@ -920,7 +953,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 		}
 		return addRootToWorkspace(subjectKey, workspace, entity);
 	}
-	
+    
 	public EntityData addRootToWorkspace(String subjectKey, Entity workspace, Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("createFolderInWorkspace(subjectKey="+subjectKey+", workspace.id="+workspace.getId()+", entity.id="+entity.getId()+")");
@@ -956,7 +989,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 			}
 			
 			// Ensure that all indexes are correct
-			if (ed.getOrderIndex()!=index) {
+			if (ed.getOrderIndex()==null || ed.getOrderIndex()!=index) {
 				ed.setOrderIndex(index);
 		        ed.setUpdatedDate(new Date());
 				saveOrUpdate(ed);
@@ -1976,8 +2009,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         		for(SubjectRelationship rel : groupUsers) {
         			String subjectKey = rel.getUser().getKey();
         			log.info("Adding '"+entity.getName()+"' to default workspace for "+subjectKey);
-        			Entity workspace = getDefaultWorkspace(subjectKey);
-        			addRootToWorkspace(subjectKey, workspace, entity);
+        			addRootToDefaultWorkspace(subjectKey, entity);
         		}
         	}
         }
@@ -2325,7 +2357,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 if (sharedDataFolder==null) {
                     sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
                     EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
-                    addRootToWorkspace(granteeKey, getDefaultWorkspace(granteeKey), sharedDataFolder);
+                    addRootToDefaultWorkspace(granteeKey, sharedDataFolder);
                     saveOrUpdate(sharedDataFolder);
                 }
                 

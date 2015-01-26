@@ -32,14 +32,11 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  *   ALIGN_RESULT_FILE_NODE - the node for grid calculations
  *   OUTPUT_FILE_NODE - the node where the output should finally go
  *   SAMPLE_ENTITY_ID - the id of the sample to be aligned
- *   SAMPLE_AREAS - the sample areas within the sample
+ *   SAMPLE_AREAS - the sample areas within the sample to be processed
  *  
  * Outputs:
- *   ALIGNED_FILENAMES - a list of all of the aligned output files
+ *   ALIGNED_IMAGES - a list of all of the aligned output files as ImageStack objects
  *   ALIGNED_FILENAME - the main aligned output file
- *   CHANNEL_SPEC - the channel specification for the main aligned output file
- *   SIGNAL_CHANNELS - the signal channels for the main aligned output file
- *   REFERENCE_CHANNEL - the reference channels for the main aligned output file
  *  
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -87,76 +84,31 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
             this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
-            this.warpNeurons = ! data.getItemAsBoolean("WARP_NEURONS");
+            this.warpNeurons = !"false".equals((String)processData.getItem("WARP_NEURONS"));
 
             @SuppressWarnings("unchecked")
             List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREAS");
-
             if (sampleAreas != null) {
-                // The naive implementation tries to find the default brain area to align. Subclasses may have a different
-                // strategy for finding input files and other parameters.
-                for(AnatomicalArea anatomicalArea : sampleAreas) {
-                    String areaName = anatomicalArea.getName();
-                    if ("Brain".equalsIgnoreCase(areaName) || "".equals(areaName)) {
-                        Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
-                        entityLoader.populateChildren(result);
-                        if (result!=null) {
-                            if (alignedArea!=null) {
-                                contextLogger.warn("Found more than one default brain area to align. Using: "+alignedArea);
-                            }
-                            else {
-                                Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                                this.alignedArea = areaName;    
-                                input1 = new AlignmentInputFile();
-                                input1.setPropertiesFromEntity(image);
-                                if (warpNeurons) {
-                                    input1.setInputSeparationFilename(getConsolidatedLabel(result));
-                                }
-                            }
-                        }
-                    }
-                }
+            	populateInputs(sampleAreas);
+            }
+
+            List<AlignmentInputFile> alignmentInputFiles = new ArrayList<>();
+
+            if (input1!=null) {
+                logInputFound("input stack 1", input1); 
+                checkForArchival(input1);
+                alignmentInputFiles.add(input1);    
             }
             
-            if (input1!=null) {
-                logInputFound("input stack", input1); 
-                contextLogger.info("  Sample area: "+alignedArea);
-                
-                if (input1.getOpticalResolution()==null) {
-                    // Interoperability with legacy samples
-                    contextLogger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
-                    input1.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea));
-                    if (input1.getOpticalResolution()!=null) {
-                        contextLogger.info("Found optical resolution consensus: "+input1.getOpticalResolution());
-                    }
-                }
-                
-                if (input1.getPixelResolution()==null) {
-                    // Interoperability with legacy samples
-                    contextLogger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
-                    input1.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, alignedArea));
-                    if (input1.getPixelResolution()!=null) {
-                        contextLogger.info("Found pixel resolution consensus: "+input1.getPixelResolution());
-                    }
-                }
-                
-                if (input1.getChannelColors()!=null) {
-                    contextLogger.info("  Channel colors: "+input1.getChannelColors());
-                }
-                
-                this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
-                if (gender!=null) {
-                    contextLogger.info("Found gender consensus: "+gender);
-                }
-                
-                List<AlignmentInputFile> alignmentInputFiles = new ArrayList<>();
-                alignmentInputFiles.add(input1);
+            if (input2!=null) {
+                logInputFound("input stack 2", input2); 
+                checkForArchival(input2);
                 alignmentInputFiles.add(input2);
-                
-                if (input1!=null) checkForArchival(input1);
-                if (input2!=null) checkForArchival(input2);
-                
-                putOutputVars(input1.getChannelSpec(), input1.getChannelColors(), alignmentInputFiles);
+            }
+            
+            if (!alignmentInputFiles.isEmpty()) {
+	            setConsensusValues();
+	            putOutputVars(alignmentInputFiles);
             }
         } 
         catch (Exception e) {
@@ -164,18 +116,81 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
     }
     
+    /**
+     * The naive implementation tries to find the default brain area to align. Subclasses may have a different strategy 
+     * for finding input files and other parameters.
+     * @param sampleAreas
+     * @throws Exception
+     */
+    protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
+        // The naive implementation tries to find the default brain area to align. Subclasses may have a different
+        // strategy for finding input files and other parameters.
+        for(AnatomicalArea anatomicalArea : sampleAreas) {
+            String areaName = anatomicalArea.getName();
+            if ("Brain".equalsIgnoreCase(areaName) || "".equals(areaName)) {
+                Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
+                entityLoader.populateChildren(result);
+                if (result!=null) {
+                    if (alignedArea!=null) {
+                        contextLogger.warn("Found more than one default brain area to align. Using: "+alignedArea);
+                    }
+                    else {
+                        Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+                        this.alignedArea = areaName;    
+                        input1 = new AlignmentInputFile();
+                        input1.setPropertiesFromEntity(image);
+                        if (warpNeurons) {
+                            input1.setInputSeparationFilename(getConsolidatedLabel(result));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void setConsensusValues() throws Exception {
+
+        setConsensusValues(input1);
+        setConsensusValues(input2);
+        
+        this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
+        if (gender!=null) {
+            contextLogger.info("Found gender consensus: "+gender);
+        }
+    }
+    
+    protected void setConsensusValues(AlignmentInputFile input) throws Exception {
+
+    	if (input==null) return;
+    	
+        if (input.getOpticalResolution()==null) {
+            // Interoperability with legacy samples
+            contextLogger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
+            input.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea));
+            if (input.getOpticalResolution()!=null) {
+                contextLogger.info("Found optical resolution consensus: "+input.getOpticalResolution());
+            }
+        }
+        
+        if (input.getPixelResolution()==null) {
+            // Interoperability with legacy samples
+            contextLogger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
+            input.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, alignedArea));
+            if (input.getPixelResolution()!=null) {
+                contextLogger.info("Found pixel resolution consensus: "+input.getPixelResolution());
+            }
+        }
+        
+        if (input.getChannelColors()!=null) {
+            contextLogger.info("  Channel colors: "+input.getChannelColors());
+        }
+    }
     
     protected void logInputFound(String type, AlignmentInputFile input) {
         contextLogger.info("Found " + type + ": " + input);
     }
 
-    protected void putOutputVars(String chanSpec, String channelColors, List<AlignmentInputFile> alignmentInputFiles) {
-        data.putItem("CHANNEL_SPEC", chanSpec);
-        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
-        data.putItem("SIGNAL_CHANNELS", signalChannels);
-        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
-        data.putItem("REFERENCE_CHANNEL", referenceChannels);
-        data.putItem("CHANNEL_COLORS", channelColors);
+    protected void putOutputVars(List<AlignmentInputFile> alignmentInputFiles) {
         data.putItem("ALIGNMENT_INPUTS", alignmentInputFiles);
         
         if (!archivedFiles.isEmpty()) {
@@ -212,11 +227,11 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
     protected void checkForArchival(AlignmentInputFile input) throws Exception {
 
-        if (input.getInputFilename().startsWith(ARCHIVE_PREFIX)) {
-            archivedFiles.add(input.getInputFilename());
-            String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getInputFilename()).getName()).getAbsolutePath();
+        if (input.getFilepath().startsWith(ARCHIVE_PREFIX)) {
+            archivedFiles.add(input.getFilepath());
+            String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getFilepath()).getName()).getAbsolutePath();
             targetFiles.add(newInput);
-            input.setInputFilename(newInput);
+            input.setFilepath(newInput);
         }
         
         if (input.getInputSeparationFilename()!=null) {
@@ -302,25 +317,10 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         return TIMEOUT_SECONDS;
     }
     
+	/**
+	 * Every subclass must override this to verify its results and
+	 * populate ALIGNED_IMAGES and ALIGNED_FILENAME.
+	 */
     @Override
-	public void postProcess() throws MissingDataException {
-
-        File outputFile = new File(resultFileNode.getDirectoryPath(),"Aligned.v3draw");
-        
-        File alignDir = new File(resultFileNode.getDirectoryPath());
-    	File[] coreFiles = alignDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-	            return name.startsWith("core");
-			}
-		});
-
-    	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Brain alignment core dumped for "+resultFileNode.getDirectoryPath());
-    	}
-
-    	if (! outputFile.exists()) {
-    		throw new MissingDataException("Output file not found: "+outputFile.getAbsolutePath());
-    	}
-	}
+	public abstract void postProcess() throws MissingDataException;
 }

@@ -92,6 +92,21 @@
     </operation>
     
     <operation>
+        <description>Retire all the samples which are in "Desync" status for the given user</description>
+        <name>runSampleRetirement</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Retire all the samples which are in "Desync" status for the all users</description>
+        <name>runSampleRetirement</name>
+    </operation>
+    
+    <operation>
         <description>Archive the given sample</description>
         <name>runSingleSampleArchival</name>
         <parameter>
@@ -287,7 +302,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
            <name>extraParam</name>
            <type>java.lang.String</type>
         </parameter>
@@ -307,7 +322,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
            <name>extraParam</name>
            <type>java.lang.String</type>
         </parameter>
@@ -327,7 +342,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>One extra parameter to provide to the process. Must be formatted as ""key=value".</description>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
            <name>extraParam</name>
            <type>java.lang.String</type>
         </parameter>

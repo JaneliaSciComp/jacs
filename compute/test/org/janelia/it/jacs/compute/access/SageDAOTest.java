@@ -58,7 +58,7 @@ public class SageDAOTest {
     public void testGetImagesByDataSet() throws Exception {
         ResultSetIterator iterator = null;
         try {
-            iterator = sageDao.getImagesByDataSet("asoy_mb_polarity_63x_case_2");
+            iterator = sageDao.getImagesByDataSet("asoy_mb_polarity_case_2");
             validateIteratorResults(iterator, 10);
         } finally {
             if (iterator != null) {
@@ -72,7 +72,7 @@ public class SageDAOTest {
     public void testGetAllImagePropertiesByDataSet() throws Exception {
         ResultSetIterator iterator = null;
         try {
-            iterator = sageDao.getAllImagePropertiesByDataSet("asoy_mb_polarity_63x_case_3");
+            iterator = sageDao.getAllImagePropertiesByDataSet("asoy_mb_polarity_case_3");
             validateIteratorResults(iterator, 10);
         } finally {
             if (iterator != null) {

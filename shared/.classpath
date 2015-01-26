@@ -20,5 +20,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Xuggler"/>
 	<classpathentry kind="lib" path="lib/jai_codec.jar"/>
 	<classpathentry kind="lib" path="lib/jai_core.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/javacpp"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>

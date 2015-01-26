@@ -562,8 +562,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
                 folder = folders.iterator().next();
             }
             else {
-                folder = newEntity(destinationFolderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
-                folder = e.saveOrUpdateEntity(subjectKey, folder);
+                folder = EJBFactory.getLocalEntityBean().createFolderInDefaultWorkspace(subjectKey, destinationFolderName).getChildEntity();
             }
 
             // Loop through the main areas and pull out the data directories.  Create entities for them if necessary
@@ -579,7 +578,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
                     Set<Entity> testFolders = e.getEntitiesByName(subjectKey, tmpData.getName());
                     if (null!=testFolders && testFolders.size()>0) continue;
                     // else add in the new data
-                    Entity sample = newEntity(tmpData.getName(), EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
+                    Entity sample = newEntity(tmpData.getName(), EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey);
                     sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, tmpData.getAbsolutePath());
                     sample = e.saveOrUpdateEntity(subjectKey, sample);
                     System.out.println("Saved sample as "+sample.getId());
@@ -592,7 +591,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public Entity newEntity(String name, String entityTypeName, String ownerKey, boolean isCommonRoot) throws ComputeException {
+    public Entity newEntity(String name, String entityTypeName, String ownerKey) throws ComputeException {
         Date createDate = new Date();
         Entity entity = new Entity();
         entity.setName(name);
@@ -600,11 +599,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         entity.setCreationDate(createDate);
         entity.setUpdatedDate(createDate);
         entity.setEntityTypeName(entityTypeName);
-        if (isCommonRoot) {
-            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COMMON_ROOT, "Common Root");
-            Entity workspace = EJBFactory.getLocalEntityBean().getDefaultWorkspace(ownerKey);
-            EJBFactory.getLocalEntityBean().addRootToWorkspace(ownerKey, workspace.getId(), entity.getId());
-        }
         return entity;
     }
     
@@ -614,7 +608,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             EntityBeanLocal e = EJBFactory.getLocalEntityBean();
             Entity parent = e.getEntityById(null, Long.parseLong(parentId));
             
-            Entity folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, parent.getOwnerKey(), false);
+            Entity folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, parent.getOwnerKey());
             folder = e.saveOrUpdateEntity(parent.getOwnerKey(), folder);
 
             e.addEntityToParent(folder.getOwnerKey(), parent.getId(), folder.getId(), null, EntityConstants.ATTRIBUTE_ENTITY);
