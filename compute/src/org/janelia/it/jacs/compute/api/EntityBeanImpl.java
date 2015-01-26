@@ -896,6 +896,16 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
+    public EntityData addRootToDefaultWorkspace(String subjectKey, Long entityId) throws ComputeException {
+        try {
+            return _annotationDAO.addRootToDefaultWorkspace(subjectKey, entityId);
+        }
+        catch (DaoException e) {
+            _logger.error("Error adding root to default workspace for "+subjectKey, e);
+            throw new ComputeException("Error adding root to default workspace for "+subjectKey,e);
+        }
+    }
+    
 	public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException {
         try {
             return _annotationDAO.addRootToWorkspace(subjectKey, workspaceId, entityId);
@@ -905,7 +915,17 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error adding root to workspace for "+subjectKey,e);
         }
 	}
-	
+
+    public EntityData createFolderInDefaultWorkspace(String subjectKey, String entityName) throws ComputeException {
+        try {
+            return _annotationDAO.createFolderInDefaultWorkspace(subjectKey, entityName);
+        }
+        catch (DaoException e) {
+            _logger.error("Error creating folder in default workspace for "+subjectKey, e);
+            throw new ComputeException("Error creating folder in default workspace for "+subjectKey,e);
+        }
+    }
+    
 	public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException {
         try {
             return _annotationDAO.createFolderInWorkspace(subjectKey, workspaceId, entityName);

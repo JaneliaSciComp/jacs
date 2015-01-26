@@ -95,6 +95,8 @@ public interface EntityBeanRemote {
     public List<Entity> getWorkspaces(String subjectKey) throws ComputeException;
     public Entity getDefaultWorkspace(String subjectKey) throws ComputeException;
     public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException;
+    public EntityData addRootToDefaultWorkspace(String subjectKey,Long entityId) throws ComputeException;
     public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException;
+    public EntityData createFolderInDefaultWorkspace(String subjectKey, String entityName) throws ComputeException;
     
 }
