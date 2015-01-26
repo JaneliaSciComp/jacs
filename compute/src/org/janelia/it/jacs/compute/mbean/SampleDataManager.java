@@ -143,6 +143,32 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.error("Error running pipeline", ex);
         }
     }
+    
+    public void runSampleRetirement(String user) {
+        try {
+            String processName = "SampleRetirementPipeline";
+            String displayName = "Sample Retirement Pipeline";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
+    
+    public void runSampleRetirement() {
+        try {
+            Set<String> subjectKeys = new TreeSet<String>();
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+                subjectKeys.add(dataSet.getOwnerKey());
+            }
+            for(String subjectKey : subjectKeys) {
+                runSampleRetirement(subjectKey);
+            }
+        } 
+        catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
 
     public void runSingleSampleArchival(String sampleEntityId) {
         try {
