@@ -514,7 +514,9 @@ public class MongoDbImport extends AnnotationDAO {
         }
         
         // Set derived consensus values
-        sample.setGender(genderConsensus);
+        if (!StringUtils.isEmpty(genderConsensus)) {
+            sample.setGender(sanitizeGender(genderConsensus));
+        }
         
         return sample;
     }
@@ -683,8 +685,8 @@ public class MongoDbImport extends AnnotationDAO {
         
         Entity stackEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         if (stackEntity!=null) {
-            result.setImageSize(cleanRes(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
-            result.setOpticalResolution(cleanRes(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+            result.setImageSize(sanitizeCSV(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+            result.setOpticalResolution(sanitizeCSV(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
             addImage(files,FileType.Stack,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
             addImage(files,FileType.ReferenceMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
             addImage(files,FileType.SignalMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
@@ -776,9 +778,9 @@ public class MongoDbImport extends AnnotationDAO {
         result.setChannelColors(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
         result.setChanSpec(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
         result.setFilepath(alignmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        result.setImageSize(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+        result.setImageSize(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
         result.setObjective(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
-        result.setOpticalResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+        result.setOpticalResolution(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
         
         Map<AlignmentScoreType,String> scores = new HashMap<AlignmentScoreType,String>();
         String qiScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE);
@@ -847,7 +849,7 @@ public class MongoDbImport extends AnnotationDAO {
         lsm.setObjective(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
         lsm.setSlideCode(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
         
-        lsm.setGender(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER));
+        lsm.setGender(sanitizeGender(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER)));
         if (genderConsensus==null) {
         	genderConsensus = lsm.getGender();
         }
@@ -887,8 +889,8 @@ public class MongoDbImport extends AnnotationDAO {
             image.setNumChannels(Integer.parseInt(numChannels));
         }
         image.setObjective(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
-        image.setOpticalResolution(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
-        image.setImageSize(cleanRes(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+        image.setOpticalResolution(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+        image.setImageSize(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
 
         Map<FileType,String> images = new HashMap<FileType,String>();
         addImage(images,FileType.Stack,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
@@ -1460,8 +1462,8 @@ public class MongoDbImport extends AnnotationDAO {
     	compartmentSet.setCreationDate(compartmentSetEntity.getCreationDate());
     	compartmentSet.setUpdatedDate(compartmentSetEntity.getUpdatedDate());
     	compartmentSet.setAlignmentSpace(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE));
-    	compartmentSet.setImageSize(cleanRes(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
-    	compartmentSet.setOpticalResolution(cleanRes(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+    	compartmentSet.setImageSize(sanitizeCSV(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+    	compartmentSet.setOpticalResolution(sanitizeCSV(compartmentSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
         
     	Pattern p = Pattern.compile("(.*?) \\((.*?)\\)");
     	
@@ -1581,8 +1583,8 @@ public class MongoDbImport extends AnnotationDAO {
     	alignmentBoard.setCreationDate(alignmentBoardEntity.getCreationDate());
     	alignmentBoard.setUpdatedDate(alignmentBoardEntity.getUpdatedDate());
     	alignmentBoard.setAlignmentSpace(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE));
-    	alignmentBoard.setImageSize(cleanRes(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
-    	alignmentBoard.setOpticalResolution(cleanRes(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+    	alignmentBoard.setImageSize(sanitizeCSV(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+    	alignmentBoard.setOpticalResolution(sanitizeCSV(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
     	List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardEntity);
     	if (!children.isEmpty()) alignmentBoard.setChildren(children);
     	
@@ -2009,13 +2011,42 @@ public class MongoDbImport extends AnnotationDAO {
         }
         return "unknown";
     }
+
+    /**
+     * Convert non-standard gender values like "Female" into standardized codes like "f". The
+     * four standardized codes are "m", "f", "x", and "NO_CONSENSUS" in the case of samples.
+     * @param sageGender
+     * @return
+     */
+    private String sanitizeGender(String gender) {
+        if (gender==null) {
+            return null;
+        }
+        if (gender.equals(NO_CONSENSUS_VALUE)) {
+            return NO_CONSENSUS_VALUE;
+        }
+        String genderLc = gender.toLowerCase();
+        if (genderLc.startsWith("f")) {
+            return "f";
+        }
+        else if (genderLc.startsWith("m")) {
+            return "m";
+        }
+        else if (genderLc.startsWith("x")) {
+            return "x";
+        } 
+        else {
+            log.warn("Invalid value for sample gender: "+gender);
+            return null;
+        }
+    }
     
     /**
-     * Remove stray quotes from the res attributes
+     * Remove stray quotes from a CSV string.
      * @param res
      * @return
      */
-    private String cleanRes(String res) {
+    private String sanitizeCSV(String res) {
         if (res==null) return res;
         return res.replaceAll("'", "");
     }
