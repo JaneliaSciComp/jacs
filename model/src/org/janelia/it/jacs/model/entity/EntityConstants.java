@@ -161,7 +161,9 @@ public class EntityConstants {
     public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
     public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
-    
+    public static final String ATTRIBUTE_MICRON_TO_VOXEL_MATRIX              = "Micron to Voxel Matrix";
+    public static final String ATTRIBUTE_VOXEL_TO_MICRON_MATRIX              = "Voxel to Micron Matrix";
+        
     // Geometric Tree
     //
     //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"
