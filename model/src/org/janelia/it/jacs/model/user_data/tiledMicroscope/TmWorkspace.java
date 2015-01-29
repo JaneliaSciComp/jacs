@@ -126,7 +126,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
     // This method will typically be used to generate a TmWorkspace object after the Workspace entity has been initially
     // retrieved from the database.
 
-    public TmWorkspace(Entity entity) throws Exception {
+    public TmWorkspace(Entity entity, Entity sampleEntity) throws Exception {
         if (entity.getEntityTypeName()==null || !entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
             throw new Exception("Entity type must be="+EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
         }
@@ -143,29 +143,16 @@ public class TmWorkspace implements IsSerializable, Serializable {
             }
         }
 
-        EntityData sampleEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
-        if (sampleEd == null) {
-            throw new Exception("workspace " + entity.getName() + " has no associated brand sample!");
-        } else {
-            this.sampleID = Long.valueOf(sampleEd.getValue());
-        }
-
-        Set<Entity> children = entity.getChildren();
-        Entity sampleEntity = null;
-        for (Entity child: children) {
-            if (child.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
-                sampleEntity = child;
-            }
-        }
         if (sampleEntity != null) {
-            String voxToMicronStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX);
-            if (voxToMicronStr != null) {
-                Matrix matrix = deserializeMatrix(voxToMicronStr, EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX);
+            this.sampleID = sampleEntity.getId();
+            String matrixStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX);
+            if (matrixStr != null) {
+                Matrix matrix = deserializeMatrix(matrixStr, EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX);
                 setVoxToMicronMatrix(matrix);
             }
-            String micronToVoxStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX);
-            if (micronToVoxStr != null) {
-                Matrix matrix = deserializeMatrix(voxToMicronStr, EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX);
+            matrixStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX);
+            if (matrixStr != null) {
+                Matrix matrix = deserializeMatrix(matrixStr, EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX);
                 setMicronToVoxMatrix(matrix);
             }
         }
@@ -211,8 +198,8 @@ public class TmWorkspace implements IsSerializable, Serializable {
                 try {                    
                     for (String column : columnStr) {                        
                         double colDouble = Double.parseDouble(column);
-                        x++;
                         accumulator[x][y] = colDouble;
+                        x++;
                     }
                 } catch (NumberFormatException nfe) {
                     // NOTE: this class is serialized.  Therefore, it cannot carry logger.
@@ -220,6 +207,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
                 }
                 y++;
             }
+            rtnVal = new Matrix(accumulator);
         }
         else {
             // NOTE: this class is serialized.  Therefore, it cannot carry logger.
