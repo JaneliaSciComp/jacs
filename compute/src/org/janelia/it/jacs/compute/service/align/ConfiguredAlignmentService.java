@@ -40,6 +40,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     protected String scriptFile;
     protected String mountingProtocol;
     protected String tissueOrientation;
+    protected String genderCode;
 
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -52,6 +53,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             if (supportingData!=null) {
                 this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
                 this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION, alignedArea);
+                this.genderCode = sanitizeGender(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea));
             }
         }
         catch (Exception e) {
@@ -59,7 +61,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         }
     }
 
-    @Override
+	@Override
     protected void createShellScript(FileWriter writer) throws IOException, ParameterException, MissingDataException,
             InterruptedException, ServiceException {
 
@@ -89,6 +91,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         }
         if ("face_down".equals(tissueOrientation)) {
             cmd.append(" -z zflip");
+        }
+        if (genderCode!=null) {
+            cmd.append(" -g ").append(genderCode);
         }
         if (input1!=null) {
         	if (StringUtils.isEmpty(input1.getPixelResolution())) {
@@ -250,4 +255,21 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         return FileUtils.listFiles(outputDir, extensions, true);
     }
 
+    private String sanitizeGender(String gender) {
+		if (gender==null) return null;
+		String genderLc = gender.toLowerCase();
+		if (genderLc.startsWith("f")) {
+			return "f";
+		}
+		else if (genderLc.startsWith("m")) {
+			return "m";
+		}
+		else if (genderLc.startsWith("x")) {
+			return "x";
+		}
+		else {
+			logger.warn("Invalid value for sample gender: "+gender);
+			return null;
+		}
+	}
 }

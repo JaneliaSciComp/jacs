@@ -61,23 +61,23 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         }            
 
         logger.info("Running Qi Score Synchronization (isDebug="+isDebug+")");
-        
-        this.sage = new SageDAO(logger);
-        this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
-        this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
 
         Long alignmentId = data.getItemAsLong("ALIGNMENT_ID");
-        if (alignmentId!=null) {
-        	try {
-        		processAlignment(alignmentId);
-        	}
-        	catch (Exception e) {
-        		logger.warn("Problem synchronizing Qi/Qm scores to SAGE for alignment "+alignmentId+". The pipeline will continue.",e);
-        	}
-        }
-        else {
-        	processAllAlignments();
-        }
+        
+    	try {
+	        if (alignmentId!=null) {
+	                this.sage = new SageDAO(logger);
+	                this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
+	                this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
+	        		processAlignment(alignmentId);
+	        }
+	        else {
+	        	processAllAlignments();
+	        }
+    	}
+    	catch (Exception e) {
+    		logger.warn("Problem synchronizing Qi/Qm scores to SAGE. The pipeline will continue.",e);
+    	}
 
         logger.info("Processed "+numAlignments+" JBA Alignments");
         
