@@ -19,6 +19,7 @@ public class SubjectManager implements SubjectManagerMBean {
     public void createUser(String username) {
         try {
             ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
+            AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();
             User user = computeBean.getUserByNameOrKey(username);
             // If we don't know them, and they authenticated, add to the database and create a location in the filestore
             if (null == user) {
@@ -29,9 +30,12 @@ public class SubjectManager implements SubjectManagerMBean {
                 }
                 else {
                 	log.debug("Created directory and/or account for user " + username);
-                    user = computeBean.getUserByNameOrKey(username);
-                	EJBFactory.getLocalAnnotationBean().createWorkspace(user.getKey());
-                	log.debug("Created workspace for user " + username);
+                }
+                // If the user was created, make sure they have a workspace
+                user = computeBean.getUserByNameOrKey(username);
+                if (user!=null) {
+                	annotationBean.createWorkspace(user.getKey());
+	            	log.debug("Created workspace for user " + username);
                 }
             }
             else {
