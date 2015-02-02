@@ -352,9 +352,12 @@ public class SageArtifactExportService extends AbstractEntityService {
                 for(Entity child : artifactRun.getChildren()) {
                     String name = child.getName();
                     if (child.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
-                    	chanspec = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-                    	pixelRes = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-                        if (name.contains(tile.getName()) && !name.contains("Signal")) {
+                        if (name.contains(tile.getName()) && !name.contains("Signal") && !name.contains("_MIP")) {
+                        	if (imageName!=null) {
+                        		logger.warn("Overriding "+imageName+" with "+name.substring(0, name.lastIndexOf('.')));
+                        	}
+                        	chanspec = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                        	pixelRes = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
                         	imageName = name.substring(0, name.lastIndexOf('.'));
                         }
                     }

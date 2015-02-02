@@ -107,7 +107,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             }
             
             if (!alignmentInputFiles.isEmpty()) {
-	            setConsensusValues();
+	            setLegacyConsensusValues();
 	            putOutputVars(alignmentInputFiles);
             }
         } 
@@ -148,23 +148,37 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
     }
 
-    protected void setConsensusValues() throws Exception {
-
-        setConsensusValues(input1);
-        setConsensusValues(input2);
-        
-        this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
-        if (gender!=null) {
-            contextLogger.info("Found gender consensus: "+gender);
-        }
+    protected void setLegacyConsensusValues() throws Exception {
+        setLegacyConsensusValues(input1);
+        setLegacyConsensusValues(input2);
     }
-    
-    protected void setConsensusValues(AlignmentInputFile input) throws Exception {
+
+    /** 
+     * Interoperability with legacy samples
+     * @param input
+     * @throws Exception
+     */
+    protected void setLegacyConsensusValues(AlignmentInputFile input) throws Exception {
 
     	if (input==null) return;
-    	
+        
+        if (input.getChannelColors()==null) {
+            contextLogger.warn("No channel colors on the input file. Trying to find a consensus among the LSMs...");
+            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, alignedArea));
+            if (input.getChannelColors()!=null) {
+                contextLogger.info("Found channel colors consensus: "+input.getChannelColors());
+            }
+        }
+        
+        if (input.getChannelSpec()==null) {
+            contextLogger.warn("No channel spec on the input file. Trying to find a consensus among the LSMs...");
+            input.setChannelSpec(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, alignedArea));
+            if (input.getChannelColors()!=null) {
+                contextLogger.info("Found channel spec consensus: "+input.getChannelSpec());
+            }
+        }
+
         if (input.getOpticalResolution()==null) {
-            // Interoperability with legacy samples
             contextLogger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
             input.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea));
             if (input.getOpticalResolution()!=null) {
@@ -173,16 +187,11 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
         
         if (input.getPixelResolution()==null) {
-            // Interoperability with legacy samples
             contextLogger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
             input.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, alignedArea));
             if (input.getPixelResolution()!=null) {
                 contextLogger.info("Found pixel resolution consensus: "+input.getPixelResolution());
             }
-        }
-        
-        if (input.getChannelColors()!=null) {
-            contextLogger.info("  Channel colors: "+input.getChannelColors());
         }
     }
     
