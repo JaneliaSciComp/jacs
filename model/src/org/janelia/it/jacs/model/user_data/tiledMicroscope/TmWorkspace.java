@@ -198,7 +198,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
                 try {                    
                     for (String column : columnStr) {                        
                         double colDouble = Double.parseDouble(column);
-                        accumulator[x][y] = colDouble;
+                        accumulator[y][x] = colDouble;
                         x++;
                     }
                 } catch (NumberFormatException nfe) {
