@@ -28,8 +28,8 @@ public class SageDAOTest {
 
     @Test
     @Category(TestCategories.FastIntegrationTests.class)
-    public void testGetFlylightImageVocabulary() throws Exception {
-        final Map<String, SageTerm> map = sageDao.getFlylightImageVocabulary();
+    public void testGetSageImageVocabulary() throws Exception {
+        final Map<String, SageTerm> map = sageDao.getSageVocabulary();
         final String[] expectedKeys = { "id", "name", "path", "line", "data_set",
                                         "slide_code", "capture_date", "created_by" };
         for (String expectedKey : expectedKeys) {
@@ -44,7 +44,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getImagesByFamily("flylight_flip");
-            validateIteratorResults(iterator, 10);
+            validateIteratorResults(iterator, 10, "age");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -59,7 +59,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getImagesByDataSet("asoy_mb_polarity_case_2");
-            validateIteratorResults(iterator, 10);
+            validateIteratorResults(iterator, 10, "age");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -73,7 +73,21 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getAllImagePropertiesByDataSet("asoy_mb_polarity_case_3");
-            validateIteratorResults(iterator, 10);
+            validateIteratorResults(iterator, 10, "age");
+        } finally {
+            if (iterator != null) {
+                iterator.close();
+            }
+        }
+    }
+
+    @Test
+    @Category(TestCategories.SlowIntegrationTests.class)
+    public void testGetAllLineProperties() throws Exception {
+        ResultSetIterator iterator = null;
+        try {
+            iterator = sageDao.getAllLineProperties();
+            validateIteratorResults(iterator, 10, "genotype");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -87,7 +101,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getAllImagePropertiesByDataSet("system_flylight_optic_lobe_tile");
-            validateIteratorResults(iterator, 0);
+            validateIteratorResults(iterator, 0, "age");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -96,13 +110,14 @@ public class SageDAOTest {
     }
 
     private void validateIteratorResults(ResultSetIterator iterator,
-                                         int minimumNumberOfRows) {
+                                         int minimumNumberOfRows,
+                                         String targetAttribute) {
         int row = 0;
         Map<String, Object> map;
         while ((row < minimumNumberOfRows) && iterator.hasNext()) {
             row++;
             map = iterator.next();
-            assertNotNull("age is missing for row " + row, map.get("age"));
+            assertNotNull(targetAttribute + " is missing for row " + row, map.get(targetAttribute));
         }
         assertEquals("expected to find at least 10 matching rows", minimumNumberOfRows, row);
     }
