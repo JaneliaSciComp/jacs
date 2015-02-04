@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronMappingGridService;
+import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
@@ -94,7 +95,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         Entity supportingFiles = EntityUtils.getSupportingData(targetSeparation);
         populateChildren(supportingFiles);
         
-        boolean resultWasMapped = EntityUtils.findChildWithName(supportingFiles, "SeparationResult.nsp")!=null; 
+        boolean resultWasMapped = NeuronSeparatorHelper.getSeparationResult(supportingFiles)!=null; 
         
         Entity sourceNeuronCollection = EntityUtils.findChildWithType(sourceSeparation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
         Entity targetNeuronCollection = EntityUtils.findChildWithType(targetSeparation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);

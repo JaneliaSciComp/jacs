@@ -1,9 +1,7 @@
-
 package org.janelia.it.jacs.compute.service.image;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -185,7 +183,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     		String inputFile2 = null;
     		String chanSpec2 = null;
     		String effector2 = null;
-            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
+            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag().replaceAll("\\s+","_")+"-"+effector1;
             String colorSpec1 = outputColorSpec;
             String colorSpec2 = null;
 
@@ -298,7 +296,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("fpid=$!\n");
         
         // Spy on Xvfb
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 3600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 7200));
         
 		// Convert movies to H.246
         script.append("fin=$OUTPUT_PREFIX.avi\n");
@@ -315,7 +313,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 40;
+    	return 88;
     }
 
 	@Override

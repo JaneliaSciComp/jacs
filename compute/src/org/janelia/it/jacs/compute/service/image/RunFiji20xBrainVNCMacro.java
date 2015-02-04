@@ -15,6 +15,7 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -111,10 +112,19 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         }
         
         chanSpec = brainLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        if (chanSpec==null) {
+        	String numChannelsStr = brainLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);
+        	if (numChannelsStr==null) {
+            	throw new IllegalStateException("Brain LSM does not specify chanSpec or numChannels");
+        	}
+        	int numChannels = Integer.parseInt(numChannelsStr);
+        	chanSpec = ChanSpecUtils.createChanSpec(numChannels, numChannels);
+        }
+        
         if (vncLsm!=null) {
-            String vncChanSpec = brainLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+            String vncChanSpec = vncLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
             if (!chanSpec.equals(vncChanSpec)) {
-                throw new IllegalStateException("Brain chanspec ("+chanSpec+") does not match VNC chanspec ("+vncChanSpec+")");
+                logger.warn("Brain chanspec ("+chanSpec+") does not match VNC chanspec ("+vncChanSpec+"). Will continue with Brain chanspec.");
             }
         }
         

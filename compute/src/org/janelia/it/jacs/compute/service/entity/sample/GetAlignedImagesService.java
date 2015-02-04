@@ -7,7 +7,6 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Gets all the aligned images for an alignment and puts their ids in a list called IMAGE_ID.
@@ -18,11 +17,7 @@ public class GetAlignedImagesService extends AbstractEntityService {
 
     public void execute() throws Exception {
         	
-    	String resultEntityId = (String)processData.getItem("RESULT_ENTITY_ID");
-    	if (StringUtils.isEmpty(resultEntityId)) {
-    		throw new IllegalArgumentException("PIPELINE_RUN_ENTITY_ID may not be null");
-    	}
-
+    	Long resultEntityId = data.getRequiredItemAsLong("RESULT_ENTITY_ID");
     	Entity resultEntity = entityBean.getEntityById(resultEntityId);
     	populateChildren(resultEntity);
     	

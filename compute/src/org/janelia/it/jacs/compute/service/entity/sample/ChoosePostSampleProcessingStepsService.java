@@ -79,7 +79,7 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
             final Pattern skipTileNamePattern = Pattern.compile(skipAlignmentTileFilter);
 
             @SuppressWarnings("unchecked")
-            final List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREA");
+            final List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREAS");
             if (sampleAreas != null) {
                 List<Entity> tiles;
                 String tileName;
@@ -90,7 +90,7 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
                         final Matcher m = skipTileNamePattern.matcher(tileName);
                         if (m.matches()) {
                             skipAlignment = true;
-                            contextLogger.info("skipping alignment because SAMPLE_AREA contains tile '" +
+                            contextLogger.info("skipping alignment because SAMPLE_AREAS contains tile '" +
                                                tileName + "'");
                             break;
                         }

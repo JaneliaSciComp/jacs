@@ -32,9 +32,10 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
  */
 public class SageArtifactExportService extends AbstractEntityService {
 
+	public static final String CREATED_BY = "Janelia Workstation";
+	
     private static final String WEBDAV_PREFIX = "http://jacs-webdav.int.janelia.org/WebDAV";
     private static final String NO_CONSENSUS = "No Consensus";
-    private static final String CREATED_BY = "Janelia Workstation";
     private static final String PUBLISHED_TO = "MBEW";
     private static final String ARTIFACT_PIPELINE_RUN_PREFIX = "MBEW Pipeline";
     private static final String ANNOTATION_EXPORT_20X = "Publish20xToMBEW";
@@ -351,9 +352,12 @@ public class SageArtifactExportService extends AbstractEntityService {
                 for(Entity child : artifactRun.getChildren()) {
                     String name = child.getName();
                     if (child.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
-                    	chanspec = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-                    	pixelRes = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-                        if (name.contains(tile.getName()) && !name.contains("Signal")) {
+                        if (name.contains(tile.getName()) && !name.contains("Signal") && !name.contains("_MIP")) {
+                        	if (imageName!=null) {
+                        		logger.warn("Overriding "+imageName+" with "+name.substring(0, name.lastIndexOf('.')));
+                        	}
+                        	chanspec = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                        	pixelRes = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
                         	imageName = name.substring(0, name.lastIndexOf('.'));
                         }
                     }

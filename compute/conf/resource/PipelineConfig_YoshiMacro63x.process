@@ -7,6 +7,7 @@
         <input name="OUTPUT_CHANNEL_ORDER"/>
         <input name="OUTPUT_COLOR_SPEC"/>
         <input name="MACRO_NAME"/>
+        <input name="MERGE_ALGORITHM"/>
     
         <!-- By default, use ordered merged -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
@@ -101,7 +102,7 @@
         <include name="Pipeline" process="FijiMacroPipeline">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="OUTPUT_CHANNEL_ORDER"/>
-            <input name="PIPELINE_NAME" value="MBEW Pipeline 63x (v15)"/>
+            <input name="PIPELINE_NAME" value="MBEW Pipeline 63x (v17)"/>
             <input name="PIPELINE_PROCESS"/>
             <input name="MACRO_NAME"/>
             <input name="MACRO_CLASS" value="org.janelia.it.jacs.compute.service.image.RunFiji63xTilesAndStitchedFileMacro"/>
@@ -111,7 +112,7 @@
         </include>
         
         <!-- We're done with the LSMs -->
-        <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+        <operation name="Delete Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.DeleteFileNodeService">
             <input name="FILE_NODE_ID" value="$V{MERGE_RESULT_FILE_NODE_ID}"/>
         </operation>
         

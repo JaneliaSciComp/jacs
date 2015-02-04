@@ -2,7 +2,6 @@
 	<sequence>
 	    
 	    <input name="PIPELINE_PROCESS"/>
-        <input name="20X_MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
         <input name="CHANNEL_DYE_SPEC_20X"/>
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
 	    <input name="CHANNEL_DYE_SPEC_63X"/>
@@ -48,8 +47,8 @@
             <include name="20x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_20X_ID}"/>
                 <input name="PIPELINE_NAME" value="Polarity Pipeline 20x"/>
-                <input name="MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
-                <input name="STITCH_ALGORITHMS" value=""/>
+                <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
+                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED,CONFIGURED_BRAIN_VNC"/>
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh"/>
                 <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment,Brain/VNC Alignment"/>
@@ -71,7 +70,7 @@
                 <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_PAIR"/>
-                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_ds_dpx_1024px_INT.sh"/>
+                <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalignPolarityPair_ds_dpx_1024px_INT_v2.sh"/>
                 <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="Brain 20X/63X Alignment"/>
                 <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>

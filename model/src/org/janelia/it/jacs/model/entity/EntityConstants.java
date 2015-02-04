@@ -20,6 +20,8 @@ public class EntityConstants {
     public static final String VALUE_ERROR                           = "Error";
     public static final String VALUE_MARKED                          = "Marked for Rerun";
     public static final String VALUE_BLOCKED                         = "Blocked";
+    public static final String VALUE_DESYNC                          = "Desync";
+    public static final String VALUE_RETIRED                         = "Retired";
     
     // Entity Status
     public static final String STATUS_DEPRECATED                     = "Deprecated";

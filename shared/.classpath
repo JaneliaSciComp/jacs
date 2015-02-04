@@ -14,5 +14,12 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT Serializable"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Solrj"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/LOCI"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Jama"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JAXB"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Xuggler"/>
+	<classpathentry kind="lib" path="lib/jai_codec.jar"/>
+	<classpathentry kind="lib" path="lib/jai_core.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/javacpp"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>

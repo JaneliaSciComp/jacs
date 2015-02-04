@@ -552,14 +552,7 @@ public class ScreenScoresLoadingService extends AbstractEntityService {
 
         if (topLevelFolder == null && createIfNecessary) {
             logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
-            topLevelFolder = new Entity();
-            topLevelFolder.setCreationDate(createDate);
-            topLevelFolder.setUpdatedDate(createDate);
-            topLevelFolder.setOwnerKey(ownerKey);
-            topLevelFolder.setName(topLevelFolderName);
-            topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
-            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
-            topLevelFolder = entityBean.saveOrUpdateEntity(topLevelFolder);
+            topLevelFolder = entityBean.createFolderInDefaultWorkspace(ownerKey, topLevelFolderName).getChildEntity();
             logger.info("Saved top level folder as " + topLevelFolder.getId());
         }
 
