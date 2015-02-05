@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.api;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,6 @@ import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
