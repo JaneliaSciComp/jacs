@@ -1961,6 +1961,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             ed.setCreationDate(createDate);
             ed.setUpdatedDate(createDate);
             ed.setEntityAttrName(attributeName);
+            ed.setOrderIndex(parent.getMaxOrderIndex()+1);
             
             saveOrUpdate(ed);
             parent.getEntityData().add(ed);
