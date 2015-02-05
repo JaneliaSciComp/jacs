@@ -326,7 +326,11 @@ public class LargeOperations {
                     iterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
 	        		while (iterator.hasNext()) {
 	            		Map<String,Object> imageProperties = iterator.next();
-	    				imageProperties.putAll(lineMap.get((String)imageProperties.get("line")));
+	    				String tmpLine = (String)imageProperties.get("line");
+						Map<String,Object> tmpLineMap = lineMap.get(tmpLine);
+						if (null!=tmpLineMap && 0<tmpLineMap.size()) {
+							imageProperties.putAll(tmpLineMap);
+						}
 						associateImageProperties(conn, imageProperties);
 	            	}
 	        	}

@@ -15,6 +15,15 @@ public class StringUtils {
 		return s==null || "".equals(s);
 	}
 
+	public static boolean areAllEmpty(Collection<String> strings) {
+	    for (String s : strings) {
+	        if (!isEmpty(s)) {
+	            return false;
+	        }
+	    }
+	    return true;
+    }
+
 	public static String getIndent(int level, String single) {
         StringBuilder indent = new StringBuilder();
         for(int i=0; i<level; i++) {
