@@ -367,7 +367,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
     
     /**
      * Format the given name in lowercase, with underscores instead of spaces.
-     * For example, "Tiling Pattern" -> "tiling_pattern"
+     * For example, "Channel Specification" -> "channel_specification"
      * 
      * @param name
      * @return
@@ -378,7 +378,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
 
     /**
      * Format the given name in title case without spaces. For example,
-     * "Tiling Pattern" -> "TilingPattern"
+     * "Channel Specification" -> "ChannelSpecification"
      * 
      * @param name
      * @return
