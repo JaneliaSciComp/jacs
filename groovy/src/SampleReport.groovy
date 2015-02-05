@@ -14,22 +14,14 @@ class SampleReportConstants {
     static final GROUP = "flylight"
     static final OWNER_KEY = "user:"+OWNER
     static final GROUP_KEY = "group:"+GROUP
-    static final OUTPUT_HTML = true
 	static final WRITE_DATABASE = false
-    static final COLOR_RETIRED = "aaf"
-    static final COLOR_ACTIVE = "faa"
-    static final OUTPUT_FILE = "/Users/rokickik/retired." + (OUTPUT_HTML?"html":"txt")
+    static final COLOR_RETIRED = "FAA755"
+    static final COLOR_ACTIVE = "67CF55"
+    static final OUTPUT_FILE = "/Users/rokickik/retired.html"
 	static final OUTPUT_ROOT_NAME = "Retired Duplicates"
 }
 
-def file = null
-if (SampleReportConstants.OUTPUT_HTML) {
-    file = new PrintWriter(SampleReportConstants.OUTPUT_FILE)
-}
-else {
-    file = System.out
-}
-
+def file = new PrintWriter(SampleReportConstants.OUTPUT_FILE)
 f = new JacsUtils(SampleReportConstants.OWNER_KEY, true)
 
 Multimap<String, Entity> sampleMap = HashMultimap.<String,Entity>create();
@@ -52,26 +44,24 @@ Collections.sort(keys);
 
 int numSlideCodes = 0
 int numRetiredSamples = 0
-int numStitchingErrors = 0
-int numDuplications = 0
+int numActiveSamples = 0
 
-if (SampleReportConstants.OUTPUT_HTML) {
-    file.println("<html><body><head><style>" +
-            "td { font: 8pt sans-serif; vertical-align:top; border: 0px solid #aaa;} table { border-collapse: collapse; } " +
-            "</style></head>")
-    file.println("<h3>"+SampleReportConstants.OWNER+" Retired Samples</h3>")
-    file.println("<table>")
-    file.println("<tr><td>Owner</td><td>Sample Name</td><td>Data Set</td><td>Matching Active Sample</td><td>Fragments</td><td>Annotations</td></tr>")
-}
+file.println("<html><body><head><style>" +
+        "td { font: 8pt sans-serif; vertical-align:top; border: 0px solid #aaa;} table { border-collapse: collapse; } " +
+        "</style></head>")
+file.println("<h3>"+SampleReportConstants.OWNER+" Retired Samples</h3>")
+file.println("<table>")
+file.println("<tr><td>Owner</td><td>Sample Name</td><td>Data Set</td><td>Matching Active Sample</td><td>Total Fragments</td><td>Referenced Fragments</td><td>Annotations</td></tr>")
+numExtraCols = 5 // Number of columns besides owner and sample name
 
 List<Entity> samplesForDeletion = new ArrayList<Entity>();
 
-def rootFolder = null
+Entity rootFolder = null
 if (SampleReportConstants.WRITE_DATABASE) {
 	rootFolder = f.getRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
     if (rootFolder!=null) {
         println "Deleting root folder "+SampleReportConstants.OUTPUT_ROOT_NAME+". This may take a while!"
-        f.deleteEntityTreeById(rootFolder.id)
+        f.deleteEntityTree(rootFolder.id)
     }
 	rootFolder = f.createRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
 }
@@ -101,16 +91,8 @@ for(String key : keys) {
 			keyFolder = f.verifyOrCreateChildFolder(rootFolder, key)
 		}
 		
-        if (SampleReportConstants.OUTPUT_HTML) {
-            file.println("<tr><td colspan=6 style='background-color:#aaa'>"+key+"</td></tr>");
-            println("Processing slide code "+key+" ("+index+")") // to see progress
-        }
-        else {
-            file.println()
-            file.println("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-            file.println(key)
-            file.println("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-        }
+        file.println("<tr><td colspan="+(2+numExtraCols)+" style='background-color:#aaa'>"+key+"</td></tr>");
+        println("Processing slide code "+key+" ("+index+")") // to see progress
 
         List<Entity> activeSamples = new ArrayList<Entity>()
         List<Entity> retiredSamples = new ArrayList<Entity>()
@@ -156,124 +138,118 @@ for(String key : keys) {
         })
 
         Set<String> situations = new HashSet<String>()
+        int numTargets = transferMap.size()
+        int numTargetsAnnotation = 0
 
         for(Entity sample : orderedSamples) {
 
             f.loadChildren(sample)
 
-            annotations = getAnnotations(f, sample.id)
-            data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
-            retired = (retiredSampleSet.contains(sample.id)?"Retired":"")
+            List<String> annotations = getAnnotations(f, sample.id)
+            String data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
 
-            SampleReportNeuronCounter counter = new SampleReportNeuronCounter(f.getEntityLoader())
+            SampleReportNeuronCounter counter = new SampleReportNeuronCounter(f)
             counter.count(sample)
 
+            int numAnnotationOnTransferSamples = 0
+            
             Set<Entity> transferSamples = transferMap.get(sample)
+            StringBuilder transferNamesSb = new StringBuilder()
             StringBuilder transferSamplesSb = new StringBuilder()
             if (transferSamples!=null) {
                 transferSamples.each {
+                    List<String> activeAnnotations = getAnnotations(f, it.id)
+                    numAnnotationOnTransferSamples += activeAnnotations.size()
                     if (transferSamplesSb.length()>0) transferSamplesSb.append(",")
                     transferSamplesSb.append(it.name)
                 }
             }
+            
+            boolean retired = retiredSampleSet.contains(sample.id);
 
             if (retired) {
                 // Retired sample
                 numRetiredSamples++
-                if (sample.name.startsWith(transferSamplesSb.toString())) {
-                    situations.add('duplication')
+                if (numAnnotationOnTransferSamples==0 && (!annotations.isEmpty() || counter.numWithRefs>0)) {
+                    situations.add("can_migrate")
+                }
+                else if (numAnnotationOnTransferSamples>0) {
+                    numTargetsAnnotation++
                 }
             }
             else {
                 // Active sample
-                Set annotSet = new HashSet<String>(annotations)
-                if (annotSet.contains("Stitching_error") || annotSet.contains("something_wrong")) {
-                    situations.add('stitching')
-					if (SampleReportConstants.WRITE_DATABASE) {
-	                    samplesForDeletion.add(sample)
-	                    println("  Stitching error detected. Will delete this sample later.")
-					}
-                }
+                numActiveSamples++
             }
 
 			if (SampleReportConstants.WRITE_DATABASE) {
 				f.addToParent(keyFolder, sample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
 			}
-			
-            if (SampleReportConstants.OUTPUT_HTML) {
-                def annots = annotations.toString()
-                def color = (retired?SampleReportConstants.COLOR_RETIRED:SampleReportConstants.COLOR_ACTIVE)
-                file.println("<tr><td>"+sample.ownerKey.replaceAll("group:","").replaceAll("user:","")+"</td>")
-                file.println("<td style='background-color:#"+color+"'><nobr><b>"+sample.name+"</b></nobr></td>")
-                file.println("<td>"+data_set+"</td>")
-                if (transferSamplesSb.length()>0) {
-                    file.println("<td style='background-color:#"+SampleReportConstants.COLOR_ACTIVE+"'><nobr><b>"+transferSamplesSb+"</b></nobr></td>")
-                }
-                else {
-                    file.println("<td></td>");
-                }
-                file.println("<td>"+counter.numFragments+"</td>")
-                file.println("<td>"+annots.substring(1,annots.length()-1)+"</td></tr>")
+            
+            def annots = annotations.toString()
+            def color = (retired?SampleReportConstants.COLOR_RETIRED:SampleReportConstants.COLOR_ACTIVE)
+            file.println("<tr><td>"+sample.ownerKey.replaceAll("group:","").replaceAll("user:","")+"</td>")
+            file.println("<td style='background-color:#"+color+"'><nobr><b>"+sample.name+"</b></nobr></td>")
+            file.println("<td>"+data_set+"</td>")
+            if (transferSamplesSb.length()>0) {
+                file.println("<td style='background-color:#"+SampleReportConstants.COLOR_ACTIVE+"'><nobr><b>"+transferSamplesSb+"</b></nobr></td>")
             }
             else {
-                transfer = transferSamplesSb.length()>0?"--> "+transferSamplesSb:""
-                file.println padRight(sample.ownerKey, 16) + padRight(sample.name, 65) + padRight(data_set, 40) + " " + transfer + " " + counter.numFragments + " "+ annotations
-
+                file.println("<td></td>");
             }
+            file.println("<td style='text-align:right'>"+counter.numFragments+"</td>")
+            
+            def refsColor = ((retired && counter.numWithRefs>0)?SampleReportConstants.COLOR_RETIRED:"white")
+            file.println("<td style='background-color:#"+refsColor+"; text-align:right'>"+counter.numWithRefs+"</td>")
+            file.println("<td>"+annots.substring(1,annots.length()-1)+"</td></tr>")
 
             StringBuilder lsb = new StringBuilder();
             Entity supportingData = EntityUtils.getSupportingData(sample)
             f.loadChildren(supportingData)
             if (supportingData != null) {
-                for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
+                List<Entity> tiles = EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY);
+                for(Entity imageTile : tiles) {
 
-                    if (SampleReportConstants.OUTPUT_HTML) {
-                        lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
-                    }
-                    else {
-                        file.println "                  "+imageTile.name
-                    }
+                    lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
 
                     f.loadChildren(imageTile)
                     for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
-                        if (SampleReportConstants.OUTPUT_HTML) {
-                            lsb.append("&nbsp&nbsp&nbsp&nbsp"+lsm.name+"<br>")
-                        }
-                        else {
-                            file.println "                      "+lsm.name
-                        }
+                        lsb.append("&nbsp&nbsp&nbsp&nbsp"+lsm.name+"<br>")
                     }
+                }
+                if (tiles.size()>2) {
+                    situations.add("duplsms");
                 }
             }
 
-            if (SampleReportConstants.OUTPUT_HTML) {
-                file.println("<tr><td></td><td>"+lsb+"</td><td colspan=4></td></tr>")
-            }
+            file.println("<tr><td></td><td>"+lsb+"</td><td colspan="+numExtraCols+"></td></tr>")
 
             // free memory
             sample.setEntityData(null)
         }
 
-        if (SampleReportConstants.OUTPUT_HTML) {
-            def situation = ""
-            def color = "fff"
-
-            if (situations.contains("stitching") && situations.contains("duplication")) {
-                color = "afa"
-                situation = "Retired sample duplicated with stitching error";
-                numStitchingErrors++
-            }
-            else if (situations.contains("duplication")) {
-                color = "aff"
-                situation = "Retired sample duplicated";
-                numDuplications++
-            }
-            else {
-                situation = situations.toString()
-            }
-            file.println("<tr><td colspan=6 style='background-color:#"+color+"; text-align:right'>"+situation+"</td></tr>")
-            file.println("<tr><td height=40 colspan=6>&nbsp;</td></td>")
+        def situation = ""
+        def color = "D8CED9"
+        
+        if (situations.contains("available_annotations")) {
+            situation += "Migration opportunity. ";
         }
+        
+        if (numTargetsAnnotation>=numTargets) {
+            situation += "Target is already annotated. ";
+        }
+        
+        if (situations.contains("duplsms")) {
+            color = "F7ABAB"
+            situation += "Active Duplicate LSMs detected. ";
+        }
+        
+        if (situation.equals("")) {
+            situation = "&nbsp;";
+        }
+        
+        file.println("<tr><td colspan="+(2+numExtraCols)+" style='background-color:#"+color+"; text-align:right'>"+situation+"</td></tr>")
+        file.println("<tr><td height=40 colspan="+(2+numExtraCols)+">&nbsp;</td></td>")
     }
 }
 
@@ -281,28 +257,22 @@ if (SampleReportConstants.WRITE_DATABASE) {
 	println("Deleting unwanted samples...")
 	for(Entity sample : samplesForDeletion) {
 	    println("Unlinking and deleting "+sample.name)
-	    f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
+	    f.e.deleteEntityTreeById(sample.ownerKey, sample.id, true)
 	}
 }
 
-if (SampleReportConstants.OUTPUT_HTML) {
-    file.println("</table>")
-    file.println("<br>Slide codes: "+numSlideCodes)
-    file.println("<br>Retired samples: "+numRetiredSamples)
-    file.println("<br>Stitching errors: "+numStitchingErrors)
-    file.println("<br>Duplications: "+numDuplications)
-    file.println("</body></html>")
-}
-else {
-    file.println("Slide codes: "+numSlideCodes)
-    file.println("Retired samples: "+numRetiredSamples)
-    file.println("Stitching errors: "+numStitchingErrors)
-    file.println("Duplications: "+numDuplications)
-
-}
+file.println("</table>")
+file.println("<br>Slide codes: "+numSlideCodes)
+file.println("<br>Active samples: "+numActiveSamples)
+file.println("<br>Retired samples: "+numRetiredSamples)
+file.println("</body></html>")
 
 file.close()
 
+def removeSuffix(String name) {
+    return name.replaceFirst("-Retired", "").replaceFirst("-Left_Optic_Lobe", "").replaceFirst("-Right_Optic_Lobe", "").replaceFirst("-Optic_Central_Border", "")
+    
+}
 
 def padRight(String s, int n) {
     return String.format("%1\$-" + n + "s", s)
@@ -338,9 +308,19 @@ def getAnnotations(JacsUtils f, Long sampleId) {
 }
 
 def lsmSetsMatch(JacsUtils f, Entity sample1, Entity sample2) {
-    Set<String> set1 = getLsmSet(f, sample1)
-    Set<String> set2 = getLsmSet(f, sample2)
-    return set1.containsAll(set2) && set2.containsAll(set1)
+    Set<String> set1 = getLsmSet(f, sample1);
+    Set<String> set1r = new HashSet<String>();
+    for(String s : set1) {
+        set1r.add(s.replaceAll(".bz2", ""));
+    }
+    
+    Set<String> set2 = getLsmSet(f, sample2);
+    Set<String> set2r = new HashSet<String>();
+    for(String s : set2) {
+        set2r.add(s.replaceAll(".bz2", ""));
+    }
+    
+    return (set1r.containsAll(set2r) && set2r.containsAll(set1r));
 }
 
 def getLsmSet(JacsUtils f, Entity sample) {
@@ -360,10 +340,10 @@ def getLsmSet(JacsUtils f, Entity sample) {
 }
 
 class SampleReportSampleInfo {
-    def sampleName = "";
-    def line = "";
-    def slide_code = "";
-    def objective = "";
+    String sampleName = "";
+    String line = "";
+    String slide_code = "";
+    String objective = "";
 
     SampleReportSampleInfo(Entity sample) {
 
@@ -380,6 +360,9 @@ class SampleReportSampleInfo {
         if (startOfSlideCode<0) {
             // Try to find typo'd slide codes
             startOfSlideCode = sampleName.lastIndexOf("-10");
+            if (startOfSlideCode>0) {
+                println("Detected typo in slide code: "+sampleName)
+            }
         }
 
         if (startOfSlideCode>0) {
@@ -399,23 +382,27 @@ class SampleReportSampleInfo {
 
 class SampleReportNeuronCounter {
 
-    AbstractEntityLoader loader
+    JacsUtils f
     int numFragments;
+    int numWithRefs;
 
-    public SampleReportNeuronCounter(AbstractEntityLoader loader) {
-        this.loader = loader
+    public SampleReportNeuronCounter(JacsUtils f) {
+        this.f = f
         this.numFragments = 0
+        this.numWithRefs = 0
     }
 
     def count(Entity sample) {
-        EntityVistationBuilder.create(loader).startAt(sample)
+        EntityVistationBuilder.create(f.getEntityLoader()).startAt(sample)
                 .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN).last()
                 .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
                 .childrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT).last()
                 .childOfName("Neuron Fragments")
+                .childrenOfType(EntityConstants.TYPE_NEURON_FRAGMENT)
                 .run(new EntityVisitor() {
-            public void visit(Entity fragmentCollection) throws Exception {
-                numFragments = EntityUtils.getChildrenForAttribute(fragmentCollection, EntityConstants.ATTRIBUTE_ENTITY).size()
+            public void visit(Entity fragment) throws Exception {
+                numFragments++;
+                numWithRefs += f.e.getParentEntities(null, fragment.id).size()>1?1:0;
             }
         });
     }

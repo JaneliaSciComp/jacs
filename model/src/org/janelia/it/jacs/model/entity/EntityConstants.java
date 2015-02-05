@@ -128,7 +128,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_RESULT                              = "Result";
     public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
     public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
-    public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_ALIGNMENT_NCC_SCORE                 = "Alignment Normalized Cross Correlation Score";
     public static final String ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE       = "Alignment Inconsistency Score";
