@@ -516,7 +516,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
     
     /**
      * Format the given name in lowercase, with underscores instead of spaces.
-     * For example, "Tiling Pattern" -> "tiling_pattern"
+     * For example, "Channel Specification" -> "channel_specification"
      * 
      * @param name
      * @return
@@ -527,7 +527,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
 
     /**
      * Format the given name with underscores instead of spaces.
-     * For example, "Tiling Pattern" -> "TILING_PATTERN"
+     * For example, "Channel Specification" -> "CHANNEL_SPECIFICATION"
      * 
      * @param name
      * @return

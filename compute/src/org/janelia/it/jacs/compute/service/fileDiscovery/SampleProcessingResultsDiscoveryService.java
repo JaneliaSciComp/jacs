@@ -18,6 +18,8 @@ import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
 
+import antlr.Utils;
+
 /**
  * File discovery service for sample processing results.
  * 
@@ -160,13 +162,17 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
                     }
                     
                     allLsmColors.addAll(colors);
+
+                    if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
+                        logger.info("  Setting LSM colors: "+colors);
+                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors));
+                    }
                     
-                    logger.info("  Setting LSM colors: "+colors);
-                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors));
-                    if (!dyeNames.isEmpty()) {
+                    if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
                         logger.info("  Setting LSM dyes: "+dyeNames);
                         lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames));
                     }
+                    
                     entityBean.saveOrUpdateEntity(lsmStack);
                 }
             }

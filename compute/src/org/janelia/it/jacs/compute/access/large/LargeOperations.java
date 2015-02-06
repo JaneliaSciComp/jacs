@@ -1,18 +1,8 @@
 package org.janelia.it.jacs.compute.access.large;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -23,9 +13,16 @@ import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Large, memory-bound operations which need to be done on disk using EhCache, lest we run out of heap space.
@@ -44,7 +41,7 @@ public class LargeOperations {
 	
 	protected static CacheManager manager;
 	// Local cache for faster access to caches, without all the unnecessary checking that the CacheManager does
-	protected static Map<String,Cache> caches = new HashMap<String,Cache>();
+	protected static Map<String,Cache> caches = new HashMap<>();
 	
 	protected AnnotationDAO annotationDAO;
 
@@ -129,7 +126,7 @@ public class LargeOperations {
                 Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)
                         getValue(annotationMapCache, entityId);
 				if (annots == null) {
-					annots = new HashSet<SimpleAnnotation>();
+					annots = new HashSet<>();
 				}
 				
 				annots.add(new SimpleAnnotation(annotationName, key, value, owner));
@@ -234,7 +231,7 @@ public class LargeOperations {
     	logger.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
     }
 
-    private static final HashSet<Long> EMPTY_SET = new HashSet<Long>();
+    private static final HashSet<Long> EMPTY_SET = new HashSet<>();
 //    boolean debugAncestors = false;
     private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
 
@@ -275,7 +272,7 @@ public class LargeOperations {
     	visited.add(entityId);
     	
     	Set<Long> ancestors = ancestorSet.getAncestors();
-    	for(Long parentId : new HashSet<Long>(ancestors)) {
+    	for(Long parentId : new HashSet<>(ancestors)) {
     		ancestors.addAll(calculateAncestors(parentId, visited, level+1));
     	}
     	
@@ -303,14 +300,38 @@ public class LargeOperations {
 	    		
 	    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 	    		logger.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
-	    		
+
+				ResultSetIterator lineIterator = null;
+				Map<String, Map<String,Object>> lineMap = new HashMap<>();
+				try {
+					lineIterator = sage.getAllLineProperties();
+					while (lineIterator.hasNext()) {
+						Map<String,Object> lineProperties = lineIterator.next();
+						lineMap.put((String)lineProperties.get("line"),lineProperties);
+					}
+				}
+				catch (RuntimeException e) {
+					if (e.getCause() instanceof SQLException) {
+						throw new DaoException(e);
+					}
+					throw e;
+				}
+				finally {
+					if (lineIterator!=null) lineIterator.close();
+				}
+
 	        	ResultSetIterator iterator = null;
 	        	
 	        	try {
                     iterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
 	        		while (iterator.hasNext()) {
-	            		Map<String,Object> row = iterator.next();
-	    				associateImageProperties(conn, row);
+	            		Map<String,Object> imageProperties = iterator.next();
+	    				String tmpLine = (String)imageProperties.get("line");
+						Map<String,Object> tmpLineMap = lineMap.get(tmpLine);
+						if (null!=tmpLineMap && 0<tmpLineMap.size()) {
+							imageProperties.putAll(tmpLineMap);
+						}
+						associateImageProperties(conn, imageProperties);
 	            	}
 	        	}
 	        	catch (RuntimeException e) {
@@ -324,26 +345,6 @@ public class LargeOperations {
 	            }
 	    	}
 	    	
-			logger.info("  Building property map for all Sage images in the flylight_flip image family");
-			
-	    	ResultSetIterator iterator = null;
-	    	
-	    	try {
-	    		iterator = sage.getImagesByFamily("flylight_flip");
-	    		while (iterator.hasNext()) {
-	        		Map<String,Object> row = iterator.next();
-					associateImageProperties(conn, row);
-	        	}
-	    	}
-	    	catch (RuntimeException e) {
-	    		if (e.getCause() instanceof SQLException) {
-	    			throw new DaoException(e);
-	    		}
-	    		throw e;
-	    	}
-	        finally {
-	        	if (iterator!=null) iterator.close();
-	        }
     	}
     	catch (ComputeException e) {
     		throw new DaoException(e);

@@ -25,6 +25,7 @@ class JacsUtils {
 	EntityBeanRemote e
 	AnnotationBeanRemote a
 	ComputeBeanRemote c
+    ComputeBeanRemote cr
 	SolrBeanRemote s
 	Subject subject
 	Date createDate
@@ -45,6 +46,7 @@ class JacsUtils {
 		this.e = EJBFactory.getRemoteEntityBean()
 		this.a = EJBFactory.getRemoteAnnotationBean()
 		this.c = EJBFactory.getRemoteComputeBean(false)
+        this.cr = EJBFactory.getRemoteComputeBean(true)
 		this.s = EJBFactory.getRemoteSolrBean()
 		this.subject = c.getSubjectByNameOrKey(subjectNameOrKey)
 		this.createDate = new Date()
@@ -91,18 +93,10 @@ class JacsUtils {
     }
 
     def createRootEntity(String topLevelFolderName) {
-        Date createDate = new Date();
-        Entity topLevelFolder = new Entity();
-        topLevelFolder.setCreationDate(createDate);
-        topLevelFolder.setUpdatedDate(createDate);
-        topLevelFolder.setOwnerKey(subject.key);
-        topLevelFolder.setName(topLevelFolderName);
-        topLevelFolder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
-        EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
         if (persist) {
-            topLevelFolder = e.saveOrUpdateEntity(subject.key, topLevelFolder);
+            return e.createFolderInWorkspace(subject.key, e.getDefaultWorkspace(subject.key).getId(), topLevelFolderName).getChildEntity();
         }
-        return topLevelFolder;
+        return null
     }
 
 	def verifyOrCreateChildFolder(parentFolder, childName) {
