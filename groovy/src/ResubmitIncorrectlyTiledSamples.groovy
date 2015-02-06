@@ -10,7 +10,8 @@ import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder
 
 class ResubmitIncorrectlyTiledSamplesScript {
     
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
+    private static final String OWNER_KEY = "user:nerna"
     private static final String OUTPUT_ROOT_NAME = "Resubmitted Samples";
     private final JacsUtils f;
     private String context;
@@ -20,7 +21,7 @@ class ResubmitIncorrectlyTiledSamplesScript {
     private Entity rootFolder = null
     
     public ResubmitIncorrectlyTiledSamplesScript() {
-        f = new JacsUtils(null, false)
+        f = new JacsUtils(OWNER_KEY, !DEBUG)
     }
     
     public void run() {
@@ -98,10 +99,12 @@ class ResubmitIncorrectlyTiledSamplesScript {
     public void resubmitSample(Entity sample) {
         
         String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS)
+        
         println "Resubmitting "+sample.name+" ("+status+")"
         numResubmitted++
         
         if (!DEBUG) {
+            
             String process = "GSPS_CompleteSamplePipeline"
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", ""+sample.id, null));
@@ -111,8 +114,8 @@ class ResubmitIncorrectlyTiledSamplesScript {
             String user = sample.getOwnerKey();
             GenericTask task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), taskParameters, process, process);
             task = f.c.saveOrUpdateTask(task);
-            f.c.submitJob(task.getTaskName(), task.getObjectId());
-       
+            f.cr.submitJob(task.getTaskName(), task.getObjectId());
+            
             if (rootFolder!=null) {
                 f.addToParent(rootFolder, sample, rootFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
             }
