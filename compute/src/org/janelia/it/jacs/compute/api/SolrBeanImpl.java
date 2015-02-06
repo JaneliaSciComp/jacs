@@ -176,7 +176,8 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 			term.setDataType(getStringValue(doc, "data_type_t"));
 			term.setDisplayName(getStringValue(doc, "display_name_t"));
 			term.setDefinition(getStringValue(doc, "definition_t"));
-			vocab.put(term.getName(), term);
+			term.setCv(getStringValue(doc, "cv_t"));
+			vocab.put(term.getKey(), term);
 		}
 		
     	return vocab;
