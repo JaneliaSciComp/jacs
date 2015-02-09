@@ -1,5 +1,13 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -11,7 +19,8 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 
-import java.util.*;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
@@ -60,7 +69,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
         }
 
-        logger.info("Processed "+sageRowsProcessed+" rows, created "+sampleHelper.getNumSamplesCreated()+
+        logger.info("Processed "+sageRowsProcessed+" rows for "+ownerKey+", created "+sampleHelper.getNumSamplesCreated()+
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
         		" samples to their corresponding data set folders. Annexed "+sampleHelper.getNumSamplesAnnexed()+
         		" samples, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
@@ -71,38 +80,24 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
      * Provide either imageFamily or dataSetIdentifier. 
      */
     protected void processSageDataSet(Entity dataSet) throws Exception {
-    	
-    	SageDAO sageDAO = new SageDAO(logger);
+
+        Multimap<String,SlideImage> slideGroups = LinkedListMultimap.<String,SlideImage>create();
+        
+		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+		logger.info("Querying SAGE for data set: "+dataSetIdentifier);
+		
     	ResultSetIterator iterator = null;
     	try {
-    		List<SlideImage> slideGroup = null;
-    		String currSlideCode = null;
-    		
-    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-			logger.info("Querying SAGE for data set: "+dataSetIdentifier);
+        	SageDAO sageDAO = new SageDAO(logger);
 			iterator = sageDAO.getImagesByDataSet(dataSetIdentifier);
     		
+			// Load all slides for this data set into memory, so that we don't over-stay our welcome on the database cursor
+			// in case we need to do some time-intensive stuff (e.g. adding permissions)
         	while (iterator.hasNext()) {
         		Map<String,Object> row = iterator.next();
         		SlideImage slideImage = createSlideImage(row);
-        		
-				if (!slideImage.getSlideCode().equals(currSlideCode)) {
-					// Process the current group
-					if (slideGroup != null) {
-		                processSlideGroup(dataSet, currSlideCode, slideGroup);
-					}
-					// Start a new group
-					currSlideCode = slideImage.getSlideCode();
-					slideGroup = new ArrayList<SlideImage>();
-				}
-				
-				slideGroup.add(slideImage);
+				slideGroups.put(slideImage.getSlideCode(), slideImage);
 				sageRowsProcessed++;
-			}
-
-			// Process the last group
-			if (slideGroup != null) {
-                processSlideGroup(dataSet, currSlideCode, slideGroup);
 			}
     	}
         finally {
@@ -116,6 +111,11 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 }
             }
         }
+		
+    	// Now process all the slide
+		for (String slideCode : slideGroups.keySet()) {
+            processSlideGroup(dataSet, slideCode, slideGroups.get(slideCode));
+		}
     }
     
     protected SlideImage createSlideImage(Map<String,Object> row) {
@@ -164,7 +164,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		return slideImage;
     }
     
-    protected void processSlideGroup(Entity dataSet, String slideCode, List<SlideImage> slideGroup) throws Exception {
+    protected void processSlideGroup(Entity dataSet, String slideCode, Collection<SlideImage> slideGroup) throws Exception {
     	
         HashMap<String, SlideImageGroup> tileGroups = new HashMap<String, SlideImageGroup>();
         
