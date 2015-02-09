@@ -42,13 +42,13 @@ public class TifVolumeFileLoader extends AbstractVolumeFileLoader {
     /**
      * Sets maximum size in all dimensions, to add to outgoing image.
      * 
-     * @param cubicOutputDimension how many voxels to use.
+     * @param dimensions how many voxels to use.
      */
-    public void setCubicOutputDimension( int cubicOutputDimension ) {
+    public void setOutputDimensions( int[] dimensions ) {
         if ( subsetHelper == null ) {
             subsetHelper = new LoaderSubsetHelper();
         }
-        subsetHelper.setCubicOutputDimension(cubicOutputDimension);
+        subsetHelper.setOutputDimensions(dimensions);
     }
     
     public void setConversionCharacteristics( double[][] fwdTransform, double[][] invTransform, int[] minCorner, int[] extent, List<Integer> queryCoords ) {

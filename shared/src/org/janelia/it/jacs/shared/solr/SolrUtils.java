@@ -76,6 +76,6 @@ public class SolrUtils {
 				solrSuffix = "_l";		
 			}
 		}
-		return "sage_"+sageTerm.getName()+solrSuffix;
+		return "sage_"+sageTerm.getKey()+solrSuffix;
     }
 }

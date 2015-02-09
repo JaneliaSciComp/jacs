@@ -328,7 +328,8 @@ public class SolrDAO extends AnnotationDAO {
         	doc.addField("name", term.getName(), 1.0f);
         	doc.addField("data_type_t", term.getDataType(), 1.0f);
         	doc.addField("definition_t", term.getDefinition(), 1.0f);
-        	doc.addField("display_name_t", term.getDisplayName(), 1.0f);        	
+        	doc.addField("display_name_t", term.getDisplayName(), 1.0f);
+			doc.addField("cv_t", term.getCv(), 1.0f);
         	docs.add(doc);
         	id++;
         }

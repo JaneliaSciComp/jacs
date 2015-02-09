@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.largevolume;
 
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
@@ -43,6 +44,11 @@ public class RawFileFetcher {
         transform = new CoordinateToRawTransform( renderedBaseDirectory );
     }
 
+    /** Return this for convenient reuse. */
+    public CoordinateToRawTransform getTransform() {
+        return transform;
+    }
+    
     //private static Map<String,double[][]> baseToInverse = new HashMap<>();
     
     /**

@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.largevolume;
+package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import java.io.*;
 
@@ -7,7 +7,7 @@ import java.io.*;
  * coordinate into a microscope-scaled coordinate.
  * Created by fosterl on 9/26/14.
  */
-public class CoordinateToRawTransform {
+public class CoordinateToRawTransform implements Serializable {
     private enum TransformParseType { origin, scale }
 
     private static final String TRANSFORM_FILE = "transform.txt";
