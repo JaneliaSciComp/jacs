@@ -30,8 +30,8 @@ public class SageDAOTest {
     @Category(TestCategories.FastIntegrationTests.class)
     public void testGetSageImageVocabulary() throws Exception {
         final Map<String, SageTerm> map = sageDao.getSageVocabulary();
-        final String[] expectedKeys = { "id", "name", "path", "line", "data_set",
-                                        "slide_code", "capture_date", "created_by" };
+        final String[] expectedKeys = { "light_imagery_id", "light_imagery_name", "light_imagery_path", "light_imagery_line", "light_imagery_data_set",
+                                        "light_imagery_slide_code", "light_imagery_capture_date", "light_imagery_created_by" };
         for (String expectedKey : expectedKeys) {
             assertTrue("map is missing key: " + expectedKey, map.containsKey(expectedKey));
         }

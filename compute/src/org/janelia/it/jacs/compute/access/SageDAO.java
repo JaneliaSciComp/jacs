@@ -229,8 +229,8 @@ public class SageDAO {
 
     public Map<String,SageTerm> getSageVocabulary() throws DaoException {
         Map<String, SageTerm> entireVocabulary = new HashMap<>();
-        entireVocabulary.putAll(getSageVocabulary("http://sage.int.janelia.org/sage-ws/cvs/light_imagery/with-all-related-cvs"));
-        entireVocabulary.putAll(getSageVocabulary("http://sage.int.janelia.org/sage-ws/cvs/line/with-all-related-cvs"));
+        entireVocabulary.putAll(getSageVocabulary("light_imagery"));
+        entireVocabulary.putAll(getSageVocabulary("line"));
         return entireVocabulary;
     }
 
@@ -238,14 +238,16 @@ public class SageDAO {
      * @return a map of all Sage controlled vocabulary terms for light imagery and related vocabularies.
      * @throws DaoException
      */
-    Map<String,SageTerm> getSageVocabulary(String vocabularyRestfulPath) throws DaoException {
+    Map<String,SageTerm> getSageVocabulary(String cv) throws DaoException {
+        String pathPrefix = "http://sage.int.janelia.org/sage-ws/cvs/";
+        String pathSuffix = "/with-all-related-cvs";
 
         Map<String,SageTerm> map = new HashMap<>();
         map.putAll(getStaticTerms());
 
         try {
             HttpClient client = new HttpClient();
-            HttpMethod method = new GetMethod(vocabularyRestfulPath);
+            HttpMethod method = new GetMethod(pathPrefix+cv+pathSuffix);
             client.executeMethod(method);
             InputStream body = method.getResponseBodyAsStream();
 
@@ -262,21 +264,22 @@ public class SageDAO {
                     Node definitionNode = termElement.selectSingleNode("definition");
 
                     if (nameNode==null) {
-                        log.warn("Term with no name encountered in "+ vocabularyRestfulPath);
+                        log.warn("Term with no name encountered in "+ cv);
                         continue;
                     }
 
                     if (dataTypeNode==null) {
-                        log.warn("Term with no type (name="+nameNode.getText()+") encountered in "+ vocabularyRestfulPath);
+                        log.warn("Term with no type (name="+nameNode.getText()+") encountered in "+ cv);
                         continue;
                     }
 
                     SageTerm st = new SageTerm();
                     st.setName(nameNode.getText());
                     st.setDataType(dataTypeNode.getText());
-                    st.setDisplayName(displayNameNode!=null?displayNameNode.getText():st.getName());
-                    st.setDefinition(definitionNode!=null?definitionNode.getText():"");
-                    map.put(st.getName(),st);
+                    st.setDisplayName(displayNameNode != null ? displayNameNode.getText() : st.getName());
+                    st.setDefinition(definitionNode != null ? definitionNode.getText() : "");
+                    st.setCv(cv);
+                    map.put(st.getKey(),st);
                 }
                 else {
                     log.warn("Expecting <term>, got "+o);
@@ -461,17 +464,23 @@ public class SageDAO {
 
         final String[][] terms = {
                 //name           displayName        dataType     definition
-                {"id",           "SAGE Id",         "integer",   "Identifier within SAGE database"},
-                {"name",         "Image Path",      "text",      "Relative path to the image"},
-                {"path",         "Full Image Path", "text",      "Absolute path to the image"},
-                {"line",         "Fly Line",        "text",      "Name of the fly line"},
+                {"id",           "SAGE Id",         "integer",   "Identifier within SAGE database", "light_imagery"},
+                {"name",         "Image Path",      "text",      "Relative path to the image", "light_imagery"},
+                {"path",         "Full Image Path", "text",      "Absolute path to the image", "light_imagery"},
+                {"line",         "Fly Line",        "text",      "Name of the fly line", "light_imagery"},
+
+                //select line_vw.id, line_vw.name line, line_vw.lab, line_vw.gene, line_vw.organism, " +
+                //"line_vw.synonyms, line_vw.genotype
+                {"id",              "SAGE Line Id", "integer",   "Identifier within SAGE database", "line"},
+                {"lab",             "Lab",          "text",      "Lab",     "line"},
+                {"gene",            "Gene",         "text",      "Gene",    "line"},
+                {"organism",        "Organism",     "text",      "Organism","line"}
         };
 
         Map<String,SageTerm> map = new HashMap<>();
-        SageTerm term;
         for (String[] termData : terms) {
-            term = new SageTerm(termData[0], termData[1], termData[2], termData[3]);
-            map.put(term.getName(), term);
+            SageTerm term = new SageTerm(termData[0], termData[1], termData[2], termData[3], termData[4]);
+            map.put(term.getKey(), term);
         }
 
         return map;
@@ -656,7 +665,7 @@ public class SageDAO {
             "  where i.display=true and i.path is not null" +
             "  and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
             ") image_vw on (ip1.image_id = image_vw.id) " +
-            "group by image_vw.id ";
+            "where ip1.cv='light_imagery' group by image_vw.id ";
 
     private static final String ALL_LINE_PROPERTY_SQL_1 =
             "select line_vw.id, line_vw.name line, line_vw.lab, line_vw.gene, line_vw.organism, " +
@@ -669,7 +678,7 @@ public class SageDAO {
                     "  from line_vw l" +
                     "  inner join line_property_vw lp2 on (lp2.line_id=l.id)"+
                     ") line_vw on (lp1.line_id = line_vw.id) " +
-                    "group by line_vw.id ";
+                    "where lp1.cv='line' group by line_vw.id ";
 
 
 

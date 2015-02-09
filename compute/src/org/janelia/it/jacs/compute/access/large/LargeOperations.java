@@ -325,13 +325,23 @@ public class LargeOperations {
 	        	try {
                     iterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
 	        		while (iterator.hasNext()) {
+						Map<String,Object> allProps = new HashMap<>();
 	            		Map<String,Object> imageProperties = iterator.next();
 	    				String tmpLine = (String)imageProperties.get("line");
 						Map<String,Object> tmpLineMap = lineMap.get(tmpLine);
-						if (null!=tmpLineMap && 0<tmpLineMap.size()) {
-							imageProperties.putAll(tmpLineMap);
+
+						if (!imageProperties.isEmpty()) {
+							for (String tmpKey : imageProperties.keySet()) {
+								allProps.put("light_imagery_"+tmpKey,imageProperties.get(tmpKey));
+							}
 						}
-						associateImageProperties(conn, imageProperties);
+
+						if (null!=tmpLineMap && !tmpLineMap.isEmpty()) {
+							for (String tmpKey : tmpLineMap.keySet()) {
+								allProps.put("line_"+tmpKey,tmpLineMap.get(tmpKey));
+							}
+						}
+						associateImageProperties(conn, allProps);
 	            	}
 	        	}
 	        	catch (RuntimeException e) {
@@ -360,7 +370,7 @@ public class LargeOperations {
     }
     
     private void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
-    	String imagePath = (String)imageProps.get("path");
+    	String imagePath = (String)imageProps.get("light_imagery_path");
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
 		for(Long imageId : annotationDAO.getImageIdsWithName(conn, null, filename)) {
