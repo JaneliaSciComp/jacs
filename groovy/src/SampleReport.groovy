@@ -58,7 +58,6 @@ class SampleReportScript {
         file.println("<h3>"+OWNER+" Retired Samples</h3>")
         file.println("<table>")
         file.println("<tr><td>Retired Sample</td><td>Neurons</td><td>Annotations</td><td>Active Sample</td><td>Neurons</td><td>Annotations</td></tr>")
-        def numCols = NUM_SAMPLE_COLS*2 // Number of columns besides owner and sample name
         
         List<Entity> samplesForDeletion = new ArrayList<Entity>();
         
@@ -93,7 +92,7 @@ class SampleReportScript {
         			keyFolder = f.verifyOrCreateChildFolder(rootFolder, key)
         		}
         		
-                file.println("<tr><td colspan="+numCols+" style='background-color:#aaa'>"+key+"</td></tr>");
+                file.println("<tr><td colspan="+(NUM_SAMPLE_COLS*2)+" style='background-color:#aaa; font-size:10pt; padding: 5px;'>"+key+"</td></tr>");
                 println("Processing slide code "+key+" ("+numSlideCodes+")") // to see progress
         
                 List<Entity> activeSamples = new ArrayList<Entity>()
@@ -149,6 +148,8 @@ class SampleReportScript {
                     List<String> activeCols = getSampleCols(f, activeSample, false);
                     
                     int i = 0;
+                    
+                    file.println(getBorderRow())
                     for(String retiredCol : retiredCols) {
                         String activeCol = activeCols==null?null:activeCols.get(i)
                         file.println("<tr>");
@@ -180,12 +181,13 @@ class SampleReportScript {
                 
                 for(Entity activeSample : activeSamples) {
                     
-                    file.println("<tr>");
+                    file.println(getBorderRow())
                     for(String activeCol : getSampleCols(f, activeSample, false)) {
+                        file.println("<tr>");
                         file.println(getBlankCols())
                         file.println(activeCol)
+                        file.println("</tr>");
                     }
-                    file.println("</tr>");
                     
                     if (WRITE_DATABASE) {
                         f.addToParent(keyFolder, activeSample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
@@ -195,7 +197,7 @@ class SampleReportScript {
                     activeSample.setEntityData(null)
                 }
                 
-                file.println("<tr><td height=40 colspan="+numCols+">&nbsp;</td></td>")
+                file.println(getBreakRow())
             }
         }
         
@@ -214,6 +216,14 @@ class SampleReportScript {
         file.println("</body></html>")
         
         file.close()
+    }
+    
+    def getBreakRow() {
+        return "<tr><td height=40 colspan="+(NUM_SAMPLE_COLS*2)+">&nbsp;</td></td>";
+    }
+    
+    def getBorderRow() {
+        return "<tr><td height=10 colspan="+(NUM_SAMPLE_COLS*2)+" style='border-top: 1px solid black'>&nbsp;</td></tr>"
     }
     
     def getBlankCols() {
@@ -235,19 +245,26 @@ class SampleReportScript {
         def annots = annotations.toString()
         def color = (retired?COLOR_RETIRED:COLOR_ACTIVE)
         sb.append("<td style='background-color:#"+color+"'><nobr><b>"+sample.name+"</b></nobr></td>")
-        sb.append("<td style='text-align:right'>"+counter.numWithRefs+" / "+counter.numFragments+"</td>")
-        sb.append("<td>"+annots.substring(1,annots.length()-1)+"</td>")
+        sb.append("<td rowspan=2 style='text-align:right; padding: 0 1em 0 1em'>"+counter.numWithRefs+" /<br>"+counter.numFragments+"</td>")
+        sb.append("<td rowspan=2>"+annots.substring(1,annots.length()-1)+"</td>")
     
-        StringBuilder lsb = new StringBuilder("<td colspan="+NUM_SAMPLE_COLS+">")
+        StringBuilder lsb = new StringBuilder("<td>")
         Entity supportingData = EntityUtils.getSupportingData(sample)
         f.loadChildren(supportingData)
         if (supportingData != null) {
             List<Entity> tiles = EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY);
             for(Entity imageTile : tiles) {
-                lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
                 f.loadChildren(imageTile)
-                for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
+                List<Entity> lsms = EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)
+                if (lsms.size()>2) {
+                    lsb.append("<span style='text-color:red'>")
+                }
+                lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
+                for(Entity lsm : lsms) {
                     lsb.append("&nbsp&nbsp&nbsp&nbsp"+lsm.name+"<br>")
+                }
+                if (lsms.size()>2) {
+                    lsb.append("</span>")
                 }
             }
         }
