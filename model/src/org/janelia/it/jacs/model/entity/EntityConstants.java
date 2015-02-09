@@ -20,6 +20,8 @@ public class EntityConstants {
     public static final String VALUE_ERROR                           = "Error";
     public static final String VALUE_MARKED                          = "Marked for Rerun";
     public static final String VALUE_BLOCKED                         = "Blocked";
+    public static final String VALUE_DESYNC                          = "Desync";
+    public static final String VALUE_RETIRED                         = "Retired";
     
     // Entity Status
     public static final String STATUS_DEPRECATED                     = "Deprecated";
@@ -126,7 +128,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_RESULT                              = "Result";
     public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
     public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
-    public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_ALIGNMENT_NCC_SCORE                 = "Alignment Normalized Cross Correlation Score";
     public static final String ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE       = "Alignment Inconsistency Score";
@@ -159,7 +160,9 @@ public class EntityConstants {
     public static final String ATTRIBUTE_INPUT_IMAGE                         = "Input Image";
     public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
-    
+    public static final String ATTRIBUTE_MICRON_TO_VOXEL_MATRIX              = "Micron to Voxel Matrix";
+    public static final String ATTRIBUTE_VOXEL_TO_MICRON_MATRIX              = "Voxel to Micron Matrix";
+        
     // Geometric Tree
     //
     //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"

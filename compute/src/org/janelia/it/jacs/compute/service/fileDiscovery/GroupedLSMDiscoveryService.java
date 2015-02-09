@@ -111,7 +111,6 @@ public class GroupedLSMDiscoveryService extends FileDiscoveryService {
         sample.setCreationDate(createDate);
         sample.setUpdatedDate(createDate);
         sample.setName(name);
-        sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_TILING_PATTERN, TilingPattern.UNKNOWN.toString());
         sample = entityBean.saveOrUpdateEntity(sample);
         logger.info("Saved sample as "+sample.getId());
 

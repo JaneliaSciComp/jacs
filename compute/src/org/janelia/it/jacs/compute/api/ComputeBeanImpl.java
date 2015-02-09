@@ -572,7 +572,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             // Comma-separated list of emails
             String[] errorMessageDestinations = SystemConfigurationProperties.getString("System.ErrorMessageDestination").split(",");
             for (String errorMessageDestination : errorMessageDestinations) {
-                helper.sendEmail("saffordt@janelia.hhmi.org", errorMessageDestination, "VICS Error - " + hostname,
+                helper.sendEmail("saffordt@janelia.hhmi.org", errorMessageDestination, "JACS Error - " + hostname,
                         sbuf.toString());
             }
         }

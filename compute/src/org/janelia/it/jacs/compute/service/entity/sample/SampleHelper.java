@@ -50,8 +50,8 @@ public class SampleHelper extends EntityHelper {
     private Entity blockedDataFolder;
     private List<Entity> dataSets;
     private String dataSetNameFilter;
-    private Map<String,Entity> dataSetFolderByIdentifier = new HashMap<String,Entity>();
-    private Map<String,Entity> dataSetEntityByIdentifier = new HashMap<String,Entity>();
+    private Map<String,Entity> dataSetFolderByIdentifier;
+    private Map<String,Entity> dataSetEntityByIdentifier;
     private Set<Long> samplesToAnnex = new HashSet<Long>();
     private int numSamplesCreated = 0;
     private int numSamplesUpdated = 0;
@@ -82,16 +82,25 @@ public class SampleHelper extends EntityHelper {
     }
     
     /**
-     * Set the visited flag on a given entity.
-     * @param entity
+     * Set the visited flag on a given sample entity and clear the desync status if it is set.
+     * @param sample
      * @return
      * @throws Exception
      */
-    public Entity setVisited(Entity entity) throws Exception {
-        if (!EntityUtils.addAttributeAsTag(entity, EntityConstants.ATTRIBUTE_VISITED)) {
-            throw new IllegalStateException("Could not set visited flag for "+entity.getName());
+    public Entity setVisited(Entity sample) throws Exception {
+        if (!EntityUtils.addAttributeAsTag(sample, EntityConstants.ATTRIBUTE_VISITED)) {
+            throw new IllegalStateException("Could not set visited flag for "+sample.getName());
         }
-        return entityBean.saveOrUpdateEntity(entity);
+        sample = entityBean.saveOrUpdateEntity(sample);
+        
+        EntityData statusEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        if (statusEd!=null && EntityConstants.VALUE_DESYNC.equals(statusEd.getValue())) {
+            // This sample is no longer desynchronized, so delete its desync status
+            sample.getEntityData().remove(statusEd);
+            entityBean.deleteEntityData(statusEd);
+        }
+        
+        return sample;
     }
 
     public void setDataSetNameFilter(String dataSetNameFilter) {
@@ -974,11 +983,17 @@ public class SampleHelper extends EntityHelper {
         return numSamplesMovedToBlockedFolder;
     }
 
-    public Map<String, Entity> getDataSetFolderByIdentifierMap() {
+    public Map<String, Entity> getDataSetFolderByIdentifierMap() throws Exception {
+        if (dataSetFolderByIdentifier==null) {
+            loadDataSets();
+        }
         return dataSetFolderByIdentifier;
     }
 
-    public Map<String, Entity> getDataSetEntityByIdentifierMap() {
+    public Map<String, Entity> getDataSetEntityByIdentifierMap() throws Exception {
+        if (dataSetEntityByIdentifier==null) {
+            loadDataSets();
+        }
         return dataSetEntityByIdentifier;
     }
 

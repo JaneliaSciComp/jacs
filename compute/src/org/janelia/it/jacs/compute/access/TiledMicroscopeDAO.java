@@ -96,8 +96,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             annotationDAO.saveOrUpdate(sampleEd);
             workspace.getEntityData().add(sampleEd);
             annotationDAO.saveOrUpdate(workspace);
+            Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
             // back to user
-            TmWorkspace tmWorkspace=new TmWorkspace(workspace);
+            TmWorkspace tmWorkspace=new TmWorkspace(workspace, sampleEntity);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
 
@@ -144,8 +145,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 folder = folders.iterator().next();
             }
             else {
-                folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
-                annotationDAO.saveOrUpdateEntity(folder);
+                folder = annotationDAO.createFolderInDefaultWorkspace(subjectKey, folderName).getChildEntity();
             }
 
             Entity sample = newEntity(sampleName, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
@@ -984,12 +984,24 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
         try {
-            Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
+            Long sampleID = null;
+            Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);            
+            Entity sampleEntity = null;
+            if (workspaceEntity != null) {
+                EntityData sampleEd = workspaceEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+                if (sampleEd == null) {
+                    throw new Exception("workspace " + workspaceEntity.getName() + " has no associated brand sample!");
+                } else {
+                    sampleID = Long.valueOf(sampleEd.getValue());
+                    sampleEntity = annotationDAO.getEntityById(sampleID);
+                }
+            }
+
             // see notes in TmNeuron() on the connectivity retry scheme
             TmWorkspace workspace = null;
             boolean connectivityException;
             try {
-                workspace = new TmWorkspace(workspaceEntity);
+                workspace = new TmWorkspace(workspaceEntity, sampleEntity);
                 connectivityException = false;
             }
             catch (TmConnectivityException e) {
@@ -999,7 +1011,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (connectivityException) {
                 fixConnectivityWorkspace(workspaceId);
                 workspaceEntity = annotationDAO.getEntityById(workspaceId);
-                workspace = new TmWorkspace(workspaceEntity);
+                workspace = new TmWorkspace(workspaceEntity, sampleEntity);
             }
             return workspace;
         } catch (Exception e) {

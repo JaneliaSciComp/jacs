@@ -279,6 +279,17 @@
     <library name="Jama" systemlibrary="false">
         <archive path="/common/jama-1.0.1/Jama-1.0.3.jar"/>
     </library>
+    <library name="javacpp" systemlibrary="false">
+        <archive path="/common/javacpp-presets-bin/ffmpeg-android-arm.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-android-x86.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-linux-x86_64.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-linux-x86.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-macosx-x86_64.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-windows-x86_64.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-windows-x86.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg.jar"/>
+        <archive path="/common/javacpp-presets-bin/javacpp.jar"/>
+    </library>
     <library name="JAXB" systemlibrary="false">
         <archive path="/common/JAXB-2.1.5/activation.jar"/>
         <archive path="/common/JAXB-2.1.5/jaxb-api.jar"/>

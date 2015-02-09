@@ -47,16 +47,12 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                 contextLogger.info("Found 63x sub-sample: "+objectiveSample.getName());
                 Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
                 input1 = buildInputFromResult("first input (63x stack)", result);
-                this.gender = sampleHelper.getConsensusLsmAttributeValue(objectiveSample, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
-                if (gender!=null) {
-                    contextLogger.info("Found gender consensus: "+gender);
-                }
             }
         }
     }
 
     @Override
-    protected void setConsensusValues() throws Exception {
+    protected void setLegacyConsensusValues() throws Exception {
     	// Do nothing, since we build our consensus values while populating the inputs
     }
     

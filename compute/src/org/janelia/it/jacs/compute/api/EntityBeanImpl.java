@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.api;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,6 @@ import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -896,6 +894,16 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         }
     }
 
+    public EntityData addRootToDefaultWorkspace(String subjectKey, Long entityId) throws ComputeException {
+        try {
+            return _annotationDAO.addRootToDefaultWorkspace(subjectKey, entityId);
+        }
+        catch (DaoException e) {
+            _logger.error("Error adding root to default workspace for "+subjectKey, e);
+            throw new ComputeException("Error adding root to default workspace for "+subjectKey,e);
+        }
+    }
+    
 	public EntityData addRootToWorkspace(String subjectKey, Long workspaceId, Long entityId) throws ComputeException {
         try {
             return _annotationDAO.addRootToWorkspace(subjectKey, workspaceId, entityId);
@@ -905,7 +913,17 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error adding root to workspace for "+subjectKey,e);
         }
 	}
-	
+
+    public EntityData createFolderInDefaultWorkspace(String subjectKey, String entityName) throws ComputeException {
+        try {
+            return _annotationDAO.createFolderInDefaultWorkspace(subjectKey, entityName);
+        }
+        catch (DaoException e) {
+            _logger.error("Error creating folder in default workspace for "+subjectKey, e);
+            throw new ComputeException("Error creating folder in default workspace for "+subjectKey,e);
+        }
+    }
+    
 	public EntityData createFolderInWorkspace(String subjectKey, Long workspaceId, String entityName) throws ComputeException {
         try {
             return _annotationDAO.createFolderInWorkspace(subjectKey, workspaceId, entityName);
