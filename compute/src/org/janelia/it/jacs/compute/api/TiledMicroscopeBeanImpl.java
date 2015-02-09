@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.jboss.annotation.ejb.PoolClass;
@@ -13,6 +12,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.List;
 import java.util.Map;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
 /**
  * Created with IntelliJ IDEA.
@@ -319,23 +319,10 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
 
     @Override
-    public RawFileInfo getNearestFileInfo(String basePath, int[] viewerCoord) throws ComputeException {
-        RawFileInfo rtnVal = null;
-        try {
-            rtnVal = _tiledMicroscopeDAO.getNearestFileInfo(basePath, viewerCoord);
-        } catch (Exception e) {
-            String errorString="Error calling getNearestFileInfo DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(e);
-        }
-        return rtnVal;
-    }
-
-    @Override
-    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws ComputeException {
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int[] dimensions ) throws ComputeException {
         Map<Integer,byte[]> rtnVal = null;
         try {
-            rtnVal = _tiledMicroscopeDAO.getTextureBytes(basePath, viewerCoord, cubicDim);
+            rtnVal = _tiledMicroscopeDAO.getTextureBytes(basePath, viewerCoord, dimensions);
 
         } catch (Exception e) {
             String errorString="Error calling getTextureByteArray DAO layer: " + e.getMessage();
@@ -343,6 +330,19 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
             throw new ComputeException(e);
         }
         return rtnVal;
+    }
+    
+    @Override
+    public CoordinateToRawTransform getTransform( String basePath ) throws ComputeException {
+        CoordinateToRawTransform transform = null;
+        try {
+            transform = _tiledMicroscopeDAO.getTransform(basePath);
+        } catch (Exception e) {
+            String errorString="Error calling getTransform DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(e);
+        }
+        return transform;
     }
 
 }
