@@ -1,24 +1,6 @@
 
 package org.janelia.it.jacs.compute.access;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.rmi.PortableRemoteObject;
-import javax.sql.DataSource;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -32,14 +14,19 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
-import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.sage.CvTerm;
-import org.janelia.it.jacs.model.sage.Image;
-import org.janelia.it.jacs.model.sage.ImageProperty;
-import org.janelia.it.jacs.model.sage.Line;
-import org.janelia.it.jacs.model.sage.SecondaryImage;
+import org.janelia.it.jacs.model.sage.*;
+import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.rmi.PortableRemoteObject;
+import javax.sql.DataSource;
+import java.io.InputStream;
+import java.sql.*;
+import java.util.*;
+import java.util.Date;
 
 /**
  * Simple JDBC access to the Sage database.
@@ -474,7 +461,9 @@ public class SageDAO {
                 {"id",              "SAGE Line Id", "integer",   "Identifier within SAGE database", "line"},
                 {"lab",             "Lab",          "text",      "Lab",     "line"},
                 {"gene",            "Gene",         "text",      "Gene",    "line"},
-                {"organism",        "Organism",     "text",      "Organism","line"}
+                {"organism",        "Organism",     "text",      "Organism","line"},
+                {"line",            "Fly Line",     "text",      "Name of the fly line", "line"},
+                {"synonyms",        "Synonyms",     "text",      "Synonyms","line"}
         };
 
         Map<String,SageTerm> map = new HashMap<>();
