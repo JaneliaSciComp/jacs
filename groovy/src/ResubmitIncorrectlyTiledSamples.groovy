@@ -76,6 +76,9 @@ class ResubmitIncorrectlyTiledSamplesScript {
             }
         }
         
+        final Set<String> lsmSet = new HashSet<>(lsms)
+        final Set<String> metaSet = new HashSet<>()
+        
         EntityVistationBuilder.create(f.getEntityLoader()).startAt(sample)
                 .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN).last()
                 .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
@@ -83,13 +86,25 @@ class ResubmitIncorrectlyTiledSamplesScript {
                 .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
                 .run(new EntityVisitor() {
             public void visit(Entity textFile) throws Exception {
-                String name = textFile.name.replaceAll(".json", "").replaceAll(".metadata", "")
-                lsms.remove(name)
+                if (textFile.name.contains(".json") || textFile.name.contains(".metadata")) {
+                    String name = textFile.name.replaceAll(".json", "").replaceAll(".metadata", "")
+                    lsmSet.remove(name)
+                    metaSet.add(name)
+                }
             }
         });
         
-        if (!lsms.isEmpty()) {
-            //println "  No metadata files found for LSMs "+lsms+" in sample "+sample.name;
+        metaSet.removeAll(lsms)
+    
+        // Make sure that every LSM has metadata
+        if (!lsmSet.isEmpty()) {
+            //println "Missing lsms "+lsmSet+" from meta set "+metaSet
+            problem = true
+        }
+        
+        // Make sure that every metadata file is for an LSM
+        if (!metaSet.isEmpty()) {
+            //println "Missing meta "+metaSet+" from LSMS set"+lsms
             problem = true
         }
         
@@ -99,6 +114,7 @@ class ResubmitIncorrectlyTiledSamplesScript {
     public void resubmitSample(Entity sample) {
         
         String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS)
+        if (status.equals("Error")) return
         
         println "Resubmitting "+sample.name+" ("+status+")"
         numResubmitted++
@@ -113,7 +129,7 @@ class ResubmitIncorrectlyTiledSamplesScript {
             taskParameters.add(new TaskParameter("reuse alignment", "false", null));
             String user = sample.getOwnerKey();
             GenericTask task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(), taskParameters, process, process);
-            task = f.c.saveOrUpdateTask(task);
+            task = f.cr.saveOrUpdateTask(task);
             f.cr.submitJob(task.getTaskName(), task.getObjectId());
             
             if (rootFolder!=null) {
