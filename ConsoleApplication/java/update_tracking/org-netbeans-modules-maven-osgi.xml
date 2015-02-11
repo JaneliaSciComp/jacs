@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.maven.osgi/1">
+    <module_version install_time="1381504582879" last="true" origin="installer" specification_version="1.25.1">
+        <file crc="2810362290" name="config/Modules/org-netbeans-modules-maven-osgi.xml"/>
+        <file crc="3725878616" name="modules/locale/org-netbeans-modules-maven-osgi_ja.jar"/>
+        <file crc="26461364" name="modules/locale/org-netbeans-modules-maven-osgi_pt_BR.jar"/>
+        <file crc="1725466781" name="modules/locale/org-netbeans-modules-maven-osgi_ru.jar"/>
+        <file crc="3499042231" name="modules/locale/org-netbeans-modules-maven-osgi_zh_CN.jar"/>
+        <file crc="1844109643" name="modules/org-netbeans-modules-maven-osgi.jar"/>
+    </module_version>
+</module>

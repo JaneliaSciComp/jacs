@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.ant.browsetask">
+    <module_version install_time="1381504924683" last="true" origin="installer" specification_version="1.34.1">
+        <file crc="381237079" name="ant/nblib/org-netbeans-modules-ant-browsetask.jar"/>
+        <file crc="2362084903" name="config/Modules/org-netbeans-modules-ant-browsetask.xml"/>
+        <file crc="23024419" name="modules/locale/org-netbeans-modules-ant-browsetask_ja.jar"/>
+        <file crc="2693681528" name="modules/locale/org-netbeans-modules-ant-browsetask_pt_BR.jar"/>
+        <file crc="3258554585" name="modules/locale/org-netbeans-modules-ant-browsetask_ru.jar"/>
+        <file crc="1531266687" name="modules/locale/org-netbeans-modules-ant-browsetask_zh_CN.jar"/>
+        <file crc="290186280" name="modules/org-netbeans-modules-ant-browsetask.jar"/>
+    </module_version>
+</module>

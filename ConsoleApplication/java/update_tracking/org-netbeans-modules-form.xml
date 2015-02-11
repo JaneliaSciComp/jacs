@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module codename="org.netbeans.modules.form/2">
+    <module_version install_time="1381502839621" last="false" origin="installer" specification_version="1.50.1.4">
+        <file crc="2061491584" name="config/Modules/org-netbeans-modules-form.xml"/>
+        <file crc="3849573998" name="modules/ext/AbsoluteLayout.jar"/>
+        <file crc="3172855630" name="modules/locale/org-netbeans-modules-form_ja.jar"/>
+        <file crc="2253406112" name="modules/locale/org-netbeans-modules-form_pt_BR.jar"/>
+        <file crc="410353662" name="modules/locale/org-netbeans-modules-form_ru.jar"/>
+        <file crc="2694706642" name="modules/locale/org-netbeans-modules-form_zh_CN.jar"/>
+        <file crc="3075091183" name="modules/org-netbeans-modules-form.jar"/>
+        <file crc="3022427873" name="sources/org/netbeans/lib/awtextra/AbsoluteConstraints.java"/>
+        <file crc="2059909733" name="sources/org/netbeans/lib/awtextra/AbsoluteLayout.java"/>
+        <file crc="3519667398" name="sources/readme.txt"/>
+    </module_version>
+    <module_version install_time="1423506318041" last="true" origin="NetBeans Distribution" specification_version="1.50.3.4">
+        <file crc="2061491584" name="config/Modules/org-netbeans-modules-form.xml"/>
+        <file crc="3836559595" name="modules/ext/AbsoluteLayout.jar"/>
+        <file crc="2878181371" name="modules/locale/org-netbeans-modules-form_ja.jar"/>
+        <file crc="85677159" name="modules/locale/org-netbeans-modules-form_pt_BR.jar"/>
+        <file crc="647470475" name="modules/locale/org-netbeans-modules-form_ru.jar"/>
+        <file crc="1637570653" name="modules/locale/org-netbeans-modules-form_zh_CN.jar"/>
+        <file crc="1207644477" name="modules/org-netbeans-modules-form.jar"/>
+        <file crc="3022427873" name="sources/org/netbeans/lib/awtextra/AbsoluteConstraints.java"/>
+        <file crc="2059909733" name="sources/org/netbeans/lib/awtextra/AbsoluteLayout.java"/>
+        <file crc="3519667398" name="sources/readme.txt"/>
+    </module_version>
+</module>

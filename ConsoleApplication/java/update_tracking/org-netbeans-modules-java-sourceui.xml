@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.java.sourceui/1">
+    <module_version install_time="1381504401157" last="true" origin="installer" specification_version="1.33.1.1.26">
+        <file crc="3053485992" name="config/Modules/org-netbeans-modules-java-sourceui.xml"/>
+        <file crc="1714072417" name="modules/locale/org-netbeans-modules-java-sourceui_ja.jar"/>
+        <file crc="2129525137" name="modules/locale/org-netbeans-modules-java-sourceui_pt_BR.jar"/>
+        <file crc="3124210800" name="modules/locale/org-netbeans-modules-java-sourceui_ru.jar"/>
+        <file crc="813850882" name="modules/locale/org-netbeans-modules-java-sourceui_zh_CN.jar"/>
+        <file crc="1125224144" name="modules/org-netbeans-modules-java-sourceui.jar"/>
+    </module_version>
+</module>

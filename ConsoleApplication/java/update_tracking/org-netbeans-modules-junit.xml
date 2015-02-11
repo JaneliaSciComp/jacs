@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module codename="org.netbeans.modules.junit/2">
+    <module_version install_time="1381505674800" last="false" origin="installer" specification_version="2.60.1">
+        <file crc="3744911987" name="config/Modules/org-netbeans-modules-junit.xml"/>
+        <file crc="369337483" name="modules/locale/org-netbeans-modules-junit_ja.jar"/>
+        <file crc="140515776" name="modules/locale/org-netbeans-modules-junit_pt_BR.jar"/>
+        <file crc="3558523667" name="modules/locale/org-netbeans-modules-junit_ru.jar"/>
+        <file crc="1615657653" name="modules/locale/org-netbeans-modules-junit_zh_CN.jar"/>
+        <file crc="3842843749" name="modules/org-netbeans-modules-junit.jar"/>
+    </module_version>
+    <module_version install_time="1423506315408" last="true" origin="NetBeans Distribution" specification_version="2.60.2">
+        <file crc="3744911987" name="config/Modules/org-netbeans-modules-junit.xml"/>
+        <file crc="1177848492" name="modules/locale/org-netbeans-modules-junit_ja.jar"/>
+        <file crc="2843596875" name="modules/locale/org-netbeans-modules-junit_pt_BR.jar"/>
+        <file crc="3112664399" name="modules/locale/org-netbeans-modules-junit_ru.jar"/>
+        <file crc="4098806595" name="modules/locale/org-netbeans-modules-junit_zh_CN.jar"/>
+        <file crc="2936977872" name="modules/org-netbeans-modules-junit.jar"/>
+    </module_version>
+</module>

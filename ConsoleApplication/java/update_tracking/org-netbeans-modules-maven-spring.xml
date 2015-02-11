@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.maven.spring/1">
+    <module_version install_time="1381505877189" last="true" origin="installer" specification_version="1.21.1">
+        <file crc="2995813157" name="config/Modules/org-netbeans-modules-maven-spring.xml"/>
+        <file crc="3264243602" name="modules/locale/org-netbeans-modules-maven-spring_ja.jar"/>
+        <file crc="4211513493" name="modules/locale/org-netbeans-modules-maven-spring_pt_BR.jar"/>
+        <file crc="2913195714" name="modules/locale/org-netbeans-modules-maven-spring_ru.jar"/>
+        <file crc="2797582583" name="modules/locale/org-netbeans-modules-maven-spring_zh_CN.jar"/>
+        <file crc="140016557" name="modules/org-netbeans-modules-maven-spring.jar"/>
+    </module_version>
+</module>
