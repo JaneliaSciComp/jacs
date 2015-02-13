@@ -48,7 +48,7 @@ public class H5JLoader
         FFMpegLoader movie = new FFMpegLoader(path);
         movie.start();
         movie.grab();
-        ImageStack frames = movie.get_image();
+        ImageStack frames = movie.getImage();
 
         // try to delete the file.
         // The file will be deleted when all the open handles have been
