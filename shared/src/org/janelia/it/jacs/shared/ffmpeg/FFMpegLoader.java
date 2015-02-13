@@ -45,7 +45,6 @@ public class FFMpegLoader {
     private boolean _frame_grabbed;
     private long _time_stamp;
     private int frameNumber;
-    private ImageMode imageMode = ImageMode.COLOR;
     private boolean deinterlace = false;
 
     public FFMpegLoader(String _filename) {
@@ -113,16 +112,28 @@ public class FFMpegLoader {
         this.deinterlace = deinterlace;
     }
 
-    public int getPixelFormat() {
-        int result = AV_PIX_FMT_BGR24;
-        if (imageMode == ImageMode.COLOR || imageMode == ImageMode.GRAY) {
-            int pixelFormat = -1;
-            if (pixelFormat == AV_PIX_FMT_NONE) {
-                result = imageMode == ImageMode.COLOR ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_GRAY8;
-            } else {
-                result = pixelFormat;
+    public int getPixelFormat()
+    {
+        int result = AV_PIX_FMT_NONE;
+        if (_image.get_num_components() == 1)
+        {
+            if (_image.get_bytes_per_pixel() == 1)
+                result = AV_PIX_FMT_GRAY8;
+            else if (_image.get_bytes_per_pixel() == 2)
+                result = AV_PIX_FMT_GRAY16;
+            else
+                result = AV_PIX_FMT_NONE;
             }
-        } else if (_video_codec != null) { // RAW
+        else if (_image.get_num_components() == 3)
+        {
+            result = AV_PIX_FMT_BGR24;
+        }
+        else if (_image.get_num_components() == 4)
+        {
+            result = AV_PIX_FMT_BGRA;
+        }
+        else if (_video_codec != null)
+        { // RAW
             result = _video_codec.pix_fmt();
         }
 
@@ -262,6 +273,13 @@ public class FFMpegLoader {
             }
         }
 
+        int pix_fmt = _video_codec.pix_fmt();
+        AVPixFmtDescriptor fmt = av_pix_fmt_desc_get(pix_fmt);
+        int comps = fmt.nb_components();
+        _image.set_num_components(comps);
+        AVComponentDescriptor desc = fmt.comp();
+        int bpp = comps / (desc.step_minus1() + 1);
+        _image.set_bytes_per_pixel(bpp);
     }
 
     public void stop() throws Exception {
@@ -283,9 +301,6 @@ public class FFMpegLoader {
         _image.set_height(height);
         _image.set_width(width);
 
-        switch (imageMode) {
-            case COLOR:
-            case GRAY:
                 int fmt = getPixelFormat();
 
                 // Determine required buffer size and allocate buffer
@@ -296,26 +311,14 @@ public class FFMpegLoader {
                 // Note that picture_rgb is an AVFrame, but AVFrame is a superset of AVPicture
                 avpicture_fill(new AVPicture(picture_rgb), _buffer_rgb, fmt, width, height);
 
-                break;
-
-            case RAW:
-                _buffer_rgb = null;
-                break;
-
-            default:
-                assert false;
-        }
-
         // Assign to the frame so the memory can be deleted later
         f.buffer_rgb = _buffer_rgb;
         f.picture = picture;
         f.picture_rgb = picture_rgb;
     }
 
-    private void processImage() throws Exception {
-        switch (imageMode) {
-            case COLOR:
-            case GRAY:
+    private void processImage() throws Exception
+    {
                 // Deinterlace Picture
                 if (deinterlace) {
                     AVPicture p = new AVPicture(picture);
@@ -334,17 +337,7 @@ public class FFMpegLoader {
                 // Convert the image from its native format to RGB or GRAY
                 sws_scale(img_convert_ctx, new PointerPointer(picture), picture.linesize(), 0,
                         _video_codec.height(), new PointerPointer(picture_rgb), picture_rgb.linesize());
-                break;
-
-            case RAW:
-                assert _video_codec.width() == _image.width()
-                        && _video_codec.height() == _image.height();
-                break;
-
-            default:
-                assert false;
         }
-    }
 
     public void grab() throws Exception {
         Frame f;
