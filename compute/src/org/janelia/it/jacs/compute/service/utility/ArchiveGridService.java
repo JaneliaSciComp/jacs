@@ -130,7 +130,7 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         for(String sourceFilepath : sourcePaths) {
             String targetFilepath = targets.remove();
             if (sourceFilepath!=null && targetFilepath!=null) {
-                logger.info("Will copy "+sourceFilepath);
+                logger.info("Will copy "+sourceFilepath+" to "+targetFilepath);
                 writeInstanceFiles(sourceFilepath, targetFilepath, configIndex++);
             }
             else {
@@ -164,10 +164,14 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append("read SOURCE_FILE\n");
         script.append("read TARGET_FILE\n");
-        script.append(ARCHIVE_SYNC_CMD + " \"$SOURCE_FILE\" \"$TARGET_FILE\"\n");
+        script.append("if [ \"$SOURCE_FILE\" == \"$TARGET_FILE\" ]; then\n");
+        script.append("    echo \"Source and target are identical\"\n");
+        script.append("else\n");
+        script.append("    "+ARCHIVE_SYNC_CMD + " \"$SOURCE_FILE\" \"$TARGET_FILE\"\n");
         if (deleteSourceFiles) {
-            script.append(REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
+            script.append("    "+REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
         }
+        script.append("fi\n");
         writer.write(script.toString());
     }
     
