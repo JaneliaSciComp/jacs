@@ -148,10 +148,11 @@ public class SampleTraversalService extends AbstractEntityService {
     
     private List<Entity> getIncludedSamples(Entity sample) throws Exception {
 
+        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
         List<Entity> included = new ArrayList<Entity>();
 
         // Ignore blocked samples
-        if (isBlocked(sample)) {
+        if (isBlocked(status)) {
             logger.info("Excluded "+sample+" (blocked)");
             return included;
         }
@@ -183,7 +184,7 @@ public class SampleTraversalService extends AbstractEntityService {
                 }
             }
             
-            if (includeParentSamples && (!childrenIncluded.isEmpty() || isMarked(sample))) {
+            if (includeParentSamples && (!childrenIncluded.isEmpty() || isMarked(status))) {
                 // The parent sample should be included if any of the children samples are included, or if it's marked
                 included.add(sample);
                 logger.info("Included "+sample+" (parent sample)");
@@ -210,23 +211,15 @@ public class SampleTraversalService extends AbstractEntityService {
         return included;
     }
     
-    private boolean isMarked(Entity sample) {
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
-        return (status != null && EntityConstants.VALUE_MARKED.equals(status));
-    }
-    
-    private boolean isBlocked(Entity sample) {
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
-        return (status != null && EntityConstants.VALUE_BLOCKED.equals(status));
-    }
-    
     private boolean includeSample(Entity sample) throws Exception {
 
-        if (isBlocked(sample)) {
+        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        
+        if (isBlocked(status) || isDesync(status)) {
             return false;
         }
         
-        if (includeMarkedSamples && isMarked(sample)) {
+        if (includeMarkedSamples && isMarked(status)) {
             return true;
         }
         
@@ -253,5 +246,17 @@ public class SampleTraversalService extends AbstractEntityService {
         }
         
         return false;
+    }
+    
+    private boolean isMarked(String status) {
+        return (status != null && EntityConstants.VALUE_MARKED.equals(status));
+    }
+    
+    private boolean isBlocked(String status) {
+        return (status != null && EntityConstants.VALUE_BLOCKED.equals(status));
+    }
+
+    private boolean isDesync(String status) {
+        return (status != null && EntityConstants.VALUE_DESYNC.equals(status));
     }
 }
