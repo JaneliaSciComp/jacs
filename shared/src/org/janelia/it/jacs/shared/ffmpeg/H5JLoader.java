@@ -80,6 +80,5 @@ public class H5JLoader
         int linesize = _image.linesize(iFrame);
         acceptor.accept(data, linesize, width, height);
     }    
-    
-    
+
 }
