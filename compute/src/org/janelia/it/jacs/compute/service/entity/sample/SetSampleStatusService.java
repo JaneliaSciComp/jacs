@@ -39,7 +39,7 @@ public class SetSampleStatusService extends AbstractEntityService {
             }
             
             // Also update parent status
-            logger.info("Setting status to "+status+" on parent sample "+sample.getName()+" (id="+entityId+")");
+            logger.info("Setting status to "+status+" on parent sample "+parentSample.getName()+" (id="+parentSample.getId()+")");
             entityBean.setOrUpdateValue(parentSample.getId(), EntityConstants.ATTRIBUTE_STATUS, status);
     	}
     }
