@@ -210,23 +210,28 @@ public class SampleTraversalService extends AbstractEntityService {
         return included;
     }
     
-    private boolean isMarked(Entity sample) {
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+    private boolean isMarked(String status) {
         return (status != null && EntityConstants.VALUE_MARKED.equals(status));
     }
     
-    private boolean isBlocked(Entity sample) {
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+    private boolean isBlocked(String status) {
         return (status != null && EntityConstants.VALUE_BLOCKED.equals(status));
     }
+
+    private boolean isDesync(String status) {
+        return (status != null && EntityConstants.VALUE_DESYNC.equals(status));
+    }
+    
     
     private boolean includeSample(Entity sample) throws Exception {
 
-        if (isBlocked(sample)) {
+        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        
+        if (isBlocked(status) || isDesync(status)) {
             return false;
         }
         
-        if (includeMarkedSamples && isMarked(sample)) {
+        if (includeMarkedSamples && isMarked(status)) {
             return true;
         }
         
