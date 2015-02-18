@@ -6,11 +6,14 @@ import ch.systemsx.cisd.hdf5.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
+import org.bytedeco.javacpp.BytePointer;
+import org.janelia.it.jacs.shared.img_3d_loader.FFMPGByteAcceptor;
 
 public class H5JLoader
 {
     private String _filename;
     private IHDF5Reader _reader;
+    private ImageStack _image;
     
     public H5JLoader(String filename) {
         this._filename = filename;
@@ -48,7 +51,7 @@ public class H5JLoader
         FFMpegLoader movie = new FFMpegLoader(path);
         movie.start();
         movie.grab();
-        ImageStack frames = movie.getImage();
+        _image = movie.getImage();
 
         // try to delete the file.
         // The file will be deleted when all the open handles have been
@@ -66,6 +69,17 @@ public class H5JLoader
         if (!deleted)
             temp.deleteOnExit();
 
-        return frames;
+        return _image;
     }
+    
+    public void saveFrame(int iFrame, FFMPGByteAcceptor acceptor)
+            throws Exception {
+        int width = _image.width();
+        int height = _image.height();
+        BytePointer data = _image.image(iFrame);
+        int linesize = _image.linesize(iFrame);
+        acceptor.accept(data, linesize, width, height);
+    }    
+    
+    
 }
