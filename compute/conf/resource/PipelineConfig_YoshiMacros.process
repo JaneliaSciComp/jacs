@@ -15,6 +15,9 @@
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="RUN_OBJECTIVES"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>

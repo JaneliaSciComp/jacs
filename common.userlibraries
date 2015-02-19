@@ -270,6 +270,9 @@
     <library name="GWT Serializable" systemlibrary="false">
         <archive path="/common/GWT-Serializable/gwt-serializable.jar"/>
     </library>
+    <library name="HDF5" systemlibrary="false">
+        <archive path="/common/JHDF/sis-jhdf5-batteries_included.jar"/>
+    </library>
     <library name="Hibernate" systemlibrary="false">
         <archive path="/common/Hibernate-3.2/antlr-2.7.6.jar"/>
         <archive path="/common/Hibernate-3.2/asm.jar"/>

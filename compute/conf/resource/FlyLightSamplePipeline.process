@@ -22,6 +22,7 @@
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="PIPELINE_NAME"/>
             <input name="MERGE_ALGORITHMS"/>
@@ -33,7 +34,6 @@
             <input name="PIPELINE_PROCESS"/>
             <input name="REUSE_PROCESSING"/>
             <input name="REUSE_ALIGNMENT"/>
-            <input name="OVERRIDE" value="false"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="pipeline name"/>

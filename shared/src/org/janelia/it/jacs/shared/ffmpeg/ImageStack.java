@@ -60,6 +60,26 @@ public class ImageStack
         return _image.size();
     }
 
+    public int get_num_components()
+    {
+        return _num_components;
+    }
+
+    public void set_num_components(int num_components)
+    {
+        this._num_components = num_components;
+    }
+
+    public int get_bytes_per_pixel()
+    {
+        return _bytes_per_pixel;
+    }
+
+    public void set_bytes_per_pixel(int bytes_per_pixel)
+    {
+        this._bytes_per_pixel = bytes_per_pixel;
+    }
+
     /**
      * Return a pointer to the pixels of the ith frame/image in the stack
      * @param i - image index
@@ -106,6 +126,10 @@ public class ImageStack
 
     private int _height;
     private int _width;
+
+    private int _num_components;
+
+    private int _bytes_per_pixel;
 
     private ArrayList<Frame> _image = new ArrayList<Frame>();
 }

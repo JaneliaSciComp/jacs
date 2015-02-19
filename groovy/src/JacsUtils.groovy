@@ -105,7 +105,7 @@ class JacsUtils {
 			folder = newEntity(childName, TYPE_FOLDER)
 			folder = save(folder)
             if (folder.id) println "Saved folder "+childName+" as "+folder.id
-			addToParent(parentFolder, folder, null, ATTRIBUTE_ENTITY)
+			addToParent(parentFolder, folder)
 		}
 		return folder
 	}

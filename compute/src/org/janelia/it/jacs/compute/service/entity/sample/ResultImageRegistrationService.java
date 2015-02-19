@@ -174,7 +174,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             }
             else {
                 // Set the image on the subsample
-                logger.info("Applying default 3d image to the sub-sample ("+parentSample.getName()+")");
+                logger.info("Applying default 3d image to the sub-sample ("+sampleEntity.getName()+")");
                 entityHelper.setDefault3dImage(sampleEntity, default3dImage);
                 topLevelSample = parentSample;
             }
