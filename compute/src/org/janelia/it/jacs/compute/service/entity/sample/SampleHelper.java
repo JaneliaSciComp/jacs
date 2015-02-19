@@ -27,7 +27,6 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -919,6 +918,10 @@ public class SampleHelper extends EntityHelper {
         if (retiredEd!=null) {
             logger.info("    Removing from retired data folder");
             entityBean.deleteEntityData(retiredEd);
+            if (sample.getName().contains("-Retired")) {
+                sample.setName(sample.getName().replaceAll("-Retired", ""));
+                entityBean.saveOrUpdateEntity(sample);
+            }
         }
         else {
             logger.trace("    Already missing from retired data folder");
