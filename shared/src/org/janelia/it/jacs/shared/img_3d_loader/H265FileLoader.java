@@ -46,12 +46,21 @@ public class H265FileLoader extends AbstractVolumeFileLoader {
     private ByteGatherAcceptor populateAcceptor(H5JLoader reader) throws Exception {
         List<String> channels = reader.channelNames();
         ByteGatherAcceptor acceptor = new ByteGatherAcceptor();
+        acceptor.setPixelBytes(1);
         for (String channelId: channels) {
             try {
                 ImageStack image = reader.extract(channelId);
-                System.out.println(channelId + " has " + image.get_num_frames() + " frames.");
+                System.out.println("Version 10");
+//                try {
+//                    Thread.sleep(2000);
+//                } catch (InterruptedException ie) {
+//                    ie.printStackTrace();
+//                }
+                System.out.println(channelId + " has " + image.get_num_frames() + " frames, and " + image.get_bytes_per_pixel() + " bytes per pixel.");
+                acceptor.setPixelBytes(image.get_bytes_per_pixel());
                 int frameCount = image.get_num_frames();
                 for (int i = 0; i < frameCount; i++) {
+                    System.out.println("Saving frame " + i);
                     reader.saveFrame(i, acceptor);
                 }
             } catch (Exception e) {
