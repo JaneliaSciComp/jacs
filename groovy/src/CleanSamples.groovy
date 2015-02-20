@@ -25,6 +25,7 @@ class CleanSamplesScript {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             for(String subjectKey : subjectKeys) {
+                if (subjectKey.equals("group:dicksonlab")||subjectKey.equals("group:ditp")||subjectKey.equals("group:flylight")||subjectKey.equals("group:heberleinlab")) continue
                 processSamples(subjectKey);
             }
         }
@@ -76,7 +77,7 @@ class CleanSamplesScript {
                     //println "Correcting status for sample "+childSample.name
                     numCorrectedStatus++;
                     if (!DEBUG) {
-                        f.e.setOrUpdateValue(ownerKey, childSample.id, EntityConstants.ATTRIBUTE_STATUS, "Complete")
+                        f.e.setOrUpdateValue(childSample.ownerKey, childSample.id, EntityConstants.ATTRIBUTE_STATUS, "Complete")
                     }
                 }
             }            
@@ -99,7 +100,7 @@ class CleanSamplesScript {
                 numMarkedSamples++;
                 println "  Marking sample for reprocessing: "+sample.name
                 if (!DEBUG) {
-                    f.e.setOrUpdateValue(ownerKey, sample.id, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
+                    f.e.setOrUpdateValue(sample.ownerKey, sample.id, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
                 }
             }
         }
@@ -126,7 +127,7 @@ class CleanSamplesScript {
             if (!hasError && !hasResult) {
                 println "  Removing empty run (id="+run.id+") for sample: "+sample.name
                 if (!DEBUG) {
-                    f.e.deleteEntityTreeById(ownerKey, run.id)
+                    f.e.deleteEntityTreeById(run.ownerKey, run.id)
                 }
             }
             else {
