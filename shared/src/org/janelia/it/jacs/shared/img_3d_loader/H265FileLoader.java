@@ -28,14 +28,21 @@ public class H265FileLoader extends AbstractVolumeFileLoader {
         setUnCachedFileName(filename);   
         H5JLoader reader = new H5JLoader(filename);
         try {
-            ByteGatherAcceptor acceptor = populateAcceptor(reader);
+            ByteGatherAcceptor acceptor = gatherBytes(reader);
             helper.captureData(acceptor, this);
             //dumpMeta(acceptor);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        reader.close();
     }
     
+    public void saveFramesAsPPM(String filename) {
+        H5JLoader reader = new H5JLoader(filename);
+        FFMPGByteAcceptor acceptor = new PPMFileAcceptor();
+        accept(reader, acceptor);
+    }
+
     /**
      * Save the frames into an acceptor, and hand back the populated acceptor.
      * 
@@ -43,32 +50,30 @@ public class H265FileLoader extends AbstractVolumeFileLoader {
      * @return the acceptor.
      * @throws Exception 
      */
-    private ByteGatherAcceptor populateAcceptor(H5JLoader reader) throws Exception {
-        List<String> channels = reader.channelNames();
+    private ByteGatherAcceptor gatherBytes(H5JLoader reader) throws Exception {
         ByteGatherAcceptor acceptor = new ByteGatherAcceptor();
-        acceptor.setPixelBytes(1);
-        for (String channelId: channels) {
-            try {
+        accept(reader, acceptor);
+        //helper.dumpMeta(acceptor);
+        return acceptor;
+    }
+    
+    private void accept(H5JLoader reader, FFMPGByteAcceptor acceptor) {
+        List<String> channels = reader.channelNames();
+        try {
+            for (String channelId : channels) {                
                 ImageStack image = reader.extract(channelId);
-                System.out.println("Version 10");
-//                try {
-//                    Thread.sleep(2000);
-//                } catch (InterruptedException ie) {
-//                    ie.printStackTrace();
-//                }
-                System.out.println(channelId + " has " + image.get_num_frames() + " frames, and " + image.get_bytes_per_pixel() + " bytes per pixel.");
                 acceptor.setPixelBytes(image.get_bytes_per_pixel());
                 int frameCount = image.get_num_frames();
                 for (int i = 0; i < frameCount; i++) {
-                    System.out.println("Saving frame " + i);
+                    logger.debug("Saving frame " + i + " of channel " + channelId);
+                    acceptor.setFrameNum(i);                    
                     reader.saveFrame(i, acceptor);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+//                image.release();
+            }            
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        //helper.dumpMeta(acceptor);
-        return acceptor;
     }
     
 }

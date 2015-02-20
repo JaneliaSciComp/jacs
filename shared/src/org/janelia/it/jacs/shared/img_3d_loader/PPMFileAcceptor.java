@@ -17,6 +17,7 @@ import org.bytedeco.javacpp.BytePointer;
  */
 public class PPMFileAcceptor implements FFMPGByteAcceptor {
     private int frameNum;
+    private int pixelBytes;
     public PPMFileAcceptor() {
     }
     
@@ -34,7 +35,7 @@ public class PPMFileAcceptor implements FFMPGByteAcceptor {
             stream.write(("P6\n" + width + " " + height + "\n255\n").getBytes());
 
             // Write pixel data
-            byte[] bytes = new byte[width * 3];
+            byte[] bytes = new byte[width * pixelBytes];
             for (int y = 0; y < height; y++) {
                 data.position(y * linesize).get(bytes);
                 stream.write(bytes);
@@ -44,6 +45,11 @@ public class PPMFileAcceptor implements FFMPGByteAcceptor {
             ioe.printStackTrace();
         }
 
+    }
+    
+    @Override
+    public void setPixelBytes(int pixelBytes) {
+        this.pixelBytes = pixelBytes;
     }
     
 }
