@@ -31,19 +31,21 @@ class CleanSamplesScript {
         else {
             processSamples(ownerKey);
         }
-        println "Corrected status on "+numCorrectedStatus+" sub-samples"
-        println "Marked "+numMarkedSamples+" samples for rerun"
         println "Done"
         System.exit(0)
 	}
     
     private void processSamples(String ownerKey) {
+        this.numCorrectedStatus = 0
+        this.numMarkedSamples = 0
         println "Processing samples for "+ownerKey
         for(Entity sample : f.e.getUserEntitiesByTypeName(ownerKey, "Sample")) {
             if (sample.name.contains("~")) continue;
             processSample(sample)
             sample.setEntityData(null)
         }
+        println "Corrected status on "+numCorrectedStatus+" sub-samples for "+ownerKey
+        println "Marked "+numMarkedSamples+" samples for rerun for "+ownerKey
     }
 	
 	private void processSample(Entity sample) {
@@ -95,7 +97,7 @@ class CleanSamplesScript {
                     && !EntityConstants.VALUE_ERROR.equals(status) 
                     && !EntityConstants.VALUE_MARKED.equals(status)) {
                 numMarkedSamples++;
-                println "Marking sample for reprocessing: "+sample.name
+                println "  Marking sample for reprocessing: "+sample.name
                 if (!DEBUG) {
                     f.e.setOrUpdateValue(ownerKey, sample.id, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
                 }
@@ -122,7 +124,7 @@ class CleanSamplesScript {
             }
                         
             if (!hasError && !hasResult) {
-                println "Removing empty run (id="+run.id+") for sample: "+sample.name
+                println "  Removing empty run (id="+run.id+") for sample: "+sample.name
                 if (!DEBUG) {
                     f.e.deleteEntityTreeById(ownerKey, run.id)
                 }
@@ -144,14 +146,14 @@ class CleanSamplesScript {
             numRuns++;
         }
         if (numErrors==numRuns && numErrors>=minErrors) {
-            println "Sample has "+numErrors+": "+sample.name
+            println "  Sample has "+numErrors+": "+sample.name
             return true
         }
         else if (numErrors==numRuns && numErrors>=2) {
-            println "WARNING: All runs error, and there are "+numErrors+" which is less than the cut-off "+minErrors
+            println "  WARNING: All runs error, and there are "+numErrors+" which is less than the cut-off "+minErrors
         }
         else if (numErrors>=minErrors) {
-            println "WARNING: There are "+numErrors+" errors, but "+numRuns+" total runs. This should be cleaned up by the cleaning service."
+            println "  WARNING: There are "+numErrors+" errors, but "+numRuns+" total runs. This should be cleaned up by the cleaning service."
         }
         return false
     }
