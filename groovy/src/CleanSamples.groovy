@@ -7,7 +7,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 
 class CleanSamplesScript {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
     private String ownerKey = null;
     private final JacsUtils f;
 	private String context;
@@ -25,7 +25,6 @@ class CleanSamplesScript {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             for(String subjectKey : subjectKeys) {
-                if (subjectKey.equals("group:dicksonlab")||subjectKey.equals("group:ditp")||subjectKey.equals("group:flylight")||subjectKey.equals("group:heberleinlab")) continue
                 processSamples(subjectKey);
             }
         }
@@ -84,7 +83,12 @@ class CleanSamplesScript {
         }
         else if ("Error".equals(status)) {
             for(Entity childSample : childSamples) {
-                if (allRunsError(childSample, 5)) {
+                if (allRunsError(childSample, 3)) {
+                    for(Entity run : EntityUtils.getChildrenOfType(sample, "Pipeline Run")) {
+                        if (!DEBUG) {
+                            f.e.deleteEntityTreeById(run.ownerKey, run.id)
+                        }
+                    }
                     reprocess = true;
                     break;
                 }
@@ -94,8 +98,7 @@ class CleanSamplesScript {
         if (reprocess) {
             if (!EntityConstants.VALUE_DESYNC.equals(status) 
                     && !EntityConstants.VALUE_RETIRED.equals(status) 
-                    && !EntityConstants.VALUE_BLOCKED.equals(status) 
-                    && !EntityConstants.VALUE_ERROR.equals(status) 
+                    && !EntityConstants.VALUE_BLOCKED.equals(status)
                     && !EntityConstants.VALUE_MARKED.equals(status)) {
                 numMarkedSamples++;
                 println "  Marking sample for reprocessing: "+sample.name
@@ -143,11 +146,11 @@ class CleanSamplesScript {
         List<Entity> runs = EntityUtils.getChildrenOfType(sample, "Pipeline Run")
         for(Entity run : runs) {
             f.loadChildren(run)
-            numErrors += EntityUtils.getChildrenOfType(sample, "Error").isEmpty()?0:1;
+            numErrors += EntityUtils.getChildrenOfType(run, "Error").isEmpty()?0:1;
             numRuns++;
         }
         if (numErrors==numRuns && numErrors>=minErrors) {
-            println "  Sample has "+numErrors+": "+sample.name
+            //println "  Sample has "+numErrors+" errors, it will be cleaned and marked for rerun: "+sample.name
             return true
         }
         else if (numErrors==numRuns && numErrors>=2) {
@@ -155,6 +158,9 @@ class CleanSamplesScript {
         }
         else if (numErrors>=minErrors) {
             println "  WARNING: There are "+numErrors+" errors, but "+numRuns+" total runs. This should be cleaned up by the cleaning service."
+        }
+        else {
+            //println "  INFO: There are "+numErrors+" errors, and "+numRuns+" total runs."
         }
         return false
     }
