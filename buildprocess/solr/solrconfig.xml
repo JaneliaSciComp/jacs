@@ -101,9 +101,9 @@
        other than the default ./data under the Solr home.  If
        replication is in use, this should match the replication
        configuration.
-  <dataDir>${solr.data.dir:/groups/jacs/jacsDev/servers/rokicki-ws/solr/jacs/core_FlyWorkstation/data}</dataDir>
+  <dataDir>${solr.data.dir:/groups/scicomp/jacsData/servers/rokicki-ws/solr/jacs/core_FlyWorkstation/data}</dataDir>
     -->
-  <dataDir>${solr.data.dir:/home/rokickik/dev/solr/jacs/core0/data}</dataDir>
+  <dataDir>${solr.data.dir:/data/core0}</dataDir>
 
 
   <!-- The DirectoryFactory to use for indexes.
@@ -133,11 +133,11 @@
 
     <useCompoundFile>false</useCompoundFile>
 
-    <mergeFactor>10</mergeFactor>
+    <mergeFactor>20</mergeFactor>
     <!-- Sets the amount of RAM that may be used by Lucene indexing
          for buffering added documents and deletions before they are
          flushed to the Directory.  -->
-    <ramBufferSizeMB>32</ramBufferSizeMB>
+    <ramBufferSizeMB>128</ramBufferSizeMB>
     <!-- If both ramBufferSizeMB and maxBufferedDocs is set, then
          Lucene will flush based on whichever limit is hit first.  
       -->
@@ -444,8 +444,8 @@
          (DocList) based on a query, a sort, and the range of documents requested.  
       -->
     <queryResultCache class="solr.LRUCache"
-                     size="512"
-                     initialSize="512"
+                     size="122880"
+                     initialSize="122880"
                      autowarmCount="0"/>
    
     <!-- Document Cache
@@ -455,8 +455,8 @@
          this cache will not be autowarmed.  
       -->
     <documentCache class="solr.LRUCache"
-                   size="512"
-                   initialSize="512"
+                   size="2900000"
+                   initialSize="2900000"
                    autowarmCount="0"/>
     
     <!-- Field Value Cache
@@ -721,7 +721,7 @@
        <str name="echoParams">explicit</str>
        <int name="rows">10</int>
        <str name="qf">
-          id^10.0 all_strings^0.7 all_gen^0.6 text^0.5 
+          id^10.0 all_strings^0.7 text^0.5 
        </str>
      </lst>
 
@@ -784,7 +784,7 @@
        <str name="echoParams">explicit</str>
        <int name="rows">10</int>
        <str name="qf">
-          id^1.0 all_strings^0.8 text^0.5 
+          id^10.0 all_strings^0.7 text^0.5 
        </str>
        <str name="defType">edismax</str>
 
@@ -830,6 +830,7 @@
      -->
   </requestHandler>
 
+  <!--
   <requestHandler name="/mlt" class="solr.MoreLikeThisHandler">
      <lst name="defaults">
        <str name="mlt.fl">all_gen</str>
@@ -837,6 +838,7 @@
        <int name="mlt.mintf">1</int>
      </lst>
   </requestHandler>   
+  -->
 
   <!-- XML Update Request Handler.  
        

@@ -22,7 +22,7 @@ class SampleReportScript {
     private static final String GROUP = "flylight"
     private static final String OWNER_KEY = "user:"+OWNER
     private static final String GROUP_KEY = "group:"+GROUP
-	private static final boolean WRITE_DATABASE = true
+	private static final boolean WRITE_DATABASE = false
     private static final boolean MIGRATE_NEURONS = false
     private static final boolean DELETE_SAMPLES = false
     private static final String COLOR_RETIRED = "FAA755"
@@ -30,7 +30,7 @@ class SampleReportScript {
     private static final String OUTPUT_FILE = "/Users/rokickik/retired.html"
 	private static final String MANUAL_OUTPUT_ROOT_NAME = "Retired Duplicates (Manual)"
     private static final String AUTO_OUTPUT_ROOT_NAME = "Retired Duplicates (Auto)"
-    private static final String AUTO_MIGRATION_TERM_NAME = "Auto_migrated"
+    private static final String AUTO_MIGRATION_TERM_NAME = "Fragments_migrated"
     private static final int NUM_SAMPLE_COLS = 3
     private JacsUtils f
     private Entity autoMigratedTerm;
@@ -123,11 +123,30 @@ class SampleReportScript {
                 numRetiredSamples += retiredSamples.size()
                 numActiveSamples += activeSamples.size()
         
+                boolean matchAll = true;
                 Multimap<Entity, Entity> transferMap = HashMultimap.<Entity,Entity>create();
                 for(Entity retiredSample : retiredSamples) {
+                    boolean match = false;
                     for(Entity activeSample : activeSamples) {
                         if (lsmSetsMatch(f, retiredSample, activeSample)) {
                             transferMap.put(retiredSample, activeSample);
+                            match = true;
+                        }
+                    }
+                    if (!match) {
+                        matchAll = false;
+                    }
+                }
+                
+                // LSM sets didn't match for every retired sample, let's try sample names
+                if (!matchAll) {
+                    for(Entity retiredSample : retiredSamples) {
+                        if (transferMap.get(retiredSample).isEmpty()) {
+                            for(Entity activeSample : activeSamples) {
+                                if (retiredSample.name.replaceAll("-Retired", "").equals(activeSample.name)) {
+                                    transferMap.put(retiredSample, activeSample);
+                                }
+                            }
                         }
                     }
                 }
@@ -165,7 +184,9 @@ class SampleReportScript {
                     
                     Boolean autoMigrated = null;
                     if (retiredWalker!=null && activeWalker!=null && retiredWalker.numFragments==activeWalker.numFragments) {
-                        keyFolder = f.verifyOrCreateChildFolder(autoRootFolder, key)
+                        if (WRITE_DATABASE) {
+                            keyFolder = f.verifyOrCreateChildFolder(autoRootFolder, key)
+                        }
                         autoMigrated = migrateNeurons(f, retiredWalker, activeWalker, keyFolder)
                         if (autoMigrated) {
                             if (WRITE_DATABASE && MIGRATE_NEURONS) {
@@ -173,7 +194,6 @@ class SampleReportScript {
                                 f.a.createOntologyAnnotation(OWNER_KEY, annotation)
                             }
                         }
-                        
                     }
                     
                     if (autoMigrated) {

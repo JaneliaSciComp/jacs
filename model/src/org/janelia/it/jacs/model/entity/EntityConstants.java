@@ -23,10 +23,6 @@ public class EntityConstants {
     public static final String VALUE_DESYNC                          = "Desync";
     public static final String VALUE_RETIRED                         = "Retired";
     
-    // Entity Status
-    public static final String STATUS_DEPRECATED                     = "Deprecated";
-    public static final String STATUS_VALID                          = "Valid";
-
     // Singleton Entity Names
     public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
     public static final String NAME_SHARED_DATA                      = "Shared Data";

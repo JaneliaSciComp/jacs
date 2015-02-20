@@ -93,7 +93,7 @@ public class FFMpegLoader {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        release();
+//        release();
     }
 
     public int getImageWidth() {
