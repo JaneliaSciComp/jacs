@@ -8,7 +8,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 class CleanSamplesScript {
 	
 	private static final boolean DEBUG = false;
-    private String ownerKey = "group:dicksonlab";
+    private String ownerKey = null;
     private final JacsUtils f;
 	private String context;
 	private int numCorrectedStatus;
@@ -21,7 +21,7 @@ class CleanSamplesScript {
 	public void run() {
         if (ownerKey==null) {
             Set<String> subjectKeys = new TreeSet<String>();
-            for(Entity dataSet : f.e.getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+            for(Entity dataSet : f.e.getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             for(String subjectKey : subjectKeys) {
