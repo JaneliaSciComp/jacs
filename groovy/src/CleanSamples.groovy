@@ -7,12 +7,15 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 
 class CleanSamplesScript {
 	
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
     private String ownerKey = null;
     private final JacsUtils f;
 	private String context;
 	private int numCorrectedStatus;
     private int numMarkedSamples;
+    private int numErrorRunsDeleted;
+    private int numEmptyRunsDeleted;
+    private int numCorrectedStatusEds;
     
 	public CleanSamplesScript() {
 		f = new JacsUtils(ownerKey, false)
@@ -25,6 +28,7 @@ class CleanSamplesScript {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             for(String subjectKey : subjectKeys) {
+                //if (!subjectKey.equals("group:leetlab")) continue
                 processSamples(subjectKey);
             }
         }
@@ -44,9 +48,14 @@ class CleanSamplesScript {
             processSample(sample)
             sample.setEntityData(null)
         }
-        println "Corrected status on "+numCorrectedStatus+" sub-samples for "+ownerKey
-        println "Marked "+numMarkedSamples+" samples for rerun for "+ownerKey
+        println "Completed processing for "+ownerKey
+        println "  Corrected status on "+numCorrectedStatus+" sub-samples"
+        println "  Deleted "+numEmptyRunsDeleted+" empty pipeline runs"
+        println "  Deleted "+numErrorRunsDeleted+" error pipeline runs"
+        println "  Deleted "+numCorrectedStatusEds+" duplicate statuses"
+        println "  Marked "+numMarkedSamples+" samples for rerun"
     }
+
 	
 	private void processSample(Entity sample) {
 		f.loadChildren(sample)
@@ -68,16 +77,29 @@ class CleanSamplesScript {
             }
         }
         
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        List<EntityData> statusEds = EntityUtils.getOrderedEntityDataForAttribute(sample, EntityConstants.ATTRIBUTE_STATUS);
+        if (statusEds.size()>1) {
+            int i = 0
+            for(EntityData ed : statusEds) {
+                if (i>0) {
+                    sample.getEntityData().remove(ed)
+                    if (!DEBUG) {
+                        f.e.deleteEntityData(ed.ownerKey, ed.getId())
+                    }
+                    numCorrectedStatusEds++;
+                }
+                i++
+            }
+        }
+        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS)
         
         if ("Complete".equals(status)) {
             for(Entity childSample : childSamples) {
                 if ("Processing".equals(childSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS))) {
-                    //println "Correcting status for sample "+childSample.name
-                    numCorrectedStatus++;
                     if (!DEBUG) {
                         f.e.setOrUpdateValue(childSample.ownerKey, childSample.id, EntityConstants.ATTRIBUTE_STATUS, "Complete")
                     }
+                    numCorrectedStatus++;
                 }
             }            
         }
@@ -88,6 +110,7 @@ class CleanSamplesScript {
                         if (!DEBUG) {
                             f.e.deleteEntityTreeById(run.ownerKey, run.id)
                         }
+                        numErrorRunsDeleted++;
                     }
                     reprocess = true;
                     break;
@@ -99,12 +122,13 @@ class CleanSamplesScript {
             if (!EntityConstants.VALUE_DESYNC.equals(status) 
                     && !EntityConstants.VALUE_RETIRED.equals(status) 
                     && !EntityConstants.VALUE_BLOCKED.equals(status)
-                    && !EntityConstants.VALUE_MARKED.equals(status)) {
-                numMarkedSamples++;
+                    && !EntityConstants.VALUE_MARKED.equals(status)
+                    && !sample.name.startsWith("NO_CONSENSUS")) {
                 println "  Marking sample for reprocessing: "+sample.name
                 if (!DEBUG) {
                     f.e.setOrUpdateValue(sample.ownerKey, sample.id, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
                 }
+                numMarkedSamples++;
             }
         }
         
@@ -132,6 +156,7 @@ class CleanSamplesScript {
                 if (!DEBUG) {
                     f.e.deleteEntityTreeById(run.ownerKey, run.id)
                 }
+                numEmptyRunsDeleted++;
             }
             else {
                 hasRemainingRuns = true
@@ -154,10 +179,10 @@ class CleanSamplesScript {
             return true
         }
         else if (numErrors==numRuns && numErrors>=2) {
-            println "  WARNING: All runs error, and there are "+numErrors+" which is less than the cut-off "+minErrors
+            println "  WARNING: All runs error, and there are "+numErrors+" which is less than the cut-off "+minErrors+": "+sample.name
         }
         else if (numErrors>=minErrors) {
-            println "  WARNING: There are "+numErrors+" errors, but "+numRuns+" total runs. This should be cleaned up by the cleaning service."
+            println "  WARNING: There are "+numErrors+" errors, but "+numRuns+" total runs. This sample should be cleaned up by the cleaning service "+sample.name 
         }
         else {
             //println "  INFO: There are "+numErrors+" errors, and "+numRuns+" total runs."
