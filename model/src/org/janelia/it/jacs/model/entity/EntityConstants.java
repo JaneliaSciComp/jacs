@@ -204,7 +204,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SAGE_ID                             = "SAGE Id";
     
     // Error Attributes
-    public static final String ATTRIBUTE_MESSAGE                             = "Message";
+    public static final String ATTRIBUTE_DESCRIPTION                         = "Description";
+    public static final String ATTRIBUTE_CLASSIFICATION                      = "Classification";
     
     // Ontology Type Values
     public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL             = "Interval";

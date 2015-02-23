@@ -10,7 +10,10 @@ import org.apache.commons.io.FileUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
+import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
  * Run the fast load pipeline on a set of neuron separation result directories.
@@ -107,7 +110,10 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     
     @Override
 	public void postProcess() throws MissingDataException {
-    	
+
+        FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
+        File file = new File(parentNode.getDirectoryPath());
+        
     	List<String> archivePaths = new ArrayList<String>();
     	
     	for(String fastLoadDir : fastLoadPaths) {
@@ -115,7 +121,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     		File dir = new File(fastLoadDir);
     		if (!dir.exists()) {
 				if (fastLoadPaths.size()==1) {
-					throw new MissingDataException("Missing fast load directory: "+fastLoadDir);
+					throw new MissingGridResultException(file.getAbsolutePath(), "Missing fast load directory: "+fastLoadDir);
 				}
 				else {
 	    			logger.error("Missing fast load directory: "+fastLoadDir);
@@ -128,7 +134,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     		}
         	else {
 				if (fastLoadPaths.size()==1) {
-					throw new MissingDataException("No archive directory was generated at "+archiveDir.getAbsolutePath());
+					throw new MissingGridResultException(file.getAbsolutePath(), "No archive directory was generated at "+archiveDir.getAbsolutePath());
 				}
 				else {
 	    			logger.error("No archive directory was generated at "+archiveDir.getAbsolutePath());
@@ -137,7 +143,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
 
     		if (!dir.exists()) {
 				if (fastLoadPaths.size()==1) {
-					throw new MissingDataException("Missing fast load directory: "+fastLoadDir);
+					throw new MissingGridResultException(file.getAbsolutePath(), "Missing fast load directory: "+fastLoadDir);
 				}
 				else {
 	    			logger.error("Missing fast load directory: "+fastLoadDir);
@@ -150,7 +156,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
     				FileUtils.deleteDirectory(dir);
     				FileUtils.deleteDirectory(archiveDir);
     				if (fastLoadPaths.size()==1) {
-    					throw new MissingDataException("Fast load directory has "+numFiles+" files. Expected "+NUM_ARTIFACTS+".");
+    					throw new MissingGridResultException(file.getAbsolutePath(), "Fast load directory has "+numFiles+" files. Expected "+NUM_ARTIFACTS+".");
     				}
     				else {
     	    			logger.error("Fast load directory has "+numFiles+" files. Expected "+NUM_ARTIFACTS+".");

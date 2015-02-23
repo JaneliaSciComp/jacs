@@ -8,6 +8,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.user_data.FileNode;
@@ -157,12 +158,12 @@ public class NeuronSeparationPipelineGridService extends AbstractEntityGridServi
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(outputDir, "core");    	
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Neuron separation core dumped for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(outputDir.getAbsolutePath(), "Neuron separation core dumped for "+resultFileNode.getDirectoryPath());
     	}
     	
     	File[] csFiles = FileUtil.getFilesWithPrefixes(outputDir, "Consolidated", "SeparationResult.nsp");
     	if (csFiles.length < 3) {
-    		throw new MissingDataException("SeparationResult, ConsolidatedSignal, and ConsolidatedLabel not found for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(outputDir.getAbsolutePath(), "SeparationResult, ConsolidatedSignal, and ConsolidatedLabel not found for "+resultFileNode.getDirectoryPath());
     	}
     	
     	File archiveDir = new File(outputDir, "archive");

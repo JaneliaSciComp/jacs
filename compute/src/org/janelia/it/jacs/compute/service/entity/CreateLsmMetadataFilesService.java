@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -165,24 +166,24 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     public void postProcess() throws MissingDataException {
 
         if (!jsonDataFile.exists()) {
-            throw new MissingDataException("JSON metadata file does not exist: "+jsonDataFile);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "JSON metadata file does not exist: "+jsonDataFile);
         }
 
         if (jsonDataFile.length()<=0) {
-            throw new MissingDataException("JSON metadata file is empty: "+jsonDataFile);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "JSON metadata file is empty: "+jsonDataFile);
         }
         
         try {
             LSMMetadata metadata = LSMMetadata.fromFile(jsonDataFile);
             if(metadata.getChannels().isEmpty()) {
-                throw new MissingDataException("No channels in JSON metadata file: "+jsonDataFile);
+                throw new MissingGridResultException(outputDir.getAbsolutePath(), "No channels in JSON metadata file: "+jsonDataFile);
             }
         }
         catch (MissingDataException e) {
             throw e;
         }
         catch (Exception e) {
-            throw new MissingDataException("JSON metadata file cannot be parsed: "+jsonDataFile,e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "JSON metadata file cannot be parsed: "+jsonDataFile,e);
         }
         
     }
