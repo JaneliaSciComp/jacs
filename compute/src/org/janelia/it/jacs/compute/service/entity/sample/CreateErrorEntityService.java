@@ -1,32 +1,57 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.hibernate.exception.ExceptionUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.exceptions.EntityException;
+import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.entity.DataReporter;
 
 /**
  * Creates an Error entity based on the given exception, and adds it to the root entity (usually a Pipeline Run).
+ * 
+ * Also tries to classify the error and take appropriate action: resubmit the job if the error is recoverable, submit
+ * a JIRA ticket if there is a data problem, etc.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class CreateErrorEntityService extends AbstractEntityService {
 
+    private static final String FROM_EMAIL = SystemConfigurationProperties.getString("System.DataErrorSource");
+    private static final String TO_EMAIL = SystemConfigurationProperties.getString("System.DataErrorDestination");
 	private static final String ERRORS_DIR_NAME = "Error";
     private static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
+    private static final String LAB_ERROR_TERM_NAME = "Lab Error";
+    
+    private FileNode resultFileNode;
+    private Entity rootEntity;
+    private ClassifiedError error;
     
     public void execute() throws Exception {
             
     	String rootEntityId = data.getRequiredItemAsString("ROOT_ENTITY_ID");
 
     	File outputDir = null;
-        FileNode resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
+        this.resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
         String username = ownerKey.split(":")[1];
 
         if (resultFileNode!=null) {
@@ -39,24 +64,228 @@ public class CreateErrorEntityService extends AbstractEntityService {
             logger.warn("No RESULT_FILE_NODE is specified, saving error message to general Errors folder: "+outputDir);
         }
     	
-    	Entity rootEntity = entityBean.getEntityById(rootEntityId);
+    	this.rootEntity = entityBean.getEntityById(rootEntityId);
     	if (rootEntity == null) {
     		throw new IllegalArgumentException("Root entity not found with id="+rootEntityId);
     	}
 
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);
-    	String message = ExceptionUtils.getStackTrace(exception);
+        this.error = new ClassifiedError(exception);
+        
+    	Entity errorEntity = entityBean.createEntity(rootEntity.getOwnerKey(), EntityConstants.TYPE_ERROR, "Error");
+    	logger.info("Saved error entity as id="+errorEntity.getId());
     	
-    	Entity error = entityBean.createEntity(rootEntity.getOwnerKey(), EntityConstants.TYPE_ERROR, "Error");
-    	logger.info("Saved error entity as id="+error.getId());
-    	
-        File errorFile = new File(outputDir, error.getId().toString()+".txt");
-        FileUtils.writeStringToFile(errorFile, message);
+        File errorFile = new File(outputDir, errorEntity.getId().toString()+".txt");
+        FileUtils.writeStringToFile(errorFile, error.getStackTrace());
         logger.info("Wrote error message to "+errorFile);
         
-        entityBean.setOrUpdateValue(error.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, errorFile.getAbsolutePath());
-    	
-    	entityBean.addEntityToParent(ownerKey, rootEntity.getId(), error.getId(), rootEntity.getMaxOrderIndex()+1, 
+        entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, errorFile.getAbsolutePath());
+        entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_DESCRIPTION, error.getDescription());
+        entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_CLASSIFICATION, error.getType().toString());
+        
+    	entityBean.addEntityToParent(ownerKey, rootEntity.getId(), errorEntity.getId(), rootEntity.getMaxOrderIndex()+1, 
     			EntityConstants.ATTRIBUTE_ENTITY);
+    	
+    	switch (error.getType()) {
+    	case RecoverableError:
+    	    markSampleForReprocessing();
+    	    break;
+    	case LabError:
+    	    reportError();
+    	    break;
+    	case ComputeError:
+    	    logError();
+    	    break;
+	    default:
+	        logger.warn("Cannot classify error type");
+	        break;
+    	}
+    	
+    }
+    
+    private void markSampleForReprocessing() {
+        try {
+            Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);
+            if (sample!=null && sample.getName().contains("~")) {
+                sample = entityBean.getAncestorWithType(sample, EntityConstants.TYPE_SAMPLE);
+            }
+            if (sample==null) {
+                throw new EntityException("Could not find containing Sample for "+rootEntity.getId());
+            }
+            entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
+            logger.info("Marked sample for reprocessing: "+sample.getId());
+        }
+        catch (Exception e) {
+            logger.error("Error trying to mark sample for reprocessing",e);
+        }
+    }
+
+    private void reportError() {
+        try {
+            Entity errorOntology = annotationBean.getErrorOntology();
+            Entity keyEntity = EntityUtils.findChildWithName(errorOntology, LAB_ERROR_TERM_NAME);
+            String keyString = keyEntity.getName();
+            String valueString = error.getDescription();
+            final OntologyAnnotation annotation = new OntologyAnnotation(
+                    null, rootEntity.getId(), keyEntity.getId(), keyString, null, valueString);
+            Entity annotationEntity = annotationBean.createOntologyAnnotation("user:system", annotation);
+            DataReporter reporter = new DataReporter(FROM_EMAIL, TO_EMAIL);
+            reporter.reportData(rootEntity, annotationEntity.getName());
+        }
+        catch (Exception e) {
+            logger.error("Error trying to report error on "+rootEntity.getId(), e);
+        }
+        
+    }
+
+    private void logError() {
+        // Should already be logged in the server log
+    }
+    
+    private enum ErrorType {
+        RecoverableError,
+        LabError,
+        ComputeError,
+        UnclassifiedError
+    }
+    
+    private class ClassifiedError {
+        private Exception exception;
+        private String stackTrace;
+        private ErrorType type;
+        private String description;
+        public ClassifiedError(Exception exception) {
+            this.stackTrace = ExceptionUtils.getStackTrace(exception);
+            classify();
+        }
+        private void classify() {
+            List<Throwable> trace = new ArrayList<>();
+            Throwable e = exception;
+            while (e!=null) {
+                trace.add(e);
+                e = e.getCause();
+            }
+            // Start with the inner-most exception and find one that we know how to process
+            for(Throwable t : trace) {
+                if (t instanceof MissingGridResultException) {
+                    classify((MissingGridResultException)t);
+                    return;
+                }
+                else if (t instanceof MissingDataException) {
+                    classify((MissingDataException)t);
+                    return;
+                }
+                else if (t instanceof MetadataException) {
+                    classify((MetadataException)t);
+                    return;
+                }
+                else if (t instanceof SubmitJobException) {
+                    classify((SubmitJobException)t);
+                    return;
+                }
+                else if (t instanceof ServiceException) {
+                    classify((ServiceException)t);
+                    return;
+                }
+            }
+            this.type = ErrorType.UnclassifiedError;
+            this.description = "Unable to classify error";
+        }
+
+        private void classify(MissingGridResultException e) {
+            if (e.getFilepath()==null) {
+                classify((MissingDataException)e);
+                return;
+            }
+            if (e.getMessage().contains("core dumped")) {
+                this.type = ErrorType.ComputeError;
+                this.description = "Segmentation fault";
+                return;
+            }
+            File dir = new File(e.getFilepath());
+            if (!dir.exists()) {
+                this.type = ErrorType.ComputeError;
+                this.description = "Missing grid result directory: "+dir.getAbsolutePath();
+                return;
+            }
+            File sgeOutputDir = new File(dir, "sge_output");
+            File sgeErrorDir = new File(dir, "sge_error");
+            File[] outputFiles = FileUtil.getFilesWithPrefixes(sgeOutputDir, "*Output.*");
+            File[] errorFiles = FileUtil.getFilesWithPrefixes(sgeErrorDir, "*Error.*");
+            List<File> files = new ArrayList<File>();
+            files.addAll(Arrays.asList(errorFiles));
+            files.addAll(Arrays.asList(outputFiles));
+            
+            for(File file : files) {
+                try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+                    String line = br.readLine();
+                    while (line != null) {
+                        if (line.matches("\\d+ Bus error")) {
+                            this.type = ErrorType.RecoverableError;
+                            this.description = "I/O error on the grid";
+                            return;
+                        }
+                        else if (line.matches("\\d+ Killed")) {
+                            this.type = ErrorType.RecoverableError;
+                            this.description = "Job killed on the grid";
+                            return;
+                        }
+                        else if (line.matches("Fail to allocate memory")) {
+                            this.type = ErrorType.RecoverableError;
+                            this.description = "Failed to allocate enough memory";
+                            return;
+                        }
+                        line = br.readLine();
+                    }
+                }
+                catch (Exception ex) {
+                    logger.error("Error trying to classify error", ex);
+                }
+            }
+        }
+        
+        private void classify(MissingDataException e) {
+            this.type = ErrorType.ComputeError;
+            this.description = "Unrecognized missing data error";
+        }
+
+        private void classify(MetadataException e) {
+            this.type = ErrorType.LabError;
+            this.description = e.getMessage();
+        }
+        
+        private void classify(SubmitJobException e) {
+            this.type = ErrorType.ComputeError;
+            this.description = "Unrecognized grid error";
+        }
+
+        private void classify(ServiceException e) {
+            if (e.getMessage().contains("java.net.SocketTimeoutException: Read timed out")) {
+                this.type = ErrorType.RecoverableError;
+                this.description = "Problem connecting to JMS queue";
+            }
+            else if (e.getMessage().contains("failed on the compute grid")) {
+                this.type = ErrorType.RecoverableError;
+                this.description = "Job failed on the compute grid";
+            }
+            else {
+                this.type = ErrorType.ComputeError;
+                this.description = "Unrecognized compute error";
+            }
+        }
+        
+        public Exception getException() {
+            return exception;
+        }
+        public String getStackTrace() {
+            return stackTrace;
+        }
+        public ErrorType getType() {
+            return type;
+        }
+        public String getDescription() {
+            return description;
+        }
+        
     }
 }
