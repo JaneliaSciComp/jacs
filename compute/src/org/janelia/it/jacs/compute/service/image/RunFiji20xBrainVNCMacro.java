@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
@@ -362,7 +363,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         });
         
         if (files.length==0) {
-            throw new MissingDataException("No output files found in directory "+outputDir);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "No output files found in directory "+outputDir);
         }
         
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
@@ -387,7 +388,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
             }
         }
         catch (Exception e) {
-            throw new MissingDataException("Error discoverying files in "+outputDir,e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Error discoverying files in "+outputDir,e);
         }
 	}
 }
