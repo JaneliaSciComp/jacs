@@ -145,6 +145,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     private void reportError() {
         try {
+        	// Annotate the run
             Entity errorOntology = annotationBean.getErrorOntology();
             Entity keyEntity = EntityUtils.findChildWithName(errorOntology, LAB_ERROR_TERM_NAME);
             String keyString = keyEntity.getName();
@@ -152,8 +153,11 @@ public class CreateErrorEntityService extends AbstractEntityService {
             final OntologyAnnotation annotation = new OntologyAnnotation(
                     null, rootEntity.getId(), keyEntity.getId(), keyString, null, valueString);
             Entity annotationEntity = annotationBean.createOntologyAnnotation("user:system", annotation);
+            
+            // Report the sample
+            Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);
             DataReporter reporter = new DataReporter(FROM_EMAIL, TO_EMAIL);
-            reporter.reportData(rootEntity, annotationEntity.getName());
+            reporter.reportData(sample, annotationEntity.getName());
         }
         catch (Exception e) {
             logger.error("Error trying to report error on "+rootEntity.getId(), e);
@@ -266,6 +270,11 @@ public class CreateErrorEntityService extends AbstractEntityService {
                         else if (line.matches(".*?failed on (the )?compute grid.*?")) {
                             this.type = ErrorType.RecoverableError;
                             this.description = "Job failed on the compute grid";
+                            return;
+                        }
+                        else if (line.matches(".*?Images are different dimensions! Do nothing!.*?")) {
+                            this.type = ErrorType.LabError;
+                            this.description = "Inconsistent image dimensions";
                             return;
                         }
                         line = br.readLine();
