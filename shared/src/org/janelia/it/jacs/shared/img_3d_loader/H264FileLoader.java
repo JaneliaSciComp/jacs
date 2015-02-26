@@ -41,7 +41,7 @@ public class H264FileLoader extends AbstractVolumeFileLoader {
             movie.start();
             movie.grab();
             ImageStack image = movie.getImage();
-            int frames = image.get_num_frames();
+            int frames = image.getNumFrames();
             PPMFileAcceptor acceptor = new PPMFileAcceptor();
             for (int i = 0; i < frames; i++ ) {
                 acceptor.setFrameNum(i);
@@ -64,7 +64,7 @@ public class H264FileLoader extends AbstractVolumeFileLoader {
         movie.start();
         movie.grab();
         ImageStack image = movie.getImage();
-        int frames = image.get_num_frames();
+        int frames = image.getNumFrames();
         
         ByteGatherAcceptor acceptor = new ByteGatherAcceptor();
         for (int i = 0; i < frames; i++ ) {
