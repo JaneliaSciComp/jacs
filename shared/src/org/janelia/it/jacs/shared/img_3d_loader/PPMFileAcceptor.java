@@ -48,6 +48,26 @@ public class PPMFileAcceptor implements FFMPGByteAcceptor {
     }
     
     @Override
+    public void accept(byte[] bytes, int linesize, int width, int height) {
+        final String FILENAME_FORMAT = "image%05d.ppm";
+        // Open file
+        try (OutputStream stream = new FileOutputStream(String.format(FILENAME_FORMAT,frameNum))) {
+
+            // Write header
+            stream.write(("P6\n" + width + " " + height + "\n255\n").getBytes());
+
+            // Write pixel data
+            for (int y = 0; y < height; y++) {
+                stream.write(bytes, y * linesize, linesize);
+            }
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+
+    }
+    
+    @Override
     public void setPixelBytes(int pixelBytes) {
         this.pixelBytes = pixelBytes;
     }

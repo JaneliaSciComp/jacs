@@ -14,6 +14,7 @@ import org.bytedeco.javacpp.BytePointer;
  */
 public interface FFMPGByteAcceptor {
     void accept(BytePointer data, int linesize, int width, int height);
+    void accept(byte[] data, int linesize, int width, int height);
     void setFrameNum(int frameNum);
     void setPixelBytes(int pixelBytes);
 }

@@ -73,9 +73,9 @@ public class H5JLoader
             throws Exception {
         int width = _image.width();
         int height = _image.height();
-//        BytePointer data = _image.image(iFrame);
+        byte[] data = _image.interleave(iFrame, 0, 3);
         int linesize = _image.linesize(iFrame);
-//        acceptor.accept(data, linesize, width, height);
+        acceptor.accept(data, linesize, width, height);
     }
 
 }
