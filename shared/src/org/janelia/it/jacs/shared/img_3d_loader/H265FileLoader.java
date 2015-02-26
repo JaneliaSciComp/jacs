@@ -62,8 +62,8 @@ public class H265FileLoader extends AbstractVolumeFileLoader {
         try {
             for (String channelId : channels) {                
                 ImageStack image = reader.extract(channelId);
-                acceptor.setPixelBytes(image.get_bytes_per_pixel());
-                int frameCount = image.get_num_frames();
+                acceptor.setPixelBytes(image.getBytesPerPixel());
+                int frameCount = image.getNumFrames();
                 for (int i = 0; i < frameCount; i++) {
                     logger.debug("Saving frame " + i + " of channel " + channelId);
                     acceptor.setFrameNum(i);                    
