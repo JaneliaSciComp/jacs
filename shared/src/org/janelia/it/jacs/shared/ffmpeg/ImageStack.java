@@ -2,7 +2,6 @@
  * Created by bolstadm on 10/29/14.
  */
 package org.janelia.it.jacs.shared.ffmpeg;
-package ffmpeg;
 // Used for testing outside of the workstation
 //package ffmpeg;
 
