@@ -1,11 +1,14 @@
 package org.janelia.it.jacs.shared.ffmpeg;
-//package FFmpeg;
+// Used for testing outside of the workstation
+//package ffmpeg;
 
 import ch.systemsx.cisd.hdf5.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
+import java.util.ListIterator;
+
 import org.bytedeco.javacpp.BytePointer;
 import org.janelia.it.jacs.shared.img_3d_loader.FFMPGByteAcceptor;
 
@@ -32,46 +35,40 @@ public class H5JLoader
 
     public List<String> channelNames() { return _reader.object().getAllGroupMembers("/Channels"); }
 
-    public ImageStack extract(String channelID) throws Exception
-    {
-        // create a temp file
-        File temp = File.createTempFile(channelID, ".tmp");
-        String path = temp.getAbsolutePath();
-        //System.err.println("Temp file created: " + path);
+    public ImageStack extractAllChannels() {
+        _image = new ImageStack();
 
-        // open a handle to it
-        FileOutputStream fh = new FileOutputStream(temp);
-        //System.err.println("Temp file opened for writing.");
-
-        IHDF5OpaqueReader channel = _reader.opaque();
-        byte[] data = channel.readArray("/Channels/" + channelID);
-        fh.write(data);
-        fh.close();
-
-        FFMpegLoader movie = new FFMpegLoader(path);
-        movie.start();
-        movie.grab();
-        _image = movie.getImage();
-
-        // try to delete the file.
-        // The file will be deleted when all the open handles have been
-        // closed.
-        boolean deleted = false;
-        try
+        List<String> channels = channelNames();
+        for (ListIterator<String> iter = channels.listIterator(); iter.hasNext(); )
         {
-            deleted = temp.delete();
-        } catch (SecurityException e)
-        {
-            // ignore
+            String channel_id = iter.next();
+            try
+            {
+                ImageStack frames = extract(channel_id);
+                _image.merge( frames );
+            } catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
-
-        // else delete the file when the program ends
-        if (!deleted)
-            temp.deleteOnExit();
 
         return _image;
     }
-    
+
+    public ImageStack extract(String channelID) throws Exception
+    {
+        IHDF5OpaqueReader channel = _reader.opaque();
+        byte[] data = channel.readArray("/Channels/" + channelID);
+
+        FFMpegLoader movie = new FFMpegLoader(data);
+        movie.start();
+        movie.grab();
+        ImageStack stack = movie.getImage();
+
+        return stack;
+    }
+
+
     public void saveFrame(int iFrame, FFMPGByteAcceptor acceptor)
             throws Exception {
         int width = _image.width();
@@ -79,6 +76,6 @@ public class H5JLoader
         BytePointer data = _image.image(iFrame);
         int linesize = _image.linesize(iFrame);
         acceptor.accept(data, linesize, width, height);
-    }    
+    }
 
 }

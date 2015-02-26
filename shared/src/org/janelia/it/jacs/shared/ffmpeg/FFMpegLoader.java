@@ -4,10 +4,14 @@
  * Modeled on the javacpp tutorial with a fair amount of lifting from the javacv
  * FFmpegFrameGrabber class
  */
+
 package org.janelia.it.jacs.shared.ffmpeg;
+// Used by me for testing outside of the workstation
+//package ffmpeg;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.DoublePointer;
+import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.PointerPointer;
 
 import static org.bytedeco.javacpp.avcodec.*;
@@ -17,9 +21,35 @@ import static org.bytedeco.javacpp.avutil.*;
 import static org.bytedeco.javacpp.swscale.*;
 import org.janelia.it.jacs.shared.img_3d_loader.FFMPGByteAcceptor;
 
-public class FFMpegLoader {
+class ReadInput extends Read_packet_Pointer_BytePointer_int {
+    private byte[] _buffer;
+    private boolean _read_bytes;
 
-    static {
+    public ReadInput(byte[] bb) {
+        super();
+        this._buffer = bb;
+        _read_bytes = true;
+    }
+
+    @Override
+    public int call(Pointer opaque, BytePointer buffer, int buffer_size) {
+        int buf_size = buffer_size;
+        if ( _read_bytes )
+        {
+            buffer.put(_buffer, 0, buffer_size);
+            _read_bytes = false;
+        }
+        else
+            buf_size = 0;
+
+        return buf_size;
+    }
+};
+
+public class FFMpegLoader
+{
+    static
+    {
         // Register all formats and codecs
         avcodec_register_all();
         avdevice_register_all();
@@ -28,7 +58,6 @@ public class FFMpegLoader {
     }
 
     public static enum ImageMode {
-
         COLOR, GRAY, RAW
     }
 
@@ -46,12 +75,30 @@ public class FFMpegLoader {
     private long _time_stamp;
     private int frameNumber;
     private boolean deinterlace = false;
+    private BytePointer _ibuffer;
+    private int _components_per_frame;
 
-    public FFMpegLoader(String _filename) {
-        this._filename = _filename;
+    public FFMpegLoader(String filename)
+    {
+        this._filename = filename;
+        _format_context = new AVFormatContext(null);
     }
 
-    public ImageStack getImage() {
+    public FFMpegLoader(byte[] ibytes)
+    {
+        this._filename = "";
+        _ibuffer = new BytePointer(ibytes);
+        int BUFFER_SIZE=ibytes.length;
+        // allocate buffer
+        BytePointer buffer = new BytePointer(av_malloc(BUFFER_SIZE));
+        // create format context
+        _format_context = avformat_alloc_context();
+        _format_context.pb(avio_alloc_context(buffer, BUFFER_SIZE, 0, _ibuffer, new ReadInput(ibytes), null, null));
+        _format_context.pb().seekable(0);
+    }
+
+    public ffmpeg.ImageStack getImage()
+    {
         return _image;
     }
 
@@ -115,20 +162,20 @@ public class FFMpegLoader {
     public int getPixelFormat()
     {
         int result = AV_PIX_FMT_NONE;
-        if (_image.get_num_components() == 1)
+        if (_components_per_frame == 1)
         {
-            if (_image.get_bytes_per_pixel() == 1)
+            if (_image.getBytesPerPixel() == 1)
                 result = AV_PIX_FMT_GRAY8;
-            else if (_image.get_bytes_per_pixel() == 2)
+            else if (_image.getBytesPerPixel() == 2)
                 result = AV_PIX_FMT_GRAY16;
             else
                 result = AV_PIX_FMT_NONE;
             }
-        else if (_image.get_num_components() == 3)
+        else if (_components_per_frame == 3)
         {
             result = AV_PIX_FMT_BGR24;
         }
-        else if (_image.get_num_components() == 4)
+        else if (_components_per_frame == 4)
         {
             result = AV_PIX_FMT_BGRA;
         }
@@ -208,7 +255,6 @@ public class FFMpegLoader {
     public void startUnsafe() throws Exception {
         int ret;
         img_convert_ctx = null;
-        _format_context = new AVFormatContext(null);
         _video_codec = null;
         pkt = new AVPacket();
         pkt2 = new AVPacket();
@@ -276,10 +322,10 @@ public class FFMpegLoader {
         int pix_fmt = _video_codec.pix_fmt();
         AVPixFmtDescriptor fmt = av_pix_fmt_desc_get(pix_fmt);
         int comps = fmt.nb_components();
-        _image.set_num_components(comps);
+        _components_per_frame = comps;
         AVComponentDescriptor desc = fmt.comp();
         int bpp = comps / (desc.step_minus1() + 1);
-        _image.set_bytes_per_pixel(bpp);
+        _image.setBytesPerPixel(bpp);
     }
 
     public void stop() throws Exception {
@@ -298,46 +344,57 @@ public class FFMpegLoader {
         int width = getImageWidth() > 0 ? getImageWidth() : _video_codec.width();
         int height = getImageHeight() > 0 ? getImageHeight() : _video_codec.height();
 
-        _image.set_height(height);
-        _image.set_width(width);
+        _image.setHeight(height);
+        _image.setWidth(width);
 
-                int fmt = getPixelFormat();
+        int fmt = getPixelFormat();
 
-                // Determine required buffer size and allocate buffer
-                int size = avpicture_get_size(fmt, width, height);
-                _buffer_rgb = new BytePointer(av_malloc(size));
+        // Determine required buffer size and allocate buffer
+        int size = avpicture_get_size(fmt, width, height);
+        _buffer_rgb = new BytePointer(av_malloc(size));
 
-                // Assign appropriate parts of buffer to image planes in picture_rgb
-                // Note that picture_rgb is an AVFrame, but AVFrame is a superset of AVPicture
-                avpicture_fill(new AVPicture(picture_rgb), _buffer_rgb, fmt, width, height);
+        // Assign appropriate parts of buffer to image planes in picture_rgb
+        // Note that picture_rgb is an AVFrame, but AVFrame is a superset of AVPicture
+        avpicture_fill(new AVPicture(picture_rgb), _buffer_rgb, fmt, width, height);
 
         // Assign to the frame so the memory can be deleted later
         f.buffer_rgb = _buffer_rgb;
         f.picture = picture;
         f.picture_rgb = picture_rgb;
+        f.imageBytes.add( new byte[width * height] );
     }
 
-    private void processImage() throws Exception
+    private void extractBytes(Frame frame, BytePointer imageBytes) {
+        byte[] bytes = new byte[_video_codec.width() * _video_codec.height() * 3];
+        imageBytes.get(bytes);
+        byte[] frameBytes = frame.imageBytes.get(0);
+        for (int i = 0; i < frameBytes.length; i++)
+            frameBytes[i] = bytes[3 * i];
+    }
+
+    private void processImage(Frame frame) throws Exception
     {
-                // Deinterlace Picture
-                if (deinterlace) {
-                    AVPicture p = new AVPicture(picture);
-                    avpicture_deinterlace(p, p, _video_codec.pix_fmt(), _video_codec.width(), _video_codec.height());
-                }
-
-                // Convert the image into BGR or GRAY format that OpenCV uses
-                img_convert_ctx = sws_getCachedContext(img_convert_ctx,
-                        _video_codec.width(), _video_codec.height(), _video_codec.pix_fmt(),
-                        getImageWidth(), getImageHeight(), getPixelFormat(), SWS_BILINEAR,
-                        null, null, (DoublePointer) null);
-                if (img_convert_ctx == null) {
-                    throw new Exception("sws_getCachedContext() error: Cannot initialize the conversion context.");
-                }
-
-                // Convert the image from its native format to RGB or GRAY
-                sws_scale(img_convert_ctx, new PointerPointer(picture), picture.linesize(), 0,
-                        _video_codec.height(), new PointerPointer(picture_rgb), picture_rgb.linesize());
+        // Deinterlace Picture
+        if (deinterlace) {
+            AVPicture p = new AVPicture(picture);
+            avpicture_deinterlace(p, p, _video_codec.pix_fmt(), _video_codec.width(), _video_codec.height());
         }
+
+        // Convert the image into BGR or GRAY format that OpenCV uses
+        img_convert_ctx = sws_getCachedContext(img_convert_ctx,
+                _video_codec.width(), _video_codec.height(), _video_codec.pix_fmt(),
+                getImageWidth(), getImageHeight(), getPixelFormat(), SWS_BILINEAR,
+                null, null, (DoublePointer) null);
+        if (img_convert_ctx == null) {
+            throw new Exception("sws_getCachedContext() error: Cannot initialize the conversion context.");
+        }
+
+        // Convert the image from its native format to RGB or GRAY
+        sws_scale(img_convert_ctx, new PointerPointer(picture), picture.linesize(), 0,
+                _video_codec.height(), new PointerPointer(picture_rgb), picture_rgb.linesize());
+
+        extractBytes(frame, picture_rgb.data(0));
+    }
 
     public void grab() throws Exception {
         Frame f;
@@ -364,16 +421,18 @@ public class FFMpegLoader {
 
         if (_frame_grabbed) {
             _frame_grabbed = false;
-            processImage();
+            processImage(frame);
             frame.keyFrame = picture.key_frame() != 0;
             frame.image = picture_rgb;
             return frame;
         }
         boolean done = false;
-        while (!done) {
-            if (pkt2.size() <= 0) {
-                if (av_read_frame(_format_context, pkt) < 0) {
-                    if (_video_stream != null) {
+        while (!done)
+        {
+                if (av_read_frame(_format_context, pkt) < 0)
+                {
+                    if (_video_stream != null)
+                    {
                         // The video codec may have buffered some frames
                         pkt.stream_index(_video_stream.index());
                         pkt.flags(AV_PKT_FLAG_KEY);
@@ -383,7 +442,6 @@ public class FFMpegLoader {
                         return null;
                     }
                 }
-            }
 
             // Is this a packet from the video stream?
             if (_video_stream != null && pkt.stream_index() == _video_stream.index()) {
@@ -401,17 +459,19 @@ public class FFMpegLoader {
                     _time_stamp = 1000000L * pts * time_base.num() / time_base.den();
                     // best guess, AVCodecContext.frame_number = number of decoded frames...
                     frameNumber = (int) (_time_stamp * getFrameRate() / 1000000L);
-                    processImage();
+                    processImage(frame);
                     done = true;
                     frame.keyFrame = picture.key_frame() != 0;
                     frame.image = picture_rgb;
                     frame.opaque = picture;
                 } else if (pkt.data() == null && pkt.size() == 0) {
                     return null;
-                }
+                } else
+                    frame.release();
             }
 
-            if (pkt2.size() <= 0) {
+            if (pkt.size() > 0)
+            {
                 // Free the packet that was allocated by av_read_frame
                 av_free_packet(pkt);
             }
@@ -427,5 +487,4 @@ public class FFMpegLoader {
         int linesize = _image.linesize(iFrame);        
         acceptor.accept(data, linesize, width, height);
     }    
-    
 }
