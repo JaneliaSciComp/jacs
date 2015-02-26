@@ -17,6 +17,8 @@ public class Group extends Subject implements Serializable, IsSerializable
 {
 	public static final String ADMIN_GROUP_NAME = "admin";
     public static final String ADMIN_GROUP_KEY = "group:admin";
+	public static final String ALL_USERS_GROUP_NAME = "workstation_users";
+    public static final String ALL_USERS_GROUP_KEY = "group:workstation_users";
     
     @XmlElement(name="userRelationship")
     @XmlElementWrapper(name="userRelationships")
