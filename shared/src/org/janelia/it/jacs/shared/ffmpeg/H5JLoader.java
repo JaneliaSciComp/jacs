@@ -4,12 +4,9 @@ package org.janelia.it.jacs.shared.ffmpeg;
 
 import ch.systemsx.cisd.hdf5.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.bytedeco.javacpp.BytePointer;
 import org.janelia.it.jacs.shared.img_3d_loader.FFMPGByteAcceptor;
 
 public class H5JLoader
