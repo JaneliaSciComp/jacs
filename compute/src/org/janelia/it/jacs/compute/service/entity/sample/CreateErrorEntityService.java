@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.exception.ExceptionUtils;
@@ -41,6 +42,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
 	private static final String ERRORS_DIR_NAME = "Error";
     private static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
     private static final String LAB_ERROR_TERM_NAME = "Lab Error";
+    private static final int MAX_CONSECUTIVE_ERRORS = 3;
     
     private FileNode resultFileNode;
     private Entity rootEntity;
@@ -71,6 +73,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);
         this.error = new ClassifiedError(exception);
+        logger.info("Classified error as "+error.getType()+" with description '"+error.getDescription()+"'");
         
     	Entity errorEntity = entityBean.createEntity(rootEntity.getOwnerKey(), EntityConstants.TYPE_ERROR, "Error");
     	logger.info("Saved error entity as id="+errorEntity.getId());
@@ -106,6 +109,26 @@ public class CreateErrorEntityService extends AbstractEntityService {
     private void markSampleForReprocessing() {
         try {
             Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);
+
+            populateChildren(sample);
+            List<Entity> runs = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
+            Collections.reverse(runs);
+            
+            int numConsecutiveErrors = 0;
+            for(Entity run : runs) {
+                populateChildren(run);
+                Entity errorEntity = EntityUtils.findChildWithType(run, EntityConstants.TYPE_ERROR);
+                if (errorEntity==null) {
+                	break;
+                }
+                numConsecutiveErrors++;
+            }
+            
+            if (numConsecutiveErrors>=MAX_CONSECUTIVE_ERRORS) {
+            	logger.info("Sample has experienced "+numConsecutiveErrors+" consecutive errors. Will not mark for reprocessing.");
+            	return;
+            }
+            
             if (sample!=null && sample.getName().contains("~")) {
                 sample = entityBean.getAncestorWithType(sample, EntityConstants.TYPE_SAMPLE);
             }
@@ -122,6 +145,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     private void reportError() {
         try {
+        	// Annotate the run
             Entity errorOntology = annotationBean.getErrorOntology();
             Entity keyEntity = EntityUtils.findChildWithName(errorOntology, LAB_ERROR_TERM_NAME);
             String keyString = keyEntity.getName();
@@ -129,8 +153,11 @@ public class CreateErrorEntityService extends AbstractEntityService {
             final OntologyAnnotation annotation = new OntologyAnnotation(
                     null, rootEntity.getId(), keyEntity.getId(), keyString, null, valueString);
             Entity annotationEntity = annotationBean.createOntologyAnnotation("user:system", annotation);
+            
+            // Report the sample
+            Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);
             DataReporter reporter = new DataReporter(FROM_EMAIL, TO_EMAIL);
-            reporter.reportData(rootEntity, annotationEntity.getName());
+            reporter.reportData(sample, annotationEntity.getName());
         }
         catch (Exception e) {
             logger.error("Error trying to report error on "+rootEntity.getId(), e);
@@ -155,6 +182,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
         private ErrorType type;
         private String description;
         public ClassifiedError(Exception exception) {
+        	this.exception = exception;
             this.stackTrace = ExceptionUtils.getStackTrace(exception);
             classify();
         }
@@ -166,7 +194,9 @@ public class CreateErrorEntityService extends AbstractEntityService {
                 e = e.getCause();
             }
             // Start with the inner-most exception and find one that we know how to process
+            Collections.reverse(trace);
             for(Throwable t : trace) {
+            	logger.info("Attempting to classify "+t.getClass().getName());
                 if (t instanceof MissingGridResultException) {
                     classify((MissingGridResultException)t);
                     return;
@@ -210,29 +240,41 @@ public class CreateErrorEntityService extends AbstractEntityService {
             }
             File sgeOutputDir = new File(dir, "sge_output");
             File sgeErrorDir = new File(dir, "sge_error");
-            File[] outputFiles = FileUtil.getFilesWithPrefixes(sgeOutputDir, "*Output.*");
-            File[] errorFiles = FileUtil.getFilesWithPrefixes(sgeErrorDir, "*Error.*");
+            File[] outputFiles = FileUtil.getFiles(sgeOutputDir);
+            File[] errorFiles = FileUtil.getFiles(sgeErrorDir);
             List<File> files = new ArrayList<File>();
             files.addAll(Arrays.asList(errorFiles));
             files.addAll(Arrays.asList(outputFiles));
+            files.add(new File(dir, "DrmaaSubmitter.log"));
             
             for(File file : files) {
+            	logger.info("  Parsing file "+file.getAbsolutePath());
                 try(BufferedReader br = new BufferedReader(new FileReader(file))) {
                     String line = br.readLine();
                     while (line != null) {
-                        if (line.matches("\\d+ Bus error")) {
+                        if (line.matches(".*?\\d+ Bus error.*?")) {
                             this.type = ErrorType.RecoverableError;
                             this.description = "I/O error on the grid";
                             return;
                         }
-                        else if (line.matches("\\d+ Killed")) {
+                        else if (line.matches(".*?\\d+ Killed.*?")) {
                             this.type = ErrorType.RecoverableError;
                             this.description = "Job killed on the grid";
                             return;
                         }
-                        else if (line.matches("Fail to allocate memory")) {
+                        else if (line.matches(".*?Fail to allocate memory.*?")) {
                             this.type = ErrorType.RecoverableError;
                             this.description = "Failed to allocate enough memory";
+                            return;
+                        }
+                        else if (line.matches(".*?failed on (the )?compute grid.*?")) {
+                            this.type = ErrorType.RecoverableError;
+                            this.description = "Job failed on the compute grid";
+                            return;
+                        }
+                        else if (line.matches(".*?Images are different dimensions! Do nothing!.*?")) {
+                            this.type = ErrorType.LabError;
+                            this.description = "Inconsistent image dimensions";
                             return;
                         }
                         line = br.readLine();
@@ -242,6 +284,9 @@ public class CreateErrorEntityService extends AbstractEntityService {
                     logger.error("Error trying to classify error", ex);
                 }
             }
+
+            this.type = ErrorType.ComputeError;
+            this.description = "Unrecognized missing grid result error";
         }
         
         private void classify(MissingDataException e) {
@@ -260,11 +305,11 @@ public class CreateErrorEntityService extends AbstractEntityService {
         }
 
         private void classify(ServiceException e) {
-            if (e.getMessage().contains("java.net.SocketTimeoutException: Read timed out")) {
+            if (e.getMessage().matches(".*?java.net.SocketTimeoutException: Read timed out.*?")) {
                 this.type = ErrorType.RecoverableError;
                 this.description = "Problem connecting to JMS queue";
             }
-            else if (e.getMessage().contains("failed on the compute grid")) {
+            else if (e.getMessage().matches(".*?failed on (the )?compute grid.*?")) {
                 this.type = ErrorType.RecoverableError;
                 this.description = "Job failed on the compute grid";
             }
@@ -274,18 +319,16 @@ public class CreateErrorEntityService extends AbstractEntityService {
             }
         }
         
-        public Exception getException() {
-            return exception;
-        }
         public String getStackTrace() {
             return stackTrace;
         }
+        
         public ErrorType getType() {
             return type;
         }
+        
         public String getDescription() {
             return description;
         }
-        
     }
 }

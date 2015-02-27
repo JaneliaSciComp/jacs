@@ -37,6 +37,8 @@ public class SubjectManager implements SubjectManagerMBean {
                 	annotationBean.createWorkspace(user.getKey());
 	            	log.debug("Created workspace for user " + username);
                 }
+                // Add user to the "everyone" group
+                addUserToGroup(user.getKey(), Group.ALL_USERS_GROUP_KEY);
             }
             else {
             	log.debug("User " + username+" already exists.");

@@ -6,7 +6,7 @@ package org.janelia.it.jacs.compute.service.exceptions;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MetadataConsensusException extends MetadataException {
+public class MetadataConsensusException extends SAGEMetadataException {
 
     public MetadataConsensusException(String msg) {
         super(msg);
