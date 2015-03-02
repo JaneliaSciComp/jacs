@@ -119,12 +119,12 @@ public class SolrQueryBuilder {
     	StringBuffer qs = new StringBuffer();
     	
     	if (!ownerKeys.isEmpty()) {
-        	qs.append("+(");
+        	qs.append("+subjects:(");
         	int i = 0;
         	for(String ownerKey : ownerKeys) {
         		if (i++>0) qs.append(" OR ");
                 String ownerName = ownerKey.split(":")[1];
-        		qs.append("subjects:\""+ownerName+"\"");
+        		qs.append(ownerName);
         	}
         	qs.append(")");
     	}
@@ -155,7 +155,7 @@ public class SolrQueryBuilder {
         	for(String ownerKey : ownerKeys) {
                 String ownerName = ownerKey.split(":")[1];
         		String fieldNamePrefix = SolrUtils.getFormattedName(ownerName);
-        		qs.append(" OR "+fieldNamePrefix+"_annotations:("+escapedSearchString+") OR "+fieldNamePrefix+"_annotations_exact:("+escapedSearchString+")");	
+        		qs.append(" OR "+fieldNamePrefix+"_annotations:("+escapedSearchString+")");	
         	}
         	
             qs.append(")");
