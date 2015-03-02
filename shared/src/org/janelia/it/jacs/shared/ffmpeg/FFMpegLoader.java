@@ -483,8 +483,9 @@ public class FFMpegLoader
             throws Exception {
         int width = _image.width();
         int height = _image.height();
-//        BytePointer data = _image.image(iFrame);
-        int linesize = _image.linesize(iFrame);        
-//        acceptor.accept(data, linesize, width, height);
-    }    
+        byte[] data = _image.image(iFrame, 0);
+//                .interleave(iFrame, 0, 1);
+        int linesize = _image.linesize(iFrame);
+        acceptor.accept(data, linesize, width, height);
+    }
 }

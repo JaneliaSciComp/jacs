@@ -6,7 +6,6 @@
 
 package org.janelia.it.jacs.shared.img_3d_loader;
 
-import java.util.List;
 import org.slf4j.Logger;
 import org.janelia.it.jacs.shared.ffmpeg.H5JLoader;
 import org.janelia.it.jacs.shared.ffmpeg.ImageStack;
@@ -58,10 +57,12 @@ public class H265FileLoader extends AbstractVolumeFileLoader {
     }
     
     private void accept(H5JLoader reader, FFMPGByteAcceptor acceptor) {
-        List<String> channels = reader.channelNames();
         try {
             ImageStack image = reader.extractAllChannels();
-            for (int i = 0; i < image.getNumFrames(); i++) {
+            int maxFrames = image.getNumFrames();
+            int startingFrame = 0;
+            int endingFrame = startingFrame + maxFrames;
+            for (int i = startingFrame; i < endingFrame; i++) {
                 acceptor.setPixelBytes(image.getBytesPerPixel());
                 acceptor.setFrameNum(i);
                 reader.saveFrame(i, acceptor);

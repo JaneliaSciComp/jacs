@@ -36,21 +36,24 @@ public class H264FileLoader extends AbstractVolumeFileLoader {
     }
 
     public void saveFramesAsPPM(String filename) {
-        FFMpegLoader movie = new FFMpegLoader(filename);
-        try {
-            movie.start();
-            movie.grab();
-            ImageStack image = movie.getImage();
-            int frames = image.getNumFrames();
-            PPMFileAcceptor acceptor = new PPMFileAcceptor();
-            for (int i = 0; i < frames; i++ ) {
-                acceptor.setFrameNum(i);
-                movie.saveFrame(i, acceptor);
-            }
-            movie.release();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        FFMpegLoader reader = new FFMpegLoader(filename);
+        FFMPGByteAcceptor acceptor = new PPMFileAcceptor();
+        accept(reader, acceptor);
+//        FFMpegLoader movie = new FFMpegLoader(filename);
+//        try {
+//            movie.start();
+//            movie.grab();
+//            ImageStack image = movie.getImage();
+//            int frames = image.getNumFrames();
+//            PPMFileAcceptor acceptor = new PPMFileAcceptor();
+//            for (int i = 0; i < frames; i++ ) {
+//                acceptor.setFrameNum(i);
+//                movie.saveFrame(i, acceptor);
+//            }
+//            movie.release();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
     
     /**
@@ -74,6 +77,26 @@ public class H264FileLoader extends AbstractVolumeFileLoader {
         
         //helper.dumpMeta(acceptor);
         return acceptor;
+    }
+    
+    private void accept(FFMpegLoader reader, FFMPGByteAcceptor acceptor) {
+        try {
+            reader.start();
+            reader.grab();
+
+            ImageStack image = reader.getImage();
+            int maxFrames = image.getNumFrames();
+            int startingFrame = 0;
+            int endingFrame = startingFrame + maxFrames;
+            for (int i = startingFrame; i < endingFrame; i++) {
+                acceptor.setPixelBytes(image.getBytesPerPixel());
+                acceptor.setFrameNum(i);
+                reader.saveFrame(i, acceptor);
+            }
+            reader.release();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
 }
