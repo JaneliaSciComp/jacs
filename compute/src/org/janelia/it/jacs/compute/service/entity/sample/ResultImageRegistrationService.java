@@ -163,21 +163,25 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}
     	
     	if (default3dImage!=null) {
-        	logger.info("Applying default 3d image to the Result, Pipeline Run, and Sample ("+sampleEntity.getName()+")");
+            logger.info("Applying default 3d image to the result ("+resultEntity.getId()+")");
         	entityHelper.setDefault3dImage(resultEntity, default3dImage);
+            logger.info("Applying default 3d image to the pipeline run ("+pipelineRunEntity.getId()+")");
         	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
 
         	Entity topLevelSample = sampleEntity;
-            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-            if (parentSample==null) {
-                // Already at top level sample
-            }
-            else {
-                // Set the image on the subsample
-                logger.info("Applying default 3d image to the sub-sample ("+parentSample.getName()+")");
-                entityHelper.setDefault3dImage(sampleEntity, default3dImage);
-                topLevelSample = parentSample;
-            }
+        	if (sampleEntity.getName().contains("~")) {
+	            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
+	            if (parentSample==null) {
+	                // Already at top level sample
+	            	logger.warn("Sub-sample "+sampleEntity.getName()+" has no ancestor sample");
+	            }
+	            else {
+	                // Set the image on the sub-sample
+	                logger.info("Applying default 3d image to the sub-sample ("+sampleEntity.getName()+")");
+	                entityHelper.setDefault3dImage(sampleEntity, default3dImage);
+	                topLevelSample = parentSample;
+	            }
+        	}
             
             // Set the top level sample, if this image matches the user's preference for the sample's data set
             
@@ -185,11 +189,11 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
             if (dataSet!=null) {
                 String sampleImageTypeName = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
-                logger.info("Sample image type is: "+sampleImageTypeName);
+                logger.debug("Sample image type is: "+sampleImageTypeName);
                 if (sampleImageTypeName!=null) {
                     SampleImageType sampleImageType = SampleImageType.valueOf(sampleImageTypeName);
                     if (sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
-                        logger.info("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
+                        logger.debug("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
                         entityHelper.setDefault3dImage(topLevelSample, default3dImage);  
                     }
                 }

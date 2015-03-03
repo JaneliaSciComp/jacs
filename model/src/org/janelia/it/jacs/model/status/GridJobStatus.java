@@ -207,7 +207,7 @@ public class GridJobStatus implements Serializable, IsSerializable {
 
         try {
             if (null != resources.get("submission_time")) {
-                setSubmitTime(new Date(df.parse(resources.get("submission_time")).longValue() * 1000));
+                setSubmitTime(new Date(df.parse(resources.get("submission_time")).longValue() ));
             }
         }
         catch (Throwable t) {
@@ -216,7 +216,7 @@ public class GridJobStatus implements Serializable, IsSerializable {
 
         try {
             if (null != resources.get("start_time")) {
-                setStartTime(new Date(df.parse(resources.get("start_time")).longValue() * 1000));
+                setStartTime(new Date(df.parse(resources.get("start_time")).longValue() ));
             }
         }
         catch (Throwable t) {
@@ -225,7 +225,7 @@ public class GridJobStatus implements Serializable, IsSerializable {
 
         try {
             if (null != resources.get("end_time")) {
-                setEndTime(new Date(df.parse(resources.get("end_time")).longValue() * 1000));
+                setEndTime(new Date(df.parse(resources.get("end_time")).longValue() ));
             }
         }
         catch (Throwable t) {

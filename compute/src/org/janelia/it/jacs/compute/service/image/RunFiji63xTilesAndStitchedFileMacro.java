@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
@@ -328,12 +329,12 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
     	File[] aviFiles = FileUtil.getFilesWithSuffixes(outputDir, ".avi");
     	if (aviFiles.length > 0) {
-			throw new MissingDataException("MP4 generation failed for "+resultFileNode.getDirectoryPath());
+			throw new MissingGridResultException(outputDir.getAbsolutePath(), "MP4 generation failed for "+resultFileNode.getDirectoryPath());
     	}
 
     	File[] mp4Files = FileUtil.getFilesWithSuffixes(outputDir, ".mp4");
     	if (mp4Files.length < 1) {
-			throw new MissingDataException("MP4 generation failed for "+resultFileNode.getDirectoryPath());
+			throw new MissingGridResultException(outputDir.getAbsolutePath(), "MP4 generation failed for "+resultFileNode.getDirectoryPath());
     	}
     	
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
@@ -371,7 +372,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             }
         }
         catch (Exception e) {
-            throw new MissingDataException("Error discovering files in "+outputDir,e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Error discovering files in "+outputDir,e);
         }
 	}
 }

@@ -18,6 +18,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
+import org.janelia.it.jacs.compute.service.exceptions.SAGEMetadataException;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -145,6 +146,9 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                     }
                 }
             }
+        }
+        if (input1==null) {
+            throw new SAGEMetadataException("Tile with anatomical area 'Brain' or '' not found for alignment");
         }
     }
 

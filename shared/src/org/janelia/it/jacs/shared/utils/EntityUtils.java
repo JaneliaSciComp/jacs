@@ -781,7 +781,14 @@ public class EntityUtils {
 	
 	public static Long getEntityIdFromUniqueId(String uniqueId) {
 		String[] pathParts = uniqueId.split("/");
-		if (pathParts.length<1) return null;
+		if (pathParts.length<1) {
+		    try {
+		        return new Long(uniqueId.trim());
+		    }
+		    catch (NumberFormatException e) {
+		        return null;
+		    }
+		}
 		String lastPart = pathParts[pathParts.length-1];
 		if (!lastPart.startsWith("e_")) return null;
 		return new Long(lastPart.substring(2));

@@ -108,4 +108,17 @@ public class StringUtils {
         return builder.toString();
     }
 
+    // Borrowed from Apache Commons
+    public static int countMatches(final String str, final String sub) {
+        if (isEmpty(str) || isEmpty(sub)) {
+            return 0;
+        }
+        int count = 0;
+        int idx = 0;
+        while ((idx = str.indexOf(sub, idx)) != -1) {
+            count++;
+            idx += sub.length();
+        }
+        return count;
+    }   
 }

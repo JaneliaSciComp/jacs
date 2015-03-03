@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
@@ -144,14 +145,14 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Stitch/blend core dumped for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Stitch/blend core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
         String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
         File stitchedFile = new File(stitchedFilename);
         
     	if (!stitchedFile.exists()) {
-    		throw new MissingDataException("Stitched output file not found for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Stitched output file not found for "+resultFileNode.getDirectoryPath());
     	}
 	}
     

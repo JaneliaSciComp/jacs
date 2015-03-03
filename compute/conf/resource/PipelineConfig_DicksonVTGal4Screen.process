@@ -16,8 +16,8 @@
 
         <!-- Default variables if they haven't been explicitly defined by task. -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-            <input name="REUSE_ALIGNMENT"/>
             <input name="OVERRIDE" value="false"/>
+            <input name="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_1" value="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
             <output name="REUSE_ALIGNMENT"/>

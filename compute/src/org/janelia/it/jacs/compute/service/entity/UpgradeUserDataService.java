@@ -1,9 +1,16 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.ontology.types.Category;
+import org.janelia.it.jacs.model.ontology.types.Tag;
+import org.janelia.it.jacs.model.ontology.types.Text;
+import org.janelia.it.jacs.model.user_data.Group;
+import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Upgrade the model to use the most current entity structure.
@@ -19,59 +26,55 @@ public class UpgradeUserDataService extends AbstractEntityService {
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model for "+ownerKey+" to latest version: "+serverVersion);
 
-        renameYoshiMacroResults();
+        createGroupEveryone();
+        createCommonOntology();
     }
 
-	private void renameYoshiMacroResults() throws Exception {
+	private void createGroupEveryone() throws Exception {
 
-		log.info("Renaming old 20x Normalization results");
+		log.info("Creating "+Group.ALL_USERS_GROUP_KEY);
+		Group allUsers = computeBean.createGroup("user:system", Group.ALL_USERS_GROUP_NAME);
 		
-		for(Entity pipelineRun : entityBean.getEntitiesByNameAndTypeName("user:asoy", "MBEW Pipeline 20x Results", EntityConstants.TYPE_PIPELINE_RUN)) {
-			
-			Entity sample = entityBean.getAncestorWithType(pipelineRun, EntityConstants.TYPE_SAMPLE);
-			if (sample.getName().contains("~")) {
-				sample = entityBean.getAncestorWithType(sample, EntityConstants.TYPE_SAMPLE);
-			}
-			
-			String dataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-			
-			if (dataSetIdentifier==null) {
-				log.warn("Data set identifier not found on entity "+sample.getId());
-				continue;
-			}
-			
-			EntityData ppEd = pipelineRun.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-			
-			String oldValue = ppEd.getValue();
-			
-			if ("YoshiNormalization20x".equals(oldValue)) {
-			
-				if (dataSetIdentifier.endsWith("mcfo_case_1")) {
-					ppEd.setValue("YoshiMacroMCFOCase1");
-				}
-				else if (dataSetIdentifier.endsWith("polarity_case_1")) {
-					ppEd.setValue("YoshiMacroPolarityCase1");
-				}
-				else if (dataSetIdentifier.endsWith("polarity_case_2")) {
-					ppEd.setValue("YoshiMacroPolarityCase2");
-				}
-				else if (dataSetIdentifier.endsWith("polarity_case_3")) {
-					ppEd.setValue("YoshiMacroPolarityCase3");
-				}
-				else if (dataSetIdentifier.endsWith("polarity_case_4")) {
-					ppEd.setValue("YoshiMacroPolarityCase4");
-				}
-				else {
-					log.warn("Unrecognized data set for 20x normalization: "+dataSetIdentifier);
-				}
-				
-				log.info("Changing "+oldValue+" to "+ppEd.getValue());
-				entityBean.saveOrUpdateEntityData(ppEd);
-			}
-			
-			// Free memory
-			pipelineRun.setEntityData(null);
+		allUsers.setFullName("Workstation Users");
+		computeBean.saveOrUpdateSubject(allUsers);
+		
+        annotationBean.createWorkspace(allUsers.getKey());
+
+		log.info("Adding all users to "+allUsers.getKey());
+		for(User user : computeBean.getUsers()) {
+			computeBean.addUserToGroup(user.getKey(), Group.ALL_USERS_GROUP_KEY);
+			annotationBean.addGroupWorkspaceToUserWorkspace(user.getKey(), Group.ALL_USERS_GROUP_KEY);
 		}
+	}
+	
+	private void createCommonOntology() throws Exception {
+
+		log.info("Creating common ontology");
+		
+		Entity ontology = annotationBean.createOntologyRoot(Group.ALL_USERS_GROUP_KEY, "Image Evaluation");
+		
+		// Convert "Error Ontology" into a subtree of the common ontology
+		Set<Entity> errorOntologySet = entityBean.getEntitiesByName("group:flylight", "Error Ontology");
+		if (!errorOntologySet.isEmpty()) {
+			Entity errorOntology = errorOntologySet.iterator().next();
+			errorOntology.setEntityTypeName(EntityConstants.TYPE_ONTOLOGY_ELEMENT);
+			errorOntology.setValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, "Category");
+			errorOntology.setName("Report");
+			entityBean.saveOrUpdateEntity(errorOntology);
+			entityBean.annexEntityTree(Group.ALL_USERS_GROUP_KEY, errorOntology.getId());
+			errorOntology = entityBean.getEntityById(errorOntology.getId()); // Get annexed entity with correct ownership
+			entityBean.addEntityToParent(ontology, errorOntology, 1, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
+		}
+		
+		// Create "Disposition" subtree
+		EntityData dispositionEd = annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, ontology.getId(), "Disposition", new Category(), 2);
+		Entity disposition = dispositionEd.getChildEntity();
+		int i = 1;
+		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Accepted", new Tag(), i++);
+		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Discard", new Tag(), i++);
+		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Re-image", new Tag(), i++);
+		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Image at 63x", new Tag(), i++);
+		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Image ROI at 63x", new Text(), i++);
 		
 	}
 }

@@ -9,6 +9,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
@@ -102,7 +103,7 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Grouping core dumped for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Grouping core dumped for "+resultFileNode.getDirectoryPath());
     	}
     	
         List<List<String>> groups = new ArrayList<List<String>>();
@@ -130,10 +131,10 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
           
         }
         catch (FileNotFoundException e) {
-    		throw new MissingDataException("Grouped output file not found at "+groupedFile.getAbsolutePath(), e);
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Grouped output file not found at "+groupedFile.getAbsolutePath(), e);
         }
         catch (IOException e) {
-    		throw new MissingDataException("Error reading grouped output file at "+groupedFile.getAbsolutePath(), e);
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Error reading grouped output file at "+groupedFile.getAbsolutePath(), e);
         }
     	
         int maxSizeIndex = 0;
@@ -181,7 +182,7 @@ public class Vaa3DStitchGroupingService extends SubmitDrmaaJobService {
 	        	}
             }
             catch (Exception e) {
-            	throw new MissingDataException("Error creating merged file symlinks");
+            	throw new MissingGridResultException(file.getAbsolutePath(), "Error creating merged file symlinks");
             }
             
         	
