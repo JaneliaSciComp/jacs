@@ -33,6 +33,10 @@ public class EntityConstants {
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
     public static final String NAME_SEARCH_RESULTS                   = "Search Results";
     
+    // Virtual types (not persisted)
+    public static final String IN_MEMORY_TYPE_VIRTUAL_ENTITY         = "Virtual Entity";
+    public static final String IN_MEMORY_ATTRIBUTE_TITLE             = "Virtual Title";
+    
     // Common Types
     public static final String TYPE_ANNOTATION                       = "Annotation";
     public static final String TYPE_FOLDER                           = "Folder";
