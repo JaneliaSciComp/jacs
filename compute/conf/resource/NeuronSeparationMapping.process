@@ -11,6 +11,8 @@
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
     	    <input name="OVERRIDE" value="false"/>
+            <input name="SEPARATION_ID_1"/>
+            <input name="SEPARATION_ID_2"/>
             <input name="TASK_PARAMETER_1" value="separation id 1"/>
             <input name="PROCESS_VARIABLE_1" value="SEPARATION_ID_1"/>
             <input name="TASK_PARAMETER_2" value="separation id 2"/>

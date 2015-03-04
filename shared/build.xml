@@ -53,7 +53,8 @@
             <pathelement location="${common.module}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
             <!--<fileset dir="${common.module}/JAXB/" includes="*.jar"/>-->
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
-            <fileset dir="${common.module}/javacpp-presets-bin/" includes="javacpp.jar,ffmpeg.jar,ffmpeg-macosx-x86_64.jar"/>
+            <fileset dir="${common.module}/javacpp-presets-bin/" includes="*.jar"/>
+            <fileset dir="${common.module}/JHDF/" includes=""/>
             <fileset dir="${common.module}/Apache-Commons/" includes="*.jar"/>
             <fileset dir="${common.module}/Guava/" includes="*.jar"/>
             <fileset dir="${common.module}/Logging/" includes="*.jar"/>

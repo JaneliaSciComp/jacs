@@ -880,6 +880,15 @@ public class FileUtil {
         }
         return fileList;
     }
+
+    public static File[] getFiles(File directory) {
+    	return directory.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return true;
+			}
+		});
+    }
     
     public static File[] getFilesWithPrefixes(File directory, final String... prefixes) {
     	return directory.listFiles(new FilenameFilter() {

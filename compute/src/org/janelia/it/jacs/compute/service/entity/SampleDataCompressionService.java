@@ -99,22 +99,18 @@ public class SampleDataCompressionService implements IService {
     
     private void doCreateInputList() throws ComputeException {
 
-        logger.info("Finding V3DRAW files to compress...");
-        
-        if (isDebug) {
-        	logger.info("This is a test run. Nothing will actually happen.");
-        }
-        else {
-        	logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");
-        }
-    	
         processV3dRawEntities();
         
         List<List<String>> inputGroups = createGroups(inputFiles, GROUP_SIZE);
         processData.putItem("INPUT_PATH_LIST", inputGroups);
         processData.putItem("ENTITY_MAP", entityMap);
         
-		logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
+        if (inputFiles.isEmpty()) {
+            logger.info("Nothing to be done.");
+        }
+        else {
+            logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
+        }
     }
 
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
@@ -152,8 +148,15 @@ public class SampleDataCompressionService implements IService {
     
 	public void processV3dRawEntities() throws ComputeException {
 
+        if (isDebug) {
+            logger.info("This is a test run. Nothing will actually happen.");
+        }
+        else {
+            logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");
+        }
+        
         if (rootEntityId!=null) {
-        	logger.info("Finding V3DRAW files under id="+rootEntityId);
+            logger.info("Finding V3DRAW files to compress under root "+rootEntityId);
         	
         	Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
         	if (entity == null) {
@@ -182,8 +185,6 @@ public class SampleDataCompressionService implements IService {
     			addV3dRawFile(entity);
     		}
         }
-    	
-		logger.info("The processing was a success.");
     }
     
     private void addV3dRawFile(Entity imageEntity) throws ComputeException {

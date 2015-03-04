@@ -11,6 +11,8 @@
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
     	    <input name="OVERRIDE" value="false"/>
+            <input name="SOURCE_FILE_PATHS"/>
+            <input name="TARGET_FILE_PATHS"/>
             <input name="TASK_PARAMETER_1" value="source file paths"/>
             <input name="PROCESS_VARIABLE_1" value="SOURCE_FILE_PATHS"/>
             <input name="TASK_PARAMETER_2" value="target file paths"/>

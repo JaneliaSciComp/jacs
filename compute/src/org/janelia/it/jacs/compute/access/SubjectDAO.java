@@ -148,7 +148,7 @@ public class SubjectDAO extends ComputeBaseDAO {
 
     /**
      * Defines the relationship between a user and group. If the user has any existing relationship with the group, it is
-     * deleted first. 
+     * updated instead.
      * @param userNameOrKey
      * @param groupNameOrKey
      * @param relationshipType

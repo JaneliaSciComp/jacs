@@ -23,10 +23,6 @@ public class EntityConstants {
     public static final String VALUE_DESYNC                          = "Desync";
     public static final String VALUE_RETIRED                         = "Retired";
     
-    // Entity Status
-    public static final String STATUS_DEPRECATED                     = "Deprecated";
-    public static final String STATUS_VALID                          = "Valid";
-
     // Singleton Entity Names
     public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
     public static final String NAME_SHARED_DATA                      = "Shared Data";
@@ -36,6 +32,10 @@ public class EntityConstants {
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
     public static final String NAME_SEARCH_RESULTS                   = "Search Results";
+    
+    // Virtual types (not persisted)
+    public static final String IN_MEMORY_TYPE_VIRTUAL_ENTITY         = "Virtual Entity";
+    public static final String IN_MEMORY_ATTRIBUTE_TITLE             = "Virtual Title";
     
     // Common Types
     public static final String TYPE_ANNOTATION                       = "Annotation";
@@ -208,7 +208,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SAGE_ID                             = "SAGE Id";
     
     // Error Attributes
-    public static final String ATTRIBUTE_MESSAGE                             = "Message";
+    public static final String ATTRIBUTE_DESCRIPTION                         = "Description";
+    public static final String ATTRIBUTE_CLASSIFICATION                      = "Classification";
     
     // Ontology Type Values
     public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL             = "Interval";

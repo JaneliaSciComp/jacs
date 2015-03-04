@@ -55,7 +55,7 @@ public class SampleArchiveService extends AbstractEntityService {
     }
     
     private void doCreateArchiveList() throws Exception {
-        logger.info("Finding files to archive...");
+        logger.info("Finding files to archive under root "+sampleEntityId);
         // Short-circuit the case where the FileStore and Archive are one and the same location
         if (!SystemConfigurationProperties.getString("FileStore.CentralDir").
                 equals(SystemConfigurationProperties.getString("FileStore.CentralDir.Archived"))) {
