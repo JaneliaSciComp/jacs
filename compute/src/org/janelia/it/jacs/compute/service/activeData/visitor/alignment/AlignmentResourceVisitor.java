@@ -15,18 +15,19 @@ import java.io.FileWriter;
 /**
  * Created by murphys on 10/2/14.
  */
-public class AlignmentCompletionVisitor extends ActiveVisitor {
+public class AlignmentResourceVisitor extends ActiveVisitor {
 
-    public static final String SAMPLE_INFO_FILENAME = "sampleInfo.txt";
 
-    Logger logger = Logger.getLogger(AlignmentCompletionVisitor.class);
+    Logger logger = Logger.getLogger(AlignmentResourceVisitor.class);
 
     @Override
     public Boolean call() throws Exception {
         AlignmentSampleScanner.SampleInfo sampleInfo=(AlignmentSampleScanner.SampleInfo)contextMap.get(AlignmentSampleScanner.SAMPLE_INFO);
         if (sampleInfo!=null) {
             ActiveDataClient activeData = (ActiveDataClient) ActiveDataServerSimpleLocal.getInstance();
+            // First copy added to event map gets appended to the unified file containing all entries - ultimately this needs to go away and just use the resource tree copy
             activeData.addEntityEvent(signature, entityId, AlignmentSampleScanner.SAMPLE_INFO, sampleInfo);
+            // Second copy goes to sample resource file tree, its proper location
             addSampleInfoToAlignmentResource(sampleInfo);
         }
         return true;
@@ -34,10 +35,9 @@ public class AlignmentCompletionVisitor extends ActiveVisitor {
 
     public void addSampleInfoToAlignmentResource(AlignmentSampleScanner.SampleInfo sampleInfo) throws Exception {
         File alignmentResourceDir=new File(AlignmentSampleScanner.ALIGNMENT_RESOURCE_DIR);
-        String sampleOffsetPath= FileNode.getTreePathForId(sampleInfo.id);
-        File sampleDir=new File(alignmentResourceDir.getAbsoluteFile()+"/"+"samples"+"/"+sampleOffsetPath);
-        FileUtil.ensureDirExists(sampleDir.getAbsolutePath());
-        File sampleInfoFile=new File(sampleDir, SAMPLE_INFO_FILENAME);
+        String sampleInfoFilepath=sampleInfo.getResourcePath(alignmentResourceDir.getAbsolutePath());
+        File sampleInfoFile=new File(sampleInfoFilepath);
+        FileUtil.ensureDirExists(sampleInfoFile.getParentFile().getAbsolutePath());
         logger.info("Writing "+sampleInfoFile.getAbsolutePath());
         BufferedWriter bw=new BufferedWriter(new FileWriter(sampleInfoFile));
         bw.write(sampleInfo.toString());

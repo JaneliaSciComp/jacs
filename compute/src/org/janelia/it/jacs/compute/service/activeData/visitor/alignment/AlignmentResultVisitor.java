@@ -237,14 +237,13 @@ public class AlignmentResultVisitor extends ActiveVisitor {
                             }
                         }, visitedSet);
                     } else if (src.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION)) {
+                        if (sepInfo.fragmentInfoList==null) {
+                            sepInfo.fragmentInfoList=new ArrayList<>();
+                        }
                         Set<Entity> fragments=src.getChildren();
                         for (Entity fragment : fragments) {
                             if (fragment.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_FRAGMENT)) {
                                 List<AlignmentSampleScanner.NeuronFragmentInfo> fragmentInfoList=sepInfo.fragmentInfoList;
-                                if (fragmentInfoList==null) {
-                                    fragmentInfoList=new ArrayList<>();
-                                    sepInfo.fragmentInfoList=fragmentInfoList;
-                                }
                                 AlignmentSampleScanner.NeuronFragmentInfo fragmentInfo=new AlignmentSampleScanner.NeuronFragmentInfo();
                                 fragmentInfo.id=fragment.getId();
                                 String indexString=fragment.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
@@ -264,9 +263,9 @@ public class AlignmentResultVisitor extends ActiveVisitor {
                             @Override
                             public int compare(AlignmentSampleScanner.NeuronFragmentInfo o1, AlignmentSampleScanner.NeuronFragmentInfo o2) {
                                 if (o1.index>o2.index) {
-                                    return -1;
-                                } else {
                                     return 1;
+                                } else {
+                                    return -1;
                                 }
                             }
                         });

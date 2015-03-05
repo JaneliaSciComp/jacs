@@ -220,7 +220,7 @@ public class ActiveDataScan {
                     }
                 }
             }
-            //logger.info("Returning next id="+nextId);
+            logger.info("ActiveDataScan: returning next id="+nextId+", which is "+nextIdIndex+" of "+idArray.length);
             return nextId;
         }
     }
