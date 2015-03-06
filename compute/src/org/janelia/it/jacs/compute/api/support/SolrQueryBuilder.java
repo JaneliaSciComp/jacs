@@ -158,7 +158,8 @@ public class SolrQueryBuilder {
 			qs.append(")");
 		}
 
-        qs.append(" +(");
+		boolean outer = !StringUtils.isEmpty(searchString) || !StringUtils.isEmpty(auxAnnotationQueryString);
+        if (outer) qs.append(" +(");
         
         if (!StringUtils.isEmpty(searchString)) {
             String escapedSearchString = searchString==null?"":searchString.replaceAll(":", "\\:");
@@ -186,7 +187,7 @@ public class SolrQueryBuilder {
             qs.append(")");
         }
         
-        qs.append(")");
+        if (outer) qs.append(")");
 		
     	SolrQuery query = new SolrQuery();
         query.setQuery(qs.toString());
@@ -220,7 +221,7 @@ public class SolrQueryBuilder {
 	    else {
             escapedSearchString = auxAnnotationQueryString.replaceAll(":", "\\:");
         }
-        if (escapedSearchString!=null) {
+        if (!StringUtils.isEmpty(escapedSearchString)) {
             query.append("(");
             query.append(escapedSearchString);
             query.append(")");
