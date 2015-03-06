@@ -2,6 +2,8 @@
  * Created by bolstadm on 10/29/14.
  */
 package org.janelia.it.jacs.shared.ffmpeg;
+// Used for testing outside of the workstation
+//package ffmpeg;
 
 import java.util.ArrayList;
 import org.bytedeco.javacpp.BytePointer;
@@ -26,7 +28,7 @@ public class ImageStack
      *
      * @param width - the width of an individual image
      */
-    public void set_width(int width)
+    public void setWidth(int width)
     {
         this._width = width;
     }
@@ -45,7 +47,7 @@ public class ImageStack
      * Setter method for height
      * @param height - the height of an individual image
      */
-    public void set_height(int height)
+    public void setHeight(int height)
     {
         this._height = height;
     }
@@ -55,37 +57,61 @@ public class ImageStack
      *
      * @return the number of individual frames
      */
-    public int get_num_frames()
+    public int getNumFrames()
     {
         return _image.size();
     }
 
-    public int get_num_components()
+    public int getNumComponents()
     {
-        return _num_components;
+        if ( _image.size() > 0 )
+            return _image.get(0).imageBytes.size();
+        else
+            return 0;
     }
 
-    public void set_num_components(int num_components)
-    {
-        this._num_components = num_components;
-    }
-
-    public int get_bytes_per_pixel()
+    public int getBytesPerPixel()
     {
         return _bytes_per_pixel;
     }
 
-    public void set_bytes_per_pixel(int bytes_per_pixel)
+    public void setBytesPerPixel(int bytes_per_pixel)
     {
         this._bytes_per_pixel = bytes_per_pixel;
     }
 
     /**
-     * Return a pointer to the pixels of the ith frame/image in the stack
+     * Return a byte arryay of the pixels of the ith frame/image in the stack
      * @param i - image index
-     * @return a pointer to the bytes representing the image
+     * @param component - component index
+     * @return the bytes representing the image
      */
-    public BytePointer image(int i) { return _image.get(i).image.data(0); }
+    public byte[] image(int i, int component) { return _image.get(i).imageBytes.get(component); }
+
+    /**
+     * Return a byte array of the pixels of the ith frame/image in the stack
+     * @param idx - image index
+     * @param component - component index
+     * @param count - number of components to use
+     * @return the bytes representing the image
+     */
+    public byte[] interleave(int idx, int component, int count) {
+        byte[] result = new byte[_width * _height * count];
+        Frame f = _image.get(idx);
+        for ( int j = 0; j < count; j++ ) {
+            if ( component+j > f.imageBytes.size() ) {
+                for ( int i = 0; i < _width * _height; i++ )
+                    result[count*i + j] = 0;
+            } else {
+                byte[] bytes = f.imageBytes.get(component + j);
+                for ( int i = 0; i < _width * _height; i++ )
+                {
+                    result[count * i + j] = bytes[i];
+                }
+            }
+        }
+        return result;
+    }
 
     /**
      * Returns a Frame of the ith image in the stack
@@ -108,6 +134,28 @@ public class ImageStack
     public void add(Frame f) { _image.add(f); }
 
     /**
+     * Merge the channels from another ImageStack to the end of this one
+     * @param other - The other ImageStack to add
+     */
+    public void merge(ImageStack other) {
+        if ( _image.size() == 0 ) {
+            _width = other.width();
+            _height = other.height();
+            _bytes_per_pixel = other.getBytesPerPixel();
+
+            for (int i = 0; i < other.getNumFrames(); i++)
+            {
+                add(other.frame(i));
+            }
+        } else {
+            for (int i = 0; i < other.getNumFrames(); i++)
+            {
+                frame(i).imageBytes.add(other.frame(i).imageBytes.get(0));
+            }
+        }
+    }
+
+    /**
      * Release the resources used by this class
      * @throws Exception
      */
@@ -126,8 +174,6 @@ public class ImageStack
 
     private int _height;
     private int _width;
-
-    private int _num_components;
 
     private int _bytes_per_pixel;
 

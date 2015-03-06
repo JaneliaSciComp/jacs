@@ -2358,7 +2358,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 if (sharedDataFolder==null) {
                     sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
                     EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
-                    addRootToDefaultWorkspace(granteeKey, sharedDataFolder);
+                    Entity granteeWorkspace = getDefaultWorkspace(granteeKey);
+                    if (granteeWorkspace!=null) {
+                    	addRootToWorkspace(granteeKey, granteeWorkspace, sharedDataFolder);
+                    }
                     saveOrUpdate(sharedDataFolder);
                 }
                 
@@ -2790,19 +2793,26 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("getErrorOntology()");
         }
         
-        String owner = "group:flylight";
+        String ontologyName = "Image Evaluation";
+        String categoryName = "Report";
         
-        // TODO: this ontology should be owned by the system user
-        List<Entity> list = getEntitiesByNameAndTypeName(owner, "Error Ontology", EntityConstants.TYPE_ONTOLOGY_ROOT);
+        List<Entity> list = getEntitiesByNameAndTypeName(Group.ALL_USERS_GROUP_KEY, ontologyName, EntityConstants.TYPE_ONTOLOGY_ROOT);
         if (list.isEmpty()) {
-            throw new ComputeException("Cannot find Error Ontology");
+            throw new ComputeException("Cannot find '"+ontologyName+"' ontology");
         }
         else if (list.size()>1) {
-            log.warn("Found more than one Error Ontology, using the first one, "+list.get(0).getId());
+            log.warn("Found more than one ontology named '"+ontologyName+"', using the first one, "+list.get(0).getId());
         }
         Entity root = list.get(0);
-        loadLazyEntity(owner, root, true);
-        return root;
+        loadLazyEntity(Group.ALL_USERS_GROUP_KEY, root, true);
+        
+        Entity report = EntityUtils.findChildWithName(root, categoryName);
+        
+        if (report==null) {
+        	log.warn("Could not find child '"+categoryName+"' in ontology '"+ontologyName+"'");
+        }
+        
+        return report;
     }
     
     /******************************************************************************************************************/

@@ -6,8 +6,6 @@
 
 package org.janelia.it.jacs.shared.img_3d_loader;
 
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -25,7 +23,6 @@ public class ByteGatherAcceptor implements FFMPGByteAcceptor {
     private int width;
     private int height;
     private int pixelBytes;
-    private int frameNum;
     private Logger logger = Logger.getLogger(ByteGatherAcceptor.class);
             
     public ByteGatherAcceptor() {
@@ -48,15 +45,33 @@ public class ByteGatherAcceptor implements FFMPGByteAcceptor {
         // Write pixel data
         byte[] page = new byte[linesize * height];
         pagewisePageCapture(width, height, linesize, data, page);
-        
+
 //        byte[] bytes = data.getStringBytes();
+        totalSize += page.length;
+        pages.add( page );
+    }
+
+    /**
+     * Accept one "page" of data, of width x height given, and with linesize
+     * bytes on each line of the page.
+     * 
+     * @param page the data.
+     * @param linesize how long is a line (with multiplier justification).
+     * @param width how wide is a line in elements.
+     * @param height number of lines in the page.
+     */
+    @Override
+    public void accept(final byte[] page, final int linesize, final int width, int height) {
+        setWidth(width);
+        setHeight(height);
+        // Write pixel data
         totalSize += page.length;
         pages.add( page );
     }
 
     @Override
     public void setFrameNum(int frameNum) {
-        this.frameNum = frameNum;
+        // unused
     }
     
     /**
@@ -145,7 +160,7 @@ public class ByteGatherAcceptor implements FFMPGByteAcceptor {
 
     private void pagewisePageCapture(final int width, int height, final int linesize, final BytePointer data, byte[] page) {
         BytePointer ptr = data.position(0);
-        //ptr.get(page);
+        ptr.get(page);
     }
     
 }

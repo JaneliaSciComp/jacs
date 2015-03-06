@@ -9,10 +9,15 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Copy a file or a directory tree from archive to the file share, or vice versa.
@@ -184,5 +189,19 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
     protected int getRequiredSlots() {
         return 1;
     }
-    
+
+    /**
+     * Make sure the files were copied to the target location.
+     */
+    @Override
+	public void postProcess() throws MissingDataException {
+    	FileNode node = ProcessDataHelper.getResultFileNode(processData);
+    	for(String filepath : targetPaths) {
+    		File file = new File(filepath);
+        	if (!file.exists()) {
+        		throw new MissingGridResultException(node.getDirectoryPath(), "Target file not found at "+file.getAbsolutePath());
+        	}
+    	}
+        
+    }
 }

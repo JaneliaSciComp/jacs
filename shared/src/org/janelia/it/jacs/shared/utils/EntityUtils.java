@@ -781,7 +781,14 @@ public class EntityUtils {
 	
 	public static Long getEntityIdFromUniqueId(String uniqueId) {
 		String[] pathParts = uniqueId.split("/");
-		if (pathParts.length<1) return null;
+		if (pathParts.length<1) {
+		    try {
+		        return new Long(uniqueId.trim());
+		    }
+		    catch (NumberFormatException e) {
+		        return null;
+		    }
+		}
 		String lastPart = pathParts[pathParts.length-1];
 		if (!lastPart.startsWith("e_")) return null;
 		return new Long(lastPart.substring(2));
@@ -819,5 +826,17 @@ public class EntityUtils {
 	public static String createDenormIdentifierFromName(String username, String name) {
 	    if (username.contains(":")) username = username.split(":")[1];
     	return username+"_"+name.toLowerCase().replaceAll("\\W+", "_");
+	}
+	
+	/**
+	 * Returns true if the given Entity is a virtual non-persistent entity for client-side use only. 
+	 * @param entity
+	 * @return
+	 */
+	public static boolean isVirtual(Entity entity) {
+        if (EntityConstants.IN_MEMORY_TYPE_VIRTUAL_ENTITY.equals(entity.getEntityTypeName()) || EntityConstants.IN_MEMORY_TYPE_PLACEHOLDER_ENTITY.equals(entity.getEntityTypeName())) {
+            return true;
+        }
+        return false;
 	}
 }
