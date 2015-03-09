@@ -1,8 +1,7 @@
-package org.janelia.it.jacs.compute.api.support;
+package org.janelia.it.jacs.shared.solr;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -10,10 +9,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import java.util.*;
 
 /**
- * A helper class for clients building SOLR queries against the Entity model.
- * 
- * @deprecated This class was moved to the shared module. This version exists for backwards compatibility only, and should not be used. 
- * @see org.janelia.it.jacs.shared.solr.SolrQueryBuilder
+ * A helper class for building SOLR queries against the Entity model.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -126,7 +122,7 @@ public class SolrQueryBuilder {
 		return !StringUtils.isEmpty(searchString) || !StringUtils.isEmpty(auxString) || !StringUtils.isEmpty(auxAnnotationQueryString) || rootId!=null || !filters.isEmpty() || startDate!=null || endDate != null;
 	}
 	
-	public SolrQuery getQuery() throws ComputeException {
+	public SolrQuery getQuery() throws Exception {
     	
     	StringBuffer qs = new StringBuffer();
     	
