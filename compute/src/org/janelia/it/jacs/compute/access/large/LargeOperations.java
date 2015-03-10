@@ -289,36 +289,42 @@ public class LargeOperations {
      */
     public void buildSageImagePropMap() throws DaoException {
     	
-    	logger.info("Building property map for all Sage images");
     	SageDAO sage = new SageDAO(logger);
     	Connection conn = null;
     	
     	try {
     		conn = annotationDAO.getJdbcConnection();
 
+            logger.info("Building property map for all lines");
+            
+            ResultSetIterator lineIterator = null;
+            Map<String, Map<String,Object>> lineMap = new HashMap<>();
+            try {
+                lineIterator = sage.getAllLineProperties();
+                while (lineIterator.hasNext()) {
+                    Map<String,Object> lineProperties = lineIterator.next();
+                    lineMap.put((String)lineProperties.get("line"),lineProperties);
+                }
+            }
+            catch (RuntimeException e) {
+                if (e.getCause() instanceof SQLException) {
+                    throw new DaoException(e);
+                }
+                throw e;
+            }
+            finally {
+                if (lineIterator!=null) lineIterator.close();
+            }
+            
+            logger.info("Retrieved properties for "+lineMap.size()+" lines");
+            
+            logger.info("Building property map for all SAGE images");
+
+            int i = 0;
 	    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
 	    		
 	    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-	    		logger.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
-
-				ResultSetIterator lineIterator = null;
-				Map<String, Map<String,Object>> lineMap = new HashMap<>();
-				try {
-					lineIterator = sage.getAllLineProperties();
-					while (lineIterator.hasNext()) {
-						Map<String,Object> lineProperties = lineIterator.next();
-						lineMap.put((String)lineProperties.get("line"),lineProperties);
-					}
-				}
-				catch (RuntimeException e) {
-					if (e.getCause() instanceof SQLException) {
-						throw new DaoException(e);
-					}
-					throw e;
-				}
-				finally {
-					if (lineIterator!=null) lineIterator.close();
-				}
+	    		logger.info("  Building property map for all SAGE images in Data Set '"+dataSetIdentifier+"'");
 
 	        	ResultSetIterator iterator = null;
 	        	
@@ -342,6 +348,7 @@ public class LargeOperations {
 							}
 						}
 						associateImageProperties(conn, allProps);
+						i++;
 	            	}
 	        	}
 	        	catch (RuntimeException e) {
@@ -354,6 +361,8 @@ public class LargeOperations {
 	            	if (iterator!=null) iterator.close();
 	            }
 	    	}
+	    	
+            logger.info("Retrieved properties for "+i+" images");
 	    	
     	}
     	catch (ComputeException e) {

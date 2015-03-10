@@ -827,4 +827,16 @@ public class EntityUtils {
 	    if (username.contains(":")) username = username.split(":")[1];
     	return username+"_"+name.toLowerCase().replaceAll("\\W+", "_");
 	}
+	
+	/**
+	 * Returns true if the given Entity is a virtual non-persistent entity for client-side use only. 
+	 * @param entity
+	 * @return
+	 */
+	public static boolean isVirtual(Entity entity) {
+        if (EntityConstants.IN_MEMORY_TYPE_VIRTUAL_ENTITY.equals(entity.getEntityTypeName()) || EntityConstants.IN_MEMORY_TYPE_PLACEHOLDER_ENTITY.equals(entity.getEntityTypeName())) {
+            return true;
+        }
+        return false;
+	}
 }

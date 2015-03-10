@@ -1,6 +1,24 @@
 
 package org.janelia.it.jacs.compute.access;
 
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.rmi.PortableRemoteObject;
+import javax.sql.DataSource;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -15,18 +33,13 @@ import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.sage.*;
+import org.janelia.it.jacs.model.sage.CvTerm;
+import org.janelia.it.jacs.model.sage.Image;
+import org.janelia.it.jacs.model.sage.ImageProperty;
+import org.janelia.it.jacs.model.sage.Line;
+import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.rmi.PortableRemoteObject;
-import javax.sql.DataSource;
-import java.io.InputStream;
-import java.sql.*;
-import java.util.*;
-import java.util.Date;
 
 /**
  * Simple JDBC access to the Sage database.
@@ -450,20 +463,17 @@ public class SageDAO {
     private Map<String,SageTerm> getStaticTerms() {
 
         final String[][] terms = {
-                //name           displayName        dataType     definition
-                {"id",           "SAGE Id",         "integer",   "Identifier within SAGE database", "light_imagery"},
-                {"name",         "Image Path",      "text",      "Relative path to the image", "light_imagery"},
-                {"path",         "Full Image Path", "text",      "Absolute path to the image", "light_imagery"},
-                {"line",         "Fly Line",        "text",      "Name of the fly line", "light_imagery"},
-
-                //select line_vw.id, line_vw.name line, line_vw.lab, line_vw.gene, line_vw.organism, " +
-                //"line_vw.synonyms, line_vw.genotype
-                {"id",              "SAGE Line Id", "integer",   "Identifier within SAGE database", "line"},
-                {"lab",             "Lab",          "text",      "Lab",     "line"},
-                {"gene",            "Gene",         "text",      "Gene",    "line"},
-                {"organism",        "Organism",     "text",      "Organism","line"},
-                {"line",            "Fly Line",     "text",      "Name of the fly line", "line"},
-                {"synonyms",        "Synonyms",     "text",      "Synonyms","line"}
+                //name           displayName        dataType     definition                               vocabulary
+                {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database", "light_imagery"},
+                {"name",         "Image Path",      "text",      "Relative path to the image",            "light_imagery"},
+                {"path",         "Full Image Path", "text",      "Absolute path to the image",            "light_imagery"},
+                {"line",         "Fly Line",        "text",      "Name of the fly line",                  "light_imagery"},
+                {"id",           "SAGE Line Id",    "integer",   "Line identifier within SAGE database",  "line"},
+                {"lab",          "Lab",             "text",      "Lab",                                   "line"},
+                {"gene",         "Gene",            "text",      "Gene",                                  "line"},
+                {"organism",     "Organism",        "text",      "Organism",                              "line"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",              "line"},
+                {"synonyms",     "Synonyms",        "text",      "Synonyms for the genetic line",         "line"}
         };
 
         Map<String,SageTerm> map = new HashMap<>();
@@ -494,7 +504,10 @@ public class SageDAO {
                 "  select i.id from image_vw i " +
                 "  inner join image_property_vw ip2 on " +
                 "    (ip2.image_id = i.id and ip2.type='data_set' and ip2.value=?) " +
-                ") image_vw on (ip1.image_id = image_vw.id) order by ip1.type";
+                ") image_vw on (ip1.image_id = image_vw.id) " +
+                "where ip1.cv in ('light_imagery') " +
+                "order by ip1.type";
+        
         PreparedStatement pStatement = null;
         ResultSet resultSet = null;
         try {
@@ -504,7 +517,8 @@ public class SageDAO {
             while (resultSet.next()) {
                 list.add(resultSet.getString(1));
             }
-        } finally {
+        } 
+        finally {
             ResultSetIterator.close(resultSet, pStatement, null, log);
         }
 
@@ -519,20 +533,17 @@ public class SageDAO {
      *
      * @param  connection  current database connection.
      *
-     * @return list of defined property types for the specified dataSet
+     * @return list of defined line property types 
      *
      * @throws SQLException
      *   if list query fails.
      */
     private List<String> getLinePropertyTypes(Connection connection) throws SQLException {
-        List<String> list = new ArrayList<>(256);
+        List<String> list = new ArrayList<>();
 
         final String sql = "select distinct lp1.type from line_property_vw lp1 " +
-                "inner join (" +
-                "  select l.id from line_vw l " +
-                "  inner join line_property_vw lp2 on " +
-                "    (lp2.line_id = l.id) " +
-                ") line_vw on (lp1.line_id = line_vw.id) order by lp1.type";
+                           "where lp1.cv in ('line','light_imagery') ";
+        
         PreparedStatement pStatement = null;
         ResultSet resultSet = null;
         try {
@@ -541,7 +552,8 @@ public class SageDAO {
             while (resultSet.next()) {
                 list.add(resultSet.getString(1));
             }
-        } finally {
+        } 
+        finally {
             ResultSetIterator.close(resultSet, pStatement, null, log);
         }
 
@@ -579,7 +591,7 @@ public class SageDAO {
 
         return sql.toString();
     }
-
+    
     /**
      *
      * @param  propertyTypeNames  names of line properties to include in query.
@@ -650,25 +662,22 @@ public class SageDAO {
             "  select i.id, i.line, i.name, i.path, i.family, i.capture_date, i.representative, i.created_by" +
             "  from image_vw i" +
             "  inner join image_property_vw ip2 on (ip2.image_id=i.id and ip2.type='data_set' and ip2.value=?)" +
-            "  inner join image_property_vw ip3 on (ip3.image_id=i.id and ip3.type='slide_code' and ip3.value is not null)" +
             "  where i.display=true and i.path is not null" +
             "  and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
-            ") image_vw on (ip1.image_id = image_vw.id) " +
-            "where ip1.cv='light_imagery' group by image_vw.id ";
+            ") image_vw on ip1.image_id = image_vw.id " +
+            "where ip1.cv in ('light_imagery') " +
+            "group by image_vw.id ";
 
     private static final String ALL_LINE_PROPERTY_SQL_1 =
-            "select line_vw.id, line_vw.name line, line_vw.lab, line_vw.gene, line_vw.organism, " +
-                    "line_vw.synonyms, line_vw.genotype";
+            "select line_vw.id, line_vw.name line, line_vw.lab, line_vw.gene, line_vw.organism, line_vw.synonyms";
 
     private static final String ALL_LINE_PROPERTY_SQL_2 =
-            " from line_property_vw lp1 " +
-                    "inner join (" +
-                    "  select l.id, l.name, l.lab, l.gene, l.organism, l.synonyms, l.genotype" +
-                    "  from line_vw l" +
-                    "  inner join line_property_vw lp2 on (lp2.line_id=l.id)"+
-                    ") line_vw on (lp1.line_id = line_vw.id) " +
-                    "where lp1.cv='line' group by line_vw.id ";
-
-
-
+            " from line_property_vw lp1  " +
+            "inner join line_vw on lp1.line_id = line_vw.id " +
+            "inner join ( " +
+            "  select distinct line from image_data_mv where data_set is not null and display=true and path is not null " +
+            ") image_lines on line_vw.name = image_lines.line  " +
+            "where lp1.cv in ('line','light_imagery') " +
+            "group by line_vw.id ";
+            
 }
