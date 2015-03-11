@@ -336,6 +336,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new Exception("Could not find geo entry to update for value string");
             }
             TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(valueString);
+            // normally this is filled in automatically when the annotation is part of
+            //  a neuron, but here it's not (explicitly); however, we know the value
+            //  to put in:
+            geoAnnotation.setNeuronId(neuronId);
             return geoAnnotation;
         } catch (Exception e) {
             e.printStackTrace();
