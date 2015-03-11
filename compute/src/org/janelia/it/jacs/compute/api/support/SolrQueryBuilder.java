@@ -1,13 +1,19 @@
 package org.janelia.it.jacs.compute.api.support;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrUtils;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.util.*;
 
 /**
  * A helper class for clients building SOLR queries against the Entity model.
@@ -135,7 +141,7 @@ public class SolrQueryBuilder {
         	int i = 0;
         	for(String ownerKey : ownerKeys) {
         		if (i++>0) qs.append(" OR ");
-                String ownerName = ownerKey.split(":")[1];
+                String ownerName = EntityUtils.getNameFromSubjectKey(ownerKey);
         		qs.append(ownerName);
         	}
         	qs.append(")");
@@ -180,7 +186,7 @@ public class SolrQueryBuilder {
             qs.append("(");
             int i = 0;
         	for(String ownerKey : ownerKeys) {
-                String ownerName = ownerKey.split(":")[1];
+                String ownerName = EntityUtils.getNameFromSubjectKey(ownerKey);
         		String fieldNamePrefix = SolrUtils.getFormattedName(ownerName);
         		if (i++>0) {
         		    qs.append(" OR ");
