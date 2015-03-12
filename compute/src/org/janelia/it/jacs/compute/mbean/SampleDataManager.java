@@ -45,6 +45,17 @@ public class SampleDataManager implements SampleDataManagerMBean {
         EJBFactory.getLocalComputeBean().submitJob(task.getTaskName(), task.getObjectId());
     }
     
+    private void addExtraParams(HashSet<TaskParameter> taskParameters, String extraParams) throws Exception {
+        if (StringUtils.isEmpty(extraParams)) return;
+        for (String extraParam : extraParams.split(",")) {
+        	String[] p = extraParam.split("=");
+        	if (p.length!=2) {
+        		throw new Exception("Unable to parse extra parameter: "+extraParam);
+        	}
+        	taskParameters.add(new TaskParameter(p[0], p[1], null));
+        }
+    }
+    
     // -----------------------------------------------------------------------------------------------------
     // Maintenance Pipelines    
     // -----------------------------------------------------------------------------------------------------
@@ -298,7 +309,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams) {
         try {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
@@ -306,11 +317,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    runSampleFolder(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment);
+                    runSampleFolder(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment, extraParams);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment);  
+                    runSamplePipelines(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
                 else {
@@ -322,7 +333,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
@@ -338,8 +349,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (reuseAlignment!=null) {
             	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             }
-            String user = sample.getOwnerKey();
-            saveAndRunTask(user, processName, processName, taskParameters);
+            addExtraParams(taskParameters, extraParams);
+            saveAndRunTask(sample.getOwnerKey(), processName, processName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -397,17 +408,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.error("Error running pipeline", ex);
         }
     }
-    
-    private void addExtraParam(HashSet<TaskParameter> taskParameters, String extraParam) throws Exception {
-        if (StringUtils.isEmpty(extraParam)) return;
-    	String[] p = extraParam.split("=");
-    	if (p.length!=2) {
-    		throw new Exception("Unable to parse extraParam: "+extraParam);
-    	}
-    	taskParameters.add(new TaskParameter(p[0], p[1], null));
-    }
 
-    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParam) {
+    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParams) {
         try {
             if (!StringUtils.isEmpty(dataSetName)) {
                 Subject subject = EJBFactory.getLocalComputeBean().getSubjectByNameOrKey(user);
@@ -423,7 +425,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter("data set name", dataSetName, null)); 
             taskParameters.add(new TaskParameter("process def name", processName, null));
             taskParameters.add(new TaskParameter("parent or children", parentOrChildren, null));
-            addExtraParam(taskParameters, extraParam);
+            addExtraParams(taskParameters, extraParams);
             saveAndRunTask(user, parentProcessName, displayName, taskParameters);
         } 
         catch (Exception ex) {
@@ -431,14 +433,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void applyProcessToSample(String sampleEntityId, String processName, String extraParam) {
+    public void applyProcessToSample(String sampleEntityId, String processName, String extraParams) {
         try {
             String displayName = "Apply Process To Sample";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-            addExtraParam(taskParameters, extraParam);
+            addExtraParams(taskParameters, extraParams);
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
@@ -447,7 +449,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParam) {
+    public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParams) {
         try {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
@@ -455,11 +457,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParam);
+                    applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParams);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    applyProcessToSample(child.getId().toString(), processName, extraParam);  
+                    applyProcessToSample(child.getId().toString(), processName, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
                 else {

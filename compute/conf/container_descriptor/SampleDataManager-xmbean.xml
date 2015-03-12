@@ -226,6 +226,11 @@
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
+           <name>extraParams</name>
+           <type>java.lang.String</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -250,6 +255,11 @@
             <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
+           <name>extraParams</name>
+           <type>java.lang.String</type>
         </parameter>
     </operation>
     
@@ -303,7 +313,7 @@
         </parameter>
         <parameter>
            <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
-           <name>extraParam</name>
+           <name>extraParams</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -323,7 +333,7 @@
         </parameter>
         <parameter>
            <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
-           <name>extraParam</name>
+           <name>extraParams</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
@@ -343,7 +353,7 @@
         </parameter>
         <parameter>
            <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
-           <name>extraParam</name>
+           <name>extraParams</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>
