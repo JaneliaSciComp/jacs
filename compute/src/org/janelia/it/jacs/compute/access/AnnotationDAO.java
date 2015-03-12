@@ -2994,7 +2994,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         try {
-        	
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
@@ -3008,10 +3007,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("join ed.parentEntity ");
             hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
+            hql.append("left outer join ed.parentEntity.entityActorPermissions pf ");
             hql.append("where ed.entityAttrName = :attrName ");
             hql.append("and ed.value in (:entityIds) ");
             if (subjectKey!=null) {
-            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or pf.subjectKey in (:subjectKeyList)) ");
             }
             hql.append("order by ed.parentEntity.id ");
             

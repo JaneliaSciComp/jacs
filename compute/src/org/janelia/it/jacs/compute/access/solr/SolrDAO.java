@@ -264,7 +264,7 @@ public class SolrDAO extends AnnotationDAO {
 			
 			String subjectsCsv = ownerKey;
 			for(EntityActorPermission eap : annotationEntity.getEntityActorPermissions()) {
-			    ownerKey += ","+eap.getSubjectKey();
+			    subjectsCsv += ","+eap.getSubjectKey();
 			}
 			
 			annotations.add(new SimpleAnnotation(annotationEntity.getName(), subjectsCsv));
