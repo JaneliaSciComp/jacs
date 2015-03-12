@@ -48,6 +48,10 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class SageDAO {
 
+    public static final String IMAGE_PROP_PATH = "image_query_path";
+    public static final String IMAGE_PROP_LINE_TERM = "image_query_line";
+    public static final String LINE_PROP_LINE_TERM = "line_query_line";
+    
     private final String jndiPath = SystemConfigurationProperties.getString("sage.jdbc.jndiName", null);
     private final String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName", null);
     private final String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url", null);
@@ -339,21 +343,6 @@ public class SageDAO {
         return (SecondaryImage)query.uniqueResult();
     }
 
-//    public List<Image> getImagesByProperty(CvTerm term, String value) {
-//        if (log.isTraceEnabled()) {
-//            log.trace("getImagesByProperty(term="+term.getName()+", value="+value+")");
-//        }
-//        Session session = getCurrentSession();
-//        Query query = session.createQuery("select image from Image image " +
-//                                          "join image.imageProperties props " +
-//                                          "join props.type term " +
-//                                          "where term.id = :termId and props.value like :value ");
-//        query.setInteger("termId", term.getId());
-//        query.setString("value", value);
-//        //noinspection unchecked
-//        return (List<Image>)query.list();
-//    }
-
     public Image getImage(Integer id) {
         if (log.isTraceEnabled()) {
             log.trace("getImages(id="+id+")");    
@@ -464,16 +453,17 @@ public class SageDAO {
 
         final String[][] terms = {
                 //name           displayName        dataType     definition                               vocabulary
-                {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database", "light_imagery"},
-                {"name",         "Image Path",      "text",      "Relative path to the image",            "light_imagery"},
-                {"path",         "Full Image Path", "text",      "Absolute path to the image",            "light_imagery"},
-                {"line",         "Fly Line",        "text",      "Name of the fly line",                  "light_imagery"},
-                {"id",           "SAGE Line Id",    "integer",   "Line identifier within SAGE database",  "line"},
-                {"lab",          "Lab",             "text",      "Lab",                                   "line"},
-                {"gene",         "Gene",            "text",      "Gene",                                  "line"},
-                {"organism",     "Organism",        "text",      "Organism",                              "line"},
-                {"line",         "Fly Line",        "text",      "Name of the genetic line",              "line"},
-                {"synonyms",     "Synonyms",        "text",      "Synonyms for the genetic line",         "line"}
+                {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database", "image_query"},
+                {"name",         "Image Path",      "text",      "Relative path to the image",            "image_query"},
+                {"path",         "Full Image Path", "text",      "Absolute path to the image",            "image_query"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",                  "image_query"},
+                
+                {"id",           "SAGE Line Id",    "integer",   "Line identifier within SAGE database",  "line_query"},
+                {"lab",          "Lab",             "text",      "Lab",                                   "line_query"},
+                {"gene",         "Gene",            "text",      "Gene",                                  "line_query"},
+                {"organism",     "Organism",        "text",      "Organism",                              "line_query"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",              "line_query"},
+                {"synonyms",     "Synonyms",        "text",      "Synonyms for the genetic line",         "line_query"}
         };
 
         Map<String,SageTerm> map = new HashMap<>();
@@ -499,7 +489,7 @@ public class SageDAO {
                                                Connection connection) throws SQLException {
         List<String> list = new ArrayList<>(256);
 
-        final String sql = "select distinct ip1.type from image_property_vw ip1 " +
+        final String sql = "select distinct ip1.cv,ip1.type from image_property_vw ip1 " +
                 "inner join (" +
                 "  select i.id from image_vw i " +
                 "  inner join image_property_vw ip2 on " +
@@ -515,7 +505,9 @@ public class SageDAO {
             pStatement.setString(1, dataSet);
             resultSet = pStatement.executeQuery();
             while (resultSet.next()) {
-                list.add(resultSet.getString(1));
+                String cv = resultSet.getString(1);
+                String term = resultSet.getString(2);
+                list.add(cv+":"+term);
             }
         } 
         finally {
@@ -541,7 +533,7 @@ public class SageDAO {
     private List<String> getLinePropertyTypes(Connection connection) throws SQLException {
         List<String> list = new ArrayList<>();
 
-        final String sql = "select distinct lp1.type from line_property_vw lp1 " +
+        final String sql = "select distinct lp1.cv,lp1.type from line_property_vw lp1 " +
                            "where lp1.cv in ('line','light_imagery') ";
         
         PreparedStatement pStatement = null;
@@ -550,7 +542,9 @@ public class SageDAO {
             pStatement = connection.prepareStatement(sql);
             resultSet = pStatement.executeQuery();
             while (resultSet.next()) {
-                list.add(resultSet.getString(1));
+                String cv = resultSet.getString(1);
+                String term = resultSet.getString(2);
+                list.add(cv+":"+term);
             }
         } 
         finally {
@@ -574,14 +568,7 @@ public class SageDAO {
         StringBuilder sql = new StringBuilder(2048);
 
         sql.append(ALL_IMAGE_PROPERTY_SQL_1);
-
-        for (String typeName : propertyTypeNames) {
-            sql.append(", max(IF(ip1.type='");
-            sql.append(typeName);
-            sql.append("', ip1.value, null)) AS `");
-            sql.append(typeName);
-            sql.append('`'); // must escape column names to prevent conflict with SQL reserved words like 'condition'
-        }
+        sql.append(buildPropertySql(propertyTypeNames, "ip1"));
 
         sql.append(ALL_IMAGE_PROPERTY_SQL_2);
 
@@ -594,7 +581,7 @@ public class SageDAO {
     
     /**
      *
-     * @param  propertyTypeNames  names of line properties to include in query.
+     * @param  propertyTypeNames names of line properties to include in query.
      *
      * @return dynamically built SQL statement for the specified property type names.
      */
@@ -602,21 +589,33 @@ public class SageDAO {
         StringBuilder sql = new StringBuilder(2048);
 
         sql.append(ALL_LINE_PROPERTY_SQL_1);
-
-        for (String typeName : propertyTypeNames) {
-            sql.append(", max(IF(lp1.type='");
-            sql.append(typeName);
-            sql.append("', lp1.value, null)) AS `");
-            sql.append(typeName);
-            sql.append('`'); // must escape column names to prevent conflict with SQL reserved words like 'condition'
-        }
-
+        sql.append(buildPropertySql(propertyTypeNames, "lp1"));
+        
         sql.append(ALL_LINE_PROPERTY_SQL_2);
 
         if (log.isDebugEnabled()) {
             log.debug("buildLinePropertySql: returning \"" + sql + "\"");
         }
 
+        return sql.toString();
+    }
+    
+    /**
+     * @param propertyTypeNames names of qualified properties to include in the query (with format "<cv>:<term>")
+     * @param tableAlias alias of the table to select property values from
+     * @return
+     */
+    private String buildPropertySql(List<String> propertyTypeNames, String tableAlias) {
+        StringBuilder sql = new StringBuilder();
+        for (String qualifiedTypeName : propertyTypeNames) {
+            String typeLabel = qualifiedTypeName.replaceFirst(":", "_");
+            String typeName = qualifiedTypeName.substring(qualifiedTypeName.indexOf(':')+1);
+            sql.append(", max(IF(").append(tableAlias).append(".type='");
+            sql.append(typeName);
+            sql.append("', ").append(tableAlias).append(".value, null)) AS `");
+            sql.append(typeLabel);
+            sql.append('`'); // must escape column names to prevent conflict with SQL reserved words like 'condition'
+        }
         return sql.toString();
     }
 
@@ -653,8 +652,8 @@ public class SageDAO {
             "order by slide_code.value, i.path";
 
     private static final String ALL_IMAGE_PROPERTY_SQL_1 =
-            "select image_vw.id, image_vw.line, image_vw.name, image_vw.path, image_vw.family, " +
-            "image_vw.capture_date, image_vw.representative, image_vw.created_by";
+            "select image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
+            "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, image_vw.created_by light_imagery_created_by";
 
     private static final String ALL_IMAGE_PROPERTY_SQL_2 =
             " from image_property_vw ip1 " +
@@ -669,7 +668,7 @@ public class SageDAO {
             "group by image_vw.id ";
 
     private static final String ALL_LINE_PROPERTY_SQL_1 =
-            "select line_vw.id, line_vw.name line, line_vw.lab, line_vw.gene, line_vw.organism, line_vw.synonyms";
+            "select line_vw.id line_query_id, line_vw.name line_query_line, line_vw.lab line_query_lab, line_vw.gene line_query_gene, line_vw.organism line_query_organism, line_vw.synonyms line_query_synonyms";
 
     private static final String ALL_LINE_PROPERTY_SQL_2 =
             " from line_property_vw lp1  " +
