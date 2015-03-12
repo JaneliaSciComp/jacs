@@ -29,6 +29,7 @@ import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode
 import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
 import org.jboss.annotation.ejb.PoolClass;
@@ -41,6 +42,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -144,9 +146,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 
     public Subject login(String userLogin, String password) {
         try {
-            if (userLogin.contains(":")) {
-                userLogin = userLogin.split(":")[1];
-            }
+            userLogin = EntityUtils.getNameFromSubjectKey(userLogin);
             
             // Connect to LDAP server.
             String ldapBase = SystemConfigurationProperties.getString("LDAP.Base");

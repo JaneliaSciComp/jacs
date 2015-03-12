@@ -182,7 +182,20 @@ public class EntityUtils {
         return subjectKeys.contains(Group.ADMIN_GROUP_KEY);
         
     }
-    
+
+    /**
+     * Returns the subject name part of a given subject key. For example, for "group:flylight", this will return "flylight".
+     *
+     * @param subjectKey
+     * @return
+     */
+    public static String getNameFromSubjectKey(String subjectKey) {
+        if (subjectKey == null) {
+            return null;
+        }
+        return subjectKey.substring(subjectKey.indexOf(':') + 1);
+    }
+
     /**
      * Returns true if the given entities are identical in terms of their own properties and their EntityData properties.
      * @param entity1
