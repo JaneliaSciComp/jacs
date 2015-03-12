@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SeparationResultNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
@@ -48,7 +49,7 @@ public class SampleTrashCompactorService extends AbstractEntityService {
         	isDebug = Boolean.parseBoolean(testRun);	
         }
         
-        this.username = ownerKey.split(":")[1];
+        this.username = EntityUtils.getNameFromSubjectKey(ownerKey);
         this.userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
         this.archiveFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_ARCHIVE_DIR_PROP) + File.separator + username + File.separator);
         

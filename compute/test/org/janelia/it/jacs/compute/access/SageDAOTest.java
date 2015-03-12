@@ -30,7 +30,7 @@ public class SageDAOTest {
     @Category(TestCategories.FastIntegrationTests.class)
     public void testGetSageImageVocabulary() throws Exception {
         final Map<String, SageTerm> map = sageDao.getSageVocabulary();
-        final String[] expectedKeys = { "light_imagery_id", "light_imagery_name", "light_imagery_path", "light_imagery_line", "light_imagery_data_set",
+        final String[] expectedKeys = { "light_imagery_line", "light_imagery_data_set",
                                         "light_imagery_slide_code", "light_imagery_capture_date", "light_imagery_created_by" };
         for (String expectedKey : expectedKeys) {
             assertTrue("map is missing key: " + expectedKey, map.containsKey(expectedKey));
@@ -44,7 +44,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getImagesByFamily("flylight_flip");
-            validateIteratorResults(iterator, 10, "age");
+            validateIteratorResults(iterator, 10, "light_imagery_age");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -59,7 +59,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getImagesByDataSet("asoy_mb_polarity_case_2");
-            validateIteratorResults(iterator, 10, "age");
+            validateIteratorResults(iterator, 10, "light_imagery_age");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -73,7 +73,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getAllImagePropertiesByDataSet("asoy_mb_polarity_case_3");
-            validateIteratorResults(iterator, 10, "age");
+            validateIteratorResults(iterator, 10, "light_imagery_age");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -87,7 +87,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getAllLineProperties();
-            validateIteratorResults(iterator, 10, "genotype");
+            validateIteratorResults(iterator, 10, "line_genotype");
         } finally {
             if (iterator != null) {
                 iterator.close();
@@ -101,7 +101,7 @@ public class SageDAOTest {
         ResultSetIterator iterator = null;
         try {
             iterator = sageDao.getAllImagePropertiesByDataSet("system_flylight_optic_lobe_tile");
-            validateIteratorResults(iterator, 0, "age");
+            validateIteratorResults(iterator, 0, "light_imagery_age");
         } finally {
             if (iterator != null) {
                 iterator.close();

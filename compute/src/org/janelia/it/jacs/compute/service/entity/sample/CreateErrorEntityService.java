@@ -54,7 +54,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     	File outputDir = null;
         this.resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
-        String username = ownerKey.split(":")[1];
+        String username = EntityUtils.getNameFromSubjectKey(ownerKey);
 
         if (resultFileNode!=null) {
             outputDir = new File(resultFileNode.getDirectoryPath());
