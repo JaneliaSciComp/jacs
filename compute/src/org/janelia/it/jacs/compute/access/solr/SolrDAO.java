@@ -109,9 +109,9 @@ public class SolrDAO extends AnnotationDAO {
     	log.info("Building disk-based entity maps");
     	
     	this.largeOp = new LargeOperations(this);
-    	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
     	largeOp.buildSageImagePropMap();
+    	largeOp.buildAncestorMap();
     	
     	log.info("Getting entities");
     	
@@ -245,8 +245,6 @@ public class SolrDAO extends AnnotationDAO {
     	
     	Map<Long,Set<SimpleAnnotation>> annotationMap = new HashMap<>();
 		for(Entity annotationEntity : getAnnotationsByEntityId(null, entityIds)) {
-			String key = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
-			String value = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
 			String ownerKey = annotationEntity.getOwnerKey();
 			String entityIdStr = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
 			
@@ -264,7 +262,12 @@ public class SolrDAO extends AnnotationDAO {
 				annotationMap.put(entityId, annotations);
 			}
 			
-			annotations.add(new SimpleAnnotation(annotationEntity.getName(), key, value, ownerKey));
+			String subjectsCsv = ownerKey;
+			for(EntityActorPermission eap : annotationEntity.getEntityActorPermissions()) {
+			    ownerKey += ","+eap.getSubjectKey();
+			}
+			
+			annotations.add(new SimpleAnnotation(annotationEntity.getName(), subjectsCsv));
 		}
 		
 		// Get all Solr documents
@@ -425,18 +428,18 @@ public class SolrDAO extends AnnotationDAO {
 
 		if (existingDoc!=null) {
     		for(String fieldName : new ArrayList<>(doc.getFieldNames())) {
-    			if (fieldName.endsWith("_annotations") || fieldName.endsWith("_annot")) {
+    			if (fieldName.endsWith("_annotations")) {
     				doc.removeField(fieldName);
     			}
     		}
 		}
 		
     	if (annotations != null) {
-    		for(SimpleAnnotation annotation : annotations) {        
-    			doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
-//    			if (annotation.getValue()!=null) {
-//    				doc.addField(annotation.getOwner()+"_"+SolrUtils.getFormattedName(annotation.getKey())+"_annot", annotation.getValue(), 1.0f);
-//    			}
+    		for(SimpleAnnotation annotation : annotations) {
+    		    for(String subject : annotation.getSubjectsCsv().split(",")) {
+    		        subject = subject.contains(":") ? subject.split(":")[1] : subject;
+                    doc.addField(subject+"_annotations", annotation.getTag(), 1.0f);
+    		    }
     		}
     	}
     	
