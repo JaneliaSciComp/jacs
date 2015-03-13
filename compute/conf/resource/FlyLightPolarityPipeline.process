@@ -6,6 +6,7 @@
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
 	    <input name="CHANNEL_DYE_SPEC_63X"/>
         <input name="OUTPUT_CHANNEL_ORDER_63X"/>
+        <input name="RUN_OBJECTIVES"/>
         
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -14,6 +15,7 @@
             <input name="REUSE_PIPELINE_RUNS"/>
             <input name="REUSE_PROCESSING"/>
             <input name="REUSE_ALIGNMENT"/>
+            <input name="RUN_OBJECTIVES"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>
@@ -22,18 +24,29 @@
             <input name="PROCESS_VARIABLE_3" value="REUSE_PROCESSING"/>
             <input name="TASK_PARAMETER_4" value="reuse alignment"/>
             <input name="PROCESS_VARIABLE_4" value="REUSE_ALIGNMENT"/>
+            <input name="TASK_PARAMETER_5" value="run objectives"/>
+            <input name="PROCESS_VARIABLE_5" value="RUN_OBJECTIVES"/>
             <output name="SAMPLE_ENTITY_ID"/>
             <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
+            <output name="RUN_OBJECTIVES"/>
         </operation>
         
         <!-- Init variables -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="REUSE_PROCESSING"/>
             <input name="REUSE_ALIGNMENT"/>
-            <input name="PROCESS_VARIABLE_1" value="REUSE_ALIGNMENT"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
+            <input name="PROCESS_VARIABLE_1" value="REUSE_PIPELINE_RUNS"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="false"/>
+            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
+            <input name="PROCESS_VARIABLE_VALUE_2" value="false"/>
+            <input name="PROCESS_VARIABLE_3" value="REUSE_ALIGNMENT"/>
+            <input name="PROCESS_VARIABLE_VALUE_3" value="false"/>
+            <output name="REUSE_PIPELINE_RUNS"/>
+            <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
         </operation>
         
@@ -41,6 +54,9 @@
         <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="RUN_OBJECTIVES"/>
+            <input name="PIPELINES_TO_RUN_20X" value="$V{PIPELINE_PROCESS}"/>
+            <input name="PIPELINES_TO_RUN_63X" value="$V{PIPELINE_PROCESS}"/>
             <output name="PARENT_SAMPLE_ID"/>
             <output name="SAMPLE_20X_ID"/>
             <output name="SAMPLE_63X_ID"/>
