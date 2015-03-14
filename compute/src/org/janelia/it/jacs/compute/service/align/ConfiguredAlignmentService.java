@@ -52,9 +52,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             entityLoader.populateChildren(sampleEntity);
             Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
             if (supportingData!=null) {
-                this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
-                this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION, alignedArea);
-                this.genderCode = sanitizeGender(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea));
+                this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
+                this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION);
+                this.genderCode = sanitizeGender(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_GENDER));
             }
         }
         catch (Exception e) {

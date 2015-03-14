@@ -40,10 +40,7 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	String objectiveList = data.getItemAsString("RUN_OBJECTIVES");
     	if (objectiveList!=null) {
 			logger.info("Will only run the objectives provided by RUN_OBJECTIVES: "+objectiveList);
-    		Set<String> objectiveSet = new HashSet<String>();
-    		for(String objective : Task.listOfStringsFromCsvString(objectiveList)) {
-    			objectiveSet.add(objective);
-    		}
+    		Set<String> objectiveSet = new HashSet<String>(Task.listOfStringsFromCsvString(objectiveList));
 			if (!objectiveSet.contains(Objective.OBJECTIVE_20X.getName())) {
 				run20x = false;
 			}

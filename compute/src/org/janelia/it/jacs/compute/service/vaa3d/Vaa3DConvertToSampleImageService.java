@@ -575,13 +575,14 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     }
     
     private void populateMaps() throws Exception {
-                
-        for(Entity tile : sampleArea.getTiles()) {
+
+		List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
+        for(Entity tile : tileEntities) {
+        	
+        	entityLoader.populateChildren(tile);
             contextLogger.info("Populating maps for tile: "+tile.getName());
             
-            for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
-                // Don't trust entities in ProcessData, fetch a fresh copy
-                Entity lsmStack = entityBean.getEntityById(image.getId());
+            for(Entity lsmStack : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
                 
                 // The actual filename of the LSM we're dealing with is not compressed
                 String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());

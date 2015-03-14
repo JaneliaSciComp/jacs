@@ -48,8 +48,7 @@ public class CopyLsmsFromArchiveService implements IService {
             for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
             	String newPath1 = copyFile(mergedLsmPair.getLsmFilepath1(), resultNode);
             	String newPath2 = copyFile(mergedLsmPair.getLsmFilepath2(), resultNode);
-            	MergedLsmPair newPair = new MergedLsmPair(newPath1, newPath2, mergedLsmPair.getMergedFilepath(), mergedLsmPair.getTag());
-            	newPairs.add(newPair);
+            	newPairs.add(mergedLsmPair.getMovedLsmPair(newPath1, newPath2));
             }
             
             processData.putItem("BULK_MERGE_PARAMETERS",newPairs);

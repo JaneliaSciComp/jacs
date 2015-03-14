@@ -67,6 +67,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         if (bulkMergeParamObj instanceof List) {
         	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
         	if (mergedLsmPairs.size()==1) {
+        		logger.warn("Creating stitching bypass script. This is an old code path that should not longer be exercised!");
         		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
         	}            
         	else {
@@ -86,6 +87,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     }
     
     /**
+     * TODO: remove this method
      * if there is just one merged file we have to bypass the stitcher altogether because otherwise we get a bogus 
      * output from it. 
      * @param writer

@@ -811,34 +811,55 @@ public class SampleHelper extends EntityHelper {
      * @return
      * @throws Exception
      */
-    public String getConsensusLsmAttributeValue(Entity sampleEntity, String attrName, String areaName) throws Exception {
+    public String getConsensusLsmAttributeValue(AnatomicalArea sampleArea, String attrName) throws Exception {
+        List<AnatomicalArea> sampleAreas = new ArrayList<>();
+        sampleAreas.add(sampleArea);
+        return getConsensusLsmAttributeValue(sampleAreas, attrName);
+    }
+
+    /**
+     * Go through a set of sample areas' LSM supporting files and look for an entity attribute with a given name. If a consensus
+     * can be reached across all the LSM's in the area then return that consensus. Otherwise log a warning and return null.
+     * @param sampleEntity
+     * @param attrName
+     * @param areaName
+     * @return
+     * @throws Exception
+     */
+    public String getConsensusLsmAttributeValue(List<AnatomicalArea> sampleAreas, String attrName) throws Exception {
         String consensus = null;
-        entityLoader.populateChildren(sampleEntity);
-        Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
-        if (supportingData==null) {
-            logger.error("Sample has no supporting data: "+sampleEntity.getId());
-            return null;
-        }
-        entityLoader.populateChildren(supportingData);
-        for(Entity tile : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_TILE)) {
-            entityLoader.populateChildren(tile);
-            for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {    
-                String lsmArea = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-                if (areaName==null || (StringUtils.isEmpty(areaName) && StringUtils.isEmpty(lsmArea)) || areaName.equals(lsmArea)) {
-                    String value = image.getValueByAttributeName(attrName);
-                    if (consensus!=null && !consensus.equals(value)) {
-                        logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample "+sampleEntity.getId());
-                        return null;
-                    }
-                    else {
-                        consensus = value;
-                    }
-                }
-            }
+        logger.info("Determining consensus for "+attrName+" for sample areas: "+getSampleAreasCSV(sampleAreas));
+        for(AnatomicalArea sampleArea : sampleAreas) {
+        	logger.info("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
+			List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
+	        for(Entity tile : tileEntities) {
+	        	logger.info("    Determining consensus for "+attrName+" in "+tile.getName()+" tile");
+	        	entityLoader.populateChildren(tile);
+	            for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
+		        	logger.info("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
+	                String value = image.getValueByAttributeName(attrName);
+	                if (consensus!=null && !consensus.equals(value)) {
+	                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample processing result "+sampleArea.getSampleProcessingResultId());
+	                    return null;
+	                }
+	                else {
+	                    consensus = value;
+	                }
+	            }
+	        }
         }
         return consensus;
     }
-
+    
+    private String getSampleAreasCSV(List<AnatomicalArea> sampleAreas) {
+    	StringBuilder sb = new StringBuilder();
+    	for(AnatomicalArea sampleArea : sampleAreas) {
+    		if (sb.length()>0) sb.append(",");
+    		sb.append(sampleArea.getName());
+    	}
+    	return sb.toString();
+    }
+    
     /**
      * Remove the given sample from any incorrect data set folders and add it to the correct data set folder, based on
      * its data set identifier attribute.

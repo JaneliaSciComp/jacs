@@ -272,25 +272,33 @@
         		    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
         					<input name="BULK_MERGE_PARAMETERS"/>
         					<input name="REFERENCE_CHANNEL"/>
+        					<input name="SAMPLE_AREA"/>
         					<output name="BULK_MERGE_PARAMETERS"/>
+        					<output name="SAMPLE_AREA"/>
+        					<output name="RUN_STITCH"/>
         		        </operation>
         	        </sequence>
-        	        
-        		    <!-- Stitch the merged files into a single result -->
-        	        <sequence name="Stitch and Blend" waitForAsync="true">
-        		        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
-        		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchAndBlendService"/>
-        		    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
-        		    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
-        					<input name="BULK_MERGE_PARAMETERS"/>
-        					<input name="REFERENCE_CHANNEL"/>
-        					<input name="STITCHED_FILENAME"/>
-        		        </operation>
-        	        </sequence>
-        	          
+	        	        
+                	<!-- Run the stitcher, unless if the grouper decides we don't need to -->
+	            	<sequence if="RUN_STITCH=true">
+	            	
+	        		    <!-- Stitch the merged files into a single result -->
+	        	        <sequence name="Stitch and Blend" waitForAsync="true">
+	        		        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
+	        		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchAndBlendService"/>
+	        		    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
+	        		    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
+	        					<input name="BULK_MERGE_PARAMETERS"/>
+	        					<input name="REFERENCE_CHANNEL"/>
+	        					<input name="STITCHED_FILENAME"/>
+	        		        </operation>
+	        	        </sequence>
+	        	        
+	                </sequence>
+	                
                 </sequence>
                 
-                <!-- Else -->
+                <!-- Else, or if the grouper determined we don't need to run the stitcher -->
             	<sequence if="RUN_STITCH=false">
         	    
         		    <!-- If we're not stitching then the single tile is considered the stitched file -->

@@ -54,19 +54,16 @@ public class InitSampleProcessingParametersService extends
 		List<Entity> tileEntities = null;
 		if (sampleArea != null) {
 			logger.info("Processing tiles for area: " + sampleArea.getName());
-			tileEntities = sampleArea.getTiles();
-		} else {
+			tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
+		} 
+		else {
 			populateChildren(sampleEntity);
-			Entity supportingFiles = EntityUtils
-					.getSupportingData(sampleEntity);
+			Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
 			if (supportingFiles == null) {
-				throw new IllegalStateException(
-						"Sample does not have Supporting Files child: "
-								+ sampleEntityId);
+				throw new IllegalStateException("Sample does not have Supporting Files child: " + sampleEntityId);
 			}
 			supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
-			tileEntities = EntityUtils.getDescendantsOfType(supportingFiles,
-					EntityConstants.TYPE_IMAGE_TILE, true);
+			tileEntities = EntityUtils.getDescendantsOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE, true);
 		}
 
 		boolean archived = populateMergedLsmPairs(tileEntities, mergedLsmPairs);
@@ -122,38 +119,35 @@ public class InitSampleProcessingParametersService extends
 				sampleProcessingResultsName);
 	}
 
-	private boolean populateMergedLsmPairs(List<Entity> tileEntities,
-			List<MergedLsmPair> mergedLsmPairs) throws Exception {
+	private boolean populateMergedLsmPairs(List<Entity> tileEntities, List<MergedLsmPair> mergedLsmPairs) throws Exception {
 
 		boolean archived = false;
 
 		for (Entity tileEntity : tileEntities) {
+			
+			populateChildren(tileEntity);
+			
 			String lsmFilepath1 = null;
 			String lsmFilepath2 = null;
 
 			Entity first = null;
 			for (EntityData ed : tileEntity.getOrderedEntityData()) {
 				Entity lsmStack = ed.getChildEntity();
-				if (lsmStack != null
-						&& lsmStack.getEntityTypeName().equals(
-								EntityConstants.TYPE_LSM_STACK)) {
-					String filepath = lsmStack
-							.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+				if (lsmStack != null && lsmStack.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
+					String filepath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 					if (first != null) {
 						lsmFilepath2 = filepath;
-					} else {
+					} 
+					else {
 						lsmFilepath1 = filepath;
 						first = lsmStack;
 					}
 				}
 			}
 
-			if ("2".equals(first
-					.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS))
-					&& lsmFilepath2 != null) {
+			if ("2".equals(first.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)) && lsmFilepath2 != null) {
 				logger.info("Putting 3 channel image first: " + lsmFilepath2);
-				// Switch the LSMs so that the 3 channel image always comes
-				// first
+				// Switch the LSMs so that the 3 channel image always comes first
 				String temp = lsmFilepath1;
 				lsmFilepath1 = lsmFilepath2;
 				lsmFilepath2 = temp;
@@ -165,26 +159,21 @@ public class InitSampleProcessingParametersService extends
 			File lsmFile2 = null;
 			if (lsmFilepath2 != null) {
 				lsmFile2 = new File(lsmFilepath2);
-				mergedFile = new File(mergeResultNode.getDirectoryPath(),
-						"tile-" + tileEntity.getId() + ".v3draw");
-			} else {
+				mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-" + tileEntity.getId() + ".v3draw");
+			} 
+			else {
 				// lsmFilepath2 may be null
-				mergedFile = new File(mergeResultNode.getDirectoryPath(),
-						"tile-" + tileEntity.getId() + ".v3draw");
+				mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-" + tileEntity.getId() + ".v3draw");
 			}
 
 			String lsmRealPath1 = lsmFile1.getCanonicalPath();
-			String lsmRealPath2 = lsmFile2 == null ? null : lsmFile2
-					.getCanonicalPath();
+			String lsmRealPath2 = lsmFile2 == null ? null : lsmFile2.getCanonicalPath();
 
-			if (lsmRealPath1.startsWith(ARCHIVE_PREFIX)
-					|| (lsmRealPath2 != null && lsmRealPath2
-							.startsWith(ARCHIVE_PREFIX))) {
+			if (lsmRealPath1.startsWith(ARCHIVE_PREFIX) || (lsmRealPath2 != null && lsmRealPath2.startsWith(ARCHIVE_PREFIX))) {
 				archived = true;
 			}
 
-			mergedLsmPairs.add(new MergedLsmPair(lsmRealPath1, lsmRealPath2,
-					mergedFile.getAbsolutePath(), tileEntity.getName()));
+			mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, lsmRealPath1, lsmRealPath2, mergedFile.getAbsolutePath(), tileEntity.getName()));
 		}
 
 		return archived;

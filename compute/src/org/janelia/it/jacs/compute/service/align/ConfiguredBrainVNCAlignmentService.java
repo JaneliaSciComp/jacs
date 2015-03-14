@@ -25,11 +25,13 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
                 Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                 if (image!=null)  {
                     if ("VNC".equalsIgnoreCase(areaName)) {
+                    	alignedAreas.add(anatomicalArea);
                         input2 = new AlignmentInputFile();
                         input2.setPropertiesFromEntity(image);
                         if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
                     }
                     else if ("Brain".equalsIgnoreCase(areaName)) {
+                    	alignedAreas.add(anatomicalArea);
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
                         if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));

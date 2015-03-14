@@ -31,7 +31,7 @@ public class CleanUpMergedTilesService extends AbstractEntityService {
     	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
 
     		File file = new File(mergedLsmPair.getMergedFilepath());
-    		if (file.getAbsolutePath().equals(stitchedFile)) continue; // never delete the stitched file
+    		if (file.getAbsolutePath().equals(stitchedFile)) continue; // never delete the "stitched" file
     		
     		File symlink = new File(mergedLsmPair.getMergedFilepath().replace("merge", "group"));
     		if (symlink.exists()) {

@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.model.entity.Entity;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +12,7 @@ import java.util.List;
 public class AnatomicalArea implements Serializable {
 
     private String name;
-    private List<Entity> tiles = new ArrayList<Entity>();
+    private List<Long> tileIds = new ArrayList<Long>();
     private Long sampleProcessingResultId;
     private String sampleProcessingResultFilename;
 
@@ -22,16 +20,16 @@ public class AnatomicalArea implements Serializable {
         this.name = name;
     }
 
-    public void addTile(Entity imageTile) {
-        tiles.add(imageTile);
+    public void addTileId(Long imageTileId) {
+        tileIds.add(imageTileId);
     }
 
     public String getName() {
         return name;
     }
 
-    public List<Entity> getTiles() {
-        return tiles;
+    public List<Long> getTileIds() {
+        return tileIds;
     }
 
     public Long getSampleProcessingResultId() {
@@ -50,7 +48,7 @@ public class AnatomicalArea implements Serializable {
     public String toString() {
         return "AnatomicalArea{" +
                 "name='" + name + '\'' +
-                ", tiles=" + tiles +
+                ", tileIds=" + tileIds +
                 ", sampleProcessingResultId=" + sampleProcessingResultId +
                 ", sampleProcessingResultFilename='" + sampleProcessingResultFilename + '\'' +
                 '}';

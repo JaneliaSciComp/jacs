@@ -1,15 +1,16 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Decides which types of processing will be run for a Sample after the initial processing is done.
@@ -81,23 +82,27 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
             @SuppressWarnings("unchecked")
             final List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getItem("SAMPLE_AREAS");
             if (sampleAreas != null) {
-                List<Entity> tiles;
                 String tileName;
                 for (AnatomicalArea area : sampleAreas) {
-                    tiles = area.getTiles();
-                    for (Entity tile: tiles) {
-                        tileName = tile.getName();
-                        final Matcher m = skipTileNamePattern.matcher(tileName);
-                        if (m.matches()) {
-                            skipAlignment = true;
-                            contextLogger.info("skipping alignment because SAMPLE_AREAS contains tile '" +
-                                               tileName + "'");
-                            break;
-                        }
-                    }
-                    if (skipAlignment) {
-                        break;
-                    }
+                	try {
+	                	List<Entity> tiles = entityBean.getEntitiesById(area.getTileIds());
+	                    for (Entity tile : tiles) {
+	                        tileName = tile.getName();
+	                        final Matcher m = skipTileNamePattern.matcher(tileName);
+	                        if (m.matches()) {
+	                            skipAlignment = true;
+	                            contextLogger.info("skipping alignment because SAMPLE_AREAS contains tile '" +
+	                                               tileName + "'");
+	                            break;
+	                        }
+	                    }
+	                    if (skipAlignment) {
+	                        break;
+	                    }
+                	}
+                	catch (ComputeException e) {
+                		logger.error("Error checking skip alignment tile filter for area "+area.getName(),e);
+                	}
                 }
             }
         }
