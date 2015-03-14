@@ -178,7 +178,9 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
 	        		File mergedFileLink = new File(resultFileNode.getDirectoryPath(), mergedFile.getName());
 	                logger.info("Largest group contains: "+mergedFile);
                     logger.info("    LSM1: "+mergedLsmPair.getLsmFilepath1());
-                    logger.info("    LSM2: "+mergedLsmPair.getLsmFilepath2());
+                    if (mergedLsmPair.getLsmFilepath2()!=null) {
+                    	logger.info("    LSM2: "+mergedLsmPair.getLsmFilepath2());
+                    }
                     
                     String cmd = "ln -s "+mergedFile.getAbsolutePath()+" "+mergedFileLink.getAbsolutePath();
             		String[] args = cmd.split("\\s+");
@@ -228,7 +230,7 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
                 
                 boolean found = false;
                 for(MergedLsmPair mergedLsmPair : newMergedLsmPairs) {
-                	if (mergedLsmPair.getOrignalFilepath1().endsWith(lsmFilename) || mergedLsmPair.getOrignalFilepath2().endsWith(lsmFilename)) {
+                	if (mergedLsmPair.getOriginalFilepath1().endsWith(lsmFilename) || (mergedLsmPair.getOriginalFilepath2()!=null && mergedLsmPair.getOriginalFilepath2().endsWith(lsmFilename))) {
                 		found = true;
                 	}
                 }
