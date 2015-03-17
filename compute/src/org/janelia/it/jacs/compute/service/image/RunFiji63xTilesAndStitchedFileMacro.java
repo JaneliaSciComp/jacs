@@ -109,21 +109,30 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
                 .run(new EntityVisitor() {
             public void visit(Entity tile) throws Exception {
             	populateChildren(tile);
-            	String lsm1 = null;
-            	String lsm2 = null;
+            	String lsmName1 = null;
+            	String lsmName2 = null;
+            	String lsmPath1 = null;
+            	String lsmPath2 = null;
             	for(Entity lsm : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
+            		String lsmName = lsm.getName();
                     // The actual filename of the LSM we're dealing with is not compressed
-            		String lsmName = ArchiveUtils.getDecompressedFilepath(lsm.getName());
-            		lsmEntityMap.put(lsmName, lsm);
-            		if (lsm1==null) lsm1 = lsmName;
-            		else if (lsm2==null) lsm2 = lsmName;
+            		String lsmPath = ArchiveUtils.getDecompressedFilepath(lsmName);
+            		lsmEntityMap.put(lsmPath, lsm);
+            		if (lsmName1==null) {
+            			lsmName1 = lsmName;
+            			lsmPath1 = lsmPath;
+            		}
+            		else if (lsmName2==null) {
+            			lsmName2 = lsmName;
+            			lsmPath2 = lsmPath;
+            		}
             		else {
             			logger.warn("Too many LSMs for tile "+tile.getId()+" in sample "+sampleEntity.getId());
             		}
             	}
             	if (gatherLsms) {
 	            	String tileName = tile.getName().replaceAll(" ", "_");
-		        	mergedLsmPairs.add(new MergedLsmPair(lsm1, lsm2, null, tileName));
+		        	mergedLsmPairs.add(new MergedLsmPair(lsmName1, lsmName2, lsmPath1, lsmPath2, null, tileName));
             	}
             }
         });

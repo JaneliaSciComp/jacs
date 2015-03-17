@@ -22,7 +22,7 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService 
         final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
         AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
 
-        List<Entity> tiles = sampleArea.getTiles();
+    	List<Entity> tiles = entityBean.getEntitiesById(sampleArea.getTileIds());
         Integer numImagesPerTile = null;
         Integer numTiles = tiles.size();
         for (Entity tile : tiles) {

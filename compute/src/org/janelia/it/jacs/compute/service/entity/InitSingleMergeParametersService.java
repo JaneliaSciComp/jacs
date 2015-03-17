@@ -14,7 +14,7 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
  * Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
  *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
- * OUTPUT:
+ * Output:
  *   STITCHED_FILENAME
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -22,23 +22,22 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 public class InitSingleMergeParametersService implements IService {
 
 	public void execute(IProcessData processData) throws ServiceException {
-        try {
 
-            Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-            if (bulkMergeParamObj==null) {
-            	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-            }
-            
-            if (bulkMergeParamObj instanceof List) {
-            	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-            	if (mergedLsmPairs.size() != 1) {
-            		throw new ServiceException("BULK_MERGE_PARAMETERS must contain exactly one merged pair");
-            	}
-            	processData.putItem("STITCHED_FILENAME", mergedLsmPairs.get(0).getMergedFilepath());
-            }
-            
-        } catch (Exception e) {
-            throw new ServiceException(e);
+        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
+        if (bulkMergeParamObj==null) {
+        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
         }
+        
+        if (bulkMergeParamObj instanceof List) {
+        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+        	if (mergedLsmPairs.size() != 1) {
+        		throw new ServiceException("BULK_MERGE_PARAMETERS must contain exactly one merged pair");
+        	}
+        	processData.putItem("STITCHED_FILENAME", mergedLsmPairs.get(0).getMergedFilepath());
+        }
+        else {
+        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be a List");
+        }
+            
     }
 }

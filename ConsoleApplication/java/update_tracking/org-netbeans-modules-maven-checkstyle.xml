@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.maven.checkstyle">
+    <module_version install_time="1381504605320" last="true" origin="installer" specification_version="1.10.1">
+        <file crc="3364178083" name="config/Modules/org-netbeans-modules-maven-checkstyle.xml"/>
+        <file crc="860826529" name="modules/locale/org-netbeans-modules-maven-checkstyle_ja.jar"/>
+        <file crc="2394663627" name="modules/locale/org-netbeans-modules-maven-checkstyle_pt_BR.jar"/>
+        <file crc="455238985" name="modules/locale/org-netbeans-modules-maven-checkstyle_ru.jar"/>
+        <file crc="1970338393" name="modules/locale/org-netbeans-modules-maven-checkstyle_zh_CN.jar"/>
+        <file crc="272805479" name="modules/org-netbeans-modules-maven-checkstyle.jar"/>
+    </module_version>
+</module>

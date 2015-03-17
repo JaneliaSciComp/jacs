@@ -1,7 +1,12 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -10,7 +15,6 @@ import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -18,15 +22,13 @@ import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
 
-import antlr.Utils;
-
 /**
  * File discovery service for sample processing results.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleProcessingResultsDiscoveryService extends SupportingFilesDiscoveryService {
-
+	
     @Override
     public void execute(IProcessData processData) throws ServiceException {
         processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
@@ -36,10 +38,12 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
     @Override
     protected void processFolderForData(Entity sampleProcessingResult) throws Exception {
 
+    	SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, null, ownerKey, logger);
+        
         if (!sampleProcessingResult.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
             throw new IllegalStateException("Expected Sample Processing Result as input");
         }
-
+        
         super.processFolderForData(sampleProcessingResult);
 
         String channelMappingStr = (String)processData.getItem("LSM_CHANNEL_MAPPING");
@@ -68,13 +72,11 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
 
         // Find consensus optical res
-        entityLoader.populateChildren(sampleEntity);
-        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, null, ownerKey, logger);        
-        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, sampleArea.getName());
+        entityLoader.populateChildren(sampleEntity);    
+        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sampleArea, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
         
         Entity supportingFiles = EntityUtils.getSupportingData(sampleProcessingResult);
         String pixelRes = null;
-        
         Entity image3d = null;
         
         Map<String,Entity> jsonEntityMap = new HashMap<String,Entity>();
@@ -111,70 +113,71 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
 
         if (pixelRes==null) {
             // The result image was not stitched (since no *.tc file was found), so we can get the pixel resolution from the LSMs
-            pixelRes = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, sampleArea.getName());
+            pixelRes = sampleHelper.getConsensusLsmAttributeValue(sampleArea, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
         }
 
+        // TODO: should determine consensus pixel resolution for all tiles (not just the main image), if we didn't stitch them
         if (pixelRes!=null) {
             logger.info("Setting pixel resolution for "+image3d.getName()+" (id="+image3d.getId()+") to "+pixelRes);
             helper.setPixelResolution(image3d, pixelRes);
         }
+        else {
+        	throw new ServiceException("Could not determine pixel resolution for "+image3d.getName());
+        }
 
         List<String> consensusLsmColors = null;
         boolean consensusColors = true;
-        
-        for(Entity tileEntity : sampleArea.getTiles()) {
-            
-            List<String> allLsmColors = new ArrayList<String>();
-            
-            for(EntityData ed : tileEntity.getOrderedEntityData()) {
-                Entity lsmStack = ed.getChildEntity();
-                if (lsmStack != null && lsmStack.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
-                    
-                    // Don't trust entities in ProcessData, fetch a fresh copy
-                    lsmStack = entityBean.getEntityById(lsmStack.getId());
-                    
-                    String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
-                    
-                    logger.info("Processing metadata for LSM: "+lsmFilename);
-                    
-                    Entity jsonEntity = jsonEntityMap.get(lsmFilename);
-                    if (jsonEntity==null) {
-                        logger.warn("  No JSON metadata file found for LSM: "+lsmFilename);
-                        continue;
-                    }
 
-                    List<String> colors = new ArrayList<String>();
-                    List<String> dyeNames = new ArrayList<String>();
-                    File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                    
-                    try {
-                        LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
-                        for(Channel channel : metadata.getChannels()) {
-                            colors.add(channel.getColor());
-                            DetectionChannel detection = metadata.getDetectionChannel(channel);
-                            if (detection!=null) {
-                                dyeNames.add(detection.getDyeName());
-                            }
+		List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
+        for(Entity tileEntity : tileEntities) {
+            
+        	entityLoader.populateChildren(tileEntity);
+        	
+            List<String> allLsmColors = new ArrayList<String>();
+
+            for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
+        	                        
+                String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
+                
+                logger.info("Processing metadata for LSM: "+lsmFilename);
+                
+                Entity jsonEntity = jsonEntityMap.get(lsmFilename);
+                if (jsonEntity==null) {
+                    logger.warn("  No JSON metadata file found for LSM: "+lsmFilename);
+                    continue;
+                }
+
+                List<String> colors = new ArrayList<String>();
+                List<String> dyeNames = new ArrayList<String>();
+                File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                
+                try {
+                    LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
+                    for(Channel channel : metadata.getChannels()) {
+                        colors.add(channel.getColor());
+                        DetectionChannel detection = metadata.getDetectionChannel(channel);
+                        if (detection!=null) {
+                            dyeNames.add(detection.getDyeName());
                         }
                     }
-                    catch (Exception e) {
-                        throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
-                    }
-                    
-                    allLsmColors.addAll(colors);
-
-                    if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
-                        logger.info("  Setting LSM colors: "+colors);
-                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors));
-                    }
-                    
-                    if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
-                        logger.info("  Setting LSM dyes: "+dyeNames);
-                        lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames));
-                    }
-                    
-                    entityBean.saveOrUpdateEntity(lsmStack);
                 }
+                catch (Exception e) {
+                    throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
+                }
+                
+                allLsmColors.addAll(colors);
+
+                if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
+                    logger.info("  Setting LSM colors: "+colors);
+                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors));
+                }
+                
+                if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
+                    logger.info("  Setting LSM dyes: "+dyeNames);
+                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames));
+                }
+                
+                entityBean.saveOrUpdateEntity(lsmStack);
             }
             
             if (consensusLsmColors==null) {
@@ -188,7 +191,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
 
         logger.debug("channelMapping="+channelMapping);
         
-        if (consensusColors) {
+        if (consensusLsmColors!=null && consensusColors) {
             logger.debug("consensusLsmColors="+consensusLsmColors);
         
             List<String> resultColors = new ArrayList<String>();

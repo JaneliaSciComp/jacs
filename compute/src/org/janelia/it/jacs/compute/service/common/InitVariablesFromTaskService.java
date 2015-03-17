@@ -39,6 +39,7 @@ public class InitVariablesFromTaskService implements IService {
                 }
                 String processVarName = (String) processData.getItem("PROCESS_VARIABLE_" + i);
                 String value = task.getParameter(taskParamName);
+                contextLogger.debug("Init "+processVarName+" with value '"+value+"' from task parameter "+taskParamName);
                 if (value != null) {
                     // We specifically avoid overriding existing values in ProcessData, because if the process file
                     // is being <include>'d, then the task may not contain the parameter which is already in
@@ -50,12 +51,15 @@ public class InitVariablesFromTaskService implements IService {
                             data.putItem(processVarName, value);
                         }
                     }
-
+                    else {
+                        contextLogger.debug("  Will not override existing value '"+processData.getItem(processVarName)+"'");
+                    }
                 }
             }
 
             data.putItem("TASK_OWNER", task.getOwner());
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             throw new ServiceException(e);
         }
     }

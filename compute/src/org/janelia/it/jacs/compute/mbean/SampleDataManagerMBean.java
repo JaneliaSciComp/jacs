@@ -24,16 +24,16 @@ public interface SampleDataManagerMBean {
     public void cancelAllIncompleteDataSetPipelineTasks();
     public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force);
     public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force);
-    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment);
-    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment);
+    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams);
+    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment);
     public void runNeuronSeparationPipeline(String resultEntityId);
     public void runNeuronSeparationMapping(String separationId1, String separationId2);
     
     // Generic sample processing
-    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParam);
-    public void applyProcessToSample(String sampleEntityId, String processName, String extraParam);
-    public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParam);
+    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParams);
+    public void applyProcessToSample(String sampleEntityId, String processName, String extraParams);
+    public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParams);
     
     // Upgrade pipelines
     public void runRepairSeparationsPipeline(String user);

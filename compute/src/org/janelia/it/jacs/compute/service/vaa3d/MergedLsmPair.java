@@ -7,10 +7,14 @@ package org.janelia.it.jacs.compute.service.vaa3d;
  */
 public class MergedLsmPair extends CombinedFile {
 	
+	private String originalFilepath1;
+	private String originalFilepath2;
     private String tag;
     
-	public MergedLsmPair(String lsmFilepath1, String lsmFilepath2, String mergedFilepath, String tag) {
+	public MergedLsmPair(String originalFilepath1, String originalFilepath2, String lsmFilepath1, String lsmFilepath2, String mergedFilepath, String tag) {
 		super(lsmFilepath1, lsmFilepath2, mergedFilepath);
+		this.originalFilepath1 = originalFilepath1;
+		this.originalFilepath2 = originalFilepath2;
 		this.tag = tag;
 	}
 
@@ -25,8 +29,20 @@ public class MergedLsmPair extends CombinedFile {
 	public String getLsmFilepath2() {
 		return getFilepath2();
 	}
+	
+	public String getOriginalFilepath1() {
+		return originalFilepath1;
+	}
+
+	public String getOriginalFilepath2() {
+		return originalFilepath2;
+	}
 
 	public String getMergedFilepath() {
 		return getOutputFilepath();
+	}
+	
+	public MergedLsmPair getMovedLsmPair(String newPath1, String newPath2) {
+		return new MergedLsmPair(originalFilepath1, originalFilepath2, newPath1, newPath2, getMergedFilepath(), tag);
 	}
 }

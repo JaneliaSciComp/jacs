@@ -54,7 +54,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     	File outputDir = null;
         this.resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
-        String username = ownerKey.split(":")[1];
+        String username = EntityUtils.getNameFromSubjectKey(ownerKey);
 
         if (resultFileNode!=null) {
             outputDir = new File(resultFileNode.getDirectoryPath());
@@ -305,11 +305,16 @@ public class CreateErrorEntityService extends AbstractEntityService {
         }
 
         private void classify(ServiceException e) {
-            if (e.getMessage().matches(".*?java.net.SocketTimeoutException: Read timed out.*?")) {
+            String m = e.getMessage();
+            if (m.matches(".*?failed receiving gdi request response.*?")) {
+                this.type = ErrorType.RecoverableError;
+                this.description = "DRMAA connection problem";
+            }
+            if (m.matches(".*?java.net.SocketTimeoutException: Read timed out.*?")) {
                 this.type = ErrorType.RecoverableError;
                 this.description = "Problem connecting to JMS queue";
             }
-            else if (e.getMessage().matches(".*?failed on (the )?compute grid.*?")) {
+            else if (m.matches(".*?failed on (the )?compute grid.*?")) {
                 this.type = ErrorType.RecoverableError;
                 this.description = "Job failed on the compute grid";
             }

@@ -1,26 +1,27 @@
 package org.janelia.it.jacs.compute.access.solr;
 
+import java.io.Serializable;
+
 /**
  * Simplified annotation representation for the purposes of SOLR indexing.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SimpleAnnotation extends KeyValuePair {
+public class SimpleAnnotation implements Serializable {
 
 	private String tag;
-	private String owner;
+	private String subjectsCsv;
 	
-	public SimpleAnnotation(String tag, String key, String value, String owner) {
-		super(key, value);
+	public SimpleAnnotation(String tag, String subjectsCsv) {
 		this.tag = tag;
-		this.owner = owner;
+		this.subjectsCsv = subjectsCsv;
 	}
 	
 	public String getTag() {
 		return tag;
 	}
 
-	public String getOwner() {
-		return owner.contains(":") ? owner.split(":")[1] : owner;
-	}
+	public String getSubjectsCsv() {
+        return subjectsCsv;
+    }
 }

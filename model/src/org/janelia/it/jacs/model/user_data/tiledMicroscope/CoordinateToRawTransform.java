@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import java.io.*;
+import org.apache.log4j.Logger;
 
 /**
  * Given a base location for "rendered" tiffs, this class can transform an incoming Large Volume Viewer
@@ -8,14 +9,16 @@ import java.io.*;
  * Created by fosterl on 9/26/14.
  */
 public class CoordinateToRawTransform implements Serializable {
-    private enum TransformParseType { origin, scale }
+    private enum TransformParseType { origin, scale, numlevels, all }
 
     private static final String TRANSFORM_FILE = "transform.txt";
     private static final int MAX_DIGIT_HIERARCHY_LEVEL = 6;
 
     private int[] origin = new int[3];
     private double[] scale = new double[3];
+    private int numLevels = -1;
     private int relativeDrillDepth = 0;
+    private static Logger log = Logger.getLogger(CoordinateToRawTransform.class);
 
     public CoordinateToRawTransform(File baseLocation) {
         init( baseLocation );
@@ -97,16 +100,28 @@ public class CoordinateToRawTransform implements Serializable {
      * sz: 1001.480000
      */
     private void init( File baseLocation ) {
-        File bottomLevelDigitDir = digitDrilldown( baseLocation );
-        if ( bottomLevelDigitDir == null ) {
-            throw new IllegalArgumentException( "Unable to find a suitable " + TRANSFORM_FILE + " file for transform parameters." );
-        }
-        // Parse a bottom-level directory for the scale.
-        File[] transformTexts = bottomLevelDigitDir.listFiles(new TransformTextFilter());
-        parseTransform(transformTexts[0], TransformParseType.scale);
         // Parse a top-level directory for the origin.
-        transformTexts = baseLocation.listFiles(new TransformTextFilter());
-        parseTransform(transformTexts[0], TransformParseType.origin);
+        File[] transformTexts = baseLocation.listFiles(new TransformTextFilter());
+        parseTransform(transformTexts[0], TransformParseType.all);
+        if ( numLevels > 0 ) {
+            double divisor = Math.pow(2.0, numLevels - 1);
+            for (int i = 0; i < getScale().length; i++) {
+                getScale()[i] /= divisor;
+            }
+            if (log.isDebugEnabled()) {
+                log.debug("Dividing scale by numlevels " + numLevels);
+            }
+        }
+        else {
+            File bottomLevelDigitDir = digitDrilldown(baseLocation);
+            if (bottomLevelDigitDir == null) {
+                throw new IllegalArgumentException("Unable to find a suitable " + TRANSFORM_FILE + " file for transform parameters.");
+            }
+            // Parse a bottom-level directory for the scale.
+            transformTexts = bottomLevelDigitDir.listFiles(new TransformTextFilter());
+            parseTransform(transformTexts[0], TransformParseType.scale);
+        }
+
     }
 
     private void parseTransform(File transformText, TransformParseType parseType) {
@@ -122,12 +137,12 @@ public class CoordinateToRawTransform implements Serializable {
                     int maskValue = 1;
                     String[] tagValue = inline.trim().split(":");
                     if ( tagValue.length == 2 ) {
-                        String tag = tagValue[0].trim().toLowerCase();
                         String value = tagValue[1].trim();
 
-                        char coord = tag.charAt( 1 );
+                        String tag = tagValue[0].trim().toLowerCase();
+                        char secondPos = tag.charAt( 1 );
                         int index = 0;
-                        switch (coord) {
+                        switch (secondPos) {
                             case 'x':
                                 maskValue = 1;
                                 index = 0;
@@ -141,18 +156,23 @@ public class CoordinateToRawTransform implements Serializable {
                                 index = 2;
                                 break;
                             default:
-                                throw new IllegalArgumentException("Unexpected value while reading scale/origin parameters.");
+                                break;
                         }
-                        // Either origin or scale.
+                        // Either origin, scale, or number-of-levels.
                         char type = tag.charAt( 0 );
-                        if ( type == 'o'  &&  parseType == TransformParseType.origin ) {
+                        if ( type == 'o'  &&  (parseType == TransformParseType.origin  ||  parseType == TransformParseType.all) ) {
                             getOrigin()[ index ] = Integer.parseInt( value );
                         }
                         else if ( type == 's' ) {
-                            if ( parseType == TransformParseType.scale ) {
+                            if ( parseType == TransformParseType.scale  ||  parseType == TransformParseType.all ) {
                                 getScale()[ index ] = Double.parseDouble( value );
                             }
                             maskValue <<= 3;
+                        }
+                        else if ( tag.equalsIgnoreCase("nl")  &&  (parseType == TransformParseType.numlevels  ||  parseType == TransformParseType.all) ) {
+                            // This is an optional field. Not included in
+                            // the mask-of-set-values.
+                            numLevels = Integer.parseInt( value );
                         }
                         setterMask |= maskValue;
                     }
@@ -166,10 +186,13 @@ public class CoordinateToRawTransform implements Serializable {
             if ( setterMask != 0b111111 ) {
                 throw new IllegalArgumentException( "Did not find all required origin and scale parameters from  " + transformText);
             }
-
         } catch ( IOException ioe ) {
             throw new RuntimeException( ioe );
+        } catch ( Exception any ) {
+            any.printStackTrace();
+            throw any;
         }
+        
     }
 
     private static class DigitDirFileFilter implements FileFilter {

@@ -2344,29 +2344,32 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 }
             });
             
-            // Check if the grantee already has a link to the entity
-            boolean granteeHasLink = !getCommonRootsWithAncestor(granteeKey, rootEntity.getId()).isEmpty();
-            
-            if (!granteeHasLink) {
-                // Grantee has no link, so expose it in the Shared Data folder
-                Entity sharedDataFolder = null;
-                List<Entity> entities = getUserEntitiesByNameAndTypeName(granteeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
-                if (entities != null && !entities.isEmpty()) {
-                    sharedDataFolder = entities.get(0);
-                }
+            if (!rootEntity.getEntityTypeName().equals(EntityConstants.TYPE_ANNOTATION)) {
+                // Check if the grantee already has a link to the entity
+                boolean granteeHasLink = !getCommonRootsWithAncestor(granteeKey, rootEntity.getId()).isEmpty();
                 
-                if (sharedDataFolder==null) {
-                    sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
-                    EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
-                    Entity granteeWorkspace = getDefaultWorkspace(granteeKey);
-                    if (granteeWorkspace!=null) {
-                    	addRootToWorkspace(granteeKey, granteeWorkspace, sharedDataFolder);
+                if (!granteeHasLink) {
+                    // Grantee has no link, so expose it in the Shared Data folder
+                    Entity sharedDataFolder = null;
+                    List<Entity> entities = getUserEntitiesByNameAndTypeName(granteeKey, EntityConstants.NAME_SHARED_DATA, EntityConstants.TYPE_FOLDER);
+                    if (entities != null && !entities.isEmpty()) {
+                        sharedDataFolder = entities.get(0);
                     }
-                    saveOrUpdate(sharedDataFolder);
+                    
+                    if (sharedDataFolder==null) {
+                        sharedDataFolder = createEntity(granteeKey, EntityConstants.TYPE_FOLDER, EntityConstants.NAME_SHARED_DATA);
+                        EntityUtils.addAttributeAsTag(sharedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
+                        Entity granteeWorkspace = getDefaultWorkspace(granteeKey);
+                        if (granteeWorkspace!=null) {
+                            addRootToWorkspace(granteeKey, granteeWorkspace, sharedDataFolder);
+                        }
+                        saveOrUpdate(sharedDataFolder);
+                    }
+                    
+                    addEntityToParent(sharedDataFolder, rootEntity, sharedDataFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
                 }
-                
-                addEntityToParent(sharedDataFolder, rootEntity, sharedDataFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
+            
         }
         catch (Exception e) {
             throw new DaoException(e);
@@ -2991,7 +2994,6 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         try {
-        	
         	if (entityIds.isEmpty()) {
         		return new ArrayList<Entity>();
         	}
@@ -3005,10 +3007,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
             hql.append("join ed.parentEntity ");
             hql.append("left outer join fetch ed.parentEntity.entityActorPermissions p ");
+            hql.append("left outer join ed.parentEntity.entityActorPermissions pf ");
             hql.append("where ed.entityAttrName = :attrName ");
             hql.append("and ed.value in (:entityIds) ");
             if (subjectKey!=null) {
-            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
+            	hql.append("and (ed.parentEntity.ownerKey in (:subjectKeyList) or pf.subjectKey in (:subjectKeyList)) ");
             }
             hql.append("order by ed.parentEntity.id ");
             

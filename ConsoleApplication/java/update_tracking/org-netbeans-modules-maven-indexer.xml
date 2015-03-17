@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module codename="org.netbeans.modules.maven.indexer/2">
+    <module_version install_time="1381502744893" last="false" origin="installer" specification_version="2.25.1">
+        <file crc="3741439804" name="config/Modules/org-netbeans-modules-maven-indexer.xml"/>
+        <file crc="817445288" name="modules/ext/maven/indexer-artifact-5.1.1.jar"/>
+        <file crc="2812749406" name="modules/ext/maven/indexer-core-5.1.1.jar"/>
+        <file crc="2387977412" name="modules/ext/maven/lucene-core-3.6.2.jar"/>
+        <file crc="2535767780" name="modules/ext/maven/lucene-highlighter-3.6.2.jar"/>
+        <file crc="4102630127" name="modules/locale/org-netbeans-modules-maven-indexer_ja.jar"/>
+        <file crc="3724039783" name="modules/locale/org-netbeans-modules-maven-indexer_pt_BR.jar"/>
+        <file crc="815034060" name="modules/locale/org-netbeans-modules-maven-indexer_ru.jar"/>
+        <file crc="115937426" name="modules/locale/org-netbeans-modules-maven-indexer_zh_CN.jar"/>
+        <file crc="1862163958" name="modules/org-netbeans-modules-maven-indexer.jar"/>
+    </module_version>
+    <module_version install_time="1423506317462" last="true" origin="NetBeans Distribution" specification_version="2.25.2">
+        <file crc="3741439804" name="config/Modules/org-netbeans-modules-maven-indexer.xml"/>
+        <file crc="817445288" name="modules/ext/maven/indexer-artifact-5.1.1.jar"/>
+        <file crc="2812749406" name="modules/ext/maven/indexer-core-5.1.1.jar"/>
+        <file crc="2387977412" name="modules/ext/maven/lucene-core-3.6.2.jar"/>
+        <file crc="2535767780" name="modules/ext/maven/lucene-highlighter-3.6.2.jar"/>
+        <file crc="1550497738" name="modules/locale/org-netbeans-modules-maven-indexer_ja.jar"/>
+        <file crc="3033109952" name="modules/locale/org-netbeans-modules-maven-indexer_pt_BR.jar"/>
+        <file crc="1804226623" name="modules/locale/org-netbeans-modules-maven-indexer_ru.jar"/>
+        <file crc="312765074" name="modules/locale/org-netbeans-modules-maven-indexer_zh_CN.jar"/>
+        <file crc="737684333" name="modules/org-netbeans-modules-maven-indexer.jar"/>
+    </module_version>
+</module>

@@ -47,12 +47,10 @@ public class InitSampleAttributesService extends AbstractEntityService {
         Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
 
         if (supportingFiles == null) {
-
             contextLogger.info("skipping SAMPLE_AREA derviation, no supporting files for sample " +
                                sampleEntity.getName());
-
-        } else {
-
+        } 
+        else {
             supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
             final List<Entity> tileEntities = EntityUtils.getDescendantsOfType(supportingFiles,
                                                                                EntityConstants.TYPE_IMAGE_TILE,
@@ -80,7 +78,7 @@ public class InitSampleAttributesService extends AbstractEntityService {
                     anatomicalArea = new AnatomicalArea(area);
                     areaMap.put(area, anatomicalArea);
                 }
-                anatomicalArea.addTile(tileEntity);
+                anatomicalArea.addTileId(tileEntity.getId());
             }
 
             sampleAreas = new ArrayList<AnatomicalArea>(areaMap.values());
