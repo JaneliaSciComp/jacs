@@ -4,6 +4,7 @@ import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.Group;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -194,6 +196,24 @@ public class EntityUtils {
             return null;
         }
         return subjectKey.substring(subjectKey.indexOf(':') + 1);
+    }
+    
+    /**
+     * Sort a list of subjects in this order: 
+     * groups then users, alphabetical by full name, alphabetical by name. 
+     * @param subjects
+     */
+    public static void sortSubjects(List<Subject> subjects) {
+        Collections.sort(subjects, new Comparator<Subject>() {
+            @Override
+            public int compare(Subject o1, Subject o2) {
+                ComparisonChain chain = ComparisonChain.start()
+                        .compare(o1.getClass().getName(), o2.getClass().getName(), Ordering.natural())
+                        .compare(o1.getFullName(), o2.getFullName(), Ordering.natural().nullsLast())
+                        .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst());
+                return chain.result();
+            }
+        });
     }
 
     /**
