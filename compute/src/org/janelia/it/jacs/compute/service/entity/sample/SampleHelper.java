@@ -529,17 +529,14 @@ public class SampleHelper extends EntityHelper {
             ed.setChildEntity(supportingFiles);
         }
         
+        // Find the tile
         EntityData imageTileEd = null;
         for (EntityData ed : supportingFiles.getEntityData()) {
             Entity child = ed.getChildEntity();
             if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
                 if (child.getName().equals(tileGroup.getTag())) {
-                    String area = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-                    if (area==null || area.equals(tileGroup.getAnatomicalArea())) {
-                        imageTileEd = ed;
-                        break;
-                    }
-                    
+                    imageTileEd = ed;
+                    break;
                 }
             }
         }
