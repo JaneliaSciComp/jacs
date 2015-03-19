@@ -825,15 +825,15 @@ public class SampleHelper extends EntityHelper {
      */
     public String getConsensusLsmAttributeValue(List<AnatomicalArea> sampleAreas, String attrName) throws Exception {
         String consensus = null;
-        logger.info("Determining consensus for "+attrName+" for sample areas: "+getSampleAreasCSV(sampleAreas));
+        logger.trace("Determining consensus for "+attrName+" for sample areas: "+getSampleAreasCSV(sampleAreas));
         for(AnatomicalArea sampleArea : sampleAreas) {
-        	logger.info("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
+        	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
 			List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
 	        for(Entity tile : tileEntities) {
-	        	logger.info("    Determining consensus for "+attrName+" in "+tile.getName()+" tile");
+	        	logger.trace("    Determining consensus for "+attrName+" in "+tile.getName()+" tile");
 	        	entityLoader.populateChildren(tile);
 	            for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
-		        	logger.info("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
+		        	logger.trace("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
 	                String value = image.getValueByAttributeName(attrName);
 	                if (consensus!=null && !consensus.equals(value)) {
 	                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample processing result "+sampleArea.getSampleProcessingResultId());
