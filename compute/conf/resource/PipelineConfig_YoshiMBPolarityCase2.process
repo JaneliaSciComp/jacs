@@ -3,9 +3,9 @@
     
         <include name="Pipeline" process="FlyLightPolarityPipeline">
             <input name="PIPELINE_PROCESS" value="YoshiMBPolarityCase2"/>
-            <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488;membrane=Alexa Fluor 594"/>
+            <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594"/>
             <input name="OUTPUT_CHANNEL_ORDER_20X" value="membrane,reference"/>
-            <input name="CHANNEL_DYE_SPEC_63X" value="presynaptic=Alexa Fluor 568,Cy3;membrane=Alexa Fluor 594;reference=Alexa Fluor 488"/>
+            <input name="CHANNEL_DYE_SPEC_63X" value="presynaptic=Alexa Fluor 568,Cy3;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"/>
             <input name="OUTPUT_CHANNEL_ORDER_63X" value="presynaptic,membrane,reference"/>
         </include>
         
