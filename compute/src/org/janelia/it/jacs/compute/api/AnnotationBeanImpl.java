@@ -49,6 +49,10 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     private final AnnotationDAO _annotationDAO = new AnnotationDAO(_logger);
 
     private void updateIndex(Long entityId) {
+        if (entityId==null) {
+            _logger.warn("Cannot update index for null entity id");
+            return;
+        }
     	IndexingHelper.updateIndex(entityId);
     }
 
