@@ -1642,7 +1642,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             StringBuffer hql = new StringBuffer("select ed.childEntity from EntityData ed ");
             hql.append("join ed.childEntity ");
             hql.append("left outer join fetch ed.childEntity.entityActorPermissions pf ");
-            hql.append("left outer join ed.parentEntity.entityActorPermissions p ");
+            hql.append("left outer join ed.childEntity.entityActorPermissions p ");
             hql.append("where ed.parentEntity.id=? ");
             if (subjectKeyList != null) {
                 hql.append("and (ed.childEntity.ownerKey in (:subjectKeyList) or p.subjectKey in (:subjectKeyList)) ");
