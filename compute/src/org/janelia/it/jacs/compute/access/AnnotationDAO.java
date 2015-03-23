@@ -2941,13 +2941,23 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         Entity entity = getEntityById(subjectKey, annotationId);
+        
+        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_ANNOTATION)) {
+            throw new IllegalArgumentException("Entity is not an annotation: "+annotationId);
+        }
+        
         genericDelete(entity);  
         
         // Notify the session 
         String sessionId = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_SESSION_ID);
         if (sessionId != null) updateAnnotationSession(Long.parseLong(sessionId));
         
-        return new Long(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID));
+        String targetIdStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+        if (targetIdStr==null) {
+            log.warn("Deleted annotation had no target id: "+annotationId);
+            return null;
+        }
+        return new Long(targetIdStr);
     }
     
     public List<Entity> getAnnotationsForChildren(String subjectKey, Long entityId) throws DaoException {
