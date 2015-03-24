@@ -529,17 +529,14 @@ public class SampleHelper extends EntityHelper {
             ed.setChildEntity(supportingFiles);
         }
         
+        // Find the tile
         EntityData imageTileEd = null;
         for (EntityData ed : supportingFiles.getEntityData()) {
             Entity child = ed.getChildEntity();
             if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
                 if (child.getName().equals(tileGroup.getTag())) {
-                    String area = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-                    if (area==null || area.equals(tileGroup.getAnatomicalArea())) {
-                        imageTileEd = ed;
-                        break;
-                    }
-                    
+                    imageTileEd = ed;
+                    break;
                 }
             }
         }
@@ -828,15 +825,15 @@ public class SampleHelper extends EntityHelper {
      */
     public String getConsensusLsmAttributeValue(List<AnatomicalArea> sampleAreas, String attrName) throws Exception {
         String consensus = null;
-        logger.info("Determining consensus for "+attrName+" for sample areas: "+getSampleAreasCSV(sampleAreas));
+        logger.trace("Determining consensus for "+attrName+" for sample areas: "+getSampleAreasCSV(sampleAreas));
         for(AnatomicalArea sampleArea : sampleAreas) {
-        	logger.info("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
+        	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
 			List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
 	        for(Entity tile : tileEntities) {
-	        	logger.info("    Determining consensus for "+attrName+" in "+tile.getName()+" tile");
+	        	logger.trace("    Determining consensus for "+attrName+" in "+tile.getName()+" tile");
 	        	entityLoader.populateChildren(tile);
 	            for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
-		        	logger.info("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
+		        	logger.trace("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
 	                String value = image.getValueByAttributeName(attrName);
 	                if (consensus!=null && !consensus.equals(value)) {
 	                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample processing result "+sampleArea.getSampleProcessingResultId());

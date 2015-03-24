@@ -64,7 +64,6 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
         String entityType = entity.getEntityTypeName();
         
         if (entityType.equals(EntityConstants.TYPE_IMAGE_3D) 
-                || entityType.equals(EntityConstants.TYPE_MOVIE)
                 || entityType.equals(EntityConstants.TYPE_FILE)) {
             String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             deletePath(filepath);

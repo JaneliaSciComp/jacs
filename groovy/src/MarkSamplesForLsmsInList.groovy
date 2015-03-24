@@ -12,7 +12,7 @@ class MarkSamplesForLsmsInListScript {
     
     private static final filename = "all_changed_lsms.txt";
     private static final username = "user:rokickik"
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     
     private final JacsUtils f;
     
@@ -77,7 +77,8 @@ class MarkSamplesForLsmsInListScript {
                 && !EntityConstants.VALUE_BLOCKED.equals(status)
                 && !EntityConstants.VALUE_MARKED.equals(status)
                 && !sample.name.startsWith("NO_CONSENSUS")) {
-            println "Marking sample for reprocessing: "+sample.name+" (status: "+status+", owner: "+sample.ownerKey+")"
+            String dataset = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
+            println "Marking sample for reprocessing: "+sample.name+" (status: "+status+", owner: "+sample.ownerKey+", data_set: "+dataset+")"
             if (!DEBUG) {
                 f.e.setOrUpdateValue(sample.ownerKey, sample.id, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
             }
