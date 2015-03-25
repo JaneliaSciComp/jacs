@@ -463,6 +463,7 @@ public class EntityUtils {
                         type.equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK) ||
                         type.equals(EntityConstants.TYPE_LSM_STACK) ||
                         type.equals(EntityConstants.TYPE_SWC_FILE) ||
+                        type.equals(EntityConstants.IN_MEMORY_TYPE_PLACEHOLDER_ENTITY) ||
                         type.equals(EntityConstants.TYPE_V3D_ANO_FILE)) {
                     path = getFilePath(entity);
                     log.debug("at 'type-test' attempt, found " + path);
