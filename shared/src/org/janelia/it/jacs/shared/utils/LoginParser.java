@@ -19,7 +19,7 @@ public class LoginParser {
 
     public static void main(String[] args) {
         try {
-            File rootFile = new File("/groups/jacs/jacsHosts/servers/jacs/jboss-4.2.3.GA/server/default/log/logins.txt");
+            File rootFile = new File("/groups/jacs/jacsHosts/servers/jacs/jboss-4.2.3.GA/server/default/log/usersFY15.txt");
             Scanner scanner = new Scanner(rootFile);
             TreeMap<String, ArrayList<String>> userMap = new TreeMap<String, ArrayList<String>>();
             TreeMap<String, ArrayList<String>> usersByMonthMap = new TreeMap<String, ArrayList<String>>();
