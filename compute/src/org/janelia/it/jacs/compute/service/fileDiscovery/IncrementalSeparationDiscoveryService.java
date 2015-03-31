@@ -285,20 +285,15 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         helper.setImageIfNecessary(referenceVolume, EntityConstants.ATTRIBUTE_MASK_IMAGE, refMask);
         helper.setImageIfNecessary(referenceVolume, EntityConstants.ATTRIBUTE_CHAN_IMAGE, refChan);
 
-        // Set the fast 3d image on the default 3d image for the result
-        Set<Long> parentIds = entityBean.getParentIdsForAttribute(separation.getId(), EntityConstants.ATTRIBUTE_RESULT);
-        if (parentIds.isEmpty() || parentIds.size()>1) {
-            logger.warn("Unexpected number of result parents: "+parentIds.size());
+        Entity inputImage = separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_INPUT_IMAGE);
+        if (inputImage!=null) {
+        	logger.info("Setting fast 3d image on the separation's input image: "+inputImage.getName());
+        	helper.setImageIfNecessary(inputImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
         }
         else {
-            Entity resultEntity = entityBean.getEntityById(parentIds.iterator().next());
-            entityLoader.populateChildren(resultEntity);
-            Entity default3dImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-            if (default3dImage!=null) {
-            	helper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
-            }
+        	logger.warn("Could not find input image for separation: "+separation.getId());
         }
-
+        
         // Process Neurons
         Collections.sort(fragmentMipFiles, new Comparator<File>() {
 			@Override

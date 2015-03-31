@@ -205,12 +205,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             }
             
         	// Find and apply fast 3d image, if available
-    		Entity separation = EntityUtils.getLatestChildOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+    		Entity separation = findSeparation(resultEntity, default3dImage);
     		if (separation!=null) {
             	Entity fast3dImage = findFast3dImage(separation);
             	entityHelper.setDefault3dImage(separation, default3dImage);
             	if (fast3dImage!=null) {
-            		logger.info("Found default fast 3d image, applying to "+default3dImage.getName());
+            		logger.info("Found default fast 3d image in separation "+separation.getId()+", applying to "+default3dImage.getName());
             		entityHelper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fast3dImage);
         		}
     		}
@@ -246,6 +246,26 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}
 	}
 
+	/**
+	 * Find the corresponding neuron separation for the given 3d image. 
+	 * @param resultEntity
+	 * @param default3dImage
+	 * @return
+	 */
+	private Entity findSeparation(Entity resultEntity, Entity default3dImage) {
+		Entity foundEntity = null;
+		for(Entity separation : EntityUtils.getChildrenOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+			// We'll take the latest if we don't find one matching our input image, because not all entity types keep track of the Input Image attribute
+			foundEntity = separation;
+    		EntityData inputImageEd = foundEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_INPUT_IMAGE);
+			if (inputImageEd!=null && inputImageEd.getChildEntity()!=null && inputImageEd.getChildEntity().getId().equals(default3dImage.getId())) {
+				// Found it, so let's stop looking
+				break;
+			}
+		}
+		return foundEntity;
+	}
+	
     private Entity findDefaultImage(Entity result) throws Exception {
         
         logger.info("  Result's default 3d image is missing. Attempting to infer...");
