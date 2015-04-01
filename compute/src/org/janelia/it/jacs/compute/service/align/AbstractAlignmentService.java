@@ -26,6 +26,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -127,7 +128,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         // strategy for finding input files and other parameters.
         for(AnatomicalArea anatomicalArea : sampleAreas) {
             String areaName = anatomicalArea.getName();
-            if ("Brain".equalsIgnoreCase(areaName) || "".equals(areaName)) {
+            if ("Brain".equalsIgnoreCase(areaName) || StringUtils.isEmpty(areaName)) {
                 Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
                 entityLoader.populateChildren(result);
                 if (result!=null) {
