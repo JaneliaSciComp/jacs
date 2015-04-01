@@ -498,6 +498,11 @@
         <description>Run cleanup for nerna retired data</description>
         <name>runNernaRetiredDataCleanup</name>
     </operation>
-    
-    
+
+    <operation>
+        <description>Run Database File Verification Service</description>
+        <name>runFileVerification</name>
+    </operation>
+
+
 </mbean>

@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService;
 import org.janelia.it.jacs.compute.service.solr.SolrIndexingService;
+import org.janelia.it.jacs.compute.util.FileVerificationUtil;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -764,6 +765,16 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             EJBFactory.getLocalComputeBean().submitJob("CleanupRetiredData", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    public void runFileVerification() {
+        FileVerificationUtil util = new FileVerificationUtil();
+        try {
+            util.runFileVerificationUtil();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

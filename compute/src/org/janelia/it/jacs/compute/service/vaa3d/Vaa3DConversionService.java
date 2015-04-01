@@ -1,13 +1,13 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
 
 /**
  * Compress any number of 3d volumes in parallel. 
@@ -16,7 +16,7 @@ import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService
  */
 public class Vaa3DConversionService extends ParallelFileProcessingService {
     
-	private Set<Integer> output8bit = new HashSet<Integer>();
+	private Set<Integer> output8bit = new HashSet<>();
 
     boolean global8bitFlag=false;
 	
@@ -68,9 +68,9 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
         script.append("\n");
         script.append("if [ \"$COPY_ONLY\" == \"true\" ] && [ \"$SAVE_TO_8BIT\" == \"\" ]; then\n");
         script.append("    echo \"Copying $INPUT_FILENAME to $OUTPUT_FILENAME\"\n");
-        script.append("    "+Vaa3DHelper.getFormattedCopyCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME")).append("\n");
+        script.append("    ").append(Vaa3DHelper.getFormattedCopyCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME")).append("\n");
         script.append("else\n");
-        script.append("    "+Vaa3DHelper.getFormattedConvertCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT")).append("\n");
+        script.append("    ").append(Vaa3DHelper.getFormattedConvertCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT")).append("\n");
         script.append("fi\n");
         script.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
         script.append("\n");

@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.*;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -17,6 +13,9 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * Compress existing v3draw files to v3dpbd to save space.
@@ -46,12 +45,11 @@ public class SampleDataCompressionService implements IService {
     protected int numChanges;
     
     private boolean isDebug = false;
-    private String mode = MODE_UNDEFINED;
-    protected IProcessData processData;
+	protected IProcessData processData;
     
     private String rootEntityId;
-    private Set<String> inputFiles = new HashSet<String>();
-    private Map<String,Set<Long>> entityMap = new HashMap<String,Set<Long>>();
+    private Set<String> inputFiles = new HashSet<>();
+    private Map<String,Set<Long>> entityMap = new HashMap<>();
     
     public void execute(IProcessData processData) throws ServiceException {
 
@@ -70,24 +68,26 @@ public class SampleDataCompressionService implements IService {
             if (testRun!=null) {
             	isDebug = Boolean.parseBoolean(testRun);	
             }
-            
-            mode = processData.getString("MODE");
+
+			String mode = processData.getString("MODE");
             this.processData = processData;
 
         	rootEntityId = (String)processData.getItem("ROOT_ENTITY_ID");
-        	
-            if (mode.equals(MODE_CREATE_INPUT_LIST)) {
-                doCreateInputList();
-            }
-            else if (mode.equals(MODE_CREATE_OUTPUT_LIST)) {
-                doCreateOutputList();
-            }
-            else if (mode.equals(MODE_COMPLETE)) {
-                doComplete();
-            } 
-            else {
-                logger.error("Do not recognize mode type="+mode);
-            }
+
+			switch (mode) {
+				case MODE_CREATE_INPUT_LIST:
+					doCreateInputList();
+					break;
+				case MODE_CREATE_OUTPUT_LIST:
+					doCreateOutputList();
+					break;
+				case MODE_COMPLETE:
+					doComplete();
+					break;
+				default:
+					logger.error("Do not recognize mode type=" + mode);
+					break;
+			}
     	}
         catch (Exception e) {
         	if (e instanceof ServiceException) {
@@ -114,15 +114,15 @@ public class SampleDataCompressionService implements IService {
     }
 
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
-        List<List<String>> groupList = new ArrayList<List<String>>();
+        List<List<String>> groupList = new ArrayList<>();
         List<String> currentGroup = null;
         for (String s : fullList) {
             if (currentGroup==null) {
-                currentGroup = new ArrayList<String>();
+                currentGroup = new ArrayList<>();
             } 
             else if (currentGroup.size()==groupSize) {
                 groupList.add(currentGroup);
-                currentGroup = new ArrayList<String>();
+                currentGroup = new ArrayList<>();
             }
             currentGroup.add(s);
         }
@@ -139,7 +139,7 @@ public class SampleDataCompressionService implements IService {
     		throw new IllegalArgumentException("INPUT_PATH_LIST may not be null");
     	}
     	
-    	List<String> outputPaths = new ArrayList<String>();
+    	List<String> outputPaths = new ArrayList<>();
     	for(String s : inputPaths) {
     		outputPaths.add(s.replaceAll("v3draw", "v3dpbd"));
     	}
@@ -211,7 +211,7 @@ public class SampleDataCompressionService implements IService {
     	
     	Set<Long> eset = entityMap.get(filepath);
     	if (eset == null) {
-    		eset = new HashSet<Long>();
+    		eset = new HashSet<>();
     		entityMap.put(filepath, eset);
     	}
     	eset.add(imageEntity.getId());
@@ -259,7 +259,7 @@ public class SampleDataCompressionService implements IService {
             }
             
     	    // Update the input stacks
-        	for(Entity entity : entityBean.getEntitiesById(new ArrayList<Long>(inputEntites))) {
+        	for(Entity entity : entityBean.getEntitiesById(new ArrayList<>(inputEntites))) {
         	    
         	    // Update the path. This was already fixed by the bulk update above, but we need to fix it again, 
         	    // because we're using an entity with the old state.

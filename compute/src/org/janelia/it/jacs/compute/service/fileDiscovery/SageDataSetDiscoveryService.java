@@ -1,13 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -19,8 +13,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
+import java.util.*;
 
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
@@ -81,7 +74,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
      */
     protected void processSageDataSet(Entity dataSet) throws Exception {
 
-        Multimap<String,SlideImage> slideGroups = LinkedListMultimap.<String,SlideImage>create();
+        Multimap<String,SlideImage> slideGroups = LinkedListMultimap.create();
         
 		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 		logger.info("Querying SAGE for data set: "+dataSetIdentifier);
@@ -121,18 +114,19 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected SlideImage createSlideImage(Map<String,Object> row) {
         SlideImage slideImage = new SlideImage();
         slideImage.setSageId((Long)row.get("id"));
-		slideImage.setSlideCode((String)row.get("slide_code"));
-		slideImage.setImagePath((String)row.get("path"));
-		slideImage.setTileType((String)row.get("tile"));
-		slideImage.setLine((String)row.get("line"));
-        slideImage.setCrossBarcode((String)row.get("cross_barcode"));
-		slideImage.setChannelSpec((String)row.get("channel_spec"));
-		slideImage.setGender((String)row.get("gender"));
-		slideImage.setArea((String)row.get("area"));
-		slideImage.setAge((String)row.get("age"));
-		slideImage.setChannels((String)row.get("channels"));
-		slideImage.setMountingProtocol((String)row.get("mounting_protocol"));
-        slideImage.setTissueOrientation((String)row.get("tissue_orientation"));
+		slideImage.setSlideCode((String) row.get("slide_code"));
+		slideImage.setImagePath((String) row.get("path"));
+		slideImage.setTileType((String) row.get("tile"));
+		slideImage.setLine((String) row.get("line"));
+        slideImage.setCrossBarcode((String) row.get("cross_barcode"));
+		slideImage.setChannelSpec((String) row.get("channel_spec"));
+		slideImage.setGender((String) row.get("gender"));
+		slideImage.setArea((String) row.get("area"));
+		slideImage.setAge((String) row.get("age"));
+		slideImage.setChannels((String) row.get("channels"));
+		slideImage.setMountingProtocol((String) row.get("mounting_protocol"));
+        slideImage.setTissueOrientation((String) row.get("tissue_orientation"));
+        slideImage.setVtLine((String) row.get("vt_line"));
 		slideImage.setEffector((String)row.get("effector"));
 		String objectiveStr = (String)row.get("objective");
 		if (objectiveStr!=null) {
@@ -166,7 +160,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     
     protected void processSlideGroup(Entity dataSet, String slideCode, Collection<SlideImage> slideGroup) throws Exception {
     	
-        HashMap<String, SlideImageGroup> tileGroups = new HashMap<String, SlideImageGroup>();
+        HashMap<String, SlideImageGroup> tileGroups = new HashMap<>();
         
         logger.info("Processing "+slideCode+", "+slideGroup.size()+" slide images");
         
@@ -200,7 +194,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             tileNum++;
         }
         
-    	List<SlideImageGroup> tileGroupList = new ArrayList<SlideImageGroup>(tileGroups.values());
+    	List<SlideImageGroup> tileGroupList = new ArrayList<>(tileGroups.values());
     	
         // Sort the pairs by their tag name
         Collections.sort(tileGroupList, new Comparator<SlideImageGroup>() {
@@ -221,14 +215,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         logger.info("Marking desynchronized samples in dataSet: "+dataSet.getName());
 
         // Make sure to fetch fresh samples, so that we have the latest visited flags
-        Map<Long, Entity> samples = new HashMap<Long, Entity>();
+        Map<Long, Entity> samples = new HashMap<>();
         for(Entity entity : entityBean.getChildEntities(dataSetFolder.getId())) {
             if (entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
                 samples.put(entity.getId(), entity);    
             }   
         }
         
-        List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
+        List<EntityData> dataSetEds = new ArrayList<>(dataSetFolder.getEntityData());
         for(EntityData ed : dataSetEds) {
             Entity tmpChildEntity = ed.getChildEntity();
             // Ignore Data Set attributes that have no child target entity
@@ -255,7 +249,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         if (dataSetFolder==null) return;        
         logger.info("Fixing sample order indicies in "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");
 
-        List<EntityData> orderedData = new ArrayList<EntityData>();
+        List<EntityData> orderedData = new ArrayList<>();
         for(EntityData ed : dataSetFolder.getEntityData()) {
             if (ed.getChildEntity()!=null) {
                 orderedData.add(ed);

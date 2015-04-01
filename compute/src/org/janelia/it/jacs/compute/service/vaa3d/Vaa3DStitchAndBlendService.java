@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.util.List;
-
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -12,6 +8,10 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJob
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.util.List;
 
 /**
  * Stitch a bunch of merged files together and blend them. Parameters:

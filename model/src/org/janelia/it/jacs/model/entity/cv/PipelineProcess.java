@@ -17,6 +17,7 @@ public enum PipelineProcess implements NamedEnum {
     FlyLightWholeBrain("FlyLight Whole Brain Pipeline"),
     FlyLightWholeBrain64x("FlyLight Whole Brain 63x Pipeline"),
     FlyLightUnalignedNoSeparation("FlyLight Unaligned/No Separation Pipeline"),
+
     LeetCentralBrain63x("Lee Central Brain 63x Pipeline"),
     LeetWholeBrain40x("Lee Whole Brain 40x Pipeline"),
     LeetWholeBrain40x512pxINT("Lee Whole Brain 40x 512px INTensity Pipeline"),
@@ -27,6 +28,8 @@ public enum PipelineProcess implements NamedEnum {
     NernaMCFOCase1Without20xMerge("Aljoscha MCFO Case 1 Without 20x Merge Pipeline"),
     NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
     NernaPolarityCase3("Aljoscha Polarity Case 3 Pipeline"),
+
+    PolarityCase3WithCMTKVNC("Polarity Case 3 With VNC CMTK Pipeline"),
 
     PTR10ProjectionOnly("PTR 10 Projection Only Pipeline"),
     PTR20JBAAlignment("PTR 20 JBA Alignment Pipeline"),
