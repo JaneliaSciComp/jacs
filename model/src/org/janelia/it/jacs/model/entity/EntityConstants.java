@@ -145,6 +145,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_GENDER                              = "Gender"; // "m" or "f"
     public static final String ATTRIBUTE_MOUNTING_PROTOCOL                   = "Mounting Protocol"; // e.g. "DPX PBS Mounting"
     public static final String ATTRIBUTE_TISSUE_ORIENTATION                  = "Tissue Orientation"; // e.g. "face_up", "face_down"
+    public static final String ATTRIBUTE_VT_LINE                             = "VT Line"; // e.g. "face_up", "face_down"
     public static final String ATTRIBUTE_NUM_CHANNELS                        = "Num Channels"; // e.g. "3"
     public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution"; // e.g. "0.38x0.38x0.37"
     public static final String ATTRIBUTE_PIXEL_RESOLUTION                    = "Pixel Resolution"; // e.g. "1024x512x218"
