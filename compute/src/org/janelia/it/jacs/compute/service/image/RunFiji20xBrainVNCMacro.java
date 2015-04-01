@@ -203,6 +203,9 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         });
 
         int signalIndex = chanspec.indexOf('s');
+        if (signalIndex<0) {
+        	throw new IllegalStateException("Image must have a signal channel");
+        }
         Float powerFloat = new Float(illChannels.get(signalIndex).getPowerBc1());
         Float gainFloat = new Float(detChannels.get(signalIndex).getDetectorGain());
 
