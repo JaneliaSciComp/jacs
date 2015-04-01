@@ -274,7 +274,6 @@
         					<input name="REFERENCE_CHANNEL"/>
         					<input name="SAMPLE_AREA"/>
         					<output name="BULK_MERGE_PARAMETERS"/>
-        					<output name="SAMPLE_AREA"/>
         					<output name="RUN_STITCH"/>
         		        </operation>
         	        </sequence>
@@ -342,10 +341,10 @@
             	    
         	    <!-- Register MIP images -->
         		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+        			<input name="PIPELINE_RUN_ENTITY_ID"/>
         			<input name="RESULT_ENTITY_ID"/>
         			<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
         			<output name="DEFAULT_IMAGE_ID"/>
-        			<input name="PIPELINE_RUN_ENTITY_ID"/>
         	    </operation>
     		
                 <!-- Set the result for this sample area -->
