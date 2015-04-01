@@ -1,24 +1,62 @@
 <!-- 
-	Compress existing v3draw files to v3dpbd to save space.
+	Compress existing image files to one or more output formats.
 -->
 <process name="Sample Data Compression" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
 		<input name="ROOT_ENTITY_ID"/>
+        <input name="INPUT_TYPE"/>
+	    <input name="OUTPUT_TYPE"/>
+        <input name="DELETE_INPUTS"/>
+        <input name="RECORD_MODE"/>
 	
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="ROOT_ENTITY_ID"/>
+            <input name="OUTPUT_TYPE"/>
+            <input name="INPUT_TYPE"/>
+            <input name="RECORD_MODE"/>
             <input name="TASK_PARAMETER_1" value="root entity id"/>
             <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_2" value="output type"/>
+            <input name="PROCESS_VARIABLE_2" value="OUTPUT_TYPE"/>
+            <input name="TASK_PARAMETER_3" value="input type"/>
+            <input name="PROCESS_VARIABLE_3" value="INPUT_TYPE"/>
+            <input name="TASK_PARAMETER_4" value="record mode"/>
+            <input name="PROCESS_VARIABLE_4" value="RECORD_MODE"/>
 	        <output name="ROOT_ENTITY_ID"/>
+            <output name="OUTPUT_TYPE"/>
+            <output name="INPUT_TYPE"/>
+            <output name="RECORD_MODE"/>
 	    </operation>
 	    
+        <!-- Init variables with default values if they have not yet been initialized -->
+        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="INPUT_TYPE"/>
+            <input name="OUTPUT_TYPE"/>
+            <input name="DELETE_INPUTS"/>
+            <input name="RECORD_MODE"/>
+            <input name="PROCESS_VARIABLE_1" value="INPUT_TYPE"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="v3draw"/>
+            <input name="PROCESS_VARIABLE_2" value="OUTPUT_TYPE"/>
+            <input name="PROCESS_VARIABLE_VALUE_2" value="v3dpbd"/>
+            <input name="PROCESS_VARIABLE_3" value="DELETE_INPUTS"/>
+            <input name="PROCESS_VARIABLE_VALUE_3" value="true"/>
+            <input name="PROCESS_VARIABLE_4" value="RECORD_MODE"/>
+            <input name="PROCESS_VARIABLE_VALUE_4" value="UPDATE"/>
+            <output name="INPUT_TYPE"/>
+            <output name="OUTPUT_TYPE"/>
+            <output name="DELETE_INPUTS"/>
+            <output name="RECORD_MODE"/>
+        </operation>
+        
 	    <!-- Create the input file list -->
 		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
 			<input name="ROOT_ENTITY_ID"/>
 	        <input name="MODE" value="CREATE_INPUT_LIST"/>
+            <input name="INPUT_TYPE"/>
 			<output name="INPUT_PATH_LIST"/>
 			<output name="ENTITY_MAP"/>
 		</operation>
@@ -29,6 +67,7 @@
 			<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
 		        <input name="MODE" value="CREATE_OUTPUT_LIST"/>
 				<input name="INPUT_PATH_LIST"/>
+                <input name="OUTPUT_TYPE"/>
 				<output name="OUTPUT_PATH_LIST"/>
 			</operation>
 
@@ -56,6 +95,8 @@
                 <input name="INPUT_PATH_LIST"/>
 				<input name="OUTPUT_PATH_LIST"/>
 				<input name="ENTITY_MAP"/>
+                <input name="DELETE_INPUTS"/>
+                <input name="RECORD_MODE"/>
 			</operation>
 		
 		    <!-- Trash temporary file node -->
