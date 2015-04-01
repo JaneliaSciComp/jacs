@@ -116,7 +116,6 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-compress-1.8.1.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-fileupload-1.2.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-httpclient-3.1.jar"/>
-        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-io-1.4.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-logging-1.1.1.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/de-javasoft-synthetica-netbeans.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ehcache-core-2.5.1.jar"/>
@@ -243,6 +242,7 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xmlbeans-2.3.0.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/XmlSchema-1.4.3.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xuggle-xuggler-5.4.jar"/>
+        <archive path="/common/Apache-Commons/commons-io-2.0.1.jar"/>
     </library>
     <library name="Ehcache" systemlibrary="false">
         <archive path="/common/ehcache/ehcache-core-2.5.1.jar"/>
