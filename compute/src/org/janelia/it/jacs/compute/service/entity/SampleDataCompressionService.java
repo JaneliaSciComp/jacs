@@ -16,6 +16,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Compress a set of existing files to a new set of formats.  
@@ -235,7 +236,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 if (!isDebug) {
             	    // Update all entities which referred to the old path
             	    int numUpdated = entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
-                    logger.info("Updated "+numUpdated+" entities to use new compressed file: "+outputPath);
+                    logger.info("Updated "+numUpdated+" entity data values to use new compressed file: "+outputPath);
                 }
             }
             
@@ -245,16 +246,16 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 return;
             }
             
-            Entity secEntity = null;
+            Entity addEntity = null;
             
     	    // Update the input stacks
 
         	for(Entity entity : entityBean.getEntitiesById(new ArrayList<Long>(inputEntites))) {
 
                 if (RECORD_MODE_UPDATE.equals(recordMode)) {
-                    // Update the format
+                    // Update the format, if the entity has one
             		String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
-            		if (format != null && !"".equals(format)) {
+            		if (!StringUtils.isEmpty(format)) {
             			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
             		}
             		
@@ -270,31 +271,27 @@ public class SampleDataCompressionService extends AbstractEntityService {
             		else {
             			logger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
             		}
+                    
+                    numChanges++;
                 }
                 else if (RECORD_MODE_ADD.equals(recordMode)) {
-                    if (secEntity==null) {
+                    if (addEntity==null) {
                         if (!isDebug) {
                             String secName = entity.getName().replaceAll(inputExtension, outputExtension);
-                            secEntity = entityBean.createEntity(entity.getOwnerKey(), EntityConstants.TYPE_IMAGE_3D, secName);
-    
-                            // Update the format
-                            String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
-                            if (format != null && !"".equals(format)) {
-                                entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
-                            }
+                            addEntity = entityBean.createEntity(entity.getOwnerKey(), EntityConstants.TYPE_IMAGE_3D, secName);
+                            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
+                            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
                             entityBean.saveOrUpdateEntity(entity);
                         }
-                        logger.info("Created secondary entity: "+secEntity.getName()+" (id="+secEntity.getId()+")");
+                        logger.info("Created secondary entity: "+addEntity.getName()+" (id="+addEntity.getId()+")");
                     }
                     if (!isDebug) {
-                        entityBean.addEntityToParent(entity, secEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_LOSSY_IMAGE);
+                        entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_LOSSY_IMAGE, outputPath);
                     }
                 }
                 else {
                     throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
                 }
-                
-            	numChanges++;
         	}
     	
         	if (deleteSourceFiles) {
