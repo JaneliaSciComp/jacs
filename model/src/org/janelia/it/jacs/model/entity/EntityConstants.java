@@ -190,7 +190,7 @@ public class EntityConstants {
 
     public static final String ATTRIBUTE_MASK_IMAGE                          = "Mask Image";
     public static final String ATTRIBUTE_CHAN_IMAGE                          = "Chan Image";
-    public static final String ATTRIBUTE_LOSSY_IMAGE                         = "Lossy Image"; // Lossy-compressed version of the image
+    public static final String ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE                = "Slightly Lossy Image"; // Lossy-compressed version of the image
     
     public static final String ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL          = "Aligned Consolidated Label";
     

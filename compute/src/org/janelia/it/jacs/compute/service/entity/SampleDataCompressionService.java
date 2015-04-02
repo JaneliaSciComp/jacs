@@ -286,7 +286,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
                         logger.info("Created secondary entity: "+addEntity.getName()+" (id="+addEntity.getId()+")");
                     }
                     if (!isDebug) {
-                        entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_LOSSY_IMAGE, outputPath);
+                        entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE, outputPath);
                     }
                 }
                 else {
