@@ -279,9 +279,9 @@ public class SampleDataCompressionService extends AbstractEntityService {
                         if (!isDebug) {
                             String secName = entity.getName().replaceAll(inputExtension, outputExtension);
                             addEntity = entityBean.createEntity(entity.getOwnerKey(), EntityConstants.TYPE_IMAGE_3D, secName);
-                            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
-                            entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
-                            entityBean.saveOrUpdateEntity(entity);
+                            addEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
+                            addEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
+                            entityBean.saveOrUpdateEntity(addEntity);
                         }
                         logger.info("Created secondary entity: "+addEntity.getName()+" (id="+addEntity.getId()+")");
                     }
