@@ -817,7 +817,6 @@
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
             <param name="server.username" value="${user.server.login}" />
             <param name="server.address" value="${server.address}" />
-            <param name="tomcat.home" value="${user.server.path}/${server.address}/apache-tomcat-7.0.5" />
         </antcall>
     </target>
 
@@ -853,7 +852,11 @@
           </merge>
         </properties>
 
-         <!--build war file -->
+        <!-- read in properties -->
+        <property file="${temp.dir}/jacs.properties" prefix="FromPropFile"/>
+        <property name="tomcat.home" value="${FromPropFile.ServerRoot.Dir}/apache-tomcat-7.0.5" />
+
+        <!--build war file -->
         <antcall target="build-war" >
             <param name="jacs.properties.dir" value="${temp.dir}"/>
             <param name="build.war.dir" value="${temp.dir}"/>

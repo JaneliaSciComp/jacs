@@ -34,8 +34,8 @@ public class DrmaaHelper {
     private static final String DRMAA_SUBMITTER_JAR_PATH = SystemConfigurationProperties.getFilePath("Local.Lib.Path", "Drmaa.Submitter.Jar.Name");
     private static final String DRMAA_SUBMITTER_SCRIPT_PATH = SystemConfigurationProperties.getFilePath("Local.Lib.Path", "Drmaa.Submitter.Script.Name");
     public static final String ROOT_SERVER_DIR_PROP = "ServerRoot.Dir";
-    private static HashSet<String> _projectCodes = new HashSet<String>();
-    private Map<String, Integer> currentStatusMap = new HashMap<String, Integer>();
+    private static HashSet<String> _projectCodes = new HashSet<>();
+    private Map<String, Integer> currentStatusMap = new HashMap<>();
     private String mainJobID;
 
     private String errorText = "";
@@ -151,7 +151,7 @@ public class DrmaaHelper {
     public Set<String> runBulkJobs(SerializableJobTemplate jt, int start, int end, int incr) throws DrmaaException {
         synchronized (sunSession) {
             jt.flush();
-            return new HashSet<String>(sunSession.runBulkJobs(jt.getDrmaaJobTemplate(), start, end, incr));
+            return new HashSet<>(sunSession.runBulkJobs(jt.getDrmaaJobTemplate(), start, end, incr));
         }
     }
 
@@ -162,7 +162,7 @@ public class DrmaaHelper {
     }
 
     public boolean waitForJob(String jobId, String logPrefix, JobStatusLogger statusLogger, int statusPoolPeriod) throws Exception {
-        Set<String> jobSet = new HashSet<String>();
+        Set<String> jobSet = new HashSet<>();
         jobSet.add(jobId);
         return waitForJobs(jobSet, logPrefix, statusLogger, statusPoolPeriod, -1);
     }
@@ -241,7 +241,7 @@ public class DrmaaHelper {
             }
             
             // Loop through the changed jobs and get their info
-            Map<String, Map<String, String>> changedJobResourceMap = new HashMap<String, Map<String, String>>();
+            Map<String, Map<String, String>> changedJobResourceMap = new HashMap<>();
             for (String jobId : changedJobStateMap.keySet()) {
             	int jobStatus = currentStatusMap.get(jobId);
             	
@@ -417,7 +417,7 @@ public class DrmaaHelper {
 
     public Map<String, GridJobStatus.JobState> getBulkJobStatusChanges(Map<String, Integer> jobStatusMap) throws DrmaaException {
         synchronized (sunSession) {
-            Map<String, GridJobStatus.JobState> statusMap = new HashMap<String, GridJobStatus.JobState>();
+            Map<String, GridJobStatus.JobState> statusMap = new HashMap<>();
             logger.debug("Asking SGE in a loop about info for "+jobStatusMap.keySet().size()+" jobs");
             for (String jobId : jobStatusMap.keySet()) {
                 try {
@@ -485,7 +485,7 @@ public class DrmaaHelper {
         objStream.close();
 
         // build command line params
-        List<String> clParams = new LinkedList<String>();
+        List<String> clParams = new LinkedList<>();
         clParams.add(DrmaaSubmitter.OPT_TEMPLATE_FILE + DrmaaSubmitter.DELIMETER + jtFile.getAbsolutePath());
         clParams.add(DrmaaSubmitter.OPT_TASK_ID + DrmaaSubmitter.DELIMETER + taskId);
         clParams.add(DrmaaSubmitter.OPT_RETURN_BY + DrmaaSubmitter.DELIMETER + shellReturnMethod);
@@ -501,7 +501,7 @@ public class DrmaaHelper {
             clParams.add(DrmaaSubmitter.OPT_TIMEOUT_SECONDS+DrmaaSubmitter.DELIMETER+timeoutInSeconds);
         }
 
-        List<String> cmdList = new LinkedList<String>();
+        List<String> cmdList = new LinkedList<>();
 //        cmdList.add("bash");
         cmdList.add(DRMAA_SUBMITTER_SCRIPT_PATH);
         cmdList.add(JAVA_PATH);
