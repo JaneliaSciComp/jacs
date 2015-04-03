@@ -385,6 +385,7 @@ public class SampleHelper extends EntityHelper {
      * Create a new name for a sample, given the sample's attributes.
      * {Line}-{Slide Code}-Right_Optic_Lobe
      * {Line}-{Slide Code}-Left_Optic_Lobe
+     * {VT Line|Line}-{Slide Code}-Left_Optic_Lobe
      * {Line}-{Effector}-{Age}
      */
     public String getSampleName(Entity dataSet, String objective, Entity parentSample, Map<String,String> sampleProperties) {
@@ -407,15 +408,20 @@ public class SampleHelper extends EntityHelper {
         logger.trace("    Building sample name:");
         while (matcher.find()) {
             String tmpGroup = matcher.group(1);
-            String replacement = sampleProperties.get(tmpGroup);
-            if (replacement != null) {
-                matcher.appendReplacement(buffer, "");
-                buffer.append(replacement);
+            String[] replacementPieces = tmpGroup.split("|");
+            String replacement=null;
+            for (String tmpPiece:replacementPieces) {
+                replacement = sampleProperties.get(tmpPiece.trim());
+                if (replacement != null) {
+                    matcher.appendReplacement(buffer, "");
+                    buffer.append(replacement);
+                    break;
+                }
+                logger.trace("        " + replacement+" -> "+buffer);
             }
-            else {
+            if (null==replacement) {
                 logger.warn("Cannot find a property replacement for Sample Naming Pattern element " + tmpGroup);
             }
-            logger.trace("        " + replacement+" -> "+buffer);
         }
         matcher.appendTail(buffer);
         logger.trace("        append tail -> "+buffer);
