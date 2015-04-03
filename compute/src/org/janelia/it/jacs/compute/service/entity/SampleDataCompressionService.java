@@ -44,11 +44,12 @@ public class SampleDataCompressionService extends AbstractEntityService {
     private String mode = MODE_UNDEFINED;
     private String recordMode = RECORD_MODE_UPDATE;
     private boolean deleteSourceFiles = true;
+    private Set<String> excludeFileSet = new HashSet<String>();
     
     private String rootEntityId;
-    private Set<String> inputFiles = new HashSet<String>();
-    private Map<String,Set<Long>> entityMap = new HashMap<String,Set<Long>>();
-
+    private final Set<String> inputFiles = new HashSet<String>();
+    private final Set<Long> visited = new HashSet<Long>();
+    private Map<String,Set<Long>> entityMap;
     protected int numChanges;
 
     public void execute() throws Exception {
@@ -77,9 +78,60 @@ public class SampleDataCompressionService extends AbstractEntityService {
     
     private void doCreateInputList() throws ComputeException {
 
+        this.entityMap = new HashMap<String,Set<Long>>();
+                
         String inputType = data.getRequiredItemAsString("INPUT_TYPE");
+        String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
+        if (!StringUtils.isEmpty(excludeFiles)) {
+            for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
+                excludeFileSet.add(excludeFile);
+            }
+        }
+
+        this.deleteSourceFiles = !"false".equals(data.getRequiredItem("DELETE_INPUTS"));
+
+        if (isDebug) {
+            logger.info("This is a test run. Nothing will actually happen.");
+        }
+        else {
+            if (deleteSourceFiles) {
+                logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");    
+            }
+            else {
+                logger.info("This is the real thing. Files will get compressed, and added to the existing entities.");
+            }
+        }
         
-        processEntities(inputType);
+        if (rootEntityId!=null) {
+            logger.info("Finding files to compress under root "+rootEntityId+" with type "+inputType);
+            
+            Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
+            if (entity == null) {
+                throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
+            }
+            
+            for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
+                String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (filepath!=null && filepath.endsWith(inputType)) {
+                    addEntityToInputList(image);
+                }
+            }
+        }
+        else {
+            logger.info("Finding files belonging to "+ownerKey+" with type "+inputType);
+            
+            for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+inputType)) {
+                if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                    logger.warn("Ignoring entity with filepath that is not an Image 3D: "+entity.getId());
+                    continue;
+                }
+                if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
+                    logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
+                    continue;
+                }
+                addEntityToInputList(entity);
+            }
+        }
         
         List<List<String>> inputGroups = createGroups(inputFiles, GROUP_SIZE);
         processData.putItem("INPUT_PATH_LIST", inputGroups);
@@ -112,63 +164,11 @@ public class SampleDataCompressionService extends AbstractEntityService {
         return groupList;
     }
     
-    private void doCreateOutputList() throws ComputeException {
-
-
-        String outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
-    	List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
-
-        List<String> outputPaths = new ArrayList<String>();
-    	for(String filepath : inputPaths) {
-    	    String extension = getExtension(filepath);
-            outputPaths.add(filepath.replaceAll(extension, outputType));
-    	}
-        processData.putItem("OUTPUT_PATH_LIST", outputPaths);
-    }
-    
-	public void processEntities(String extension) throws ComputeException {
-
-        if (isDebug) {
-            logger.info("This is a test run. Nothing will actually happen.");
-        }
-        else {
-            logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");
-        }
-        
-        if (rootEntityId!=null) {
-            logger.info("Finding files to compress under root "+rootEntityId+" with type "+extension);
-        	
-        	Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
-        	if (entity == null) {
-        		throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
-        	}
-        	
-        	for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
-        		String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        		if (filepath!=null && filepath.endsWith(extension)) {
-        			addEntityToInputList(image);
-        		}
-        	}
-        }
-        else {
-        	logger.info("Finding files belonging to "+ownerKey+" with type "+extension);
-        	
-    	    for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+extension)) {
-    			if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-    				logger.warn("Ignoring entity with filepath that is not an Image 3D: "+entity.getId());
-    				continue;
-    			}
-    			if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
-    				logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
-    				continue;
-    			}
-    			addEntityToInputList(entity);
-    		}
-        }
-    }
-    
     private void addEntityToInputList(Entity imageEntity) throws ComputeException {
 
+        if (visited.contains(imageEntity.getId())) return;
+        visited.add(imageEntity.getId());
+        
     	if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
     	
     	String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -179,6 +179,11 @@ public class SampleDataCompressionService extends AbstractEntityService {
     	}
     	
     	File file = new File(filepath);
+    	
+    	if (excludeFileSet.contains(file.getName())) {
+            logger.info("Excluding file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+    	    return;
+    	}
     	
     	if (!file.exists()) {
     		logger.warn("File path for "+imageEntity.getId()+" does not exist: "+filepath);
@@ -195,6 +200,19 @@ public class SampleDataCompressionService extends AbstractEntityService {
     		entityMap.put(filepath, eset);
     	}
     	eset.add(imageEntity.getId());
+    }
+    
+    private void doCreateOutputList() throws ComputeException {
+
+        String outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
+        List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
+
+        List<String> outputPaths = new ArrayList<String>();
+        for(String filepath : inputPaths) {
+            String extension = getExtension(filepath);
+            outputPaths.add(filepath.replaceAll(extension, outputType));
+        }
+        processData.putItem("OUTPUT_PATH_LIST", outputPaths);
     }
     
     private void doComplete() throws ComputeException {

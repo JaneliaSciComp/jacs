@@ -9,6 +9,7 @@
 	    <input name="OUTPUT_TYPE"/>
         <input name="DELETE_INPUTS"/>
         <input name="RECORD_MODE"/>
+        <input name="EXCLUDE_FILES"/>
 	
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -17,6 +18,7 @@
             <input name="OUTPUT_TYPE"/>
             <input name="INPUT_TYPE"/>
             <input name="RECORD_MODE"/>
+            <input name="EXCLUDE_FILES"/>
             <input name="TASK_PARAMETER_1" value="root entity id"/>
             <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="output type"/>
@@ -25,10 +27,13 @@
             <input name="PROCESS_VARIABLE_3" value="INPUT_TYPE"/>
             <input name="TASK_PARAMETER_4" value="record mode"/>
             <input name="PROCESS_VARIABLE_4" value="RECORD_MODE"/>
+            <input name="TASK_PARAMETER_4" value="exclude files"/>
+            <input name="PROCESS_VARIABLE_4" value="EXCLUDE_FILES"/>
 	        <output name="ROOT_ENTITY_ID"/>
             <output name="OUTPUT_TYPE"/>
             <output name="INPUT_TYPE"/>
             <output name="RECORD_MODE"/>
+            <output name="EXCLUDE_FILES"/>
 	    </operation>
 	    
         <!-- Init variables with default values if they have not yet been initialized -->
@@ -57,6 +62,8 @@
 			<input name="ROOT_ENTITY_ID"/>
 	        <input name="MODE" value="CREATE_INPUT_LIST"/>
             <input name="INPUT_TYPE"/>
+            <input name="EXCLUDE_FILES"/>
+            <input name="DELETE_INPUTS"/>
 			<output name="INPUT_PATH_LIST"/>
 			<output name="ENTITY_MAP"/>
 		</operation>

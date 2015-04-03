@@ -445,6 +445,7 @@
             <input name="OUTPUT_TYPE" value="h5j"/>
             <input name="DELETE_INPUTS" value="false"/>
             <input name="RECORD_MODE" value="ADD"/>
+            <input name="EXCLUDE_FILES" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd"/>
         </include>
         
         <!-- Move all generated files to archive -->
