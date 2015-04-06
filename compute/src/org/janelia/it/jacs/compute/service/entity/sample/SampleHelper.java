@@ -380,12 +380,12 @@ public class SampleHelper extends EntityHelper {
         
         return sample;
     }
-    
-    /** 
+
+    /**
      * Create a new name for a sample, given the sample's attributes.
      * {Line}-{Slide Code}-Right_Optic_Lobe
      * {Line}-{Slide Code}-Left_Optic_Lobe
-     * {VT Line|Line}-{Slide Code}-Left_Optic_Lobe
+     * {VT line|Line}-{Slide Code}-Left_Optic_Lobe
      * {Line}-{Effector}-{Age}
      */
     public String getSampleName(Entity dataSet, String objective, Entity parentSample, Map<String,String> sampleProperties) {
@@ -408,7 +408,7 @@ public class SampleHelper extends EntityHelper {
         logger.trace("    Building sample name:");
         while (matcher.find()) {
             String tmpGroup = matcher.group(1);
-            String[] replacementPieces = tmpGroup.split("|");
+            String[] replacementPieces = tmpGroup.split("\\|");
             String replacement=null;
             for (String tmpPiece:replacementPieces) {
                 replacement = sampleProperties.get(tmpPiece.trim());
