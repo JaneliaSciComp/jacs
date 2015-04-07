@@ -82,7 +82,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     	ResultSetIterator iterator = null;
     	try {
         	SageDAO sageDAO = new SageDAO(logger);
-			iterator = sageDAO.getImagesByDataSet(dataSetIdentifier);
+			iterator = sageDAO.getAllImagePropertiesByDataSet(dataSetIdentifier);
     		
 			// Load all slides for this data set into memory, so that we don't over-stay our welcome on the database cursor
 			// in case we need to do some time-intensive stuff (e.g. adding permissions)
@@ -111,24 +111,29 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		}
     }
     
-    protected SlideImage createSlideImage(Map<String,Object> row) {
+    protected SlideImage createSlideImage(Map<String,Object> row) throws Exception {
+//        for (String s : row.keySet()) {
+//            System.out.println("Key "+s+" maps to "+row.get(s));
+//        }
+//        throw new Exception("Done listing the values returned from the row");
+
         SlideImage slideImage = new SlideImage();
-        slideImage.setSageId((Long)row.get("id"));
-		slideImage.setSlideCode((String) row.get("slide_code"));
-		slideImage.setImagePath((String) row.get("path"));
-		slideImage.setTileType((String) row.get("tile"));
-		slideImage.setLine((String) row.get("line"));
-        slideImage.setCrossBarcode((String) row.get("cross_barcode"));
-		slideImage.setChannelSpec((String) row.get("channel_spec"));
-		slideImage.setGender((String) row.get("gender"));
-		slideImage.setArea((String) row.get("area"));
-		slideImage.setAge((String) row.get("age"));
-		slideImage.setChannels((String) row.get("channels"));
-		slideImage.setMountingProtocol((String) row.get("mounting_protocol"));
-        slideImage.setTissueOrientation((String) row.get("tissue_orientation"));
-        slideImage.setVtLine((String) row.get("vt_line"));
-		slideImage.setEffector((String)row.get("effector"));
-		String objectiveStr = (String)row.get("objective");
+        slideImage.setSageId((Long)row.get("image_query_id"));
+		slideImage.setSlideCode((String) row.get("light_imagery_slide_code"));
+		slideImage.setImagePath((String) row.get("image_query_path"));
+		slideImage.setTileType((String) row.get("light_imagery_tile"));
+		slideImage.setLine((String) row.get("image_query_line"));
+        slideImage.setCrossBarcode((String) row.get("light_imagery_cross_barcode"));
+		slideImage.setChannelSpec((String) row.get("light_imagery_channel_spec"));
+		slideImage.setGender((String) row.get("light_imagery_gender"));
+		slideImage.setArea((String) row.get("light_imagery_area"));
+		slideImage.setAge((String) row.get("light_imagery_age"));
+		slideImage.setChannels((String) row.get("light_imagery_channels"));
+		slideImage.setMountingProtocol((String) row.get("light_imagery_mounting_protocol"));
+        slideImage.setTissueOrientation((String) row.get("light_imagery_tissue_orientation"));
+        slideImage.setVtLine((String) row.get("light_imagery_vt_line"));
+		slideImage.setEffector((String)row.get("light_imagery_effector"));
+		String objectiveStr = (String)row.get("light_imagery_objective");
 		if (objectiveStr!=null) {
 		    if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
                 slideImage.setObjective(Objective.OBJECTIVE_10X.getName());
@@ -143,15 +148,15 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 slideImage.setObjective(Objective.OBJECTIVE_63X.getName());
             }
 		}
-		String voxelSizeX = (String)row.get("voxel_size_x");
-		String voxelSizeY = (String)row.get("voxel_size_y");
-		String voxelSizeZ = (String)row.get("voxel_size_z");
+		String voxelSizeX = (String)row.get("light_imagery_voxel_size_x");
+		String voxelSizeY = (String)row.get("light_imagery_voxel_size_y");
+		String voxelSizeZ = (String)row.get("light_imagery_voxel_size_z");
 		if (voxelSizeX!=null && voxelSizeY!=null && voxelSizeZ!=null) {
 		    slideImage.setOpticalRes(voxelSizeX,voxelSizeY,voxelSizeZ);
 		}
-		String imageSizeX = (String)row.get("dimension_x");
-        String imageSizeY = (String)row.get("dimension_y");
-        String imageSizeZ = (String)row.get("dimension_z");
+		String imageSizeX = (String)row.get("light_imagery_dimension_x");
+        String imageSizeY = (String)row.get("light_imagery_dimension_y");
+        String imageSizeZ = (String)row.get("light_imagery_dimension_z");
         if (imageSizeX!=null && imageSizeY!=null && imageSizeZ!=null) {
             slideImage.setPixelRes(imageSizeX,imageSizeY,imageSizeZ);
         }

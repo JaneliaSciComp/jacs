@@ -146,28 +146,28 @@ public class SageDAO {
      * @return Iterator over the JDBC result set. 
      * @throws DaoException
      */
-    public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
-
-        Connection connection = null;
-        PreparedStatement pStatement = null;
-        ResultSet resultSet = null;
-
-        try {
-            connection = getJdbcConnection();
-            pStatement = connection.prepareStatement(CORE_IMAGE_PROPERTY_SQL);
-            pStatement.setString(1, dataSetName);
-            pStatement.setFetchSize(Integer.MIN_VALUE);
-
-            resultSet = pStatement.executeQuery();
-
-        }
-        catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, log);
-            throw new DaoException("Error querying SAGE", e);
-        }
-
-        return new ResultSetIterator(connection, pStatement, resultSet);
-    }
+//    public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
+//
+//        Connection connection = null;
+//        PreparedStatement pStatement = null;
+//        ResultSet resultSet = null;
+//
+//        try {
+//            connection = getJdbcConnection();
+//            pStatement = connection.prepareStatement(CORE_IMAGE_PROPERTY_SQL);
+//            pStatement.setString(1, dataSetName);
+//            pStatement.setFetchSize(Integer.MIN_VALUE);
+//
+//            resultSet = pStatement.executeQuery();
+//
+//        }
+//        catch (SQLException e) {
+//            ResultSetIterator.close(resultSet, pStatement, connection, log);
+//            throw new DaoException("Error querying SAGE", e);
+//        }
+//
+//        return new ResultSetIterator(connection, pStatement, resultSet);
+//    }
 
     /**
      * Returns all the images in a given data set, with ALL their non-null properties as columns.
@@ -619,39 +619,38 @@ public class SageDAO {
         return sql.toString();
     }
 
-    private static final String CORE_IMAGE_PROPERTY_SQL =
-            "select i.id id, slide_code.value slide_code, i.path path, tile.value tile, line.name line, " +
-            "channel_spec.value channel_spec, gender.value gender, age.value age, effector.value effector, " +
-            "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, tissue_orientation.value tissue_orientation, objective.value objective, " +
-            "vt_line.value vt_line, voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z, " +
-            "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z, cross_barcode.value cross_barcode " +
-            "from image i " +
-            "join line line on i.line_id = line.id " +
-            "join image_property_vw slide_code on i.id = slide_code.image_id and slide_code.type = 'slide_code' " +
-            "join image_property_vw data_set on i.id = data_set.image_id and data_set.type = 'data_set' " +
-            "left outer join image_property_vw tile on i.id = tile.image_id and tile.type = 'tile' " +
-            "left outer join image_property_vw channel_spec on i.id = channel_spec.image_id and channel_spec.type = 'channel_spec' " +
-            "left outer join image_property_vw gender on i.id = gender.image_id and gender.type = 'gender' " +
-            "left outer join image_property_vw age on i.id = age.image_id and age.type = 'age' " +
-            "left outer join image_property_vw effector on i.id = effector.image_id and effector.type = 'effector' " +
-            "left outer join image_property_vw area on i.id = area.image_id and area.type = 'area' " +
-            "left outer join image_property_vw channels on i.id = channels.image_id and channels.type = 'channels' " +
-            "left outer join image_property_vw mounting_protocol on i.id = mounting_protocol.image_id and mounting_protocol.type = 'mounting_protocol' " +
-            "left outer join image_property_vw tissue_orientation on i.id = tissue_orientation.image_id and tissue_orientation.type = 'tissue_orientation' " +
-            "left outer join image_property_vw vt_line on i.id = vt_line.image_id and vt_line.type = 'vt_line' " +
-            "left outer join image_property_vw objective on i.id = objective.image_id and objective.type = 'objective' " +
-            "left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' " +
-            "left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' " +
-            "left outer join image_property_vw voxel_size_z on i.id = voxel_size_z.image_id and voxel_size_z.type = 'voxel_size_z' " +
-            "left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' " +
-            "left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' " +
-            "left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' " +
-            "left outer join image_property_vw cross_barcode on i.id = cross_barcode.image_id and cross_barcode.type = 'cross_barcode' " +
-            "where i.display=true and i.path is not null " +
-            "and data_set.value=? " +
-            "and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
-            "order by slide_code.value, i.path";
-
+//    private static final String CORE_IMAGE_PROPERTY_SQL =
+//            "select i.id id, slide_code.value slide_code, i.path path, tile.value tile, line.name line, " +
+//            "channel_spec.value channel_spec, gender.value gender, age.value age, effector.value effector, " +
+//            "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, tissue_orientation.value tissue_orientation, objective.value objective, " +
+//            "voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z, " +
+//            "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z, cross_barcode.value cross_barcode " +
+//            "from image i " +
+//            "join line line on i.line_id = line.id " +
+//            "join image_property_vw slide_code on i.id = slide_code.image_id and slide_code.type = 'slide_code' " +
+//            "join image_property_vw data_set on i.id = data_set.image_id and data_set.type = 'data_set' " +
+//            "left outer join image_property_vw tile on i.id = tile.image_id and tile.type = 'tile' " +
+//            "left outer join image_property_vw channel_spec on i.id = channel_spec.image_id and channel_spec.type = 'channel_spec' " +
+//            "left outer join image_property_vw gender on i.id = gender.image_id and gender.type = 'gender' " +
+//            "left outer join image_property_vw age on i.id = age.image_id and age.type = 'age' " +
+//            "left outer join image_property_vw effector on i.id = effector.image_id and effector.type = 'effector' " +
+//            "left outer join image_property_vw area on i.id = area.image_id and area.type = 'area' " +
+//            "left outer join image_property_vw channels on i.id = channels.image_id and channels.type = 'channels' " +
+//            "left outer join image_property_vw mounting_protocol on i.id = mounting_protocol.image_id and mounting_protocol.type = 'mounting_protocol' " +
+//            "left outer join image_property_vw tissue_orientation on i.id = tissue_orientation.image_id and tissue_orientation.type = 'tissue_orientation' " +
+//            "left outer join image_property_vw objective on i.id = objective.image_id and objective.type = 'objective' " +
+//            "left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' " +
+//            "left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' " +
+//            "left outer join image_property_vw voxel_size_z on i.id = voxel_size_z.image_id and voxel_size_z.type = 'voxel_size_z' " +
+//            "left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' " +
+//            "left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' " +
+//            "left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' " +
+//            "left outer join image_property_vw cross_barcode on i.id = cross_barcode.image_id and cross_barcode.type = 'cross_barcode' " +
+//            "where i.display=true and i.path is not null " +
+//            "and data_set.value=? " +
+//            "and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
+//            "order by slide_code.value, i.path";
+//
     private static final String ALL_IMAGE_PROPERTY_SQL_1 =
             "select image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
             "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, image_vw.created_by light_imagery_created_by";
