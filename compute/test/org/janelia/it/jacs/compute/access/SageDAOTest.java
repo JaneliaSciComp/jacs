@@ -53,20 +53,20 @@ public class SageDAOTest {
 
     }
 
-    @Test
-    @Category(TestCategories.SlowIntegrationTests.class)
-    public void testGetImagesByDataSet() throws Exception {
-        ResultSetIterator iterator = null;
-        try {
-            iterator = sageDao.getImagesByDataSet("asoy_mb_polarity_case_2");
-            validateIteratorResults(iterator, 10, "light_imagery_age");
-        } finally {
-            if (iterator != null) {
-                iterator.close();
-            }
-        }
-    }
-
+//    @Test
+//    @Category(TestCategories.SlowIntegrationTests.class)
+//    public void testGetImagesByDataSet() throws Exception {
+//        ResultSetIterator iterator = null;
+//        try {
+//            iterator = sageDao.getImagesByDataSet("asoy_mb_polarity_case_2");
+//            validateIteratorResults(iterator, 10, "light_imagery_age");
+//        } finally {
+//            if (iterator != null) {
+//                iterator.close();
+//            }
+//        }
+//    }
+//
     @Test
     @Category(TestCategories.SlowIntegrationTests.class)
     public void testGetAllImagePropertiesByDataSet() throws Exception {
