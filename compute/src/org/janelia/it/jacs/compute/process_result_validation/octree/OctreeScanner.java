@@ -13,7 +13,6 @@ import java.util.*;
 import org.janelia.it.jacs.compute.centroid.CentroidCalculator;
 
 import org.janelia.it.jacs.compute.largevolume.TileBaseReader;
-import org.janelia.it.jacs.compute.largevolume.model.Shape;
 import org.janelia.it.jacs.compute.largevolume.model.Tile;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
