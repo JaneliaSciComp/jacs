@@ -256,7 +256,10 @@ public class SolrConnector extends SolrDAO {
 		}
                 
         for(SimpleAnnotation annotation : annotations) {        
-            doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
+            for(String subject : annotation.getSubjectsCsv().split(",")) {
+                subject = subject.contains(":") ? subject.split(":")[1] : subject;
+                doc.addField(subject+"_annotations", annotation.getTag(), 1.0f);
+            }
         }
 		
 		return doc;

@@ -60,7 +60,7 @@ public class MongoLargeOperations extends LargeOperations {
 			}
 			String key = annotation.getKey();
 			String value = annotation.getValue();
-			annots.add(new SimpleAnnotation(annotation.getName(), key, value, annotation.getOwnerKey()));
+			annots.add(new SimpleAnnotation(annotation.getName(), annotation.getOwnerKey()));
 			putValue(annotationMapCache, targetId, annots);
 			i++;
     	}
