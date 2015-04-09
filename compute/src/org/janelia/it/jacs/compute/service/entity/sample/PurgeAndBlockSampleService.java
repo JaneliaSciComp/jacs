@@ -34,6 +34,12 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
         List<Entity> samples = new ArrayList<Entity>();
         for(String oneSampleEntityIdStr : Task.listOfStringsFromCsvString(sampleEntityIdStr)) {
             final Entity sampleEntity = entityBean.getEntityById(oneSampleEntityIdStr);
+            if (sampleEntity==null) {
+                throw new IllegalArgumentException("Sample does not exist: "+oneSampleEntityIdStr);
+            }
+            if (!sampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                throw new IllegalArgumentException("Not a sample: "+oneSampleEntityIdStr);
+            }
             samples.add(sampleEntity);
         }
         
@@ -58,7 +64,6 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
         String entityType = entity.getEntityTypeName();
         
         if (entityType.equals(EntityConstants.TYPE_IMAGE_3D) 
-                || entityType.equals(EntityConstants.TYPE_MOVIE)
                 || entityType.equals(EntityConstants.TYPE_FILE)) {
             String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             deletePath(filepath);

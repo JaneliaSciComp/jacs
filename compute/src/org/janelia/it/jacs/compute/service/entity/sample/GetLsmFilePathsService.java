@@ -66,8 +66,7 @@ public class GetLsmFilePathsService implements IService {
             	    targetFilePaths.add(newPath2);
             	}
             	
-            	MergedLsmPair newPair = new MergedLsmPair(newPath1, newPath2, mergedLsmPair.getMergedFilepath(), mergedLsmPair.getTag());
-            	newPairs.add(newPair);
+            	newPairs.add(mergedLsmPair.getMovedLsmPair(newPath1, newPath2));
             }
             
             processData.putItem("LSM_SOURCE_FILE_PATHS",sourceFilePaths);

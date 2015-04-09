@@ -104,17 +104,17 @@ public class SolrDAO extends AnnotationDAO {
     	}
     	
     	this.sageVocab = sageVocab;
-    	this.usedSageVocab = new HashSet<SageTerm>();
+    	this.usedSageVocab = new HashSet<>();
 
     	log.info("Building disk-based entity maps");
     	this.largeOp = new LargeOperations(this);
-    	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
     	largeOp.buildSageImagePropMap();
+    	largeOp.buildAncestorMap();
     	
     	log.info("Getting entities");
     	
-    	Map<Long,SimpleEntity> entityMap = new HashMap<Long,SimpleEntity>();
+    	Map<Long,SimpleEntity> entityMap = new HashMap<>();
         int i = 0;
     	Connection conn = null;
     	PreparedStatement stmt = null;
@@ -225,7 +225,7 @@ public class SolrDAO extends AnnotationDAO {
         }
         
     	if (entity==null) return;
-    	List<Entity> entities = new ArrayList<Entity>();
+    	List<Entity> entities = new ArrayList<>();
     	entities.add(entity);
     	updateIndex(entities);
     }
@@ -235,17 +235,15 @@ public class SolrDAO extends AnnotationDAO {
             log.trace("updateIndex(entities.size="+entities.size()+")");
         }
         
-    	List<Long> entityIds = new ArrayList<Long>();
+    	List<Long> entityIds = new ArrayList<>();
     	for(Entity entity : entities) {
     		entityIds.add(entity.getId());
     	}
     	
     	// Get all annotations
     	
-    	Map<Long,Set<SimpleAnnotation>> annotationMap = new HashMap<Long,Set<SimpleAnnotation>>();
+    	Map<Long,Set<SimpleAnnotation>> annotationMap = new HashMap<>();
 		for(Entity annotationEntity : getAnnotationsByEntityId(null, entityIds)) {
-			String key = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
-			String value = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
 			String ownerKey = annotationEntity.getOwnerKey();
 			String entityIdStr = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
 			
@@ -259,11 +257,16 @@ public class SolrDAO extends AnnotationDAO {
 			
 			Set<SimpleAnnotation> annotations = annotationMap.get(entityId);
 			if (annotations == null) {
-				annotations = new HashSet<SimpleAnnotation>();	
+				annotations = new HashSet<>();
 				annotationMap.put(entityId, annotations);
 			}
 			
-			annotations.add(new SimpleAnnotation(annotationEntity.getName(), key, value, ownerKey));
+			String subjectsCsv = ownerKey;
+			for(EntityActorPermission eap : annotationEntity.getEntityActorPermissions()) {
+			    subjectsCsv += ","+eap.getSubjectKey();
+			}
+			
+			annotations.add(new SimpleAnnotation(annotationEntity.getName(), subjectsCsv));
 		}
 		
 		// Get all Solr documents
@@ -271,7 +274,7 @@ public class SolrDAO extends AnnotationDAO {
 
     	// Create updated Solr documents
     	
-    	List<SolrInputDocument> inputDocs = new ArrayList<SolrInputDocument>();
+    	List<SolrInputDocument> inputDocs = new ArrayList<>();
     	for(Entity entity : entities) {
     		SolrInputDocument inputDoc = null;
     		SolrDocument existingDoc = solrDocMap.get(entity.getId());
@@ -319,7 +322,7 @@ public class SolrDAO extends AnnotationDAO {
     	String dt = SolrDocTypeEnum.SAGE_TERM.toString();
     	
     	int id = 0;
-        List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+        List<SolrInputDocument> docs = new ArrayList<>();
         for(SageTerm term : terms) {
         	SolrInputDocument doc = new SolrInputDocument();
         	doc.addField("id", dt+"_"+id, 1.0f);
@@ -327,7 +330,8 @@ public class SolrDAO extends AnnotationDAO {
         	doc.addField("name", term.getName(), 1.0f);
         	doc.addField("data_type_t", term.getDataType(), 1.0f);
         	doc.addField("definition_t", term.getDefinition(), 1.0f);
-        	doc.addField("display_name_t", term.getDisplayName(), 1.0f);        	
+        	doc.addField("display_name_t", term.getDisplayName(), 1.0f);
+			doc.addField("cv_t", term.getCv(), 1.0f);
         	docs.add(doc);
         	id++;
         }
@@ -336,7 +340,7 @@ public class SolrDAO extends AnnotationDAO {
     
     private List<SolrInputDocument> createEntityDocs(Collection<SimpleEntity> entities) {
     	
-        List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+        List<SolrInputDocument> docs = new ArrayList<>();
         for(SimpleEntity se : entities) {
         	
         	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, se.getId());
@@ -422,19 +426,19 @@ public class SolrDAO extends AnnotationDAO {
 //    	}
 
 		if (existingDoc!=null) {
-    		for(String fieldName : new ArrayList<String>(doc.getFieldNames())) {
-    			if (fieldName.endsWith("_annotations") || fieldName.endsWith("_annot")) {
+    		for(String fieldName : new ArrayList<>(doc.getFieldNames())) {
+    			if (fieldName.endsWith("_annotations")) {
     				doc.removeField(fieldName);
     			}
     		}
 		}
 		
     	if (annotations != null) {
-    		for(SimpleAnnotation annotation : annotations) {        
-    			doc.addField(annotation.getOwner()+"_annotations", annotation.getTag(), 1.0f);
-//    			if (annotation.getValue()!=null) {
-//    				doc.addField(annotation.getOwner()+"_"+SolrUtils.getFormattedName(annotation.getKey())+"_annot", annotation.getValue(), 1.0f);
-//    			}
+    		for(SimpleAnnotation annotation : annotations) {
+    		    for(String subject : annotation.getSubjectsCsv().split(",")) {
+    		        subject = subject.contains(":") ? subject.split(":")[1] : subject;
+                    doc.addField(subject+"_annotations", annotation.getTag(), 1.0f);
+    		    }
     		}
     	}
     	
@@ -457,7 +461,7 @@ public class SolrDAO extends AnnotationDAO {
     	simpleEntity.setEntityTypeName(entity.getEntityTypeName());
     	simpleEntity.setOwnerKey(entity.getOwnerKey());
     	
-    	Set<Long> childrenIds = new HashSet<Long>();
+    	Set<Long> childrenIds = new HashSet<>();
     	for(EntityData ed : entity.getEntityData()) {
     		if (ed.getValue()!=null) {
     			String attr = (ed.getEntityAttrName());
@@ -568,7 +572,7 @@ public class SolrDAO extends AnnotationDAO {
         }
         
     	init();
-    	Map<Long,SolrDocument> docMap = new HashMap<Long,SolrDocument>();
+    	Map<Long,SolrDocument> docMap = new HashMap<>();
     	try {
     		int currSize = 0;
 			StringBuffer sqBuf = new StringBuffer();
@@ -621,7 +625,7 @@ public class SolrDAO extends AnnotationDAO {
             log.trace("addNewAncestor(entityId="+entityId+", newAncestorId="+newAncestorId+")");
         }
         
-		List<Long> entityIds = new ArrayList<Long>();
+		List<Long> entityIds = new ArrayList<>();
 		entityIds.add(entityId);
 		addNewAncestor(entityIds, newAncestorId);
 	}
@@ -644,7 +648,7 @@ public class SolrDAO extends AnnotationDAO {
     	log.info("Adding new ancestor to "+entityIds.size()+" entities. Found "+solrDocMap.size()+" documents.");
     	
     	// Create updated Solr documents
-    	List<SolrInputDocument> inputDocs = new ArrayList<SolrInputDocument>();
+    	List<SolrInputDocument> inputDocs = new ArrayList<>();
     	for(SolrDocument existingDoc : solrDocMap.values()) {
     		SolrInputDocument inputDoc = ClientUtils.toSolrInputDocument(existingDoc);
     		
@@ -652,12 +656,12 @@ public class SolrDAO extends AnnotationDAO {
     		
     		SolrInputField field = inputDoc.getField("ancestor_ids");
     		if (field==null) {
-    			ancestorIds = new ArrayList<Long>();
+    			ancestorIds = new ArrayList<>();
     		}
     		else {
     			ancestorIds = (Collection<Long>)field.getValue();
     			if (ancestorIds==null) {
-        			ancestorIds = new ArrayList<Long>();
+        			ancestorIds = new ArrayList<>();
         		} 
     		}
     		

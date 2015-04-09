@@ -20,9 +20,13 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
+import org.janelia.it.jacs.compute.service.exceptions.EntityException;
+import org.janelia.it.jacs.compute.service.exceptions.LSMMetadataException;
+import org.janelia.it.jacs.compute.service.exceptions.MetadataConsensusException;
+import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
-import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.MergeAlgorithm;
@@ -189,7 +193,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     for(String dye : channelDyes) {
                         tagToDyesMap.put(channelTag, dye);
                         if (dyeToTagMap.containsKey(dye)) {
-                            throw new IllegalStateException("Dye "+dye+" is already mapped as "+dyeToTagMap.get(dye));
+                            throw new ServiceException("Dye "+dye+" is already mapped as "+dyeToTagMap.get(dye));
                         }
                         dyeToTagMap.put(dye, channelTag);
                         contextLogger.info("Mapping dye '"+dye+"' to channel tag '"+channelTag+"'");
@@ -233,7 +237,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 contextLogger.info("Falling back on chanspec...");
 
                 Entity lsm1Entity = lsmEntityMap.get(lsm1.getName());
-                if (lsm1Entity==null) throw new IllegalStateException("Could not find LSM entity for first LSM: "+lsm1.getName());
+                if (lsm1Entity==null) throw new EntityException("Could not find LSM entity for first LSM: "+lsm1.getName());
 
                 String outputChanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
                 
@@ -251,7 +255,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     
                     File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
                     Entity lsm2Entity = lsmEntityMap.get(lsm2.getName());
-                    if (lsm2Entity==null) throw new IllegalStateException("Could not find LSM entity for second LSM: "+lsm2.getName());
+                    if (lsm2Entity==null) throw new EntityException("Could not find LSM entity for second LSM: "+lsm2.getName());
                 
                     LSMMetadata lsm2Metadata = lsmMetadataMap.get(lsm2.getName());
                     int refIndex2 = getRefIndex(lsm2Metadata);
@@ -395,7 +399,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             for(String tag : outputChannelList) {
                 if (tag.equals("reference") || tag.matches("r\\d+")) {
                     if (referenceChannels.length() > 0) {
-                        throw new IllegalStateException("More than one reference channel detected: "+referenceChannels+" "+index);
+                        throw new MetadataException("More than one reference channel detected: "+referenceChannels+" "+index);
                     }
                     referenceChannels.append(index);
                     chanSpec.append("r");
@@ -415,28 +419,28 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 consensusChannelMapping = channelMappingStr;
             }
             else if (!consensusChannelMapping.equals(channelMappingStr)) {
-                throw new IllegalStateException("No channel mapping consensus among tiles ("+consensusChannelMapping+"!="+channelMappingStr+")");
+                throw new MetadataConsensusException("No channel mapping consensus among tiles ("+consensusChannelMapping+"!="+channelMappingStr+")");
             }
             
             if (consensusReferenceChannels==null) {
                 consensusReferenceChannels = referenceChannels.toString();
             }
             else if (!consensusReferenceChannels.equals(referenceChannels.toString())) {
-                throw new IllegalStateException("No reference channel consensus among tiles ("+consensusReferenceChannels+"!="+referenceChannels+")");
+                throw new MetadataConsensusException("No reference channel consensus among tiles ("+consensusReferenceChannels+"!="+referenceChannels+")");
             }
                 
             if (consensusSignalChannels==null) {
                 consensusSignalChannels = signalChannels.toString();
             }
             else if (!consensusSignalChannels.equals(signalChannels.toString())) {
-                throw new IllegalStateException("No signal channel consensus among tiles ("+consensusSignalChannels+"!="+signalChannels+")");
+                throw new MetadataConsensusException("No signal channel consensus among tiles ("+consensusSignalChannels+"!="+signalChannels+")");
             }
 
             if (consensusChanSpec==null) {
                 consensusChanSpec = chanSpec.toString();
             }
             else if (!consensusChanSpec.equals(chanSpec.toString())) {
-                throw new IllegalStateException("No channel specification consensus among tiles ("+consensusChanSpec+"!="+chanSpec+")");
+                throw new MetadataConsensusException("No channel specification consensus among tiles ("+consensusChanSpec+"!="+chanSpec+")");
             }
             
             String mapping = generateChannelMapping(inputChannelList, outputChannelList);
@@ -491,7 +495,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         return refIndex;
     }
     
-    private void collectDyes(LSMMetadata lsmMetadata, Collection<String> referenceDyes, Collection<String> signalDyes, Collection<String> allDyes) {
+    private void collectDyes(LSMMetadata lsmMetadata, Collection<String> referenceDyes, Collection<String> signalDyes, Collection<String> allDyes) throws LSMMetadataException {
 
         for(Channel channel : lsmMetadata.getChannels()) {
             DetectionChannel detection = lsmMetadata.getDetectionChannel(channel);
@@ -505,7 +509,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                         referenceDye = dye;    
                     }
                     else if (!referenceDye.equals(dye)) {
-                        throw new IllegalStateException("Multiple reference dyes detected in a single image ("+referenceDye+"!, "+dye+")");
+                        throw new LSMMetadataException("Multiple reference dyes detected in a single image ("+referenceDye+"!, "+dye+")");
                     }
                 }
                 else {
@@ -559,7 +563,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         for(String tag : outputChannelList) {
             Integer sourceIndex = sourceIndexMap.get(tag);
             if (sourceIndex==null) {
-                throw new IllegalStateException("No such tag in source image: "+tag);
+                throw new LSMMetadataException("No such tag in source image: "+tag);
             }
             if (targetIndex>0) mapChannelString.append(",");
             mapChannelString.append(sourceIndex).append(",").append(targetIndex);
@@ -571,13 +575,14 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     }
     
     private void populateMaps() throws Exception {
-                
-        for(Entity tile : sampleArea.getTiles()) {
+
+		List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
+        for(Entity tile : tileEntities) {
+        	
+        	entityLoader.populateChildren(tile);
             contextLogger.info("Populating maps for tile: "+tile.getName());
             
-            for(Entity image : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
-                // Don't trust entities in ProcessData, fetch a fresh copy
-                Entity lsmStack = entityBean.getEntityById(image.getId());
+            for(Entity lsmStack : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
                 
                 // The actual filename of the LSM we're dealing with is not compressed
                 String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
@@ -593,7 +598,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 		jsonFile = new File(jsonFilepath);
                 	}
                 	else {
-                		throw new Exception("Could not find existing JSON metadata for "+lsmFilename);
+                		throw new LSMMetadataException("Could not find existing JSON metadata for "+lsmFilename);
                 	}
                 }
                 
@@ -603,7 +608,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     lsmMetadataMap.put(lsmFilename, metadata);
                 }
                 catch (Exception e) {
-                    throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
+                    throw new LSMMetadataException("Error parsing LSM metadata file: "+jsonFile,e);
                 }
             }
         }

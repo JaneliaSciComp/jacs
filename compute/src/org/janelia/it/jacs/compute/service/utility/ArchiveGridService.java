@@ -9,10 +9,15 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Copy a file or a directory tree from archive to the file share, or vice versa.
@@ -130,7 +135,7 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         for(String sourceFilepath : sourcePaths) {
             String targetFilepath = targets.remove();
             if (sourceFilepath!=null && targetFilepath!=null) {
-                logger.info("Will copy "+sourceFilepath);
+                logger.info("Will copy "+sourceFilepath+" to "+targetFilepath);
                 writeInstanceFiles(sourceFilepath, targetFilepath, configIndex++);
             }
             else {
@@ -164,10 +169,14 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append("read SOURCE_FILE\n");
         script.append("read TARGET_FILE\n");
-        script.append(ARCHIVE_SYNC_CMD + " \"$SOURCE_FILE\" \"$TARGET_FILE\"\n");
+        script.append("if [ \"$SOURCE_FILE\" == \"$TARGET_FILE\" ]; then\n");
+        script.append("    echo \"Source and target are identical\"\n");
+        script.append("else\n");
+        script.append("    "+ARCHIVE_SYNC_CMD + " \"$SOURCE_FILE\" \"$TARGET_FILE\"\n");
         if (deleteSourceFiles) {
-            script.append(REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
+            script.append("    "+REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
         }
+        script.append("fi\n");
         writer.write(script.toString());
     }
     
@@ -180,5 +189,19 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
     protected int getRequiredSlots() {
         return 1;
     }
-    
+
+    /**
+     * Make sure the files were copied to the target location.
+     */
+    @Override
+	public void postProcess() throws MissingDataException {
+    	FileNode node = ProcessDataHelper.getResultFileNode(processData);
+    	for(String filepath : targetPaths) {
+    		File file = new File(filepath);
+        	if (!file.exists()) {
+        		throw new MissingGridResultException(node.getDirectoryPath(), "Target file not found at "+file.getAbsolutePath());
+        	}
+    	}
+        
+    }
 }

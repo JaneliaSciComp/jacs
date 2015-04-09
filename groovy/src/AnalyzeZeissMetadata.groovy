@@ -7,7 +7,7 @@ import org.janelia.it.workstation.gui.framework.exception_handlers.ExitHandler
 import org.janelia.it.workstation.gui.framework.exception_handlers.UserNotificationExceptionHandler
 import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
 import org.janelia.it.workstation.gui.util.panels.ApplicationSettingsPanel
-import org.janelia.it.workstation.gui.util.panels.DataSourceSettingsPanel
+import org.janelia.it.workstation.gui.util.panels.UserAccountSettingsPanel
 import org.janelia.it.workstation.gui.util.panels.ViewerSettingsPanel
 import org.janelia.it.workstation.shared.util.ConsoleProperties
 import org.janelia.it.jacs.model.entity.Entity
@@ -207,7 +207,7 @@ def login() {
            sessionMgr.registerExceptionHandler(new UserNotificationExceptionHandler());
            sessionMgr.registerExceptionHandler(new ExitHandler());
            sessionMgr.registerPreferenceInterface(ApplicationSettingsPanel.class, ApplicationSettingsPanel.class);
-           sessionMgr.registerPreferenceInterface(DataSourceSettingsPanel.class, DataSourceSettingsPanel.class);
+           sessionMgr.registerPreferenceInterface(UserAccountSettingsPanel.class, UserAccountSettingsPanel.class);
            sessionMgr.registerPreferenceInterface(ViewerSettingsPanel.class, ViewerSettingsPanel.class);
            SessionMgr.getSessionMgr().loginSubject();
     }

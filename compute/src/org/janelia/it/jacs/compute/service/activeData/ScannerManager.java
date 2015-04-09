@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.service.activeData.scanner.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveVisitor;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 /**
  *
@@ -24,7 +25,9 @@ import org.janelia.it.jacs.compute.service.activeData.visitor.ActiveVisitor;
 public class ScannerManager {
     
     private final Logger logger = Logger.getLogger(ScannerManager.class);
-    
+
+    private final int SCANNER_POOL_SIZE = SystemConfigurationProperties.getInt("ActiveData.ScannerPoolSize");
+
     private final ScheduledThreadPoolExecutor managerPool=new ScheduledThreadPoolExecutor(1);
     private final ScheduledThreadPoolExecutor scannerPool;
     private int nextScannerIndex=0;
@@ -43,7 +46,7 @@ public class ScannerManager {
     }
     
     private ScannerManager() {
-        scannerPool=new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors()*2);
+        scannerPool=new ScheduledThreadPoolExecutor(SCANNER_POOL_SIZE);
     }
     
     public EntityScanner getScannerBySignature(String signature) {
@@ -80,7 +83,7 @@ public class ScannerManager {
         // Re-start manager if necessary
         if (managerFuture == null) {
             logger.info("managerFuture is null - creating new instance within managerPool");
-            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManagerThread(), 10, 10, TimeUnit.MILLISECONDS);
+            managerFuture = managerPool.scheduleWithFixedDelay(new ScanManagerThread(), 1000, 1000, TimeUnit.MILLISECONDS);
         } else {
             logger.info("managerFuture is not null - assuming that a manager instance is running");
         }

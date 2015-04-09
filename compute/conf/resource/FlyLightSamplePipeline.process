@@ -22,6 +22,7 @@
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="PIPELINE_NAME"/>
             <input name="MERGE_ALGORITHMS"/>
@@ -33,7 +34,6 @@
             <input name="PIPELINE_PROCESS"/>
             <input name="REUSE_PROCESSING"/>
             <input name="REUSE_ALIGNMENT"/>
-            <input name="OVERRIDE" value="false"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="pipeline name"/>
@@ -272,25 +272,32 @@
         		    		<input name="INPUT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
         					<input name="BULK_MERGE_PARAMETERS"/>
         					<input name="REFERENCE_CHANNEL"/>
+        					<input name="SAMPLE_AREA"/>
         					<output name="BULK_MERGE_PARAMETERS"/>
+        					<output name="RUN_STITCH"/>
         		        </operation>
         	        </sequence>
-        	        
-        		    <!-- Stitch the merged files into a single result -->
-        	        <sequence name="Stitch and Blend" waitForAsync="true">
-        		        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
-        		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchAndBlendService"/>
-        		    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
-        		    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
-        					<input name="BULK_MERGE_PARAMETERS"/>
-        					<input name="REFERENCE_CHANNEL"/>
-        					<input name="STITCHED_FILENAME"/>
-        		        </operation>
-        	        </sequence>
-        	          
+	        	        
+                	<!-- Run the stitcher, unless if the grouper decides we don't need to -->
+	            	<sequence if="RUN_STITCH=true">
+	            	
+	        		    <!-- Stitch the merged files into a single result -->
+	        	        <sequence name="Stitch and Blend" waitForAsync="true">
+	        		        <operation name="Stitch and Blend" processor="queue/gridSubmitAndWait">
+	        		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DStitchAndBlendService"/>
+	        		    		<input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
+	        		    		<input name="INPUT_FILE_NODE" value="$V{GROUP_RESULT_FILE_NODE}"/>
+	        					<input name="BULK_MERGE_PARAMETERS"/>
+	        					<input name="REFERENCE_CHANNEL"/>
+	        					<input name="STITCHED_FILENAME"/>
+	        		        </operation>
+	        	        </sequence>
+	        	        
+	                </sequence>
+	                
                 </sequence>
                 
-                <!-- Else -->
+                <!-- Else, or if the grouper determined we don't need to run the stitcher -->
             	<sequence if="RUN_STITCH=false">
         	    
         		    <!-- If we're not stitching then the single tile is considered the stitched file -->
@@ -334,10 +341,10 @@
             	    
         	    <!-- Register MIP images -->
         		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+        			<input name="PIPELINE_RUN_ENTITY_ID"/>
         			<input name="RESULT_ENTITY_ID"/>
         			<input name="DEFAULT_IMAGE_FILENAME" value="$V{STITCHED_FILENAME}"/>
         			<output name="DEFAULT_IMAGE_ID"/>
-        			<input name="PIPELINE_RUN_ENTITY_ID"/>
         	    </operation>
     		
                 <!-- Set the result for this sample area -->
@@ -424,8 +431,21 @@
         </sequence>
         
 		<!-- Compress all the v3draw files we created  -->
-        <include name="Compress raw files" process="SampleDataCompression">
+        <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+            <input name="OUTPUTS_TYPE" value="v3dpbd"/>
+            <input name="DELETE_INPUTS" value="true"/>
+            <input name="RECORD_MODE" value="UPDATE"/>
+        </include>
+        
+        <!-- Create h5j files from v3dpbd files -->
+        <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+            <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+            <input name="INPUT_TYPE" value="v3dpbd"/>
+            <input name="OUTPUT_TYPE" value="h5j"/>
+            <input name="DELETE_INPUTS" value="false"/>
+            <input name="RECORD_MODE" value="ADD"/>
+            <input name="EXCLUDE_FILES" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd"/>
         </include>
         
         <!-- Move all generated files to archive -->

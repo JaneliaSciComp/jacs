@@ -43,7 +43,7 @@ public class MpegFileLoader extends LociFileLoader {
 
         @Override
         public void onOpenCoder(IOpenCoderEvent event) {
-            IContainer container = event.getSource().getContainer();
+            IContainer container = ((IMediaReader) event.getSource()).getContainer();
             // Duration might be useful for computing number of frames
             long duration = container.getDuration(); // microseconds
             int numStreams = container.getNumStreams();

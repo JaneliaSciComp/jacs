@@ -67,6 +67,7 @@
                 <output name="COPY_FROM_ARCHIVE"/>
                 <output name="SOURCE_FILE_PATHS"/>
                 <output name="TARGET_FILE_PATHS"/>
+                <output name="ALIGNED_AREAS"/>
             </operation>
         
             <sequence if="COPY_FROM_ARCHIVE=true">
@@ -87,6 +88,7 @@
     	    		<input name="ALIGNMENT_SCRIPT_NAME"/>
     	    		<input name="ALIGNMENT_INPUTS"/>
     	    		<input name="SAMPLE_ENTITY_ID"/>
+               		<input name="ALIGNED_AREAS"/>
     				<output name="ALIGNED_FILENAME"/>
     				<output name="ALIGNED_IMAGES"/>
     	        </operation>

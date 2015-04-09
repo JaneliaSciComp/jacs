@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
 import java.util.*;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
 /**
  * Created with IntelliJ IDEA.
@@ -95,8 +96,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             annotationDAO.saveOrUpdate(sampleEd);
             workspace.getEntityData().add(sampleEd);
             annotationDAO.saveOrUpdate(workspace);
+            Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
             // back to user
-            TmWorkspace tmWorkspace=new TmWorkspace(workspace);
+            TmWorkspace tmWorkspace=new TmWorkspace(workspace, sampleEntity);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
 
@@ -334,6 +336,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new Exception("Could not find geo entry to update for value string");
             }
             TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(valueString);
+            // normally this is filled in automatically when the annotation is part of
+            //  a neuron, but here it's not (explicitly); however, we know the value
+            //  to put in:
+            geoAnnotation.setNeuronId(neuronId);
             return geoAnnotation;
         } catch (Exception e) {
             e.printStackTrace();
@@ -854,7 +860,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int cubicDim ) throws DaoException {
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int[] dimensions ) throws DaoException {
         Map<Integer,byte[]> rtnVal = new HashMap<>();
         try {
             // Get the bean of data around the point of interest.
@@ -872,8 +878,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
             // Grab the channels.
             TifVolumeFileLoader loader = new TifVolumeFileLoader();
-            if ( cubicDim > -1 ) {
-                loader.setCubicOutputDimension(cubicDim);
+            if ( dimensions != null ) {
+                loader.setOutputDimensions(dimensions);
             }
             loader.setConversionCharacteristics(
                     rawFileInfo.getTransformMatrix(),
@@ -896,7 +902,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return rtnVal;
     }
 
-    public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
+    public CoordinateToRawTransform getTransform( String basePath ) throws DaoException {
+        try {
+            RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
+            return fetcher.getTransform();
+        } catch ( Exception ex ) {
+            throw new DaoException(ex);
+        }
+    }
+
+    private RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
         RawFileInfo rtnVal = null;
         try {
             RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
@@ -906,7 +921,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
         return rtnVal;
     }
-
+    
     /**
      * fix connectivity issues for all neurons in a workspace
      */
@@ -972,12 +987,24 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
         try {
-            Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
+            Long sampleID = null;
+            Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);            
+            Entity sampleEntity = null;
+            if (workspaceEntity != null) {
+                EntityData sampleEd = workspaceEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+                if (sampleEd == null) {
+                    throw new Exception("workspace " + workspaceEntity.getName() + " has no associated brand sample!");
+                } else {
+                    sampleID = Long.valueOf(sampleEd.getValue());
+                    sampleEntity = annotationDAO.getEntityById(sampleID);
+                }
+            }
+
             // see notes in TmNeuron() on the connectivity retry scheme
             TmWorkspace workspace = null;
             boolean connectivityException;
             try {
-                workspace = new TmWorkspace(workspaceEntity);
+                workspace = new TmWorkspace(workspaceEntity, sampleEntity);
                 connectivityException = false;
             }
             catch (TmConnectivityException e) {
@@ -987,7 +1014,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (connectivityException) {
                 fixConnectivityWorkspace(workspaceId);
                 workspaceEntity = annotationDAO.getEntityById(workspaceId);
-                workspace = new TmWorkspace(workspaceEntity);
+                workspace = new TmWorkspace(workspaceEntity, sampleEntity);
             }
             return workspace;
         } catch (Exception e) {

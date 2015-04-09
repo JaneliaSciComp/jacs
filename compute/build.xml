@@ -32,7 +32,6 @@
     <property name="localname" value="compute"/>
     <property name="condesc.dir" value="${basedir}/conf/container_descriptor"/>
     <property name="webServices.dir" value="${basedir}/conf/webServices"/>
-    <property name="deploy.dir" value="${jboss.home}/server/${jboss.server.configuration}/deploy"/>
 
     <property name="rest-ws-war" value="${localname}-rest-ws.war"/>
 
@@ -388,7 +387,6 @@
             <param name="deployment-specific.properties.dir" value="${jacs.properties.dir}"/>
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
             <param name="server.username" value="${user.server.login}" />
-            <param name="jboss.home" value="${user.server.path}/${server.address}/jboss-4.2.3.GA" />
         </antcall>
     </target>
 
@@ -430,7 +428,6 @@
             <param name="server.username" value="${user.server.login}" />
             <param name="deployment-specific.properties.dir" value="${jacs.properties.dir}"/>
             <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
-            <param name="jboss.home" value="${user.server.path}/${server.address}/jboss-4.2.3.GA" />
         </antcall>
     </target>
 
@@ -469,6 +466,7 @@
 
         <!-- read in properties -->
         <property file="${temp.dir}/jacs.properties" prefix="FromPropFile"/>
+        <property name="jboss.home" value="${FromPropFile.ServerRoot.Dir}/jboss-4.2.3.GA" />
 
         <echo message="computeserver.ejb.service = ${FromPropFile.computeserver.ejb.service}" />
 

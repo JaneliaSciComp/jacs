@@ -42,7 +42,7 @@ public class LoaderSubsetHelper {
     private double[][] stageToTile;
     private double[][] tileToStage;
     private double[] queryCoords;
-    private int cubicOutputDimension = -1;
+    private int[] outputDimensions = new int[] { -1, -1, -1 };
     private final int[] boundingBox = new int[6];
     
     private byte[] textureByteArray;
@@ -51,8 +51,8 @@ public class LoaderSubsetHelper {
     
     private int pixelBytes;
 
-    public void setCubicOutputDimension( int dimension ) {
-        this.cubicOutputDimension = dimension;
+    public void setOutputDimensions( int[] dimension ) {
+        this.outputDimensions = dimension;
     }
     
     public void setTransformCharacteristics(double[][] tileToStage, double[][] stageToTile, int[] minCorner, int[] extent, List<Integer> queryCoords) {
@@ -64,10 +64,10 @@ public class LoaderSubsetHelper {
     }
     
     /**
-     * @return the cubicOutputDimension
+     * @return the outputDimensions
      */
-    public int getCubicOutputDimension() {
-        return cubicOutputDimension;
+    public int[] getOutputDimension() {
+        return outputDimensions;
     }
     
     /**
@@ -223,7 +223,7 @@ public class LoaderSubsetHelper {
         setPixelBytes((int)Math.floor( fileLength / ((getSourceWidth()*getSourceHeight()) * sourceDepth) ));
         //System.out.println("File size is " + file.length());
         //System.out.println("Expected number of voxels = " + (sourceWidth*sourceHeight) * sheetCountFromFile );
-        if ( getPixelBytes() < 4  ||  getCubicOutputDimension() != -1 ) {
+        if ( getPixelBytes() < 4  ||  (this.getOutputDimension() != null  &&  this.getOutputDimension()[0] != -1) ) {
             setTextureByteArray(new byte[totalVoxels * getPixelBytes()]);
         }
         else {
@@ -254,14 +254,16 @@ public class LoaderSubsetHelper {
         Matrix testMin = transform.times( new Matrix( new double[] {0,0,0,1}, 4 ) );
         */
         
-        final int halfCubeDim = getCubicOutputDimension() / 2;
-        boundingBox[START_X_INX] = clamp( 0, getSourceWidth() - getCubicOutputDimension(), (int)newPoint.getArray()[ 0 ][ 0 ] - halfCubeDim );
-        boundingBox[START_Y_INX] = clamp( 0, getSourceHeight() - getCubicOutputDimension(), (int)newPoint.getArray()[ 1 ][ 0 ] - halfCubeDim );
-        boundingBox[START_Z_INX] = clamp( 0, zCount - getCubicOutputDimension(), (int)newPoint.getArray()[ 2 ][ 0 ] - halfCubeDim );
+        final int halfXDim = getOutputDimension()[START_X_INX] / 2;
+        final int halfYDim = getOutputDimension()[START_Y_INX] / 2;
+        final int halfZDim = getOutputDimension()[START_Z_INX] / 2;
+        boundingBox[START_X_INX] = clamp( 0, getSourceWidth() - getOutputDimension()[START_X_INX], (int)newPoint.getArray()[ 0 ][ 0 ] - halfXDim );
+        boundingBox[START_Y_INX] = clamp( 0, getSourceHeight() - getOutputDimension()[START_Y_INX], (int)newPoint.getArray()[ 1 ][ 0 ] - halfYDim );
+        boundingBox[START_Z_INX] = clamp( 0, zCount - getOutputDimension()[START_Z_INX], (int)newPoint.getArray()[ 2 ][ 0 ] - halfZDim );
 
-        boundingBox[END_X_INX] = boundingBox[START_X_INX] + getCubicOutputDimension();
-        boundingBox[END_Y_INX] = boundingBox[START_Y_INX] + getCubicOutputDimension();
-        boundingBox[END_Z_INX] = boundingBox[START_Z_INX] + getCubicOutputDimension();
+        boundingBox[END_X_INX] = boundingBox[START_X_INX] + getOutputDimension()[START_X_INX];
+        boundingBox[END_Y_INX] = boundingBox[START_Y_INX] + getOutputDimension()[START_Y_INX];
+        boundingBox[END_Z_INX] = boundingBox[START_Z_INX] + getOutputDimension()[START_Z_INX];
         
         // Adjust the dimensions, to adjust the subsetting requirement.
         setSx(boundingBox[ END_X_INX ] - boundingBox[ START_X_INX ]);
@@ -281,10 +283,10 @@ public class LoaderSubsetHelper {
         // This should yield the point in TIFF coordinates, 0..MaxX, 0..MaxY, 0..MaxZ.
         Matrix newPoint = transform.times( pointMatrix );
 
-        final int halfCubeDim = getCubicOutputDimension() / 2;
-        boundingBox[START_Z_INX] = clamp( 0, zCount - getCubicOutputDimension(), (int)newPoint.getArray()[ 2 ][ 0 ] - halfCubeDim );
+        final int halfZDim = getOutputDimension()[START_Z_INX] / 2;
+        boundingBox[START_Z_INX] = clamp( 0, zCount - getOutputDimension()[START_Z_INX], (int)newPoint.getArray()[ 2 ][ 0 ] - halfZDim );
 
-        boundingBox[END_Z_INX] = boundingBox[START_Z_INX] + getCubicOutputDimension();
+        boundingBox[END_Z_INX] = boundingBox[START_Z_INX] + getOutputDimension()[START_Z_INX];
         
         // Adjust the dimensions, to adjust the subsetting requirement.
         setSz(boundingBox[ END_Z_INX ] - boundingBox[ START_Z_INX ]);

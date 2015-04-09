@@ -41,6 +41,9 @@ public class LSMImage extends Image {
     @SearchAttribute(key="orientation_txt",label="Tissue Orientation")
     private String tissueOrientation;
 
+    @SearchAttribute(key="vt_line_txt",label="VT Line")
+    private String vtLine;
+
     @SearchAttribute(key="sage_id_i",label="SAGE Id")
     private Integer sageId;
 
@@ -134,6 +137,14 @@ public class LSMImage extends Image {
 
     public void setTissueOrientation(String tissueOrientation) {
         this.tissueOrientation = tissueOrientation;
+    }
+
+    public String getVtLine() {
+        return vtLine;
+    }
+
+    public void setVtLine(String vtLine) {
+        this.vtLine = vtLine;
     }
 
     public Integer getSageId() {

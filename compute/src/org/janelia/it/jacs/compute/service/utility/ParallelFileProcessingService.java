@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
@@ -365,7 +366,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (!ignoreErrors && coreFiles.length > 0) {
-			throw new MissingDataException(getGridServicePrefixName()+" core dumped for "+resultFileNode.getDirectoryPath());
+			throw new MissingGridResultException(file.getAbsolutePath(), getGridServicePrefixName()+" core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
         int outputFileCheckTries=0;
@@ -393,7 +394,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         if (!ignoreErrors && missingFiles.size()>0) {
             StringBuffer sb=new StringBuffer();
             for (File f : missingFiles) sb.append(", "+ f.getAbsolutePath());
-            throw new MissingDataException(getGridServicePrefixName()+" missing output files: "+sb.toString());
+            throw new MissingGridResultException(file.getAbsolutePath(), getGridServicePrefixName()+" missing output files: "+sb.toString());
         }
 	}
 

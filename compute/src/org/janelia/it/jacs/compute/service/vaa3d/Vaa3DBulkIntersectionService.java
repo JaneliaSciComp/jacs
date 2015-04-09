@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
@@ -135,7 +136,7 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Bulk intersection core dumped");
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Bulk intersection core dumped");
     	}
 
         Object filePairsObj = processData.getItem("FILE_PAIRS");
@@ -143,7 +144,7 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
         for(CombinedFile combinedFile : combinedFiles) {
         	File outputFile = new File(combinedFile.getOutputFilepath());
         	if (!outputFile.exists()) {
-        		throw new MissingDataException("Missing intersection output "+outputFile.getAbsolutePath());
+        		throw new MissingGridResultException(file.getAbsolutePath(), "Missing intersection output "+outputFile.getAbsolutePath());
         	}
         }
 	}

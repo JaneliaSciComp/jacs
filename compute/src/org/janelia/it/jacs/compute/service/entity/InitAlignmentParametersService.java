@@ -40,7 +40,6 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 		else if (AlignmentAlgorithm.CONFIGURED == aa) {
         	processData.putItem("ALIGNMENT_SERVICE_CLASS", ConfiguredAlignmentService.class.getName());
         	processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Brain Alignment"));
-        	
         	processData.putItem("ALIGNMENT_SCRIPT_NAME", paa.getParameter());
 		}
         else if (AlignmentAlgorithm.CONFIGURED_BRAIN_VNC == aa) {
@@ -53,6 +52,11 @@ public class InitAlignmentParametersService extends AbstractEntityService {
             processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "Brain 20X/63X Alignment"));
             processData.putItem("ALIGNMENT_SCRIPT_NAME", paa.getParameter());
         }
+		else if (AlignmentAlgorithm.CONFIGURED_VNC == aa) {
+			processData.putItem("ALIGNMENT_SERVICE_CLASS", ConfiguredVNCAlignmentService.class.getName());
+			processData.putItem("ALIGNMENT_RESULT_NAME", StringUtils.defaultIfNullOrEmpty(paa.getResultName(), "VNC Alignment"));
+			processData.putItem("ALIGNMENT_SCRIPT_NAME", paa.getParameter());
+		}
 		else {
 			throw new IllegalArgumentException("No such alignment algorithm: "+aa);
 		}

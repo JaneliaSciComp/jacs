@@ -13,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -40,6 +41,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     protected String scriptFile;
     protected String mountingProtocol;
     protected String tissueOrientation;
+    protected String genderCode;
 
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -50,8 +52,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             entityLoader.populateChildren(sampleEntity);
             Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
             if (supportingData!=null) {
-                this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL, alignedArea);
-                this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION, alignedArea);
+                this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
+                this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION);
+                this.genderCode = sanitizeGender(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_GENDER));
             }
         }
         catch (Exception e) {
@@ -59,7 +62,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         }
     }
 
-    @Override
+	@Override
     protected void createShellScript(FileWriter writer) throws IOException, ParameterException, MissingDataException,
             InterruptedException, ServiceException {
 
@@ -89,6 +92,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         }
         if ("face_down".equals(tissueOrientation)) {
             cmd.append(" -z zflip");
+        }
+        if (genderCode!=null) {
+            cmd.append(" -g ").append(genderCode);
         }
         if (input1!=null) {
         	if (StringUtils.isEmpty(input1.getPixelResolution())) {
@@ -144,14 +150,14 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         final File outputDir = new File(resultFileNode.getDirectoryPath());
 
         if (! outputDir.exists()) {
-            throw new MissingDataException("Output directory missing for alignment: " + outputDir);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Output directory missing for alignment: " + outputDir);
         }
 
         try {
             final Collection<File> propertiesFiles = getPropertiesFiles(outputDir);
 
             if (propertiesFiles.size() == 0) {
-                throw new MissingDataException("alignment output directory " + outputDir.getAbsolutePath() +
+                throw new MissingGridResultException(outputDir.getAbsolutePath(), "alignment output directory " + outputDir.getAbsolutePath() +
                         " does not contain any '.properties' files");
             } else {
                 contextLogger.info("postProcess: '.properties' file(s) are " + propertiesFiles);
@@ -170,7 +176,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
                 String stackFilename = properties.getProperty("alignment.stack.filename");
                 File file = new File(propertyFileDir, stackFilename);
                 if (!file.exists()) {
-                    throw new MissingDataException("Alignment stack file does not exist: " + file.getAbsolutePath());
+                    throw new MissingGridResultException(outputDir.getAbsolutePath(), "Alignment stack file does not exist: " + file.getAbsolutePath());
                 }
 
                 String canonicalPath = file.getCanonicalPath();
@@ -209,7 +215,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
             }
 
             if (outputFiles.isEmpty()) {
-                throw new MissingDataException("No outputs defined for alignment: " + outputDir);
+                throw new MissingGridResultException(outputDir.getAbsolutePath(), "No outputs defined for alignment: " + outputDir);
             }
 
             data.putItem("ALIGNED_IMAGES", outputFiles);
@@ -223,7 +229,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
         }
         catch (IOException e) {
-            throw new MissingDataException("Error getting alignment outputs: " + outputDir, e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Error getting alignment outputs: " + outputDir, e);
         }
     }
 
@@ -250,4 +256,21 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         return FileUtils.listFiles(outputDir, extensions, true);
     }
 
+    private String sanitizeGender(String gender) {
+		if (gender==null) return null;
+		String genderLc = gender.toLowerCase();
+		if (genderLc.startsWith("f")) {
+			return "f";
+		}
+		else if (genderLc.startsWith("m")) {
+			return "m";
+		}
+		else if (genderLc.startsWith("x")) {
+			return "x";
+		}
+		else {
+			logger.warn("Invalid value for sample gender: "+gender);
+			return null;
+		}
+	}
 }

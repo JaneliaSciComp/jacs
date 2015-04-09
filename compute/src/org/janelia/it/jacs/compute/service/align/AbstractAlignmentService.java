@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.service.align;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +17,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
+import org.janelia.it.jacs.compute.service.exceptions.SAGEMetadataException;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -26,6 +26,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -51,9 +52,9 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected String ownerKey;
     protected SampleHelper sampleHelper;
     protected EntityBeanEntityLoader entityLoader;
-    
+
     protected Entity sampleEntity;
-    protected String alignedArea;
+    protected List<AnatomicalArea> alignedAreas = new ArrayList<AnatomicalArea>();
     protected String gender;
     
     protected boolean warpNeurons;
@@ -107,7 +108,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             }
             
             if (!alignmentInputFiles.isEmpty()) {
-	            setConsensusValues();
+	            setLegacyConsensusValues();
 	            putOutputVars(alignmentInputFiles);
             }
         } 
@@ -127,16 +128,16 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         // strategy for finding input files and other parameters.
         for(AnatomicalArea anatomicalArea : sampleAreas) {
             String areaName = anatomicalArea.getName();
-            if ("Brain".equalsIgnoreCase(areaName) || "".equals(areaName)) {
+            if ("Brain".equalsIgnoreCase(areaName) || StringUtils.isEmpty(areaName)) {
                 Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
                 entityLoader.populateChildren(result);
                 if (result!=null) {
-                    if (alignedArea!=null) {
-                        contextLogger.warn("Found more than one default brain area to align. Using: "+alignedArea);
+                    if (!alignedAreas.isEmpty()) {
+                        contextLogger.warn("Found more than one default brain area to align. Using: "+alignedAreas.get(0).getName());
                     }
                     else {
                         Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                        this.alignedArea = areaName;    
+                        alignedAreas.add(anatomicalArea);
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
                         if (warpNeurons) {
@@ -146,43 +147,55 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                 }
             }
         }
-    }
-
-    protected void setConsensusValues() throws Exception {
-
-        setConsensusValues(input1);
-        setConsensusValues(input2);
-        
-        this.gender = sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
-        if (gender!=null) {
-            contextLogger.info("Found gender consensus: "+gender);
+        if (input1==null) {
+            throw new SAGEMetadataException("Tile with anatomical area 'Brain' or '' not found for alignment");
         }
     }
-    
-    protected void setConsensusValues(AlignmentInputFile input) throws Exception {
+
+    protected void setLegacyConsensusValues() throws Exception {
+        setLegacyConsensusValues(input1);
+        setLegacyConsensusValues(input2);
+    }
+
+    /** 
+     * Interoperability with legacy samples
+     * @param input
+     * @throws Exception
+     */
+    protected void setLegacyConsensusValues(AlignmentInputFile input) throws Exception {
 
     	if (input==null) return;
-    	
+        
+        if (input.getChannelColors()==null) {
+            contextLogger.warn("No channel colors on the input file. Trying to find a consensus among the LSMs...");
+            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
+            if (input.getChannelColors()!=null) {
+                contextLogger.info("Found channel colors consensus: "+input.getChannelColors());
+            }
+        }
+        
+        if (input.getChannelSpec()==null) {
+            contextLogger.warn("No channel spec on the input file. Trying to find a consensus among the LSMs...");
+            input.setChannelSpec(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
+            if (input.getChannelColors()!=null) {
+                contextLogger.info("Found channel spec consensus: "+input.getChannelSpec());
+            }
+        }
+
         if (input.getOpticalResolution()==null) {
-            // Interoperability with legacy samples
             contextLogger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
-            input.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION, alignedArea));
+            input.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION));
             if (input.getOpticalResolution()!=null) {
                 contextLogger.info("Found optical resolution consensus: "+input.getOpticalResolution());
             }
         }
         
         if (input.getPixelResolution()==null) {
-            // Interoperability with legacy samples
             contextLogger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
-            input.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(sampleEntity, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION, alignedArea));
+            input.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
             if (input.getPixelResolution()!=null) {
                 contextLogger.info("Found pixel resolution consensus: "+input.getPixelResolution());
             }
-        }
-        
-        if (input.getChannelColors()!=null) {
-            contextLogger.info("  Channel colors: "+input.getChannelColors());
         }
     }
     
@@ -203,6 +216,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             data.putItem("SOURCE_FILE_PATHS", null);
             data.putItem("TARGET_FILE_PATHS", null);
         }
+        
+        data.putItem("ALIGNED_AREAS", alignedAreas);
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {
@@ -274,7 +289,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
             
             this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
-
+            this.alignedAreas = (List<AnatomicalArea>) data.getItem("ALIGNED_AREAS");
+            
             @SuppressWarnings("unchecked")
             List<AlignmentInputFile> alignmentInputs = (List) data.getRequiredItem("ALIGNMENT_INPUTS");
 

@@ -59,6 +59,9 @@ public abstract class AbstractEntityService implements IService {
 
             execute();
         }
+        catch (ServiceException e) {
+            throw e;
+        }
         catch (Exception e) {
             throw new ServiceException(e);
         }

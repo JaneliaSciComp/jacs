@@ -132,8 +132,9 @@ public class GeometricIndexManager extends ServiceMBeanSupport implements Geomet
                     }
                     Event lastEvent=events.get(events.size()-1);
                     if (lastEvent.getEventType().equalsIgnoreCase(Event.COMPLETED_EVENT)) {
-                        logger.info("Previous GeometricIndexManager task completed successfully - resetting for run on next invocation");
-                        indexTask=null;
+                        //logger.info("Previous GeometricIndexManager task completed successfully - resetting for run on next invocation");
+                        //indexTask=null;
+                        logger.info("Previous GeometricIndexManager task completed successfully - code must be changed to enable auto-reset");
                     }
                 } catch (Exception ex) {
                     logger.error("Error retrieving GeometricIndexTask information, id="+indexTask.getObjectId(), ex);

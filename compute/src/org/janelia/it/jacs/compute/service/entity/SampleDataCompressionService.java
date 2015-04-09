@@ -1,33 +1,36 @@
 package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
- * Compress existing v3draw files to v3dpbd to save space.
+ * Compress a set of existing files to a new set of formats.  
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleDataCompressionService implements IService {
+public class SampleDataCompressionService extends AbstractEntityService {
 
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
 	
 	private static final String centralDir = SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);
+	
+	public static final String RECORD_MODE_UPDATE = "UPDATE";
+    public static final String RECORD_MODE_ADD = "ADD";
 	
     public static final String MODE_UNDEFINED = "UNDEFINED";
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
@@ -36,97 +39,122 @@ public class SampleDataCompressionService implements IService {
     public static final int GROUP_SIZE = 200;
     public transient static final String PARAM_testRun = "is test run";
 	
-    protected Logger logger;
-    protected Task task;
-    protected String ownerKey;
-    protected AnnotationBeanLocal annotationBean;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
-    
-    protected int numChanges;
-    
     private boolean isDebug = false;
+
     private String mode = MODE_UNDEFINED;
-    protected IProcessData processData;
+    private String recordMode = RECORD_MODE_UPDATE;
+    private boolean deleteSourceFiles = true;
+    private Set<String> excludeFileSet = new HashSet<String>();
     
     private String rootEntityId;
-    private Set<String> inputFiles = new HashSet<String>();
-    private Map<String,Set<Long>> entityMap = new HashMap<String,Set<Long>>();
-    
-    public void execute(IProcessData processData) throws ServiceException {
+    private final Set<String> inputFiles = new HashSet<String>();
+    private final Set<Long> visited = new HashSet<Long>();
+    private Map<String,Set<Long>> entityMap;
+    protected int numChanges;
 
-    	try {
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            task = ProcessDataHelper.getTask(processData);
-            annotationBean = EJBFactory.getLocalAnnotationBean();
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            
-            String ownerName = ProcessDataHelper.getTask(processData).getOwner();
-            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
-            this.ownerKey = subject.getKey();
-            
-            String testRun = task.getParameter(PARAM_testRun);
-            if (testRun!=null) {
-            	isDebug = Boolean.parseBoolean(testRun);	
-            }
-            
-            mode = processData.getString("MODE");
-            this.processData = processData;
+    public void execute() throws Exception {
 
-        	rootEntityId = (String)processData.getItem("ROOT_ENTITY_ID");
-        	
-            if (mode.equals(MODE_CREATE_INPUT_LIST)) {
-                doCreateInputList();
-            }
-            else if (mode.equals(MODE_CREATE_OUTPUT_LIST)) {
-                doCreateOutputList();
-            }
-            else if (mode.equals(MODE_COMPLETE)) {
-                doComplete();
-            } 
-            else {
-                logger.error("Do not recognize mode type="+mode);
-            }
-    	}
-        catch (Exception e) {
-        	if (e instanceof ServiceException) {
-            	throw (ServiceException)e;
-            }
-            throw new ServiceException("Error running SampleDataCompressionService", e);
+        String testRun = task.getParameter(PARAM_testRun);
+        if (testRun!=null) {
+        	isDebug = Boolean.parseBoolean(testRun);	
+        }
+        
+        mode = data.getRequiredItemAsString("MODE");
+    	rootEntityId = data.getItemAsString("ROOT_ENTITY_ID");
+    	
+        if (mode.equals(MODE_CREATE_INPUT_LIST)) {
+            doCreateInputList();
+        }
+        else if (mode.equals(MODE_CREATE_OUTPUT_LIST)) {
+            doCreateOutputList();
+        }
+        else if (mode.equals(MODE_COMPLETE)) {
+            doComplete();
+        } 
+        else {
+            throw new IllegalStateException("Do not recognize mode '"+mode+"'");
         }
     }
     
     private void doCreateInputList() throws ComputeException {
 
-        logger.info("Finding V3DRAW files to compress...");
-        
+        this.entityMap = new HashMap<String,Set<Long>>();
+                
+        String inputType = data.getRequiredItemAsString("INPUT_TYPE");
+        String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
+        if (!StringUtils.isEmpty(excludeFiles)) {
+            for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
+                excludeFileSet.add(excludeFile);
+            }
+        }
+
+        this.deleteSourceFiles = !"false".equals(data.getRequiredItem("DELETE_INPUTS"));
+
         if (isDebug) {
-        	logger.info("This is a test run. Nothing will actually happen.");
+            logger.info("This is a test run. Nothing will actually happen.");
         }
         else {
-        	logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");
+            if (deleteSourceFiles) {
+                logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");    
+            }
+            else {
+                logger.info("This is the real thing. Files will get compressed, and added to the existing entities.");
+            }
         }
-    	
-        processV3dRawEntities();
+        
+        if (rootEntityId!=null) {
+            logger.info("Finding files to compress under root "+rootEntityId+" with type "+inputType);
+            
+            Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
+            if (entity == null) {
+                throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
+            }
+            
+            for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
+                String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (filepath!=null && filepath.endsWith(inputType)) {
+                    addEntityToInputList(image);
+                }
+            }
+        }
+        else {
+            logger.info("Finding files belonging to "+ownerKey+" with type "+inputType);
+            
+            for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+inputType)) {
+                if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                    logger.warn("Ignoring entity with filepath that is not an Image 3D: "+entity.getId());
+                    continue;
+                }
+                if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
+                    logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
+                    continue;
+                }
+                addEntityToInputList(entity);
+            }
+        }
         
         List<List<String>> inputGroups = createGroups(inputFiles, GROUP_SIZE);
         processData.putItem("INPUT_PATH_LIST", inputGroups);
         processData.putItem("ENTITY_MAP", entityMap);
         
-		logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
+        if (inputFiles.isEmpty()) {
+            logger.info("Nothing to be done.");
+        }
+        else {
+            logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
+        }
     }
 
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
-        List<List<String>> groupList = new ArrayList<List<String>>();
+        List<List<String>> groupList = new ArrayList<>();
         List<String> currentGroup = null;
         for (String s : fullList) {
             if (currentGroup==null) {
-                currentGroup = new ArrayList<String>();
+                currentGroup = new ArrayList<>();
             } 
             else if (currentGroup.size()==groupSize) {
                 groupList.add(currentGroup);
-                currentGroup = new ArrayList<String>();
+                currentGroup = new ArrayList<>();
             }
             currentGroup.add(s);
         }
@@ -136,58 +164,11 @@ public class SampleDataCompressionService implements IService {
         return groupList;
     }
     
-    private void doCreateOutputList() throws ComputeException {
+    private void addEntityToInputList(Entity imageEntity) throws ComputeException {
 
-    	List<String> inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
-    	if (inputPaths == null) {
-    		throw new IllegalArgumentException("INPUT_PATH_LIST may not be null");
-    	}
-    	
-    	List<String> outputPaths = new ArrayList<String>();
-    	for(String s : inputPaths) {
-    		outputPaths.add(s.replaceAll("v3draw", "v3dpbd"));
-    	}
-        processData.putItem("OUTPUT_PATH_LIST", outputPaths);
-    }
-    
-	public void processV3dRawEntities() throws ComputeException {
-
-        if (rootEntityId!=null) {
-        	logger.info("Finding V3DRAW files under id="+rootEntityId);
-        	
-        	Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
-        	if (entity == null) {
-        		throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
-        	}
-        	
-        	for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
-        		String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        		if (filepath!=null && filepath.endsWith("v3draw")) {
-        			addV3dRawFile(image);
-        		}
-        	}
-        }
-        else {
-        	logger.info("Finding V3DRAW files belonging to "+ownerKey);
-        	
-    		for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%v3draw")) {
-    			if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-    				logger.warn("Ignoring entity with v3draw filepath that is not an Image 3D: "+entity.getId());
-    				continue;
-    			}
-    			if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
-    				logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
-    				continue;
-    			}
-    			addV3dRawFile(entity);
-    		}
-        }
-    	
-		logger.info("The processing was a success.");
-    }
-    
-    private void addV3dRawFile(Entity imageEntity) throws ComputeException {
-
+        if (visited.contains(imageEntity.getId())) return;
+        visited.add(imageEntity.getId());
+        
     	if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
     	
     	String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -198,6 +179,11 @@ public class SampleDataCompressionService implements IService {
     	}
     	
     	File file = new File(filepath);
+    	
+    	if (excludeFileSet.contains(file.getName())) {
+            logger.info("Excluding file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+    	    return;
+    	}
     	
     	if (!file.exists()) {
     		logger.warn("File path for "+imageEntity.getId()+" does not exist: "+filepath);
@@ -210,95 +196,146 @@ public class SampleDataCompressionService implements IService {
     	
     	Set<Long> eset = entityMap.get(filepath);
     	if (eset == null) {
-    		eset = new HashSet<Long>();
+    		eset = new HashSet<>();
     		entityMap.put(filepath, eset);
     	}
     	eset.add(imageEntity.getId());
     }
     
+    private void doCreateOutputList() throws ComputeException {
+
+        String outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
+        List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
+
+        List<String> outputPaths = new ArrayList<String>();
+        for(String filepath : inputPaths) {
+            String extension = getExtension(filepath);
+            outputPaths.add(filepath.replaceAll(extension, outputType));
+        }
+        processData.putItem("OUTPUT_PATH_LIST", outputPaths);
+    }
+    
     private void doComplete() throws ComputeException {
 
-    	this.entityMap = (Map<String,Set<Long>>)processData.getItem("ENTITY_MAP");
-    	List<String> inputPaths = (List<String>)processData.getItem("INPUT_PATH_LIST");
-    	if (inputPaths == null) {
-    		throw new IllegalArgumentException("INPUT_PATH_LIST may not be null");
-    	}
-    	
-    	List<String> outputPaths = (List<String>)processData.getItem("OUTPUT_PATH_LIST");
-    	if (outputPaths == null) {
-    		throw new IllegalArgumentException("OUTPUT_PATH_LIST may not be null");
-    	}
+        this.recordMode = data.getRequiredItemAsString("RECORD_MODE");
+        this.deleteSourceFiles = !"false".equals(data.getRequiredItem("DELETE_INPUTS"));
+    	this.entityMap = (Map<String,Set<Long>>)data.getRequiredItem("ENTITY_MAP");
+    	List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
+        List<String> outputPaths = (List<String>)data.getRequiredItem("OUTPUT_PATH_LIST");
     	
     	for(int i=0; i<inputPaths.size(); i++) {
     		String inputPath = inputPaths.get(i);
-    		String outputPath = outputPaths.get(i);
-    		File outputFile = new File(outputPath);
-    		if (!outputFile.exists() || !outputFile.canRead() || outputFile.length()<=0) {
-    			logger.warn("Missing or corrupt output file: "+outputFile);
-    		}
-    		else {
-    			updateEntities(inputPath, outputPath);	
-    		}
+            String outputPath = outputPaths.get(i);
+            File outputFile = new File(outputPath);
+            if (!outputFile.exists() || !outputFile.canRead() || outputFile.length()<=0) {
+                logger.warn("Missing or corrupt output file: "+outputFile);
+            }
+            else {
+                updateEntities(inputPath, outputPath);  
+            }
     	}
 
 		logger.info("Modified "+numChanges+" entities.");
     }
     
     private void updateEntities(String inputPath, String outputPath) throws ComputeException {
-
+        
+        String inputExtension = getExtension(inputPath);
+        String outputExtension = getExtension(outputPath);
+        
     	try {
-    	    // Update all entities which referred to the old path
-    	    int numUpdated = entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
-            logger.info("Updated "+numUpdated+" entities to use new compressed file: "+outputPath);
-
+            File outputFile = new File(outputPath);
+            if (!outputFile.exists() || !outputFile.canRead() || outputFile.length()<=0) {
+                logger.warn("Missing or corrupt output file: "+outputFile);
+                return;
+            }
+            
+            if (RECORD_MODE_UPDATE.equals(recordMode)) {
+                if (!isDebug) {
+            	    // Update all entities which referred to the old path
+            	    int numUpdated = entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
+                    logger.info("Updated "+numUpdated+" entity data values to use new compressed file: "+outputPath);
+                }
+            }
+            
             Set<Long> inputEntites = entityMap.get(inputPath);
             if (inputEntites == null) {
                 logger.warn("No entities found with this path: "+inputPath);
                 return;
             }
             
+            Entity addEntity = null;
+            
     	    // Update the input stacks
+
         	for(Entity entity : entityBean.getEntitiesById(new ArrayList<Long>(inputEntites))) {
-        	    
-        	    // Update the path. This was already fixed by the bulk update above, but we need to fix it again, 
-        	    // because we're using an entity with the old state.
-                entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
-                
-                // Update the format
-        		String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
-        		if (format != null && !"".equals(format)) {
-        			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "v3dpbd");
-        		}
-        		
-        		// Update the name
-        		if (entity.getName().endsWith(".v3draw")) {
-        			entity.setName(entity.getName().replaceAll("v3draw", "v3dpbd"));
-        		}
-        		
-        		if (!isDebug) {
-	            	Entity savedEntity = entityBean.saveOrUpdateEntity(entity);
-	            	logger.info("Updated entity: "+savedEntity.getName()+" (id="+savedEntity.getId()+")");
-        		}
-        		else {
-        			logger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
-        		}
-            	numChanges++;
-        	}	
+
+                if (RECORD_MODE_UPDATE.equals(recordMode)) {
+                    // Update the format, if the entity has one
+            		String format = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
+            		if (!StringUtils.isEmpty(format)) {
+            			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
+            		}
+            		
+            		// Update the name
+            		if (entity.getName().endsWith(inputExtension)) {
+            			entity.setName(entity.getName().replaceAll(inputExtension, outputExtension));
+            		}
+            		
+            		if (!isDebug) {
+    	            	Entity savedEntity = entityBean.saveOrUpdateEntity(entity);
+    	            	logger.info("Updated entity: "+savedEntity.getName()+" (id="+savedEntity.getId()+")");
+            		}
+            		else {
+            			logger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
+            		}
+                    
+                    numChanges++;
+                }
+                else if (RECORD_MODE_ADD.equals(recordMode)) {
+                    if (addEntity==null) {
+                        if (!isDebug) {
+                            String secName = entity.getName().replaceAll(inputExtension, outputExtension);
+                            addEntity = entityBean.createEntity(entity.getOwnerKey(), EntityConstants.TYPE_IMAGE_3D, secName);
+                            addEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, outputPath);
+                            addEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
+                            entityBean.saveOrUpdateEntity(addEntity);
+                        }
+                        logger.info("Created secondary entity: "+addEntity.getName()+" (id="+addEntity.getId()+")");
+                    }
+                    if (!isDebug) {
+                        entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE, outputPath);
+                    }
+                }
+                else {
+                    throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
+                }
+        	}
     	
-    		File file = new File(inputPath);
-    		if (!isDebug) {
-				try {
-					FileUtils.forceDelete(file);
-					logger.info("Deleted old file: "+inputPath);
-				}
-				catch (Exception e) {
-					logger.info("Error deleting symlink "+inputPath+": "+e.getMessage());
-				}
-    		}
+        	if (deleteSourceFiles) {
+        		File file = new File(inputPath);
+        		if (!isDebug) {
+    				try {
+    					FileUtils.forceDelete(file);
+    					logger.info("Deleted old file: "+inputPath);
+    				}
+    				catch (Exception e) {
+    					logger.info("Error deleting symlink "+inputPath+": "+e.getMessage());
+    				}
+        		}
+        	}
     		
     	}
     	catch (ComputeException e) {
     		logger.error("Unable to update all entities to use new compressed file: "+outputPath);
     	}
 	}
+
+    private String getExtension(String filepath) {
+        int dot = filepath.indexOf('.');
+        if (dot>0) {
+            return filepath.substring(dot+1);
+        }
+        return "";
+    }
 }

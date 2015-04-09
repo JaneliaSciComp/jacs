@@ -39,6 +39,7 @@
             <fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Spring" includes="hibernate3.jar"/>
             <fileset dir="${common.dir}/Spring" includes="log4j-1.2.14.jar"/>
+            <fileset dir="${common.dir}/jama-1.0.1" includes="Jama-1.0.3.jar"/>
         </path>
 
         <!-- additional classes needed to compile and/or run tests -->

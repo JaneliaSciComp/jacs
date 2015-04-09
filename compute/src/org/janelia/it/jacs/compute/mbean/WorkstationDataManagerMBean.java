@@ -61,5 +61,6 @@ public interface WorkstationDataManagerMBean {
     public void runBenchmarks();
     
     public void runNernaRetiredDataCleanup();
-    
+    public void runFileVerification();
+
 }

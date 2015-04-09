@@ -8,6 +8,7 @@ package org.janelia.it.jacs.shared.img_3d_loader;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Logger;
 import org.bytedeco.javacpp.BytePointer;
 
 /**
@@ -16,11 +17,13 @@ import org.bytedeco.javacpp.BytePointer;
  */
 public class ByteGatherAcceptor implements FFMPGByteAcceptor {
 
+//    private byte[] bytes;
     private List<byte[]> pages = new ArrayList<>();
     private long totalSize = 0;
     private int width;
     private int height;
     private int pixelBytes;
+    private Logger logger = Logger.getLogger(ByteGatherAcceptor.class);
             
     public ByteGatherAcceptor() {
         setPixelBytes(3);
@@ -37,21 +40,48 @@ public class ByteGatherAcceptor implements FFMPGByteAcceptor {
      */
     @Override
     public void accept(final BytePointer data, final int linesize, final int width, int height) {
-        final int elementWidth = width * getPixelBytes();
         setWidth(width);
         setHeight(height);
         // Write pixel data
-        final int pagesize = elementWidth * height;        
-        final byte[] bytes = new byte[pagesize];
-        for (int y = 0; y < height; y++) {
-            int lineInPagePos = y * linesize;
-            data.position(lineInPagePos).get(bytes, lineInPagePos, linesize);
-        }
-        
-        totalSize += bytes.length;
-        pages.add( bytes );
+        byte[] page = new byte[linesize * height];
+        pagewisePageCapture(width, height, linesize, data, page);
+
+//        byte[] bytes = data.getStringBytes();
+        totalSize += page.length;
+        pages.add( page );
+    }
+
+    /**
+     * Accept one "page" of data, of width x height given, and with linesize
+     * bytes on each line of the page.
+     * 
+     * @param page the data.
+     * @param linesize how long is a line (with multiplier justification).
+     * @param width how wide is a line in elements.
+     * @param height number of lines in the page.
+     */
+    @Override
+    public void accept(final byte[] page, final int linesize, final int width, int height) {
+        setWidth(width);
+        setHeight(height);
+        // Write pixel data
+        totalSize += page.length;
+        pages.add( page );
+    }
+
+    @Override
+    public void setFrameNum(int frameNum) {
+        // unused
     }
     
+    /**
+     * @param pixelBytes the pixelBytes to set
+     */
+    @Override
+    public void setPixelBytes(int pixelBytes) {
+        this.pixelBytes = pixelBytes;
+    }
+
     public boolean isPopulated() {
         return pages.size() > 0;
     }
@@ -118,11 +148,19 @@ public class ByteGatherAcceptor implements FFMPGByteAcceptor {
         return pixelBytes;
     }
 
-    /**
-     * @param pixelBytes the pixelBytes to set
-     */
-    public void setPixelBytes(int pixelBytes) {
-        this.pixelBytes = pixelBytes;
+    private void linewisePageCapture(final int width, int height, final int linesize, final BytePointer data, byte[] page) {
+        byte[] bytes = new byte[width * pixelBytes];
+        for (int y = 0; y < height; y++) {
+            final int lineInPagePos = y * linesize;
+            BytePointer ptr = data.position(lineInPagePos);
+            ptr.get(bytes);
+            System.arraycopy(bytes, 0, page, y * linesize, bytes.length);
+        }
     }
 
+    private void pagewisePageCapture(final int width, int height, final int linesize, final BytePointer data, byte[] page) {
+        BytePointer ptr = data.position(0);
+        ptr.get(page);
+    }
+    
 }

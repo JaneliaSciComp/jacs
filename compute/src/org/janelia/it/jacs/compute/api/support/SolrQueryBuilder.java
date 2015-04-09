@@ -1,16 +1,25 @@
 package org.janelia.it.jacs.compute.api.support;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrUtils;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.util.*;
 
 /**
  * A helper class for clients building SOLR queries against the Entity model.
+ * 
+ * @deprecated This class was moved to the shared module. This version exists for backwards compatibility only, and should not be used. 
+ * @see org.janelia.it.jacs.shared.solr.SolrQueryBuilder
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -18,6 +27,7 @@ public class SolrQueryBuilder {
 
 	private String searchString;
 	private String auxString;
+	private String auxAnnotationQueryString;
 	private Long rootId;
 	private List<String> ownerKeys = new ArrayList<String>();
 	private Map<String,Set<String>> filters = new HashMap<String,Set<String>>();
@@ -46,7 +56,15 @@ public class SolrQueryBuilder {
 		this.auxString = auxString;
 	}
 
-	public Long getRootId() {
+	public String getAuxAnnotationQueryString() {
+        return auxAnnotationQueryString;
+    }
+
+    public void setAuxAnnotationQueryString(String auxAnnotationQueryString) {
+        this.auxAnnotationQueryString = auxAnnotationQueryString;
+    }
+
+    public Long getRootId() {
 		return rootId;
 	}
 
@@ -111,7 +129,7 @@ public class SolrQueryBuilder {
 	}
 	
 	public boolean hasQuery() {
-		return !StringUtils.isEmpty(searchString) || !StringUtils.isEmpty(auxString) || rootId!=null || !filters.isEmpty() || startDate!=null || endDate != null;
+		return !StringUtils.isEmpty(searchString) || !StringUtils.isEmpty(auxString) || !StringUtils.isEmpty(auxAnnotationQueryString) || rootId!=null || !filters.isEmpty() || startDate!=null || endDate != null;
 	}
 	
 	public SolrQuery getQuery() throws ComputeException {
@@ -119,48 +137,67 @@ public class SolrQueryBuilder {
     	StringBuffer qs = new StringBuffer();
     	
     	if (!ownerKeys.isEmpty()) {
-        	qs.append("+(");
+        	qs.append("+subjects:(");
         	int i = 0;
         	for(String ownerKey : ownerKeys) {
         		if (i++>0) qs.append(" OR ");
-                String ownerName = ownerKey.split(":")[1];
-        		qs.append("subjects:\""+ownerName+"\"");
+                String ownerName = EntityUtils.getNameFromSubjectKey(ownerKey);
+        		qs.append(ownerName);
         	}
         	qs.append(")");
     	}
     	
     	if (rootId != null) {
-    		qs.append(" AND (ancestor_ids:"+rootId+")");
+    		qs.append(" AND (ancestor_ids:").append(rootId).append(")");
     	}
     	
-    	qs.append(" +doc_type:"+ SolrDocTypeEnum.ENTITY.toString());
+    	qs.append(" +doc_type:").append(SolrDocTypeEnum.ENTITY.toString());
     	
     	qs.append(" -entity_type:Ontology*");
 
 		if (startDate!=null || endDate!=null) {
 			String startDateStr = startDate==null ? "*" : SolrUtils.formatDate(startDate);
 			String endDateStr = endDate==null ? "*" : SolrUtils.formatDate(endDate);
-			qs.append(" +updated_date:["+startDateStr+" TO "+endDateStr+"]");
+			qs.append(" +updated_date:[").append(startDateStr).append(" TO ").append(endDateStr).append("]");
 		}
 
 		if (!StringUtils.isEmpty(auxString)) {
-			qs.append(" ");
-			qs.append(auxString);	
+			qs.append(" +(");
+			qs.append(auxString);
+			qs.append(")");
 		}
-		
-		if (!StringUtils.isEmpty(searchString)) {
-	        String escapedSearchString = searchString.replaceAll(":", "\\:");
-	    	qs.append(" AND (("+escapedSearchString+")");
-    	
+
+		boolean outer = !StringUtils.isEmpty(searchString) || !StringUtils.isEmpty(auxAnnotationQueryString);
+        if (outer) qs.append(" +(");
+        
+        if (!StringUtils.isEmpty(searchString)) {
+            String escapedSearchString = searchString==null?"":searchString.replaceAll(":", "\\:");
+            qs.append("(").append(escapedSearchString).append(")");
+            if (StringUtils.isEmpty(auxAnnotationQueryString)) {
+                qs.append(" OR ");   
+            }
+            else {
+                qs.append(" AND ");
+            }
+        }      
+
+        String annotationSearchString = getAnnotationSearchString();
+        if (!StringUtils.isEmpty(annotationSearchString)) {
+            qs.append("(");
+            int i = 0;
         	for(String ownerKey : ownerKeys) {
-                String ownerName = ownerKey.split(":")[1];
+                String ownerName = EntityUtils.getNameFromSubjectKey(ownerKey);
         		String fieldNamePrefix = SolrUtils.getFormattedName(ownerName);
-        		qs.append(" OR "+fieldNamePrefix+"_annotations:("+escapedSearchString+") OR "+fieldNamePrefix+"_annotations_exact:("+escapedSearchString+")");	
+        		if (i++>0) {
+        		    qs.append(" OR ");
+        		}
+        		qs.append(fieldNamePrefix).append("_annotations:").append(annotationSearchString);	
         	}
-        	
             qs.append(")");
-		}
-    	
+        }
+        
+        if (outer) qs.append(")");
+		
     	SolrQuery query = new SolrQuery();
         query.setQuery(qs.toString());
         query.setFacetMinCount(1);
@@ -183,6 +220,23 @@ public class SolrQueryBuilder {
 		
         return query;
     }
+	
+	private String getAnnotationSearchString() {
+	    StringBuilder query = new StringBuilder();
+	    String escapedSearchString = null;
+	    if (StringUtils.isEmpty(auxAnnotationQueryString) && !StringUtils.isEmpty(searchString)) {
+            escapedSearchString = searchString.replaceAll(":", "\\:");
+	    }
+	    else {
+            escapedSearchString = auxAnnotationQueryString.replaceAll(":", "\\:");
+        }
+        if (!StringUtils.isEmpty(escapedSearchString)) {
+            query.append("(");
+            query.append(escapedSearchString);
+            query.append(")");
+        }
+	    return query.toString();
+	}
 
     /**
      * Returns a SOLR-style field query for the given field containing the given values. Also tags the
@@ -192,7 +246,8 @@ public class SolrQueryBuilder {
      * @return
      */
 	protected String getFilterQuery(String fieldName, Set<String> values) {
-    	StringBuffer sb = new StringBuffer("{!tag="+fieldName+"}"+fieldName);
+    	StringBuffer sb = new StringBuffer();
+    	sb.append("{!tag=").append(fieldName).append("}").append(fieldName);
     	sb.append(":("); // Sad face :/
     	for(String value : values) {
     		sb.append("\"");

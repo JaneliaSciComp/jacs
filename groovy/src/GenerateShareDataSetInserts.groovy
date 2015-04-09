@@ -6,18 +6,18 @@ import org.janelia.it.jacs.model.TimebasedIdentifierGenerator
 
 // Add the target folderId, custom PrintWriter file for the SQL, whether to include the parent folder, and the target entity_actor_permission values below
 // What folder's items are we sharing?
-def folderId = 1870576926658134114L
+def folderId = 1988789427169656930L
+// Who are we sharing the items with?
+def targetEntityActor = "user:wum10";
 // Where should we write the SQL strings to?
-def file = new PrintWriter("insert_perms_asoy_mcfocase1_dolanm.sql")
+def file = new PrintWriter("insert_perms_wum10_vtlexa.sql")
 // Should the parent folder get the permissions so the new children get the same sharing?
 def extendPermissionsToParentFolder = true;
-// Who are we sharing the items with?
-def targetEntityActor = "user:dolanm";
 // What privs are they getting?
 def permissions = "r";
 
 def idGen = new TimebasedIdentifierGenerator();
-f = new JacsUtils("user:saffordt", false)
+f = new JacsUtils(null, false)
 
 int ROWS = 50000
 int page = 0
@@ -29,7 +29,6 @@ query.setSortField("_docid_", ORDER.asc)
 query.setFields("id")
 
 long start = System.currentTimeMillis()
-// moved this out but needs to be tested.  The parent code below was accidentally in the loop, originally.
 def newIds = idGen.generateIdList(1)
 def newIdIndex = 0
 if (extendPermissionsToParentFolder) {
@@ -47,7 +46,6 @@ while (true) {
         SolrDocument doc = (SolrDocument)it;
         def entityId = it.getFieldValue("id")
         def newId = newIds.get(newIdIndex++)
-//      Change the target for the permissions below - user/group and r or rw
         sql = "insert into entity_actor_permission values ("+newId+","+entityId+",'"+
                 targetEntityActor+"','"+permissions+"');";
         file.println(sql)
@@ -64,3 +62,5 @@ while (true) {
 }
 
 file.close()
+println "Done"
+System.exit(0)

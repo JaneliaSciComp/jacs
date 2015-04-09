@@ -18,8 +18,9 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         
     @Override
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
-    	// Ignore sample areas, and get the sample pair (20x/63x)
+    	alignedAreas.addAll(sampleAreas);
 
+    	// Ignore sample areas, and get the sample pair (20x/63x)
     	Entity sample = sampleEntity;
         if (Objective.OBJECTIVE_63X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
             // Already within the 63x sample, we need the parent
@@ -47,16 +48,12 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                 contextLogger.info("Found 63x sub-sample: "+objectiveSample.getName());
                 Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
                 input1 = buildInputFromResult("first input (63x stack)", result);
-                this.gender = sampleHelper.getConsensusLsmAttributeValue(objectiveSample, EntityConstants.ATTRIBUTE_GENDER, alignedArea);
-                if (gender!=null) {
-                    contextLogger.info("Found gender consensus: "+gender);
-                }
             }
         }
     }
 
     @Override
-    protected void setConsensusValues() throws Exception {
+    protected void setLegacyConsensusValues() throws Exception {
     	// Do nothing, since we build our consensus values while populating the inputs
     }
     

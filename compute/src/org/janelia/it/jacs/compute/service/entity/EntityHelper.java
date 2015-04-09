@@ -156,7 +156,7 @@ public class EntityHelper {
 	 */
 	public void setDefault3dImage(Entity entity, Entity default3dImage) throws ComputeException {
 		if (entity==null || default3dImage==null) return;
-        setImage(entity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE, default3dImage);
+		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE, default3dImage);
         
         if (!EntityUtils.areLoaded(default3dImage.getEntityData())) {
         	entityBean.loadLazyEntity(default3dImage, false);
