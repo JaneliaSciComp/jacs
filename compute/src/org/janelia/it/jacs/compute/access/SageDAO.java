@@ -495,7 +495,6 @@ public class SageDAO {
                 "  inner join image_property_vw ip2 on " +
                 "    (ip2.image_id = i.id and ip2.type='data_set' and ip2.value=?) " +
                 ") image_vw on (ip1.image_id = image_vw.id) " +
-                "where ip1.cv in ('light_imagery') " +
                 "order by ip1.type";
         
         PreparedStatement pStatement = null;
