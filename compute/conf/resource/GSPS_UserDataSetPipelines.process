@@ -14,6 +14,12 @@
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
+            <input name="RUN_MODE"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="REUSE_PROCESSING"/>
+            <input name="REUSE_ALIGNMENT"/>
+            <input name="DATA_SET_NAME"/>
+            <input name="RUN_SAMPLE_DISCOVERY"/>
 	        <input name="TASK_PARAMETER_1" value="run mode"/>
             <input name="PROCESS_VARIABLE_1" value="RUN_MODE"/>
             <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>

@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
@@ -125,7 +126,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Bulk merge core dumped");
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Bulk merge core dumped");
     	}
 
         Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
@@ -133,7 +134,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
         	File outputFile = new File(mergedLsmPair.getMergedFilepath());
         	if (!outputFile.exists()) {
-        		throw new MissingDataException("Missing merge output "+outputFile.getAbsolutePath());
+        		throw new MissingGridResultException(file.getAbsolutePath(), "Missing merge output "+outputFile.getAbsolutePath());
         	}
         }
 	}

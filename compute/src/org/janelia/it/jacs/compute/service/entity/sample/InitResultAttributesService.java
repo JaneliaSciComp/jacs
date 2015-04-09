@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -43,12 +44,10 @@ public class InitResultAttributesService extends AbstractEntityService {
         }
         else {
             logger.info("Channel specification for result (id="+resultEntityId+") is "+chanSpec);    
-            
-            SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-            String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+            String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
             logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
             processData.putItem("SIGNAL_CHANNELS", signalChannels);
-            String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+            String referenceChannels = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
             logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
             processData.putItem("REFERENCE_CHANNEL", referenceChannels);            
         }

@@ -59,21 +59,24 @@ public class SubTaskExecutionService implements IService {
         		if (key == null || num>100) break;
         		Object value = processData.getItem("PARAMETER_"+num+"_VALUE");
         		
-        		String strValue = null;
-        		if (value instanceof List) {
-        		    strValue = Task.csvStringFromCollection((List)value);
+        		if (value!=null) {
+	        		String strValue = null;
+	        		if (value instanceof List) {
+	        		    strValue = Task.csvStringFromCollection((List)value);
+	        		}
+	        		else {
+	        		    strValue = value.toString();    
+	        		}
+	
+	                String printValue = strValue.toString();
+	                if (printValue.length()>1000) {
+	                    printValue = printValue.substring(0, 1000)+"...";
+	                }
+	                
+	                logger.info("Setting subtask parameter "+key+" = '"+printValue+"'");
+	        		subtask.setParameter(key, strValue);
         		}
-        		else {
-        		    strValue = value==null?"":value.toString();    
-        		}
-
-                String printValue = strValue.toString();
-                if (printValue.length()>1000) {
-                    printValue = printValue.substring(0, 1000)+"...";
-                }
-                
-                logger.info("Setting subtask parameter "+key+" = '"+printValue+"'");
-        		subtask.setParameter(key, strValue);
+        		
                 num++;
         	}
         	

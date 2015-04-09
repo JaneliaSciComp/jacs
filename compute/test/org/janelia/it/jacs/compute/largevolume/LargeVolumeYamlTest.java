@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.largevolume;
 
+import java.io.File;
+import java.io.FileInputStream;
 import org.janelia.it.jacs.compute.largevolume.model.Tile;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.junit.After;
@@ -13,7 +15,8 @@ import java.io.InputStream;
  * Created by fosterl on 9/24/14.
  */
 public class LargeVolumeYamlTest {
-    private static final String INFILE_RESOURCE = "/largevolume/2014-06-24-Descriptor-stitch1/tilebase.cache.yml";
+    private static final String TILEBASE_YML = "tilebase.cache.yml";
+    private static final String INFILE_RESOURCE = "/largevolume/2014-06-24-Descriptor-stitch1/";
     public static final String TILING_PATH = "/tier2/mousebrainmicro/mousebrainmicro/data/2014-06-24/Tiling";
     public static final String FIRST_TILE_RELATIVE_PATH = "/2014-07-05/02/02030";
     private InputStream testStream;
@@ -53,7 +56,8 @@ public class LargeVolumeYamlTest {
     }
 
     public static InputStream getTestFileStream() throws Exception {
-        return LargeVolumeYamlTest.class.getResourceAsStream( INFILE_RESOURCE );
+        File resourceFile = new File(TileWalkerTest.getBaseLocationFile(), TILEBASE_YML);
+        return new FileInputStream( resourceFile );
     }
 
 }

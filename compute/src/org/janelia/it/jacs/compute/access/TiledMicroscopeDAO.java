@@ -4,15 +4,13 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
-import org.janelia.it.jacs.compute.largevolume.TileBaseReader;
-import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
+import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.*;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
 /**
  * Created with IntelliJ IDEA.
@@ -98,8 +96,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             annotationDAO.saveOrUpdate(sampleEd);
             workspace.getEntityData().add(sampleEd);
             annotationDAO.saveOrUpdate(workspace);
+            Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
             // back to user
-            TmWorkspace tmWorkspace=new TmWorkspace(workspace);
+            TmWorkspace tmWorkspace=new TmWorkspace(workspace, sampleEntity);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
 
@@ -146,8 +145,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 folder = folders.iterator().next();
             }
             else {
-                folder = newEntity(folderName, EntityConstants.TYPE_FOLDER, subjectKey, true);
-                annotationDAO.saveOrUpdateEntity(folder);
+                folder = annotationDAO.createFolderInDefaultWorkspace(subjectKey, folderName).getChildEntity();
             }
 
             Entity sample = newEntity(sampleName, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE, subjectKey, false);
@@ -338,6 +336,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new Exception("Could not find geo entry to update for value string");
             }
             TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(valueString);
+            // normally this is filled in automatically when the annotation is part of
+            //  a neuron, but here it's not (explicitly); however, we know the value
+            //  to put in:
+            geoAnnotation.setNeuronId(neuronId);
             return geoAnnotation;
         } catch (Exception e) {
             e.printStackTrace();
@@ -613,7 +615,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     }
 
     /**
-     * move the neurite containing the input annotation to the specified neuron
+     * move the neurite containing the input annotation to the specified neuron;
+     * moves TmStructuredTextAnnotations but not anchored paths (you should
+     * delete and recalc those)
      *
      * @throws DaoException
      */
@@ -647,6 +651,13 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, ann.getId());
                 ed.setParentEntity(newNeuronEntity);
                 annotationDAO.saveOrUpdate(ed);
+                // move any TmStructuredTextAnnotations as well:
+                if (oldNeuron.getStructuredTextAnnotationMap().containsKey(ann.getId())) {
+                    TmStructuredTextAnnotation note = oldNeuron.getStructuredTextAnnotationMap().get(ann.getId());
+                    ed = (EntityData) computeDAO.genericLoad(EntityData.class, note.getId());
+                    ed.setParentEntity(newNeuronEntity);
+                    annotationDAO.saveOrUpdate(ed);
+                }
             }
 
             // if it's the root, also change its parent annotation to the new neuron
@@ -849,54 +860,162 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
+    public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int[] dimensions ) throws DaoException {
+        Map<Integer,byte[]> rtnVal = new HashMap<>();
+        try {
+            // Get the bean of data around the point of interest.
+            if ( log.isDebugEnabled() ) {
+                log.debug("Getting nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath);
+            }
+            RawFileInfo rawFileInfo =
+                    getNearestFileInfo(basePath, viewerCoord);
+            if ( rawFileInfo == null ) {
+                throw new Exception("Failed to find any tiff files in " + basePath + "." );
+            }
+            if ( log.isDebugEnabled() ) {
+                log.info("Got nearest raw info to coord " + viewerCoord[0] + "," + viewerCoord[1] + "," + viewerCoord[2] + " from base path " + basePath);
+            }
+
+            // Grab the channels.
+            TifVolumeFileLoader loader = new TifVolumeFileLoader();
+            if ( dimensions != null ) {
+                loader.setOutputDimensions(dimensions);
+            }
+            loader.setConversionCharacteristics(
+                    rawFileInfo.getTransformMatrix(),
+                    rawFileInfo.getInvertedTransform(),
+                    rawFileInfo.getMinCorner(),
+                    rawFileInfo.getExtent(),
+                    rawFileInfo.getQueryMicroscopeCoords()
+            );
+
+            loader.loadVolumeFile( rawFileInfo.getChannel0().getAbsolutePath() );
+            rtnVal.put( 0, loader.getTextureByteArray() );
+
+            loader.loadVolumeFile( rawFileInfo.getChannel1().getAbsolutePath() );
+            rtnVal.put( 1, loader.getTextureByteArray() );
+
+        } catch ( Exception ex ) {
+            ex.printStackTrace();
+            throw new DaoException(ex);
+        }
+        return rtnVal;
+    }
+
+    public CoordinateToRawTransform getTransform( String basePath ) throws DaoException {
+        try {
+            RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
+            return fetcher.getTransform();
+        } catch ( Exception ex ) {
+            throw new DaoException(ex);
+        }
+    }
+
+    private RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
         RawFileInfo rtnVal = null;
         try {
-            File basePathFile = new File( basePath );
-            File yaml = new File( basePathFile, TileBaseReader.STD_TILE_BASE_FILE_NAME );
-            if ( ! yaml.exists()  ||  ! yaml.isFile() ) {
-                String errorString = "Failed to open yaml file " + yaml;
-                throw new Exception(errorString);
-            }
-            TileBase tileBase = new TileBaseReader().readTileBase( new FileInputStream( yaml ) );
-            RawFileFetcher fetcher = new RawFileFetcher( tileBase, basePathFile );
+            RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
             rtnVal = fetcher.getNearestFileInfo( viewerCoord );
         } catch ( Exception ex ) {
             throw new DaoException(ex);
         }
         return rtnVal;
     }
+    
+    /**
+     * fix connectivity issues for all neurons in a workspace
+     */
+    private void fixConnectivityWorkspace(Long workspaceID) throws DaoException {
+        // remember, can't load workspace object, because that's what we're fixing!
+        Entity entity = annotationDAO.getEntityById(workspaceID);
+        for (TmNeuronDescriptor neuronDescriptor: getNeuronsForWorkspace(workspaceID, entity.getOwnerKey())) {
+            fixConnectivityNeuron(neuronDescriptor.getId());
+        }
+    }
 
-//    public List<String> getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
-//        List<String> rtnVal = new ArrayList<>();
-//        try {
-//            File basePathFile = new File( basePath );
-//            File yaml = new File( basePathFile, TileBaseReader.STD_TILE_BASE_FILE_NAME );
-//            if ( ! yaml.exists()  ||  ! yaml.isFile() ) {
-//                String errorString = "Failed to open yaml file " + yaml;
-//                throw new Exception(errorString);
-//            }
-//            TileBase tileBase = new TileBaseReader().readTileBase( new FileInputStream( yaml ) );
-//            RawFileFetcher fetcher = new RawFileFetcher( tileBase, basePathFile );
-//            File microscopeFilesDir = fetcher.getMicroscopeFileDir( viewerCoord );
-//            if ( microscopeFilesDir == null  ||  ! microscopeFilesDir.exists()  ||  ! microscopeFilesDir.isDirectory() ) {
-//                String errorString = "Failed to open microscope files directory " + microscopeFilesDir;
-//                throw new Exception(errorString);
-//            }
-//            File[] microScopeTiffFiles = fetcher.getMicroscopeFiles( microscopeFilesDir );
-//            for ( File microscopeTiffFile: microScopeTiffFiles ) {
-//                rtnVal.add(microscopeTiffFile.getAbsolutePath());
-//            }
-//        } catch ( Exception ex ) {
-//            throw new DaoException(ex);
-//        }
-//        return rtnVal;
-//    }
+    /**
+     * fix connectity issues for a neuron (bad parents, since children
+     * aren't stored in the entity data); fix in this case means breaking links
+     */
+    private void fixConnectivityNeuron(Long neuronID) throws DaoException {
+        // remember, can't load neuron or workspace objects, because those are what we're fixing!
+
+        log.info("attempting to fix connectivity for neuron " + neuronID);
+
+        // first we need to load all annotations (just like TmNeuron does);
+        //  then we can loop over them again and check for missing parents/children
+        ArrayList<EntityData> annList = new ArrayList<>();
+        HashSet<Long> parentSet = new HashSet<>();
+        Entity neuronEntity = annotationDAO.getEntityById(neuronID);
+        for (EntityData ed: neuronEntity.getEntityData()) {
+            String attributeName = ed.getEntityAttrName();
+            if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
+                attributeName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                parentSet.add(ed.getId());
+                // no need to check roots; they are children of neurons
+                if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                    annList.add(ed);
+                }
+            }
+        }
+
+        for (EntityData ed: annList) {
+            // I really don't get why we launder everything to DaoException, but
+            //  that seems to be the pattern:
+            TmGeoAnnotation annotation;
+            try {
+                annotation = new TmGeoAnnotation(ed.getValue());
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new DaoException(e);
+            }
+            if (annotation != null && !parentSet.contains(annotation.getParentId())) {
+                log.info(annotation.getId() + " had missing parent; promoted to root");
+
+                // when a missing parent is found:
+                //     edit value: set parent ID to neuron ID
+                //     edit attribute name: set to root not tree
+                String valueString=TmGeoAnnotation.toStringFromArguments(annotation.getId(),
+                    neuronID, annotation.getIndex(), annotation.getX(), annotation.getY(),
+                    annotation.getZ(), annotation.getComment());
+                ed.setValue(valueString);
+                ed.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+                annotationDAO.saveOrUpdate(ed);
+            }
+        }
+    }
 
     public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
         try {
-            Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
-            TmWorkspace workspace=new TmWorkspace(workspaceEntity);
+            Long sampleID = null;
+            Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);            
+            Entity sampleEntity = null;
+            if (workspaceEntity != null) {
+                EntityData sampleEd = workspaceEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+                if (sampleEd == null) {
+                    throw new Exception("workspace " + workspaceEntity.getName() + " has no associated brand sample!");
+                } else {
+                    sampleID = Long.valueOf(sampleEd.getValue());
+                    sampleEntity = annotationDAO.getEntityById(sampleID);
+                }
+            }
+
+            // see notes in TmNeuron() on the connectivity retry scheme
+            TmWorkspace workspace = null;
+            boolean connectivityException;
+            try {
+                workspace = new TmWorkspace(workspaceEntity, sampleEntity);
+                connectivityException = false;
+            }
+            catch (TmConnectivityException e) {
+                e.printStackTrace();
+                connectivityException = true;
+            }
+            if (connectivityException) {
+                fixConnectivityWorkspace(workspaceId);
+                workspaceEntity = annotationDAO.getEntityById(workspaceId);
+                workspace = new TmWorkspace(workspaceEntity, sampleEntity);
+            }
             return workspace;
         } catch (Exception e) {
             e.printStackTrace();
@@ -907,13 +1026,29 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmNeuron loadNeuron(Long neuronId) throws DaoException {
         try {
             Entity neuronEntity = annotationDAO.getEntityById(neuronId);
-            TmNeuron neuron=new TmNeuron(neuronEntity);
+            TmNeuron neuron = null;
+            // fixing potential connectivity errors is inelegant; we try
+            //  once, then let the exception bubble up the second time;
+            //  I did the if-statement because I was worried about
+            //  putting the retry in the catch, for fear of infinite recursion
+            boolean connectivityException;
+            try {
+                neuron = new TmNeuron(neuronEntity);
+                connectivityException = false;
+            }
+            catch (TmConnectivityException e) {
+                connectivityException = true;
+            }
+            if (connectivityException) {
+                fixConnectivityNeuron(neuronId);
+                neuronEntity = annotationDAO.getEntityById(neuronId);
+                neuron = new TmNeuron(neuronEntity);
+            }
             return neuron;
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
         }
     }
-
 
 }

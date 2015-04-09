@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.largevolume;
 
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.junit.Assert;
 
@@ -15,11 +16,23 @@ import java.io.InputStream;
  * Created by fosterl on 9/24/14.
  */
 public class TileWalkerTest {
-    private static final String BASE_LOCATION = System.getProperty("user.dir") + "/compute/test/resources/largevolume/2014-06-24-Descriptor-stitch1/";
 
+    private static final String COMPUTE_SUBDIR= "/compute";
+    private static final String STITCH1_DIR = "/test/resources/largevolume/2014-06-24-Descriptor-stitch1/";
     private InputStream inputStream;
 
-    public static final File getBaseLocationFile() { return new File( BASE_LOCATION); }
+    public static final File getBaseLocationFile() {
+        String userDir = System.getProperty("user.dir");
+        String baseLoc = null;
+        if (! userDir.endsWith( COMPUTE_SUBDIR ) ) {
+            baseLoc = userDir + COMPUTE_SUBDIR + STITCH1_DIR;
+        }
+        else {
+            baseLoc = userDir + STITCH1_DIR;
+        }
+        ;
+        return new File( baseLoc ); 
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -30,7 +43,7 @@ public class TileWalkerTest {
     public void walk() throws Exception {
         // Now, to find and parse the transform.txt file.
         //  Doing a directory drill-down.
-        CoordinateToRawTransform transformParameters = new CoordinateToRawTransform( new File( BASE_LOCATION )  );
+        CoordinateToRawTransform transformParameters = new CoordinateToRawTransform( getBaseLocationFile()  );
         System.out.println(
                 String.format(
                         "Transform origin: %,d %,d %,d.  Transform scale: %,f %,f %,f.",

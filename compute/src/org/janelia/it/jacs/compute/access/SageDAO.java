@@ -31,13 +31,14 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
-import org.janelia.it.jacs.shared.solr.SageTerm;
+import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
+import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -47,6 +48,10 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class SageDAO {
 
+    public static final String IMAGE_PROP_PATH = "image_query_path";
+    public static final String IMAGE_PROP_LINE_TERM = "image_query_line";
+    public static final String LINE_PROP_LINE_TERM = "line_query_line";
+    
     private final String jndiPath = SystemConfigurationProperties.getString("sage.jdbc.jndiName", null);
     private final String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName", null);
     private final String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url", null);
@@ -141,27 +146,28 @@ public class SageDAO {
      * @return Iterator over the JDBC result set. 
      * @throws DaoException
      */
-    public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
-
-        Connection connection = null;
-        PreparedStatement pStatement = null;
-        ResultSet resultSet = null;
-
-        try {
-            connection = getJdbcConnection();
-            pStatement = connection.prepareStatement(CORE_IMAGE_PROPERTY_SQL);
-            pStatement.setString(1, dataSetName);
-            pStatement.setFetchSize(Integer.MIN_VALUE);
-
-            resultSet = pStatement.executeQuery();
-
-        } catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, log);
-            throw new DaoException("Error querying SAGE", e);
-        }
-
-        return new ResultSetIterator(connection, pStatement, resultSet);
-    }
+//    public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
+//
+//        Connection connection = null;
+//        PreparedStatement pStatement = null;
+//        ResultSet resultSet = null;
+//
+//        try {
+//            connection = getJdbcConnection();
+//            pStatement = connection.prepareStatement(CORE_IMAGE_PROPERTY_SQL);
+//            pStatement.setString(1, dataSetName);
+//            pStatement.setFetchSize(Integer.MIN_VALUE);
+//
+//            resultSet = pStatement.executeQuery();
+//
+//        }
+//        catch (SQLException e) {
+//            ResultSetIterator.close(resultSet, pStatement, connection, log);
+//            throw new DaoException("Error querying SAGE", e);
+//        }
+//
+//        return new ResultSetIterator(connection, pStatement, resultSet);
+//    }
 
     /**
      * Returns all the images in a given data set, with ALL their non-null properties as columns.
@@ -195,18 +201,57 @@ public class SageDAO {
     }
 
     /**
+     * Returns all the images in a given data set, with ALL their non-null line properties as columns.
+     * The client must call close() on the returned iterator when finished with it.
+     * @return Iterator over the JDBC result set.
+     * @throws DaoException
+     */
+    public ResultSetIterator getAllLineProperties() throws DaoException {
+
+        Connection connection = null;
+        PreparedStatement pStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = getJdbcConnection();
+            final List<String> propertyTypeNames = getLinePropertyTypes(connection);
+            final String sql = buildLinePropertySql(propertyTypeNames);
+
+            pStatement = connection.prepareStatement(sql);
+            pStatement.setFetchSize(Integer.MIN_VALUE);
+
+            resultSet = pStatement.executeQuery();
+
+        }
+        catch (SQLException e) {
+            ResultSetIterator.close(resultSet, pStatement, connection, log);
+            throw new DaoException("Error querying SAGE", e);
+        }
+
+        return new ResultSetIterator(connection, pStatement, resultSet);
+    }
+
+    public Map<String,SageTerm> getSageVocabulary() throws DaoException {
+        Map<String, SageTerm> entireVocabulary = new HashMap<>();
+        entireVocabulary.putAll(getSageVocabulary("light_imagery"));
+        entireVocabulary.putAll(getSageVocabulary("line"));
+        return entireVocabulary;
+    }
+
+    /**
      * @return a map of all Sage controlled vocabulary terms for light imagery and related vocabularies.
      * @throws DaoException
      */
-    public Map<String,SageTerm> getFlylightImageVocabulary() throws DaoException {
+    Map<String,SageTerm> getSageVocabulary(String cv) throws DaoException {
+        String pathPrefix = "http://sage.int.janelia.org/sage-ws/cvs/";
+        String pathSuffix = "/with-all-related-cvs";
 
-        String getUrl = "http://sage.int.janelia.org/sage-ws/cvs/light_imagery/with-all-related-cvs";
-        Map<String,SageTerm> map = new HashMap<String,SageTerm>();
+        Map<String,SageTerm> map = new HashMap<>();
         map.putAll(getStaticTerms());
 
         try {
             HttpClient client = new HttpClient();
-            HttpMethod method = new GetMethod(getUrl);
+            HttpMethod method = new GetMethod(pathPrefix+cv+pathSuffix);
             client.executeMethod(method);
             InputStream body = method.getResponseBodyAsStream();
 
@@ -223,27 +268,27 @@ public class SageDAO {
                     Node definitionNode = termElement.selectSingleNode("definition");
 
                     if (nameNode==null) {
-                        log.warn("Term with no name encountered in "+getUrl);
+                        log.warn("Term with no name encountered in "+ cv);
                         continue;
                     }
 
                     if (dataTypeNode==null) {
-                        log.warn("Term with no type (name="+nameNode.getText()+") encountered in "+getUrl);
+                        log.warn("Term with no type (name="+nameNode.getText()+") encountered in "+ cv);
                         continue;
                     }
 
                     SageTerm st = new SageTerm();
                     st.setName(nameNode.getText());
                     st.setDataType(dataTypeNode.getText());
-                    st.setDisplayName(displayNameNode!=null?displayNameNode.getText():st.getName());
-                    st.setDefinition(definitionNode!=null?definitionNode.getText():"");
-                    map.put(st.getName(),st);
+                    st.setDisplayName(displayNameNode != null ? displayNameNode.getText() : st.getName());
+                    st.setDefinition(definitionNode != null ? definitionNode.getText() : "");
+                    st.setCv(cv);
+                    map.put(st.getKey(),st);
                 }
                 else {
                     log.warn("Expecting <term>, got "+o);
                 }
             }
-
         }
         catch (Exception e) {
             throw new DaoException("Error querying Sage Web Service", e);
@@ -298,21 +343,6 @@ public class SageDAO {
         return (SecondaryImage)query.uniqueResult();
     }
 
-//    public List<Image> getImagesByProperty(CvTerm term, String value) {
-//        if (log.isTraceEnabled()) {
-//            log.trace("getImagesByProperty(term="+term.getName()+", value="+value+")");
-//        }
-//        Session session = getCurrentSession();
-//        Query query = session.createQuery("select image from Image image " +
-//                                          "join image.imageProperties props " +
-//                                          "join props.type term " +
-//                                          "where term.id = :termId and props.value like :value ");
-//        query.setInteger("termId", term.getId());
-//        query.setString("value", value);
-//        //noinspection unchecked
-//        return (List<Image>)query.list();
-//    }
-
     public Image getImage(Integer id) {
         if (log.isTraceEnabled()) {
             log.trace("getImages(id="+id+")");    
@@ -328,7 +358,7 @@ public class SageDAO {
         if (log.isTraceEnabled()) {
             log.trace("getImages(ids.size="+ids.size()+")");    
         }
-        if (ids.isEmpty()) return new ArrayList<Image>();
+        if (ids.isEmpty()) return new ArrayList<>();
         Session session = getCurrentSession();
         Query query = session.createQuery("select image from Image image where image.id in (:ids) ");
         query.setParameterList("ids", ids);
@@ -369,6 +399,10 @@ public class SageDAO {
     }
 
 	public ImageProperty setImageProperty(Image image, CvTerm type, String value) throws Exception {
+		return setImageProperty(image, type, value, new Date());
+	}
+	
+	public ImageProperty setImageProperty(Image image, CvTerm type, String value, Date createDate) throws Exception {
     	for(ImageProperty property : image.getImageProperties()) {
     		if (property.getType().equals(type) && !property.getValue().equals(value)) {
     			// Update existing property value
@@ -378,7 +412,7 @@ public class SageDAO {
     		}
     	}
     	// Set new property
-        ImageProperty prop = new ImageProperty(type, image, value, new Date());
+        ImageProperty prop = new ImageProperty(type, image, value, createDate);
         image.getImageProperties().add(prop);
         saveImageProperty(prop);
         return prop;
@@ -418,18 +452,24 @@ public class SageDAO {
     private Map<String,SageTerm> getStaticTerms() {
 
         final String[][] terms = {
-                //name           displayName        dataType     definition
-                {"id",           "SAGE Id",         "integer",   "Identifier within SAGE database"},
-                {"name",         "Image Path",      "text",      "Relative path to the image"},
-                {"path",         "Full Image Path", "text",      "Absolute path to the image"},
-                {"line",         "Fly Line",        "text",      "Name of the fly line"},
+                //name           displayName        dataType     definition                               vocabulary
+                {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database", "image_query"},
+                {"name",         "Image Path",      "text",      "Relative path to the image",            "image_query"},
+                {"path",         "Full Image Path", "text",      "Absolute path to the image",            "image_query"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",                  "image_query"},
+                
+                {"id",           "SAGE Line Id",    "integer",   "Line identifier within SAGE database",  "line_query"},
+                {"lab",          "Lab",             "text",      "Lab",                                   "line_query"},
+                {"gene",         "Gene",            "text",      "Gene",                                  "line_query"},
+                {"organism",     "Organism",        "text",      "Organism",                              "line_query"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",              "line_query"},
+                {"synonyms",     "Synonyms",        "text",      "Synonyms for the genetic line",         "line_query"}
         };
 
-        Map<String,SageTerm> map = new HashMap<String,SageTerm>();
-        SageTerm term;
+        Map<String,SageTerm> map = new HashMap<>();
         for (String[] termData : terms) {
-            term = new SageTerm(termData[0], termData[1], termData[2], termData[3]);
-            map.put(term.getName(), term);
+            SageTerm term = new SageTerm(termData[0], termData[1], termData[2], termData[3], termData[4]);
+            map.put(term.getKey(), term);
         }
 
         return map;
@@ -447,14 +487,17 @@ public class SageDAO {
      */
     private List<String> getImagePropertyTypes(String dataSet,
                                                Connection connection) throws SQLException {
-        List<String> list = new ArrayList<String>(256);
+        List<String> list = new ArrayList<>(256);
 
-        final String sql = "select distinct ip1.type from image_property_vw ip1 " +
+        final String sql = "select distinct ip1.cv,ip1.type from image_property_vw ip1 " +
                 "inner join (" +
                 "  select i.id from image_vw i " +
                 "  inner join image_property_vw ip2 on " +
                 "    (ip2.image_id = i.id and ip2.type='data_set' and ip2.value=?) " +
-                ") image_vw on (ip1.image_id = image_vw.id) order by ip1.type";
+                ") image_vw on (ip1.image_id = image_vw.id) " +
+                "where ip1.cv in ('light_imagery') " +
+                "order by ip1.type";
+        
         PreparedStatement pStatement = null;
         ResultSet resultSet = null;
         try {
@@ -462,14 +505,54 @@ public class SageDAO {
             pStatement.setString(1, dataSet);
             resultSet = pStatement.executeQuery();
             while (resultSet.next()) {
-                list.add(resultSet.getString(1));
+                String cv = resultSet.getString(1);
+                String term = resultSet.getString(2);
+                list.add(cv+":"+term);
             }
-        } finally {
+        } 
+        finally {
             ResultSetIterator.close(resultSet, pStatement, null, log);
         }
 
         if (log.isDebugEnabled()) {
             log.debug("getImagePropertyTypes: returning " + list);
+        }
+
+        return list;
+    }
+
+    /**
+     *
+     * @param  connection  current database connection.
+     *
+     * @return list of defined line property types 
+     *
+     * @throws SQLException
+     *   if list query fails.
+     */
+    private List<String> getLinePropertyTypes(Connection connection) throws SQLException {
+        List<String> list = new ArrayList<>();
+
+        final String sql = "select distinct lp1.cv,lp1.type from line_property_vw lp1 " +
+                           "where lp1.cv in ('line','light_imagery') ";
+        
+        PreparedStatement pStatement = null;
+        ResultSet resultSet = null;
+        try {
+            pStatement = connection.prepareStatement(sql);
+            resultSet = pStatement.executeQuery();
+            while (resultSet.next()) {
+                String cv = resultSet.getString(1);
+                String term = resultSet.getString(2);
+                list.add(cv+":"+term);
+            }
+        } 
+        finally {
+            ResultSetIterator.close(resultSet, pStatement, null, log);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("getLinePropertyTypes: returning " + list);
         }
 
         return list;
@@ -485,14 +568,7 @@ public class SageDAO {
         StringBuilder sql = new StringBuilder(2048);
 
         sql.append(ALL_IMAGE_PROPERTY_SQL_1);
-
-        for (String typeName : propertyTypeNames) {
-            sql.append(", max(IF(ip1.type='");
-            sql.append(typeName);
-            sql.append("', ip1.value, null)) AS `");
-            sql.append(typeName);
-            sql.append('`'); // must escape column names to prevent conflict with SQL reserved words like 'condition'
-        }
+        sql.append(buildPropertySql(propertyTypeNames, "ip1"));
 
         sql.append(ALL_IMAGE_PROPERTY_SQL_2);
 
@@ -502,41 +578,82 @@ public class SageDAO {
 
         return sql.toString();
     }
+    
+    /**
+     *
+     * @param  propertyTypeNames names of line properties to include in query.
+     *
+     * @return dynamically built SQL statement for the specified property type names.
+     */
+    private String buildLinePropertySql(List<String> propertyTypeNames) {
+        StringBuilder sql = new StringBuilder(2048);
 
-    private static final String CORE_IMAGE_PROPERTY_SQL =
-            "select i.id id, slide_code.value slide_code, i.path path, tile.value tile, line.name line, " +
-            "channel_spec.value channel_spec, gender.value gender, age.value age, effector.value effector, " +
-            "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, tissue_orientation.value tissue_orientation, objective.value objective, " +
-            "voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z, " +
-            "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z, cross_barcode.value cross_barcode " +
-            "from image i " +
-            "join line line on i.line_id = line.id " +
-            "join image_property_vw slide_code on i.id = slide_code.image_id and slide_code.type = 'slide_code' " +
-            "join image_property_vw data_set on i.id = data_set.image_id and data_set.type = 'data_set' " +
-            "left outer join image_property_vw tile on i.id = tile.image_id and tile.type = 'tile' " +
-            "left outer join image_property_vw channel_spec on i.id = channel_spec.image_id and channel_spec.type = 'channel_spec' " +
-            "left outer join image_property_vw gender on i.id = gender.image_id and gender.type = 'gender' " +
-            "left outer join image_property_vw age on i.id = age.image_id and age.type = 'age' " +
-            "left outer join image_property_vw effector on i.id = effector.image_id and effector.type = 'effector' " +
-            "left outer join image_property_vw area on i.id = area.image_id and area.type = 'area' " +
-            "left outer join image_property_vw channels on i.id = channels.image_id and channels.type = 'channels' " +
-            "left outer join image_property_vw mounting_protocol on i.id = mounting_protocol.image_id and mounting_protocol.type = 'mounting_protocol' " +
-            "left outer join image_property_vw tissue_orientation on i.id = tissue_orientation.image_id and tissue_orientation.type = 'tissue_orientation' " +
-            "left outer join image_property_vw objective on i.id = objective.image_id and objective.type = 'objective' " +
-            "left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' " +
-            "left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' " +
-            "left outer join image_property_vw voxel_size_z on i.id = voxel_size_z.image_id and voxel_size_z.type = 'voxel_size_z' " +
-            "left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' " +
-            "left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' " +
-            "left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' " +
-            "left outer join image_property_vw cross_barcode on i.id = cross_barcode.image_id and cross_barcode.type = 'cross_barcode' " +
-            "where i.display=true and i.path is not null " +
-            "and data_set.value=? " +
-            "order by slide_code.value, i.path";
+        sql.append(ALL_LINE_PROPERTY_SQL_1);
+        sql.append(buildPropertySql(propertyTypeNames, "lp1"));
+        
+        sql.append(ALL_LINE_PROPERTY_SQL_2);
 
+        if (log.isDebugEnabled()) {
+            log.debug("buildLinePropertySql: returning \"" + sql + "\"");
+        }
+
+        return sql.toString();
+    }
+    
+    /**
+     * @param propertyTypeNames names of qualified properties to include in the query (with format "<cv>:<term>")
+     * @param tableAlias alias of the table to select property values from
+     * @return returns the property SQL
+     */
+    private String buildPropertySql(List<String> propertyTypeNames, String tableAlias) {
+        StringBuilder sql = new StringBuilder();
+        for (String qualifiedTypeName : propertyTypeNames) {
+            String typeLabel = qualifiedTypeName.replaceFirst(":", "_");
+            String typeName = qualifiedTypeName.substring(qualifiedTypeName.indexOf(':')+1);
+            sql.append(", max(IF(").append(tableAlias).append(".type='");
+            sql.append(typeName);
+            sql.append("', ").append(tableAlias).append(".value, null)) AS `");
+            sql.append(typeLabel);
+            sql.append('`'); // must escape column names to prevent conflict with SQL reserved words like 'condition'
+        }
+        return sql.toString();
+    }
+
+//    private static final String CORE_IMAGE_PROPERTY_SQL =
+//            "select i.id id, slide_code.value slide_code, i.path path, tile.value tile, line.name line, " +
+//            "channel_spec.value channel_spec, gender.value gender, age.value age, effector.value effector, " +
+//            "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, tissue_orientation.value tissue_orientation, objective.value objective, " +
+//            "voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z, " +
+//            "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z, cross_barcode.value cross_barcode " +
+//            "from image i " +
+//            "join line line on i.line_id = line.id " +
+//            "join image_property_vw slide_code on i.id = slide_code.image_id and slide_code.type = 'slide_code' " +
+//            "join image_property_vw data_set on i.id = data_set.image_id and data_set.type = 'data_set' " +
+//            "left outer join image_property_vw tile on i.id = tile.image_id and tile.type = 'tile' " +
+//            "left outer join image_property_vw channel_spec on i.id = channel_spec.image_id and channel_spec.type = 'channel_spec' " +
+//            "left outer join image_property_vw gender on i.id = gender.image_id and gender.type = 'gender' " +
+//            "left outer join image_property_vw age on i.id = age.image_id and age.type = 'age' " +
+//            "left outer join image_property_vw effector on i.id = effector.image_id and effector.type = 'effector' " +
+//            "left outer join image_property_vw area on i.id = area.image_id and area.type = 'area' " +
+//            "left outer join image_property_vw channels on i.id = channels.image_id and channels.type = 'channels' " +
+//            "left outer join image_property_vw mounting_protocol on i.id = mounting_protocol.image_id and mounting_protocol.type = 'mounting_protocol' " +
+//            "left outer join image_property_vw tissue_orientation on i.id = tissue_orientation.image_id and tissue_orientation.type = 'tissue_orientation' " +
+//            "left outer join image_property_vw objective on i.id = objective.image_id and objective.type = 'objective' " +
+//            "left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' " +
+//            "left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' " +
+//            "left outer join image_property_vw voxel_size_z on i.id = voxel_size_z.image_id and voxel_size_z.type = 'voxel_size_z' " +
+//            "left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' " +
+//            "left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' " +
+//            "left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' " +
+//            "left outer join image_property_vw cross_barcode on i.id = cross_barcode.image_id and cross_barcode.type = 'cross_barcode' " +
+//            "where i.display=true and i.path is not null " +
+//            "and data_set.value=? " +
+//            "and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
+//            "order by slide_code.value, i.path";
+//
     private static final String ALL_IMAGE_PROPERTY_SQL_1 =
-            "select image_vw.id, image_vw.line, image_vw.name, image_vw.path, image_vw.family, " +
-            "image_vw.capture_date, image_vw.representative, image_vw.created_by";
+            "select image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
+            "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, image_vw.created_by light_imagery_created_by";
 
     private static final String ALL_IMAGE_PROPERTY_SQL_2 =
             " from image_property_vw ip1 " +
@@ -544,10 +661,22 @@ public class SageDAO {
             "  select i.id, i.line, i.name, i.path, i.family, i.capture_date, i.representative, i.created_by" +
             "  from image_vw i" +
             "  inner join image_property_vw ip2 on (ip2.image_id=i.id and ip2.type='data_set' and ip2.value=?)" +
-            "  inner join image_property_vw ip3 on (ip3.image_id=i.id and ip3.type='slide_code' and ip3.value is not null)" +
             "  where i.display=true and i.path is not null" +
-            ") image_vw on (ip1.image_id = image_vw.id) " +
+            "  and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
+            ") image_vw on ip1.image_id = image_vw.id " +
+            "where ip1.cv in ('light_imagery') " +
             "group by image_vw.id ";
 
-    
+    private static final String ALL_LINE_PROPERTY_SQL_1 =
+            "select line_vw.id line_query_id, line_vw.name line_query_line, line_vw.lab line_query_lab, line_vw.gene line_query_gene, line_vw.organism line_query_organism, line_vw.synonyms line_query_synonyms";
+
+    private static final String ALL_LINE_PROPERTY_SQL_2 =
+            " from line_property_vw lp1  " +
+            "inner join line_vw on lp1.line_id = line_vw.id " +
+            "inner join ( " +
+            "  select distinct line from image_data_mv where data_set is not null and display=true and path is not null " +
+            ") image_lines on line_vw.name = image_lines.line  " +
+            "where lp1.cv in ('line','light_imagery') " +
+            "group by line_vw.id ";
+            
 }

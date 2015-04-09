@@ -15,6 +15,15 @@ public class StringUtils {
 		return s==null || "".equals(s);
 	}
 
+	public static boolean areAllEmpty(Collection<String> strings) {
+	    for (String s : strings) {
+	        if (!isEmpty(s)) {
+	            return false;
+	        }
+	    }
+	    return true;
+    }
+
 	public static String getIndent(int level, String single) {
         StringBuilder indent = new StringBuilder();
         for(int i=0; i<level; i++) {
@@ -99,4 +108,17 @@ public class StringUtils {
         return builder.toString();
     }
 
+    // Borrowed from Apache Commons
+    public static int countMatches(final String str, final String sub) {
+        if (isEmpty(str) || isEmpty(sub)) {
+            return 0;
+        }
+        int count = 0;
+        int idx = 0;
+        while ((idx = str.indexOf(sub, idx)) != -1) {
+            count++;
+            idx += sub.length();
+        }
+        return count;
+    }   
 }

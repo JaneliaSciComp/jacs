@@ -116,7 +116,6 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-compress-1.8.1.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-fileupload-1.2.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-httpclient-3.1.jar"/>
-        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-io-1.4.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-logging-1.1.1.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/de-javasoft-synthetica-netbeans.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ehcache-core-2.5.1.jar"/>
@@ -243,6 +242,7 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xmlbeans-2.3.0.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/XmlSchema-1.4.3.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xuggle-xuggler-5.4.jar"/>
+        <archive path="/common/Apache-Commons/commons-io-2.0.1.jar"/>
     </library>
     <library name="Ehcache" systemlibrary="false">
         <archive path="/common/ehcache/ehcache-core-2.5.1.jar"/>
@@ -270,6 +270,9 @@
     <library name="GWT Serializable" systemlibrary="false">
         <archive path="/common/GWT-Serializable/gwt-serializable.jar"/>
     </library>
+    <library name="HDF5" systemlibrary="false">
+        <archive path="/common/JHDF/sis-jhdf5-batteries_included.jar"/>
+    </library>
     <library name="Hibernate" systemlibrary="false">
         <archive path="/common/Hibernate-3.2/antlr-2.7.6.jar"/>
         <archive path="/common/Hibernate-3.2/asm.jar"/>
@@ -278,6 +281,17 @@
     </library>
     <library name="Jama" systemlibrary="false">
         <archive path="/common/jama-1.0.1/Jama-1.0.3.jar"/>
+    </library>
+    <library name="javacpp" systemlibrary="false">
+        <archive path="/common/javacpp-presets-bin/ffmpeg-android-arm.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-android-x86.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-linux-x86_64.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-linux-x86.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-macosx-x86_64.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-windows-x86_64.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg-windows-x86.jar"/>
+        <archive path="/common/javacpp-presets-bin/ffmpeg.jar"/>
+        <archive path="/common/javacpp-presets-bin/javacpp.jar"/>
     </library>
     <library name="JAXB" systemlibrary="false">
         <archive path="/common/JAXB-2.1.5/activation.jar"/>

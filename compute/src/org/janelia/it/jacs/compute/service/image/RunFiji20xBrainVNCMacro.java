@@ -11,9 +11,11 @@ import java.util.List;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -110,10 +112,19 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         }
         
         chanSpec = brainLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        if (chanSpec==null) {
+        	String numChannelsStr = brainLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);
+        	if (numChannelsStr==null) {
+            	throw new IllegalStateException("Brain LSM does not specify chanSpec or numChannels");
+        	}
+        	int numChannels = Integer.parseInt(numChannelsStr);
+        	chanSpec = ChanSpecUtils.createChanSpec(numChannels, numChannels);
+        }
+        
         if (vncLsm!=null) {
-            String vncChanSpec = brainLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+            String vncChanSpec = vncLsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
             if (!chanSpec.equals(vncChanSpec)) {
-                throw new IllegalStateException("Brain chanspec ("+chanSpec+") does not match VNC chanspec ("+vncChanSpec+")");
+                logger.warn("Brain chanspec ("+chanSpec+") does not match VNC chanspec ("+vncChanSpec+"). Will continue with Brain chanspec.");
             }
         }
         
@@ -191,6 +202,9 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         });
 
         int signalIndex = chanspec.indexOf('s');
+        if (signalIndex<0) {
+        	throw new IllegalStateException("Image must have a signal channel");
+        }
         Float powerFloat = new Float(illChannels.get(signalIndex).getPowerBc1());
         Float gainFloat = new Float(detChannels.get(signalIndex).getDetectorGain());
 
@@ -309,7 +323,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append(" &\n");
         script.append("fpid=$!\n");
         
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb", "PORT", "fpid", 30, 3600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 3600));
         
         script.append("for fin in *.avi; do\n");
         script.append("    fout=${fin%.avi}.mp4\n");
@@ -351,7 +365,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         });
         
         if (files.length==0) {
-            throw new MissingDataException("No output files found in directory "+outputDir);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "No output files found in directory "+outputDir);
         }
         
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
@@ -376,7 +390,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
             }
         }
         catch (Exception e) {
-            throw new MissingDataException("Error discoverying files in "+outputDir,e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Error discoverying files in "+outputDir,e);
         }
 	}
 }

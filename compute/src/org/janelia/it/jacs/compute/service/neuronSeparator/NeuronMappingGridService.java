@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -158,7 +159,7 @@ public class NeuronMappingGridService extends AbstractEntityGridService {
 		});
     	
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Neuron mapping core dumped for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(outputDir.getAbsolutePath(), "Neuron mapping core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
     	File[] resultFiles = outputDir.listFiles(new FilenameFilter() {
@@ -169,7 +170,7 @@ public class NeuronMappingGridService extends AbstractEntityGridService {
 		});
 
     	if (resultFiles.length < 1) {
-    		throw new MissingDataException("Mapping file not found in "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(outputDir.getAbsolutePath(), "Mapping file not found in "+resultFileNode.getDirectoryPath());
     	}
     	
     	// Copy the mapping file into the target separation directory and it rename it with the source separation id
@@ -192,7 +193,7 @@ public class NeuronMappingGridService extends AbstractEntityGridService {
 	        SystemCall call = new SystemCall(logger);
 	        int exitCode = call.emulateCommandLine(script.toString(), true, 10);
 	        if (0!=exitCode) {
-	            throw new ServiceException("Chmod failed with exitCode "+exitCode);
+	            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Chmod failed with exitCode "+exitCode);
 	        }
     	}
     	catch (Exception e) {

@@ -1,422 +1,603 @@
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.common.SolrDocumentList
 import org.janelia.it.jacs.model.entity.Entity
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils
 import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder
 import org.janelia.it.jacs.model.entity.EntityConstants
+import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
+import org.janelia.it.workstation.api.entity_model.management.ModelMgr;
+import org.janelia.it.workstation.model.entity.RootedEntity;
 
-class SampleReportConstants {
-    static final OWNER = "nerna"
-    static final GROUP = "flylight"
-    static final OWNER_KEY = "user:"+OWNER
-    static final GROUP_KEY = "group:"+GROUP
-    static final OUTPUT_HTML = true
-	static final WRITE_DATABASE = false
-    static final COLOR_RETIRED = "aaf"
-    static final COLOR_ACTIVE = "faa"
-    static final OUTPUT_FILE = "/Users/rokickik/retired." + (OUTPUT_HTML?"html":"txt")
-	static final OUTPUT_ROOT_NAME = "Retired Duplicates"
-}
-
-def file = null
-if (SampleReportConstants.OUTPUT_HTML) {
-    file = new PrintWriter(SampleReportConstants.OUTPUT_FILE)
-}
-else {
-    file = System.out
-}
-
-f = new JacsUtils(SampleReportConstants.OWNER_KEY, true)
-
-Multimap<String, Entity> sampleMap = HashMultimap.<String,Entity>create();
-Set<Long> retiredSampleSet = new HashSet<Long>()
-
-println "Adding owned samples"
-addSamples(sampleMap, f.e.getUserEntitiesByTypeName(SampleReportConstants.OWNER_KEY, "Sample"))
-println "Adding group samples"
-addSamples(sampleMap, f.e.getUserEntitiesByTypeName(SampleReportConstants.GROUP_KEY, "Sample"))
-
-println "Adding owned retired samples"
-addRetiredSamples(f, retiredSampleSet, f.getRootEntity(SampleReportConstants.OWNER_KEY, "Retired Data"))
-println "Adding group retired samples"
-addRetiredSamples(f, retiredSampleSet, f.getRootEntity(SampleReportConstants.GROUP_KEY, "Retired Data"))
-
-println "Generating report..."
-
-List<String> keys = new ArrayList<String>(sampleMap.keySet())
-Collections.sort(keys);
-
-int numSlideCodes = 0
-int numRetiredSamples = 0
-int numStitchingErrors = 0
-int numDuplications = 0
-
-if (SampleReportConstants.OUTPUT_HTML) {
-    file.println("<html><body><head><style>" +
-            "td { font: 8pt sans-serif; vertical-align:top; border: 0px solid #aaa;} table { border-collapse: collapse; } " +
-            "</style></head>")
-    file.println("<h3>"+SampleReportConstants.OWNER+" Retired Samples</h3>")
-    file.println("<table>")
-    file.println("<tr><td>Owner</td><td>Sample Name</td><td>Data Set</td><td>Matching Active Sample</td><td>Fragments</td><td>Annotations</td></tr>")
-}
-
-List<Entity> samplesForDeletion = new ArrayList<Entity>();
-
-def rootFolder = null
-if (SampleReportConstants.WRITE_DATABASE) {
-	rootFolder = f.getRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
-    if (rootFolder!=null) {
-        println "Deleting root folder "+SampleReportConstants.OUTPUT_ROOT_NAME+". This may take a while!"
-        f.deleteEntityTreeById(rootFolder.id)
+class SampleReportScript {
+ 
+    private static final String OWNER = "nerna"
+    private static final String GROUP = "flylight"
+    private static final String OWNER_KEY = "user:"+OWNER
+    private static final String GROUP_KEY = "group:"+GROUP
+	private static final boolean WRITE_DATABASE = false
+    private static final boolean MIGRATE_NEURONS = false
+    private static final boolean DELETE_SAMPLES = false
+    private static final String COLOR_RETIRED = "FAA755"
+    private static final String COLOR_ACTIVE = "67CF55"
+    private static final String OUTPUT_FILE = "/Users/rokickik/retired.html"
+	private static final String MANUAL_OUTPUT_ROOT_NAME = "Retired Duplicates (Manual)"
+    private static final String AUTO_OUTPUT_ROOT_NAME = "Retired Duplicates (Auto)"
+    private static final String AUTO_MIGRATION_TERM_NAME = "Fragments_migrated"
+    private static final int NUM_SAMPLE_COLS = 3
+    private JacsUtils f
+    private Entity autoMigratedTerm;
+    
+    public SampleReportScript() {
+        this.f = new JacsUtils(OWNER_KEY, WRITE_DATABASE)
     }
-	rootFolder = f.createRootEntity(SampleReportConstants.OUTPUT_ROOT_NAME)
-}
-
-int index = 0
-
-for(String key : keys) {
-
-    Collection<Entity> samples = sampleMap.get(key);
-
-    boolean hasRetired = false;
-
-    for(Entity sample : samples) {
-        if (retiredSampleSet.contains(sample.id)) {
-            hasRetired = true;
-            break;
+    
+    public void run() {
+        def file = new PrintWriter(OUTPUT_FILE)
+        
+        Multimap<String, Entity> sampleMap = HashMultimap.<String,Entity>create();
+        Set<Long> retiredSampleSet = new HashSet<Long>()
+        
+        println "Adding owned samples"
+        addSamples(sampleMap, f.e.getUserEntitiesByTypeName(OWNER_KEY, "Sample"))
+        println "Adding group samples"
+        addSamples(sampleMap, f.e.getUserEntitiesByTypeName(GROUP_KEY, "Sample"))
+        
+        println "Adding owned retired samples"
+        addRetiredSamples(f, retiredSampleSet, f.getRootEntity(OWNER_KEY, "Retired Data"))
+        println "Adding group retired samples"
+        addRetiredSamples(f, retiredSampleSet, f.getRootEntity(GROUP_KEY, "Retired Data"))
+        
+        println "Generating report..."
+        
+        for(Entity entity : f.e.getEntitiesByNameAndTypeName(OWNER_KEY, AUTO_MIGRATION_TERM_NAME, EntityConstants.TYPE_ONTOLOGY_ELEMENT)) {
+            this.autoMigratedTerm = entity 
         }
-    }
-
-    if (hasRetired) {
-
-        index++
-        numSlideCodes++
-		
-		Entity keyFolder = null
-		if (SampleReportConstants.WRITE_DATABASE) {
-			keyFolder = f.verifyOrCreateChildFolder(rootFolder, key)
-		}
-		
-        if (SampleReportConstants.OUTPUT_HTML) {
-            file.println("<tr><td colspan=6 style='background-color:#aaa'>"+key+"</td></tr>");
-            println("Processing slide code "+key+" ("+index+")") // to see progress
+        
+        if (autoMigratedTerm==null) {
+            throw new IllegalStateException("Auto migration ontology term does not exist: "+AUTO_MIGRATION_TERM_NAME)
         }
-        else {
-            file.println()
-            file.println("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-            file.println(key)
-            file.println("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        
+        List<String> keys = new ArrayList<String>(sampleMap.keySet())
+        Collections.sort(keys);
+        
+        int numSlideCodes = 0
+        int numRetiredSamples = 0
+        int numActiveSamples = 0
+        int numMigratedSamples = 0
+        int numManualSamples = 0
+        
+        file.println("<html><body><head><style>" +
+                "td { font: 8pt sans-serif; vertical-align:top; border: 0px solid #aaa;} table { border-collapse: collapse; } " +
+                "</style></head>")
+        file.println("<h3>"+OWNER+" Retired Samples</h3>")
+        file.println("<table>")
+        file.println("<tr><td>Retired Sample</td><td>Neurons</td><td>Annotations</td><td>Active Sample</td><td>Neurons</td><td>Annotations</td></tr>")
+        
+        List<Entity> samplesForDeletion = new ArrayList<Entity>();
+        
+        Entity manualRootFolder = null
+        Entity autoRootFolder = null
+        if (WRITE_DATABASE) {
+        	manualRootFolder = f.createRootEntity(MANUAL_OUTPUT_ROOT_NAME)
+            autoRootFolder = f.createRootEntity(AUTO_OUTPUT_ROOT_NAME)
         }
-
-        List<Entity> activeSamples = new ArrayList<Entity>()
-        List<Entity> retiredSamples = new ArrayList<Entity>()
-        for(Entity sample : samples) {
-            if (retiredSampleSet.contains(sample.id)) {
-                retiredSamples.add(sample);
-            }
-            else {
-                activeSamples.add(sample);
-            }
-        }
-
-        Multimap<Entity, Entity> transferMap = HashMultimap.<Entity,Entity>create();
-        for(Entity retiredSample : retiredSamples) {
-            for(Entity activeSample : activeSamples) {
-                if (lsmSetsMatch(f, retiredSample, activeSample)) {
-                    transferMap.put(retiredSample, activeSample);
+        
+        for(String key : keys) {
+        
+            Collection<Entity> samples = sampleMap.get(key);
+        
+            boolean hasRetired = false;
+            for(Entity sample : samples) {
+                if (retiredSampleSet.contains(sample.id)) {
+                    hasRetired = true;
+                    break;
                 }
             }
-        }
-
-        List<Entity> orderedSamples = new ArrayList<Entity>();
-        orderedSamples.addAll(retiredSamples);
-        orderedSamples.addAll(activeSamples);
-
-        Collections.sort(orderedSamples, new Comparator<Entity>() {
-
-            public int compare(Entity o1, Entity o2) {
-                def retired1 = retiredSampleSet.contains(o1.id)
-                def retired2 = retiredSampleSet.contains(o2.id)
-                if (retired1 && !retired2) {
-                    return -1;
-                }
-                if (retired2 && !retired1) {
-                    return 1;
-                }
-                int c = o1.ownerKey.compareTo(o2.ownerKey)
-                if (c==0) {
-                    return o1.name.compareTo(o2.name)
-                }
-                return c
-            }
-        })
-
-        Set<String> situations = new HashSet<String>()
-
-        for(Entity sample : orderedSamples) {
-
-            f.loadChildren(sample)
-
-            annotations = getAnnotations(f, sample.id)
-            data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
-            retired = (retiredSampleSet.contains(sample.id)?"Retired":"")
-
-            SampleReportNeuronCounter counter = new SampleReportNeuronCounter(f.getEntityLoader())
-            counter.count(sample)
-
-            Set<Entity> transferSamples = transferMap.get(sample)
-            StringBuilder transferSamplesSb = new StringBuilder()
-            if (transferSamples!=null) {
-                transferSamples.each {
-                    if (transferSamplesSb.length()>0) transferSamplesSb.append(",")
-                    transferSamplesSb.append(it.name)
-                }
-            }
-
-            if (retired) {
-                // Retired sample
-                numRetiredSamples++
-                if (sample.name.startsWith(transferSamplesSb.toString())) {
-                    situations.add('duplication')
-                }
-            }
-            else {
-                // Active sample
-                Set annotSet = new HashSet<String>(annotations)
-                if (annotSet.contains("Stitching_error") || annotSet.contains("something_wrong")) {
-                    situations.add('stitching')
-					if (SampleReportConstants.WRITE_DATABASE) {
-	                    samplesForDeletion.add(sample)
-	                    println("  Stitching error detected. Will delete this sample later.")
-					}
-                }
-            }
-
-			if (SampleReportConstants.WRITE_DATABASE) {
-				f.addToParent(keyFolder, sample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
-			}
-			
-            if (SampleReportConstants.OUTPUT_HTML) {
-                def annots = annotations.toString()
-                def color = (retired?SampleReportConstants.COLOR_RETIRED:SampleReportConstants.COLOR_ACTIVE)
-                file.println("<tr><td>"+sample.ownerKey.replaceAll("group:","").replaceAll("user:","")+"</td>")
-                file.println("<td style='background-color:#"+color+"'><nobr><b>"+sample.name+"</b></nobr></td>")
-                file.println("<td>"+data_set+"</td>")
-                if (transferSamplesSb.length()>0) {
-                    file.println("<td style='background-color:#"+SampleReportConstants.COLOR_ACTIVE+"'><nobr><b>"+transferSamplesSb+"</b></nobr></td>")
-                }
-                else {
-                    file.println("<td></td>");
-                }
-                file.println("<td>"+counter.numFragments+"</td>")
-                file.println("<td>"+annots.substring(1,annots.length()-1)+"</td></tr>")
-            }
-            else {
-                transfer = transferSamplesSb.length()>0?"--> "+transferSamplesSb:""
-                file.println padRight(sample.ownerKey, 16) + padRight(sample.name, 65) + padRight(data_set, 40) + " " + transfer + " " + counter.numFragments + " "+ annotations
-
-            }
-
-            StringBuilder lsb = new StringBuilder();
-            Entity supportingData = EntityUtils.getSupportingData(sample)
-            f.loadChildren(supportingData)
-            if (supportingData != null) {
-                for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
-
-                    if (SampleReportConstants.OUTPUT_HTML) {
-                        lsb.append("&nbsp&nbsp"+imageTile.name+"<br>")
+        
+            if (hasRetired) {
+        
+                numSlideCodes++
+        		
+                file.println("<tr><td colspan="+(NUM_SAMPLE_COLS*2)+" style='background-color:#aaa; font-size:10pt; padding: 5px;'>"+key+"</td></tr>");
+                println("Processing slide code "+key+" ("+numSlideCodes+")") // to see progress
+        
+                List<Entity> activeSamples = new ArrayList<Entity>()
+                List<Entity> retiredSamples = new ArrayList<Entity>()
+                for(Entity sample : samples) {
+                    if (retiredSampleSet.contains(sample.id)) {
+                        retiredSamples.add(sample);
                     }
                     else {
-                        file.println "                  "+imageTile.name
+                        activeSamples.add(sample);
                     }
-
-                    f.loadChildren(imageTile)
-                    for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
-                        if (SampleReportConstants.OUTPUT_HTML) {
-                            lsb.append("&nbsp&nbsp&nbsp&nbsp"+lsm.name+"<br>")
+                }
+                
+                numRetiredSamples += retiredSamples.size()
+                numActiveSamples += activeSamples.size()
+        
+                boolean matchAll = true;
+                Multimap<Entity, Entity> transferMap = HashMultimap.<Entity,Entity>create();
+                for(Entity retiredSample : retiredSamples) {
+                    boolean match = false;
+                    for(Entity activeSample : activeSamples) {
+                        if (lsmSetsMatch(f, retiredSample, activeSample)) {
+                            transferMap.put(retiredSample, activeSample);
+                            match = true;
                         }
-                        else {
-                            file.println "                      "+lsm.name
+                    }
+                    if (!match) {
+                        matchAll = false;
+                    }
+                }
+                
+                // LSM sets didn't match for every retired sample, let's try sample names
+                if (!matchAll) {
+                    for(Entity retiredSample : retiredSamples) {
+                        if (transferMap.get(retiredSample).isEmpty()) {
+                            for(Entity activeSample : activeSamples) {
+                                if (retiredSample.name.replaceAll("-Retired", "").equals(activeSample.name)) {
+                                    transferMap.put(retiredSample, activeSample);
+                                }
+                            }
                         }
                     }
                 }
+        
+                Collections.sort(retiredSamples, new Comparator<Entity>() {
+                    public int compare(Entity o1, Entity o2) {
+                        int c = o1.ownerKey.compareTo(o2.ownerKey)
+                        if (c==0) {
+                            return o1.name.compareTo(o2.name)
+                        }
+                        return c
+                    }
+                })
+        
+                for(Entity retiredSample : retiredSamples) {
+                    
+                    // Get corresponding active sample
+                    Set<Entity> transferSamples = transferMap.get(retiredSample)
+                    if (transferSamples.size()>1) {
+                        println "WARNING: more than one matching transfer sample for "+retiredSample.name
+                    }
+                    
+                    Entity activeSample = null
+                    
+                    if (!transferSamples.isEmpty()) {
+                        activeSample = transferSamples.iterator().next()
+                        // Remove it from the list of active samples so that it doesn't get printed by itself later on
+                        activeSamples.remove(activeSample)
+                    }
+                    
+                    LatestNeuronWalker retiredWalker = getLatestNeuronWalker(f, retiredSample)
+                    LatestNeuronWalker activeWalker = getLatestNeuronWalker(f, activeSample)
+                    
+                    Entity keyFolder = null
+                    
+                    Boolean autoMigrated = null;
+                    if (retiredWalker!=null && activeWalker!=null && retiredWalker.numFragments==activeWalker.numFragments) {
+                        if (WRITE_DATABASE) {
+                            keyFolder = f.verifyOrCreateChildFolder(autoRootFolder, key)
+                        }
+                        autoMigrated = migrateNeurons(f, retiredWalker, activeWalker, keyFolder)
+                        if (autoMigrated) {
+                            if (WRITE_DATABASE && MIGRATE_NEURONS) {
+                                OntologyAnnotation annotation = new OntologyAnnotation(null, retiredSample.id, autoMigratedTerm.id, autoMigratedTerm.name, null, null);
+                                f.a.createOntologyAnnotation(OWNER_KEY, annotation)
+                            }
+                        }
+                    }
+                    
+                    if (autoMigrated) {
+                        numMigratedSamples++
+                    }
+                    else {
+                        numManualSamples++
+                    }
+                    
+                    if (WRITE_DATABASE) {
+                        if (keyFolder==null) {
+                            keyFolder = f.verifyOrCreateChildFolder(manualRootFolder, key)
+                        }
+                        f.addToParent(keyFolder, retiredSample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
+                        if (activeSample!=null) {
+                            f.addToParent(keyFolder, activeSample, keyFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
+                        }
+                    }
+                    
+                    String bgColor = autoMigrated==null?"#F5D282":(autoMigrated?"#ADEDAD":"#FCB6B6")
+                    List<String> retiredCols = getSampleCols(f, retiredSample, retiredWalker, true, bgColor);
+                    List<String> activeCols = getSampleCols(f, activeSample, activeWalker, false, bgColor);
+                    
+                    int i = 0;
+                    file.println(getBorderRow())
+                    for(String retiredCol : retiredCols) {
+                        String activeCol = activeCols==null?null:activeCols.get(i)
+                        file.println("<tr>");
+                        file.println(retiredCol);
+                        if (activeCol==null) {
+                            file.println(getBlankCols(bgColor));
+                        }
+                        else {
+                            file.println(activeCol);
+                        }
+                        file.println("</tr>");
+                        i++
+                    }
+                    
+                    if (autoMigrated!=null) {
+                        if (autoMigrated) {
+                            file.println("<tr><td style='background-color:"+bgColor+"; text-align:right' colspan="+(NUM_SAMPLE_COLS*2)+">Auto-migration succeeded</td></td>");
+                        }
+                        else {
+                            file.println("<tr><td style='background-color:"+bgColor+"; text-align:right; text-color:red; font-weight: bold;' colspan="+(NUM_SAMPLE_COLS*2)+">Auto-migration FAILED</td></td>");
+                        }
+                    }
+                        
+                    // free memory
+                    retiredSample.setEntityData(null)
+                    if (activeSample!=null) {
+                        activeSample.setEntityData(null)
+                    }
+                    
+                }
+                
+                for(Entity activeSample : activeSamples) {
+                    
+                    file.println(getBorderRow())
+                    LatestNeuronWalker activeWalker = getLatestNeuronWalker(f, activeSample)
+                    for(String activeCol : getSampleCols(f, activeSample, activeWalker, false, "#FFFFFF")) {
+                        file.println("<tr>");
+                        file.println(getBlankCols())
+                        file.println(activeCol)
+                        file.println("</tr>");
+                    }
+                    
+                    // free memory
+                    activeSample.setEntityData(null)
+                }
+                
+                file.println(getBreakRow())
             }
-
-            if (SampleReportConstants.OUTPUT_HTML) {
-                file.println("<tr><td></td><td>"+lsb+"</td><td colspan=4></td></tr>")
-            }
-
-            // free memory
-            sample.setEntityData(null)
         }
-
-        if (SampleReportConstants.OUTPUT_HTML) {
-            def situation = ""
-            def color = "fff"
-
-            if (situations.contains("stitching") && situations.contains("duplication")) {
-                color = "afa"
-                situation = "Retired sample duplicated with stitching error";
-                numStitchingErrors++
+        
+        if (WRITE_DATABASE && DELETE_SAMPLES) {
+        	println("Deleting unwanted samples...")
+        	for(Entity sample : samplesForDeletion) {
+        	    println("Unlinking and deleting "+sample.name)
+        	    f.e.deleteEntityTreeById(sample.ownerKey, sample.id, true)
+        	}
+        }
+        
+        file.println("</table>")
+        file.println("<br>Slide codes: "+numSlideCodes)
+        file.println("<br>Active samples: "+numActiveSamples)
+        file.println("<br>Retired samples: "+numRetiredSamples)
+        file.println("<br>Auto-migrated samples: "+numMigratedSamples)
+        file.println("<br>Manual-migration samples: "+numManualSamples)
+        file.println("</body></html>")
+        
+        file.close()
+        
+        println "Done"
+    }
+    
+    def getBreakRow() {
+        return "<tr><td height=40 colspan="+(NUM_SAMPLE_COLS*2)+">&nbsp;</td></td>";
+    }
+    
+    def getBorderRow() {
+        return "<tr><td height=10 colspan="+(NUM_SAMPLE_COLS*2)+" style='border-top: 1px solid black'>&nbsp;</td></tr>"
+    }
+    
+    def getBlankCols(String bgColor) {
+        return "<td colspan="+NUM_SAMPLE_COLS+" style='background-color:"+bgColor+";'></td>"
+    }
+        
+    def getLatestNeuronWalker(JacsUtils f, Entity sample) {
+        if (sample==null) return null;
+        LatestNeuronWalker walker = new LatestNeuronWalker(f)
+        walker.walk(sample)
+        if (walker.neuronFragments==null) return null
+        return walker
+    }
+    
+    def getSampleCols(JacsUtils f, Entity sample, LatestNeuronWalker walker, boolean retired, String bgColor) {
+        if (sample==null) return null;
+        
+        String annots = "";
+        if (walker!=null) {
+            List<String> annotations = walker.getAnnotationNames()
+            annots = annotations.toString()
+            annots = annots.substring(1,annots.length()-1) 
+        }
+        
+        String data_set = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER)
+        
+        StringBuilder sb = new StringBuilder()
+        
+        def color = (retired?COLOR_RETIRED:COLOR_ACTIVE)
+        sb.append("<td style='background-color:"+bgColor+";'><nobr><b>"+sample.name+"</b></nobr></td>")
+        sb.append("<td rowspan=2 style='background-color:"+bgColor+"; text-align:right; padding: 0 1em 0 1em;'>")
+        if (walker!=null) {
+            sb.append(walker.numWithRefs+" /<br>"+walker.numFragments);
+        }
+        sb.append("</td>")
+        sb.append("<td rowspan=2 style='background-color:"+bgColor+";'>"+annots+"</td>")
+    
+        StringBuilder lsb = new StringBuilder("<td style='background-color:"+bgColor+";'>")
+        Entity supportingData = EntityUtils.getSupportingData(sample)
+        f.loadChildren(supportingData)
+        if (supportingData != null) {
+            List<Entity> tiles = EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY);
+            for(Entity imageTile : tiles) {
+                f.loadChildren(imageTile)
+                List<Entity> lsms = EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)
+                if (lsms.size()>2) {
+                    lsb.append("<span style='text-color:red; font-weight: bold;'>")
+                }
+                lsb.append("&nbsp;&nbsp;"+imageTile.name+"<br>")
+                for(Entity lsm : lsms) {
+                    lsb.append("&nbsp;&nbsp;&nbsp;&nbsp;"+lsm.name+"<br>")
+                }
+                if (lsms.size()>2) {
+                    lsb.append("</span>")
+                }
             }
-            else if (situations.contains("duplication")) {
-                color = "aff"
-                situation = "Retired sample duplicated";
-                numDuplications++
+        }
+        lsb.append("</td>")
+        
+        List<String> rows = new ArrayList()
+        rows.add(sb.toString())
+        rows.add(lsb.toString())
+        
+        return rows
+    }
+    
+    def migrateNeurons(JacsUtils f, LatestNeuronWalker retiredWalker, LatestNeuronWalker activeWalker, Entity keyFolder) {
+        
+        Entity migrationFolder = null
+        
+        boolean success = true
+        println "Auto-migration for "+retiredWalker.sample.name
+        
+        Entity retiredFragments = retiredWalker.neuronFragments
+        Entity activeFragments = activeWalker.neuronFragments
+        
+        List<Entity> targets = activeFragments.getOrderedChildren()
+        
+        int numMigratedAnnots = 0
+        int numMigratedRefs = 0
+            
+        int i = 0
+        for(EntityData ed : retiredFragments.getOrderedEntityData()) {
+            
+            Entity fragment = ed.childEntity
+            Entity target = targets.get(i)
+            
+            boolean hasAnnots = false;
+            
+            Set<String> existingAnnotNames = new HashSet<>() 
+            for(final Entity annotation : activeWalker.annotationMap.get(target.id)) {
+                hasAnnots = true
+                existingAnnotNames.add(annotation.name)
+            }
+            
+            for(final Entity annotation : retiredWalker.annotationMap.get(fragment.id)) {
+                hasAnnots = true
+                // migrate annotation to point to new target
+                String message;
+                try {
+                    if (!existingAnnotNames.contains(annotation.name)) {
+                        if (WRITE_DATABASE && MIGRATE_NEURONS) f.e.setOrUpdateValue(annotation, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID, target.getId().toString());
+                        //println "  Migrated annotation "+annotation.getName();
+                        numMigratedAnnots++
+                    }
+                }
+                catch (Exception e) {
+                    println "  Error migrating annotation: "+e.message;
+                    success = false
+                }
+            }
+    
+            for(final EntityData refEd : retiredWalker.parentEdMap.get(fragment.id)) {
+                String refType = refEd.getParentEntity().getEntityTypeName();
+                if (!refType.equals(EntityConstants.TYPE_FOLDER)) {
+                    continue;
+                }
+                // migrate reference to point to a new target
+                String message;
+                try {
+                    refEd.setChildEntity(target);
+                    if (WRITE_DATABASE && MIGRATE_NEURONS) f.e.saveOrUpdateEntityData(refEd);
+                    //println "  Migrated reference "+refEd.getParentEntity().getName();
+                    numMigratedRefs++
+                }
+                catch (Exception e) {
+                    println "  Error migrating reference: "+e.message;
+                    success = false
+                }
+            }
+            
+            if (hasAnnots && WRITE_DATABASE) {
+                if (migrationFolder==null) {
+                    migrationFolder = f.verifyOrCreateChildFolder(keyFolder, retiredWalker.sample.name+" (Migration)")
+                }
+                f.addToParent(migrationFolder, fragment, migrationFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
+                f.addToParent(migrationFolder, target, migrationFolder.maxOrderIndex+1, EntityConstants.ATTRIBUTE_ENTITY)
+            }
+            
+            i++
+        }
+        
+        println "  Migrated "+numMigratedAnnots+" annotations and "+numMigratedRefs+" references. Success="+success
+        return success
+    }
+    
+    def removeSuffix(String name) {
+        return name.replaceFirst("-Retired", "").replaceFirst("-Left_Optic_Lobe", "").replaceFirst("-Right_Optic_Lobe", "").replaceFirst("-Optic_Central_Border", "")
+    }
+    
+    def padRight(String s, int n) {
+        return String.format("%1\$-" + n + "s", s)
+    }
+    
+    def padLeft(String s, int n) {
+        return String.format("%1\$" + n + "s", s)
+    }
+    
+    def addSamples(Multimap<String, Entity> sampleMap, Collection<Entity> samples) {
+        for(Entity sample : samples) {
+            SampleReportSampleInfo info = new SampleReportSampleInfo(sample)
+            sampleMap.put(info.slide_code, sample);
+        }
+    }
+    
+    def addRetiredSamples(JacsUtils f, Set<Long> retiredSampleSet, Entity retiredSampleFolder) {
+        f.loadChildren(retiredSampleFolder)
+        for(Entity child : retiredSampleFolder.children) {
+            retiredSampleSet.add(child.id)
+        }
+    }
+    
+    def lsmSetsMatch(JacsUtils f, Entity sample1, Entity sample2) {
+        Set<String> set1 = getLsmSet(f, sample1);
+        Set<String> set1r = new HashSet<String>();
+        for(String s : set1) {
+            set1r.add(s.replaceAll(".bz2", ""));
+        }
+        
+        Set<String> set2 = getLsmSet(f, sample2);
+        Set<String> set2r = new HashSet<String>();
+        for(String s : set2) {
+            set2r.add(s.replaceAll(".bz2", ""));
+        }
+        
+        return (set1r.containsAll(set2r) && set2r.containsAll(set1r));
+    }
+    
+    def getLsmSet(JacsUtils f, Entity sample) {
+        Set<String> lsmSet = new HashSet<String>();
+        f.loadChildren(sample)
+        Entity supportingData = EntityUtils.getSupportingData(sample)
+        f.loadChildren(supportingData)
+        if (supportingData != null) {
+            for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
+                f.loadChildren(imageTile)
+                for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
+                    lsmSet.add(lsm.name)
+                }
+            }
+        }
+        return lsmSet
+    }
+    
+    class SampleReportSampleInfo {
+        String sampleName = "";
+        String line = "";
+        String slide_code = "";
+        String objective = "";
+    
+        SampleReportSampleInfo(Entity sample) {
+    
+            sampleName = sample.name;
+            def parts = sampleName.split("~")
+    
+            if (parts.length>1) {
+                sampleName = parts[0]
+                objective = parts[1]
+            }
+    
+            sampleName = sampleName.replaceFirst("-Retired", "")
+            int startOfSlideCode = sampleName.lastIndexOf("-20");
+            if (startOfSlideCode<0) {
+                // Try to find typo'd slide codes
+                startOfSlideCode = sampleName.lastIndexOf("-10");
+                if (startOfSlideCode>0) {
+                    println("Detected typo in slide code: "+sampleName)
+                }
+            }
+    
+            if (startOfSlideCode>0) {
+                line = sampleName.substring(0,startOfSlideCode)
+                slide_code = sampleName.substring(startOfSlideCode+1)
+                def matcher = (slide_code =~ /(\d{8}_\d+_\w{2}).*/)
+                if (matcher.matches()) {
+                    slide_code = matcher[0][1]
+                }
             }
             else {
-                situation = situations.toString()
-            }
-            file.println("<tr><td colspan=6 style='background-color:#"+color+"; text-align:right'>"+situation+"</td></tr>")
-            file.println("<tr><td height=40 colspan=6>&nbsp;</td></td>")
-        }
-    }
-}
-
-if (SampleReportConstants.WRITE_DATABASE) {
-	println("Deleting unwanted samples...")
-	for(Entity sample : samplesForDeletion) {
-	    println("Unlinking and deleting "+sample.name)
-	    f.e.deleteSmallEntityTree(sample.ownerKey, sample.id, true)
-	}
-}
-
-if (SampleReportConstants.OUTPUT_HTML) {
-    file.println("</table>")
-    file.println("<br>Slide codes: "+numSlideCodes)
-    file.println("<br>Retired samples: "+numRetiredSamples)
-    file.println("<br>Stitching errors: "+numStitchingErrors)
-    file.println("<br>Duplications: "+numDuplications)
-    file.println("</body></html>")
-}
-else {
-    file.println("Slide codes: "+numSlideCodes)
-    file.println("Retired samples: "+numRetiredSamples)
-    file.println("Stitching errors: "+numStitchingErrors)
-    file.println("Duplications: "+numDuplications)
-
-}
-
-file.close()
-
-
-def padRight(String s, int n) {
-    return String.format("%1\$-" + n + "s", s)
-}
-
-def padLeft(String s, int n) {
-    return String.format("%1\$" + n + "s", s)
-}
-
-def addSamples(Multimap<String, Entity> sampleMap, Collection<Entity> samples) {
-    for(Entity sample : samples) {
-        SampleReportSampleInfo info = new SampleReportSampleInfo(sample)
-        sampleMap.put(info.slide_code, sample);
-    }
-}
-
-def addRetiredSamples(JacsUtils f, Set<Long> retiredSampleSet, Entity retiredSampleFolder) {
-    f.loadChildren(retiredSampleFolder)
-    for(Entity child : retiredSampleFolder.children) {
-        retiredSampleSet.add(child.id)
-    }
-}
-
-def getAnnotations(JacsUtils f, Long sampleId) {
-    SolrQuery query = new SolrQuery("(id:"+sampleId+" OR ancestor_ids:"+sampleId+") AND all_annotations:*")
-    SolrDocumentList results = f.s.search(null, query, false).response.results
-    List<String> annotations = new ArrayList<String>()
-    results.each {
-        def all = it.getFieldValues(SampleReportConstants.OWNER+"_annotations")
-        if (all!=null) annotations.addAll(all)
-    }
-    return annotations
-}
-
-def lsmSetsMatch(JacsUtils f, Entity sample1, Entity sample2) {
-    Set<String> set1 = getLsmSet(f, sample1)
-    Set<String> set2 = getLsmSet(f, sample2)
-    return set1.containsAll(set2) && set2.containsAll(set1)
-}
-
-def getLsmSet(JacsUtils f, Entity sample) {
-    Set<String> lsmSet = new HashSet<String>();
-    f.loadChildren(sample)
-    Entity supportingData = EntityUtils.getSupportingData(sample)
-    f.loadChildren(supportingData)
-    if (supportingData != null) {
-        for(Entity imageTile : EntityUtils.getChildrenForAttribute(supportingData, EntityConstants.ATTRIBUTE_ENTITY)) {
-            f.loadChildren(imageTile)
-            for(Entity lsm : EntityUtils.getChildrenForAttribute(imageTile, EntityConstants.ATTRIBUTE_ENTITY)) {
-                lsmSet.add(lsm.name)
+                line = ""
+                slide_code = sampleName
             }
         }
     }
-    return lsmSet
-}
-
-class SampleReportSampleInfo {
-    def sampleName = "";
-    def line = "";
-    def slide_code = "";
-    def objective = "";
-
-    SampleReportSampleInfo(Entity sample) {
-
-        sampleName = sample.name;
-        def parts = sampleName.split("~")
-
-        if (parts.length>1) {
-            sampleName = parts[0]
-            objective = parts[1]
+    
+    class LatestNeuronWalker {
+    
+        JacsUtils f
+        Entity sample;
+        Entity neuronFragments;
+        Map<Long,Set<EntityData>> parentEdMap;
+        Map<Long,List<Entity>> annotationMap;
+        int numFragments;
+        int numWithRefs;
+        int numAnnotations;
+    
+        public LatestNeuronWalker(JacsUtils f) {
+            this.f = f
         }
-
-        sampleName = sampleName.replaceFirst("-Retired", "")
-        int startOfSlideCode = sampleName.lastIndexOf("-20");
-        if (startOfSlideCode<0) {
-            // Try to find typo'd slide codes
-            startOfSlideCode = sampleName.lastIndexOf("-10");
-        }
-
-        if (startOfSlideCode>0) {
-            line = sampleName.substring(0,startOfSlideCode)
-            slide_code = sampleName.substring(startOfSlideCode+1)
-            def matcher = (slide_code =~ /(\d{8}_\d+_\w{2}).*/)
-            if (matcher.matches()) {
-                slide_code = matcher[0][1]
+    
+        def walk(Entity sample) {
+            this.sample = sample
+            this.neuronFragments = null
+            this.numFragments = 0
+            this.numWithRefs = 0
+            this.numAnnotations = 0
+            this.parentEdMap = new HashMap<>()
+            this.annotationMap = new HashMap<>()
+            EntityVistationBuilder.create(f.getEntityLoader()).startAt(sample)
+                    .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN).last()
+                    .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
+                    .childrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT).last()
+                    .childOfName("Neuron Fragments")
+                    .run(new EntityVisitor() {
+                public void visit(Entity entity) throws Exception {
+                    neuronFragments = entity
+                }
+            });
+            if (neuronFragments!=null) {
+                f.loadChildren(neuronFragments)
+                for(Entity fragment : neuronFragments.getChildren()) {
+                    numFragments++;
+                    Set<EntityData> parentEds = f.e.getParentEntityDatas(null, fragment.id)
+                    parentEdMap.put(fragment.id, parentEds)
+                    numWithRefs += parentEds.size()>1?1:0;
+                    List<Entity> annotations = f.a.getAnnotationsForEntity(null, fragment.id)
+                    annotationMap.put(fragment.id, annotations)
+                    numAnnotations += annotations.size()
+                }
             }
         }
-        else {
-            line = ""
-            slide_code = sampleName
+        
+        def getAnnotationNames() {
+            List<String> annotNames = new ArrayList<>()
+            for(Entity fragment : neuronFragments.getChildren()) {
+                for(Entity annotation : annotationMap.get(fragment.id)) {
+                    annotNames.add(annotation.name)
+                }
+            }
+            return annotNames
         }
     }
 }
-
-class SampleReportNeuronCounter {
-
-    AbstractEntityLoader loader
-    int numFragments;
-
-    public SampleReportNeuronCounter(AbstractEntityLoader loader) {
-        this.loader = loader
-        this.numFragments = 0
-    }
-
-    def count(Entity sample) {
-        EntityVistationBuilder.create(loader).startAt(sample)
-                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN).last()
-                .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT).last()
-                .childrenOfType(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT).last()
-                .childOfName("Neuron Fragments")
-                .run(new EntityVisitor() {
-            public void visit(Entity fragmentCollection) throws Exception {
-                numFragments = EntityUtils.getChildrenForAttribute(fragmentCollection, EntityConstants.ATTRIBUTE_ENTITY).size()
-            }
-        });
-    }
-}
+    
+SampleReportScript script = new SampleReportScript()
+script.run()
+System.exit(0)

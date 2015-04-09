@@ -193,20 +193,39 @@ public class Vaa3DHelper {
         return "";
     }
 
-
+    /**
+     * Take a screenshot with quadratically increase latency. 
+     * For example, when secs=5, the time between screenshots works out to the quadratic sequence 2.5t^2+2.5t 
+     * which means that screenshots are taken at 5 seconds, 15 seconds, 30 seconds, 50 seconds, etc. 
+     * @param outputDir
+     * @param xvfbPortVarName
+     * @param xvfbPidVarName
+     * @param secs
+     * @param maxSecs
+     * @return
+     */
     public static String getXvfbScreenshotLoop(String outputDir, String xvfbPortVarName, String xvfbPidVarName, int secs, int maxSecs) {
         StringBuffer script = new StringBuffer();
         
-	    // Take a screenshot every X seconds
-        script.append("XVFB_SCREENSHOT_DIR=").append(outputDir).append("\n");
+        script.append("XVFB_SCREENSHOT_DIR=\"").append(outputDir).append("\"\n");
         script.append("mkdir -p $XVFB_SCREENSHOT_DIR\n");
-	    script.append("freq="+secs+"\n");
-	    script.append("t=0\n");
-	    script.append("while kill -0 $"+xvfbPidVarName+" 2> /dev/null; do\n");
-	    script.append("  DISPLAY=:$"+xvfbPortVarName+" import -window root $XVFB_SCREENSHOT_DIR/screenshot_$t.png\n");
-	    script.append("  t=$((t+freq))\n");
-	    script.append("  sleep $freq\n");
+	    script.append("ssinc="+secs+"\n"); // increment in how often to take a screenshot
+	    script.append("freq=$ssinc\n"); // how often to take a screenshot
+	    script.append("inc=5\n"); // how often to wake up and check if the process is still running
+	    script.append("t=0\n"); // time counter
+	    script.append("nt=$freq\n");
 	    
+	    script.append("while kill -0 $"+xvfbPidVarName+" 2> /dev/null; do\n");
+	    script.append("  sleep $inc\n");
+	    script.append("  t=$((t+inc))\n");
+	    
+	    // Take a screenshot with an incrementing delay
+	    script.append("  if [ \"$t\" -eq \"$nt\" ]; then\n");
+	    script.append("    freq=$((freq+ssinc))\n");
+	    script.append("    nt=$((t+freq))\n");
+	    script.append("    DISPLAY=:$"+xvfbPortVarName+" import -window root $XVFB_SCREENSHOT_DIR/screenshot_$t.png\n");
+		script.append("  fi\n");
+
 	    // Don't allow it to run for more than a set amount of time, in case it hangs due to requiring user input
 	    script.append("  if [ \"$t\" -gt "+maxSecs+" ]; then\n");
 	    script.append("    echo \"Killing Xvfb session which has been running for over "+maxSecs+" seconds\"\n");

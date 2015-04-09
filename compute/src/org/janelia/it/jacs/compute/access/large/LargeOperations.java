@@ -4,8 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,9 +25,8 @@ import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Large, memory-bound operations which need to be done on disk using EhCache, lest we run out of heap space.
@@ -44,7 +45,7 @@ public class LargeOperations {
 	
 	protected static CacheManager manager;
 	// Local cache for faster access to caches, without all the unnecessary checking that the CacheManager does
-	protected static Map<String,Cache> caches = new HashMap<String,Cache>();
+	protected static Map<String,Cache> caches = new HashMap<>();
 	
 	protected AnnotationDAO annotationDAO;
 
@@ -87,24 +88,18 @@ public class LargeOperations {
 	        conn = annotationDAO.getJdbcConnection();
 	        
             StringBuilder sql = new StringBuilder();
-	        sql.append("select a.id, a.name, aedt.value, aedk.value, aedv.value, a.owner_key ");
+	        sql.append("select a.id, a.name, aedt.value target_id, a.owner_key, group_concat(eap.subject_key separator ',') permitted ");
 	        sql.append("from entity a ");
-	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id ");
-	        sql.append("left outer join entityData aedk on a.id=aedk.parent_entity_id ");
-	        sql.append("left outer join entityData aedv on a.id=aedv.parent_entity_id ");
+	        sql.append("left outer join entityData aedt on a.id=aedt.parent_entity_id and aedt.entity_att=? ");
+	        sql.append("left outer join entity_actor_permission eap on a.id=eap.entity_id ");
 	        sql.append("where a.entity_type = ? ");
-	        sql.append("and aedt.entity_att = ? ");
-	        sql.append("and aedk.entity_att = ? ");
-	        sql.append("and aedv.entity_att = ? ");
-	        sql.append("order by a.owner_key, aedt.value");
+	        sql.append("group by a.id ");
 
 	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 	        stmt.setFetchSize(Integer.MIN_VALUE);
-	        
-	        stmt.setString(1, EntityConstants.TYPE_ANNOTATION);
-	        stmt.setString(2, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-	        stmt.setString(3, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_TERM);
-	        stmt.setString(4, EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+
+            stmt.setString(1, EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+	        stmt.setString(2, EntityConstants.TYPE_ANNOTATION);
 	        
 			rs = stmt.executeQuery();
 			logger.info("    Processing results");
@@ -113,9 +108,8 @@ public class LargeOperations {
 				Long annotationId = rs.getBigDecimal(1).longValue();
 				String annotationName = rs.getString(2);
 				String entityIdStr = rs.getString(3);
-				String key = rs.getString(4);
-				String value = rs.getString(5);
-				String owner = rs.getString(6);
+				String owner = rs.getString(4);
+				String permittedCsv = rs.getString(5);
 				
 				Long entityId = null;
 				try {
@@ -123,19 +117,24 @@ public class LargeOperations {
 				}
 				catch (NumberFormatException e) {
 					logger.warn("Cannot parse annotation target id for annotation="+annotationId);
+					continue;
 				}
 				
                 @SuppressWarnings("unchecked")
-                Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)
-                        getValue(annotationMapCache, entityId);
+                Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)getValue(annotationMapCache, entityId);
 				if (annots == null) {
-					annots = new HashSet<SimpleAnnotation>();
+					annots = new HashSet<>();
 				}
 				
-				annots.add(new SimpleAnnotation(annotationName, key, value, owner));
+				String subjectsCsv = owner;
+				if (!StringUtils.isEmpty(permittedCsv)) {
+				    subjectsCsv += ","+permittedCsv;
+				}
+								
+				annots.add(new SimpleAnnotation(annotationName, subjectsCsv));
 				putValue(annotationMapCache, entityId, annots);
 				i++;
-                }
+            }
 			logger.info("    Processed "+i+" annotations on "+annotationMapCache.getSize()+" targets");
     	}
     	catch (SQLException e) {
@@ -234,7 +233,7 @@ public class LargeOperations {
     	logger.info("    Done, ancestorMap.size="+ancestorMapCache.getSize());
     }
 
-    private static final HashSet<Long> EMPTY_SET = new HashSet<Long>();
+    private static final HashSet<Long> EMPTY_SET = new HashSet<>();
 //    boolean debugAncestors = false;
     private Set<Long> calculateAncestors(Long entityId, Set<Long> visited, int level) {
 
@@ -275,7 +274,7 @@ public class LargeOperations {
     	visited.add(entityId);
     	
     	Set<Long> ancestors = ancestorSet.getAncestors();
-    	for(Long parentId : new HashSet<Long>(ancestors)) {
+    	for(Long parentId : new HashSet<>(ancestors)) {
     		ancestors.addAll(calculateAncestors(parentId, visited, level+1));
     	}
     	
@@ -292,25 +291,62 @@ public class LargeOperations {
      */
     public void buildSageImagePropMap() throws DaoException {
     	
-    	logger.info("Building property map for all Sage images");
     	SageDAO sage = new SageDAO(logger);
     	Connection conn = null;
     	
     	try {
     		conn = annotationDAO.getJdbcConnection();
 
+            logger.info("Building property map for all lines");
+            
+            ResultSetIterator lineIterator = null;
+            Map<String, Map<String,Object>> lineMap = new HashMap<>();
+            try {
+                lineIterator = sage.getAllLineProperties();
+                while (lineIterator.hasNext()) {
+                    Map<String,Object> lineProperties = lineIterator.next();
+                    lineMap.put((String)lineProperties.get(SageDAO.LINE_PROP_LINE_TERM),lineProperties);
+                }
+            }
+            catch (RuntimeException e) {
+                if (e.getCause() instanceof SQLException) {
+                    throw new DaoException(e);
+                }
+                throw e;
+            }
+            finally {
+                if (lineIterator!=null) lineIterator.close();
+            }
+            
+            logger.info("Retrieved properties for "+lineMap.size()+" lines");
+            
+            logger.info("Building property map for all SAGE images");
+
+            int i = 0;
 	    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
 	    		
 	    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-	    		logger.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
-	    		
+	    		logger.info("  Building property map for all SAGE images in Data Set '"+dataSetIdentifier+"'");
+
 	        	ResultSetIterator iterator = null;
 	        	
 	        	try {
                     iterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
 	        		while (iterator.hasNext()) {
-	            		Map<String,Object> row = iterator.next();
-	    				associateImageProperties(conn, row);
+						Map<String,Object> imageProperties = iterator.next();
+	            		
+	            		Map<String,Object> allProps = new HashMap<>(imageProperties);
+                        
+                        String line = (String)imageProperties.get(SageDAO.IMAGE_PROP_LINE_TERM);
+                        if (line!=null) {
+                            Map<String,Object> lineProperties = lineMap.get(line);
+                            if (lineProperties!=null) {
+                                allProps.putAll(lineProperties);
+                            }
+                        }
+                        
+						associateImageProperties(conn, allProps);
+						i++;
 	            	}
 	        	}
 	        	catch (RuntimeException e) {
@@ -324,26 +360,8 @@ public class LargeOperations {
 	            }
 	    	}
 	    	
-			logger.info("  Building property map for all Sage images in the flylight_flip image family");
-			
-	    	ResultSetIterator iterator = null;
+            logger.info("Retrieved properties for "+i+" images");
 	    	
-	    	try {
-	    		iterator = sage.getImagesByFamily("flylight_flip");
-	    		while (iterator.hasNext()) {
-	        		Map<String,Object> row = iterator.next();
-					associateImageProperties(conn, row);
-	        	}
-	    	}
-	    	catch (RuntimeException e) {
-	    		if (e.getCause() instanceof SQLException) {
-	    			throw new DaoException(e);
-	    		}
-	    		throw e;
-	    	}
-	        finally {
-	        	if (iterator!=null) iterator.close();
-	        }
     	}
     	catch (ComputeException e) {
     		throw new DaoException(e);
@@ -359,7 +377,11 @@ public class LargeOperations {
     }
     
     private void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
-    	String imagePath = (String)imageProps.get("path");
+    	String imagePath = (String)imageProps.get(SageDAO.IMAGE_PROP_PATH);
+    	if (imagePath==null) {
+    	    logger.error("Null image property path encountered at imageProps="+imageProps);
+    	    throw new IllegalStateException("Null image property path");
+    	}
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
 		for(Long imageId : annotationDAO.getImageIdsWithName(conn, null, filename)) {

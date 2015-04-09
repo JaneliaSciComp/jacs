@@ -75,6 +75,11 @@ public class ProcessDataAccessor {
         return Task.listOfStringsFromCsvString(value);
     }
 
+    public List<String> getRequiredItemAsCsvStringList(String key) {
+        final String value = getRequiredItemAsString(key);
+        return Task.listOfStringsFromCsvString(value);
+    }
+    
     public Object getRequiredItem(String key) throws IllegalArgumentException {
         final Object value = getItem(key);
         if (value == null) {

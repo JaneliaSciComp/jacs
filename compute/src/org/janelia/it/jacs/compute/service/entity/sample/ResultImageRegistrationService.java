@@ -1,11 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -21,6 +15,12 @@ import org.janelia.it.jacs.model.entity.cv.SampleImageType;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Start at some result entity within a Pipeline run, and look for 2d images corresponding to 3d images. These 
@@ -163,21 +163,25 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}
     	
     	if (default3dImage!=null) {
-        	logger.info("Applying default 3d image to the Result, Pipeline Run, and Sample ("+sampleEntity.getName()+")");
+            logger.info("Applying default 3d image to the result ("+resultEntity.getId()+")");
         	entityHelper.setDefault3dImage(resultEntity, default3dImage);
+            logger.info("Applying default 3d image to the pipeline run ("+pipelineRunEntity.getId()+")");
         	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
 
         	Entity topLevelSample = sampleEntity;
-            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-            if (parentSample==null) {
-                // Already at top level sample
-            }
-            else {
-                // Set the image on the subsample
-                logger.info("Applying default 3d image to the sub-sample ("+parentSample.getName()+")");
-                entityHelper.setDefault3dImage(sampleEntity, default3dImage);
-                topLevelSample = parentSample;
-            }
+        	if (sampleEntity.getName().contains("~")) {
+	            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
+	            if (parentSample==null) {
+	                // Already at top level sample
+	            	logger.warn("Sub-sample "+sampleEntity.getName()+" has no ancestor sample");
+	            }
+	            else {
+	                // Set the image on the sub-sample
+	                logger.info("Applying default 3d image to the sub-sample ("+sampleEntity.getName()+")");
+	                entityHelper.setDefault3dImage(sampleEntity, default3dImage);
+	                topLevelSample = parentSample;
+	            }
+        	}
             
             // Set the top level sample, if this image matches the user's preference for the sample's data set
             
@@ -185,11 +189,11 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
             if (dataSet!=null) {
                 String sampleImageTypeName = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
-                logger.info("Sample image type is: "+sampleImageTypeName);
+                logger.debug("Sample image type is: "+sampleImageTypeName);
                 if (sampleImageTypeName!=null) {
                     SampleImageType sampleImageType = SampleImageType.valueOf(sampleImageTypeName);
                     if (sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
-                        logger.info("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
+                        logger.debug("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
                         entityHelper.setDefault3dImage(topLevelSample, default3dImage);  
                     }
                 }
@@ -201,12 +205,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             }
             
         	// Find and apply fast 3d image, if available
-    		Entity separation = EntityUtils.getLatestChildOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+    		Entity separation = findSeparation(resultEntity, default3dImage);
     		if (separation!=null) {
             	Entity fast3dImage = findFast3dImage(separation);
             	entityHelper.setDefault3dImage(separation, default3dImage);
             	if (fast3dImage!=null) {
-            		logger.info("Found default fast 3d image, applying to "+default3dImage.getName());
+            		logger.info("Found default fast 3d image in separation "+separation.getId()+", applying to "+default3dImage.getName());
             		entityHelper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fast3dImage);
         		}
     		}
@@ -242,6 +246,26 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}
 	}
 
+	/**
+	 * Find the corresponding neuron separation for the given 3d image. 
+	 * @param resultEntity
+	 * @param default3dImage
+	 * @return
+	 */
+	private Entity findSeparation(Entity resultEntity, Entity default3dImage) {
+		Entity foundEntity = null;
+		for(Entity separation : EntityUtils.getChildrenOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
+			// We'll take the latest if we don't find one matching our input image, because not all entity types keep track of the Input Image attribute
+			foundEntity = separation;
+    		EntityData inputImageEd = foundEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_INPUT_IMAGE);
+			if (inputImageEd!=null && inputImageEd.getChildEntity()!=null && inputImageEd.getChildEntity().getId().equals(default3dImage.getId())) {
+				// Found it, so let's stop looking
+				break;
+			}
+		}
+		return foundEntity;
+	}
+	
     private Entity findDefaultImage(Entity result) throws Exception {
         
         logger.info("  Result's default 3d image is missing. Attempting to infer...");
@@ -326,6 +350,9 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         case Latest: return true;
         case Unaligned20x: return alignmentSpace==null && Objective.OBJECTIVE_20X.getName().equals(objectiveName);
         case Unaligned63x: return alignmentSpace==null && Objective.OBJECTIVE_63X.getName().equals(objectiveName);
+		// This code walks the tree and the 63X will be visited last in both cases that match
+		case LatestUnaligned: return alignmentSpace==null;
+		case LatestAligned: return alignmentSpace!=null;
         case Aligned20x: return alignmentSpace!=null && Objective.OBJECTIVE_20X.getName().equals(objectiveName);
         case Aligned63x: return alignmentSpace!=null && Objective.OBJECTIVE_63X.getName().equals(objectiveName);
         }

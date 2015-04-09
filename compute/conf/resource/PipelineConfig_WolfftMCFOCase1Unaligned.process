@@ -2,29 +2,36 @@
     <sequence>
 
         <input name="PIPELINE_PROCESS" value="WolfftMCFOCase1Unaligned"/>
-        <input name="20X_MERGE_ALGORITHMS"/>
-        <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488;membrane=Alexa Fluor 594"/>
-        <input name="OUTPUT_CHANNEL_ORDER_20X" value="membrane,reference"/>
-        <input name="CHANNEL_DYE_SPEC_63X" value="membrane_ha=,Alexa Fluor 647;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488"/>
+        <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488,Cy2"/>
+        <input name="OUTPUT_CHANNEL_ORDER_20X" value="reference"/>
+        <input name="CHANNEL_DYE_SPEC_63X" value="membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"/>
         <input name="OUTPUT_CHANNEL_ORDER_63X" value="membrane_ha,membrane_v5,membrane_flag,reference"/>
 
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="REUSE_PROCESSING"/>
+            <input name="REUSE_ALIGNMENT"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
-            <input name="TASK_PARAMETER_3" value="reuse alignment"/>
-            <input name="PROCESS_VARIABLE_3" value="REUSE_ALIGNMENT"/>
+            <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>
+            <input name="PROCESS_VARIABLE_2" value="REUSE_PIPELINE_RUNS"/>
+            <input name="TASK_PARAMETER_3" value="reuse processing"/>
+            <input name="PROCESS_VARIABLE_3" value="REUSE_PROCESSING"/>
+            <input name="TASK_PARAMETER_4" value="reuse alignment"/>
+            <input name="PROCESS_VARIABLE_4" value="REUSE_ALIGNMENT"/>
             <output name="SAMPLE_ENTITY_ID"/>
+            <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
         </operation>
 
         <!-- Init variables -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-            <input name="REUSE_ALIGNMENT"/>
             <input name="OVERRIDE" value="false"/>
+            <input name="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_1" value="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
             <output name="REUSE_ALIGNMENT"/>
@@ -33,6 +40,7 @@
         <!-- Get sub-samples -->
         <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
             <output name="PARENT_SAMPLE_ID"/>
             <output name="SAMPLE_20X_ID"/>
             <output name="SAMPLE_63X_ID"/>
@@ -43,8 +51,8 @@
             <include name="20x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_20X_ID}"/>
                 <input name="PIPELINE_NAME" value="20x Unaligned Sample Pipeline"/>
-                <input name="MERGE_ALGORITHMS" value=""/>
-                <input name="STITCH_ALGORITHMS" value=""/>
+                <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
+                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="ALIGNMENT_ALGORITHMS" value=""/>
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value=""/>
                 <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value=""/>

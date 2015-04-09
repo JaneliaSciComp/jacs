@@ -22,6 +22,7 @@ import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.model.user_data.*;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -176,7 +177,7 @@ public class ComputeBaseDAO {
             log.trace("getMostRecentTasksWithName(owner="+owner+", taskName="+taskName+")");    
         }
         
-        String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
+        String ownerName = EntityUtils.getNameFromSubjectKey(owner);
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select t from Task t ");
         hql.append("where t.owner = :owner ");
@@ -193,7 +194,7 @@ public class ComputeBaseDAO {
             log.trace("getIncompleteTasks(owner="+owner+", taskName="+taskName+")");    
         }
         
-        String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
+        String ownerName = EntityUtils.getNameFromSubjectKey(owner);
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select t from Task t ");
         hql.append("inner join fetch t.events ");

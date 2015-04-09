@@ -16,8 +16,8 @@
 
         <!-- Default variables if they haven't been explicitly defined by task. -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-            <input name="REUSE_ALIGNMENT"/>
             <input name="OVERRIDE" value="false"/>
+            <input name="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_1" value="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
             <output name="REUSE_ALIGNMENT"/>
@@ -32,6 +32,7 @@
             <input name="STITCH_ALGORITHMS" value=""/> <!-- no stitch -->
             <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flyalign20x_JBA_Qiscore.sh"/>
+            <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment"/>
             <!-- skip alignment for VNC images -->
             <input name="SKIP_ALIGNMENT_TILE_FILTER" value="(?i).*(ventral_nerve_cord).*"/>
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>

@@ -10,17 +10,25 @@
         
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="REUSE_PROCESSING"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
+            <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>
+            <input name="PROCESS_VARIABLE_2" value="REUSE_PIPELINE_RUNS"/>
+            <input name="TASK_PARAMETER_3" value="reuse processing"/>
+            <input name="PROCESS_VARIABLE_3" value="REUSE_PROCESSING"/>
             <output name="SAMPLE_ENTITY_ID"/>
+            <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_PROCESSING"/>
         </operation>
         
         <!-- Get sub-samples -->
         <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
             <output name="PARENT_SAMPLE_ID"/>
             <output name="SAMPLE_20X_ID"/>
             <output name="SAMPLE_63X_ID"/>

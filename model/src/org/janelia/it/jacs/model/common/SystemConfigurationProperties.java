@@ -36,7 +36,6 @@ public class SystemConfigurationProperties extends Properties implements Seriali
 
     static {
         fileNames.add("jacs.properties");
-        fileNames.add("dma.properties");
     }
 
     private SystemConfigurationProperties() {

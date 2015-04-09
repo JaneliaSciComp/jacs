@@ -142,7 +142,7 @@ $cfg = new Config::IniFiles( -file => $config_ini_file );
 my @omitted_services = $cfg->val('unit_test_flags','omitted');
 
 foreach my $service (sort {$a cmp $b} keys %wsdl_services) {
-    #TODO: Parallelize this shnizzit.  Or not.  Whatevs.
+    # Parallelize this shnizzit.  Or not.  Whatevs.
 
     print "-------- Found service $service --------------\n";
 

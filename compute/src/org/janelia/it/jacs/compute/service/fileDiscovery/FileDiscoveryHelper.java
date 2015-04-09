@@ -211,19 +211,15 @@ public class FileDiscoveryHelper extends EntityHelper {
 
     public Entity createFolderForFile(String name, boolean isCommonRoot, String dir) throws Exception {
         logger.info("Creating new folder with name=" + name+" (isCommonRoot="+isCommonRoot+")");
-        Entity folder = new Entity();
-        Date createDate = new Date();
-        folder.setCreationDate(createDate);
-        folder.setUpdatedDate(createDate);
-        folder.setOwnerKey(ownerKey);
-        folder.setName(name);
-        folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
+        Entity folder = null;
         if (isCommonRoot) {
-        	EntityUtils.addAttributeAsTag(folder, EntityConstants.ATTRIBUTE_COMMON_ROOT);
+            EntityData folderEd = entityBean.createFolderInDefaultWorkspace(ownerKey, name);
+            folder = folderEd.getChildEntity();
         }
-        if (dir!=null) {
-        	folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir);
+        else {
+            
         }
+    	folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir);
         folder = entityBean.saveOrUpdateEntity(folder);
         logger.info("Saved folder " + name+" as " + folder.getId());
         return folder;

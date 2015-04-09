@@ -12,5 +12,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/MySQL"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Reflections"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/MongoDB"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Jama"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>

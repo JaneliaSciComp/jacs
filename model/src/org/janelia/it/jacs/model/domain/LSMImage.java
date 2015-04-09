@@ -1,9 +1,9 @@
 package org.janelia.it.jacs.model.domain;
 
+import org.jongo.marshall.jackson.oid.Id;
+
 import java.util.Map;
 import java.util.Set;
-
-import org.jongo.marshall.jackson.oid.Id;
 
 public class LSMImage implements DomainObject, HasImages {
 
@@ -24,6 +24,7 @@ public class LSMImage implements DomainObject, HasImages {
     private String line;
     private String mountingProtocol;
     private String tissueOrientation;
+    private String vtLine;
     private Integer numChannels;
     private String objective;
     private String opticalResolution;
@@ -130,6 +131,15 @@ public class LSMImage implements DomainObject, HasImages {
     public void setTissueOrientation(String tissueOrientation) {
         this.tissueOrientation = tissueOrientation;
     }
+
+    public String getVtLine() {
+        return vtLine;
+    }
+
+    public void setVtLine(String vtLine) {
+        this.vtLine = vtLine;
+    }
+
     public Integer getNumChannels() {
         return numChannels;
     }

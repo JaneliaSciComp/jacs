@@ -92,6 +92,21 @@
     </operation>
     
     <operation>
+        <description>Retire all the samples which are in "Desync" status for the given user</description>
+        <name>runSampleRetirement</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Retire all the samples which are in "Desync" status for the all users</description>
+        <name>runSampleRetirement</name>
+    </operation>
+    
+    <operation>
         <description>Archive the given sample</description>
         <name>runSingleSampleArchival</name>
         <parameter>
@@ -211,6 +226,11 @@
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
+           <name>extraParams</name>
+           <type>java.lang.String</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -235,6 +255,11 @@
             <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
+           <name>extraParams</name>
+           <type>java.lang.String</type>
         </parameter>
     </operation>
     
@@ -286,6 +311,11 @@
            <name>processName</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
+           <name>extraParams</name>
+           <type>java.lang.String</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -301,6 +331,11 @@
            <name>processName</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
+           <name>extraParams</name>
+           <type>java.lang.String</type>
+        </parameter>
     </operation>
         
     <operation>
@@ -314,6 +349,11 @@
         <parameter>
            <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
            <name>processName</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>One extra parameter to provide to the process. Must be formatted as "key=value".</description>
+           <name>extraParams</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>

@@ -1,4 +1,3 @@
-
 package org.janelia.it.jacs.compute.service.image;
 
 import java.io.File;
@@ -12,6 +11,7 @@ import java.util.Map;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
@@ -108,21 +108,30 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
                 .run(new EntityVisitor() {
             public void visit(Entity tile) throws Exception {
             	populateChildren(tile);
-            	String lsm1 = null;
-            	String lsm2 = null;
+            	String lsmName1 = null;
+            	String lsmName2 = null;
+            	String lsmPath1 = null;
+            	String lsmPath2 = null;
             	for(Entity lsm : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
+            		String lsmName = lsm.getName();
                     // The actual filename of the LSM we're dealing with is not compressed
-            		String lsmName = ArchiveUtils.getDecompressedFilepath(lsm.getName());
-            		lsmEntityMap.put(lsmName, lsm);
-            		if (lsm1==null) lsm1 = lsmName;
-            		else if (lsm2==null) lsm2 = lsmName;
+            		String lsmPath = ArchiveUtils.getDecompressedFilepath(lsmName);
+            		lsmEntityMap.put(lsmPath, lsm);
+            		if (lsmName1==null) {
+            			lsmName1 = lsmName;
+            			lsmPath1 = lsmPath;
+            		}
+            		else if (lsmName2==null) {
+            			lsmName2 = lsmName;
+            			lsmPath2 = lsmPath;
+            		}
             		else {
             			logger.warn("Too many LSMs for tile "+tile.getId()+" in sample "+sampleEntity.getId());
             		}
             	}
             	if (gatherLsms) {
 	            	String tileName = tile.getName().replaceAll(" ", "_");
-		        	mergedLsmPairs.add(new MergedLsmPair(lsm1, lsm2, null, tileName));
+		        	mergedLsmPairs.add(new MergedLsmPair(lsmName1, lsmName2, lsmPath1, lsmPath2, null, tileName));
             	}
             }
         });
@@ -183,7 +192,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     		String inputFile2 = null;
     		String chanSpec2 = null;
     		String effector2 = null;
-            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag()+"-"+effector1;
+            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag().replaceAll("\\s+","_")+"-"+effector1;
             String colorSpec1 = outputColorSpec;
             String colorSpec2 = null;
 
@@ -296,11 +305,14 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("fpid=$!\n");
         
         // Spy on Xvfb
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb", "PORT", "fpid", 30, 3600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 7200));
         
 		// Convert movies to H.246
         script.append("fin=$OUTPUT_PREFIX.avi\n");
         script.append("fout=$OUTPUT_PREFIX.mp4\n");
+        script.append(Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
+        script.append("fin=${OUTPUT_PREFIX}-Signal.avi\n");
+        script.append("fout=${OUTPUT_PREFIX}-Signal.mp4\n");
         script.append(Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
         
         // Clean up 
@@ -310,7 +322,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 40;
+    	return 88;
     }
 
 	@Override
@@ -325,12 +337,12 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 
     	File[] aviFiles = FileUtil.getFilesWithSuffixes(outputDir, ".avi");
     	if (aviFiles.length > 0) {
-			throw new MissingDataException("MP4 generation failed for "+resultFileNode.getDirectoryPath());
+			throw new MissingGridResultException(outputDir.getAbsolutePath(), "MP4 generation failed for "+resultFileNode.getDirectoryPath());
     	}
 
     	File[] mp4Files = FileUtil.getFilesWithSuffixes(outputDir, ".mp4");
     	if (mp4Files.length < 1) {
-			throw new MissingDataException("MP4 generation failed for "+resultFileNode.getDirectoryPath());
+			throw new MissingGridResultException(outputDir.getAbsolutePath(), "MP4 generation failed for "+resultFileNode.getDirectoryPath());
     	}
     	
         FileDiscoveryHelper helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
@@ -368,7 +380,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             }
         }
         catch (Exception e) {
-            throw new MissingDataException("Error discovering files in "+outputDir,e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Error discovering files in "+outputDir,e);
         }
 	}
 }

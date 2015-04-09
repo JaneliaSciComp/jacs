@@ -13,6 +13,7 @@ public class SageTerm implements Serializable {
 	private String displayName;
 	private String dataType;
 	private String definition;
+	private String cv;
 
     public SageTerm() {
     }
@@ -20,14 +21,20 @@ public class SageTerm implements Serializable {
     public SageTerm(String name,
                     String displayName,
                     String dataType,
-                    String definition) {
+                    String definition,
+					String cv) {
         this.name = name;
         this.displayName = displayName;
         this.dataType = dataType;
         this.definition = definition;
+		this.cv = cv;
     }
 
-    public String getName() {
+    public String getKey() {
+		return cv+"_"+name;
+	}
+
+	public String getName() {
 		return name;
 	}
 	public void setName(String name) {
@@ -51,34 +58,43 @@ public class SageTerm implements Serializable {
 	public void setDefinition(String definition) {
 		this.definition = definition;
 	}
-	
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+
+	public String getCv() {
+		return cv;
 	}
-	
+
+	public void setCv(String cv) {
+		this.cv = cv;
+	}
+
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SageTerm other = (SageTerm) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof SageTerm)) return false;
+
+		SageTerm sageTerm = (SageTerm) o;
+
+		if (!cv.equals(sageTerm.cv)) return false;
+		if (!name.equals(sageTerm.name)) return false;
+
 		return true;
 	}
-	
+
+	@Override
+	public int hashCode() {
+		int result = name.hashCode();
+		result = 31 * result + cv.hashCode();
+		return result;
+	}
+
 	@Override
 	public String toString() {
-		return "SageTerm[name:"+name+",displayName:"+displayName+",dataType:"+dataType+"]";
+		return "SageTerm[" +
+				"name='" + name + '\'' +
+				", displayName='" + displayName + '\'' +
+				", dataType='" + dataType + '\'' +
+				", definition='" + definition + '\'' +
+				", cv='" + cv + '\'' +
+				']';
 	}
 }

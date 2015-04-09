@@ -28,7 +28,7 @@ public class CentralBrainAlignmentService extends LegacyAlignmentService {
 
         logger.info("Starting "+getClass().getName()+" with taskId=" + task.getObjectId() + 
         		" resultNodeId=" + resultFileNode.getObjectId() + " resultDir=" + resultFileNode.getDirectoryPath() +
-        		" workingDir="+resultFileNode.getDirectoryPath() + " inputFilename="+input1.getInputFilename());
+        		" workingDir="+resultFileNode.getDirectoryPath() + " inputFilename="+input1.getFilepath());
 
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3dLibrarySetupCmd()+"\n");
@@ -39,7 +39,7 @@ public class CentralBrainAlignmentService extends LegacyAlignmentService {
             " -l " +  EXECUTABLE_DIR + LOBESEG_EXE_PATH +
             " -t " +  EXECUTABLE_DIR + TEMPLATE_DIR +
             " -w " +  resultFileNode.getDirectoryPath() +
-            " -i " +  input1.getInputFilename() + 
+            " -i " +  input1.getFilepath() + 
         	" -r \"" + input1.getOpticalResolution() + "\"" +
         	" -c " +  input1.getRefChannel() + "\n");
         writer.write(script.toString());

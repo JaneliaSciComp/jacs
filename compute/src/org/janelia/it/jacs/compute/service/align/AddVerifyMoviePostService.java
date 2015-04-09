@@ -8,7 +8,9 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -34,6 +36,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "movieConfiguration.";
 
+    private File outputDir;
     private File outputFile;
     
     private Entity sampleEntity;
@@ -44,7 +47,8 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
     @Override
     protected void init() throws Exception {
 
-    	this.outputFile = new File(resultFileNode.getDirectoryPath(), OUTPUT_FILE_NAME);
+        this.outputDir = new File(resultFileNode.getDirectoryPath());
+    	this.outputFile = new File(outputFile, OUTPUT_FILE_NAME);
     	
         String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         if (sampleEntityId == null || "".equals(sampleEntityId)) {
@@ -112,7 +116,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
         
         String objective = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
         String chanSpec = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        int refChan = chanSpec.indexOf('r')+1;
+        String refChan = ChanSpecUtils.getReferenceChannelCSV(chanSpec);
         
         String template = objective.equals("20x") ? template20x : template63x;
         
@@ -154,7 +158,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
 	public void postProcess() throws MissingDataException {
 
         if (!outputFile.exists()) {
-            throw new MissingDataException("Missing output file: "+outputFile.getAbsolutePath());
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Missing output file: "+outputFile.getAbsolutePath());
         }
 
         String  alignmentDir = alignment.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -164,7 +168,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
             movePath(outputFile.getAbsolutePath(), finalFile.getAbsolutePath());
         }
         catch (Exception e) {
-            throw new MissingDataException("Error putting file into alignment location",e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Error putting file into alignment location",e);
         }
 
         try {
@@ -174,7 +178,7 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
             entityHelper.addToParent(defaultImage, verifyEntity, 0, EntityConstants.ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE);
         }
         catch (Exception e) {
-            throw new MissingDataException("Error creating verify movie entities",e);
+            throw new MissingGridResultException(outputDir.getAbsolutePath(), "Error creating verify movie entities",e);
         }
 	}
 

@@ -1,16 +1,17 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.util.List;
-
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.util.List;
 
 /**
  * Stitch a bunch of merged files together and blend them. Parameters:
@@ -66,6 +67,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         if (bulkMergeParamObj instanceof List) {
         	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
         	if (mergedLsmPairs.size()==1) {
+        		logger.warn("Creating stitching bypass script. This is an old code path that should not longer be exercised!");
         		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
         	}            
         	else {
@@ -85,6 +87,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     }
     
     /**
+     * TODO: remove this method
      * if there is just one merged file we have to bypass the stitcher altogether because otherwise we get a bogus 
      * output from it. 
      * @param writer
@@ -144,14 +147,14 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
-    		throw new MissingDataException("Stitch/blend core dumped for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Stitch/blend core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
         String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
         File stitchedFile = new File(stitchedFilename);
         
     	if (!stitchedFile.exists()) {
-    		throw new MissingDataException("Stitched output file not found for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Stitched output file not found for "+resultFileNode.getDirectoryPath());
     	}
 	}
     

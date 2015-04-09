@@ -8,10 +8,16 @@
         <input name="REUSE_PROCESSING"/>
         <input name="REUSE_ALIGNMENT"/>
         <input name="REUSE_PIPELINE_RUNS"/>
+        <input name="RUN_OBJECTIVES"/>
 	    
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="REUSE_PROCESSING"/>
+            <input name="REUSE_ALIGNMENT"/>
+            <input name="RUN_OBJECTIVES"/>
             <input name="TASK_PARAMETER_1" value="sample entity id"/>
             <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
             <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>
@@ -20,10 +26,13 @@
             <input name="PROCESS_VARIABLE_3" value="REUSE_PROCESSING"/>
             <input name="TASK_PARAMETER_4" value="reuse alignment"/>
             <input name="PROCESS_VARIABLE_4" value="REUSE_ALIGNMENT"/>
+            <input name="TASK_PARAMETER_5" value="run objectives"/>
+            <input name="PROCESS_VARIABLE_5" value="RUN_OBJECTIVES"/>
             <output name="SAMPLE_ENTITY_ID"/>
             <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
+            <output name="RUN_OBJECTIVES"/>
         </operation>
         
         <!-- By default, rerun all pipelines even if they already have results, but reuse results if they're available -->
@@ -63,17 +72,18 @@
 					
 				<!-- Spawn a new task to process the Sample	-->
 		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-		            <!--
-		            <input name="WAIT_FOR_COMPLETION" value="true"/>
-		            -->
 		            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
 		            <input name="DISPLAY_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
 		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
 		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
-                    <input name="PARAMETER_2_KEY" value="reuse processing"/>
-                    <input name="PARAMETER_2_VALUE" value="$V{REUSE_PROCESSING}"/>
-                    <input name="PARAMETER_3_KEY" value="reuse alignment"/>
-                    <input name="PARAMETER_3_VALUE" value="$V{REUSE_ALIGNMENT}"/>
+                    <input name="PARAMETER_2_KEY" value="reuse pipeline runs"/>
+                    <input name="PARAMETER_2_VALUE" value="$V{REUSE_PIPELINE_RUNS}"/>
+                    <input name="PARAMETER_3_KEY" value="reuse processing"/>
+                    <input name="PARAMETER_3_VALUE" value="$V{REUSE_PROCESSING}"/>
+                    <input name="PARAMETER_4_KEY" value="reuse alignment"/>
+                    <input name="PARAMETER_4_VALUE" value="$V{REUSE_ALIGNMENT}"/>
+                    <input name="PARAMETER_5_KEY" value="run objectives"/>
+                    <input name="PARAMETER_5_VALUE" value="$V{RUN_OBJECTIVES}"/>
 		        </operation>
 			        
 	    	</sequence>

@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -12,6 +8,10 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Upgrade the model to use the most current entity structure.
@@ -22,15 +22,14 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
 
 	private static final Logger logger = Logger.getLogger(BulkSampleImageRegistrationService.class);
 
-    public transient static final String PARAM_testRun = "is test run";
+//    public transient static final String PARAM_testRun = "is test run";
 	
     protected int numSamples;
     
-    private Set<Long> visited = new HashSet<Long>();
+    private Set<Long> visited = new HashSet<>();
     private boolean isDebug = false;
     
     public void execute() throws Exception {
-        ;
         logger.info("Running sample image registration for all "+ownerKey+" samples");
         
         if (isDebug) {
@@ -43,10 +42,17 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (StringUtils.isEmpty(sampleEntityId)) {
         	List<Entity> samples = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
-        	logger.info("Processing "+samples.size()+" samples");
-            for(Entity sample : samples) {
+        	if (null==samples) {
+				logger.info("User "+ownerKey+" has null returned for samples");
+				return;
+			}
+			logger.info("Processing "+samples.size()+" samples");
+            int counter = 0;
+			for(Entity sample : samples) {
                 try {
-                    processSample(sample);
+                    counter++;
+					logger.info("Processing images for sample "+counter+" of "+samples.size());
+					processSample(sample);
                 }
                 catch (Exception e) {
                     logger.error("Error processing sample: "+sample.getName(),e);

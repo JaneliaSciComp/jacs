@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -27,7 +29,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     protected String dataSetName = null;
 
     protected int sageRowsProcessed = 0;
-    protected int samplesMovedToRetiredFolder = 0;
+    protected int samplesMarkedDesync = 0;
     
     public void execute() throws Exception {
 
@@ -55,54 +57,40 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 logger.info("Processing data set: "+dataSet.getName());
                 processSageDataSet(dataSet);
                 sampleHelper.annexSamples();
-                cleanUnvisitedSamples(dataSet);
+                markDesyncedSamples(dataSet);
                 fixOrderIndices(dataSet);
             }
         }
 
-        logger.info("Processed "+sageRowsProcessed+" rows, created "+sampleHelper.getNumSamplesCreated()+
+        logger.info("Processed "+sageRowsProcessed+" rows for "+ownerKey+", created "+sampleHelper.getNumSamplesCreated()+
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
         		" samples to their corresponding data set folders. Annexed "+sampleHelper.getNumSamplesAnnexed()+
         		" samples, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
-        		" samples to Blocked Data folder, and moved "+samplesMovedToRetiredFolder+" samples to the Retired Data folder.");
+        		" samples to Blocked Data folder, and marked "+samplesMarkedDesync+" samples as desynced.");
     }
     
     /**
      * Provide either imageFamily or dataSetIdentifier. 
      */
     protected void processSageDataSet(Entity dataSet) throws Exception {
-    	
-    	SageDAO sageDAO = new SageDAO(logger);
+
+        Multimap<String,SlideImage> slideGroups = LinkedListMultimap.create();
+        
+		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+		logger.info("Querying SAGE for data set: "+dataSetIdentifier);
+		
     	ResultSetIterator iterator = null;
     	try {
-    		List<SlideImage> slideGroup = null;
-    		String currSlideCode = null;
+        	SageDAO sageDAO = new SageDAO(logger);
+			iterator = sageDAO.getAllImagePropertiesByDataSet(dataSetIdentifier);
     		
-    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-			logger.info("Querying SAGE for data set: "+dataSetIdentifier);
-			iterator = sageDAO.getImagesByDataSet(dataSetIdentifier);
-    		
+			// Load all slides for this data set into memory, so that we don't over-stay our welcome on the database cursor
+			// in case we need to do some time-intensive stuff (e.g. adding permissions)
         	while (iterator.hasNext()) {
         		Map<String,Object> row = iterator.next();
         		SlideImage slideImage = createSlideImage(row);
-        		
-				if (!slideImage.getSlideCode().equals(currSlideCode)) {
-					// Process the current group
-					if (slideGroup != null) {
-		                processSlideGroup(dataSet, currSlideCode, slideGroup);
-					}
-					// Start a new group
-					currSlideCode = slideImage.getSlideCode();
-					slideGroup = new ArrayList<SlideImage>();
-				}
-				
-				slideGroup.add(slideImage);
+				slideGroups.put(slideImage.getSlideCode(), slideImage);
 				sageRowsProcessed++;
-			}
-
-			// Process the last group
-			if (slideGroup != null) {
-                processSlideGroup(dataSet, currSlideCode, slideGroup);
 			}
     	}
         finally {
@@ -116,25 +104,36 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 }
             }
         }
+		
+    	// Now process all the slide
+		for (String slideCode : slideGroups.keySet()) {
+            processSlideGroup(dataSet, slideCode, slideGroups.get(slideCode));
+		}
     }
     
-    protected SlideImage createSlideImage(Map<String,Object> row) {
+    protected SlideImage createSlideImage(Map<String,Object> row) throws Exception {
+//        for (String s : row.keySet()) {
+//            System.out.println("Key "+s+" maps to "+row.get(s));
+//        }
+//        throw new Exception("Done listing the values returned from the row");
+
         SlideImage slideImage = new SlideImage();
-        slideImage.setSageId((Long)row.get("id"));
-		slideImage.setSlideCode((String)row.get("slide_code"));
-		slideImage.setImagePath((String)row.get("path"));
-		slideImage.setTileType((String)row.get("tile"));
-		slideImage.setLine((String)row.get("line"));
-        slideImage.setCrossBarcode((String)row.get("cross_barcode"));
-		slideImage.setChannelSpec((String)row.get("channel_spec"));
-		slideImage.setGender((String)row.get("gender"));
-		slideImage.setArea((String)row.get("area"));
-		slideImage.setAge((String)row.get("age"));
-		slideImage.setChannels((String)row.get("channels"));
-		slideImage.setMountingProtocol((String)row.get("mounting_protocol"));
-        slideImage.setTissueOrientation((String)row.get("tissue_orientation"));
-		slideImage.setEffector((String)row.get("effector"));
-		String objectiveStr = (String)row.get("objective");
+        slideImage.setSageId((Long)row.get("image_query_id"));
+		slideImage.setSlideCode((String) row.get("light_imagery_slide_code"));
+		slideImage.setImagePath((String) row.get("image_query_path"));
+		slideImage.setTileType((String) row.get("light_imagery_tile"));
+		slideImage.setLine((String) row.get("image_query_line"));
+        slideImage.setCrossBarcode((String) row.get("light_imagery_cross_barcode"));
+		slideImage.setChannelSpec((String) row.get("light_imagery_channel_spec"));
+		slideImage.setGender((String) row.get("light_imagery_gender"));
+		slideImage.setArea((String) row.get("light_imagery_area"));
+		slideImage.setAge((String) row.get("light_imagery_age"));
+		slideImage.setChannels((String) row.get("light_imagery_channels"));
+		slideImage.setMountingProtocol((String) row.get("light_imagery_mounting_protocol"));
+        slideImage.setTissueOrientation((String) row.get("light_imagery_tissue_orientation"));
+        slideImage.setVtLine((String) row.get("light_imagery_vt_line"));
+		slideImage.setEffector((String)row.get("light_imagery_effector"));
+		String objectiveStr = (String)row.get("light_imagery_objective");
 		if (objectiveStr!=null) {
 		    if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
                 slideImage.setObjective(Objective.OBJECTIVE_10X.getName());
@@ -149,24 +148,24 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 slideImage.setObjective(Objective.OBJECTIVE_63X.getName());
             }
 		}
-		String voxelSizeX = (String)row.get("voxel_size_x");
-		String voxelSizeY = (String)row.get("voxel_size_y");
-		String voxelSizeZ = (String)row.get("voxel_size_z");
+		String voxelSizeX = (String)row.get("light_imagery_voxel_size_x");
+		String voxelSizeY = (String)row.get("light_imagery_voxel_size_y");
+		String voxelSizeZ = (String)row.get("light_imagery_voxel_size_z");
 		if (voxelSizeX!=null && voxelSizeY!=null && voxelSizeZ!=null) {
 		    slideImage.setOpticalRes(voxelSizeX,voxelSizeY,voxelSizeZ);
 		}
-		String imageSizeX = (String)row.get("dimension_x");
-        String imageSizeY = (String)row.get("dimension_y");
-        String imageSizeZ = (String)row.get("dimension_z");
+		String imageSizeX = (String)row.get("light_imagery_dimension_x");
+        String imageSizeY = (String)row.get("light_imagery_dimension_y");
+        String imageSizeZ = (String)row.get("light_imagery_dimension_z");
         if (imageSizeX!=null && imageSizeY!=null && imageSizeZ!=null) {
             slideImage.setPixelRes(imageSizeX,imageSizeY,imageSizeZ);
         }
 		return slideImage;
     }
     
-    protected void processSlideGroup(Entity dataSet, String slideCode, List<SlideImage> slideGroup) throws Exception {
+    protected void processSlideGroup(Entity dataSet, String slideCode, Collection<SlideImage> slideGroup) throws Exception {
     	
-        HashMap<String, SlideImageGroup> tileGroups = new HashMap<String, SlideImageGroup>();
+        HashMap<String, SlideImageGroup> tileGroups = new HashMap<>();
         
         logger.info("Processing "+slideCode+", "+slideGroup.size()+" slide images");
         
@@ -200,7 +199,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             tileNum++;
         }
         
-    	List<SlideImageGroup> tileGroupList = new ArrayList<SlideImageGroup>(tileGroups.values());
+    	List<SlideImageGroup> tileGroupList = new ArrayList<>(tileGroups.values());
     	
         // Sort the pairs by their tag name
         Collections.sort(tileGroupList, new Comparator<SlideImageGroup>() {
@@ -213,30 +212,22 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         sampleHelper.createOrUpdateSample(null, slideCode, dataSet, tileGroupList);
     }
     
-    protected void cleanUnvisitedSamples(Entity dataSet) throws Exception {
+    protected void markDesyncedSamples(Entity dataSet) throws Exception {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
         if (dataSetFolder==null) return;
         
-        logger.info("Cleaning unvisited samples in dataSet: "+dataSet.getName());
+        logger.info("Marking desynchronized samples in dataSet: "+dataSet.getName());
 
         // Make sure to fetch fresh samples, so that we have the latest visited flags
-        Map<Long, Entity> samples = new HashMap<Long, Entity>();
+        Map<Long, Entity> samples = new HashMap<>();
         for(Entity entity : entityBean.getChildEntities(dataSetFolder.getId())) {
             if (entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
                 samples.put(entity.getId(), entity);    
             }   
         }
         
-        Set<Long> retiredIds = new HashSet<Long>();
-        Entity retiredDataFolder = sampleHelper.getRetiredDataFolder();
-        for(EntityData ed : retiredDataFolder.getEntityData()) {
-            if (ed.getChildEntity()!=null) {
-                retiredIds.add(ed.getChildEntity().getId());
-            }
-        }
-        
-        List<EntityData> dataSetEds = new ArrayList<EntityData>(dataSetFolder.getEntityData());
+        List<EntityData> dataSetEds = new ArrayList<>(dataSetFolder.getEntityData());
         for(EntityData ed : dataSetEds) {
             Entity tmpChildEntity = ed.getChildEntity();
             // Ignore Data Set attributes that have no child target entity
@@ -244,26 +235,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             Entity sample = samples.get(tmpChildEntity.getId());
             if (sample==null || !sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) continue;
             if (sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISITED)==null) {
-                // Sample was not visited this time around, it should be:
-                if (retiredIds.contains(sample.getId())) {
-                    logger.info("  Sample was already retired. Removing from data folder: "+sample.getName()+" (id="+sample.getId()+")");   
-                    entityBean.deleteEntityData(ed);
+                // Sample was not visited this time around, it should be marked as desynchronized, and eventually retired
+                boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS));
+                // Ignore blocked samples, they don't need to be synchronized 
+                if (!blocked) {
+                    logger.info("  Marking unvisited sample as desynced: "+sample.getName()+" (id="+sample.getId()+")");
+                    entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_DESYNC);
                 }
-                else {
-                    entityBean.loadLazyEntity(sample, false);
-                    boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS));
-                    // Ignore blocked samples, they don't need to be retired
-                    if (!blocked) {
-                        logger.info("  Moving unvisited sample to retired data folder: "+sample.getName()+" (id="+sample.getId()+")");
-                        dataSetFolder.getEntityData().remove(ed);
-                        retiredDataFolder.getEntityData().add(ed);
-                        ed.setParentEntity(retiredDataFolder);
-                        entityBean.saveOrUpdateEntityData(ed);
-                        sample.setName(sample.getName()+"-Retired");
-                        entityBean.saveOrUpdateEntity(sample);
-                    }
-                }
-                samplesMovedToRetiredFolder++;
+                samplesMarkedDesync++;
             }
         }
     }
@@ -275,7 +254,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         if (dataSetFolder==null) return;        
         logger.info("Fixing sample order indicies in "+dataSetFolder.getName()+" (id="+dataSetFolder.getId()+")");
 
-        List<EntityData> orderedData = new ArrayList<EntityData>();
+        List<EntityData> orderedData = new ArrayList<>();
         for(EntityData ed : dataSetFolder.getEntityData()) {
             if (ed.getChildEntity()!=null) {
                 orderedData.add(ed);

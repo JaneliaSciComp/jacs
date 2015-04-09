@@ -62,5 +62,6 @@ public interface WorkstationDataManagerMBean {
     public void runScalityBenchmarks(String entityId);
     
     public void runNernaRetiredDataCleanup();
-    
+    public void runFileVerification();
+
 }

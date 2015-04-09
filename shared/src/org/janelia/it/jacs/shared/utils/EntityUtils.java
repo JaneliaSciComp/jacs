@@ -4,6 +4,7 @@ import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.user_data.Group;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +184,38 @@ public class EntityUtils {
         return subjectKeys.contains(Group.ADMIN_GROUP_KEY);
         
     }
+
+    /**
+     * Returns the subject name part of a given subject key. For example, for "group:flylight", this will return "flylight".
+     *
+     * @param subjectKey
+     * @return
+     */
+    public static String getNameFromSubjectKey(String subjectKey) {
+        if (subjectKey == null) {
+            return null;
+        }
+        return subjectKey.substring(subjectKey.indexOf(':') + 1);
+    }
     
+    /**
+     * Sort a list of subjects in this order: 
+     * groups then users, alphabetical by full name, alphabetical by name. 
+     * @param subjects
+     */
+    public static void sortSubjects(List<Subject> subjects) {
+        Collections.sort(subjects, new Comparator<Subject>() {
+            @Override
+            public int compare(Subject o1, Subject o2) {
+                ComparisonChain chain = ComparisonChain.start()
+                        .compare(o1.getClass().getName(), o2.getClass().getName(), Ordering.natural())
+                        .compare(o1.getFullName(), o2.getFullName(), Ordering.natural().nullsLast())
+                        .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst());
+                return chain.result();
+            }
+        });
+    }
+
     /**
      * Returns true if the given entities are identical in terms of their own properties and their EntityData properties.
      * @param entity1
@@ -415,62 +448,72 @@ public class EntityUtils {
     
     public static String getImageFilePath(Entity entity, String imageRole) {
 
-     	String type = entity.getEntityTypeName();
-    	String path = null;
-
-		if (path == null) {
-			// Always attempt to get the shortcut image path for the role requested
-	    	path = entity.getValueByAttributeName(imageRole);
-		}
+        log.debug("getImageFilePath(entity.id={},imageRole={})", entity.getId(), imageRole);
+        String type = entity.getEntityTypeName();
+        String path = null;
 
         if (path == null) {
+            // Always attempt to get the shortcut image path for the role requested
+            path = entity.getValueByAttributeName(imageRole);
+            log.debug("  Returning path: {}", path);
+        }
+
+        if (path == null) {                
             if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE)) {
                 // If the entity is a 3D image, just return its path
-                if (type.equals(EntityConstants.TYPE_IMAGE_3D) ||
-                        type.equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK) ||
-                        type.equals(EntityConstants.TYPE_LSM_STACK) ||
-                        type.equals(EntityConstants.TYPE_SWC_FILE) ||
-                        type.equals(EntityConstants.TYPE_V3D_ANO_FILE)) {
+                if (type.equals(EntityConstants.TYPE_IMAGE_3D)
+                        || type.equals(EntityConstants.TYPE_ALIGNED_BRAIN_STACK)
+                        || type.equals(EntityConstants.TYPE_LSM_STACK)
+                        || type.equals(EntityConstants.TYPE_SWC_FILE)
+                        || type.equals(EntityConstants.IN_MEMORY_TYPE_VIRTUAL_ENTITY)
+                        || type.equals(EntityConstants.TYPE_V3D_ANO_FILE)) {
                     path = getFilePath(entity);
-                    log.debug("at 'type-test' attempt, found " + path);
+                    log.debug("  Returning regular file path for 3d image: {}", path);
                 }
             }
             else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)) {
                 // If the entity is a 2D image, just return its path
                 if (type.equals(EntityConstants.TYPE_IMAGE_2D)) {
                     path = getFilePath(entity);
+                    log.debug("  Returning regular file path for 2d image: {}", path);
                 }
             }
             else if (imageRole.equals(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE)) {
-                Set<EntityData> data = entity.getEntityData();
-
-                for ( EntityData datum: data ) {
-                    Entity childEntity = datum.getChildEntity();
-                    if ( childEntity != null ) {
-                        path = childEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE );
-                        if ( path != null ) {
-                            log.debug("Found path " + path + " for entity " + entity.getName() + " via drill-and-attrib");
-                            break;
-                        }
+                for (Entity childEntity : entity.getChildren()) {
+                    if (!isInitialized(childEntity)) {
+                        continue;
+                    }
+                    path = childEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
+                    if (path != null) {
+                        log.debug("  Returning fast 3d file path for child image {}: {}", childEntity.getId(), path);
+                        break;
                     }
                 }
             }
         }
 
-    	if (path == null) {
-    		EntityData ed = entity.getEntityDataByAttributeName(imageRole);
-    		if (ed!=null && isInitialized(ed.getChildEntity())) {
-    			path = getFilePath(ed.getChildEntity());
-                log.debug("at 'entitydata-for-att-name' attempt, found " + path);
+        if (path == null) {
+            EntityData ed = entity.getEntityDataByAttributeName(imageRole);
+            if (ed != null) {
+                Entity childEntity = ed.getChildEntity();
+                if (isInitialized(childEntity)) {
+                    path = getFilePath(childEntity);
+                    log.debug("  Returning file path for child {}: {}", childEntity.getId(), path);
+                }
             }
-    	}
-    	
-		if (path == null && EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(imageRole)) {
-	    	// TODO: This is for backwards compatibility with old data. Remove this in the future.
-	    	path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);	    	
-		}
-		
- 		return path;
+        }
+
+        if (path == null && EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(imageRole)) {
+            // TODO: This is for backwards compatibility with old data. Remove this in the future.
+            path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
+            log.debug("  Returning legacy file path: {}", path);
+        }
+
+        if (path == null) {
+            log.debug("  Could not find a path to return");
+        }
+
+        return path;
     }
     
     public static String getAnyFilePath(Entity entity) {
@@ -781,7 +824,14 @@ public class EntityUtils {
 	
 	public static Long getEntityIdFromUniqueId(String uniqueId) {
 		String[] pathParts = uniqueId.split("/");
-		if (pathParts.length<1) return null;
+		if (pathParts.length<1) {
+		    try {
+		        return new Long(uniqueId.trim());
+		    }
+		    catch (NumberFormatException e) {
+		        return null;
+		    }
+		}
 		String lastPart = pathParts[pathParts.length-1];
 		if (!lastPart.startsWith("e_")) return null;
 		return new Long(lastPart.substring(2));
@@ -819,5 +869,17 @@ public class EntityUtils {
 	public static String createDenormIdentifierFromName(String username, String name) {
 	    if (username.contains(":")) username = username.split(":")[1];
     	return username+"_"+name.toLowerCase().replaceAll("\\W+", "_");
+	}
+	
+	/**
+	 * Returns true if the given Entity is a virtual non-persistent entity for client-side use only. 
+	 * @param entity
+	 * @return
+	 */
+	public static boolean isVirtual(Entity entity) {
+        if (EntityConstants.IN_MEMORY_TYPE_VIRTUAL_ENTITY.equals(entity.getEntityTypeName()) || EntityConstants.IN_MEMORY_TYPE_PLACEHOLDER_ENTITY.equals(entity.getEntityTypeName())) {
+            return true;
+        }
+        return false;
 	}
 }

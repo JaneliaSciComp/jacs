@@ -11,12 +11,12 @@ import java.util.List;
  */
 public class SlideImageGroup {
     
-    private String anatomicalArea;
-    private String tag;
-    private List<SlideImage> images = new ArrayList<SlideImage>();
+    private final String anatomicalArea;
+    private final String tag;
+    private final List<SlideImage> images = new ArrayList<SlideImage>();
 
     public SlideImageGroup(String anatomicalArea, String tag) {
-        this.anatomicalArea = anatomicalArea;
+        this.anatomicalArea = anatomicalArea==null?"":anatomicalArea;
         this.tag = tag;
     }
     

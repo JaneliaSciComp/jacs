@@ -1,8 +1,14 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -19,16 +25,17 @@ public class InitSampleAttributesService extends AbstractEntityService {
 
         final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
         final String chanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        final SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        final String signalChannels = sampleHelper.getSignalChannelIndexes(chanSpec);
+        final String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
         data.putItem("SIGNAL_CHANNELS", signalChannels);
-
-        final String referenceChannels = sampleHelper.getReferenceChannelIndexes(chanSpec);
+        final String referenceChannels = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
         data.putItem("REFERENCE_CHANNEL", referenceChannels);
 
         final List<AnatomicalArea> sampleAreas = getSampleAreas(sampleEntity);
         if (sampleAreas != null) {
+            // Singular for the for loop
             data.putItem("SAMPLE_AREA", sampleAreas);
+            // Plural for normal usage (e.g. in the alignment pipeline)
+            data.putItem("SAMPLE_AREAS", sampleAreas);
         }
     }
 
@@ -40,12 +47,10 @@ public class InitSampleAttributesService extends AbstractEntityService {
         Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
 
         if (supportingFiles == null) {
-
             contextLogger.info("skipping SAMPLE_AREA derviation, no supporting files for sample " +
                                sampleEntity.getName());
-
-        } else {
-
+        } 
+        else {
             supportingFiles = entityBean.getEntityTree(supportingFiles.getId());
             final List<Entity> tileEntities = EntityUtils.getDescendantsOfType(supportingFiles,
                                                                                EntityConstants.TYPE_IMAGE_TILE,
@@ -73,7 +78,7 @@ public class InitSampleAttributesService extends AbstractEntityService {
                     anatomicalArea = new AnatomicalArea(area);
                     areaMap.put(area, anatomicalArea);
                 }
-                anatomicalArea.addTile(tileEntity);
+                anatomicalArea.addTileId(tileEntity.getId());
             }
 
             sampleAreas = new ArrayList<AnatomicalArea>(areaMap.values());

@@ -20,11 +20,9 @@ public class EntityConstants {
     public static final String VALUE_ERROR                           = "Error";
     public static final String VALUE_MARKED                          = "Marked for Rerun";
     public static final String VALUE_BLOCKED                         = "Blocked";
+    public static final String VALUE_DESYNC                          = "Desync";
+    public static final String VALUE_RETIRED                         = "Retired";
     
-    // Entity Status
-    public static final String STATUS_DEPRECATED                     = "Deprecated";
-    public static final String STATUS_VALID                          = "Valid";
-
     // Singleton Entity Names
     public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
     public static final String NAME_SHARED_DATA                      = "Shared Data";
@@ -34,6 +32,11 @@ public class EntityConstants {
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
     public static final String NAME_SEARCH_RESULTS                   = "Search Results";
+    
+    // Virtual types (not persisted)
+    public static final String IN_MEMORY_TYPE_PLACEHOLDER_ENTITY     = "Placeholder Entity";
+    public static final String IN_MEMORY_TYPE_VIRTUAL_ENTITY         = "Virtual Entity";
+    public static final String IN_MEMORY_ATTRIBUTE_TITLE             = "Virtual Title";
     
     // Common Types
     public static final String TYPE_ANNOTATION                       = "Annotation";
@@ -126,7 +129,6 @@ public class EntityConstants {
     public static final String ATTRIBUTE_RESULT                              = "Result";
     public static final String ATTRIBUTE_IS_ZIPPED                           = "Is Zipped";
     public static final String ATTRIBUTE_MERGED_STACK                        = "Merged Stack";
-    public static final String ATTRIBUTE_TILING_PATTERN                      = "Tiling Pattern";
     public static final String ATTRIBUTE_SUPPORTING_FILES                    = "Supporting Files";
     public static final String ATTRIBUTE_ALIGNMENT_NCC_SCORE                 = "Alignment Normalized Cross Correlation Score";
     public static final String ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE       = "Alignment Inconsistency Score";
@@ -143,6 +145,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_GENDER                              = "Gender"; // "m" or "f"
     public static final String ATTRIBUTE_MOUNTING_PROTOCOL                   = "Mounting Protocol"; // e.g. "DPX PBS Mounting"
     public static final String ATTRIBUTE_TISSUE_ORIENTATION                  = "Tissue Orientation"; // e.g. "face_up", "face_down"
+    public static final String ATTRIBUTE_VT_LINE                             = "VT Line"; // e.g. "face_up", "face_down"
     public static final String ATTRIBUTE_NUM_CHANNELS                        = "Num Channels"; // e.g. "3"
     public static final String ATTRIBUTE_OPTICAL_RESOLUTION                  = "Optical Resolution"; // e.g. "0.38x0.38x0.37"
     public static final String ATTRIBUTE_PIXEL_RESOLUTION                    = "Pixel Resolution"; // e.g. "1024x512x218"
@@ -160,7 +163,9 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SOURCE_SEPARATION                   = "Source Separation";
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
     public static final String ATTRIBUTE_SCALITY_URL                         = "Scality URL";
-    
+    public static final String ATTRIBUTE_MICRON_TO_VOXEL_MATRIX              = "Micron to Voxel Matrix";
+    public static final String ATTRIBUTE_VOXEL_TO_MICRON_MATRIX              = "Voxel to Micron Matrix";
+        
     // Geometric Tree
     //
     //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"
@@ -186,6 +191,7 @@ public class EntityConstants {
 
     public static final String ATTRIBUTE_MASK_IMAGE                          = "Mask Image";
     public static final String ATTRIBUTE_CHAN_IMAGE                          = "Chan Image";
+    public static final String ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE                = "Slightly Lossy Image"; // Lossy-compressed version of the image
     
     public static final String ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL          = "Aligned Consolidated Label";
     
@@ -206,7 +212,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SAGE_ID                             = "SAGE Id";
     
     // Error Attributes
-    public static final String ATTRIBUTE_MESSAGE                             = "Message";
+    public static final String ATTRIBUTE_DESCRIPTION                         = "Description";
+    public static final String ATTRIBUTE_CLASSIFICATION                      = "Classification";
     
     // Ontology Type Values
     public static final String VALUE_ONTOLOGY_TERM_TYPE_INTERVAL             = "Interval";
