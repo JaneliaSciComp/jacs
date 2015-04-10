@@ -123,7 +123,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setImagePath((String) row.get("image_query_path"));
 		slideImage.setTileType((String) row.get("light_imagery_tile"));
 		slideImage.setLine((String) row.get("image_query_line"));
-        slideImage.setCrossBarcode((String) row.get("light_imagery_cross_barcode"));
+        slideImage.setCrossBarcode((String) row.get("fly_cross_barcode"));
 		slideImage.setChannelSpec((String) row.get("light_imagery_channel_spec"));
 		slideImage.setGender((String) row.get("light_imagery_gender"));
 		slideImage.setArea((String) row.get("light_imagery_area"));
@@ -132,7 +132,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setMountingProtocol((String) row.get("light_imagery_mounting_protocol"));
         slideImage.setTissueOrientation((String) row.get("light_imagery_tissue_orientation"));
         slideImage.setVtLine((String) row.get("light_imagery_vt_line"));
-		slideImage.setEffector((String)row.get("light_imagery_effector"));
+		slideImage.setEffector((String)row.get("fly_effector"));
 		String objectiveStr = (String)row.get("light_imagery_objective");
 		if (objectiveStr!=null) {
 		    if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
