@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -196,9 +197,14 @@ public class SolrConnector extends SolrDAO {
 
         for(Method method : methods) {
             SearchAttribute searchAttributeAnnot = method.getAnnotation(SearchAttribute.class);
-            Object value = method.equals(domainObject);   
-            if (value != null) {
-                attrs.put(searchAttributeAnnot.key(), value);
+            try {
+                Object value = method.invoke(domainObject);  
+                if (value != null) {
+                    attrs.put(searchAttributeAnnot.key(), value);
+                } 
+            }
+            catch (InvocationTargetException | IllegalAccessException e) {
+                throw new DaoException("Problem executing "+method.getName()+" on object "+domainObject,e);
             }
         }
 
@@ -428,8 +434,6 @@ public class SolrConnector extends SolrDAO {
         
         for(Object collectionObject : collection) {
             if (collectionObject==null) {
-                String colName = dao.getCollectionName(rootObject);
-                log.warn("Null object in collection "+object+"."+field.getName()+", part of "+colName+"#"+rootObject.getId());
                 continue;
             }
             Class<?> clazz = collectionObject.getClass();
