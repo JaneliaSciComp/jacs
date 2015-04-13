@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,9 +37,7 @@ import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.mongodb.Bytes;
 import com.mongodb.DBCursor;
@@ -110,7 +109,8 @@ public class SolrConnector extends SolrDAO {
 	    	
 			String type = dao.getCollectionName(clazz);
 			Set<Field> fields = ReflectionUtils.getAllFields(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
-
+			Set<Method> methods = ReflectionUtils.getAllMethods(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
+			
 			Iterator<?> iterator = dao.getCollectionByName(type).find("{$or:[{class:{$exists:0}},{class:#}]}",clazz.getName()).with(new QueryModifier() {
                 public void modify(DBCursor cursor) {
                     cursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
@@ -137,7 +137,7 @@ public class SolrConnector extends SolrDAO {
 	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, domainObject.getId());
 	        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
 	        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, domainObject.getId());
-	        	docs.add(createDocument(null, domainObject, fields, ancestors, sageProps));
+	        	docs.add(createDocument(null, domainObject, fields, methods, ancestors, sageProps));
 
 				i++;
 				total++;
@@ -167,7 +167,7 @@ public class SolrConnector extends SolrDAO {
         }
 	}
 	
-	private SolrInputDocument createDocument(SolrDocument existingDoc, DomainObject domainObject, Set<Field> fields, Set<Long> ancestorIds, Map<String,Object> sageProps) throws DaoException {
+	private SolrInputDocument createDocument(SolrDocument existingDoc, DomainObject domainObject, Set<Field> fields, Set<Method> methods, Set<Long> ancestorIds, Map<String,Object> sageProps) throws DaoException {
 
     	SolrInputDocument doc = existingDoc==null ? new SolrInputDocument() : ClientUtils.toSolrInputDocument(existingDoc);
 
@@ -193,6 +193,14 @@ public class SolrConnector extends SolrDAO {
 				throw new DaoException("No such field "+field.getName()+" on object "+domainObject,e);
 			}
 		}
+
+        for(Method method : methods) {
+            SearchAttribute searchAttributeAnnot = method.getAnnotation(SearchAttribute.class);
+            Object value = method.equals(domainObject);   
+            if (value != null) {
+                attrs.put(searchAttributeAnnot.key(), value);
+            }
+        }
 
     	if (sageVocab!=null && sageProps!=null) {
     		if (existingDoc!=null) {
@@ -252,7 +260,9 @@ public class SolrConnector extends SolrDAO {
 		
 		for(String key : fullTextStrings.keySet()) {
 			// Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
-			doc.setField(key+"_d_txt", new ArrayList<String>(fullTextStrings.get(key)), 1.0f);
+		    List<String> strings = new ArrayList<>(fullTextStrings.get(key));
+		    // The _d is for "deep". We can always make these stored=false in Solr if we need to, since they're mainly for searching purposes. 
+			doc.setField(key+"_d_txt", strings, 1.0f);
 		}
                 
         for(SimpleAnnotation annotation : annotations) {        
@@ -271,7 +281,7 @@ public class SolrConnector extends SolrDAO {
 	 * @param object the root object of the object graph to traverse
 	 * @param ignoreSearchAttrs should we ignore attributes of the root object which are marked with the @SearchAttribute annotation?
 	 */
-	private void findStrings(Set<String> visited, Object rootObject, Object object, boolean ignoreSearchAttrs, String indent) {
+	private void findStrings(Set<String> visited, DomainObject rootObject, Object object, boolean ignoreSearchAttrs, String indent) {
 		
 		if (object==null) return;
 		Class<?> clazz = object.getClass();
@@ -323,7 +333,7 @@ public class SolrConnector extends SolrDAO {
 	 * @param indent
 	 * @throws Exception
 	 */
-	private void findStrings(Set<String> visited, Object rootObject, Object object, Field field, String indent) throws Exception {
+	private void findStrings(Set<String> visited, DomainObject rootObject, Object object, Field field, String indent) throws Exception {
 
 		if (object==null) return;
 
@@ -412,11 +422,16 @@ public class SolrConnector extends SolrDAO {
 	 * @param indent
 	 * @throws Exception
 	 */
-    private void findStrings(Set<String> visited, Object rootObject, Object object, Field field, Collection<?> collection, String indent) throws Exception {
+    private void findStrings(Set<String> visited, DomainObject rootObject, Object object, Field field, Collection<?> collection, String indent) throws Exception {
         
         log.debug(indent+"indexing collection "+object+"."+field.getName());
         
         for(Object collectionObject : collection) {
+            if (collectionObject==null) {
+                String colName = dao.getCollectionName(rootObject);
+                log.warn("Null object in collection "+object+"."+field.getName()+", part of "+colName+"#"+rootObject.getId());
+                continue;
+            }
             Class<?> clazz = collectionObject.getClass();
             if (clazz.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
                 findStrings(visited, rootObject, collectionObject, false, indent+"  ");

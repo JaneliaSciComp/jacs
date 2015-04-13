@@ -58,8 +58,6 @@ public class MongoLargeOperations extends LargeOperations {
 			if (annots == null) {
 				annots = new HashSet<SimpleAnnotation>();
 			}
-			String key = annotation.getKey();
-			String value = annotation.getValue();
 			annots.add(new SimpleAnnotation(annotation.getName(), annotation.getOwnerKey()));
 			putValue(annotationMapCache, targetId, annots);
 			i++;
@@ -148,7 +146,7 @@ public class MongoLargeOperations extends LargeOperations {
             	rsIterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
         		while (rsIterator.hasNext()) {
             		Map<String,Object> row = rsIterator.next();
-                	String imagePath = (String)row.get("path");
+                	String imagePath = (String)row.get(SageDAO.IMAGE_PROP_PATH);
                 	String[] path = imagePath.split("/"); // take just the filename
                 	String filename = path[path.length-1];
                 	putValue(SAGE_IMAGEPROP_MAP, lsmLookup.get(filename), row);

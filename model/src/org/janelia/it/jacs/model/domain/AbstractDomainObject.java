@@ -1,8 +1,10 @@
 package org.janelia.it.jacs.model.domain;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
+import org.janelia.it.jacs.model.domain.support.MongoUtils;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.jongo.marshall.jackson.oid.Id;
 
@@ -22,12 +24,8 @@ public abstract class AbstractDomainObject implements DomainObject {
     @SearchAttribute(key="name",label="Name")
     private String name;
     
-    @SearchAttribute(key="username",label="Owner",facet=true)
     private String ownerKey;
-
-    @SearchAttribute(key="subjects",label="Subjects")
     private Set<String> readers;
-    
     private Set<String> writers;
 
     @SearchAttribute(key="creation_date",label="Creation Date")
@@ -36,6 +34,21 @@ public abstract class AbstractDomainObject implements DomainObject {
     @SearchAttribute(key="updated_date",label="Updated Date")
     private Date updatedDate;
 
+    @SearchAttribute(key="username",label="Owner",facet=true)
+    public String getUsername() {
+        return MongoUtils.getNameFromSubjectKey(ownerKey);
+    }
+    
+    @SearchAttribute(key="subjects",label="Subjects")
+    public Set<String> getSubjectNames() {
+        Set<String> names = new HashSet<String>();
+        for(String subjectKey : readers) {
+            if (subjectKey==null) continue;
+            names.add(MongoUtils.getNameFromSubjectKey(subjectKey));
+        }
+        return names;
+    }
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Long getId() {
         return id;
