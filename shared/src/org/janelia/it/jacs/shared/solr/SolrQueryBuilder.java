@@ -123,7 +123,7 @@ public class SolrQueryBuilder {
             qs.append(" AND (ancestor_ids:").append(rootId).append(")");
         }
 
-        qs.append(" +doc_type:").append(SolrDocTypeEnum.ENTITY.toString());
+        qs.append(" +doc_type:").append(SolrDocTypeEnum.DOCUMENT.toString());
 
         qs.append(" -entity_type:Ontology*");
 
