@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 @MongoMapped(collectionName = "annotation")
 public class Annotation extends AbstractDomainObject {
 
-    private String targetType;
     @JsonUnwrapped
     private Reference target;
     private OntologyTermReference keyTerm;
@@ -18,13 +17,6 @@ public class Annotation extends AbstractDomainObject {
     private String value;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public String getTargetType() {
-        return targetType;
-    }
-
-    public void setTargetType(String targetType) {
-        this.targetType = targetType;
-    }
 
     public Reference getTarget() {
         return target;
