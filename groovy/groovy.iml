@@ -13,20 +13,178 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../compute/build/jars/compute-client.jar!/" />
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation.jar!/" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-jacs-shared.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-jacs-shared.jar!/" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-console-viewerapi.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="Model" />
-    <orderEntry type="module" module-name="Shared" />
-    <orderEntry type="module" module-name="ConsoleApplication" />
-    <orderEntry type="library" name="Apache Commons" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="file://$MODULE_DIR$/../ConsoleApplication/ConsoleWrapper/src" />
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-geometry3d.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-gltools.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-horta.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation-gui-alignment_board.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation-gui-dataview.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation-gui-geometric_search.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation-gui-large_volume_viewer.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation-gui-qc_view.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation-gui-split_picking.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-it-workstation-nb_action.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/org-janelia-scenegraph.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/ext/compute-client.jar!/" />
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/ext/jacs-model.jar!/" />
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/ext/jacs-shared.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/ext/jacs-model.jar!/" />
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules/ext/jacs-shared.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/modules" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar:///Applications/JaneliaWorkstation.app/Contents/Resources/JaneliaWorkstation/JaneliaWorkstation/core/locale/core_janeliaws.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="Shared" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlackEye.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../ConsoleApplication/ConsoleWrapper/release/modules/ext/synthetica.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -226,4 +384,3 @@
     </option>
   </component>
 </module>
-
