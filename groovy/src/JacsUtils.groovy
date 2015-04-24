@@ -41,7 +41,9 @@ class JacsUtils {
 		FacadeManager.registerFacade(FacadeManager.getEJBProtocolString(), EJBFacadeManager.class, "JACS EJB Facade Manager");
 		// This initializes the EJBFactory
 		SessionMgr.getSessionMgr();
-        SessionMgr.getSessionMgr().loginSubject();
+		String username = (String)SessionMgr.getSessionMgr().getModelProperty(SessionMgr.USER_NAME);
+		String password = (String)SessionMgr.getSessionMgr().getModelProperty(SessionMgr.USER_PASSWORD);
+		SessionMgr.getSessionMgr().loginSubject(username, password);
 
 		this.e = EJBFactory.getRemoteEntityBean()
 		this.a = EJBFactory.getRemoteAnnotationBean()
