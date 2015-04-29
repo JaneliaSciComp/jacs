@@ -3,7 +3,9 @@ package org.janelia.it.jacs.model.domain.sample;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 
+@SearchType(key="lsm_image",label="LSM Image")
 public class LSMImage extends Image {
 
     @SearchTraversal({})
@@ -21,7 +23,7 @@ public class LSMImage extends Image {
     @SearchAttribute(key="channel_dyes_txt",label="Channel Dye Names")
     private String channelDyeNames;
 
-    @SearchAttribute(key="channel_spec_txt",label="Channel Specification")
+    @SearchAttribute(key="channel_spec_txt",label="Channel Specification",facet=true)
     private String chanSpec;
 
     @SearchAttribute(key="effector_txt",label="Effector")

@@ -1,18 +1,14 @@
-package org.janelia.it.jacs.model.domain.gui.search.filters;
+package org.janelia.it.jacs.model.domain.gui.search.criteria;
 
 import org.janelia.it.jacs.model.domain.Reference;
 
-public class SetFilter implements Filter {
+public class SetCriteria extends Criteria {
 
     private String setName;
     private Reference setReference;
 
-    @Override
-    public String getLabel() {
-        return "IN: "+setName;
-    }
-
     /* EVERYTHING BELOW IS AUTO-GENERATED */
+
     public String getSetName() {
         return setName;
     }
