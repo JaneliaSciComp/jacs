@@ -80,10 +80,11 @@ do
     $NETPBM_BIN/tifftopnm $FILE | $NETPBM_BIN/pnmtopng > "${FILE/.tif}".png
 done
 
-echo "~ Copying final artifacts to: $OUTDIR"
-cp *.png $OUTDIR
+echo "~ Moving final artifacts to: $OUTDIR"
+mv *.png $OUTDIR
 
 if ls core* &> /dev/null; then
+    echo "~ Error: core dumped in artifact pipeline"
     touch $OUTDIR/core
 fi
 
