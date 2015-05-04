@@ -122,14 +122,14 @@ if [ -s SeparationResultUnmapped.nsp ]; then
 
     if [ -s $RESULT ]; then
 
-        echo "~ Generating consolidated signal"
-        CONSIGNAL="ConSignal.v3draw"
+        echo "~ Generating full consolidated signal"
+        CONSIGNAL="ConSignal3.v3draw"
         
-        cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > $CONSIGNAL
+        cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN > $CONSIGNAL
 
         if [ ${#SIGNAL_CHAN} -lt 5 ] ; then
             # Less than 5 characters, which means less than 3 signal channels. 
-            MAPPED_INPUT=ConSignalMapped.v3draw
+            MAPPED_INPUT=ConSignal3Mapped.v3draw
             if [ ${#SIGNAL_CHAN} -lt 2 ] ; then
                 # Single channel
                 echo "Detected single channel image, duplicating channel 0 in channels 1 and 2"
@@ -144,23 +144,28 @@ if [ -s SeparationResultUnmapped.nsp ]; then
             CONSIGNAL=$MAPPED_INPUT
         fi
 
+        echo "~ Generating 8-bit, y-flipped consolidated label"
+        cat $CONSIGNAL | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
+
         echo "~ Generating consolidated label"
         $NSDIR/nsp10_to_labelv3draw16 < $RESULT > ConsolidatedLabel.v3draw
 
         echo "~ Generating reference"
         cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
 
-        echo "~ Copying final output to: $OUTDIR"
-        cp *.nsp $OUTDIR 
-        cp *.pbd $OUTDIR
-        cp *.txt $OUTDIR
-        cp $CONSIGNAL $OUTDIR/ConsolidatedSignal.v3draw
-        cp ConsolidatedLabel.v3draw $OUTDIR
-        cp Reference.v3draw $OUTDIR
+        echo "~ Moving final output to: $OUTDIR"
+        mv *.nsp $OUTDIR 
+        mv *.pbd $OUTDIR
+        mv *.txt $OUTDIR
+        mv $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3draw
+        mv ConsolidatedSignal.v3draw $OUTDIR
+        mv ConsolidatedLabel.v3draw $OUTDIR
+        mv Reference.v3draw $OUTDIR
     fi
 fi
 
 if ls core* &> /dev/null; then
+    echo "~ Error: core dumped in separate pipeline"
     touch $OUTDIR/core
 fi
 
