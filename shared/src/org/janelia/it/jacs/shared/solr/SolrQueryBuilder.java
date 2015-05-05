@@ -123,10 +123,6 @@ public class SolrQueryBuilder {
             qs.append(" AND (ancestor_ids:").append(rootId).append(")");
         }
 
-        qs.append(" +doc_type:").append(SolrDocTypeEnum.DOCUMENT.toString());
-
-        qs.append(" -entity_type:Ontology*");
-
         if (!StringUtils.isEmpty(auxString)) {
             qs.append(" +(");
             qs.append(auxString);
@@ -177,14 +173,23 @@ public class SolrQueryBuilder {
             query.setSortField(sortField, ascending ? ORDER.asc : ORDER.desc);
         }
 
+        boolean entityTypeFiltered = false;
         for (String fieldName : filters.keySet()) {
             Set<String> values = filters.get(fieldName);
             if (values == null || values.isEmpty()) {
                 continue;
             }
             query.addFilterQuery(getFilterQuery(fieldName, values));
+            if ("entity_type".equals(fieldName)) {
+                entityTypeFiltered = true;
+            }
         }
-
+        
+        query.addFilterQuery("+doc_type:"+SolrDocTypeEnum.DOCUMENT.toString());
+        if (!entityTypeFiltered) {
+            query.addFilterQuery("-entity_type:Ontology*");
+        }
+        
         for (String facet : facets) {
             // Exclude the facet field from itself, to support multi-valued faceting
             query.addFacetField("{!ex=" + facet + "}" + facet);

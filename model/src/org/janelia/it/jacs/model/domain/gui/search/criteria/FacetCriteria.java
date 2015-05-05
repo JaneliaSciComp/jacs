@@ -9,10 +9,6 @@ public class FacetCriteria extends AttributeCriteria {
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
-    public FacetCriteria(String attributeName, Set<String> values) {
-        this.values = values;
-    }
-
     public Set<String> getValues() {
         return values;
     }
