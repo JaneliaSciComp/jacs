@@ -1903,6 +1903,10 @@ public class MongoDbImport extends AnnotationDAO {
     	String entityType = entity.getEntityTypeName();
         String type = getCollectionName(entityType);
 
+        if (entity.getName().endsWith(".mask") || entity.getName().endsWith(".chan") ) {
+            return;
+        }
+        
         log.info(indent+"  Attempting import of rogue entity: "+entityType+"#"+entity.getId());
         
         try {
