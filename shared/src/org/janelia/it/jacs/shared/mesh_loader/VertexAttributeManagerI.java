@@ -1,0 +1,19 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.janelia.it.jacs.shared.mesh_loader;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Implement this to create a manager of mesh vertices.
+ * Created by fosterl on 4/18/14.
+ */
+public interface VertexAttributeManagerI extends VertexExporterI {
+    List<TriangleSource> execute() throws Exception;
+    Map<Long,RenderBuffersBean> getRenderIdToBuffers();
+    void close();
+}

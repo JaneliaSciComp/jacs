@@ -29,7 +29,7 @@ public enum PipelineProcess implements NamedEnum {
     NernaRightOpticLobe("Aljoscha Right Optic Lobe 63x Pipeline"),
     NernaPolarityCase3("Aljoscha Polarity Case 3 Pipeline"),
 
-    PolarityCase3WithCMTKVNC("Polarity Case 3 With VNC CMTK Pipeline"),
+    PolarityCase3WithCMTKVnc("Polarity Case 3 With VNC CMTK Pipeline"),
 
     PTR10ProjectionOnly("PTR 10 Projection Only Pipeline"),
     PTR20JBAAlignment("PTR 20 JBA Alignment Pipeline"),

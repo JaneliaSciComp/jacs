@@ -60,76 +60,85 @@ cd $WORKING_DIR
 
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
-echo "Input file: $INPUT_FILE"
 echo "Output dir: $OUTDIR"
-
-if [ "$INPUT_FILE" = "" ]; then
-    echo "Getting input file from neuSepConfiguration.1..."
-    INPUT_FILE=`cat $SEPDIR/sge_config/neuSepConfiguration.1 | sed -n 3p`
-    echo "    Got $INPUT_FILE"
-fi 
-
-if [ "$INPUT_FILE" = "" ]; then
-    echo "Getting input file from neuSepCmd.sh (second to last line)..."
-    INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | tail -2 | head -1 | awk '{print $(NF)}'`
-    echo "    Got $INPUT_FILE"
-    if [[ "$INPUT_FILE" = "" || "$INPUT_FILE" = "fi" ]]; then
-        echo "Getting input file from neuSepCmd.sh (line matching 'Sample' or 'Align')..."
-        INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | grep 'Sample\|Align' | awk '{print $(NF)}'`
-        echo "    Got $INPUT_FILE"
-    fi
-fi
-
-EXT=${INPUT_FILE#*.}
-
-if [ "$EXT" = "v3dpbd" ]; then
-    if [ ! -f "$INPUT_FILE" ]; then
-        INPUT_FILE=`echo $INPUT_FILE | sed -e 's/v3dpbd/v3draw/g'`
-        echo "Input file missing, trying: $INPUT_FILE"
-    fi
-else
-    if [ ! -f "$INPUT_FILE" ]; then
-        INPUT_FILE=`echo $INPUT_FILE | sed -e 's/v3draw/v3dpbd/g'`
-        echo "Input file missing, trying: $INPUT_FILE"
-    fi
-fi
-
-if [ ! -f "$INPUT_FILE" ]; then
-    echo "Cannot locate original input file. Exiting."
-    exit 1
-fi
-
 echo "Input file: $INPUT_FILE"
 
-EXT=${INPUT_FILE#*.}
-if [ "$EXT" = "v3dpbd" ]; then
-    PBD_INPUT_FILE=$INPUT_FILE
-    INPUT_FILE_STUB=`basename $PBD_INPUT_FILE`
-    INPUT_FILE="$WORKING_DIR/${INPUT_FILE_STUB%.*}.v3draw"
-    echo "~ Converting $PBD_INPUT_FILE to $INPUT_FILE "
-    $Vaa3D -cmd image-loader -convert "$PBD_INPUT_FILE" "$INPUT_FILE"
+if [ -e "$SEPDIR/ConsolidatedSignal3.v3draw" ]; then
+    # If this file exists, it means we're running within a separatePipeline.sh (novel separation) 
+    # and the 16-bit signal file has already been generated for us, so we don't need the input file.
+    mv $SEPDIR/ConsolidatedSignal3.v3draw .
+else 
+
+    if [ "$INPUT_FILE" = "" ]; then
+        echo "Getting input file from neuSepConfiguration.1..."
+        INPUT_FILE=`cat $SEPDIR/sge_config/neuSepConfiguration.1 | sed -n 3p`
+        echo "    Got $INPUT_FILE"
+    fi 
+
+    if [ "$INPUT_FILE" = "" ]; then
+        echo "Getting input file from neuSepCmd.sh (second to last line)..."
+        INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | tail -2 | head -1 | awk '{print $(NF)}'`
+        echo "    Got $INPUT_FILE"
+        if [[ "$INPUT_FILE" = "" || "$INPUT_FILE" = "fi" ]]; then
+            echo "Getting input file from neuSepCmd.sh (line matching 'Sample' or 'Align')..."
+            INPUT_FILE=`cat $SEPDIR/sge_config/neuSepCmd.sh | grep 'Sample\|Align' | awk '{print $(NF)}'`
+            echo "    Got $INPUT_FILE"
+        fi
+    fi
+
+    EXT=${INPUT_FILE#*.}
+
+    if [ "$EXT" = "v3dpbd" ]; then
+        if [ ! -f "$INPUT_FILE" ]; then
+            INPUT_FILE=`echo $INPUT_FILE | sed -e 's/v3dpbd/v3draw/g'`
+            echo "Input file missing, trying: $INPUT_FILE"
+        fi
+    else
+        if [ ! -f "$INPUT_FILE" ]; then
+            INPUT_FILE=`echo $INPUT_FILE | sed -e 's/v3draw/v3dpbd/g'`
+            echo "Input file missing, trying: $INPUT_FILE"
+        fi
+    fi
+
+    if [ ! -f "$INPUT_FILE" ]; then
+        echo "Cannot locate original input file. Exiting."
+        exit 1
+    fi
+
+    echo "Input file: $INPUT_FILE"
+
+    EXT=${INPUT_FILE#*.}
+    if [ "$EXT" = "v3dpbd" ]; then
+        PBD_INPUT_FILE=$INPUT_FILE
+        INPUT_FILE_STUB=`basename $PBD_INPUT_FILE`
+        INPUT_FILE="$WORKING_DIR/${INPUT_FILE_STUB%.*}.v3draw"
+        echo "~ Converting $PBD_INPUT_FILE to $INPUT_FILE "
+        $Vaa3D -cmd image-loader -convert "$PBD_INPUT_FILE" "$INPUT_FILE"
+    fi
+
+    EXT=${LABEL_FILE#*.}
+    if [ "$EXT" = "v3dpbd" ]; then
+        PBD_LABEL_FILE=$LABEL_FILE
+        LABEL_FILE_STUB=`basename $PBD_LABEL_FILE`
+        LABEL_FILE="$WORKING_DIR/${LABEL_FILE_STUB%.*}.v3draw"
+        echo "~ Converting $PBD_LABEL_FILE to $LABEL_FILE "
+        $Vaa3D -cmd image-loader -convert "$PBD_LABEL_FILE" "$LABEL_FILE"
+    fi
+
+    EXT=${REF_FILE#*.}
+    if [ "$EXT" = "v3dpbd" ]; then
+        PBD_REF_FILE=$REF_FILE
+        REF_FILE_STUB=`basename $PBD_REF_FILE`
+        REF_FILE="$WORKING_DIR/${REF_FILE_STUB%.*}.v3draw"
+        echo "~ Converting $PBD_REF_FILE to $REF_FILE "
+        $Vaa3D -cmd image-loader -convert "$PBD_REF_FILE" "$REF_FILE"
+    fi
+
+    echo "~ Creating full size 16-bit files"
+    cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN > ConsolidatedSignal3.v3draw
 fi
 
-EXT=${LABEL_FILE#*.}
-if [ "$EXT" = "v3dpbd" ]; then
-    PBD_LABEL_FILE=$LABEL_FILE
-    LABEL_FILE_STUB=`basename $PBD_LABEL_FILE`
-    LABEL_FILE="$WORKING_DIR/${LABEL_FILE_STUB%.*}.v3draw"
-    echo "~ Converting $PBD_LABEL_FILE to $LABEL_FILE "
-    $Vaa3D -cmd image-loader -convert "$PBD_LABEL_FILE" "$LABEL_FILE"
-fi
 
-EXT=${REF_FILE#*.}
-if [ "$EXT" = "v3dpbd" ]; then
-    PBD_REF_FILE=$REF_FILE
-    REF_FILE_STUB=`basename $PBD_REF_FILE`
-    REF_FILE="$WORKING_DIR/${REF_FILE_STUB%.*}.v3draw"
-    echo "~ Converting $PBD_REF_FILE to $REF_FILE "
-    $Vaa3D -cmd image-loader -convert "$PBD_REF_FILE" "$REF_FILE"
-fi
-
-echo "~ Creating full size 16-bit files"
-cat $INPUT_FILE | $NSDIR/v3draw_select_channels 0 1 2 > ConsolidatedSignal3.v3draw
 cat $LABEL_FILE | $NSDIR/v3draw_flip_y > ConsolidatedLabel3.v3draw
 # Note that Reference3.v3dpbd is later created as a link 
 
@@ -190,9 +199,16 @@ do
     $Vaa3D -cmd image-loader -convert ConsolidatedSignal2Blue_$MV.v3draw $OUTDIR/ConsolidatedSignal2Blue_$MV.mp4
 done
 
-cp *.metadata $OUTDIR # 10 files
+mv *.metadata $OUTDIR # 10 files
 
-cd $OUTDIR
+echo "Checking for core files..."
+
+if ls core* &> /dev/null; then
+    echo "~ Error: core dumped in fastLoad pipeline"
+    touch $SEPDIR/core
+fi
+
+#cd $OUTDIR
 #ln -s ../Reference.v3dpbd Reference3.v3dpbd
 #ln -s ConsolidatedLabel3.v3dpbd ConsolidatedLabel2.v3dpbd
 
