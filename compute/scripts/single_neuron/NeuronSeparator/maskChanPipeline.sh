@@ -79,8 +79,8 @@ $Vaa3D -cmd neuron-fragment-editor -mode mask-from-stack -sourceImage $REF_FILE 
 
 mkdir -p $OUTDIR
 if ls core* &> /dev/null; then
-    echo "~ Error: core dumped"
-    touch $OUTDIR/core
+    echo "~ Error: core dumped in maskChan pipeline"
+    touch $SEPDIR/core
 else
     echo "~ Moving files to final output directory"
     mv $WORKING_DIR/* $OUTDIR
