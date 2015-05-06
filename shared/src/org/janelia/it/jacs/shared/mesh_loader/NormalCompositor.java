@@ -9,7 +9,7 @@ import java.util.Set;
  * Created by fosterl on 4/18/14.
  */
 public class NormalCompositor {
-    public void createGouraudNormals(VertexFactory vtxFactory) {
+    public void createGouraudNormals(TriangleSource vtxFactory) {
         for ( VertexInfoBean vertexInfoBean: vtxFactory.getVertices() ) {
             Set<VertexFactory.NormalDirection> uniqueNormals = vertexInfoBean.getUniqueNormals();
             if ( uniqueNormals.size() == 1 ) {

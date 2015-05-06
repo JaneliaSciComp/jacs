@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implement this to create a manager of mesh vertices.
+ * Implementations will provide mesh vertices, and related attributes.
  * Created by fosterl on 4/18/14.
  */
-public interface VertexAttributeManagerI extends VertexExporterI {
+public interface VertexAttributeSourceI extends VertexExporterI {
     List<TriangleSource> execute() throws Exception;
     Map<Long,RenderBuffersBean> getRenderIdToBuffers();
     void close();

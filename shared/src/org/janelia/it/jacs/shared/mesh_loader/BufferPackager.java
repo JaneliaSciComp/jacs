@@ -20,7 +20,7 @@ public class BufferPackager {
      * @param factory from which to pull these data.
      * @return as-needed buffer.
      */
-    public IntBuffer getIndices( VertexFactory factory ) {
+    public IntBuffer getIndices( TriangleSource factory ) {
         // Iterate over triangles to get the index buffer.
         List<Triangle> triangleList = factory.getTriangleList();
 
@@ -45,7 +45,7 @@ public class BufferPackager {
      * @param factory from which to pull these data.
      * @return as-needed buffer.
      */
-    public FloatBuffer getVertexAttributes( VertexFactory factory ) {
+    public FloatBuffer getVertexAttributes( TriangleSource factory ) {
         List<VertexInfoBean> vertices = factory.getVertices();
 
         // Iterate over the vertices to get vertex attributes.  The order of vertices in that collection should
@@ -62,7 +62,7 @@ public class BufferPackager {
             // Add all other vertex attributes. Should be same keys in all vertices.
             Map<String,float[]> attributes = bean.getAttributeMap();
             if ( vertexAttributeOrderList == null ) {
-                vertexAttributeOrderList = new ArrayList<String>();
+                vertexAttributeOrderList = new ArrayList<>();
                 vertexAttributeOrderList.addAll( attributes.keySet() );
             }
             for ( String attName: vertexAttributeOrderList ) {
