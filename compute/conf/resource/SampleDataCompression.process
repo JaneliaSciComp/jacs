@@ -59,8 +59,8 @@
         
 	    <!-- Create the input file list -->
 		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
-			<input name="ROOT_ENTITY_ID"/>
 	        <input name="MODE" value="CREATE_INPUT_LIST"/>
+			<input name="ROOT_ENTITY_ID"/>
             <input name="INPUT_TYPE"/>
             <input name="EXCLUDE_FILES"/>
             <input name="DELETE_INPUTS"/>
@@ -73,6 +73,7 @@
 		    <!-- Create the output file list -->
 			<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
 		        <input name="MODE" value="CREATE_OUTPUT_LIST"/>
+				<input name="ROOT_ENTITY_ID"/>
 				<input name="INPUT_PATH_LIST"/>
                 <input name="OUTPUT_TYPE"/>
 				<output name="OUTPUT_PATH_LIST"/>
@@ -99,6 +100,7 @@
 		    <!--  Update the affected entities -->
 			<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
                 <input name="MODE" value="COMPLETE"/>
+				<input name="ROOT_ENTITY_ID"/>
                 <input name="INPUT_PATH_LIST"/>
 				<input name="OUTPUT_PATH_LIST"/>
 				<input name="ENTITY_MAP"/>
