@@ -144,7 +144,7 @@ public class Node implements Serializable, IsSerializable {
                 "dataType='" + dataType + '\'' +
                 ", objectId=" + ((objectId == null) ? "null" : objectId.toString()) +
                 ", owner='" + ((owner == null) ? "null" : owner) + '\'' +
-                ", task=" + ((task == null) ? "null" : task.toString()) +
+                ", taskId=" + ((task == null) ? "null" : task.getObjectId()) +
                 ", description='" + description + '\'' +
                 ", visibility='" + visibility + '\'' +
                 ", name='" + name + '\'' +

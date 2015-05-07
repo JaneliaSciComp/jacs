@@ -1,0 +1,38 @@
+<!-- 
+	Complete pipeline for compressing one or more samples.
+-->
+<process name="Sample Compression Post Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    
+        <input name="ROOT_ENTITY_ID"/>
+            
+	    <!-- Import variables from the task -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="ROOT_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_1" value="root entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_ID"/>
+	        <output name="ROOT_ENTITY_ID"/>>
+	    </operation>
+	    
+		<!-- Compress all the v3draw files we created  -->
+        <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+            <input name="ROOT_ENTITY_ID"/>
+            <input name="INPUT_TYPE" value="v3draw"/>
+            <input name="OUTPUT_TYPE" value="v3dpbd"/>
+            <input name="DELETE_INPUTS" value="true"/>
+            <input name="RECORD_MODE" value="UPDATE"/>
+        </include>
+        
+        <!-- Create h5j files from v3dpbd files -->
+        <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+            <input name="ROOT_ENTITY_ID"/>
+            <input name="INPUT_TYPE" value="v3dpbd"/>
+            <input name="OUTPUT_TYPE" value="h5j"/>
+            <input name="DELETE_INPUTS" value="false"/>
+            <input name="RECORD_MODE" value="ADD"/>
+            <input name="EXCLUDE_FILES" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
+        </include>
+                
+    </sequence>
+</process>

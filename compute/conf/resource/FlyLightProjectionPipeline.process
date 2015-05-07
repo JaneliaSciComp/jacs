@@ -2,7 +2,7 @@
     <sequence>
 
         <input name="PIPELINE_PROCESS"/>
-        <input name="20X_MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
+        <input name="20X_MERGE_ALGORITHMS"/>
         <input name="CHANNEL_DYE_SPEC_20X"/>
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
         <input name="CHANNEL_DYE_SPEC_63X"/>
