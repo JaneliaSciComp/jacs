@@ -15,6 +15,7 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -43,10 +44,13 @@ public class SampleDataCompressionService extends AbstractEntityService {
 
     private String mode = MODE_UNDEFINED;
     private String recordMode = RECORD_MODE_UPDATE;
+    private String rootEntityId;
+    private String inputType;
+    private String outputType;
+    
     private boolean deleteSourceFiles = true;
     private Set<String> excludeFileSet = new HashSet<String>();
     
-    private String rootEntityId;
     private final Set<String> inputFiles = new HashSet<String>();
     private final Set<Long> visited = new HashSet<Long>();
     private Map<String,Set<Long>> entityMap;
@@ -60,8 +64,11 @@ public class SampleDataCompressionService extends AbstractEntityService {
         }
         
         mode = data.getRequiredItemAsString("MODE");
+        recordMode = data.getRequiredItemAsString("RECORD_MODE");
     	rootEntityId = data.getItemAsString("ROOT_ENTITY_ID");
-    	
+    	inputType = data.getRequiredItemAsString("INPUT_TYPE");
+        outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
+        
         if (mode.equals(MODE_CREATE_INPUT_LIST)) {
             doCreateInputList();
         }
@@ -79,8 +86,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
     private void doCreateInputList() throws ComputeException {
 
         this.entityMap = new HashMap<String,Set<Long>>();
-                
-        String inputType = data.getRequiredItemAsString("INPUT_TYPE");
+               
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
         if (!StringUtils.isEmpty(excludeFiles)) {
             for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
@@ -113,6 +119,9 @@ public class SampleDataCompressionService extends AbstractEntityService {
             for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
                 String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 if (filepath!=null && filepath.endsWith(inputType)) {
+                    if (hasCompressedVersion(image)) {
+                    	continue;
+                    }
                     addEntityToInputList(image);
                 }
             }
@@ -120,16 +129,15 @@ public class SampleDataCompressionService extends AbstractEntityService {
         else {
             logger.info("Finding files belonging to "+ownerKey+" with type "+inputType);
             
-            for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+inputType)) {
-                if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                    logger.warn("Ignoring entity with filepath that is not an Image 3D: "+entity.getId());
+            for(Entity image : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+inputType)) {
+                if (!image.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                    logger.warn("Ignoring entity with filepath that is not an Image 3D: "+image.getId());
                     continue;
                 }
-                if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
-                    logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
-                    continue;
+                if (hasCompressedVersion(image)) {
+                	continue;
                 }
-                addEntityToInputList(entity);
+                addEntityToInputList(image);
             }
         }
         
@@ -143,6 +151,36 @@ public class SampleDataCompressionService extends AbstractEntityService {
         else {
             logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
         }
+    }
+    
+    private boolean hasCompressedVersion(Entity image) throws ComputeException {
+    	if (RECORD_MODE_ADD.equals(recordMode)) {
+    		try {
+        		populateChildren(image);
+    		}
+    		catch (Exception e) {
+    			logger.error("Error loading children of "+image.getId());
+    		}
+    		List<EntityData> toRemove = new ArrayList<>();
+    		for(EntityData ed : image.getEntityData()) {
+    			if (EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE.equals(ed.getEntityAttrName())) {
+    				toRemove.add(ed);
+    			}
+    		}
+    		if (!toRemove.isEmpty()) {
+	    		toRemove.remove(toRemove.size()-1);
+	    		for(EntityData ed : toRemove) {
+	    			logger.warn("Removing extra H5J for: "+image.getId());
+	    			image.getEntityData().remove(ed);
+	    			entityBean.deleteEntityData(ed);
+	    			entityBean.deleteEntityTreeById(ed.getOwnerKey(), ed.getChildEntity().getId());
+	    		}
+    		}
+    		if (image.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE)!=null) {
+    			return true;
+    		}
+    	}
+    	return false;
     }
 
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
@@ -172,12 +210,17 @@ public class SampleDataCompressionService extends AbstractEntityService {
     	if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
     	
     	String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	
+
     	if (filepath==null) {
     		logger.warn("File path for "+imageEntity.getId()+" is null");
     		return;
     	}
-    	
+
+        if (!filepath.contains(centralDir)) {
+            logger.warn("Ignoring entity with filepath outside of FileStore.CentralDir: "+imageEntity.getId());
+            return;
+        }
+        
     	File file = new File(filepath);
     	
     	if (excludeFileSet.contains(file.getName())) {
@@ -204,7 +247,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
     
     private void doCreateOutputList() throws ComputeException {
 
-        String outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
         List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
 
         List<String> outputPaths = new ArrayList<String>();
@@ -217,7 +259,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
     
     private void doComplete() throws ComputeException {
 
-        this.recordMode = data.getRequiredItemAsString("RECORD_MODE");
         this.deleteSourceFiles = !"false".equals(data.getRequiredItem("DELETE_INPUTS"));
     	this.entityMap = (Map<String,Set<Long>>)data.getRequiredItem("ENTITY_MAP");
     	List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
