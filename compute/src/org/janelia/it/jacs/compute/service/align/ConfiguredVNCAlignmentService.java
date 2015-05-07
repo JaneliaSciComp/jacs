@@ -43,7 +43,12 @@ public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
     }
 
     @Override
-    protected int getRequiredMemoryInGB() {
-        return 30;
+    protected int getRequiredSlots() {
+        return 16;
+    }
+
+    @Override
+    protected String getAdditionalNativeSpecification() {
+        return "-l sandy=true";
     }
 }
