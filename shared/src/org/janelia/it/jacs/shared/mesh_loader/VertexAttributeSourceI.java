@@ -12,7 +12,7 @@ import java.util.Map;
  * Implement this to create a manager of mesh vertices.
  * Created by fosterl on 4/18/14.
  */
-public interface VertexAttributeManagerI extends VertexExporterI {
+public interface VertexAttributeSourceI extends VertexExporterI {
     List<TriangleSource> execute() throws Exception;
     Map<Long,RenderBuffersBean> getRenderIdToBuffers();
     void close();
