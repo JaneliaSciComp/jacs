@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.support.MongoUtils;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.jongo.marshall.jackson.oid.Id;
 
 /**
@@ -39,7 +40,7 @@ public abstract class AbstractDomainObject implements DomainObject {
         return MongoUtils.getNameFromSubjectKey(ownerKey);
     }
     
-    @SearchAttribute(key="subjects",label="Subjects")
+    @SearchAttribute(key="subjects",label="Subjects",display=false)
     public Set<String> getSubjectNames() {
         Set<String> names = new HashSet<String>();
         for(String subjectKey : readers) {
@@ -47,6 +48,15 @@ public abstract class AbstractDomainObject implements DomainObject {
             names.add(MongoUtils.getNameFromSubjectKey(subjectKey));
         }
         return names;
+    }
+
+    @SearchAttribute(key="type",label="Type")
+    public String getType() {
+        SearchType searchType = (SearchType)getClass().getAnnotation(SearchType.class);
+        if (searchType!=null) {
+            return searchType.label();
+        }
+        return getClass().getSimpleName();
     }
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */

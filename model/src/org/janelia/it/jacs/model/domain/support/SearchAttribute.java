@@ -16,4 +16,5 @@ public @interface SearchAttribute {
     String key();
     String label();
     boolean facet() default false;
+    boolean display() default true;
 }
