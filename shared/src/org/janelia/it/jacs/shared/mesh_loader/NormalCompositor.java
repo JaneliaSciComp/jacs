@@ -9,8 +9,8 @@ import java.util.Set;
  * Created by fosterl on 4/18/14.
  */
 public class NormalCompositor {
-    public void createGouraudNormals(VertexFactory vtxFactory) {
-        for ( VertexInfoBean vertexInfoBean: vtxFactory.getVertices() ) {
+    public void createGouraudNormals(TriangleSource triangleSource) {
+        for ( VertexInfoBean vertexInfoBean: triangleSource.getVertices() ) {
             Set<VertexFactory.NormalDirection> uniqueNormals = vertexInfoBean.getUniqueNormals();
             if ( uniqueNormals.size() == 1 ) {
                 vertexInfoBean.setAttribute(

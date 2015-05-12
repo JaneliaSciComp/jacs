@@ -17,12 +17,12 @@ public class BufferPackager {
     /**
      * Create index buffer suitable for an upload to GPU.
      *
-     * @param factory from which to pull these data.
+     * @param triangleSource from which to pull these data.
      * @return as-needed buffer.
      */
-    public IntBuffer getIndices( VertexFactory factory ) {
+    public IntBuffer getIndices( TriangleSource triangleSource ) {
         // Iterate over triangles to get the index buffer.
-        List<Triangle> triangleList = factory.getTriangleList();
+        List<Triangle> triangleList = triangleSource.getTriangleList();
 
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect( triangleList.size() * 3 * (Integer.SIZE / 8) );
         byteBuffer.order( ByteOrder.nativeOrder() );
@@ -42,11 +42,11 @@ public class BufferPackager {
     /**
      * Create vertex-attrib buffer suitable for upload to GPU.
      *
-     * @param factory from which to pull these data.
+     * @param triangleSource from which to pull these data.
      * @return as-needed buffer.
      */
-    public FloatBuffer getVertexAttributes( VertexFactory factory ) {
-        List<VertexInfoBean> vertices = factory.getVertices();
+    public FloatBuffer getVertexAttributes( TriangleSource triangleSource ) {
+        List<VertexInfoBean> vertices = triangleSource.getVertices();
 
         // Iterate over the vertices to get vertex attributes.  The order of vertices in that collection should
         // match the numbers used in making the indices above.
@@ -62,7 +62,7 @@ public class BufferPackager {
             // Add all other vertex attributes. Should be same keys in all vertices.
             Map<String,float[]> attributes = bean.getAttributeMap();
             if ( vertexAttributeOrderList == null ) {
-                vertexAttributeOrderList = new ArrayList<String>();
+                vertexAttributeOrderList = new ArrayList<>();
                 vertexAttributeOrderList.addAll( attributes.keySet() );
             }
             for ( String attName: vertexAttributeOrderList ) {
