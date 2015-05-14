@@ -3,57 +3,41 @@ package org.janelia.it.jacs.model.domain.sample;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
-public class PipelineResult implements HasFilepath {
+public class PipelineResult implements HasFilepath, HasFiles {
 
+    private String name;
+    private String objective;
+    private String anatomicalArea;
     private String filepath;
     private Date creationDate;
     private List<PipelineResult> results;
-    private PipelineError error;
+    private Map<FileType, String> files;
 
-    public boolean hasError() {
-        return error!=null;
-    }
-    
-    private PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type, boolean mustHaveFiles) {
+    protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
         if (results==null) {
             return null;
         }
         for (int i = results.size()-1; i>=0; i--) {
             PipelineResult result = results.get(i);
             if (type==null || type.isAssignableFrom(result.getClass())) {
-                if (!mustHaveFiles || result instanceof HasFiles) {
-                    return result;
-                }
+                return result;
             }
         }
         return null;
     }
 
-    public PipelineResult getLatestResult() {
-        return getLatestResultOfType(null, false);
-    }
-
-    public HasFiles getLatestResultWithFiles() {
-        return (HasFiles)getLatestResultOfType(null, true);
-    }
-    
-    public SampleProcessingResult getLatestProcessingResult() {
-        return (SampleProcessingResult) getLatestResultOfType(SampleProcessingResult.class, false);
-    }
-
-    public SampleAlignmentResult getLatestAlignmentResult() {
-        return (SampleAlignmentResult) getLatestResultOfType(SampleAlignmentResult.class, false);
-    }
-
     public NeuronSeparation getLatestSeparationResult() {
-        return (NeuronSeparation) getLatestResultOfType(NeuronSeparation.class, false);
+        return (NeuronSeparation) getLatestResultOfType(NeuronSeparation.class);
     }
 
     public void addResult(PipelineResult result) {
@@ -74,6 +58,31 @@ public class PipelineResult implements HasFilepath {
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public String getObjective() {
+        return objective;
+    }
+
+    public void setObjective(String objective) {
+        this.objective = objective;
+    }
+
+    public String getAnatomicalArea() {
+        return anatomicalArea;
+    }
+
+    public void setAnatomicalArea(String anatomicalArea) {
+        this.anatomicalArea = anatomicalArea;
+    }
+
     @Override
     public String getFilepath() {
         return filepath;
@@ -94,17 +103,18 @@ public class PipelineResult implements HasFilepath {
     public List<PipelineResult> getResults() {
         return results;
     }
-
+    
     public void setResults(List<PipelineResult> results) {
         this.results = results;
     }
 
-    public PipelineError getError() {
-        return error;
+    public Map<FileType, String> getFiles() {
+        return files;
     }
 
-    public void setError(PipelineError error) {
-        this.error = error;
+    public void setFiles(Map<FileType, String> files) {
+        this.files = files;
     }
+
 
 }

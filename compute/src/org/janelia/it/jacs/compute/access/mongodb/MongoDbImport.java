@@ -488,7 +488,7 @@ public class MongoDbImport extends AnnotationDAO {
             if (objective==null) {
                 objective = "63x";
             }
-            ObjectiveSample os = getObjectiveSampleObject(sampleEntity, sampleEntity);
+            ObjectiveSample os = getObjectiveSampleObject(sampleEntity, sampleEntity, objective);
             if (os!=null) {
                 objectiveSamples.put(objective, os);
             }
@@ -499,7 +499,7 @@ public class MongoDbImport extends AnnotationDAO {
                 if (objective==null) {
                     objective = "63x";
                 }
-                ObjectiveSample os = getObjectiveSampleObject(sampleEntity, objSampleEntity);
+                ObjectiveSample os = getObjectiveSampleObject(sampleEntity, objSampleEntity, objective);
                 if (os!=null) {
                     objectiveSamples.put(objective, os);
                 }
@@ -521,7 +521,7 @@ public class MongoDbImport extends AnnotationDAO {
         return sample;
     }
 
-    private ObjectiveSample getObjectiveSampleObject(Entity parentSampleEntity, Entity sampleEntity) throws Exception {
+    private ObjectiveSample getObjectiveSampleObject(Entity parentSampleEntity, Entity sampleEntity, String sampleObjective) throws Exception {
 
         populateChildren(sampleEntity);
         
@@ -550,6 +550,7 @@ public class MongoDbImport extends AnnotationDAO {
                     }
                     
                     SampleProcessingResult result = getSampleProcessingResult(resultEntity);
+                    result.setObjective(sampleObjective);
                     
                     if (!sprResults.isEmpty()) {
                         result.setResults(sprResults);
@@ -566,6 +567,7 @@ public class MongoDbImport extends AnnotationDAO {
                     Map<String,PipelineResult> nsResultMap = new HashMap<String,PipelineResult>();
                     for(Entity separationEntity : EntityUtils.getChildrenOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
                         String objective = separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+                        
                         if (StringUtils.isEmpty(objective)) objective = "";
                         nsResultMap.put(objective,getNeuronSeparation(parentSampleEntity, separationEntity));
                     }
@@ -589,7 +591,7 @@ public class MongoDbImport extends AnnotationDAO {
                     for(Entity imageEntity : resultImages) {
                         Entity movieEntity = null;
                         String objective = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-                        if (resultImages.size()==1 || "63".equals(objective) || "".equals(objective)) {
+                        if (resultImages.size()==1 || "63x".equals(objective) || "".equals(objective)) {
                             movieEntity = verifyMovie;
                         }
 
@@ -603,6 +605,12 @@ public class MongoDbImport extends AnnotationDAO {
                         }
                         
                         SampleAlignmentResult alignmentResult = getAlignmentResult(resultEntity, imageEntity, movieEntity);
+                        if (imageEntity.getName().contains("VNC")) {
+                            alignmentResult.setAnatomicalArea("VNC");    
+                        }
+                        else {
+                            alignmentResult.setAnatomicalArea("Brain");
+                        }
                         
                         if (!sprResults.isEmpty()) {
                             alignmentResult.setResults(sprResults);
@@ -618,6 +626,7 @@ public class MongoDbImport extends AnnotationDAO {
             run.setName(runEntity.getName());
             run.setCreationDate(runEntity.getCreationDate());
             run.setPipelineProcess(runEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS));
+            run.setPipelineVersion(1);
             
             Entity errorEntity = EntityUtils.findChildWithType(runEntity, EntityConstants.TYPE_ERROR);
             if (errorEntity!=null) {
@@ -671,7 +680,22 @@ public class MongoDbImport extends AnnotationDAO {
         return sample;
     }
     
-    private SampleProcessingResult getSampleProcessingResult(Entity resultEntity) {
+    private void addStackFiles(Entity imageEntity, Map<FileType,String> files, HasFilepath result) throws Exception {
+        addImage(files,FileType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        addImage(files,FileType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+        addImage(files,FileType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+        populateChildren(imageEntity);
+        Entity slightlyLossy = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE);
+        if (slightlyLossy!=null) {
+            addImage(files,FileType.VisuallyLosslessStack,getRelativeFilename(result,slightlyLossy.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        }
+        Entity fast3dImage = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
+        if (fast3dImage!=null) {
+            addImage(files,FileType.FastStack,getRelativeFilename(result,fast3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        }
+    }
+    
+    private SampleProcessingResult getSampleProcessingResult(Entity resultEntity) throws Exception {
         SampleProcessingResult result = new SampleProcessingResult();
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
@@ -680,16 +704,17 @@ public class MongoDbImport extends AnnotationDAO {
         if (!StringUtils.isEmpty(area)) {
             result.setAnatomicalArea(area);
         }
+        else {
+            result.setAnatomicalArea("Brain");
+        }
         
         Map<FileType,String> files = new HashMap<FileType,String>();
         
-        Entity stackEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        if (stackEntity!=null) {
-            result.setImageSize(sanitizeCSV(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
-            result.setOpticalResolution(sanitizeCSV(stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
-            addImage(files,FileType.Stack,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            addImage(files,FileType.ReferenceMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-            addImage(files,FileType.SignalMip,getRelativeFilename(result,stackEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+        Entity imageEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+        if (imageEntity!=null) {
+            result.setImageSize(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
+            result.setOpticalResolution(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+            addStackFiles(imageEntity, files, result);
         }
         else {
             log.warn("  Sample processing result has no default stack: "+resultEntity.getId());
@@ -769,7 +794,8 @@ public class MongoDbImport extends AnnotationDAO {
         return result;
     }
     
-    private SampleAlignmentResult getAlignmentResult(Entity alignmentEntity, Entity imageEntity, Entity movieEntity) {
+    private SampleAlignmentResult getAlignmentResult(Entity alignmentEntity, Entity imageEntity, Entity movieEntity) throws Exception {
+        
         SampleAlignmentResult result = new SampleAlignmentResult();
         result.setName(alignmentEntity.getName());
         result.setCreationDate(imageEntity.getCreationDate());
@@ -810,9 +836,7 @@ public class MongoDbImport extends AnnotationDAO {
         if (!scores.isEmpty()) result.setScores(scores);
         
         Map<FileType,String> files = new HashMap<FileType,String>();
-        addImage(files,FileType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-        addImage(files,FileType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-        addImage(files,FileType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+        addStackFiles(imageEntity, files, result);
         if (movieEntity!=null) {
             addImage(files,FileType.AlignmentVerificationMovie,getRelativeFilename(result,movieEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
         }
@@ -892,11 +916,10 @@ public class MongoDbImport extends AnnotationDAO {
         image.setOpticalResolution(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
         image.setImageSize(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
 
-        Map<FileType,String> images = new HashMap<FileType,String>();
-        addImage(images,FileType.Stack,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        addImage(images,FileType.ReferenceMip,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
-        addImage(images,FileType.SignalMip,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
-        image.setFiles(images);
+        
+        Map<FileType,String> files = new HashMap<FileType,String>();
+        addStackFiles(imageEntity, files, null);
+        image.setFiles(files);
         
         return image;
     }
@@ -2057,6 +2080,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private String getRelativeFilename(HasFilepath result, String filepath) {
         if (filepath==null) return null;
+        if (result==null) return filepath;
         String parentFilepath = result.getFilepath();
         if (parentFilepath==null) throw new IllegalArgumentException("Result "+filepath+" has null parent filepath");
         String prefix = parentFilepath.endsWith("/") ? parentFilepath : parentFilepath+"/";

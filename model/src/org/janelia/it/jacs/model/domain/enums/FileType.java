@@ -8,6 +8,8 @@ package org.janelia.it.jacs.model.domain.enums;
 public enum FileType {
 
     Stack(false, false),
+    FastStack(false, false),
+    VisuallyLosslessStack(false, false),
     CompleteMip(true, false),
     SignalMip(true, false),
     ReferenceMip(true, false),
