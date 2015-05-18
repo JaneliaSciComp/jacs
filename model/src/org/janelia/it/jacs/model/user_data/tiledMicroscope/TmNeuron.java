@@ -16,6 +16,21 @@ import java.util.*;
  */
 public class TmNeuron implements IsSerializable, Serializable {
 
+    // this enum is to be used in navigation requests for
+    //  movement along a neuron; it is intentionally vague and
+    //  conceptual, in order to let us rather than the requester
+    //  interpret what the relationship means in gory detail
+    public enum AnnotationNavigationDirection {
+        // easy: toward or away from the root of the neuron
+        ROOTWARD,
+        ENDWARD,
+        // assuming the children of each branch are in some stable
+        //  order, next/prev implies movement between sibling
+        //  branches of the nearest rootward branch point
+        NEXT_PARALLEL,
+        PREV_PARALLEL,
+    }
+
     Long id;
     String name;
     Date creationDate;
@@ -144,6 +159,39 @@ public class TmNeuron implements IsSerializable, Serializable {
             children.add(getGeoAnnotationMap().get(childID));
         }
         return children;
+    }
+
+    /**
+     * returns a list of the child annotations of the input annotation in
+     * a predictable, stable order
+     *
+     * current implementation is based on the angle from the x-axis
+     * of the x-y projection of the line connecting the branch to its child
+     */
+    public List<TmGeoAnnotation> getChildrenOfOrdered(TmGeoAnnotation annotation) {
+        List<TmGeoAnnotation> unorderedList = getChildrenOf(annotation);
+        if (unorderedList.size() < 2) {
+            return unorderedList;
+        }
+
+        // we're going to use the angle in the xy plane of the lines between
+        //  the parent and children to sort; for convenience, I'll use
+        //  the value returned by math.atan2
+        Collections.sort(unorderedList, new Comparator<TmGeoAnnotation>() {
+            @Override
+            public int compare(TmGeoAnnotation ann1, TmGeoAnnotation ann2) {
+                double tan1 = Math.atan2(ann1.getY(), ann1.getX());
+                double tan2 = Math.atan2(ann2.getY(), ann2.getX());
+                if (tan1 > tan2) {
+                    return 1;
+                } else if (tan1 < tan2) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        return unorderedList;
     }
 
     /**
