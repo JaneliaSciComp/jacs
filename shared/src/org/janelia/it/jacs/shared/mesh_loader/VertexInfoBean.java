@@ -89,7 +89,7 @@ public class VertexInfoBean {
         this.key = key;
     }
 
-    public void setIncludingTriangle( Triangle triangle ) {
+    public void addIncludingTriangle( Triangle triangle ) {
         triangleInclusions.add( triangle );
     }
 
@@ -99,14 +99,18 @@ public class VertexInfoBean {
      *
      * @return unique list of normal directions.
      */
-    public Set<VertexFactory.NormalDirection> getUniqueNormals() {
-        Set<VertexFactory.NormalDirection> rtnVal = new HashSet<VertexFactory.NormalDirection>();
+    public Set<AxialNormalDirection> getUniqueNormals() {
+        Set<AxialNormalDirection> rtnVal = new HashSet<>();
         for ( Triangle triangle: triangleInclusions ) {
             rtnVal.add( triangle.getNormalVector() );
         }
         return rtnVal;
     }
-
+    
+    public Collection<Triangle> getIncludingTriangles() {
+        return triangleInclusions;
+    }
+    
     //------------------------------------HELPERS
     private void checkAttributeSanity(String attributeName, int attributeCount) {
         Integer previousCount = attributeNameVsCount.get( attributeName );
