@@ -1,10 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.io.File;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -17,6 +12,11 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.io.File;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A helper class for dealing with common entities such as default images. 
@@ -247,7 +247,7 @@ public class EntityHelper {
 	 */
 	public void addImage(Entity entity, String attributeName, Entity image) throws ComputeException {
 		if (image==null) return;
-        logger.debug("Adding "+attributeName+" ("+image.getName()+") to "+entity.getName()+" (id="+entity.getId()+")");
+        logger.debug("Adding " + attributeName + " (" + image.getName() + ") to " + entity.getName() + " (id=" + entity.getId() + ")");
     	if (DEBUG) return;
     	String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	entityBean.addEntityToParent(entity, image, null, attributeName, filepath);
@@ -388,7 +388,15 @@ public class EntityHelper {
     public void setNccScore(Entity entity, String value) throws Exception {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_NCC_SCORE, value);
     }
-    
+
+    public void setOverlapCoeff(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_OVERLAP_COEFFICIENT, value);
+    }
+
+    public void setObjectPearsonCoeff(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_OBJECT_PEARSON_COEFFICIENT, value);
+    }
+
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
         if (entity==null || StringUtils.isEmpty(value)) return;
         EntityData currEd = entity.getEntityDataByAttributeName(attributeName);
