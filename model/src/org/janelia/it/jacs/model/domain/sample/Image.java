@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
@@ -20,17 +21,18 @@ public class Image extends AbstractDomainObject implements HasFiles, HasFilepath
     @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
     
-    @SearchAttribute(key="image_size_txt",label="Image Size", facet=true)
+    @SearchAttribute(key="image_size_txt",label="Image Size")
     private String imageSize;
 
-    @SearchAttribute(key="optical_res_txt",label="Optical Resolution", facet=true)
+    @SearchAttribute(key="optical_res_txt",label="Optical Resolution")
     private String opticalResolution;
-    
-    @SearchAttribute(key="num_channels_i",label="Num Channels", facet=true)
-    private Integer numChannels;
-    
+
     @SearchAttribute(key="objective_txt",label="Objective", facet=true)
     private String objective;
+
+    @SAGEAttribute(cvName="light_imagery", termName="channels")
+    @SearchAttribute(key="num_channels_i",label="Num Channels", facet=true)
+    private Integer numChannels;
     
     private Map<FileType, String> files;
 

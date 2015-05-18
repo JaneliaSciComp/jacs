@@ -456,7 +456,7 @@ public class SageDAO {
                 {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database", "image_query"},
                 {"name",         "Image Path",      "text",      "Relative path to the image",            "image_query"},
                 {"path",         "Full Image Path", "text",      "Absolute path to the image",            "image_query"},
-                {"line",         "Fly Line",        "text",      "Name of the genetic line",                  "image_query"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",              "image_query"},
                 
                 {"id",           "SAGE Line Id",    "integer",   "Line identifier within SAGE database",  "line_query"},
                 {"lab",          "Lab",             "text",      "Lab",                                   "line_query"},

@@ -324,6 +324,7 @@ public class LargeOperations {
 	    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
 	    		
 	    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+	    		
 	    		logger.info("  Building property map for all SAGE images in Data Set '"+dataSetIdentifier+"'");
 
 	        	ResultSetIterator iterator = null;
@@ -374,7 +375,7 @@ public class LargeOperations {
     	}
     }
     
-    private void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
+    protected void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
     	String imagePath = (String)imageProps.get(SageDAO.IMAGE_PROP_PATH);
     	if (imagePath==null) {
     	    logger.error("Null image property path encountered at imageProps="+imageProps);
@@ -395,7 +396,7 @@ public class LargeOperations {
     	putValue(getCache(cacheName), key, value);
     }
 
-    protected Cache getCache(String cacheName) {
+    public Cache getCache(String cacheName) {
     	if (caches.containsKey(cacheName)) {
     		return caches.get(cacheName);
     	}

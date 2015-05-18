@@ -24,7 +24,9 @@ public enum FileType {
     CellCountStackMip(true, false),
     CellCountImage(false, false),
     CellCountImageMip(true, false),
-    Unclassified(false, false);
+    Unclassified2d(true, false),
+    Unclassified3d(false, false),
+    UnclassifiedAscii(false, true);
 
     private final boolean is2dImage;
     private final boolean isAscii;

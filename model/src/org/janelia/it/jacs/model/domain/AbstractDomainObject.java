@@ -35,8 +35,8 @@ public abstract class AbstractDomainObject implements DomainObject {
     @SearchAttribute(key="updated_date",label="Updated Date")
     private Date updatedDate;
 
-    @SearchAttribute(key="username",label="Owner",facet=true)
-    public String getUsername() {
+    @SearchAttribute(key="owner",label="Owner",facet=true)
+    public String getOwnerName() {
         return MongoUtils.getNameFromSubjectKey(ownerKey);
     }
     
@@ -54,9 +54,9 @@ public abstract class AbstractDomainObject implements DomainObject {
     public String getType() {
         SearchType searchType = (SearchType)getClass().getAnnotation(SearchType.class);
         if (searchType!=null) {
-            return searchType.label();
+            return searchType.key();
         }
-        return getClass().getSimpleName();
+        return null;
     }
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */

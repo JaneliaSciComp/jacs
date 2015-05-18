@@ -174,7 +174,7 @@ public class ReflectionHelper {
         String methodName = getAccessor("get", fieldName);
         return clazz.getMethod(methodName, EMPTY_ARGS_TYPES);
     }
-    
+
     /**
      * Set the given attribute on the specified object, using the public setter method.
      */

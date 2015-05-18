@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Deque;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,12 +23,17 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.Element;
+
 import org.apache.log4j.Logger;
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
+import org.janelia.it.jacs.compute.access.large.LargeOperations;
+import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -66,6 +73,7 @@ import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.screen.PatternMask;
 import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.support.MongoUtils;
+import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
@@ -75,6 +83,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.MongoCollection;
+import org.reflections.ReflectionUtils;
 
 import com.google.common.collect.ComparisonChain;
 import com.mongodb.WriteConcern;
@@ -121,6 +130,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection alignmentBoardCollection;
     
     // Load state
+    private MongoLargeOperations largeOp;
     private String genderConsensus = null;
     private Map<String,String> lsmJsonFiles = new HashMap<String,String>();
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
@@ -149,7 +159,15 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     public void loadAllEntities() throws DaoException {
+
+        log.info("Building disk-based SAGE property map");
+        this.largeOp = new MongoLargeOperations(dao, this);
+        largeOp.buildSageImagePropMap();
+
+        log.info("Building LSM property map");
+        buildLsmAttributeMap();
         
+        log.info("Loading data into MongoDB");
         getSession().setFlushMode(FlushMode.MANUAL);
         
         long startAll = System.currentTimeMillis(); 
@@ -157,20 +175,14 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Adding subjects");
         loadSubjects();
 
-        log.info("Adding ontologies");
-        loadOntologies(); // must come before loadAnnotations to populate the term maps
-
-        log.info("Adding annotations");
-        loadAnnotations();
-        
-        log.info("Adding data sets");
-        loadDataSets();
-        
         log.info("Adding samples");
         // TODO: handle curated neurons
         // TODO: handle pattern mask results in samples (knappj)
         loadSamples();
 
+        log.info("Adding data sets");
+        loadDataSets();
+        
         log.info("Adding fly lines");
         loadFlyLines();
         
@@ -185,12 +197,43 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Adding folders");
         loadWorkspaces();
+
+        log.info("Adding ontologies");
+        loadOntologies(); // must come before loadAnnotations to populate the term maps
+
+        log.info("Adding annotations");
+        loadAnnotations();
         
         // TODO: add large image viewer workspaces and associated entities
         
         log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
     }
 
+    Map<String,LsmSageAttribute> lsmSageAttrs = new HashMap<>();
+    
+    private void buildLsmAttributeMap() {
+        for (Field field : ReflectionUtils.getAllFields(LSMImage.class)) {
+            SAGEAttribute sageAttribute = field.getAnnotation(SAGEAttribute.class);
+            if (sageAttribute!=null) {
+                LsmSageAttribute attr = new LsmSageAttribute();
+                attr.cvName = sageAttribute.cvName();
+                attr.termName = sageAttribute.termName();
+                attr.field = field;
+                log.info("  "+attr.getKey()+" -> LsmImage."+field.getName());
+                lsmSageAttrs.put(attr.getKey(), attr);
+            }
+        }
+    }
+    
+    private class LsmSageAttribute {
+        String cvName;
+        String termName;
+        Field field;
+        public String getKey() {
+            return cvName+"_"+termName;
+        }
+    }
+    
     private void resetSession() {
         long start = System.currentTimeMillis();
         getSession().flush();
@@ -386,7 +429,7 @@ public class MongoDbImport extends AnnotationDAO {
     private void loadSamples() {
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
-            try {
+            try { 
                 loadSamples(subjectKey);
             }
             catch (Exception e) {
@@ -647,6 +690,10 @@ public class MongoDbImport extends AnnotationDAO {
         List<SampleTile> tiles = new ArrayList<SampleTile>();
         populateChildren(supportingDataEntity);
         for(Entity tileEntity : supportingDataEntity.getOrderedChildren()) {
+
+            Map<FileType,String> images = new HashMap<FileType,String>();
+            addImage(images,FileType.ReferenceMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
+            addImage(images,FileType.SignalMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
             
             List<LSMImage> lsmImages = new ArrayList<LSMImage>();
             List<Reference> lsmReferences = new ArrayList<Reference>();
@@ -655,17 +702,14 @@ public class MongoDbImport extends AnnotationDAO {
             for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
                 LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
                 if (lsmImage!=null) {
+                    // Denormalize tile MIPs into the LSMs
+                    lsmImage.getFiles().putAll(images);
                     lsmImages.add(lsmImage);
                     lsmReferences.add(getReference(lsmEntity));
                 }
             }
 
             imageCollection.insert(lsmImages.toArray());
-            
-
-            Map<FileType,String> images = new HashMap<FileType,String>();
-            addImage(images,FileType.ReferenceMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
-            addImage(images,FileType.SignalMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
             
             SampleTile tile = new SampleTile();
             tile.setName(tileEntity.getName());
@@ -849,7 +893,8 @@ public class MongoDbImport extends AnnotationDAO {
 
         LSMImage lsm = (LSMImage)getImage(lsmEntity);
         // An LSM file must have a stack file path
-        if (lsm.getFiles().get(FileType.Stack)==null) {
+        String filepath = lsm.getFiles().get(FileType.Stack);
+        if (filepath==null) {
             log.error("LSM cannot be imported because it has no filepath: "+lsmEntity.getId());
             return null;
         }
@@ -886,6 +931,54 @@ public class MongoDbImport extends AnnotationDAO {
             lsm.setSageId(Integer.parseInt(sageId));
         }
 
+        Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, sageId);
+        if (sageProps==null) {
+            log.warn("Cannot find LSM#"+lsm.getId()+" in SAGE, with SAGE Id "+sageId);
+        }
+        else {
+            for(String key : lsmSageAttrs.keySet()) {
+                try {
+                    LsmSageAttribute attr = lsmSageAttrs.get(key);
+                    Object value = sageProps.get(key);
+                    Object trueValue = null;
+                    if (value!=null) {
+                        Class<?> fieldType = attr.field.getType();
+                        // Convert the incoming value from SAGE to the correct type in our domain model
+                        if (fieldType.equals(String.class)) {
+                            trueValue = value.toString();
+                        }
+                        else if (fieldType.equals(Date.class)) {
+                            // Dates are represented as java.sql.Timestamps, which is a subclass of Date, 
+                            // so this should be safe to assign directly
+                            trueValue = value;
+                        }
+                        else if (fieldType.equals(Integer.class)) {
+                            trueValue = Integer.parseInt(value.toString());
+                        }
+                        else if (fieldType.equals(Boolean.class)) {
+                            if (value instanceof Boolean) {
+                                trueValue = value;
+                            }
+                            else if (value instanceof Integer) {
+                                trueValue = new Boolean(((Integer)value)!=0);
+                            }
+                            else {
+                                throw new Exception("Cannot parse "+value+" into a Boolean");
+                            }
+                        }
+                        else {
+                            // This might take care of future types we may not have anticipated
+                            trueValue = value;
+                        }
+                    }
+                    org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(lsm, attr.field, trueValue);
+                }
+                catch (Exception e) {
+                    log.error("Error setting SAGE attribute value "+key+" for LSM#"+lsm.getId(),e);
+                }
+            }
+        }
+        
         return lsm;
     }
 
@@ -918,7 +1011,13 @@ public class MongoDbImport extends AnnotationDAO {
 
         
         Map<FileType,String> files = new HashMap<FileType,String>();
-        addStackFiles(imageEntity, files, null);
+        String path = image.getFilepath();
+        if (path.endsWith(".png") || path.endsWith(".gif") || path.endsWith(".jpg") || path.endsWith(".jpeg")) {
+            addImage(files,FileType.Unclassified2d,path);
+        }
+        else {
+            addStackFiles(imageEntity, files, null);    
+        }
         image.setFiles(files);
         
         return image;

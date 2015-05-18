@@ -64,25 +64,12 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     }
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
-
-    	log.info("Getting Image vocabularies from SAGE web service...");
-    	Map<String, SageTerm> sageVocab = null;
-    	try {
-    		sageVocab = new SageDAO(log).getSageVocabulary();
-    	}
-    	catch (DaoException e) {
-    		log.error("Error retrieving Image vocabularies",e);
-    	}
-    	if (null!=sageVocab) {
-			log.info("Got "+sageVocab.size()+" vocabulary terms from SAGE web service");
-		}
-    	
     	try {
     		SolrConnector solrConnector = new SolrConnector();
     		if (clearIndex) {
     			solrConnector.clearIndex();
     		}
-    		solrConnector.indexAllDocuments(sageVocab);
+    		solrConnector.indexAllDocuments();
     	}
     	catch (UnknownHostException e) {
             log.error("Error connecting to Mongo",e);

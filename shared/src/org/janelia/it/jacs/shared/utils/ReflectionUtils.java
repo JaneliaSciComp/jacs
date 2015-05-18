@@ -41,6 +41,36 @@ public class ReflectionUtils {
             throw new RuntimeException("Field cannot be accessed",e);
         }
     }
+
+    /**
+     * Set the given field on the specified object. If the field is
+     * private, this subverts the security manager to set the value anyway.
+     */
+    public static Object getFieldValue(Object obj, Field field, Object value) 
+            throws NoSuchFieldException {
+        try {
+            field.setAccessible(true);
+            return field.get(obj); 
+        }
+        catch (IllegalAccessException e) {
+            throw new RuntimeException("Field cannot be accessed",e);
+        }
+    }
+    
+    /**
+     * Set the given field on the specified object. If the field is
+     * private, this subverts the security manager to set the value anyway.
+     */
+    public static void setFieldValue(Object obj, Field field, Object value) 
+            throws NoSuchFieldException {
+        try {
+            field.setAccessible(true);
+            field.set(obj, value);    
+        }
+        catch (IllegalAccessException e) {
+            throw new RuntimeException("Field cannot be accessed",e);
+        }
+    }
     
     /**
      * Get the given attribute from the specified object, 

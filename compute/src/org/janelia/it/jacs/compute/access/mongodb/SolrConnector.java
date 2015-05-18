@@ -31,9 +31,7 @@ import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
-import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
-import org.janelia.it.jacs.shared.solr.SolrUtils;
 import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
@@ -67,7 +65,6 @@ public class SolrConnector extends SolrDAO {
     Map<Class<?>, List<Field>> classFields = new HashMap<Class<?>,List<Field>>();
     
     // Current indexing context
-    private Class<?> currContext;
     private Set<SimpleAnnotation> annotations = new HashSet<SimpleAnnotation>();
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
     
@@ -76,22 +73,16 @@ public class SolrConnector extends SolrDAO {
 		this.dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
     }
     
-	public void indexAllDocuments(Map<String, SageTerm> sageVocab) throws DaoException {
+	public void indexAllDocuments() throws DaoException {
 		
-		if (log.isTraceEnabled()) {
-            log.trace("indexAllDocuments(sageVocab.size="+sageVocab.size()+")");
-        }
+        log.trace("indexAllDocuments()");
     	
     	if (!useBuildCore || !streamingUpdates) {
     		throw new IllegalStateException("indexAllEntities called on SolrConnector which has useBuildCore=false or streamingUpdates=false");
     	}
     	
-    	this.sageVocab = sageVocab;
-    	this.usedSageVocab = new HashSet<SageTerm>();
-
     	log.info("Building disk-based entity maps");
-    	this.largeOp = new MongoLargeOperations(dao);
-    	largeOp.buildSageImagePropMap();
+    	this.largeOp = new MongoLargeOperations(dao, this);
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
 
@@ -101,8 +92,6 @@ public class SolrConnector extends SolrDAO {
         int total = 0;
         
 		for (Class<?> clazz : searchClasses) {
-
-			this.currContext = clazz;
 
             long start = System.currentTimeMillis();
             
@@ -137,8 +126,7 @@ public class SolrConnector extends SolrDAO {
 				
 	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, domainObject.getId());
 	        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
-	        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, domainObject.getId());
-	        	docs.add(createDocument(null, domainObject, fields, methods, ancestors, sageProps));
+	        	docs.add(createDocument(null, domainObject, fields, methods, ancestors));
 
 				i++;
 				total++;
@@ -154,9 +142,6 @@ public class SolrConnector extends SolrDAO {
 		}
     	
         try {
-        	log.info("Indexing Sage vocabularies");
-        	index(createSageDocs(usedSageVocab));
-        	
     		commit();
     		optimize();
         	log.info("Completed indexing "+total+" objects");
@@ -168,20 +153,12 @@ public class SolrConnector extends SolrDAO {
         }
 	}
 	
-	private SolrInputDocument createDocument(SolrDocument existingDoc, DomainObject domainObject, Set<Field> fields, Set<Method> methods, Set<Long> ancestorIds, Map<String,Object> sageProps) throws DaoException {
+	private SolrInputDocument createDocument(SolrDocument existingDoc, DomainObject domainObject, Set<Field> fields, Set<Method> methods, Set<Long> ancestorIds) throws DaoException {
 
     	SolrInputDocument doc = existingDoc==null ? new SolrInputDocument() : ClientUtils.toSolrInputDocument(existingDoc);
-
-		Class<?> clazz = domainObject.getClass();
-		SearchType searchTypeAnnot = clazz.getAnnotation(SearchType.class);
-		
     	doc.setField("doc_type", SolrDocTypeEnum.DOCUMENT.toString(), 1.0f);
-    	doc.setField("entity_type", searchTypeAnnot.key(), 1.0f);
-
-//		log.info("indexing "+searchTypeAnnot.label()+" "+domainObject.getName());
     	
 		Map<String,Object> attrs = new HashMap<String,Object>();
-		
 		for(Field field : fields) {
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			try {
@@ -207,34 +184,6 @@ public class SolrConnector extends SolrDAO {
                 throw new DaoException("Problem executing "+method.getName()+" on object "+domainObject,e);
             }
         }
-
-    	if (sageVocab!=null && sageProps!=null) {
-    		if (existingDoc!=null) {
-        		for(String key : sageProps.keySet()) {
-    				SageTerm sageTerm = sageVocab.get(key);
-    				if (sageTerm==null) {
-    					log.warn("Unrecognized SAGE term: "+key);
-    					continue;
-    				}
-    				doc.removeField(SolrUtils.getSageFieldName(sageTerm));
-        		}
-    		}
-    		for(String key : sageProps.keySet()) {
-    			Object value = sageProps.get(key);
-    			if (value != null) {
-    				SageTerm sageTerm = sageVocab.get(key);
-    				if (sageTerm==null) {
-    					log.warn("Unrecognized SAGE term: "+key);
-    					continue;
-    				}
-    				
-    				// Keep track of the terms we use, so that they can be indexed as well
-    				if (!usedSageVocab.contains(sageTerm)) usedSageVocab.add(sageTerm);
-    				String fieldName = SolrUtils.getSageFieldName(sageTerm);
-    				doc.addField(fieldName, value, 0.9f);
-    			}
-    		}
-    	}
 
 		if (existingDoc!=null) {
 			// This is slightly flawed in that attributes are not removed from the index if they are removed from 
@@ -263,13 +212,15 @@ public class SolrConnector extends SolrDAO {
 		fullTextStrings.clear();
 		
 		findStrings(new HashSet<String>(), domainObject, domainObject, true, "  ");
-		
-		for(String key : fullTextStrings.keySet()) {
-			// Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
-		    List<String> strings = new ArrayList<>(fullTextStrings.get(key));
-		    // The _d is for "deep". We can always make these stored=false in Solr if we need to, since they're mainly for searching purposes. 
-			doc.setField(key+"_d_txt", strings, 1.0f);
-		}
+
+//        for(String key : fullTextStrings.keySet()) {
+//            // Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
+//            List<String> strings = new ArrayList<>(fullTextStrings.get(key));
+//            // The _d is for "deep". We can always make these stored=false in Solr if we need to, since they're mainly for searching purposes. 
+//            doc.setField(key+"_d_txt", strings, 1.0f);
+//        }
+		Collection<String> strings = new HashSet<>(fullTextStrings.values());
+		doc.setField("fulltext_txt", strings, 0.8f);
                 
         for(SimpleAnnotation annotation : annotations) {        
             for(String subject : annotation.getSubjectsCsv().split(",")) {
@@ -315,12 +266,8 @@ public class SolrConnector extends SolrDAO {
 		}
 		
 		for(Field field : fields) {
-            // Don't index permissions
-            if ("readers".equals(field.getName()) || "writers".equals(field.getName()) || "ownerKey".equals(field.getName())) continue;
-            
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			if (ignoreSearchAttrs && searchAttributeAnnot!=null) continue;
-			
 			try {
 				findStrings(visited, rootObject, object, field, indent+"  ");
 			}

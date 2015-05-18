@@ -180,14 +180,14 @@ public class SolrQueryBuilder {
                 continue;
             }
             query.addFilterQuery(getFilterQuery(fieldName, values));
-            if ("entity_type".equals(fieldName)) {
+            if ("type".equals(fieldName)) {
                 entityTypeFiltered = true;
             }
         }
         
         query.addFilterQuery("+doc_type:"+SolrDocTypeEnum.DOCUMENT.toString());
         if (!entityTypeFiltered) {
-            query.addFilterQuery("-entity_type:Ontology*");
+            query.addFilterQuery("-type:Ontology*");
         }
         
         for (String facet : facets) {

@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.access.large;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,18 +11,23 @@ import java.util.Set;
 import net.sf.ehcache.Cache;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAO;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.jongo.MongoCursor;
 
 /**
@@ -37,10 +43,14 @@ public class MongoLargeOperations extends LargeOperations {
 
     private DomainDAO dao; 
 
-    public MongoLargeOperations(DomainDAO dao) {
-		this.dao = dao;
+//    public MongoLargeOperations(DomainDAO dao) {
+//		this.dao = dao;
+//    }
+
+    public MongoLargeOperations(DomainDAO dao, AnnotationDAO annotationDAO) {
+        super(annotationDAO);
+        this.dao = dao;
     }
-    
     /**
      * Builds a map of entity ids to sets of SimpleAnnotations on disk using EhCache.
      * @throws DaoException
@@ -115,52 +125,72 @@ public class MongoLargeOperations extends LargeOperations {
      * Builds a map of image paths to Sage properties.
      * @throws DaoException
      */
-    public void buildSageImagePropMap() throws DaoException {
-    	
-    	SageDAO sage = new SageDAO(log);
+//    public void buildSageImagePropMap() throws DaoException {
+//    	
+//    	SageDAO sage = new SageDAO(log);
+//
+////    	log.info("Building LSM filename lookup table...");
+////		Map<String,Long> lsmLookup = new HashMap<String,Long>();
+////		MongoCursor<LSMImage> cursor = dao.getCollectionByClass(LSMImage.class).find("{class:#}",LSMImage.class.getName()).as(LSMImage.class);
+////    	for(Iterator<LSMImage> lsmIterator = cursor.iterator(); lsmIterator.hasNext(); ) {
+////    		LSMImage image = lsmIterator.next();
+////    		String stackFilepath = image.getFiles().get(FileType.Stack);
+////    		if (stackFilepath==null) {
+////    			log.warn("LSMImage missing filepath: "+image.getId());
+////    			continue;
+////    		}
+////        	String[] path = stackFilepath.split("/"); // take just the filename
+////        	String filename = path[path.length-1];
+////    		lsmLookup.put(filename, image.getId());
+////    	}
+////    	log.info("Got "+lsmLookup.size()+" LSM filenames");
+//
+//    	log.info("Building property map for all Sage images");
+////    	for(Iterator<DataSet> iterator = dao.getDomainObjects(DataSet.class).iterator(); iterator.hasNext(); ) {
+////    		DataSet dataSet = iterator.next();
+////    		String dataSetIdentifier = dataSet.getIdentifier();
+//
+//    	// TODO: only use this method when doing the MongoDbImport
+//    	try {
+//            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+//                
+//                String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+//    
+//                if (!dataSetIdentifier.startsWith("dolanm")) continue;
+//        		log.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
+//    
+//            	ResultSetIterator rsIterator = null;
+//            	try {
+//                	rsIterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
+//            		while (rsIterator.hasNext()) {
+//                		Map<String,Object> row = rsIterator.next();
+////                    	String imagePath = (String)row.get(SageDAO.IMAGE_PROP_PATH);
+//    //                	String[] path = imagePath.split("/"); // take just the filename
+//    //                	String filename = path[path.length-1];
+//                    	String sageId = row.get("image_query_id").toString();
+//                    	putValue(SAGE_IMAGEPROP_MAP, sageId, row);
+//                	}
+//            	}
+//            	catch (RuntimeException e) {
+//            		if (e.getCause() instanceof SQLException) {
+//            			throw new DaoException(e);
+//            		}
+//            		throw e;
+//            	}
+//                finally {
+//                	if (rsIterator!=null) rsIterator.close();
+//                }
+//        	}
+//    	}
+//        catch (ComputeException e) {
+//            throw new DaoException(e);
+//        }
+//    }
 
-    	log.info("Building LSM filename lookup table...");
-		Map<String,Long> lsmLookup = new HashMap<String,Long>();
-		MongoCursor<LSMImage> cursor = dao.getCollectionByClass(LSMImage.class).find("{class:#}",LSMImage.class.getName()).as(LSMImage.class);
-    	for(Iterator<LSMImage> lsmIterator = cursor.iterator(); lsmIterator.hasNext(); ) {
-    		LSMImage image = lsmIterator.next();
-    		String stackFilepath = image.getFiles().get(FileType.Stack);
-    		if (stackFilepath==null) {
-    			log.warn("LSMImage missing filepath: "+image.getId());
-    			continue;
-    		}
-        	String[] path = stackFilepath.split("/"); // take just the filename
-        	String filename = path[path.length-1];
-    		lsmLookup.put(filename, image.getId());
-    	}
-    	log.info("Got "+lsmLookup.size()+" LSM filenames");
-
-    	log.info("Building property map for all Sage images");
-    	for(Iterator<DataSet> iterator = dao.getDomainObjects(DataSet.class).iterator(); iterator.hasNext(); ) {
-    		DataSet dataSet = iterator.next();
-    		String dataSetIdentifier = dataSet.getIdentifier();
-    		log.info("  Building property map for all Sage images in Data Set '"+dataSetIdentifier+"'");
-
-        	ResultSetIterator rsIterator = null;
-        	try {
-            	rsIterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
-        		while (rsIterator.hasNext()) {
-            		Map<String,Object> row = rsIterator.next();
-                	String imagePath = (String)row.get(SageDAO.IMAGE_PROP_PATH);
-                	String[] path = imagePath.split("/"); // take just the filename
-                	String filename = path[path.length-1];
-                	putValue(SAGE_IMAGEPROP_MAP, lsmLookup.get(filename), row);
-            	}
-        	}
-        	catch (RuntimeException e) {
-        		if (e.getCause() instanceof SQLException) {
-        			throw new DaoException(e);
-        		}
-        		throw e;
-        	}
-            finally {
-            	if (rsIterator!=null) rsIterator.close();
-            }
-    	}
+    protected void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
+//        String[] path = imagePath.split("/"); // take just the filename
+//        String filename = path[path.length-1];
+        String sageId = imageProps.get("image_query_id").toString();
+        putValue(SAGE_IMAGEPROP_MAP, sageId, imageProps);
     }
 }
