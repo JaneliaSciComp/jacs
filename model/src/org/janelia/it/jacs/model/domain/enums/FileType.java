@@ -10,6 +10,7 @@ public enum FileType {
     Stack(false, false),
     FastStack(false, false),
     VisuallyLosslessStack(false, false),
+    HeatmapStack(true, false),
     CompleteMip(true, false),
     SignalMip(true, false),
     ReferenceMip(true, false),

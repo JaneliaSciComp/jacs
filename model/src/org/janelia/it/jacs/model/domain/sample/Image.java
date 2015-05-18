@@ -21,13 +21,13 @@ public class Image extends AbstractDomainObject implements HasFiles, HasFilepath
     @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
     
-    @SearchAttribute(key="image_size_txt",label="Image Size")
+    @SearchAttribute(key="image_size_s",label="Image Size")
     private String imageSize;
 
-    @SearchAttribute(key="optical_res_txt",label="Optical Resolution")
+    @SearchAttribute(key="optical_res_s",label="Optical Resolution")
     private String opticalResolution;
 
-    @SearchAttribute(key="objective_txt",label="Objective", facet=true)
+    @SearchAttribute(key="objective_s",label="Objective", facet=true)
     private String objective;
 
     @SAGEAttribute(cvName="light_imagery", termName="channels")

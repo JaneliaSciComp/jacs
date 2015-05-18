@@ -1163,7 +1163,7 @@ public class MongoDbImport extends AnnotationDAO {
         screenSample.setFilepath(paFilepath.replaceFirst("patternAnnotation", ""));
         
         addMasks(screenSample, patternAnnotationEntity, masks);
-
+        
         Entity maskAnnotationEntity = EntityUtils.findChildWithNameAndType(screenSampleEntity, "Mask Annotation", EntityConstants.TYPE_FOLDER);
         if (maskAnnotationEntity!=null) {
             populateChildren(maskAnnotationEntity);
@@ -1175,11 +1175,15 @@ public class MongoDbImport extends AnnotationDAO {
         patternMaskCollection.insert(masks.toArray());
 
         Map<FileType,String> images = new HashMap<FileType,String>();
-        addImage(images,FileType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         if (alignedStack!=null) {
             addImage(images,FileType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
             addImage(images,FileType.CompleteMip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        }
+        Entity heatmap = EntityUtils.findChildWithName(patternAnnotationEntity, "Heatmap");
+        if (heatmap!=null) {
+            addImage(images,FileType.HeatmapStack,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(images,FileType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         screenSample.setImages(images);
         

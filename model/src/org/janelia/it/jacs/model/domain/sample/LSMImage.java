@@ -39,11 +39,11 @@ public class LSMImage extends Image {
     private String age;
 
     @SAGEAttribute(cvName="light_imagery", termName="annotated_by")
-    @SearchAttribute(key="annotatedby_txt",label="Annotated By",facet=true)
+    @SearchAttribute(key="annotatedby_s",label="Annotated By",facet=true)
     private String annotatedBy;
 
     @SAGEAttribute(cvName="light_imagery", termName="area")
-    @SearchAttribute(key="area_txt",label="Anatomical Area",facet=true)
+    @SearchAttribute(key="area_s",label="Anatomical Area",facet=true)
     private String anatomicalArea;
 
     @SAGEAttribute(cvName="light_imagery", termName="bc_correction1")
@@ -95,7 +95,7 @@ public class LSMImage extends Image {
     private String fullAge;
 
     @SAGEAttribute(cvName="light_imagery", termName="mount_protocol")
-    @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol",facet=true)
+    @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol")
     private String mountingProtocol;
 
     @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_1_name")
@@ -281,8 +281,10 @@ public class LSMImage extends Image {
     @SAGEAttribute(cvName="line", termName="hide")
     @SearchAttribute(key="linehide_txt",label="Hide Line?",display=false)
     private String lineHide;
+
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */
+    
     
     public Reference getSample() {
         return sample;
@@ -314,6 +316,22 @@ public class LSMImage extends Image {
 
     public void setSageId(Integer sageId) {
         this.sageId = sageId;
+    }
+
+    public String getLine() {
+        return line;
+    }
+
+    public void setLine(String line) {
+        this.line = line;
+    }
+
+    public Boolean getRepresentative() {
+        return representative;
+    }
+
+    public void setRepresentative(Boolean representative) {
+        this.representative = representative;
     }
 
     public String getAge() {
@@ -426,14 +444,6 @@ public class LSMImage extends Image {
 
     public void setGender(String gender) {
         this.gender = gender;
-    }
-
-    public String getLine() {
-        return line;
-    }
-
-    public void setLine(String line) {
-        this.line = line;
     }
 
     public String getFullAge() {
@@ -754,5 +764,69 @@ public class LSMImage extends Image {
 
     public void setVtLine(String vtLine) {
         this.vtLine = vtLine;
+    }
+
+    public String getOrganism() {
+        return organism;
+    }
+
+    public void setOrganism(String organism) {
+        this.organism = organism;
+    }
+
+    public String getGenotype() {
+        return genotype;
+    }
+
+    public void setGenotype(String genotype) {
+        this.genotype = genotype;
+    }
+
+    public Integer getFlycoreId() {
+        return flycoreId;
+    }
+
+    public void setFlycoreId(Integer flycoreId) {
+        this.flycoreId = flycoreId;
+    }
+
+    public String getFlycoreLabId() {
+        return flycoreLabId;
+    }
+
+    public void setFlycoreLabId(String flycoreLabId) {
+        this.flycoreLabId = flycoreLabId;
+    }
+
+    public String getFlycoreLandingSite() {
+        return flycoreLandingSite;
+    }
+
+    public void setFlycoreLandingSite(String flycoreLandingSite) {
+        this.flycoreLandingSite = flycoreLandingSite;
+    }
+
+    public String getFlycorePermission() {
+        return flycorePermission;
+    }
+
+    public void setFlycorePermission(String flycorePermission) {
+        this.flycorePermission = flycorePermission;
+    }
+
+    public String getFlycoreProject() {
+        return flycoreProject;
+    }
+
+    public void setFlycoreProject(String flycoreProject) {
+        this.flycoreProject = flycoreProject;
+    }
+
+    public String getLineHide() {
+        return lineHide;
+    }
+
+    public void setLineHide(String lineHide) {
+        this.lineHide = lineHide;
     }
 }

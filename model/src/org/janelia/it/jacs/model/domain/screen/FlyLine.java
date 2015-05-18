@@ -23,7 +23,7 @@ public class FlyLine extends AbstractDomainObject {
     @SearchAttribute(key="robot_id_i",label="Robot Id")
     private Integer robotId;
     
-    @SearchAttribute(key="split_part_txt",label="Split Part",facet=true)
+    @SearchAttribute(key="split_part_s",label="Split Part",facet=true)
     private String splitPart;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */

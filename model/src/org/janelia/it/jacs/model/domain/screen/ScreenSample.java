@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.ReverseReference;
+import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
@@ -26,6 +27,8 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
     private ReverseReference patternMasks;
     
     private Map<FileType, String> images;
+    
+    private Map<AlignmentScoreType, String> scores;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getFilepath() {
@@ -58,5 +61,13 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
 
     public void setImages(Map<FileType, String> images) {
         this.images = images;
+    }
+
+    public Map<AlignmentScoreType, String> getScores() {
+        return scores;
+    }
+
+    public void setScores(Map<AlignmentScoreType, String> scores) {
+        this.scores = scores;
     }
 }
