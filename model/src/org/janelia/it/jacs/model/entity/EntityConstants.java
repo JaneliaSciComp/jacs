@@ -23,6 +23,12 @@ public class EntityConstants {
     public static final String VALUE_DESYNC                          = "Desync";
     public static final String VALUE_RETIRED                         = "Retired";
     
+    public static final String VALUE_COMPRESSION_UNCOMPRESSED               = "Uncompressed";
+    public static final String VALUE_COMPRESSION_LOSSLESS                   = "Lossless";
+    public static final String VALUE_COMPRESSION_LOSSLESS_AND_H5J           = "Lossless and H5J";
+    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD  = "Visually Lossless and PBD";
+    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS          = "Visually Lossless";
+    
     // Singleton Entity Names
     public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
     public static final String NAME_SHARED_DATA                      = "Shared Data";
@@ -94,6 +100,7 @@ public class EntityConstants {
     
     // Entity Data Attributes
     public static final String ATTRIBUTE_STATUS                              = "Status";
+    public static final String ATTRIBUTE_COMRESSION_TYPE                     = "Compression Type";
     public static final String ATTRIBUTE_LINE                                = "Line";
     public static final String ATTRIBUTE_CROSS_BARCODE                       = "Cross Barcode";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
