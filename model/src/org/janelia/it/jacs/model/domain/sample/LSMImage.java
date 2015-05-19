@@ -127,11 +127,11 @@ public class LSMImage extends Image {
     private String imageFamily;
 
     @SAGEAttribute(cvName="light_imagery", termName="created_by")
-    @SearchAttribute(key="created_by_txt",label="Imager")
+    @SearchAttribute(key="created_by_s",label="Imager",facet=true)
     private String createdBy;
 
     @SAGEAttribute(cvName="light_imagery", termName="data_set")
-    @SearchAttribute(key="data_set_txt",label="Imagery Data Set")
+    @SearchAttribute(key="data_set_txt",label="Data Set",facet=true)
     private String dataSet;
 
     @SAGEAttribute(cvName="light_imagery", termName="imaging_project")

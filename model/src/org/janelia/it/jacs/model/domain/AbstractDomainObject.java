@@ -54,7 +54,7 @@ public abstract class AbstractDomainObject implements DomainObject {
     public String getType() {
         SearchType searchType = (SearchType)getClass().getAnnotation(SearchType.class);
         if (searchType!=null) {
-            return searchType.key();
+            return searchType.label();
         }
         return null;
     }

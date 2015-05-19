@@ -8,11 +8,11 @@ public class SampleAlignmentResult extends PipelineResult {
 
     private String imageSize;
     private String opticalResolution;
+    private String channelColors;
+    private String channelSpec;
+    private String objective;
     private String alignmentSpace;
     private String boundingBox;
-    private String channelColors;
-    private String chanSpec;
-    private String objective;
     private Map<AlignmentScoreType, String> scores;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
@@ -33,6 +33,30 @@ public class SampleAlignmentResult extends PipelineResult {
         this.opticalResolution = opticalResolution;
     }
 
+    public String getChannelColors() {
+        return channelColors;
+    }
+
+    public void setChannelColors(String channelColors) {
+        this.channelColors = channelColors;
+    }
+
+    public String getChannelSpec() {
+        return channelSpec;
+    }
+
+    public void setChannelSpec(String chanSpec) {
+        this.channelSpec = chanSpec;
+    }
+
+    public String getObjective() {
+        return objective;
+    }
+
+    public void setObjective(String objective) {
+        this.objective = objective;
+    }
+    
     public String getAlignmentSpace() {
         return alignmentSpace;
     }
@@ -47,30 +71,6 @@ public class SampleAlignmentResult extends PipelineResult {
 
     public void setBoundingBox(String boundingBox) {
         this.boundingBox = boundingBox;
-    }
-
-    public String getChannelColors() {
-        return channelColors;
-    }
-
-    public void setChannelColors(String channelColors) {
-        this.channelColors = channelColors;
-    }
-
-    public String getChanSpec() {
-        return chanSpec;
-    }
-
-    public void setChanSpec(String chanSpec) {
-        this.chanSpec = chanSpec;
-    }
-
-    public String getObjective() {
-        return objective;
-    }
-
-    public void setObjective(String objective) {
-        this.objective = objective;
     }
 
     public Map<AlignmentScoreType, String> getScores() {
