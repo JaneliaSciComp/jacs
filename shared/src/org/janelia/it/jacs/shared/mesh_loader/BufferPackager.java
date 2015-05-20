@@ -56,7 +56,10 @@ public class BufferPackager {
         List<VertexInfoBean> vertices = factory.getVertices();
         if (vertices.isEmpty()) {
             log.info("No vertices.");
-            new RuntimeException("Getting NO vertex attributes in packager.").printStackTrace(); // Marking the spot.
+            //new RuntimeException("Getting NO vertex attributes in packager.").printStackTrace(); // Marking the spot.
+        }
+        else {
+            log.info("Got {} vertices.", vertices.size());
         }
 
         // Iterate over the vertices to get vertex attributes.  The order of vertices in that collection should
