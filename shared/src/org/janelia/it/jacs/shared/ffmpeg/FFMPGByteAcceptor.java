@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.shared.img_3d_loader;
+package org.janelia.it.jacs.shared.ffmpeg;
 
 import org.bytedeco.javacpp.BytePointer;
 

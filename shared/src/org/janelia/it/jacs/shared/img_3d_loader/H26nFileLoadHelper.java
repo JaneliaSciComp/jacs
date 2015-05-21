@@ -7,6 +7,8 @@
 package org.janelia.it.jacs.shared.img_3d_loader;
 
 import java.util.List;
+
+import org.janelia.it.jacs.shared.ffmpeg.ByteGatherAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

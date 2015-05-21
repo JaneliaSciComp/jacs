@@ -19,7 +19,6 @@ import static org.bytedeco.javacpp.avdevice.avdevice_register_all;
 import static org.bytedeco.javacpp.avformat.*;
 import static org.bytedeco.javacpp.avutil.*;
 import static org.bytedeco.javacpp.swscale.*;
-import org.janelia.it.jacs.shared.img_3d_loader.FFMPGByteAcceptor;
 
 class ReadInput extends Read_packet_Pointer_BytePointer_int {
     private byte[] _buffer;
