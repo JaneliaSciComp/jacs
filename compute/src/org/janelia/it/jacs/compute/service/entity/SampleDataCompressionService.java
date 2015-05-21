@@ -116,12 +116,10 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
             }
             
-            for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
+            Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
+            for(Entity image : entities.values()) {
                 String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 if (filepath!=null && filepath.endsWith(inputType)) {
-                    if (hasCompressedVersion(image)) {
-                    	continue;
-                    }
                     addEntityToInputList(image);
                 }
             }
@@ -133,9 +131,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 if (!image.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
                     logger.warn("Ignoring entity with filepath that is not an Image 3D: "+image.getId());
                     continue;
-                }
-                if (hasCompressedVersion(image)) {
-                	continue;
                 }
                 addEntityToInputList(image);
             }
@@ -152,64 +147,75 @@ public class SampleDataCompressionService extends AbstractEntityService {
             logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
         }
     }
-    
-    private boolean hasCompressedVersion(Entity image) throws ComputeException {
-    	if (RECORD_MODE_ADD.equals(recordMode)) {
-    		try {
-        		populateChildren(image);
-    		}
-    		catch (Exception e) {
-    			logger.error("Error loading children of "+image.getId());
-    		}
-    		List<EntityData> toRemove = new ArrayList<>();
-    		for(EntityData ed : image.getEntityData()) {
-    			if (EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE.equals(ed.getEntityAttrName())) {
-    				toRemove.add(ed);
-    			}
-    		}
-    		if (!toRemove.isEmpty()) {
-	    		toRemove.remove(toRemove.size()-1);
-	    		for(EntityData ed : toRemove) {
-	    			logger.warn("Removing extra H5J for: "+image.getId());
-	    			image.getEntityData().remove(ed);
-	    			entityBean.deleteEntityData(ed);
-	    			entityBean.deleteEntityTreeById(ed.getOwnerKey(), ed.getChildEntity().getId());
-	    		}
-    		}
-    		if (image.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE)!=null) {
-    			return true;
-    		}
-    	}
-    	return false;
-    }
-
-    private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
-        List<List<String>> groupList = new ArrayList<>();
-        List<String> currentGroup = null;
-        for (String s : fullList) {
-            if (currentGroup==null) {
-                currentGroup = new ArrayList<>();
-            } 
-            else if (currentGroup.size()==groupSize) {
-                groupList.add(currentGroup);
-                currentGroup = new ArrayList<>();
-            }
-            currentGroup.add(s);
-        }
-        if (currentGroup!=null && currentGroup.size() > 0) {
-            groupList.add(currentGroup);
-        }
-        return groupList;
-    }
+       
+    // TODO: move this cleanup function to a Groovy or Python script
+//    private void cleanExtraFiles(Entity image) throws ComputeException {
+//        List<EntityData> toRemove = new ArrayList<>();
+//        for(EntityData ed : image.getEntityData()) {
+//            if (EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE.equals(ed.getEntityAttrName())) {
+//                toRemove.add(ed);
+//            }
+//        }
+//        if (!toRemove.isEmpty()) {
+//            toRemove.remove(toRemove.size()-1);
+//            for(EntityData ed : toRemove) {
+//                logger.warn("Removing extra H5J for: "+image.getId());
+//                image.getEntityData().remove(ed);
+//                entityBean.deleteEntityData(ed);
+//                entityBean.deleteEntityTreeById(ed.getOwnerKey(), ed.getChildEntity().getId());
+//            }
+//        }
+//    }
     
     private void addEntityToInputList(Entity imageEntity) throws ComputeException {
 
+        populateChildren(imageEntity);
+        String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        
+        if (outputType.equals("h5j")) {
+            Entity existingH5j = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE);
+            if (existingH5j!=null) {
+                // The H5J entity already exists
+                String h5jFilepath = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (RECORD_MODE_ADD.equals(recordMode)) {
+                    if (h5jFilepath!=null & h5jFilepath.endsWith(".h5j")) {
+                        // It's already in the correct place
+                        return;
+                    }
+                }
+                else if (RECORD_MODE_UPDATE.equals(recordMode)) {
+                    // We just need to move it into the right place
+                    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, h5jFilepath);
+                    logger.info("Updated "+numUpdated+" entity data values to use compressed file: "+h5jFilepath);
+                    
+                    // Update the image to use H5J format
+                    imageEntity.setName(existingH5j.getName());
+                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, h5jFilepath);
+                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "h5j");
+                    entityBean.saveOrUpdateEntity(imageEntity);
+                    
+                    // Move all references to the H5J
+                    for(EntityData parentEd : entityBean.getParentEntityDatas(existingH5j.getId())) {
+                        if (!parentEd.getParentEntity().getId().equals(imageEntity.getId())) {
+                            parentEd.setChildEntity(imageEntity);
+                            logger.info("Carrying forward reference to H5J#"+existingH5j.getId()+" from "+parentEd.getParentEntity().getName());
+                            entityBean.saveOrUpdateEntityData(parentEd);
+                        }
+                    }
+                    
+                    // Delete the old H5J entity
+                    entityBean.deleteEntityTreeById(existingH5j.getOwnerKey(), existingH5j.getId(), true);
+                    logger.info("Replaced Entity#"+imageEntity.getId()+" with "+imageEntity.getName());
+                    
+                    deleteIfNecessary(filepath);
+                }
+            }
+        }
+        
         if (visited.contains(imageEntity.getId())) return;
         visited.add(imageEntity.getId());
         
     	if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
-    	
-    	String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 
     	if (filepath==null) {
     		logger.warn("File path for "+imageEntity.getId()+" is null");
@@ -243,6 +249,25 @@ public class SampleDataCompressionService extends AbstractEntityService {
     		entityMap.put(filepath, eset);
     	}
     	eset.add(imageEntity.getId());
+    }
+
+    private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
+        List<List<String>> groupList = new ArrayList<>();
+        List<String> currentGroup = null;
+        for (String s : fullList) {
+            if (currentGroup==null) {
+                currentGroup = new ArrayList<>();
+            } 
+            else if (currentGroup.size()==groupSize) {
+                groupList.add(currentGroup);
+                currentGroup = new ArrayList<>();
+            }
+            currentGroup.add(s);
+        }
+        if (currentGroup!=null && currentGroup.size() > 0) {
+            groupList.add(currentGroup);
+        }
+        return groupList;
     }
     
     private void doCreateOutputList() throws ComputeException {
@@ -353,24 +378,26 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 }
         	}
     	
-        	if (deleteSourceFiles) {
-        		File file = new File(inputPath);
-        		if (!isDebug) {
-    				try {
-    					FileUtils.forceDelete(file);
-    					logger.info("Deleted old file: "+inputPath);
-    				}
-    				catch (Exception e) {
-    					logger.info("Error deleting symlink "+inputPath+": "+e.getMessage());
-    				}
-        		}
-        	}
-    		
+        	deleteIfNecessary(inputPath);
     	}
     	catch (ComputeException e) {
     		logger.error("Unable to update all entities to use new compressed file: "+outputPath);
     	}
 	}
+    
+    private void deleteIfNecessary(String filepath) {
+        if (!deleteSourceFiles) return;
+        File file = new File(filepath);
+        if (!isDebug) {
+            try {
+                FileUtils.forceDelete(file);
+                logger.info("Deleted old file: "+filepath);
+            }
+            catch (Exception e) {
+                logger.info("Error deleting symlink "+filepath+": "+e.getMessage());
+            }
+        }
+    }
 
     private String getExtension(String filepath) {
         int dot = filepath.indexOf('.');
