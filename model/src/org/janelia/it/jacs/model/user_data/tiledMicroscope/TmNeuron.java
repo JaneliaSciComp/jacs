@@ -22,8 +22,10 @@ public class TmNeuron implements IsSerializable, Serializable {
     //  interpret what the relationship means in gory detail
     public enum AnnotationNavigationDirection {
         // easy: toward or away from the root of the neuron
-        ROOTWARD,
-        ENDWARD,
+        ROOTWARD_JUMP,
+        ROOTWARD_STEP,
+        ENDWARD_JUMP,
+        ENDWARD_STEP,
         // assuming the children of each branch are in some stable
         //  order, next/prev implies movement between sibling
         //  branches of the nearest rootward branch point
