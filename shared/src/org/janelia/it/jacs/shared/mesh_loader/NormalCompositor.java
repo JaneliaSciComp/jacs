@@ -23,8 +23,12 @@ public class NormalCompositor {
         float[] zeroCoords = vertices.get(0).getCoordinates();
         float[] oneCoords = vertices.get(1).getCoordinates();
         float[] twoCoords = vertices.get(2).getCoordinates();
+//        float[] v = getLineDelta(zeroCoords, oneCoords);
+//        float[] w = getLineDelta(zeroCoords, twoCoords);
         float[] v = getLineDelta(oneCoords, zeroCoords);
         float[] w = getLineDelta(twoCoords, zeroCoords);
+//        float[] v = getLineDelta(oneCoords, zeroCoords);
+//        float[] w = getLineDelta(oneCoords, twoCoords);
         double nx = (v[Y] * w[Z]) - (v[Z] * w[Y]);
         double ny = (v[Z] * w[X]) - (v[X] * w[Z]);
         double nz = (v[X] * w[Y]) - (v[Y] * w[X]);
