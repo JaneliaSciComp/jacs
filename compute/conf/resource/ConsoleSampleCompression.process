@@ -1,0 +1,40 @@
+<!-- 
+	Rerun compression service on a sample or samples.
+-->
+<process name="Sample Compression" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence name="Sample Compression" waitForAsync="true">
+        
+        <input name="SAMPLE_ENTITY_ID"/>
+        
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_1" value="sample entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+            <output name="SAMPLE_ENTITY_ID"/>
+        </operation>
+	    
+        <operation name="Get Sample Ids" processor="org.janelia.it.jacs.compute.service.common.ParseCSVStringService">
+            <input name="INPUT_CSV" value="$V{SAMPLE_ENTITY_ID}"/>
+            <input name="OUTPUT_VAR" value="ENTITY_ID"/>
+            <output name="ENTITY_ID"/>
+        </operation>
+                
+        <sequence forEach="ENTITY_ID">
+    
+            <!-- Spawn a new task to process the sample -->
+            <operation name="Batch Repair Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                <input name="PROCESS_DEF_NAME" value="PostPipeline_SampleCompression"/>
+                <input name="DISPLAY_NAME" value="Sample Compression"/>
+                <input name="PARAMETER_2_KEY" value="sample entity id"/>
+                <input name="PARAMETER_2_VALUE" value="$V{ENTITY_ID}"/>
+            </operation>
+            
+        </sequence>
+        
+        <!-- Wait for subtasks to finish -->
+        <operation name="Wait for Subtasks" processor="org.janelia.it.jacs.compute.service.common.WaitForSubTasksService">
+        </operation>
+        
+    </sequence>
+</process>

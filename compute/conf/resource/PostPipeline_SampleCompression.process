@@ -1,7 +1,7 @@
 <!-- 
 	Complete pipeline for compressing one or more samples.
 -->
-<process name="Sample Compression Post Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sample Compression Post Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
         <input name="ROOT_ENTITY_ID"/>
@@ -24,7 +24,7 @@
             
             <!-- Import variables from the entity -->
             <operation name="Get Target Compression" processor="org.janelia.it.jacs.compute.service.entity.InitVariablesFromEntityService">
-                <input name="ENTITY_ID" value="${ROOT_ENTITY_ID}"/>
+                <input name="ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
                 <input name="OVERRIDE" value="false"/>
                 <input name="TARGET_COMPRESSION"/>
                 <input name="TASK_PARAMETER_1" value="Compression Type"/>
@@ -32,7 +32,7 @@
                 <output name="TARGET_COMPRESSION"/>
             </operation>
             
-        <sequence>
+        </sequence>
         
         <!-- Init variables with default values if they have not yet been initialized -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
@@ -104,5 +104,12 @@
             
         </sequence>
                 
+        <!-- Set the compression type in case it was passed in separately -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.entity.SetEntityAttributeValueService">
+            <input name="ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
+            <input name="ATTRIBUTE_NAME" value="Compression Type"/>
+            <input name="ATTRIBUTE_VALUE" value="$V{TARGET_COMPRESSION}"/>
+        </operation>
+        
     </sequence>
 </process>
