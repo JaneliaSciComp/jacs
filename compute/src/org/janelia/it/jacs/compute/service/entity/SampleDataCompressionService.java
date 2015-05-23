@@ -116,6 +116,10 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
             }
             
+            if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                throw new IllegalArgumentException("Entity is not a sample: "+rootEntityId);
+            }
+            
             Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
             for(Entity image : entities.values()) {
                 String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
