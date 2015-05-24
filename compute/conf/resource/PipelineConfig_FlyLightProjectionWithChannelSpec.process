@@ -3,6 +3,7 @@
     
         <include name="Pipeline" process="FlyLightProjectionPipeline">
             <input name="PIPELINE_PROCESS" value="FlyLightProjectionPipeline"/>
+            <input name="20X_MERGE_ALGORITHMS" value="FLYLIGHT"/>
         </include>
         
     </sequence>

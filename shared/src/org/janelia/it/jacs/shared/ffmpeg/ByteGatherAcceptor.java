@@ -4,11 +4,10 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.shared.img_3d_loader;
+package org.janelia.it.jacs.shared.ffmpeg;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
 import org.bytedeco.javacpp.BytePointer;
 
 /**
@@ -17,14 +16,12 @@ import org.bytedeco.javacpp.BytePointer;
  */
 public class ByteGatherAcceptor implements FFMPGByteAcceptor {
 
-//    private byte[] bytes;
     private List<byte[]> pages = new ArrayList<>();
     private long totalSize = 0;
     private int width;
     private int height;
     private int pixelBytes;
-    private Logger logger = Logger.getLogger(ByteGatherAcceptor.class);
-            
+
     public ByteGatherAcceptor() {
         setPixelBytes(3);
     }

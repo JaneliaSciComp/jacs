@@ -24,12 +24,12 @@ public class BufferPackager {
     /**
      * Create index buffer suitable for an upload to GPU.
      *
-     * @param factory from which to pull these data.
+     * @param triangleSource from which to pull these data.
      * @return as-needed buffer.
      */
-    public IntBuffer getIndices( TriangleSource factory ) {
+    public IntBuffer getIndices( TriangleSource triangleSource ) {
         // Iterate over triangles to get the index buffer.
-        List<Triangle> triangleList = factory.getTriangleList();
+        List<Triangle> triangleList = triangleSource.getTriangleList();
 
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect( triangleList.size() * 3 * (Integer.SIZE / 8) );
         byteBuffer.order( ByteOrder.nativeOrder() );

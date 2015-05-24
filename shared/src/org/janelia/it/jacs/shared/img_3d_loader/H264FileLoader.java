@@ -6,9 +6,8 @@
 
 package org.janelia.it.jacs.shared.img_3d_loader;
 
+import org.janelia.it.jacs.shared.ffmpeg.*;
 import org.slf4j.Logger;
-import org.janelia.it.jacs.shared.ffmpeg.FFMpegLoader;
-import org.janelia.it.jacs.shared.ffmpeg.ImageStack;
 import org.slf4j.LoggerFactory;
 
 /**
