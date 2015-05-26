@@ -117,7 +117,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runSampleDataCompression(String user, Boolean testRun) {
         try {
-            String processName = "SampleDataCompression";
+            String processName = "PostPipeline_SampleCompression";
             String displayName = "Sample Data Compression";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter(SampleDataCompressionService.PARAM_testRun, Boolean.toString(testRun), null)); 
@@ -130,7 +130,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSingleSampleDataCompression(String sampleId) {
         try {
-            String processName = "SampleDataCompression";
+            String processName = "PostPipeline_SampleCompression";
             String displayName = "Single Sample Data Compression";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");

@@ -1,14 +1,5 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.io.File;
-import java.io.FileReader;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
@@ -18,6 +9,11 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.io.File;
+import java.io.FileReader;
+import java.text.DecimalFormat;
+import java.util.*;
 
 /**
  * File discovery service for alignment results. Reads .properties files and updates the discovered files
@@ -50,7 +46,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
         Entity supportingFiles = EntityUtils.getSupportingData(alignmentResult);
         entityLoader.populateChildren(supportingFiles);
         
-        Map<String,EntityData> resultItemMap = new HashMap<String,EntityData>();
+        Map<String,EntityData> resultItemMap = new HashMap<>();
         for(EntityData resultItemEd : supportingFiles.getEntityData()) {
             Entity resultItem = resultItemEd.getChildEntity();
             if (resultItem!=null) {
@@ -66,7 +62,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                 logger.info("Got text file: "+resultItem.getName());    
                 if (resultItem.getName().endsWith(".properties")) {
                     
-                    logger.info("Got properties file: "+resultItem.getName());
+                    logger.info("Got properties file: " + resultItem.getName());
                     File propertiesFile = new File(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
                     
                     Properties properties = new Properties();
@@ -78,7 +74,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     Entity stackEntity = stackEntityEd.getChildEntity();
                     
                     if (stackEntity==null) {
-                        logger.warn("Could not find result item with filename: "+stackFilename);
+                        logger.warn("Could not find result item with filename: " + stackFilename);
                         continue;
                     }
 
@@ -109,8 +105,10 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String scoreNcc = properties.getProperty("alignment.quality.score.ncc");
                     String scoreJbaQm = properties.getProperty("alignment.quality.score.jbaqm");
                     String scoresQiCsv = properties.getProperty("alignment.quality.score.qi"); // The three comma-delimited scores from QiScore.csv 
+                    String overlapCoeff  = properties.getProperty("alignment.overlap.coefficient");
+                    String objectPearsonCoeff = properties.getProperty("alignment.object.pearson.coefficient");
 
-                    String channelSpec = null;
+                    String channelSpec;
                 	int numChannels = Integer.parseInt(channels);
                 	int refChannel = Integer.parseInt(refchan);
                 	channelSpec = ChanSpecUtils.createChanSpec(numChannels, refChannel);
@@ -133,7 +131,17 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
     					String formattedScoreJbaQm = dfScore.format(Double.parseDouble(scoreJbaQm));
     					helper.setModelViolationScore(stackEntity, formattedScoreJbaQm);
     				}
-    				                    
+
+                    if (!StringUtils.isEmpty(overlapCoeff)) {
+                        String formattedOverlapCoeff = dfScore.format(Double.parseDouble(overlapCoeff));
+                        helper.setOverlapCoeff(stackEntity, formattedOverlapCoeff);
+                    }
+
+                    if (!StringUtils.isEmpty(objectPearsonCoeff)) {
+                        String formattedObjectPearsonCoeff = dfScore.format(Double.parseDouble(objectPearsonCoeff));
+                        helper.setObjectPearsonCoeff(stackEntity, formattedObjectPearsonCoeff);
+                    }
+
                     // Derive all Qi and inconsistency (1-Qi) scores
                     processQiScoreCsv(stackEntity, scoresQiCsv);
                     
@@ -176,8 +184,8 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
 
     	if (StringUtils.isEmpty(scoresQiCsv)) return;
     		
-    	List<Double> qiScores = new ArrayList<Double>();
-    	List<Double> inconsistencyScores = new ArrayList<Double>();
+    	List<Double> qiScores = new ArrayList<>();
+    	List<Double> inconsistencyScores = new ArrayList<>();
         for(String scoreQi : Task.listOfStringsFromCsvString(scoresQiCsv)) {
             try {
                 Double d_scoresQi = Double.parseDouble(scoreQi);
@@ -197,8 +205,8 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
     
     /**
      * Format the given doubles with the default format and create a comma-separated list with the formatted values.
-     * @param scores
-     * @return
+     * @param scores list of doubles
+     * @return formatted csv string
      */
     private String getFormattedCSV(List<Double> scores) {
     	StringBuilder sb = new StringBuilder();
@@ -210,7 +218,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
     }
 
     /**
-     * @see getJBAWeightedAverage(double, double, double)
+     * @see AlignmentResultsDiscoveryService#getJBAWeightedAverage(double, double, double)
      * @param scores Three individual Qi or Inconsistency (1-Qi) scores
      * @return Combined Qi
      */
@@ -219,7 +227,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
     }
     
     /**
-     * @see getJBAWeightedAverage(double, double, double)
+     * @see AlignmentResultsDiscoveryService#getJBAWeightedAverage(double, double, double)
      * @param scores Three individual Qi or Inconsistency (1-Qi) scores
      * @return Combined Qi
      */

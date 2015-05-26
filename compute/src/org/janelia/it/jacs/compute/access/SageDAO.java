@@ -235,6 +235,7 @@ public class SageDAO {
         Map<String, SageTerm> entireVocabulary = new HashMap<>();
         entireVocabulary.putAll(getSageVocabulary("light_imagery"));
         entireVocabulary.putAll(getSageVocabulary("line"));
+        entireVocabulary.putAll(getSageVocabulary("fly"));
         return entireVocabulary;
     }
 
@@ -276,7 +277,8 @@ public class SageDAO {
                         log.warn("Term with no type (name="+nameNode.getText()+") encountered in "+ cv);
                         continue;
                     }
-
+                    // todo this traversal assumes all items with a name belong to the same cv passed in.  This is not the case as
+                    // more than one cv can be retruned by the web service call.  There is a hierarchy.  We need to respect this.
                     SageTerm st = new SageTerm();
                     st.setName(nameNode.getText());
                     st.setDataType(dataTypeNode.getText());
@@ -495,7 +497,6 @@ public class SageDAO {
                 "  inner join image_property_vw ip2 on " +
                 "    (ip2.image_id = i.id and ip2.type='data_set' and ip2.value=?) " +
                 ") image_vw on (ip1.image_id = image_vw.id) " +
-                "where ip1.cv in ('light_imagery') " +
                 "order by ip1.type";
         
         PreparedStatement pStatement = null;
@@ -664,7 +665,6 @@ public class SageDAO {
             "  where i.display=true and i.path is not null" +
             "  and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
             ") image_vw on ip1.image_id = image_vw.id " +
-            "where ip1.cv in ('light_imagery') " +
             "group by image_vw.id ";
 
     private static final String ALL_LINE_PROPERTY_SQL_1 =
@@ -676,7 +676,7 @@ public class SageDAO {
             "inner join ( " +
             "  select distinct line from image_data_mv where data_set is not null and display=true and path is not null " +
             ") image_lines on line_vw.name = image_lines.line  " +
-            "where lp1.cv in ('line','light_imagery') " +
+            "where lp1.cv in ('line','light_imagery','fly') " +
             "group by line_vw.id ";
             
 }

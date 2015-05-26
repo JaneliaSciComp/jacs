@@ -7,8 +7,6 @@ import ch.systemsx.cisd.hdf5.*;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.janelia.it.jacs.shared.img_3d_loader.FFMPGByteAcceptor;
-
 public class H5JLoader
 {
     private String _filename;
@@ -66,13 +64,17 @@ public class H5JLoader
     }
 
 
-    public void saveFrame(int iFrame, FFMPGByteAcceptor acceptor)
+    public void saveFrame(int iFrame, DataAcceptor acceptor)
             throws Exception {
         int width = _image.width();
         int height = _image.height();
         byte[] data = _image.interleave(iFrame, 0, 3);
         int linesize = _image.linesize(iFrame);
         acceptor.accept(data, linesize, width, height);
+    }
+    
+    public static interface DataAcceptor {
+        void accept(byte[] data, int linesize, int width, int height);
     }
 
 }

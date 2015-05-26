@@ -131,7 +131,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
             
             if (mergeAlgorithm==null) {
-            	logger.warn("Merge algorithm is not specified");
+            	logger.warn("Merge algorithm is not specified, defaulting to FLYLIGHT (RGB ordering) algorithm.");
             }
             
             populateMaps();
