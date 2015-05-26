@@ -39,7 +39,6 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  */
 public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
 
-    private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "groupConfiguration.";
     private File groupedFile;
     private int referenceChannelIndex = 4;
@@ -47,6 +46,10 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
     @Override
     protected String getGridServicePrefixName() {
         return "group";
+    }
+    
+    @Override
+    protected void init() throws Exception {
     }
 
     @Override
