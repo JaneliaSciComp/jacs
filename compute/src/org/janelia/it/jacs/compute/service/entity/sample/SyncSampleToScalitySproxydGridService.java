@@ -5,27 +5,112 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
+import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
 /**
  * Moves the given Sample's files to the Scality object store via the Sproxyd REST API and updates the object model to add a Scality Id attribute to each file entity.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SyncSampleToScalitySproxydGridService extends SyncSampleToScalityFuseGridService {
+public class SyncSampleToScalitySproxydGridService extends AbstractEntityGridService {
 
-    protected static final String ARCHIVE_SYNC_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
-            SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
+    protected static final String CONFIG_PREFIX = "scalityConfiguration.";
     
+    protected static final String ARCHIVE_SYNC_CMD = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
+    protected static final String REMOVE_COMMAND = "rm -rf"; 
+    
+    protected static final String TIMING_PREFIX="Timing: ";
+
+    protected static final String[] NON_SCALITY_PREFIXES = { "/tier2" };
+    protected static final String SCALITY_ROOT_PATH = 
+            SystemConfigurationProperties.getString("Root.Scality.Dir");
+
+    protected static final String ITERATION = "1";
+    
+    protected int configIndex = 1;
+    protected Entity sampleEntity;
+    protected List<Entity> entitiesToMove = new ArrayList<Entity>();
+    protected boolean deleteSourceFiles = false;
+
     @Override
+    protected String getGridServicePrefixName() {
+        return "scality";
+    }
+
+    @Override
+    protected void init() throws Exception {
+
+        Long sampleEntityId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
+        sampleEntity = entityBean.getEntityById(sampleEntityId);
+        if (sampleEntity == null) {
+            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+        }
+        
+        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
+            throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
+        }
+        
+        logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+
+        String fileTypes = data.getRequiredItemAsString("FILE_TYPES");
+        List<String> types = Task.listOfStringsFromCsvString(fileTypes);
+        
+        if (types.remove("lsms")) {
+            logger.info("Searching for LSMs to move...");
+            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
+                    .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
+                    .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
+                    .childrenOfType(EntityConstants.TYPE_LSM_STACK)
+                    .run(new EntityVisitor() {
+                public void visit(Entity lsm) throws Exception {
+                    // TODO: REMOVE LATER
+                    // For benchmarking purposes we want big files
+                    if ("3".equals(lsm.getValueByAttributeName("Num Channels"))) {
+                        logger.info("Will move "+lsm.getName());
+                        entitiesToMove.add(lsm);
+                    }
+                }
+            });
+        }
+        
+        // TODO: REMOVE LATER
+        // Move just one file per sample to make benchmarking easier
+//        Entity first = entitiesToMove.get(0);
+//        entitiesToMove.clear();
+//        entitiesToMove.add(first);
+        
+        if (!types.isEmpty()) {
+            logger.warn("Unrecognized file types specified in FILE_TYPES: "+types);
+        }
+    }
+
+    @Override
+    protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+        int configIndex = 1;
+        for(Entity entity : entitiesToMove) {
+            writeInstanceFile(entity, configIndex++);
+        }
+        setJobIncrementStop(configIndex-1);
+        createShellScript(writer);
+    }
+    
     protected void writeInstanceFile(Entity entity, int configIndex) throws Exception {
 		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 		if (filepath==null) {
@@ -64,7 +149,6 @@ public class SyncSampleToScalitySproxydGridService extends SyncSampleToScalityFu
         }
     }
 
-    @Override
     protected void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read FILE_PATH\n");
@@ -79,7 +163,12 @@ public class SyncSampleToScalitySproxydGridService extends SyncSampleToScalityFu
         }
         writer.write(script.toString());
     }
-    
+
+    @Override
+    protected String getNativeSpecificationOverride() {
+        return "-q 'test.q@h02*' -pe batch 16";
+    }
+
     @Override
 	public void postProcess() throws MissingDataException {
 
@@ -165,4 +254,10 @@ public class SyncSampleToScalitySproxydGridService extends SyncSampleToScalityFu
     	}
 		logger.info("Timings:"+sb);
 	}
+
+    protected int getIndexExtension(File file) {
+        String name = file.getName();
+        String ext = name.substring(name.lastIndexOf('.')+1);
+        return Integer.parseInt(ext);
+    }
 }
