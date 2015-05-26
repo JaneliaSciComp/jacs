@@ -63,6 +63,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected static final String NORMAL_QUEUE = SystemConfigurationProperties.getString("Grid.NormalQueue");
     protected static final int MAX_JOBS_IN_ARRAY = SystemConfigurationProperties.getInt("Grid.MaxNumberOfJobs");
     private GridResourceSpec gridResourceSpec;
+    private boolean cancelled = false;
     
     /**
      * This method is part of IService interface and used when this class
@@ -74,15 +75,26 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     public void submitJobAndWait(IProcessData processData) throws SubmitJobException {
         try {
             init(processData);
-            submitJob();
-            postProcess();
-            handleErrors();
+            if (cancelled) {
+                logger.info("Grid job cancelled by init");
+            }
+            else {
+                submitJob();
+                postProcess();
+                handleErrors();
+            }
         }
         catch (Exception e) {
             throw new SubmitJobException(e);
         }
     }
-
+    
+    /**
+     * Can be called during initialization to cause the job to be skipped. 
+     */
+    protected void cancel() {
+        this.cancelled = true;
+    }
 
     /**
      * This method is invoked from GridSubmitAndWaitMDB
@@ -94,6 +106,10 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         //logger.debug(getClass().getSimpleName() + " Process Data : " + processData);
         try {
             init(processData);
+            if (cancelled) {
+                logger.info("Grid job cancelled by init");
+                return null;
+            }
             if (logger.isInfoEnabled()) {
                 logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
             }

@@ -4,26 +4,28 @@
 <process name="Move User Files To Scality" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
-	   <input name="FILE_TYPES"/>
-	   <input name="DATA_SET_NAME"/>
+        <input name="DATA_SET_NAME"/>
+	    <input name="FILE_TYPES"/>
 	
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
-	        <input name="TASK_PARAMETER_1" value="file types"/>
-            <input name="PROCESS_VARIABLE_1" value="FILE_TYPES"/>
-            <input name="TASK_PARAMETER_2" value="data set name"/>
-            <input name="PROCESS_VARIABLE_2" value="DATA_SET_NAME"/>
+            <input name="DATA_SET_NAME"/>
+            <input name="FILE_TYPES"/>
+            <input name="TASK_PARAMETER_1" value="data set name"/>
+            <input name="PROCESS_VARIABLE_1" value="DATA_SET_NAME"/>
+            <input name="TASK_PARAMETER_2" value="file types"/>
+            <input name="PROCESS_VARIABLE_2" value="FILE_TYPES"/>
+            <output name="DATA_SET_NAME"/>
 	        <output name="FILE_TYPES"/>
-	        <output name="DATA_SET_NAME"/>
 	    </operation>
 	    
         <!-- By default, only move LSMs -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-            <input name="FILE_TYPES"/>
             <input name="OVERRIDE" value="false"/>
+            <input name="FILE_TYPES"/>
             <input name="PROCESS_VARIABLE_1" value="FILE_TYPES"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="lsms"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="lsm"/>
             <output name="FILE_TYPES"/>
         </operation>
 	    
@@ -38,7 +40,7 @@
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
         
-            <include name="Process sample" process="MoveSampleFilesToScality">
+            <include name="Process sample" process="SyncSampleToScality">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="FILE_TYPES"/>
             </include>
