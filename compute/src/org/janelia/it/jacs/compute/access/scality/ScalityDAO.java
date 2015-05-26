@@ -41,10 +41,10 @@ public class ScalityDAO {
         this.httpClient = new HttpClient(mgr); 
 	}
 	
-	public void put(String scalityId, String filepath) throws Exception {
+	public void put(Long entityId, String filepath) throws Exception {
 		PutMethod put = null;
     	try {
-			final String url = getUrl(scalityId);
+			final String url = getUrlFromEntityId(entityId);
 			log.info("Putting "+url+" from "+filepath);
 		
 	        put = new PutMethod(url);
@@ -118,14 +118,14 @@ public class ScalityDAO {
 	    }
 	}
 	
-	public void get(final String scalityId, final String filepath) throws Exception {
-		get(scalityId, filepath, DEFAULT_BUFFER_SIZE);
+	public void get(final Long entityId, final String filepath) throws Exception {
+		get(entityId, filepath, DEFAULT_BUFFER_SIZE);
 	}
 	
-	public void get(final String scalityId, final String filepath, int bufferSize) throws Exception {
+	public void get(final Long entityId, final String filepath, int bufferSize) throws Exception {
     	GetMethod get = null;
     	try {
-    		String url = ScalityDAO.getUrl(scalityId);
+    		String url = ScalityDAO.getUrlFromEntityId(entityId);
     		log.info("Getting "+url+" to "+filepath);
     		
             get = new GetMethod(url);
@@ -155,11 +155,11 @@ public class ScalityDAO {
 		}
     }
 	
-	public void delete(String scalityId) throws Exception {
+	public void delete(Long entityId) throws Exception {
 
 		DeleteMethod delete = null;
 		try {
-			final String url = getUrl(scalityId);
+			final String url = getUrlFromEntityId(entityId);
 			log.info("Deleting "+url);
 		
 			delete = new DeleteMethod(url);
@@ -200,18 +200,27 @@ public class ScalityDAO {
 		}
 		return count;
 	}
-	
-	public static String getUrl(String scalityId) {
+
+    public static String getBPIDFromEntityId(Long entityId) {
+        StringBuilder sb = new StringBuilder(SCALITY_PATH_NAMESPACE);
+        sb.append("/");
+        sb.append(entityId);
+        return sb.toString();
+    }
+
+	public static String getUrlFromBPID(String bpid) {
 		StringBuilder sb = new StringBuilder(SCALITY_BASE_URL);
 		sb.append("/");
 		sb.append(SCALITY_DRIVER);
 		sb.append("/");
-		sb.append(SCALITY_PATH_NAMESPACE);
-		sb.append("/");
-		sb.append(scalityId);
+		sb.append(bpid);
 		return sb.toString();
 	}
 
+    public static String getUrlFromEntityId(Long entityId) {
+        return getUrlFromBPID(getBPIDFromEntityId(entityId));
+    }
+    
 	private static long getMbps(long bytes, long millis) {
 		return getKbps(bytes, millis) / 1000;
 	}
@@ -224,14 +233,14 @@ public class ScalityDAO {
 		
 		ScalityDAO dao = new ScalityDAO();
 		
-		dao.put("1904834176872349794", "/Users/rokickik/1904834176872349794.v3dpbd");
-        dao.put("2141686516697530539", "/Users/rokickik/2141686516697530539.v3dpbd");
+		dao.put(1904834176872349794L, "/Users/rokickik/1904834176872349794.v3dpbd");
+        dao.put(2141686516697530539L, "/Users/rokickik/2141686516697530539.v3dpbd");
 
-        dao.get("1904834176872349794", "/Users/rokickik/1904834176872349794-2.v3dpbd");
-		dao.get("2141686516697530539", "/Users/rokickik/2141686516697530539-2.v3dpbd");
+        dao.get(1904834176872349794L, "/Users/rokickik/1904834176872349794-2.v3dpbd");
+		dao.get(2141686516697530539L, "/Users/rokickik/2141686516697530539-2.v3dpbd");
 
-        dao.delete("1904834176872349794");
-		dao.delete("2141686516697530539");
+        dao.delete(1904834176872349794L);
+		dao.delete(2141686516697530539L);
 		
 		dao.close();
 		System.exit(0);

@@ -53,9 +53,12 @@ public class ScalityProxyServlet extends HttpServlet {
 			String filename = entityIdParam+".bin";
 	        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 	        
-    		String url = ScalityDAO.getUrl(entityIdParam);
+	        Long entityId = Long.parseLong(entityIdParam);
+    		String url = ScalityDAO.getUrlFromEntityId(entityId);
 
     		log.info(entityIdParam+" "+url);
+    		
+    		// TODO: use ScalityDAO instead
     		
             GetMethod get = new GetMethod(url);
             int responseCode = httpClient.executeMethod(get);

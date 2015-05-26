@@ -39,8 +39,6 @@ public class SyncSampleToScalitySproxydGridService extends AbstractEntityGridSer
     protected static final String TIMING_PREFIX="Timing: ";
 
     protected static final String[] NON_SCALITY_PREFIXES = { "/tier2" };
-    protected static final String SCALITY_ROOT_PATH = 
-            SystemConfigurationProperties.getString("Root.Scality.Dir");
 
     protected static final String ITERATION = "1";
     
@@ -80,21 +78,11 @@ public class SyncSampleToScalitySproxydGridService extends AbstractEntityGridSer
                     .childrenOfType(EntityConstants.TYPE_LSM_STACK)
                     .run(new EntityVisitor() {
                 public void visit(Entity lsm) throws Exception {
-                    // TODO: REMOVE LATER
-                    // For benchmarking purposes we want big files
-                    if ("3".equals(lsm.getValueByAttributeName("Num Channels"))) {
-                        logger.info("Will move "+lsm.getName());
-                        entitiesToMove.add(lsm);
-                    }
+                    logger.info("Will move "+lsm.getName());
+                    entitiesToMove.add(lsm);
                 }
             });
         }
-        
-        // TODO: REMOVE LATER
-        // Move just one file per sample to make benchmarking easier
-//        Entity first = entitiesToMove.get(0);
-//        entitiesToMove.clear();
-//        entitiesToMove.add(first);
         
         if (!types.isEmpty()) {
             logger.warn("Unrecognized file types specified in FILE_TYPES: "+types);
@@ -122,18 +110,9 @@ public class SyncSampleToScalitySproxydGridService extends AbstractEntityGridSer
 			if (filepath.startsWith(prefix)) {
 				break;
 			}
-			else if (filepath.startsWith("/groups/flylight/flylight")) {
-		        // TODO: REMOVE LATER
-				// hack for working with outdated val-db
-				File file = new File(filepath);
-				String name = file.getName();
-				name = name.substring(0,name.lastIndexOf('.'));
-				filepath = filepath.replaceFirst("/groups/flylight", "/tier2")+".bz2";
-				break;
-			}
 		}
 		
-		String scalityUrl = ScalityDAO.getUrl(""+entity.getId());
+		String scalityUrl = ScalityDAO.getUrlFromEntityId(entity.getId());
 		
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
@@ -165,8 +144,13 @@ public class SyncSampleToScalitySproxydGridService extends AbstractEntityGridSer
     }
 
     @Override
-    protected String getNativeSpecificationOverride() {
-        return "-q 'test.q@h02*' -pe batch 16";
+    protected int getRequiredSlots() {
+        return 16;
+    }
+
+    @Override
+    protected String getAdditionalNativeSpecification() {
+        return "-l scalityw=1";
     }
 
     @Override
@@ -229,9 +213,8 @@ public class SyncSampleToScalitySproxydGridService extends AbstractEntityGridSer
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
     			logger.debug("Successfully moved entity "+entity.getName()+" (id="+entity.getId()+")");
-    			// TODO: update model
-//    			String scalityUrl = ScalityDAO.getUrl(""+entity.getId());
-//    			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_URL, scalityUrl);
+    			String bpid = ScalityDAO.getBPIDFromEntityId(entity.getId());
+    			entity.setValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
     		}	
     		else {
     			logger.warn("Error moving entity "+entity.getName()+" (id="+entity.getId()+")");

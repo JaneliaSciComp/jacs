@@ -25,7 +25,7 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 	
 	private ScalityDAO scality;
 	
-	private List<String> createdScalityIds = new ArrayList<String>();
+	private List<Long> createdScalityIds = new ArrayList<Long>();
 	
 	public void execute() throws Exception {
 		
@@ -74,7 +74,7 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 		if (filepath!=null) {
 			long start = System.currentTimeMillis();
-			String scalityId = entity.getId().toString();
+			Long scalityId = entity.getId();
 			createdScalityIds.add(scalityId);
 			scality.put(scalityId, filepath);
 			long elapsed = System.currentTimeMillis()-start;
@@ -99,7 +99,7 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 	
 			long start = System.currentTimeMillis();
 			if (useScality) {
-				scality.get(entity.getId().toString(), tmpFile.getAbsolutePath());
+				scality.get(entity.getId(), tmpFile.getAbsolutePath());
 			}
 			else {
 				FileUtils.copyFile(new File(filepath), tmpFile);
@@ -118,7 +118,7 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 	
 	private void cleanScality() {
 		long start = System.currentTimeMillis();
-		for(String scalityId : createdScalityIds) {
+		for(Long scalityId : createdScalityIds) {
 			try {
 				scality.delete(scalityId);
 			}
