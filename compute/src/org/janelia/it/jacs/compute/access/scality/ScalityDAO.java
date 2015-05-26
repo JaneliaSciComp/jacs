@@ -17,14 +17,19 @@ import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.log4j.Logger;
 
+/**
+ * DAO for CRUD operations against the Scality key store. 
+ *  
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class ScalityDAO {
 	
     private static final Logger log = Logger.getLogger(ScalityDAO.class);
 
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 2;
     private static final String SCALITY_PATH_NAMESPACE = "JACS";//SystemConfigurationProperties.getString("Scality.Namespace");
-    private static final String SCALITY_BASE_URL = "http://s2-jrc:81/proxy";//SystemConfigurationProperties.getString("Scality.BaseURL");
-	private static final String SCALITY_DRIVER = "bparc";//SystemConfigurationProperties.getString("Scality.Driver");
+    private static final String SCALITY_BASE_URL = "http://sc101-jrc:81/proxy";//SystemConfigurationProperties.getString("Scality.BaseURL");
+	private static final String SCALITY_DRIVER = "bparc2";//SystemConfigurationProperties.getString("Scality.Driver");
 	
 	private HttpClient httpClient;
 	
@@ -207,11 +212,11 @@ public class ScalityDAO {
 		return sb.toString();
 	}
 
-	public static long getMbps(long bytes, long millis) {
+	private static long getMbps(long bytes, long millis) {
 		return getKbps(bytes, millis) / 1000;
 	}
 	
-	public static long getKbps(long bytes, long millis) {
+	private static long getKbps(long bytes, long millis) {
 		return Math.round(((double)bytes*8) / ((double)millis/1000) / 1000);
 	}
 	
@@ -219,87 +224,14 @@ public class ScalityDAO {
 		
 		ScalityDAO dao = new ScalityDAO();
 		
-		long elapsed, start;
-		
-//		dao.put2("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd");
-//		dao.put2("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd");
-//		dao.put("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd");
-		dao.put("1870576927434080358", "/home/rokickik/stitched-1947307635921387618.v3dpbd");
-//		
-//		dao.get("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd2",1024 * 1);
-		dao.get("1870576927434080358", "/home/rokickik/stitched-1947307635921387618.v3dpbd3");
-//		dao.get2("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd3",1024 * 2);
-//		dao.get2("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd3",1024 * 2);
-//		dao.get2("1870576927434080356", "/home/rokickik/stitched-1870576927434080354.v3dpbd4",1024 * 4);
-//		dao.get2("1870576927434080357", "/home/rokickik/stitched-1947307635921387618.v3dpbd4",1024 * 4);
-	
-		dao.delete("1870576927434080358");
-		
-//		13:00:32.508 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 2772074402 bytes at 693 Mbps
-//		13:03:09.861 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 9858181219 bytes at 502 Mbps
-//		13:03:48.545 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 2772074402 bytes at 583 Mbps
-//		13:06:09.485 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 9858181219 bytes at 563 Mbps
-		
-//		13:07:07.160 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 2772074402 bytes at 389 Mbps
-//		13:10:20.134 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 9858181219 bytes at 410 Mbps
-//		13:11:18.462 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 2772074402 bytes at 382 Mbps
-//		13:14:26.184 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 9858181219 bytes at 421 Mbps
-//		13:15:23.940 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 2772074402 bytes at 389 Mbps
-//		13:18:16.503 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 9858181219 bytes at 458 Mbps
+		dao.put("1904834176872349794", "/Users/rokickik/1904834176872349794.v3dpbd");
+        dao.put("2141686516697530539", "/Users/rokickik/2141686516697530539.v3dpbd");
 
-//		13:23:56.467 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 2772074402 bytes at 462 Mbps
-//		13:26:37.255 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 9858181219 bytes at 492 Mbps
-//		13:27:08.993 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 2772074402 bytes at 715 Mbps
-//		13:29:06.780 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - PUT 9858181219 bytes at 674 Mbps
-		
-//		13:30:05.955 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 2772074402 bytes at 375 Mbps
-//		13:33:16.744 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 9858181219 bytes at 415 Mbps
-//		13:34:15.412 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 2772074402 bytes at 382 Mbps
-//		13:37:21.267 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 9858181219 bytes at 426 Mbps
-//		13:38:19.643 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 2772074402 bytes at 382 Mbps
-//		13:41:31.766 [main] INFO  org.janelia.it.jacs.compute.access.scality.ScalityDAO  - GET 9858181219 bytes at 410 Mbps
+        dao.get("1904834176872349794", "/Users/rokickik/1904834176872349794-2.v3dpbd");
+		dao.get("2141686516697530539", "/Users/rokickik/2141686516697530539-2.v3dpbd");
 
-		
-//		File tmpDir = new File("/tmp");
-//		File destDir = new File("/nobackup/jacs/jacsData/filestore/rokickik/Test");
-//		
-//		File file1 = new File("/home/rokickik/stitched-1870576927434080354.v3dpbd");
-//		File file2 = new File("/home/rokickik/stitched-1947307635921387618.v3dpbd");
-//		
-//		start = System.currentTimeMillis();
-//		File file1t = new File(destDir, file1.getName());
-//		FileUtil.copyFile(file1, file1t);
-//		elapsed = System.currentTimeMillis()-start;
-//		log.info("PUT "+file1.length()+" bytes at "+getMbps(file1.length(),elapsed)+" Mbps");
-//
-//		start = System.currentTimeMillis();
-//		File file2t = new File(destDir, file2.getName());
-//		FileUtil.copyFile(file2, file2t);
-//		elapsed = System.currentTimeMillis()-start;
-//		log.info("PUT "+file2.length()+" bytes at "+getMbps(file2.length(),elapsed)+" Mbps");
-//		
-//		start = System.currentTimeMillis();
-//		File file1s = new File(tmpDir, "file1");
-//		FileUtil.copyFile(file1, file1s);
-//		elapsed = System.currentTimeMillis()-start;
-//		log.info("GET "+file1s.length()+" bytes at "+getMbps(file1s.length(),elapsed)+" Mbps");
-//
-//		start = System.currentTimeMillis();
-//		File file2s = new File(tmpDir, "file2");
-//		FileUtil.copyFile(file2, file2s);
-//		elapsed = System.currentTimeMillis()-start;
-//		log.info("GET "+file2s.length()+" bytes at "+getMbps(file2s.length(),elapsed)+" Mbps");
-		
-		
-//		start = System.currentTimeMillis();
-//		dao.get("1841433294516781154", testFilepath+"-2");
-//		stop = System.currentTimeMillis();
-//		log.info("Download took "+(stop-start)+" ms");
-//		
-//		start = System.currentTimeMillis();
-//		dao.delete("1841433294516781154");
-//		stop = System.currentTimeMillis();
-//		log.info("Deletion took "+(stop-start)+" ms");
+        dao.delete("1904834176872349794");
+		dao.delete("2141686516697530539");
 		
 		dao.close();
 		System.exit(0);
