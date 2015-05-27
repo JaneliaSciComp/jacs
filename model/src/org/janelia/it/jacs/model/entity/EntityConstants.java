@@ -23,6 +23,12 @@ public class EntityConstants {
     public static final String VALUE_DESYNC                          = "Desync";
     public static final String VALUE_RETIRED                         = "Retired";
     
+    public static final String VALUE_COMPRESSION_UNCOMPRESSED               = "Uncompressed";
+    public static final String VALUE_COMPRESSION_LOSSLESS                   = "Lossless";
+    public static final String VALUE_COMPRESSION_LOSSLESS_AND_H5J           = "Lossless and H5J";
+    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD  = "Visually Lossless and PBD";
+    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS          = "Visually Lossless";
+    
     // Singleton Entity Names
     public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
     public static final String NAME_SHARED_DATA                      = "Shared Data";
@@ -94,6 +100,7 @@ public class EntityConstants {
     
     // Entity Data Attributes
     public static final String ATTRIBUTE_STATUS                              = "Status";
+    public static final String ATTRIBUTE_COMRESSION_TYPE                     = "Compression Type";
     public static final String ATTRIBUTE_LINE                                = "Line";
     public static final String ATTRIBUTE_CROSS_BARCODE                       = "Cross Barcode";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
@@ -138,6 +145,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE     = "Alignment Model Violation Score";
     public static final String ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE              = "Alignment Verify Movie";
     public static final String ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS       = "Alignment Board User Settings";
+    public static final String ATTRIBUTE_ALIGNMENT_OVERLAP_COEFFICIENT       = "Alignment Overlap Coefficient";
+    public static final String ATTRIBUTE_ALIGNMENT_OBJECT_PEARSON_COEFFICIENT= "Alignment Object Pearson Coefficient";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";

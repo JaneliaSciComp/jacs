@@ -430,22 +430,9 @@
             </sequence>
         </sequence>
         
-		<!-- Compress all the v3draw files we created  -->
-        <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+		<!-- Compress all v3draw files to v3dpbd, and generate accompanying h5j files -->
+        <include name="Compress v3draw files to v3dpbd" process="PostPipeline_SampleCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-            <input name="OUTPUTS_TYPE" value="v3dpbd"/>
-            <input name="DELETE_INPUTS" value="true"/>
-            <input name="RECORD_MODE" value="UPDATE"/>
-        </include>
-        
-        <!-- Create h5j files from v3dpbd files -->
-        <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
-            <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-            <input name="INPUT_TYPE" value="v3dpbd"/>
-            <input name="OUTPUT_TYPE" value="h5j"/>
-            <input name="DELETE_INPUTS" value="false"/>
-            <input name="RECORD_MODE" value="ADD"/>
-            <input name="EXCLUDE_FILES" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd"/>
         </include>
         
         <!-- Move all generated files to archive -->

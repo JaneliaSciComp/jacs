@@ -6,9 +6,8 @@
 
 package org.janelia.it.jacs.shared.img_3d_loader;
 
+import org.janelia.it.jacs.shared.ffmpeg.*;
 import org.slf4j.Logger;
-import org.janelia.it.jacs.shared.ffmpeg.H5JLoader;
-import org.janelia.it.jacs.shared.ffmpeg.ImageStack;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -24,8 +23,9 @@ public class H265FileLoader extends AbstractVolumeFileLoader {
     
     @Override
     public void loadVolumeFile(String filename) throws Exception {
-        setUnCachedFileName(filename);   
+        setUnCachedFileName(filename);
         H5JLoader reader = new H5JLoader(filename);
+        setChannelCount( 3 );
         try {
             ByteGatherAcceptor acceptor = gatherBytes(reader);
             helper.captureData(acceptor, this);
@@ -61,15 +61,30 @@ public class H265FileLoader extends AbstractVolumeFileLoader {
             ImageStack image = reader.extractAllChannels();
             int maxFrames = image.getNumFrames();
             int startingFrame = 0;
-            int endingFrame = startingFrame + maxFrames;
+            AcceptorAdapter acceptorAdapter = new AcceptorAdapter(acceptor);
+            int endingFrame = startingFrame + maxFrames;            
             for (int i = startingFrame; i < endingFrame; i++) {
                 acceptor.setPixelBytes(image.getBytesPerPixel());
                 acceptor.setFrameNum(i);
-                reader.saveFrame(i, acceptor);
+                reader.saveFrame(i, acceptorAdapter);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    private static class AcceptorAdapter implements H5JLoader.DataAcceptor {
+        private FFMPGByteAcceptor wrappedAcceptor;
+        public AcceptorAdapter( FFMPGByteAcceptor wrappedAcceptor) {
+            this.wrappedAcceptor = wrappedAcceptor;
+        }
+
+        @Override
+        public void accept(byte[] data, int linesize, int width, int height) {
+            wrappedAcceptor.accept(data,linesize,width,height);
+        }
+        
+        
     }
     
 }
