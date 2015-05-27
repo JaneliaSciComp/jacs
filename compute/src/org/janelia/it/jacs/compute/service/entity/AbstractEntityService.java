@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.api.SolrBeanRemote;
@@ -69,7 +70,15 @@ public abstract class AbstractEntityService implements IService {
 
     protected abstract void execute() throws Exception;
 
-    protected Entity populateChildren(Entity entity) throws Exception {
-        return entityLoader.populateChildren(entity);
+    protected Entity populateChildren(Entity entity) throws ComputeException {
+        try {
+            return entityLoader.populateChildren(entity);
+        }
+        catch (ComputeException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            throw new ComputeException("Error loading children of "+entity.getId());
+        }
     }
 }

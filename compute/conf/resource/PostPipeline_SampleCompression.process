@@ -1,21 +1,61 @@
 <!-- 
 	Complete pipeline for compressing one or more samples.
 -->
-<process name="Sample Compression Post Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sample Compression Post Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
         <input name="ROOT_ENTITY_ID"/>
-            
+        <input name="TARGET_COMPRESSION"/>
+        
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="ROOT_ENTITY_ID"/>
+            <input name="TARGET_COMPRESSION"/>
             <input name="TASK_PARAMETER_1" value="root entity id"/>
             <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_ID"/>
-	        <output name="ROOT_ENTITY_ID"/>>
+            <input name="TASK_PARAMETER_2" value="compression type"/>
+            <input name="PROCESS_VARIABLE_2" value="COMPRESSION_TYPE"/>
+	        <output name="ROOT_ENTITY_ID"/>
+            <output name="TARGET_COMPRESSION"/>
 	    </operation>
 	    
-		<!-- Compress all the v3draw files we created  -->
+        <!-- Get the parent sample if this is a child sample -->
+        <operation name="Get Root Sample" processor="org.janelia.it.jacs.compute.service.entity.FindAncestorService">
+            <input name="ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
+            <input name="ANCESTOR_TYPE" value="Sample"/>
+            <input name="USE_SELF" value="true"/>
+            <output name="ANCESTOR_ID"/>
+        </operation>
+        
+        <sequence if="ANCESTOR_ID is not empty">
+            
+            <!-- Import variables from the entity -->
+            <operation name="Get Target Compression" processor="org.janelia.it.jacs.compute.service.entity.InitVariablesFromEntityService">
+                <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
+                <input name="OVERRIDE" value="false"/>
+                <input name="TARGET_COMPRESSION"/>
+                <input name="ENTITY_ATTRIBUTE_1" value="Compression Type"/>
+                <input name="PROCESS_VARIABLE_1" value="TARGET_COMPRESSION"/>
+                <output name="TARGET_COMPRESSION"/>
+            </operation>
+            
+        </sequence>
+        
+        <!-- Init variables with default values if they have not yet been initialized -->
+        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="SEPARATION_EXCLUDE"/>
+            <input name="TARGET_COMPRESSION"/>
+            <input name="PROCESS_VARIABLE_1" value="SEPARATION_EXCLUDE"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
+            <input name="PROCESS_VARIABLE_2" value="TARGET_COMPRESSION"/>
+            <input name="PROCESS_VARIABLE_VALUE_2" value="Lossless and H5J"/>
+            <output name="SEPARATION_EXCLUDE"/>
+            <output name="TARGET_COMPRESSION"/>
+        </operation>
+        
+        <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
         <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
             <input name="ROOT_ENTITY_ID"/>
             <input name="INPUT_TYPE" value="v3draw"/>
@@ -24,15 +64,64 @@
             <input name="RECORD_MODE" value="UPDATE"/>
         </include>
         
-        <!-- Create h5j files from v3dpbd files -->
-        <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
-            <input name="ROOT_ENTITY_ID"/>
-            <input name="INPUT_TYPE" value="v3dpbd"/>
-            <input name="OUTPUT_TYPE" value="h5j"/>
-            <input name="DELETE_INPUTS" value="false"/>
-            <input name="RECORD_MODE" value="ADD"/>
-            <input name="EXCLUDE_FILES" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
-        </include>
+        <sequence if="TARGET_COMPRESSION=Lossless">
+            
+            <!-- Nothing to do, everything is already lossless -->    
+            
+        </sequence>
                 
+        <sequence if="TARGET_COMPRESSION=Lossless and H5J">
+        
+            <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
+            <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3dpbd"/>
+                <input name="OUTPUT_TYPE" value="h5j"/>
+                <input name="DELETE_INPUTS" value="false"/>
+                <input name="RECORD_MODE" value="ADD"/>
+                <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
+            </include>
+            
+        </sequence>
+                
+        <sequence if="TARGET_COMPRESSION=Visually Lossless and PBD">
+                    
+            <!-- Create h5j files from v3dpbd files, replace the v3dpbd entities, but leave the v3dpbd files on disk -->
+            <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3dpbd"/>
+                <input name="OUTPUT_TYPE" value="h5j"/>
+                <input name="DELETE_INPUTS" value="false"/>
+                <input name="RECORD_MODE" value="UPDATE"/>
+                <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
+            </include>
+            
+        </sequence>
+                
+        <sequence if="TARGET_COMPRESSION=Visually Lossless">
+                    
+            <!-- Create h5j files from v3dpbd files, replace the v3dpbd entities, and delete the v3dpbd files -->
+            <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3dpbd"/>
+                <input name="OUTPUT_TYPE" value="h5j"/>
+                <input name="DELETE_INPUTS" value="true"/>
+                <input name="RECORD_MODE" value="UPDATE"/>
+                <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
+            </include>
+            
+        </sequence>
+                
+        <sequence if="ANCESTOR_ID is not empty">
+            
+            <!-- Set the compression type on the sample in case it was passed in separately. If it wasn't passed in as a parameter, then this will set it to the current value, and have no effect. -->
+            <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.entity.SetEntityAttributeValueService">
+                <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
+                <input name="ATTRIBUTE_NAME" value="Compression Type"/>
+                <input name="ATTRIBUTE_VALUE" value="$V{TARGET_COMPRESSION}"/>
+            </operation>
+            
+        </sequence>
+        
     </sequence>
 </process>
