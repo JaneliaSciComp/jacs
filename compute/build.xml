@@ -34,6 +34,7 @@
     <property name="webServices.dir" value="${basedir}/conf/webServices"/>
 
     <property name="rest-ws-war" value="${localname}-rest-ws.war"/>
+    <property name="secure-rest-ws-war" value="${localname}-secure-rest-ws.war"/>
 
     <!-- Compiles all src code from other than the src area into ${build.classes.dir} -->
 	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
@@ -75,6 +76,7 @@
 			<fileset dir="${common.dir}/Neo4j" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/jama-1.0.1" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Scality" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
             <fileset dir="${common.dir}/snakeyaml-1.11" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
@@ -196,13 +198,23 @@
         </war>
         <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
-                <include name="org/**/wsrest/**/*.class"/>
+                <include name="org/**/wsrest/RestfulWebService.class"/>
             </classes>
-
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
             </lib>
-
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+            </manifest>
+        </war>
+        <war warfile="${basedir}/build/jars/${secure-rest-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
+            <classes dir="${build.classes.dir}">
+                <include name="org/**/wsrest/SecureRestfulWebService.class"/>
+            </classes>
+            <lib dir="${basedir}/lib/resteasy-2.3.4">
+                <include name="**/*.jar"/>
+            </lib>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
@@ -217,6 +229,7 @@
             <fileset file="${basedir}/lib/drmaa.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.war"/>
             <fileset file="${basedir}/build/jars/${rest-ws-war}"/>
+            <fileset file="${basedir}/build/jars/${secure-rest-ws-war}"/>
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.sar"/>
             <fileset file="${basedir}/build/jars/${localname}.har"/>

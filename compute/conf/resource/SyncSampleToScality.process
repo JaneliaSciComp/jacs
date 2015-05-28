@@ -1,0 +1,58 @@
+<!-- 
+    Asynchronously move the Sample's files to Scality via Sproxyd. 
+-->
+<process name="Synchronize Sample Files to Scality" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence>
+    
+        <input name="SAMPLE_ENTITY_ID"/>
+        <input name="FILE_TYPES"/>
+    
+        <!-- Import variables from the task -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="FILE_TYPES"/>
+            <input name="TASK_PARAMETER_1" value="sample entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_2" value="file types"/>
+            <input name="PROCESS_VARIABLE_2" value="FILE_TYPES"/>
+            <output name="SAMPLE_ENTITY_ID"/>
+            <output name="FILE_TYPES"/>
+        </operation>
+    
+        <!-- By default, only move LSMs -->
+        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="FILE_TYPES"/>
+            <input name="PROCESS_VARIABLE_1" value="FILE_TYPES"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="lsm"/>
+            <output name="FILE_TYPES"/>
+        </operation>
+        
+        <!-- Create a result node -->
+        <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+            <input name="NAME" value="Temp"/>
+            <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
+            <output name="RESULT_FILE_NODE"/>
+            <output name="RESULT_FILE_NODE_ID"/>
+        </operation>
+        
+        <!-- Copy the files to archive -->
+        <sequence name="Wait Async" waitForAsync="true">
+            <operation name="Copy files" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.sample.SyncSampleToScalityGridService"/>
+                <input name="RESULT_FILE_NODE"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="FILE_TYPES"/>
+                <input name="DELETE_SOURCE_FILES" value="false"/>
+            </operation>
+        </sequence>
+        
+        <!-- We're done with the node 
+        <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+            <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+        </operation>
+        -->
+     
+    </sequence>
+</process>

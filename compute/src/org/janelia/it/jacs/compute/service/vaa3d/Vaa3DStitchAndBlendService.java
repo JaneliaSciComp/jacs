@@ -29,13 +29,13 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     
     private int referenceChannelIndex = 4;
     
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-    }
-
     @Override
     protected String getGridServicePrefixName() {
         return "stitch";
+    }
+    
+    protected void init(IProcessData processData) throws Exception {
+        super.init(processData);
     }
 
     @Override
