@@ -79,7 +79,7 @@ public class OBJWriter {
         }
 
         for ( VertexInfoBean bean: vertices ) {
-            float[] normal = bean.getKnownAttribute( VertexInfoBean.KnownAttributes.normal );
+            float[] normal = bean.getKnownAttribute( VertexInfoBean.KnownAttributes.a_normal );
             if ( normal != null ) {
                 objWriter.print("vn");
                 for ( float normalElement: normal ) {

@@ -31,7 +31,7 @@ public class VertexInfoBean {
     }
 
     public enum KnownAttributes {
-        normal, color
+        a_normal, b_color
     }
 
     private VertexInfoKey key;

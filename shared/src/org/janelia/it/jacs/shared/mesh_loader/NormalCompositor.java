@@ -47,7 +47,7 @@ public class NormalCompositor {
             Set<AxialNormalDirection> uniqueNormals = vertexInfoBean.getUniqueNormals();
             if ( uniqueNormals.size() == 1 ) {
                 vertexInfoBean.setAttribute(
-                        VertexInfoBean.KnownAttributes.normal.toString(),
+                        VertexInfoBean.KnownAttributes.a_normal.toString(),
                         uniqueNormals.iterator().next().getNumericElements(),
                         3
                 );
@@ -107,7 +107,7 @@ public class NormalCompositor {
             }
         }
         vertexInfoBean.setAttribute(
-                VertexInfoBean.KnownAttributes.normal.toString(),
+                VertexInfoBean.KnownAttributes.a_normal.toString(),
                 attribArray,
                 3
         );
