@@ -11,7 +11,15 @@ import java.util.*;
  * Created by fosterl on 4/3/14.
  */
 public class VertexInfoBean {
+    private VertexInfoKey key;
+    private int vtxBufOffset;
+
+    private Map<String, float[]> attributeMap = new HashMap<>();
+    private Map<String, Integer> attributeNameVsCount = new HashMap<>();
+    private List<Triangle> triangleInclusions = new ArrayList<>();
+
     private float[] coordinates;
+    
     public float[] getCoordinates() {
         if ( coordinates == null ) {
             coordinates = new float[3];
@@ -33,13 +41,6 @@ public class VertexInfoBean {
     public enum KnownAttributes {
         a_normal, b_color
     }
-
-    private VertexInfoKey key;
-    private int vtxBufOffset;
-
-    private Map<String,float[]> attributeMap = new HashMap<String,float[]>();
-    private Map<String,Integer> attributeNameVsCount = new HashMap<String,Integer>();
-    private List<Triangle> triangleInclusions = new ArrayList<Triangle>();
 
     /**
      * Attributes are meant to become vertex attributes: float arrays describing a vertex.
@@ -91,6 +92,23 @@ public class VertexInfoBean {
 
     public void addIncludingTriangle( Triangle triangle ) {
         triangleInclusions.add( triangle );
+    }
+    
+    /**
+     * This clone is partially-deep.  It uses same key ref, but copies
+     * attribute values.  Note: not overriding clone, purposely.
+     * 
+     * @return separately-changeable copy of this bean.
+     */
+    public VertexInfoBean cloneIt() {
+        // Specifically avoid triangle inclusions, here.
+        VertexInfoBean rtnVal = new VertexInfoBean();
+        rtnVal.setKey(key);
+        rtnVal.attributeMap = new HashMap<>( this.getAttributeMap() );
+        rtnVal.coordinates = getCoordinates();
+        rtnVal.setVtxBufOffset( this.getVtxBufOffset() );
+        rtnVal.attributeNameVsCount = new HashMap<>( this.attributeNameVsCount );
+        return rtnVal;
     }
 
     /**

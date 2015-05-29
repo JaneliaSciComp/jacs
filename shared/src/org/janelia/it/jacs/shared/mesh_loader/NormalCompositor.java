@@ -75,10 +75,26 @@ public class NormalCompositor {
         for (VertexInfoBean vertexInfoBean : vtxFactory.getVertices()) {
             double[] normalArray = new double[3];
             for (Triangle triangle: vertexInfoBean.getIncludingTriangles() ) {
-                double[] customNormal = triangle.getCustomNormal();
-                normalArray[ 0 ] += customNormal[ 0 ];
-                normalArray[ 1 ] += customNormal[ 1 ];
-                normalArray[ 2 ] += customNormal[ 2 ];
+                if (triangle.isNormalCombinationParticant()) {
+                    double[] customNormal = triangle.getCustomNormal();
+                    normalArray[ 0 ] += customNormal[ 0 ];
+                    normalArray[ 1 ] += customNormal[ 1 ];
+                    normalArray[ 2 ] += customNormal[ 2 ];
+                }
+                else {
+                    // Special case: use custom normal of this
+                    // very triangle, and apply that to all its
+                    // vertices.
+                    double[] customNormal = triangle.getCustomNormal();
+                    float[] attributeArray = new float[] {
+                        (float)customNormal[0], (float)customNormal[1], (float)customNormal[2]
+                    };
+                    vertexInfoBean.setAttribute(
+                            VertexInfoBean.KnownAttributes.a_normal.toString(),
+                            attributeArray,
+                            3
+                    );
+                }
             }
             
             combineNormals( normalArray, vertexInfoBean );
