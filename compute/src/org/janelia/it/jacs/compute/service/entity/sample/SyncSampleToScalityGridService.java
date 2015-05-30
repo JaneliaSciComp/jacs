@@ -62,6 +62,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
     protected void init() throws Exception {
 
+        this.deleteSourceFiles = data.getItemAsBoolean("DELETE_SOURCE_FILES");
+        
         Long sampleEntityId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
         sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
@@ -122,6 +124,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                     .run(new EntityVisitor() {
                 public void visit(Entity entity) throws Exception {
                     String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                    if (filepath==null) {
+                        return;
+                    }
                     if (!filepath.endsWith(".v3dpbd")) {
                         return;
                     }
@@ -194,9 +199,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("echo \"Copy source: $FILE_PATH\"\n");
         script.append("echo \"Copy target: $SCALITY_URL\"\n");
         script.append("timing=`"+ARCHIVE_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
-        script.append("echo \"$timing\"");
+        script.append("echo \"$timing\"\n");
         if (deleteSourceFiles) {
-            script.append(REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
+            script.append(REMOVE_COMMAND + " \"$FILE_PATH\"\n");    
         }
         writer.write(script.toString());
     }
@@ -267,17 +272,36 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                 hasError[index-1] = true;
             }
         }
-    	
-    	int i=0;
+
+        int i=0;
+        StringBuilder sb = new StringBuilder();
+        for(Entity entity : entitiesToMove) {
+            String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            File file = new File(filepath);
+            if (!hasError[i]) {
+                String timingCsv = timings[i];
+                sb.append("\nScalityBenchmark,PUT,Sproxyd,"+file.getName()+","+timingCsv);
+            }
+            else {
+                sb.append("\nScalityBenchmark,PUT,Sproxyd,"+file.getName()+",Error");
+            }
+            i++;
+        }
+        logger.info("Timings:"+sb);
+        
+    	i=0;
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
+                EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	        String scalityUrl = ScalityDAO.getUrlFromEntityId(entity.getId());
-    			logger.info("Successfully synchronized entity "+entity.getName()+" (id="+entity.getId()+") to "+scalityUrl);
+    			logger.info("Successfully synchronized entity "+entity.getName()+" to "+scalityUrl);
+                if (deleteSourceFiles) {
+                    logger.info("  and deleted "+filepathEd.getValue());
+                }
                 try {
                     String bpid = ScalityDAO.getBPIDFromEntityId(entity.getId());
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
         			if (deleteSourceFiles) {
-        			    EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         			    entityBean.deleteEntityData(filepathEd);
         			}
                 }
@@ -287,25 +311,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     			
     		}	
     		else {
-    			logger.warn("Error moving entity "+entity.getName()+" (id="+entity.getId()+")");
+    			logger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
     		}
     	}
-    	
-    	i=0;
-    	StringBuilder sb = new StringBuilder();
-    	for(Entity entity : entitiesToMove) {
-			String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-			File file = new File(filepath);
-    		if (!hasError[i]) {
-    			String timingCsv = timings[i];
-    			sb.append("\nScalityBenchmark,PUT,Sproxyd,"+file.getName()+","+timingCsv);
-        	}
-    		else {
-    			sb.append("\nScalityBenchmark,PUT,Sproxyd,"+file.getName()+",Error");
-    		}
-    		i++;
-    	}
-		logger.info("Timings:"+sb);
 	}
 
     private int getIndexExtension(File file) {

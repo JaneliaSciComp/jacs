@@ -12,10 +12,10 @@
             <input name="OVERRIDE" value="false"/>
             <input name="ROOT_ENTITY_ID"/>
             <input name="TARGET_COMPRESSION"/>
-            <input name="TASK_PARAMETER_1" value="root entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="ROOT_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="compression type"/>
-            <input name="PROCESS_VARIABLE_2" value="COMPRESSION_TYPE"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="root entity id" value="ROOT_ENTITY_ID"/>
+                <entry key="compression type" value="COMPRESSION_TYPE"/>
+            </input>
 	        <output name="ROOT_ENTITY_ID"/>
             <output name="TARGET_COMPRESSION"/>
 	    </operation>
@@ -47,10 +47,10 @@
             <input name="OVERRIDE" value="false"/>
             <input name="SEPARATION_EXCLUDE"/>
             <input name="TARGET_COMPRESSION"/>
-            <input name="PROCESS_VARIABLE_1" value="SEPARATION_EXCLUDE"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
-            <input name="PROCESS_VARIABLE_2" value="TARGET_COMPRESSION"/>
-            <input name="PROCESS_VARIABLE_VALUE_2" value="Lossless and H5J"/>
+            <input name="PROCESS_VARIABLE_MAP">
+                <entry key="SEPARATION_EXCLUDE" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
+                <entry key="TARGET_COMPRESSION" value="Lossless and H5J"/>
+            </input>
             <output name="SEPARATION_EXCLUDE"/>
             <output name="TARGET_COMPRESSION"/>
         </operation>
@@ -66,7 +66,7 @@
         
         <sequence if="TARGET_COMPRESSION=Lossless">
             
-            <!-- Nothing to do, everything is already lossless -->    
+            <!-- Nothing to do, everything is already lossless. This is a legacy state and should not be used. -->    
             
         </sequence>
                 
@@ -86,16 +86,23 @@
                 
         <sequence if="TARGET_COMPRESSION=Visually Lossless and PBD">
                     
-            <!-- Create h5j files from v3dpbd files, replace the v3dpbd entities, but leave the v3dpbd files on disk -->
+            <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
             <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
                 <input name="ROOT_ENTITY_ID"/>
                 <input name="INPUT_TYPE" value="v3dpbd"/>
                 <input name="OUTPUT_TYPE" value="h5j"/>
                 <input name="DELETE_INPUTS" value="false"/>
-                <input name="RECORD_MODE" value="UPDATE"/>
+                <input name="RECORD_MODE" value="ADD"/>
                 <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
             </include>
             
+            <!-- Move all PBD files to Scality -->
+            <include name="Move sample to archive" process="SyncSampleToScality">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="SAMPLE_ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
+                <input name="FILE_TYPES" value="pbd"/>
+            </include>
+        
         </sequence>
                 
         <sequence if="TARGET_COMPRESSION=Visually Lossless">

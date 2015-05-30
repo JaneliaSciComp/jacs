@@ -6,27 +6,35 @@
     
         <input name="SAMPLE_ENTITY_ID"/>
         <input name="FILE_TYPES"/>
+        <input name="DELETE_SOURCE_FILES"/>
     
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="FILE_TYPES"/>
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="file types"/>
-            <input name="PROCESS_VARIABLE_2" value="FILE_TYPES"/>
+            <input name="DELETE_SOURCE_FILES"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="file types" value="FILE_TYPES"/>
+                <entry key="delete source files" value="DELETE_SOURCE_FILES"/>
+            </input>
             <output name="SAMPLE_ENTITY_ID"/>
             <output name="FILE_TYPES"/>
+            <output name="DELETE_SOURCE_FILES"/>
         </operation>
-    
-        <!-- By default, only move LSMs -->
+        
+        <!-- By default, only move pbd files and delete them -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
             <input name="FILE_TYPES"/>
-            <input name="PROCESS_VARIABLE_1" value="FILE_TYPES"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="lsm"/>
+            <input name="DELETE_SOURCE_FILES"/>
+            <input name="PROCESS_VARIABLE_MAP">
+                <entry key="FILE_TYPES" value="pbd"/>
+                <entry key="DELETE_SOURCE_FILES" value="false"/>
+            </input>
             <output name="FILE_TYPES"/>
+            <output name="DELETE_SOURCE_FILES"/>
         </operation>
         
         <!-- Create a result node -->
@@ -44,15 +52,14 @@
                 <input name="RESULT_FILE_NODE"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="FILE_TYPES"/>
-                <input name="DELETE_SOURCE_FILES" value="false"/>
+                <input name="DELETE_SOURCE_FILES"/>
             </operation>
         </sequence>
         
-        <!-- We're done with the node 
+        <!-- We're done with the node -->
         <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
             <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
         </operation>
-        -->
      
     </sequence>
 </process>

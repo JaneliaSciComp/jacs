@@ -10,10 +10,10 @@
             <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="TARGET_COMPRESSION"/>
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="compression type"/>
-            <input name="PROCESS_VARIABLE_2" value="COMPRESSION_TYPE"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="compression type" value="COMPRESSION_TYPE"/>
+            </input>
             <output name="SAMPLE_ENTITY_ID"/>
             <output name="TARGET_COMPRESSION"/>
         </operation>
@@ -27,7 +27,7 @@
         <sequence forEach="ENTITY_ID">
     
             <!-- Spawn a new task to process the sample -->
-            <operation name="Batch Repair Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+            <operation name="Sample Compression Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
                 <input name="PROCESS_DEF_NAME" value="PostPipeline_SampleCompression"/>
                 <input name="DISPLAY_NAME" value="Sample Compression"/>
                 <input name="PARAMETER_1_KEY" value="root entity id"/>
