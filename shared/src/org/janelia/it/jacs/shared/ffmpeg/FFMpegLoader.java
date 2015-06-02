@@ -363,23 +363,23 @@ public class FFMpegLoader
         f.imageBytes.add( new byte[width * height] );
     }
 
-    private void extractBytes(Frame frame, BytePointer imageBytes) {
+    private void extractBytes(Frame frameOutput, BytePointer imageBytesInput) {
         int width = _video_codec.width();
         int height = _video_codec.height();
-        byte[] bytes = new byte[width * height * 3];
-        imageBytes.get(bytes);
         int mod8 = width % 8;
         int padding = mod8 == 0 ? 0 : 8 - mod8;
-        byte[] frameBytes = frame.imageBytes.get(0);
         // Handle older files.
-        if (frameBytes.length == width * height) {
+        if (imageBytesInput.capacity() == width * height) {
             padding = 0;
         }
+        byte[] outputBytes = frameOutput.imageBytes.get(0);
+        byte[] inputBytes = new byte[(width + padding) * height * 3];
+        imageBytesInput.get(inputBytes);
         int inputOffset = 0;
         int outputOffset = 0;
         for (int rows = 0; rows < height; rows++) {
             for (int cols = 0; cols < width; cols++) {
-                frameBytes[ outputOffset ] = bytes[3 * inputOffset];
+                outputBytes[ outputOffset ] = inputBytes[3 * inputOffset];
                 inputOffset ++;
                 outputOffset ++;
             }
