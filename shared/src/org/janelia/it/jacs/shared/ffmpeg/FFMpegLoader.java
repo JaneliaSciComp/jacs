@@ -364,11 +364,27 @@ public class FFMpegLoader
     }
 
     private void extractBytes(Frame frame, BytePointer imageBytes) {
-        byte[] bytes = new byte[_video_codec.width() * _video_codec.height() * 3];
+        int width = _video_codec.width();
+        int height = _video_codec.height();
+        byte[] bytes = new byte[width * height * 3];
         imageBytes.get(bytes);
+        int mod8 = width % 8;
+        int padding = mod8 == 0 ? 0 : 8 - mod8;
         byte[] frameBytes = frame.imageBytes.get(0);
-        for (int i = 0; i < frameBytes.length; i++)
-            frameBytes[i] = bytes[3 * i];
+        // Handle older files.
+        if (frameBytes.length == width * height) {
+            padding = 0;
+        }
+        int inputOffset = 0;
+        int outputOffset = 0;
+        for (int rows = 0; rows < height; rows++) {
+            for (int cols = 0; cols < width; cols++) {
+                frameBytes[ outputOffset ] = bytes[3 * inputOffset];
+                inputOffset ++;
+                outputOffset ++;
+            }
+            inputOffset += padding;
+        }
     }
 
     private void processImage(Frame frame) throws Exception
