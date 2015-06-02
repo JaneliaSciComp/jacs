@@ -154,7 +154,7 @@ public class ScalityDAO {
 			if (get!=null) get.releaseConnection();
 		}
     }
-	
+    
 	public void delete(Long entityId) throws Exception {
 
 		DeleteMethod delete = null;
