@@ -187,7 +187,6 @@
                 <include name="javax/**"/>
                 <include name="jp/**"/>
                 <include name="org/**"/>
-                <include name="jacs.properties"/>
             </fileset>
         </jar>
         <!-- delete temp files -->
