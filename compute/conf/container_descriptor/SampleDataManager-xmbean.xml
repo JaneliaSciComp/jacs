@@ -125,6 +125,41 @@
             <type>java.lang.String</type>
         </parameter>
     </operation>
+    
+    <operation>
+        <description>Move the files for the given sample to Scality</description>
+        <name>runSyncSampleToScality</name>
+        <parameter>
+           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
+           <name>sampleEntityId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>File types to move (comma-delimited list including any of [lsm,pbd])</description>
+           <name>fileTypes</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
+        <description>Move the files for the matching samples for a given user to Scality</description>
+        <name>runSyncDataSetToScality</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Data Set Name (e.g. "Cell Count" or leave empty to run all data sets for the user)</description>
+            <name>dataSetName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>File types to move (comma-delimited list including any of [lsm,pbd])</description>
+           <name>fileTypes</name>
+           <type>java.lang.String</type>
+        </parameter>
+    </operation>
      
     <operation>
         <description>Cancel all incomplete tasks for all users with data set pipelines</description>

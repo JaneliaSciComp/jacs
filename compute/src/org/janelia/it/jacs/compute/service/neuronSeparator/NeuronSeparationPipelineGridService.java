@@ -51,8 +51,8 @@ public class NeuronSeparationPipelineGridService extends AbstractEntityGridServi
         return "neuSep";
     }
 
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
+    @Override
+    protected void init() throws Exception {
 
         outputFileNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
         if (outputFileNode==null) {
