@@ -116,6 +116,10 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
             }
             
+            if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                throw new IllegalArgumentException("Entity is not a sample: "+rootEntityId);
+            }
+            
             Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
             for(Entity image : entities.values()) {
                 String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -169,8 +173,36 @@ public class SampleDataCompressionService extends AbstractEntityService {
     
     private void addEntityToInputList(Entity imageEntity) throws ComputeException {
 
-        populateChildren(imageEntity);
+        if (visited.contains(imageEntity.getId())) return;
+        visited.add(imageEntity.getId());
+        
+        if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
+
         String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        
+        if (filepath==null) {
+            logger.warn("Ignoring entity with null filepath: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+            return;
+        }
+
+        if (!filepath.contains(centralDir)) {
+            logger.warn("Ignoring entity with filepath outside of FileStore.CentralDir: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+            return;
+        }
+
+        File file = new File(filepath);
+        
+        if (excludeFileSet.contains(file.getName())) {
+            logger.info("Excluding file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+            return;
+        }
+        
+        if (!file.exists()) {
+            logger.warn("Ignoring entity with non-existent file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+            return;
+        }
+        
+        populateChildren(imageEntity);
         
         if (outputType.equals("h5j")) {
             Entity existingH5j = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE);
@@ -208,37 +240,12 @@ public class SampleDataCompressionService extends AbstractEntityService {
                     logger.info("Replaced Entity#"+imageEntity.getId()+" with "+imageEntity.getName());
                     
                     deleteIfNecessary(filepath);
+                    return;
                 }
+                
             }
         }
         
-        if (visited.contains(imageEntity.getId())) return;
-        visited.add(imageEntity.getId());
-        
-    	if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
-
-    	if (filepath==null) {
-    		logger.warn("File path for "+imageEntity.getId()+" is null");
-    		return;
-    	}
-
-        if (!filepath.contains(centralDir)) {
-            logger.warn("Ignoring entity with filepath outside of FileStore.CentralDir: "+imageEntity.getId());
-            return;
-        }
-        
-    	File file = new File(filepath);
-    	
-    	if (excludeFileSet.contains(file.getName())) {
-            logger.info("Excluding file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
-    	    return;
-    	}
-    	
-    	if (!file.exists()) {
-    		logger.warn("File path for "+imageEntity.getId()+" does not exist: "+filepath);
-    		return;
-    	}
-    	
     	logger.info("Will compress file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
     	
     	inputFiles.add(filepath);

@@ -17,8 +17,12 @@ public interface SampleDataManagerMBean {
     public void runSampleImageRegistration(String user);
     public void runSampleRetirement(String user);
     public void runSampleRetirement();
+    
+    // File management
     public void runSingleSampleArchival(String sampleEntityId);  
-    public void runCompleteSampleArchival(String user); 
+    public void runCompleteSampleArchival(String user);
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes);  
+    public void runSyncDataSetToScality(String user, String dataSet, String filetypes);
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void cancelAllIncompleteDataSetPipelineTasks();
