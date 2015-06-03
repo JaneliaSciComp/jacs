@@ -107,7 +107,7 @@ public class Vaa3DHelper {
     	return buf.toString();
     }
     
-    private static String getHostnameEcho() {
+    public static String getHostnameEcho() {
     	return "echo \"Running on \"`hostname`\n";
     }
 

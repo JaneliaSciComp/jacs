@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.dom4j.Attribute;
@@ -46,6 +48,8 @@ public class DefLoader implements Serializable {
     private static final String OUTPUT_ELE = "output";
     private static final String DATA_TYPE_ATTR = "dataType";
     private static final String VALUE_ATTR = "value";
+    private static final String ENTRY_ELE = "entry";
+    private static final String KEY_ATTR = "key";
     private static final String MANDATORY_ATTR = "mandatory";
     private static final String UPDATE_PROCESS_STATUS = "updateProcessStatus";
     private static final String MAX_JMS_WAIT_TIME = "maxJMSWaitTime";
@@ -228,27 +232,60 @@ public class DefLoader implements Serializable {
      *
      * @param targetSet     set of input and output parameters (from the process file) relating to an element
      * @param elements      list of elements to get parameters from
-     * @param parameterType type of parameter (string, int, etc)
+     * @param parameterType type of parameter (input/output)
      */
     private void addParameters(Set<Parameter> targetSet, List elements, ParameterType parameterType) {
         if (elements != null) {
             for (Object o : elements) {
                 Element element = (Element) o;
                 String name = element.attributeValue(NAME_ATTR);
-                String value = element.attributeValue(VALUE_ATTR);
+                String strValue = element.attributeValue(VALUE_ATTR);
                 String datatype = element.attributeValue(DATA_TYPE_ATTR);
                 Boolean mandatory = Boolean.valueOf(element.attributeValue(MANDATORY_ATTR));
-                Parameter parameter = new Parameter(name, createParameterValue(datatype, value), 
-                		parameterType, mandatory);
+                
+                Object value = null;
+                if (strValue!=null) {
+                    value = createParameterValue(datatype, strValue);
+                    addReferencedParameters(targetSet, strValue, parameterType);
+                }
+                else {
+                    // There is no string value, so check for other data types
+                    Map<String,String> map = new HashMap<>();
+                    for (Object o2 : element.elements(ENTRY_ELE)) {
+                        Element entryEle = (Element) o2;
+                        String entryKey = entryEle.attributeValue(KEY_ATTR);
+                        String entryValue = entryEle.attributeValue(VALUE_ATTR);
+                        if (entryKey==null) {
+                            throw new MandatoryAttributeMissingException("Missing 'key' attribute on map entry for parameter '"+name+"'");
+                        }
+                        if (entryValue==null) {
+                            throw new MandatoryAttributeMissingException("Missing 'value' attribute on map entry for parameter '"+name+"'");
+                        }
+                        if (entryValue.startsWith("$V{")) {
+                            throw new UnexpectedAttributeException("Variable interpolation ($V{}) is not yet supported for map entry values");
+                        }
+                        // TODO: uncomment this once we add support for interpolation
+                        //addReferencedParameters(targetSet, entryValue, parameterType);
+                        map.put(entryKey, entryValue);
+                    }
+                    if (!map.isEmpty()) {
+                        value = map;
+                    }
+                }
+                
+                Parameter parameter = new Parameter(name, value, parameterType, mandatory);
                 setParameter(targetSet, parameter);
-                if (value!=null && value.startsWith("$V{")) {
-                	// Also add the referenced variable
-                	name = value.substring(value.indexOf("$V{") + 3, value.length() - 1);
-                	parameter = new Parameter(name, null, parameterType, mandatory);
-                	setParameter(targetSet, parameter);
-                }                
             }
         }
+    }
+    
+    private void addReferencedParameters(Set<Parameter> targetSet, String value, ParameterType parameterType) {
+        if (value!=null && value.startsWith("$V{")) {
+            // Also add the referenced variable
+            String name = value.substring(value.indexOf("$V{") + 3, value.length() - 1);
+            Parameter parameter = new Parameter(name, null, parameterType, false);
+            setParameter(targetSet, parameter);
+        }                
     }
     
     /**

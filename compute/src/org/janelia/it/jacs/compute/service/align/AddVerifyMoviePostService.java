@@ -5,7 +5,6 @@ import java.io.FileWriter;
 import java.util.Date;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
@@ -44,9 +43,9 @@ public class AddVerifyMoviePostService extends AbstractEntityGridService {
     private Entity alignment;
     private Entity defaultImage;
     private Entity supportingFiles;
-    
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
+
+    @Override
+    protected void init() throws Exception {
 
         this.outputDir = new File(resultFileNode.getDirectoryPath());
     	this.outputFile = new File(outputFile, OUTPUT_FILE_NAME);

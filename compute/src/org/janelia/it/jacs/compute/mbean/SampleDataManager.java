@@ -185,11 +185,10 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "singleSampleArchival", "Single Sample Archival");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SyncSampleToArchive", task.getObjectId());
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
+            String processName = "SyncSampleToArchive";
+            String displayName = "Single Sample Archival";
+            saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -201,6 +200,36 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String processName = "CompleteSampleArchivalService";
             String displayName = "Complete Sample Archival";
             saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
+    
+
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes) {
+        try {
+            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
+            taskParameters.add(new TaskParameter("file types", filetypes, null));
+            String processName = "SyncSampleToScality";
+            String displayName = "Sync Sample to Scality";
+            saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
+    
+    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("data set name", dataSetName, null));
+            taskParameters.add(new TaskParameter("file types", filetypes, null));
+            String processName = "SyncUserFilesToScality";
+            String displayName = "Sync User Files to Scality";
+            saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);

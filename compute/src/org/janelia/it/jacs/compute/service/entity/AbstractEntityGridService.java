@@ -52,11 +52,15 @@ public abstract class AbstractEntityGridService extends SubmitDrmaaJobService {
             
             this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
             this.entityLoader = new EntityBeanEntityLoader(entityBean);
+            
+            init();
         } 
         catch (Exception e) {
             throw new ServiceException(e);
         }
     }
+
+    protected abstract void init() throws Exception;
     
 	@Override
     public int getJobTimeoutSeconds() {
