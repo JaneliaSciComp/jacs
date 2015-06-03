@@ -20,4 +20,41 @@ ensureRawFile()
     eval $_RESULTVAR="'$_FILE'"
 }
 
+ensureLocalFile()
+{
+    local _SYNC_SCRIPT="$1"
+    local _WORKING_DIR="$2"
+    local _FILE="$3"
+    local _RESULTVAR="$4"
+    if [[ $_FILE == http* ]]; then
+        local _URL=$_FILE
+        local _FILE_STUB=`basename $_URL`
+        _FILE="$_WORKING_DIR/$_FILE_STUB"
+        $_SYNC_SCRIPT GET "$_URL" "$_FILE"
+    fi
+    eval $_RESULTVAR="'$_FILE'"
+}
+
+ensureUncompressedFile()
+{
+    local _WORKING_DIR="$1"
+    local _FILE="$2"
+    local _RESULTVAR="$3"
+    local _INFILE=$_FILE
+    local _FILE_STUB=`basename ${_FILE%.*}`
+    case "$_FILE" in
+    *.gz )
+        _FILE="$_WORKING_DIR/$_FILE_STUB"
+        gunzip -c $_INFILE > $_FILE
+        ;;
+    *.bz2 )
+        _FILE="$_WORKING_DIR/$_FILE_STUB"
+        bzcat $_INFILE > $_FILE
+        ;;
+    *)
+        ;;
+    esac
+    eval $_RESULTVAR="'$_FILE'"
+}
+
 
