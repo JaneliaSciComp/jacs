@@ -16,7 +16,9 @@ import org.bytedeco.javacpp.BytePointer;
  */
 public class ByteGatherAcceptor implements FFMPGByteAcceptor {
 
-    private List<byte[]> pages = new ArrayList<>();
+    // NOTE: this code is required to remain at source version 1.6,
+    // for export in its own jar file.
+    private List<byte[]> pages = new ArrayList<byte[]>();
     private long totalSize = 0;
     private int width;
     private int height;

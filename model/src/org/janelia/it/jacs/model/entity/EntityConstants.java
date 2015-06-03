@@ -8,6 +8,8 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
+    public static final String SCALITY_PATH_PREFIX = "/Scality/";
+    
     public static final String VALUE_SC_GUID                         = "GUID";
     public static final String VALUE_SC_NAME                         = "Name";
     public static final String VALUE_SC_DATE_CREATED                 = "Date Created";
@@ -23,7 +25,6 @@ public class EntityConstants {
     public static final String VALUE_DESYNC                          = "Desync";
     public static final String VALUE_RETIRED                         = "Retired";
     
-    public static final String VALUE_COMPRESSION_UNCOMPRESSED               = "Uncompressed";
     public static final String VALUE_COMPRESSION_LOSSLESS                   = "Lossless";
     public static final String VALUE_COMPRESSION_LOSSLESS_AND_H5J           = "Lossless and H5J";
     public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD  = "Visually Lossless and PBD";

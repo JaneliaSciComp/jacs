@@ -31,13 +31,14 @@
     <property name="schema.home" value="schema"/>
     <property name="jaxb.src.dir" value="src"/>
 
-	<!-- Set some generic properties.  Doing it in this target gives us access to all  -->
-	<!-- props in the generic set-common-properties -->
-	<target name="set-common-properties" depends="build-module-init.set-common-properties">
+    <!-- Set some generic properties.  Doing it in this target gives us access to all  -->
+    <!-- props in the generic set-common-properties -->
+    <target name="set-common-properties" depends="build-module-init.set-common-properties">
         <property name="model.module" value="${basedir}/../model" />
         <property name="jar.name" value="jacs-shared.jar"/>
         <property name="build.unzipped.dir" value="${build.jars.dir}/unzipped"/>
         <property name="grid.jar.name" value="jacs-grid.jar"/>
+        <property name="h265-support.jar.name" value="h265-support.jar"/>
         <property name="indexer.jar.name" value="lucene-indexer.jar"/>
         <property name="util.jar.name" value="jacs-util.jar"/>
         <property name="common.module" value="${basedir}/../common"/>
@@ -150,6 +151,46 @@
         </jar>
         <!-- delete temp files -->
         <delete dir="${build.unzipped.dir}"/>
+    </target>
+
+    <target name="jar-h265-plugin-code" depends="set-common-properties">
+        <property name="temp.java6" value="../build-java6" />
+        <delete file="${build.jars.dir}/${h265-support.jar.name}" />
+        <!-- unjar dependencies -->
+        <!--  Maybe these are needed intact.  Also, no Mac version here.
+        <mkdir dir="${build.unzipped.dir}" />
+        <unjar src="${common.dir}/ffmpeg-linux-x86.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        <unjar src="${common.dir}/ffmpeg-linux-x86_64.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        <unjar src="${common.dir}/ffmpeg-windows-x86.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        <unjar src="${common.dir}/ffmpeg-windows-x86_64.jar" dest="${build.unzipped.dir}" overwrite="true"/>
+        -->
+        <copy file="${basedir}/../shared/conf/jacs.properties" todir="${build.unzipped.dir}" overwrite="true" />
+
+        <!-- The plugin-receiver, Fiji, requires Java6 only. -->        
+        <delete dir="${temp.java6}"/>
+        <mkdir dir="${temp.java6}"/>
+        
+        <javac source="1.6" 
+               target="1.6"
+               srcdir="${jaxb.src.dir}" 
+               destdir="${temp.java6}" 
+               includes="org/janelia/it/jacs/shared/ffmpeg/**/*.java" 
+               classpathref="compile.classpath.additional">
+        </javac>
+
+        <jar destfile="${build.jars.dir}/${h265-support.jar.name}">
+            <fileset dir="${temp.java6}">
+                <include name="org/janelia/it/jacs/shared/ffmpeg/**"/>
+            </fileset>
+            <fileset dir="${build.unzipped.dir}">
+                <include name="com/**"/>
+                <include name="javax/**"/>
+                <include name="jp/**"/>
+                <include name="org/**"/>
+            </fileset>
+        </jar>
+        <!-- delete temp files -->
+        <delete dir="${temp.java6}"/>
     </target>
 
     <target name="shared-jar" depends="compile, make-jars-dir">

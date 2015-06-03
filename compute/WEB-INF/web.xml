@@ -68,7 +68,7 @@
 
     <servlet-mapping>
         <servlet-name>ScalityProxy</servlet-name>
-        <url-pattern>/ScalityProxy</url-pattern>
+        <url-pattern>/ScalityProxy/*</url-pattern>
     </servlet-mapping>
     
 </web-app>

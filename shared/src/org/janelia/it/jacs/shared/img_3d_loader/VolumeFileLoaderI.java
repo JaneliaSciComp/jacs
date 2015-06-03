@@ -17,6 +17,7 @@ public interface VolumeFileLoaderI {
     String MP4_EXT = "MP4";
     String H264_EXT = "H264";
     String H265_EXT = "H265";
+    String H5J_EXT  = "H5J";
 
     void loadVolumeFile( String fileName ) throws Exception;
 }

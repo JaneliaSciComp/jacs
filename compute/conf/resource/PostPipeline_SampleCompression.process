@@ -101,6 +101,7 @@
                 <input name="ROOT_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
                 <input name="FILE_TYPES" value="pbd"/>
+                <input name="DELETE_SOURCE_FILES" value="true"/>
             </include>
         
         </sequence>

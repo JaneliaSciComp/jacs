@@ -21,6 +21,7 @@ import org.janelia.it.jacs.model.entity.json.JsonEntity;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
+import org.jboss.resteasy.spi.UnauthorizedException;
 
 /**
  * Defines the secure RESTful web service entry points.
@@ -208,8 +209,7 @@ public class SecureRestfulWebService {
     }
     
     private String getSubjectKey() {
-    	return "user:rokickik";
-//    	if (securityContext==null) return null;
-//        return securityContext.getUserPrincipal().getName();
+    	if (securityContext==null) throw new UnauthorizedException("User has no security context");
+        return securityContext.getUserPrincipal().getName();
     }
 }
