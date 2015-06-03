@@ -32,7 +32,7 @@ public class NormalCompositor {
         double nx = (v[Y] * w[Z]) - (v[Z] * w[Y]);
         double ny = (v[Z] * w[X]) - (v[X] * w[Z]);
         double nz = (v[X] * w[Y]) - (v[Y] * w[X]);
-
+        
         return normalize(new double[]{nx, ny, nz});
     }
 
@@ -94,6 +94,7 @@ public class NormalCompositor {
                             attributeArray,
                             3
                     );
+                    normalArray = customNormal;
                 }
             }
             
@@ -114,7 +115,7 @@ public class NormalCompositor {
                 attribArray[ i] = (float) (normalArray[ i] / magnitude);
             } else {
                 // This implies that the vertex is touching triangles in all 6 positions, making
-                // its normal a net neurtral.  Its facing direction can make it positive or negative.
+                // its normal a net neutral.  Its facing direction can make it positive or negative.
                 // At time of writing, with the absolute value being used in the shader, and normalizing
                 // being done in the shader, this is a reasonable setting.  Note that w/o absolute
                 // values, we would have to decide whether all touched faces are on the front or the
