@@ -397,6 +397,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
         File file = new File(filepath);
         if (!isDebug) {
             try {
+                // TODO: what if the file is stored in Scality?
                 FileUtils.forceDelete(file);
                 logger.info("Deleted old file: "+filepath);
             }

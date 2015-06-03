@@ -217,6 +217,16 @@ public class ScalityDAO {
 		return sb.toString();
 	}
 
+	public static Long getEntityIdFromBPID(String bpid) {
+	    try {
+	        return new Long(bpid.replaceFirst(SCALITY_PATH_NAMESPACE+"/", ""));
+	    }
+	    catch (NumberFormatException e) {
+	        log.warn("Error finding entity id in BPID "+bpid,e);
+	        return null;
+	    }
+	}
+	
     public static String getUrlFromEntityId(Long entityId) {
         return getUrlFromBPID(getBPIDFromEntityId(entityId));
     }
