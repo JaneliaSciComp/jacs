@@ -25,7 +25,7 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 	
 	private ScalityDAO scality;
 	
-	private List<Long> createdScalityIds = new ArrayList<Long>();
+	private List<Entity> createdScalityEntities = new ArrayList<>();
 	
 	public void execute() throws Exception {
 		
@@ -75,8 +75,8 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 		if (filepath!=null) {
 			long start = System.currentTimeMillis();
 			Long scalityId = entity.getId();
-			createdScalityIds.add(scalityId);
-			scality.put(scalityId, filepath);
+			createdScalityEntities.add(entity);
+			scality.put(entity);
 			long elapsed = System.currentTimeMillis()-start;
 			log.info("    "+entity.getName()+"\t"+elapsed+" ms");
 			totalElapsed += elapsed;
@@ -99,7 +99,7 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 	
 			long start = System.currentTimeMillis();
 			if (useScality) {
-				scality.get(entity.getId(), tmpFile.getAbsolutePath());
+				scality.get(entity, tmpFile.getAbsolutePath());
 			}
 			else {
 				FileUtils.copyFile(new File(filepath), tmpFile);
@@ -118,15 +118,15 @@ public class ScalityBenchmarkService extends AbstractEntityService {
 	
 	private void cleanScality() {
 		long start = System.currentTimeMillis();
-		for(Long scalityId : createdScalityIds) {
+		for(Entity entity : createdScalityEntities) {
 			try {
-				scality.delete(scalityId);
+				scality.delete(entity);
 			}
 			catch (Exception e) {
-				log.error("Failed to delete temporary object Scality#"+scalityId,e);
+				log.error("Failed to delete temporary object "+entity.getId(),e);
 			}
 		}
 		long elapsed = System.currentTimeMillis()-start;
-		log.info("Deleting "+createdScalityIds.size()+" Scality objects took "+elapsed+" ms");
+		log.info("Deleting "+createdScalityEntities.size()+" Scality objects took "+elapsed+" ms");
 	}
 }

@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
@@ -40,7 +39,7 @@ public class MIPGenerationService extends ParallelFileProcessingService {
     }
 
     @Override
-    protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
+    protected void writeInstanceFile(FileWriter fw, String inputFile, String outputFile, int configIndex) throws IOException {
         super.writeInstanceFile(fw, inputFile, outputFile, configIndex);
         fw.write((outputFlipy.contains(configIndex)?"-flipy":"") + "\n");
     }

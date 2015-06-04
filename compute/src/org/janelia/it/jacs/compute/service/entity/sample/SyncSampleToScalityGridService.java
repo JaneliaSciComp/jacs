@@ -175,7 +175,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     
     private void writeInstanceFile(Entity entity, int configIndex) throws Exception {
 		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		String scalityUrl = ScalityDAO.getUrlFromEntityId(entity.getId());
+		String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
@@ -293,10 +293,10 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
                 EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	        String scalityUrl = ScalityDAO.getUrlFromEntityId(entity.getId());
+    	        String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
                 try {
-                    String bpid = ScalityDAO.getBPIDFromEntityId(entity.getId());
-                    String scalityPath = EntityConstants.SCALITY_PATH_PREFIX+ScalityDAO.getBPIDFromEntityId(entity.getId());
+                    String bpid = ScalityDAO.getBPIDFromEntity(entity);
+                    String scalityPath = EntityConstants.SCALITY_PATH_PREFIX+ScalityDAO.getBPIDFromEntity(entity);
                     
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
         			int numUpdated = 0;
