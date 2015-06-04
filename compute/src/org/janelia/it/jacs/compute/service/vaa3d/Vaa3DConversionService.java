@@ -48,7 +48,7 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     	}
     }
 
-    protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
+    protected void writeInstanceFile(FileWriter fw, String inputFile, String outputFile, int configIndex) throws IOException {
         super.writeInstanceFile(fw, inputFile, outputFile, configIndex);
         if (global8bitFlag) {
             fw.write("8" + "\n");

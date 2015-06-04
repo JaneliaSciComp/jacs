@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  * Do some operation on any number of files in parallel. Subclasses should override getGridServicePrefixName,
  * writeInstanceFile, and writeShellScript.
  * 
+ * @author Sean Murphy
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public abstract class ParallelFileProcessingService extends SubmitDrmaaJobService {
@@ -30,8 +32,8 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     // These 2 vars are the core which must be populated for the service to run.
     // Additionally, a result node or id must be supplied for SubmitDrmaaJobService, which may
     // be the first ID in a result node list.
-    protected List<File> inputFiles = new ArrayList<File>();
-    protected List<File> outputFiles = new ArrayList<File>();
+    protected List<String> inputFiles = new ArrayList<String>();
+    protected List<String> outputFiles = new ArrayList<String>();
 
     private List<FileNode> outputFileNodes;
 
@@ -165,22 +167,22 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
         if (inputPathListGlobal!=null && outputPathListGlobal!=null &&
                 (inputPathListGlobal.size()==outputPathListGlobal.size())) {
             for (String filepath : inputPathListGlobal) {
-                inputFiles.add(new File(filepath));
+                inputFiles.add(filepath);
             }
             for (String filepath : outputPathListGlobal) {
-                outputFiles.add(new File(filepath));
+                outputFiles.add(filepath);
             }
         } else {
 
             if (inputPathListGlobal!=null && inputPathListGlobal.size()==outputFileNodes.size()) {
                 for (String filepath : inputPathListGlobal) {
-                    inputFiles.add(new File(filepath));
+                    inputFiles.add(filepath);
                 }
                 inputPathListAlreadySpecified=true;
             }
             if (outputPathListGlobal!=null && outputPathListGlobal.size()==outputFileNodes.size()) {
                 for (String filepath : outputPathListGlobal) {
-                    outputFiles.add(new File(filepath));
+                    outputFiles.add(filepath);
                 }
                 outputPathListAlreadySpecified=true;
             }
@@ -198,7 +200,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 
                     if (DEBUG) logger.info("Using inputDir="+inputDir.getAbsolutePath());
 
-                    File inputFile=null;
+                    String inputFile=null;
 
                     if (DEBUG) logger.info("  argIndex: "+argIndex);
                     if (DEBUG) logger.info("    Inputs...");
@@ -208,7 +210,8 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                         if (argIndex==GLOBAL_CASE) {
                             if (inputNameGlobal!=null) {
                                 if (DEBUG) logger.info("      Global Case 1: inputNameGlobal:"+inputNameGlobal);
-                                inputFile=new File(inputDir.getAbsolutePath(), inputNameGlobal);
+                                File file=new File(inputDir.getAbsolutePath(), inputNameGlobal);
+                                inputFile=file.getAbsolutePath();
                             }
                             else if (inputRegexGlobal!=null && outputPatternGlobal!=null) {
                                 if (DEBUG) logger.info("      Global Case 2: inputRegexGlobal:"+inputRegexGlobal+", outputPatternGlobal:"+outputPatternGlobal);
@@ -220,19 +223,23 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                                 }
                                 for (String inputFilename : inputFilenames) {
                                     String outputFilename = inputFilename.replaceAll(inputRegexGlobal, outputPatternGlobal);
-                                    inputFiles.add(new File(inputDir, inputFilename));
-                                    outputFiles.add(new File(inputDir, outputFilename));
+                                    File file = new File(inputDir, inputFilename);
+                                    inputFiles.add(file.getAbsolutePath());
+                                    file = new File(inputDir, outputFilename);
+                                    outputFiles.add(file.getAbsolutePath());
                                 }
                             }
                         }
                         else {
                             if (!inputNameList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 1: inputNameList:"+inputNameList.size());
-                                inputFile=new File(inputDir.getAbsolutePath(), inputNameList.get(argIndex));
+                                File file=new File(inputDir.getAbsolutePath(), inputNameList.get(argIndex));
+                                inputFile=file.getAbsolutePath();
                             }
                             else if (!inputPathList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 2: inputPathList:"+inputPathList.size());
-                                inputFile=new File(inputPathList.get(argIndex));
+                                // We don't use File here on purpose, so that URLs do not have anything prepended to them
+                                inputFile=inputPathList.get(argIndex);
                             }
                             else if (!inputRegexList.isEmpty() && !outputPatternList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 3: inputRegexList:"+inputRegexList.size());
@@ -241,8 +248,10 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                                 String[] inputFilenames = getFilesMatching(inputDir, regex);
                                 for (String inputFilename : inputFilenames) {
                                     String outputFilename = inputFilename.replaceAll(regex, pattern);
-                                    inputFiles.add(new File(inputDir, inputFilename));
-                                    outputFiles.add(new File(inputDir, outputFilename));
+                                    File file = new File(inputDir, inputFilename);
+                                    inputFiles.add(file.getAbsolutePath());
+                                    file = new File(inputDir, outputFilename);
+                                    outputFiles.add(file.getAbsolutePath());
                                 }
                             }
                         }
@@ -255,31 +264,37 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                     // Now output
                     if (DEBUG) logger.info("    Outputs...");
                     if (!outputPathListAlreadySpecified) {
-                        File outputFile=null;
+                        String outputFile=null;
 
                         if (argIndex==GLOBAL_CASE) {
                             if (outputNameGlobal!=null) {
                                 if (DEBUG) logger.info("      Global Case 1: outputNameGlobal:"+outputNameGlobal);
-                                outputFile=new File(inputDir.getAbsolutePath(), outputNameGlobal);
+                                File file=new File(inputDir.getAbsolutePath(), outputNameGlobal);
+                                outputFile=file.getAbsolutePath();
                             }
                         }
                         else {
                             if (!outputNameList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 1: outputNameList:"+outputNameList.size());
-                                outputFile=new File(outputFileNode==null?inputDir.getAbsolutePath():outputFileNode.getDirectoryPath(), outputNameList.get(argIndex));
+                                File file=new File(outputFileNode==null?inputDir.getAbsolutePath():outputFileNode.getDirectoryPath(), outputNameList.get(argIndex));
+                                outputFile=file.getAbsolutePath();
                             }
                             else if (!outputPathList.isEmpty()) {
                                 if (DEBUG) logger.info("      Case 2: outputPathList:"+outputPathList.size());
-                                outputFile=new File(outputPathList.get(argIndex));
+                                File file=new File(outputPathList.get(argIndex));
+                                outputFile=file.getAbsolutePath();
                             }
                             else if (outputExtension!=null) {
                                 if (DEBUG) logger.info("      Case 3: outputExtension:"+outputExtension);
-                                String inputFileName = inputFile.getName();
+                                File inputFileObj = new File(inputFile);
+                                String inputFileName = inputFileObj.getName();
                                 if (inputFileName.lastIndexOf('.')>0) {
-                                    outputFile=new File(outputNode.getDirectoryPath(),inputFileName.substring(0,inputFileName.lastIndexOf('.'))+"."+outputExtension);    
+                                    File file=new File(outputNode.getDirectoryPath(),inputFileName.substring(0,inputFileName.lastIndexOf('.'))+"."+outputExtension);
+                                    outputFile=file.getAbsolutePath();
                                 }
                                 else {
-                                    outputFile=new File(outputNode.getDirectoryPath(),inputFileName+"."+outputExtension);    
+                                    File file=new File(outputNode.getDirectoryPath(),inputFileName+"."+outputExtension);
+                                    outputFile=file.getAbsolutePath();
                                 }
                             }
                             else {
@@ -307,16 +322,16 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 
     	int i = 0;
     	int configIndex = 1;
-    	for(File inputFile : inputFiles) {
-    		File outputFile = outputFiles.get(i++);
-    		processData.putItem("OUTPUT_PATH_"+configIndex, outputFile.getAbsolutePath());
+    	for(String inputFile : inputFiles) {
+    		String outputFile = outputFiles.get(i++);
+    		processData.putItem("OUTPUT_PATH_"+configIndex, outputFile);
     		writeInstanceFiles(inputFile, outputFile, configIndex++);
     	}
     	writeShellScript(writer);
         setJobIncrementStop(configIndex-1);
     }
 
-    protected void writeInstanceFiles(File inputFile, File outputFile, int configIndex) throws Exception {
+    protected void writeInstanceFiles(String inputFile, String outputFile, int configIndex) throws Exception {
         File configFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Configuration."+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
@@ -339,9 +354,9 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
      * @param configIndex
      * @throws IOException
      */
-    protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
-        fw.write(inputFile.getAbsolutePath() + "\n");
-        fw.write(outputFile.getAbsolutePath() + "\n");
+    protected void writeInstanceFile(FileWriter fw, String inputFile, String outputFile, int configIndex) throws IOException {
+        fw.write(inputFile + "\n");
+        fw.write(outputFile + "\n");
     }
 
     /**
@@ -371,18 +386,19 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 
         int outputFileCheckTries=0;
         int maxOutputFileCheckTries=10;
-        List<File> missingFiles=new ArrayList<File>();
+        List<String> missingFiles=new ArrayList<String>();
         while(outputFileCheckTries<maxOutputFileCheckTries) {
             missingFiles.clear();
-    	    for(File outputFile : outputFiles) {
-                if (!outputFile.exists()) {
+    	    for(String outputFile : outputFiles) {
+    	        File outputFileObj = new File(outputFile);
+                if (!outputFileObj.exists()) {
                     missingFiles.add(outputFile);
                 }
             }
             if (missingFiles.size()>0) {
                 logger.info("Warning: could not find these files during try="+outputFileCheckTries+" out of "+maxOutputFileCheckTries);
-                for (File mf : missingFiles) {
-                    logger.info("missing file: "+mf.getAbsolutePath());
+                for (String mf : missingFiles) {
+                    logger.info("Missing file: "+mf);
                 }
                 logger.info("Missing total of "+missingFiles.size()+" files\n\n");
                 outputFileCheckTries++;
@@ -393,7 +409,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
     	}
         if (!ignoreErrors && missingFiles.size()>0) {
             StringBuffer sb=new StringBuffer();
-            for (File f : missingFiles) sb.append(", "+ f.getAbsolutePath());
+            for (String f : missingFiles) sb.append(", "+ f);
             throw new MissingGridResultException(file.getAbsolutePath(), getGridServicePrefixName()+" missing output files: "+sb.toString());
         }
 	}
