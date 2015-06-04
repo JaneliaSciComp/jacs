@@ -40,6 +40,10 @@ echo "Local input file: $INPUT_FILE"
 ensureUncompressedFile "$WORKING_DIR" "$INPUT_FILE" INPUT_FILE
 echo "Uncompressed input file: $INPUT_FILE"
 
+INPUT_NAME=`basename $INPUT_FILE`
+ln -s $INPUT_FILE $WORKING_DIR/$INPUT_NAME
+INPUT_FILE=$WORKING_DIR/$INPUT_NAME
+
 echo "~ Splitting channels"
 $Vaa3D -x ireg -f splitColorChannels -i $INPUT_FILE
 
@@ -58,7 +62,7 @@ do
 done
 
 echo "~ Copying outputs to $OUTPUT_DIR"
-cp $WORKING_DIR/$INPUT_FILE_STUB*.$OUT_EXT $OUTPUT_DIR
+cp $WORKING_DIR/*_c*.$OUT_EXT $OUTPUT_DIR
 
 echo "~ Removing working directory $WORKING_DIR"
 rm -rf $WORKING_DIR
