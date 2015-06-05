@@ -62,10 +62,10 @@ public class MaskAnnotationDataManager {
         return returnList;
     }
 
-    public void loadMaskCompartmentList(URL maskNameIndexURL) {
+    public void loadMaskCompartmentList(InputStream maskNameIndexStream) {
         try {
             
-            BufferedReader br = new BufferedReader(new InputStreamReader(maskNameIndexURL.openStream()));
+            BufferedReader br = new BufferedReader(new InputStreamReader(maskNameIndexStream));
             String line = null;
             while ((line = br.readLine()) != null) {
                 if (line.trim().length() > 0) {
@@ -190,7 +190,7 @@ public class MaskAnnotationDataManager {
     }
 
     // This method returns: Map<Long, Map<String, String>> sampleInfoMap, Map<Long, List<Double>> quantifierInfoMap
-    public Object[] loadMaskSummaryFile(URL patternAnnotationSummaryURL) throws Exception {
+    public Object[] loadMaskSummaryFile(InputStream patternAnnotationSummaryStream) throws Exception {
 //        System.out.println("loadMaskSummaryFile start()");
         if (QS_COMPARTMENT_LIST.size()==0) {
             throw new Exception("Compartment list must be loaded");
@@ -198,10 +198,10 @@ public class MaskAnnotationDataManager {
 //        Long startTime=new Date().getTime();
 //        System.out.println("Reading mask annotation summary file="+patternAnnotationSummaryFile.getAbsolutePath());
 
-        BufferedReader bw = new BufferedReader(new InputStreamReader(patternAnnotationSummaryURL.openStream()));
+        BufferedReader bw = new BufferedReader(new InputStreamReader(patternAnnotationSummaryStream));
         String firstLine=bw.readLine();
         if (firstLine==null) {
-            throw new Exception("Could not read first line of file="+patternAnnotationSummaryURL);
+            throw new Exception("Could not read first line of file");
         }
         String[] firstLineColumnNames=firstLine.split(",");
         int qsoSize=QS_COMPARTMENT_LIST.size();

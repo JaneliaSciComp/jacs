@@ -3511,8 +3511,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
             File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
             File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");
-            maskManager.loadMaskCompartmentList(nameIndexFile.toURI().toURL());
-            Object[] mapObjects=maskManager.loadMaskSummaryFile(summaryFile.toURI().toURL());
+            maskManager.loadMaskCompartmentList(nameIndexFile.toURI().toURL().openStream());
+            Object[] mapObjects=maskManager.loadMaskSummaryFile(summaryFile.toURI().toURL().openStream());
             return mapObjects;
         } catch (Exception ex) {
             ex.printStackTrace();
