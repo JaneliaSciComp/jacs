@@ -25,6 +25,12 @@
                 <output name="RESULT_FILE_NODE_DIR"/>
     	    </operation>
     	    
+            <operation name="Standardize Path" processor="org.janelia.it.jacs.compute.service.common.StandardizePathService">
+                <input name="FILE_PATH"/>
+                <input name="OUTPUT_VAR_NAME" value="INPUT_FILE"/>
+                <output name="INPUT_FILE"/>
+            </operation>
+            
         </sequence>
 
         <sequence name="Convert files" waitForAsync="true" startEvent="running">
@@ -33,7 +39,7 @@
                 <input name="IGNORE_ERRORS" value="true"/>
                 <input name="RESULT_FILE_NODE"/>
                 <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
-                <input name="INPUT_PATH_1" value="$V{FILE_PATH}"/>
+                <input name="INPUT_PATH_1" value="$V{INPUT_FILE}"/>
                 <input name="OUTPUT_EXTENSION"/>
             </operation>
         </sequence>

@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -17,7 +19,6 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
  * Proxy servlet which fetches objects from Scality based on an Entity's BPID.
@@ -32,7 +33,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 public class ScalityProxyServlet extends HttpServlet {
 
 	private Logger log = Logger.getLogger(ScalityProxyServlet.class);
-	
+
     private HttpClient httpClient;
     
 	@Override
@@ -47,21 +48,39 @@ public class ScalityProxyServlet extends HttpServlet {
 	@Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        String entityIdParam = request.getParameter("id");
-        String username = request.getParameter("username");
+	    ///compute/ScalityProxy/JACS/2143188828775514283/test.v3dpbd
+	    
+	    String path = request.getPathInfo();
+        String bpid = null;
+        String filename = null;
+
+	    Pattern p = Pattern.compile("/(.*?)/([^/]*?)");
+	    Matcher m = p.matcher(path);
+        if (m.matches()) {
+            bpid = m.group(1);
+            filename = m.group(2);
+        }
+        else {
+            response.setStatus(400);
+            return;
+        }
         
+        // TODO: get from BASIC auth
+        String username = null;
+	    log.info("principle: "+request.getUserPrincipal());
+	    
 		try {
-		    if (entityIdParam==null) {
+		    if (bpid==null) {
                 response.setStatus(400);
                 return;
 		    }
 
-            if (username==null) {
+		    Long entityId = ScalityDAO.getEntityIdFromBPID(bpid);
+		    if (entityId==null) {
                 response.setStatus(400);
                 return;
-            }
-            
-			Long entityId = Long.parseLong(entityIdParam);
+		    }
+		    
 	        Entity entity = EJBFactory.getLocalEntityBean().getEntityById(username, entityId);
 	        if (entity==null) {
 	        	log.warn("Entity not found with id="+entityId+" for user "+username);
@@ -69,23 +88,18 @@ public class ScalityProxyServlet extends HttpServlet {
 	        	return;
 	        }
 	        
-	        String bpid = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
-	        if (bpid==null) {
-                log.warn("Entity "+entityId+" does not have BPID");
-                response.setStatus(404);
-                return;
-	        }
-	        
     		String url = ScalityDAO.getUrlFromBPID(bpid);
-    		log.info("Proxying " + entityIdParam+" -> "+url);
+    		log.info("Proxying "+url);
 
-            String filename = entity.getName();
-            response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+    		if (filename==null) {
+                filename = entity.getName();
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+    		}
     		
             GetMethod get = new GetMethod(url);
             int responseCode = httpClient.executeMethod(get);
 
-            log.trace(entityIdParam+" responseCode="+responseCode);
+            log.trace(bpid+" responseCode="+responseCode);
             
             if (responseCode!=HttpServletResponse.SC_OK) {
             	response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -96,16 +110,16 @@ public class ScalityProxyServlet extends HttpServlet {
             Header contentLengthHeader = get.getResponseHeader("Content-Length");
             if (contentLengthHeader!=null) {
             	response.setHeader("Content-Length", contentLengthHeader.getValue());
-                log.trace(entityIdParam+" length="+contentLengthHeader.getValue());
+                log.trace(bpid+" length="+contentLengthHeader.getValue());
             }
             
-            log.trace(entityIdParam+" begin streaming");
+            log.trace(bpid+" begin streaming");
             IOUtils.copy(get.getResponseBodyAsStream(), response.getOutputStream());
-            log.trace(entityIdParam+" done streaming");
+            log.trace(bpid+" done streaming");
 		}
 		catch (Exception e) {
-			throw new ServletException("Error proxying scality object for entity "+
-			                            entityIdParam+" and username "+username, e);
+			throw new ServletException("Error proxying Scality object with BPID "+
+			        bpid+" and username "+username, e);
 		}
     }
 }

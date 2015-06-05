@@ -175,7 +175,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     
     private void writeInstanceFile(Entity entity, int configIndex) throws Exception {
 		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		String scalityUrl = ScalityDAO.getUrlFromEntityId(entity.getId());
+		String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
@@ -293,17 +293,28 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
                 EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	        String scalityUrl = ScalityDAO.getUrlFromEntityId(entity.getId());
-    			logger.info("Successfully synchronized entity "+entity.getName()+" to "+scalityUrl);
-                if (deleteSourceFiles) {
-                    logger.info("  and deleted "+filepathEd.getValue());
-                }
+    	        String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
                 try {
-                    String bpid = ScalityDAO.getBPIDFromEntityId(entity.getId());
+                    String bpid = ScalityDAO.getBPIDFromEntity(entity);
+                    String scalityPath = EntityConstants.SCALITY_PATH_PREFIX+ScalityDAO.getBPIDFromEntity(entity);
+                    
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
+        			int numUpdated = 0;
         			if (deleteSourceFiles) {
         			    entityBean.deleteEntityData(filepathEd);
+                        numUpdated = entityBean.bulkUpdateEntityDataValue(filepathEd.getValue(), scalityPath);
         			}
+        			
+        			StringBuilder sb2 = new StringBuilder();
+        			sb2.append("Successfully synchronized entity ").append(entity.getName()).append(" to ").append(scalityUrl);
+                    if (deleteSourceFiles) {
+                        sb2.append(" and deleted ").append(filepathEd.getValue());
+                    }
+                    if (numUpdated>0) {
+                        sb2.append(" and updated ").append(numUpdated+" entity data values to use ").append(scalityPath);
+                    }
+                    
+                    logger.info(sb2.toString());
                 }
                 catch (ComputeException e) {
                     logger.error("Error updating entity id="+entity.getId(),e);

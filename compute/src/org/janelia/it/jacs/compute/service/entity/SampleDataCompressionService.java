@@ -42,8 +42,8 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	
     private boolean isDebug = false;
 
-    private String mode = MODE_UNDEFINED;
-    private String recordMode = RECORD_MODE_UPDATE;
+    private String mode;
+    private String recordMode;
     private String rootEntityId;
     private String inputType;
     private String outputType;
@@ -68,6 +68,10 @@ public class SampleDataCompressionService extends AbstractEntityService {
     	rootEntityId = data.getItemAsString("ROOT_ENTITY_ID");
     	inputType = data.getRequiredItemAsString("INPUT_TYPE");
         outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
+
+        if (!RECORD_MODE_ADD.equals(recordMode) && !RECORD_MODE_UPDATE.equals(recordMode)) {
+            throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
+        }
         
         if (mode.equals(MODE_CREATE_INPUT_LIST)) {
             doCreateInputList();
@@ -151,25 +155,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
             logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
         }
     }
-       
-    // TODO: move this cleanup function to a Groovy or Python script
-//    private void cleanExtraFiles(Entity image) throws ComputeException {
-//        List<EntityData> toRemove = new ArrayList<>();
-//        for(EntityData ed : image.getEntityData()) {
-//            if (EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE.equals(ed.getEntityAttrName())) {
-//                toRemove.add(ed);
-//            }
-//        }
-//        if (!toRemove.isEmpty()) {
-//            toRemove.remove(toRemove.size()-1);
-//            for(EntityData ed : toRemove) {
-//                logger.warn("Removing extra H5J for: "+image.getId());
-//                image.getEntityData().remove(ed);
-//                entityBean.deleteEntityData(ed);
-//                entityBean.deleteEntityTreeById(ed.getOwnerKey(), ed.getChildEntity().getId());
-//            }
-//        }
-//    }
     
     private void addEntityToInputList(Entity imageEntity) throws ComputeException {
 
@@ -380,9 +365,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
                         entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE, outputPath);
                     }
                 }
-                else {
-                    throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
-                }
         	}
     	
         	deleteIfNecessary(inputPath);
@@ -397,6 +379,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
         File file = new File(filepath);
         if (!isDebug) {
             try {
+                // TODO: what if the file is stored in Scality?
                 FileUtils.forceDelete(file);
                 logger.info("Deleted old file: "+filepath);
             }

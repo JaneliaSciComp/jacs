@@ -172,7 +172,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
             helper.setAlignmentSpace(alignmentResult, consensusAlignmentSpace);
         }
         else {
-            logger.warn("No consensus for alignment space, using default: "+defaultAlignmentSpace);
+            logger.info("No consensus for alignment space, using default: "+defaultAlignmentSpace);
             helper.setAlignmentSpace(alignmentResult, defaultAlignmentSpace);
         }
         
