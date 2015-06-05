@@ -1,0 +1,57 @@
+<!-- 
+	Compress all of a user's samples to a target compression level.
+-->
+<process name="Sample Compression" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	
+        <input name="DATA_SET_NAME"/>
+        <input name="TARGET_COMPRESSION"/>
+    
+        <!-- Import variables from the task -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="data set name"/>
+            <input name="PROCESS_VARIABLE_1" value="DATA_SET_NAME"/>
+            <input name="TASK_PARAMETER_2" value="target compression"/>
+            <input name="PROCESS_VARIABLE_2" value="TARGET_COMPRESSION"/>
+            <output name="DATA_SET_NAME"/>
+            <output name="TARGET_COMPRESSION"/>
+        </operation>
+        
+        <!-- Init variables -->
+        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="TARGET_COMPRESSION"/>
+            <input name="PROCESS_VARIABLE_1" value="TARGET_COMPRESSION"/>
+            <input name="PROCESS_VARIABLE_VALUE_1" value="Lossless and H5J"/>
+            <output name="TARGET_COMPRESSION"/>
+        </operation>
+
+        <!-- Find all the Sample Entities in the database -->
+        <operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
+            <input name="RUN_MODE"/>
+            <input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
+            <input name="DATA_SET_NAME"/>
+            <output name="SAMPLE_ENTITY_ID"/>
+        </operation>
+        
+        <!-- Process each Sample Entity -->
+        <sequence forEach="SAMPLE_ENTITY_ID">
+                
+            <!-- Spawn a new task to process the sample -->
+            <operation name="Sample Compression Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                <input name="PROCESS_DEF_NAME" value="PostPipeline_SampleCompression"/>
+                <input name="DISPLAY_NAME" value="Sample Compression"/>
+                <input name="PARAMETER_1_KEY" value="root entity id"/>
+                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+                <input name="PARAMETER_2_KEY" value="compression type"/>
+                <input name="PARAMETER_2_VALUE" value="$V{TARGET_COMPRESSION}"/>
+            </operation>
+            
+        </sequence>
+        
+        <!-- Wait for subtasks to finish -->
+        <operation name="Wait for Subtasks" processor="org.janelia.it.jacs.compute.service.common.WaitForSubTasksService">
+        </operation>
+        
+    </sequence>
+</process>

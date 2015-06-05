@@ -64,12 +64,6 @@
             <input name="RECORD_MODE" value="UPDATE"/>
         </include>
         
-        <sequence if="TARGET_COMPRESSION=Lossless">
-            
-            <!-- Nothing to do, everything is already lossless. This is a legacy state and should not be used. -->    
-            
-        </sequence>
-                
         <sequence if="TARGET_COMPRESSION=Lossless and H5J">
         
             <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
@@ -114,7 +108,8 @@
                 <input name="INPUT_TYPE" value="v3dpbd"/>
                 <input name="OUTPUT_TYPE" value="h5j"/>
                 <input name="DELETE_INPUTS" value="true"/>
-                <input name="RECORD_MODE" value="UPDATE"/>
+                <!-- TODO: fix this when we implement deletion from Scality so that PBDs can be purged -->
+                <input name="RECORD_MODE" value="NOT YET IMPLEMENTED"/>
                 <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
             </include>
             
