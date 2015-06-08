@@ -101,8 +101,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
 
         if (types.remove("lsm")) {
-            contextLogger.info("Searching for LSM files to move...");
-            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
+            contextLogger.info("Searching "+sample.getId()+" for LSM files to move...");
+            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                     .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
                     .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
                     .childrenOfType(EntityConstants.TYPE_LSM_STACK)
@@ -114,8 +114,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
         
         if (types.remove("pbd")) {
-            contextLogger.info("Searching for PBD files to move...");
-            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
+            contextLogger.info("Searching "+sample.getId()+" for PBD files to move...");
+            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                     .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
                     .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
                     .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA)
