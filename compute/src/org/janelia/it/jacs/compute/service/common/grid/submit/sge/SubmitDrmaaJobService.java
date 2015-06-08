@@ -76,7 +76,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         try {
             init(processData);
             if (cancelled) {
-                logger.info("Grid job cancelled by init");
+                // Nothing to do.
             }
             else {
                 submitJob();
@@ -107,7 +107,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         try {
             init(processData);
             if (cancelled) {
-                logger.info("Grid job cancelled by init");
                 return null;
             }
             if (logger.isInfoEnabled()) {
