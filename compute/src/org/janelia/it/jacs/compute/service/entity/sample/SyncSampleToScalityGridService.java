@@ -293,7 +293,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
                 String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
-    		    contextLogger.info("Synchronized entity "+entity.getName()+" ("+entity.getId()+") to "+scalityUrl);
+    		    contextLogger.info("Synchronized "+entity.getId()+" to "+scalityUrl);
     		    
                 EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 try {
@@ -308,10 +308,10 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         			}
         			
                     if (deleteSourceFiles) {
-                        contextLogger.info("  and deleted "+filepathEd.getValue());
+                        contextLogger.info("Deleted "+filepathEd.getValue());
                     }
                     if (numUpdated>0) {
-                        contextLogger.info("  and updated "+numUpdated+" entity data values to use "+scalityPath);
+                        contextLogger.info("Updated "+numUpdated+" entity data values to "+scalityPath);
                     }
                 }
                 catch (Exception e) {
