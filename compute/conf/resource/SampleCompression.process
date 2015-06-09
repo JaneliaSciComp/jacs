@@ -5,30 +5,34 @@
 	<sequence>
 	
         <input name="DATA_SET_NAME"/>
-        <input name="TARGET_COMPRESSION"/>
+        <input name="COMPRESSION_TYPE"/>
     
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="TASK_PARAMETER_1" value="data set name"/>
-            <input name="PROCESS_VARIABLE_1" value="DATA_SET_NAME"/>
-            <input name="TASK_PARAMETER_2" value="target compression"/>
-            <input name="PROCESS_VARIABLE_2" value="TARGET_COMPRESSION"/>
+            <input name="OVERRIDE" value="false"/>
+            <input name="DATA_SET_NAME"/>
+            <input name="COMPRESSION_TYPE"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="data set name" value="DATA_SET_NAME"/>
+                <entry key="compression type" value="COMPRESSION_TYPE"/>
+            </input>
             <output name="DATA_SET_NAME"/>
-            <output name="TARGET_COMPRESSION"/>
+            <output name="COMPRESSION_TYPE"/>
         </operation>
         
-        <!-- Init variables -->
+        <!-- Init variables with default values if they have not yet been initialized -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
-            <input name="TARGET_COMPRESSION"/>
-            <input name="PROCESS_VARIABLE_1" value="TARGET_COMPRESSION"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="Lossless and H5J"/>
-            <output name="TARGET_COMPRESSION"/>
+            <input name="COMPRESSION_TYPE"/>
+            <input name="PROCESS_VARIABLE_MAP">
+                <entry key="COMPRESSION_TYPE" value="Lossless and H5J"/>
+            </input>
+            <output name="COMPRESSION_TYPE"/>
         </operation>
-
+        
         <!-- Find all the Sample Entities in the database -->
         <operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
-            <input name="RUN_MODE"/>
+            <input name="RUN_MODE" value="ALL"/>
             <input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
             <input name="DATA_SET_NAME"/>
             <output name="SAMPLE_ENTITY_ID"/>
@@ -44,7 +48,7 @@
                 <input name="PARAMETER_1_KEY" value="root entity id"/>
                 <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
                 <input name="PARAMETER_2_KEY" value="compression type"/>
-                <input name="PARAMETER_2_VALUE" value="$V{TARGET_COMPRESSION}"/>
+                <input name="PARAMETER_2_VALUE" value="$V{COMPRESSION_TYPE}"/>
             </operation>
             
         </sequence>

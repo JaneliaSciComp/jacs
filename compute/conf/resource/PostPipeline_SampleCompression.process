@@ -5,19 +5,19 @@
 	<sequence>
 	    
         <input name="ROOT_ENTITY_ID"/>
-        <input name="TARGET_COMPRESSION"/>
+        <input name="COMPRESSION_TYPE"/>
         
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="ROOT_ENTITY_ID"/>
-            <input name="TARGET_COMPRESSION"/>
+            <input name="COMPRESSION_TYPE"/>
             <input name="TASK_PARAMETER_MAP">
                 <entry key="root entity id" value="ROOT_ENTITY_ID"/>
                 <entry key="compression type" value="COMPRESSION_TYPE"/>
             </input>
 	        <output name="ROOT_ENTITY_ID"/>
-            <output name="TARGET_COMPRESSION"/>
+            <output name="COMPRESSION_TYPE"/>
 	    </operation>
 	    
         <!-- Get the parent sample if this is a child sample -->
@@ -31,13 +31,13 @@
         <sequence if="ANCESTOR_ID is not empty">
             
             <!-- Import variables from the entity -->
-            <operation name="Get Target Compression" processor="org.janelia.it.jacs.compute.service.entity.InitVariablesFromEntityService">
+            <operation name="Get Compression Type" processor="org.janelia.it.jacs.compute.service.entity.InitVariablesFromEntityService">
                 <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
                 <input name="OVERRIDE" value="false"/>
-                <input name="TARGET_COMPRESSION"/>
+                <input name="COMPRESSION_TYPE"/>
                 <input name="ENTITY_ATTRIBUTE_1" value="Compression Type"/>
-                <input name="PROCESS_VARIABLE_1" value="TARGET_COMPRESSION"/>
-                <output name="TARGET_COMPRESSION"/>
+                <input name="PROCESS_VARIABLE_1" value="COMPRESSION_TYPE"/>
+                <output name="COMPRESSION_TYPE"/>
             </operation>
             
         </sequence>
@@ -46,13 +46,13 @@
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
             <input name="SEPARATION_EXCLUDE"/>
-            <input name="TARGET_COMPRESSION"/>
+            <input name="COMPRESSION_TYPE"/>
             <input name="PROCESS_VARIABLE_MAP">
                 <entry key="SEPARATION_EXCLUDE" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
-                <entry key="TARGET_COMPRESSION" value="Lossless and H5J"/>
+                <entry key="COMPRESSION_TYPE" value="Lossless and H5J"/>
             </input>
             <output name="SEPARATION_EXCLUDE"/>
-            <output name="TARGET_COMPRESSION"/>
+            <output name="COMPRESSION_TYPE"/>
         </operation>
         
         <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
@@ -64,7 +64,7 @@
             <input name="RECORD_MODE" value="UPDATE"/>
         </include>
         
-        <sequence if="TARGET_COMPRESSION=Lossless and H5J">
+        <sequence if="COMPRESSION_TYPE=Lossless and H5J">
         
             <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
             <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
@@ -78,7 +78,7 @@
             
         </sequence>
                 
-        <sequence if="TARGET_COMPRESSION=Visually Lossless and PBD">
+        <sequence if="COMPRESSION_TYPE=Visually Lossless and PBD">
                     
             <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
             <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
@@ -100,7 +100,7 @@
         
         </sequence>
                 
-        <sequence if="TARGET_COMPRESSION=Visually Lossless">
+        <sequence if="COMPRESSION_TYPE=Visually Lossless">
                     
             <!-- Create h5j files from v3dpbd files, replace the v3dpbd entities, and delete the v3dpbd files -->
             <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
@@ -121,7 +121,7 @@
             <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.entity.SetEntityAttributeValueService">
                 <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
                 <input name="ATTRIBUTE_NAME" value="Compression Type"/>
-                <input name="ATTRIBUTE_VALUE" value="$V{TARGET_COMPRESSION}"/>
+                <input name="ATTRIBUTE_VALUE" value="$V{COMPRESSION_TYPE}"/>
             </operation>
             
         </sequence>
