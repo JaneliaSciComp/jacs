@@ -103,7 +103,8 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
             // Call postprocess method of the service so that the necessary information is set to the processData
             try {
-	            originalservice.handleErrors();
+	            originalservice.cleanup();
+                originalservice.handleErrors();
 	            originalservice.postProcess();
             }
             finally {

@@ -11,10 +11,13 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
  * Time: 4:14:33 PM
  */
 public interface SubmitJobService {
+    
     public void submitJobAndWait(IProcessData processData) throws SubmitJobException;
 
     public Process submitAsynchJob(IProcessData processData, String submissionKey) throws SubmitJobException;
 
+    public void cleanup();
+    
     public void postProcess() throws MissingDataException;
 
     public void handleErrors() throws Exception;
