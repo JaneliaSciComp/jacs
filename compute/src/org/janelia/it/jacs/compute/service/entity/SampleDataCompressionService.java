@@ -207,7 +207,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
                         return;
                     }
                     
-                        // We just need to move it into the right place
+                    // We just need to move it into the right place
                     int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, h5jFilepath);
                     contextLogger.info("Updated "+numUpdated+" entity data values to use compressed file: "+h5jFilepath);
                     

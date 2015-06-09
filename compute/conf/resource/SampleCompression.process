@@ -7,7 +7,7 @@
         <input name="DATA_SET_NAME"/>
         <input name="COMPRESSION_TYPE"/>
     
-        <!-- Import variables from the task -->
+        <!-- Import variables from the task if any were not passed in as input parameters above -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="DATA_SET_NAME"/>
@@ -52,10 +52,6 @@
             </operation>
             
         </sequence>
-        
-        <!-- Wait for subtasks to finish -->
-        <operation name="Wait for Subtasks" processor="org.janelia.it.jacs.compute.service.common.WaitForSubTasksService">
-        </operation>
         
     </sequence>
 </process>

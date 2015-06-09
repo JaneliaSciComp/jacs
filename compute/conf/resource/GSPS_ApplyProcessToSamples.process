@@ -3,17 +3,25 @@
 -->
 <process name="Apply Process To Samples" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
-	    
+	
+        <input name="DATA_SET_NAME"/>
+        <input name="PROCESS_DEF_NAME"/>
+        <input name="SUBTASK_NAME"/>
+        <input name="PARENT_OR_CHILDREN"/>
+        
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="TASK_PARAMETER_1" value="data set name"/>
-            <input name="PROCESS_VARIABLE_1" value="DATA_SET_NAME"/>
-            <input name="TASK_PARAMETER_2" value="process def name"/>
-            <input name="PROCESS_VARIABLE_2" value="PROCESS_DEF_NAME"/>
-            <input name="TASK_PARAMETER_3" value="subtask name"/>
-            <input name="PROCESS_VARIABLE_3" value="SUBTASK_NAME"/>
-            <input name="TASK_PARAMETER_4" value="parent or children"/>
-            <input name="PROCESS_VARIABLE_4" value="PARENT_OR_CHILDREN"/>
+            <input name="OVERRIDE" value="false"/>
+            <input name="DATA_SET_NAME"/>
+            <input name="PROCESS_DEF_NAME"/>
+            <input name="SUBTASK_NAME"/>
+            <input name="PARENT_OR_CHILDREN"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="data set name" value="DATA_SET_NAME"/>
+                <entry key="process def name" value="PROCESS_DEF_NAME"/>
+                <entry key="subtask name" value="SUBTASK_NAME"/>
+                <entry key="parent or children" value="PARENT_OR_CHILDREN"/>
+            </input>
             <output name="DATA_SET_NAME"/>
             <output name="PROCESS_DEF_NAME"/>
             <output name="SUBTASK_NAME"/>
