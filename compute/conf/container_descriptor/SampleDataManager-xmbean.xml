@@ -57,7 +57,7 @@
     </operation>
 
     <operation>
-        <description>Compress all of the user's v3draw files to v3dpbd</description>
+        <description>Compress a user's samples</description>
         <name>runSampleDataCompression</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
@@ -65,18 +65,28 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Should this run as a test without making any real changes?</description>
-           <name>testRun</name>
-           <type>java.lang.Boolean</type>
+            <description>Data Set Name (e.g. "Cell Count" or leave empty to run all data sets for the user)</description>
+            <name>dataSetName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>The compression level (e.g. "Visually Lossless and PBD")</description>
+           <name>compressionType</name>
+           <type>java.lang.String</type>
         </parameter>
     </operation>
     
     <operation>
-        <description>Compress the given sample's' v3draw files to v3dpbd</description>
+        <description>Compress the given sample to a target compression level</description>
         <name>runSingleSampleDataCompression</name>
         <parameter>
            <description>Entity id of the Sample to run (e.g. "1679282451010027618")</description>
            <name>sampleId</name>
+           <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>The compression level (e.g. "Visually Lossless and PBD")</description>
+           <name>compressionType</name>
            <type>java.lang.String</type>
         </parameter>
     </operation>

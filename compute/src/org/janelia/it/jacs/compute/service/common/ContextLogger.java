@@ -35,7 +35,7 @@ public class ContextLogger {
             taskContext.append(task.getObjectId());
             final Long parentTaskId = task.getParentTaskId();
             if (parentTaskId != null) {
-                taskContext.append(" (child of task ");
+                taskContext.append(" (child of ");
                 taskContext.append(parentTaskId);
                 taskContext.append(")");
             }

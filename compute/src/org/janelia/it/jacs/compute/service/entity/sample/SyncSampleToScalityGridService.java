@@ -74,7 +74,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
         }
         
-        logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+        contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         String fileTypesStr = data.getRequiredItemAsString("FILE_TYPES");
         List<String> fileTypes = Task.listOfStringsFromCsvString(fileTypesStr);
@@ -82,7 +82,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         processSample(sampleEntity, fileTypes);
 
         if (entitiesToMove.isEmpty()) {
-            logger.info("No entities to process, aborting.");
+            contextLogger.info("No entities to process, aborting.");
             cancel();
         }
     }
@@ -101,8 +101,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
 
         if (types.remove("lsm")) {
-            logger.info("Searching for LSM files to move...");
-            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
+            contextLogger.info("Searching "+sample.getId()+" for LSM files to move...");
+            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                     .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
                     .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
                     .childrenOfType(EntityConstants.TYPE_LSM_STACK)
@@ -114,8 +114,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
         
         if (types.remove("pbd")) {
-            logger.info("Searching for PBD files to move...");
-            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
+            contextLogger.info("Searching "+sample.getId()+" for PBD files to move...");
+            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                     .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
                     .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
                     .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA)
@@ -131,7 +131,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                         return;
                     }
                     if (!filepath.startsWith(JACS_DATA_DIR) && !filepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
-                        logger.warn("Entity has path outside of filestore: "+entity.getId());
+                        contextLogger.warn("Entity has path outside of filestore: "+entity.getId());
                         return;
                     }
                     addToEntitiesToMove(entity);
@@ -149,17 +149,17 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         
         if (filepath==null) {
-            logger.warn("Entity should be moved to Scality but has no filepath: "+entity.getId());
+            contextLogger.warn("Entity should be moved to Scality but has no filepath: "+entity.getId());
             return;
         }
 
         File file = new File(filepath);
         if (!file.exists()) {
-            logger.warn("Entity has filepath which does not exist: "+entity.getId());
+            contextLogger.warn("Entity has filepath which does not exist: "+entity.getId());
             return;
         }
 
-        logger.info("Will synchronized file for entity: "+entity.getId());
+        contextLogger.info("Will synchronized file for entity: "+entity.getId());
         entitiesToMove.add(entity);
     }
     
@@ -219,7 +219,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
 	public void postProcess() throws MissingDataException {
 
-        logger.debug("Processing "+resultFileNode.getDirectoryPath());
+        contextLogger.debug("Processing "+resultFileNode.getDirectoryPath());
 
         File outputDir = new File(resultFileNode.getDirectoryPath(), "sge_output");
     	File[] outputFiles = FileUtil.getFilesWithPrefixes(outputDir, getGridServicePrefixName());
@@ -244,7 +244,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     				}
                     else if (line.startsWith("Result: failure")) {
                         hasError[index-1] = true;
-                        logger.error("Error uploading "+entitiesToMove.get(index).getId()+" to Scality. Details can be found at "+outputFile.getAbsolutePath());
+                        contextLogger.error("Error uploading "+entitiesToMove.get(index).getId()+" to Scality. Details can be found at "+outputFile.getAbsolutePath());
                     }
     				else if (line.startsWith(TIMING_PREFIX)) {
     					timingCsv = line.substring(TIMING_PREFIX.length());
@@ -268,7 +268,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         for (File errorFile : errorFiles) {
             int index = getIndexExtension(errorFile);
             if (errorFile.length() > 0) {
-                logger.warn("Not empty error file: " + errorFile.getAbsolutePath());
+                contextLogger.warn("Not empty error file: " + errorFile.getAbsolutePath());
                 hasError[index-1] = true;
             }
         }
@@ -287,13 +287,15 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             }
             i++;
         }
-        logger.info("Timings:"+sb);
+        contextLogger.info("Timings:"+sb);
         
     	i=0;
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
+                String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
+    		    contextLogger.info("Synchronized "+entity.getId()+" to "+scalityUrl);
+    		    
                 EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	        String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
                 try {
                     String bpid = ScalityDAO.getBPIDFromEntity(entity);
                     String scalityPath = EntityConstants.SCALITY_PATH_PREFIX+ScalityDAO.getBPIDFromEntity(entity);
@@ -301,28 +303,25 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
         			int numUpdated = 0;
         			if (deleteSourceFiles) {
-        			    entityBean.deleteEntityData(filepathEd);
-                        numUpdated = entityBean.bulkUpdateEntityDataValue(filepathEd.getValue(), scalityPath);
+        			    numUpdated = entityBean.bulkUpdateEntityDataValue(filepathEd.getValue(), scalityPath);
+        			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
         			}
         			
-        			StringBuilder sb2 = new StringBuilder();
-        			sb2.append("Successfully synchronized entity ").append(entity.getName()).append(" to ").append(scalityUrl);
                     if (deleteSourceFiles) {
-                        sb2.append(" and deleted ").append(filepathEd.getValue());
+                        contextLogger.info("Deleted "+filepathEd.getValue());
                     }
                     if (numUpdated>0) {
-                        sb2.append(" and updated ").append(numUpdated+" entity data values to use ").append(scalityPath);
+                        contextLogger.info("Updated "+numUpdated+" entity data values to "+scalityPath);
                     }
-                    
-                    logger.info(sb2.toString());
                 }
-                catch (ComputeException e) {
-                    logger.error("Error updating entity id="+entity.getId(),e);
+                catch (Exception e) {
+                    contextLogger.error("Error updating entity id="+entity.getId(),e);
+                    throw new MissingDataException("Could not update entities, database may be in an inconsistent state!");
                 }
     			
     		}	
     		else {
-    			logger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
+    			contextLogger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
     		}
     	}
 	}
