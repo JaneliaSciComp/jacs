@@ -53,6 +53,34 @@ public class ImageStack
     }
 
     /**
+     * @return the _padding_right
+     */
+    public int getPaddingRight() {
+        return _padding_right;
+    }
+
+    /**
+     * @param _padding_right the _padding_right to set
+     */
+    public void setPaddingRight(int _padding_right) {
+        this._padding_right = _padding_right;
+    }
+
+    /**
+     * @return the _padding_bottom
+     */
+    public int getPaddingBottom() {
+        return _padding_bottom;
+    }
+
+    /**
+     * @param _padding_bottom the _padding_bottom to set
+     */
+    public void setPaddingBottom(int _padding_bottom) {
+        this._padding_bottom = _padding_bottom;
+    }
+
+    /**
      * The number of frames in the stack
      *
      * @return the number of individual frames
@@ -174,9 +202,13 @@ public class ImageStack
 
     private int _height;
     private int _width;
+    
+    private int _padding_right;
+    private int _padding_bottom;
 
     private int _bytes_per_pixel;
 
     private ArrayList<Frame> _image = new ArrayList<Frame>();
+
 }
 

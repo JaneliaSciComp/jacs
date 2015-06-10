@@ -47,6 +47,7 @@ class ReadInput extends Read_packet_Pointer_BytePointer_int {
 
 public class FFMpegLoader
 {
+//    private static final String REJECT_PAD_FORMAT = "File %s may not have proper padding attributes.  Width * Heigth=%d, and raw image byte count is %d.";
     static
     {
         // Register all formats and codecs
@@ -366,15 +367,28 @@ public class FFMpegLoader
     private void extractBytes(Frame frameOutput, BytePointer imageBytesInput) {
         int width = _video_codec.width();
         int height = _video_codec.height();
-        int mod8 = width % 8;
-        int padding = mod8 == 0 ? 0 : 8 - mod8;
-        // Handle older files.
-        if (imageBytesInput.capacity() == width * height) {
+        int padding = _image.getPaddingRight();
+        if (padding == -1) {
             padding = 0;
         }
+
         byte[] outputBytes = frameOutput.imageBytes.get(0);
-        byte[] inputBytes = new byte[(width + padding) * height * 3];
+        byte[] inputBytes = new byte[width * height * 3];
         imageBytesInput.get(inputBytes);
+
+//        // First frame may be completely empty.
+//        final int rawImageByteSize = imageBytesInput.capacity();
+//        if (rawImageByteSize == 0) {
+//            return;
+//        }
+//        
+//        // Reject inconsistent files.
+//        if (rawImageByteSize > width * height   &&   padding == 0) {
+//            throw new IllegalArgumentException(
+//                    String.format(REJECT_PAD_FORMAT, _filename, width * height, rawImageByteSize)
+//            );
+//        }
+
         int inputOffset = 0;
         int outputOffset = 0;
         for (int rows = 0; rows < height; rows++) {
@@ -386,7 +400,7 @@ public class FFMpegLoader
             inputOffset += padding;
         }
     }
-
+    
     private void processImage(Frame frame) throws Exception
     {
         // Deinterlace Picture
