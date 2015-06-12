@@ -109,6 +109,11 @@ public class BlastTeraGridSubmitJobService extends SubmitTeraGridJobService impl
     }
 
     @Override
+    public void cleanup() {
+
+    }
+    
+    @Override
     public void postProcess() throws MissingDataException {
 
     }

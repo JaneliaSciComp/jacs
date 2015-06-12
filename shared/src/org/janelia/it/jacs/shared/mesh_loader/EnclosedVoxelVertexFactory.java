@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.shared.mesh_loader;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,49 +13,10 @@ import java.util.HashMap;
  *
  * Created by fosterl on 4/2/14.
  */
-public class VertexFactory implements TriangleSource {
+public class EnclosedVoxelVertexFactory implements TriangleSource {
     private static final int X = 0;
     private static final int Y = 1;
     private static final int Z = 2;
-
-    /**
-     * This establishes the only possible normals that can be produced when envoloping a cubic voxel that is
-     * oriented with all its faces parallel to axes.
-     */
-    public static enum NormalDirection {
-        TOP_FACE_NORMAL, FRONT_FACE_NORMAL, BOTTOM_FACE_NORMAL, LEFT_FACE_NORMAL, RIGHT_FACE_NORMAL, BACK_FACE_NORMAL;
-        public float[] getNumericElements() {
-            float[] rtnVal = null;
-            switch ( this ) {
-                case TOP_FACE_NORMAL:
-                    rtnVal = TOP_FACE_NORMAL_VECT;
-                    break;
-                case FRONT_FACE_NORMAL:
-                    rtnVal = FRONT_FACE_NORMAL_VECT;
-                    break;
-                case BOTTOM_FACE_NORMAL:
-                    rtnVal = BOTTOM_FACE_NORMAL_VECT;
-                    break;
-                case LEFT_FACE_NORMAL:
-                    rtnVal = LEFT_FACE_NORMAL_VECT;
-                    break;
-                case RIGHT_FACE_NORMAL:
-                    rtnVal = RIGHT_FACE_NORMAL_VECT;
-                    break;
-                case BACK_FACE_NORMAL:
-                    rtnVal = BACK_FACE_NORMAL_VECT;
-                    break;
-            }
-            return rtnVal;
-        }
-    }
-
-    private static final float[] TOP_FACE_NORMAL_VECT = new float[]{0, 1, 0};
-    private static final float[] BOTTOM_FACE_NORMAL_VECT = new float[]{0, -1, 0};
-    private static final float[] FRONT_FACE_NORMAL_VECT = new float[]{0, 0, 1};
-    private static final float[] RIGHT_FACE_NORMAL_VECT = new float[]{1, 0, 0};
-    private static final float[] LEFT_FACE_NORMAL_VECT = new float[]{-1, 0, 0};
-    private static final float[] BACK_FACE_NORMAL_VECT = new float[]{0, 0, -1};
 
     private Map<VertexInfoKey, VertexInfoBean> vertexMap = new HashMap<VertexInfoKey, VertexInfoBean>();
     private List<VertexInfoBean> vertices = new ArrayList<VertexInfoBean>();
@@ -86,7 +46,7 @@ public class VertexFactory implements TriangleSource {
         boolean[] exposedFaces = bean.getExposedFaces();
         for ( int i = 0; i < exposedFaces.length; i++ ) {
             if ( exposedFaces[ i ] ) {
-                NormalDirection normalVector = null;
+                AxialNormalDirection normalVector = null;
                 // Ensure vertices exist for each face; make two triangles each face.
                 VertexInfoBean[] vertices = new VertexInfoBean[ 4 ];
                 switch (i) {
@@ -95,42 +55,42 @@ public class VertexFactory implements TriangleSource {
                         vertices[ 1 ] = addVertex( topFrontRight( key ) );
                         vertices[ 2 ] = addVertex( topBackRight( key ) );
                         vertices[ 3 ] = addVertex( topBackLeft( key ) );
-                        normalVector = NormalDirection.TOP_FACE_NORMAL;
+                        normalVector = AxialNormalDirection.TOP_FACE_NORMAL;
                         break;
                     case VoxelInfoBean.FRONT_FACE :
                         vertices[ 0 ] = addVertex( topFrontRight( key ) );
                         vertices[ 1 ] = addVertex( topFrontLeft( key ) );
                         vertices[ 2 ] = addVertex( bottomFrontLeft( key ) );
                         vertices[ 3 ] = addVertex( bottomFrontRight( key ) );
-                        normalVector = NormalDirection.FRONT_FACE_NORMAL;
+                        normalVector = AxialNormalDirection.FRONT_FACE_NORMAL;
                         break;
                     case VoxelInfoBean.BOTTOM_FACE :
                         vertices[ 0 ] = addVertex( bottomFrontRight( key ) );
                         vertices[ 1 ] = addVertex( bottomFrontLeft(key) );
                         vertices[ 2 ] = addVertex( bottomBackLeft(key) );
                         vertices[ 3 ] = addVertex( bottomBackRight(key) );
-                        normalVector = NormalDirection.BOTTOM_FACE_NORMAL;
+                        normalVector = AxialNormalDirection.BOTTOM_FACE_NORMAL;
                         break;
                     case VoxelInfoBean.LEFT_FACE :
                         vertices[ 0 ] = addVertex( bottomFrontLeft( key ) );
                         vertices[ 1 ] = addVertex( topFrontLeft(key) );
                         vertices[ 2 ] = addVertex( topBackLeft(key) );
                         vertices[ 3 ] = addVertex( bottomBackLeft(key) );
-                        normalVector = NormalDirection.LEFT_FACE_NORMAL;
+                        normalVector = AxialNormalDirection.LEFT_FACE_NORMAL;
                         break;
                     case VoxelInfoBean.RIGHT_FACE :
                         vertices[ 0 ] = addVertex( bottomFrontRight( key ) );
                         vertices[ 1 ] = addVertex( bottomBackRight(key) );
                         vertices[ 2 ] = addVertex( topBackRight(key) );
                         vertices[ 3 ] = addVertex( topFrontRight(key) );
-                        normalVector = NormalDirection.RIGHT_FACE_NORMAL;
+                        normalVector = AxialNormalDirection.RIGHT_FACE_NORMAL;
                         break;
                     case VoxelInfoBean.BACK_FACE :
                         vertices[ 0 ] = addVertex( bottomBackRight( key ) );
                         vertices[ 1 ] = addVertex( bottomBackLeft(key) );
                         vertices[ 2 ] = addVertex( topBackLeft(key) );
                         vertices[ 3 ] = addVertex( topBackRight(key) );
-                        normalVector = NormalDirection.BACK_FACE_NORMAL;
+                        normalVector = AxialNormalDirection.BACK_FACE_NORMAL;
                         break;
                 }
 
@@ -139,18 +99,18 @@ public class VertexFactory implements TriangleSource {
                 t1.addVertex( vertices[ 1 ] );
                 t1.addVertex( vertices[ 2 ] );
                 t1.setNormalVector( normalVector );
-                vertices[ 0 ].setIncludingTriangle(t1);
-                vertices[ 1 ].setIncludingTriangle(t1);
-                vertices[ 2 ].setIncludingTriangle( t1 );
+                vertices[ 0 ].addIncludingTriangle(t1);
+                vertices[ 1 ].addIncludingTriangle(t1);
+                vertices[ 2 ].addIncludingTriangle( t1 );
 
                 Triangle t2 = new Triangle();
                 t2.addVertex( vertices[ 2 ] );
                 t2.addVertex( vertices[ 3 ] );
                 t2.addVertex( vertices[ 0 ] );
                 t2.setNormalVector( normalVector );
-                vertices[ 2 ].setIncludingTriangle(t2);
-                vertices[ 3 ].setIncludingTriangle(t2);
-                vertices[ 0 ].setIncludingTriangle(t2);
+                vertices[ 2 ].addIncludingTriangle(t2);
+                vertices[ 3 ].addIncludingTriangle(t2);
+                vertices[ 0 ].addIncludingTriangle(t2);
 
                 triangleList.add( t1 );
                 triangleList.add( t2 );

@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.common;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -24,14 +25,18 @@ import org.janelia.it.jacs.model.user_data.Node;
  *   PARAMETER_{X}_VALUE - value of the same task parameter 
  *   WAIT_FOR_COMPLETION - if true then execute synchronously (wait until the subtask completes). Default to false.
  *   
+ * Alternatively, the parameter keys and values can be specified with TASK_PARAMETER_MAP
+ * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SubTaskExecutionService implements IService {
 	
+    private Logger logger;
+    
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	
-        	Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+        	this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             Task task = ProcessDataHelper.getTask(processData);
             ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
 
@@ -58,28 +63,17 @@ public class SubTaskExecutionService implements IService {
         		String key = processData.getString("PARAMETER_"+num+"_KEY");	
         		if (key == null || num>100) break;
         		Object value = processData.getItem("PARAMETER_"+num+"_VALUE");
-        		
-        		if (value!=null) {
-	        		String strValue = null;
-	        		if (value instanceof List) {
-	        		    strValue = Task.csvStringFromCollection((List)value);
-	        		}
-	        		else {
-	        		    strValue = value.toString();    
-	        		}
-	
-	                String printValue = strValue.toString();
-	                if (printValue.length()>1000) {
-	                    printValue = printValue.substring(0, 1000)+"...";
-	                }
-	                
-	                logger.info("Setting subtask parameter "+key+" = '"+printValue+"'");
-	        		subtask.setParameter(key, strValue);
-        		}
-        		
+        		processParameter(key, value, subtask);
                 num++;
         	}
-        	
+
+            Map<String,String> processVarMap = (Map)processData.getItem("TASK_PARAMETER_MAP");
+            if (processVarMap!=null) {
+                for(Map.Entry<String, String> entry : processVarMap.entrySet()) {
+                    processParameter(entry.getKey(), entry.getValue(), subtask);
+                }
+            }
+            
             subtask.setParentTaskId(task.getObjectId());
             computeBean.saveOrUpdateTask(subtask);
             
@@ -103,5 +97,27 @@ public class SubTaskExecutionService implements IService {
         catch (Exception e) {
             throw new ServiceException(e);
         }
+    }
+    
+    private void processParameter(String key, Object value, GenericTask subtask) {
+
+        if (value!=null) {
+            String strValue = null;
+            if (value instanceof List) {
+                strValue = Task.csvStringFromCollection((List)value);
+            }
+            else {
+                strValue = value.toString();    
+            }
+
+            String printValue = strValue.toString();
+            if (printValue.length()>1000) {
+                printValue = printValue.substring(0, 1000)+"...";
+            }
+            
+            logger.info("Setting subtask parameter "+key+" = '"+printValue+"'");
+            subtask.setParameter(key, strValue);
+        }
+        
     }
 }

@@ -115,12 +115,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runSampleDataCompression(String user, Boolean testRun) {
+    public void runSampleDataCompression(String user, String dataSetName, String compressionType) {
         try {
-            String processName = "PostPipeline_SampleCompression";
+            String processName = "SampleCompression";
             String displayName = "Sample Data Compression";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter(SampleDataCompressionService.PARAM_testRun, Boolean.toString(testRun), null)); 
+            taskParameters.add(new TaskParameter("data set name", dataSetName, null));
+            taskParameters.add(new TaskParameter("compression type", compressionType, null));
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
@@ -128,14 +129,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSingleSampleDataCompression(String sampleId) {
+    public void runSingleSampleDataCompression(String sampleId, String compressionType) {
         try {
             String processName = "PostPipeline_SampleCompression";
             String displayName = "Single Sample Data Compression";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("root entity id", sampleId, null)); 
+            taskParameters.add(new TaskParameter("root entity id", sampleId, null));
+            taskParameters.add(new TaskParameter("compression type", compressionType, null));
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 

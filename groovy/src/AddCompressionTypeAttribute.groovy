@@ -80,11 +80,11 @@ class AddCompressionTypeAttributeScript {
         
         if (raw>0) {
             println sample.name+" - some raw"+s
-            ct = "Uncompressed"
+//            ct = "Uncompressed"
         }
         else if (ll>0) {
             println sample.name+" - some lossless"+s
-            ct = "Lossless"
+//            ct = "Lossless"
         } 
         else if (llandh5j>0) {
             println sample.name+" - some lossless with h5j"+s
@@ -96,7 +96,7 @@ class AddCompressionTypeAttributeScript {
         }
         else {
             println sample.name+" - no files"+s
-            ct = "Lossless"
+//            ct = "Lossless"
         }
         
         if (!DEBUG && ct!=null) {

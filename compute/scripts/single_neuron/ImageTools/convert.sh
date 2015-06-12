@@ -52,10 +52,18 @@ if [[ "$INPUT_FILE_EXT" = "$OUTPUT_FILE_EXT" && -z $SAVE_TO_8BIT ]]; then
     echo "~ Copying $INPUT_FILE to $OUTPUT_FILE"
     cp "$INPUT_FILE" "$OUTPUT_FILE"
 else
-    # Get rid of gzip or bz2 extension
+    # Decompress input file
     ensureUncompressedFile "$WORKING_DIR" "$INPUT_FILE" INPUT_FILE
     echo "Uncompressed input file: $INPUT_FILE"
     INPUT_FILE_EXT=${INPUT_FILE##*.}
+
+    # Check if we need to compress output file
+    bz2Output=false
+    if [[ "$OUTPUT_FILE_EXT" = "bz2" ]]; then
+        bz2Output=true
+        OUTPUT_FILE=${OUTPUT_FILE%.*}
+        OUTPUT_FILE_EXT=${OUTPUT_FILE##*.}
+    fi
 
     if [[ "$INPUT_FILE_EXT" = "$OUTPUT_FILE_EXT" && -z $SAVE_TO_8BIT ]]; then
         # The file is in the format we're looking for (for example, lsm)
@@ -65,6 +73,11 @@ else
         # Must convert using Vaa3d
         echo "~ Converting $INPUT_FILE to $OUTPUT_FILE"
         $Vaa3D -cmd image-loader -convert$SAVE_TO_8BIT "$INPUT_FILE" "$OUTPUT_FILE"
+    fi
+
+    if [ "$bz2Output" = true ]; then
+        echo "~ Compressing output file with bzip2"
+        bzip2 $OUTPUT_FILE
     fi
 fi
 
