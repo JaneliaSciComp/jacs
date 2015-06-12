@@ -50,18 +50,22 @@
 			<output name="SAMPLE_ENTITY_ID"/>
 		</operation>
 		
-	    <!-- Process each Sample Entity -->
-        <sequence forEach="SAMPLE_ENTITY_ID">
+        <sequence if="PROCESS_DEF_NAME is not empty">
+                
+    	    <!-- Process each Sample Entity -->
+            <sequence forEach="SAMPLE_ENTITY_ID">
             
-			<!-- Spawn a new task to process the Sample	-->
-	        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-	            <input name="PROCESS_DEF_NAME"/>
-                <input name="DISPLAY_NAME" value="$V{SUBTASK_NAME}"/>
-                <input name="PARAMETER_1_KEY" value="sample entity id"/>
-                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
-	        </operation>
-	        
-	    </sequence>
+    			<!-- Spawn a new task to process the Sample	-->
+    	        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+    	            <input name="PROCESS_DEF_NAME"/>
+                    <input name="DISPLAY_NAME" value="$V{SUBTASK_NAME}"/>
+                    <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                    <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+    	        </operation>
+    	        
+    	    </sequence>
+    	    
+        </sequence>
 	    
     </sequence>
 </process>

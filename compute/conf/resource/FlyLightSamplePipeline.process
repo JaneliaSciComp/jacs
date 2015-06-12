@@ -141,7 +141,7 @@
                 
             </sequence>
             
-            <sequence if="RUN_PROCESSING=true">
+            <sequence if="RUN_PROCESSING=true" name="Sample processing" startEvent="running">
             
         	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
         	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateSampleResultFileNodeService">
@@ -215,8 +215,8 @@
                     <sequence forEach="MERGE_ALGORITHM">
                     
             		    <!-- Merge all the LSM pairs in parallel -->
-            	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
-            		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
+            	        <sequence name="Merge LSM Pairs" waitForAsync="true">
+            		        <operation name="Merge LSM Pairs" processor="queue/gridSubmitAndWait">
             		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
             		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
             					<input name="BULK_MERGE_PARAMETERS"/>
@@ -254,7 +254,7 @@
     		    </operation>
     		   
             	<!-- Run stitcher? -->
-            	<sequence if="RUN_STITCH=true">
+            	<sequence if="RUN_STITCH=true" name="Tile stitching">
         	
         		    <!-- Determine tile groupings and pick the largest group for processing -->
         	        <sequence name="Determine Stitch Grouping" waitForAsync="true">
@@ -365,7 +365,7 @@
                             </operation>
                             
                             <!-- Run neuron separation on prealigned data -->
-                            <include name="Neuron Separation" process="FlyLightSeparationPipeline">
+                            <include process="FlyLightSeparationPipeline" name="Unaligned neuron separation" startEvent="running">
                                 <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
                                 <input name="SAMPLE_ENTITY_ID"/>
                                 <input name="INPUT_FILENAME" value="$V{OUTPUT_FILENAME}"/>
@@ -407,7 +407,7 @@
                 <sequence>
             
                     <!-- Run brain alignment on prealigned data -->
-                    <include name="Brain Alignment" process="FlyLightAlignmentPipeline">
+                    <include name="Alignment" process="FlyLightAlignmentPipeline" startEvent="running">
                         <input name="PIPELINE_RUN_ENTITY_ID"/>
                         <input name="SAMPLE_ENTITY_ID"/>
                         <input name="SAMPLE_AREAS"/>
@@ -423,7 +423,7 @@
         </sequence>
         
 		<!-- Compress all v3draw files to v3dpbd, and generate accompanying h5j files -->
-        <include name="Compress v3draw files to v3dpbd" process="PostPipeline_SampleCompression">
+        <include name="Sample compression" process="PostPipeline_SampleCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
         </include>
         
