@@ -44,6 +44,7 @@ public interface SampleDataManagerMBean {
     public void runRepairSeparationResultsPipeline(String user);
 
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode);
+    public void visuallyLosslessCorrectionService(String filePath, String debug);
 
     // SAGE database
     public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab, String debug, String lock);
