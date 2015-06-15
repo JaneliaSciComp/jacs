@@ -296,6 +296,10 @@
               discriminator-value="bzipTestTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="vlCorrectionTask">
+    </subclass>
+
     <subclass name="org.janelia.it.jacs.model.tasks.utility.GenericTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="genericTask">
     </subclass>

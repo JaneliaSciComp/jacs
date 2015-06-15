@@ -1,17 +1,9 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
-import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -24,6 +16,11 @@ import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.rmi.RemoteException;
+import java.util.*;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -539,10 +536,72 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 EJBFactory.getLocalComputeBean().submitJob("BzipTestService", bzipTask.getObjectId());
             }
         }
-        catch (DaoException e) {
+        catch (DaoException | RemoteException e) {
             e.printStackTrace();
         }
-        catch (RemoteException e) {
+    }
+
+    @Override
+    public void visuallyLosslessCorrectionService(String filePath, String debug) {
+        try {
+            Scanner scanner = new Scanner(new File(filePath));
+            HashSet<String> userList = new HashSet<>();
+            while (scanner.hasNextLine()) {
+                String tmpLine = scanner.nextLine().trim();
+                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
+                File tmpOriginalPBD = new File(originalPDB);
+                File tmpOriginalVL = new File(tmpLine);
+                if (!tmpOriginalVL.exists()) {
+                    log.debug("Can't find the original VL file: "+tmpLine);
+                }
+                if (!tmpOriginalPBD.exists()) {
+                    log.debug("Can't find the original PBD file: "+originalPDB);
+                }
+
+                tmpLine = tmpLine.substring(tmpLine.indexOf("filestore/")+10);
+                String tmpUser = tmpLine.substring(0,tmpLine.indexOf("/"));
+                if (!userList.contains(tmpUser)) {
+                    userList.add(tmpUser);
+                    log.debug("Adding user "+tmpUser);
+                }
+            }
+
+//            for (String targetOwner : userList) {
+//                VLCorrectionTask vlcorrectionTask = new VLCorrectionTask("system", new ArrayList<Event>(), filePath, targetOwner, Boolean.valueOf(debug));
+//                vlcorrectionTask = (VLCorrectionTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(vlcorrectionTask);
+//                EJBFactory.getLocalComputeBean().submitJob("VLCorrectionService", vlcorrectionTask.getObjectId());
+//            }
+        }
+        catch (/**DaoException | RemoteException |**/ FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/VLInputPaths.txt"));
+            HashSet<String> userList = new HashSet<>();
+            while (scanner.hasNextLine()) {
+                String tmpLine = scanner.nextLine().trim();
+                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
+                File tmpOriginalPBD = new File(originalPDB);
+                File tmpOriginalVL = new File(tmpLine);
+                if (!tmpOriginalVL.exists()) {
+                    System.out.println("Can't find the original VL file: "+tmpLine);
+                }
+                if (!tmpOriginalPBD.exists()) {
+                    System.out.println("Can't find the original PBD file: "+originalPDB);
+                }
+
+                tmpLine = tmpLine.substring(tmpLine.indexOf("filestore/")+10);
+                String tmpUser = tmpLine.substring(0,tmpLine.indexOf("/"));
+                if (!userList.contains(tmpUser)) {
+                    userList.add(tmpUser);
+                    System.out.println("Adding user "+tmpUser);
+                }
+            }
+        }
+        catch (/**DaoException | RemoteException |**/ FileNotFoundException e) {
             e.printStackTrace();
         }
     }
