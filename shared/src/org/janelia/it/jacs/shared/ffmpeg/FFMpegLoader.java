@@ -366,15 +366,15 @@ public class FFMpegLoader
     private void extractBytes(Frame frameOutput, BytePointer imageBytesInput) {
         int width = _video_codec.width();
         int height = _video_codec.height();
-        int mod8 = width % 8;
-        int padding = mod8 == 0 ? 0 : 8 - mod8;
-        // Handle older files.
-        if (imageBytesInput.capacity() == width * height) {
+        int padding = _image.getPaddingRight();
+        if (padding == -1) {
             padding = 0;
         }
+
         byte[] outputBytes = frameOutput.imageBytes.get(0);
-        byte[] inputBytes = new byte[(width + padding) * height * 3];
+        byte[] inputBytes = new byte[width * height * 3];
         imageBytesInput.get(inputBytes);
+
         int inputOffset = 0;
         int outputOffset = 0;
         for (int rows = 0; rows < height; rows++) {
@@ -386,7 +386,7 @@ public class FFMpegLoader
             inputOffset += padding;
         }
     }
-
+    
     private void processImage(Frame frame) throws Exception
     {
         // Deinterlace Picture

@@ -18,16 +18,13 @@
             <input name="REUSE_PROCESSING"/>
             <input name="REUSE_ALIGNMENT"/>
             <input name="RUN_OBJECTIVES"/>
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PIPELINE_RUNS"/>
-            <input name="TASK_PARAMETER_3" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_3" value="REUSE_PROCESSING"/>
-            <input name="TASK_PARAMETER_4" value="reuse alignment"/>
-            <input name="PROCESS_VARIABLE_4" value="REUSE_ALIGNMENT"/>
-            <input name="TASK_PARAMETER_5" value="run objectives"/>
-            <input name="PROCESS_VARIABLE_5" value="RUN_OBJECTIVES"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="reuse pipeline runs" value="REUSE_PIPELINE_RUNS"/>
+                <entry key="reuse processing" value="REUSE_PROCESSING"/>
+                <entry key="reuse alignment" value="REUSE_ALIGNMENT"/>
+                <entry key="run objectives" value="RUN_OBJECTIVES"/>
+            </input>
             <output name="SAMPLE_ENTITY_ID"/>
             <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_PROCESSING"/>
@@ -41,12 +38,11 @@
             <input name="REUSE_PIPELINE_RUNS"/>
             <input name="REUSE_PROCESSING"/>
             <input name="REUSE_ALIGNMENT"/>
-            <input name="PROCESS_VARIABLE_1" value="REUSE_PIPELINE_RUNS"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
-            <input name="PROCESS_VARIABLE_VALUE_2" value="true"/>
-            <input name="PROCESS_VARIABLE_3" value="REUSE_ALIGNMENT"/>
-            <input name="PROCESS_VARIABLE_VALUE_3" value="true"/>
+            <input name="PROCESS_VARIABLE_MAP">
+                <entry key="REUSE_PIPELINE_RUNS" value="true"/>
+                <entry key="REUSE_PROCESSING" value="true"/>
+                <entry key="REUSE_ALIGNMENT" value="true"/>
+            </input>
             <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>

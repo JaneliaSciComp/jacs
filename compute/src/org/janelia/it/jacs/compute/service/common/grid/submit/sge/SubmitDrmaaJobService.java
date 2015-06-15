@@ -26,6 +26,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import com.google.common.base.Strings;
 
@@ -46,6 +47,7 @@ import java.util.regex.Pattern;
  * @author Sean Murphy
  * @author Todd Safford
  * @author Tareq Nabeel
+ * @author Konrad Rokicki
  */
 public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
@@ -76,12 +78,13 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         try {
             init(processData);
             if (cancelled) {
-                logger.info("Grid job cancelled by init");
+                // Nothing to do.
             }
             else {
                 submitJob();
-                postProcess();
                 handleErrors();
+                cleanup();
+                postProcess();
             }
         }
         catch (Exception e) {
@@ -89,6 +92,17 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
     }
     
+    public void cleanup() {
+        SystemCall system = new SystemCall(logger);
+        try {
+            String resultDirectory = resultFileNode.getDirectoryPath();
+            system.emulateCommandLine("rm -f " + resultDirectory + "/DrmaaTemplate*.oos", true);
+        }
+        catch (Exception e) {
+            logger.error("Error cleaning up after DRMAA job",e);
+        }
+    }
+
     /**
      * Can be called during initialization to cause the job to be skipped. 
      */
@@ -107,7 +121,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         try {
             init(processData);
             if (cancelled) {
-                logger.info("Grid job cancelled by init");
                 return null;
             }
             if (logger.isInfoEnabled()) {
