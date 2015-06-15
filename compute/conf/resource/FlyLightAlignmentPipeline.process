@@ -151,7 +151,7 @@
     	    			<sequence if="SIGNAL_CHANNELS is not empty">
 	                        
 	                        <!-- Run neuron separation if there are signal channels to analyze -->
-	                        <include name="Neuron Separation" process="FlyLightSeparationPipeline">
+	                        <include process="FlyLightSeparationPipeline" name="Aligned neuron separation" startEvent="running">
 	                            <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
 	                            <input name="SAMPLE_ENTITY_ID"/>
 	                            <input name="INPUT_IMAGE_ID" value="$V{IMAGE_ID}"/>

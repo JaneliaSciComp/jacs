@@ -153,23 +153,24 @@ public class SampleTraversalService extends AbstractEntityService {
 
         // Ignore blocked samples
         if (isBlocked(status)) {
-            logger.info("Excluded "+sample+" (blocked)");
+            logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - blocked");
             return included;
         }
-        
+
         populateChildren(sample);
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
-        
+
         if (childSamples.isEmpty()) {
             // Childless samples are always included
             if (includeSample(sample)) {
                 included.add(sample);
-                logger.info("Included "+sample+" (childless sample)");
+                logger.info("Included " + sample + " (id=" + sample.getId() + ") - childless sample");
             }
             else {
-                logger.info("Excluded "+sample+" (childless sample)");
+                boolean desync = isDesync(status);
+                logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - childless sample " + (desync ? "is desynced" : ""));
             }
-        }
+        } 
         else {
             // This is a parent sample because it has child samples. Check if any of the children are to be included.
             Set<Entity> childrenIncluded = new HashSet<Entity>();
@@ -183,75 +184,75 @@ public class SampleTraversalService extends AbstractEntityService {
                     childrenExcluded.add(childSample);
                 }
             }
-            
+
             if (includeParentSamples && (!childrenIncluded.isEmpty() || isMarked(status))) {
                 // The parent sample should be included if any of the children samples are included, or if it's marked
                 included.add(sample);
-                logger.info("Included "+sample+" (parent sample)");
-            }
+                logger.info("Included " + sample + " (id=" + sample.getId() + ") - parent sample");
+            } 
             else {
-                logger.info("Excluded "+sample+" (parent sample)");
+                logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - parent sample");
             }
-            
+
             for(Entity childSample : childrenIncluded) {
                 if (includeChildSamples) {
-                    logger.info("  Included "+childSample+" (child sample)");
+                    logger.info("  Included " + childSample + " (id=" + childSample.getId() + ") - because it is a child sample");
                     included.add(childSample);
-                }
+                } 
                 else {
-                    logger.info("  Excluded "+childSample+" (child sample) because child samples are not wanted");    
+                    logger.info("  Excluded " + childSample + " (id=" + childSample.getId() + ") - because it is a child sample");
                 }
             }
 
             for(Entity childSample : childrenExcluded) {
-                logger.info("  Excluded "+childSample+" (child sample) because it does not fit the run mode");
+                logger.info("  Excluded " + childSample + " (id=" + childSample.getId() + ") - child sample");
             }
         }
-        
+
         return included;
     }
-    
+
     private boolean includeSample(Entity sample) throws Exception {
 
         String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
-        
+
         if (isBlocked(status) || isDesync(status)) {
             return false;
         }
-        
+
         if (includeMarkedSamples && isMarked(status)) {
             return true;
         }
-        
+
         if (includeAllSamples) {
             return true;
         }
-        
+
         if (includeNewSamples) {
             Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
             if (pipelineRun==null) {
                 return true;
             }
         }
-        
+
         if (includeErrorSamples) {
             Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
             if (pipelineRun!=null) {
-	            populateChildren(pipelineRun);
-	            Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
-	            if (error!=null) {
-	                return true;
-	            }
+                populateChildren(pipelineRun);
+                Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
+                if (error!=null) {
+                    return true;
+                }
             }
         }
-        
+
         return false;
     }
-    
+
     private boolean isMarked(String status) {
         return (status != null && EntityConstants.VALUE_MARKED.equals(status));
     }
-    
+
     private boolean isBlocked(String status) {
         return (status != null && EntityConstants.VALUE_BLOCKED.equals(status));
     }

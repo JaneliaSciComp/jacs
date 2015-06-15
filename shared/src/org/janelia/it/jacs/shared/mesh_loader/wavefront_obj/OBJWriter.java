@@ -31,7 +31,7 @@ public class OBJWriter {
      * @param outputLocation directory for file.
      * @param filenamePrefix first part of file name.
      * @param fileSuffix last part of file name.
-     * @param key distinguising part of file name.
+     * @param key distinguishing part of file name.
      * @return file file path.
      */
     public File getVertexFile( File outputLocation, String filenamePrefix, String fileSuffix, Long key ) {
@@ -46,8 +46,8 @@ public class OBJWriter {
      * @param outputLocation directory for file.
      * @param filenamePrefix first part of file name.
      * @param fileSuffix last part of file name.
-     * @param key distinguising part of file name.  Must be relevant to the triangle source.
-     * @param factory
+     * @param key distinguishing part of file name.  Must be relevant to the triangle source.
+     * @param triangleSource has all triangles to save
      * @throws IOException thrown by failed io opertions.
      */
     public void writeVertices(File outputLocation, String filenamePrefix, String fileSuffix, Long key, TriangleSource triangleSource) throws IOException {
@@ -57,10 +57,8 @@ public class OBJWriter {
     /**
      * Get the relevant data from the factory to write a file, with a standardized name.
      *
-     * @param outputLocation directory for file.
-     * @param filenamePrefix first part of file name.
-     * @param fileSuffix last part of file name.
-     * @param factory
+     * @param outputLocationFile full location for file.
+     * @param triangleSource has all triangles to be saved.
      * @throws IOException thrown by failed io opertions.
      */
     public void writeVertices(File outputLocationFile, TriangleSource triangleSource) throws IOException {
@@ -70,10 +68,21 @@ public class OBJWriter {
         List<VertexInfoBean> vertices = triangleSource.getVertices();
         for ( VertexInfoBean bean: vertices ) {
             double[] coords = bean.getKey().getPosition();
+            // NOTE: OBJ handles only 3 coords, and ignores any fourth.
+            // Therefore, omitting the 'w' coord, and keeping x,y,z.
             objWriter.print("v");
-            for ( double coord: coords ) {
+            for (int i = 0; i < 3; i++) {
                 objWriter.print(" ");
-                objWriter.print(coord);
+                objWriter.print(coords[i]);
+            }
+            // If color values are provided, dump them out on the line after vertices.
+            // Colors are displayed by some applications.
+            float[] colors = bean.getAttribute( VertexInfoBean.KnownAttributes.b_color.name() );
+            if (colors != null) {
+                for ( float color: colors ) {
+                    objWriter.print(" ");
+                    objWriter.print(color);
+                }
             }
             objWriter.println();
         }
