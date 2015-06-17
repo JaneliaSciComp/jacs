@@ -12,12 +12,13 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 class CleanDesyncSamplesScript {
 	
 	private static final boolean DEBUG = true;
-    private String ownerKey = null;
+    private String ownerKey = "user:nerna";
     private final JacsUtils f;
 	private String context;
     private int numOriginalBlocked = 0
     private int numProblems = 0
     private int numNonIssues = 0
+    private int numExtraSubSampleProblem = 0
     private int numFixed = 0
     
 	public CleanDesyncSamplesScript() {
@@ -49,16 +50,19 @@ class CleanDesyncSamplesScript {
         
         println "Processing samples for "+ownerKey
         
-        Collection<Entity> desync = f.e.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_DESYNC)
-        println ownerKey+" had "+desync.size()+" desynced samples"
+        Collection<Entity> samples = f.e.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, "nerna_polarity_case_3")
+        println ownerKey+" had "+samples.size()+" samples"
         
         Set<String> names = new HashSet<>()
-        for(Entity sample : desync) {
+        for(Entity sample : samples) {
+            if (sample.name.endsWith("-Retired")) continue
             names.add(sample.name)
         }
         
         for(String name : names) {
             Collection<Entity> dups = f.e.getEntitiesByName(ownerKey, name)
+            Collection<Entity> dups2 = f.e.getEntitiesByName(ownerKey, name+"-Retired")
+            dups.addAll(dups2)
             if (dups.size()>1) {
                 processProblem(name, dups)
 //                if (numFixed>0) break
@@ -67,18 +71,30 @@ class CleanDesyncSamplesScript {
         
         println ownerKey+" had "+numOriginalBlocked+" blocked samples that were unblocked by desyncing"
         println ownerKey+" had "+numProblems+" problem samples and "+numFixed+" were fixed"
-        println ownerKey+" had "+numNonIssues+" non-issues that will work themselves out with retirement"
+        println ownerKey+" had "+numNonIssues+" non-issues that were marked for simple reprocessing"
+        println ownerKey+" had "+numExtraSubSampleProblem+" samples with extra subsamples"
+        
     }
     
     private void processProblem(String name, Collection<Entity> samples) {
         
         List<Entity> ordered = new ArrayList<Entity>()
         
+        Entity activeSample = null;
         for(Entity sample : samples) {
             if (sample.entityTypeName.equals(EntityConstants.TYPE_SAMPLE)) {
                 ordered.add(sample)
+                String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS)
+                if (!status.equals(EntityConstants.VALUE_BLOCKED) && !status.equals(EntityConstants.VALUE_DESYNC) && !status.equals(EntityConstants.VALUE_RETIRED) && !sample.name.endsWith("-Retired")) {
+                    if (activeSample!=null) {
+                        throw new IllegalStateException("More than one active sample for "+name)
+                    }
+                    activeSample = sample
+                }
             }
         }
+        
+        if (ordered.isEmpty()) return
         
         Collections.sort(ordered, new Comparator<Entity>() {
             @Override
@@ -93,10 +109,10 @@ class CleanDesyncSamplesScript {
         String originalStatus = original.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS)
         String newestStatus = newest.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS)
         
-        if (EntityConstants.VALUE_DESYNC.equals(newestStatus)) {
-            println name+" was already fixed in a previous run (in theory)"
-            return
-        }
+//        if (EntityConstants.VALUE_DESYNC.equals(newestStatus)) {
+//            println name+" was already fixed in a previous run (in theory)"
+//            return
+//        }
         
         StringBuilder sb = new StringBuilder()
         int numTotalAnnots = 0
@@ -106,11 +122,12 @@ class CleanDesyncSamplesScript {
             numTotalAnnots += annots
             sb.append("    "+sample.id+" "+annots+" ("+status+")\n")
         }
-
+        
+        println name
+        print sb.toString()
+        
         if (numTotalAnnots>0) {
-            println name
-            print sb.toString()
-            fixProblem(name, ordered)
+            //fixProblem(name, ordered)
             numProblems++
         }
         else {
@@ -120,7 +137,33 @@ class CleanDesyncSamplesScript {
                 numOriginalBlocked++;
             }
             else {
-                numNonIssues++
+                if (activeSample!=null) {
+                    f.loadChildren(activeSample)
+                    boolean rerun = false;
+                    List<Entity> subSamples = EntityUtils.getChildrenOfType(activeSample, "Sample")
+                    if (subSamples.isEmpty()) {
+                        List<Entity> activeRuns = EntityUtils.getChildrenOfType(activeSample, "Pipeline Run")
+                        if (!activeRuns.isEmpty()) {
+                            rerun = true;
+                        }
+                    }
+                    else {
+                        for(Entity subSample : subSamples) {
+                            List<Entity> activeRuns = EntityUtils.getChildrenOfType(subSample, "Pipeline Run")
+                            if (!activeRuns.isEmpty()) {
+                                rerun = true;
+                            }
+                        }
+                    }
+                    
+                    if (rerun) {
+                        println "  Marking active sample for reprocessing: "+activeSample.id
+                        if (!DEBUG) {
+                            f.e.setOrUpdateValue(ownerKey, activeSample.id, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
+                        }
+                        numNonIssues++
+                    }
+                }
             }
         }
     }
@@ -133,7 +176,7 @@ class CleanDesyncSamplesScript {
         f.loadChildren(original)
         f.loadChildren(newest)
         
-        Entity sf = EntityUtils.getSupportingData(newest)
+        Entity sf = EntityUtils.getSupportingData(original)
         f.loadChildren(sf)
         
         boolean aaProblem = false
@@ -175,6 +218,7 @@ class CleanDesyncSamplesScript {
                         if (!DEBUG) {
                             f.e.deleteEntityTreeById(ownerKey, child.id, true)
                         }
+                        numExtraSubSampleProblem++
                     }
                     else {
                         if (child.name.endsWith("20x")) {
