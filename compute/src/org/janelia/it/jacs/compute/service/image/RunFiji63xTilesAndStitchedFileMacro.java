@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
@@ -56,9 +55,9 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private Entity stitchedFile;
     private String effector;
 
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-
+    @Override
+    protected void init() throws Exception {
+    	
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
 

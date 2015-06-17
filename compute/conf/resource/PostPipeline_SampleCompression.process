@@ -1,0 +1,130 @@
+<!-- 
+	Complete pipeline for compressing one or more samples.
+-->
+<process name="Sample Compression Post Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    
+        <input name="ROOT_ENTITY_ID"/>
+        <input name="COMPRESSION_TYPE"/>
+        
+	    <!-- Import variables from the task -->
+	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="ROOT_ENTITY_ID"/>
+            <input name="COMPRESSION_TYPE"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="root entity id" value="ROOT_ENTITY_ID"/>
+                <entry key="compression type" value="COMPRESSION_TYPE"/>
+            </input>
+	        <output name="ROOT_ENTITY_ID"/>
+            <output name="COMPRESSION_TYPE"/>
+	    </operation>
+	    
+        <!-- Get the parent sample if this is a child sample -->
+        <operation name="Get Root Sample" processor="org.janelia.it.jacs.compute.service.entity.FindAncestorService">
+            <input name="ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
+            <input name="ANCESTOR_TYPE" value="Sample"/>
+            <input name="USE_SELF" value="true"/>
+            <output name="ANCESTOR_ID"/>
+        </operation>
+        
+        <sequence if="ANCESTOR_ID is not empty">
+            
+            <!-- Import variables from the entity -->
+            <operation name="Get Compression Type" processor="org.janelia.it.jacs.compute.service.entity.InitVariablesFromEntityService">
+                <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
+                <input name="OVERRIDE" value="false"/>
+                <input name="COMPRESSION_TYPE"/>
+                <input name="ENTITY_ATTRIBUTE_1" value="Compression Type"/>
+                <input name="PROCESS_VARIABLE_1" value="COMPRESSION_TYPE"/>
+                <output name="COMPRESSION_TYPE"/>
+            </operation>
+            
+        </sequence>
+        
+        <!-- Init variables with default values if they have not yet been initialized -->
+        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="SEPARATION_EXCLUDE"/>
+            <input name="COMPRESSION_TYPE"/>
+            <input name="PROCESS_VARIABLE_MAP">
+                <entry key="SEPARATION_EXCLUDE" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
+                <entry key="COMPRESSION_TYPE" value="Lossless and H5J"/>
+            </input>
+            <output name="SEPARATION_EXCLUDE"/>
+            <output name="COMPRESSION_TYPE"/>
+        </operation>
+        
+        <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
+        <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+            <input name="ROOT_ENTITY_ID"/>
+            <input name="INPUT_TYPE" value="v3draw"/>
+            <input name="OUTPUT_TYPE" value="v3dpbd"/>
+            <input name="DELETE_INPUTS" value="true"/>
+            <input name="RECORD_MODE" value="UPDATE"/>
+        </include>
+        
+        <sequence if="COMPRESSION_TYPE=Lossless and H5J">
+        
+            <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
+            <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3dpbd"/>
+                <input name="OUTPUT_TYPE" value="h5j"/>
+                <input name="DELETE_INPUTS" value="false"/>
+                <input name="RECORD_MODE" value="ADD"/>
+                <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
+            </include>
+            
+        </sequence>
+                
+        <sequence if="COMPRESSION_TYPE=Visually Lossless and PBD">
+                    
+            <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
+            <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3dpbd"/>
+                <input name="OUTPUT_TYPE" value="h5j"/>
+                <input name="DELETE_INPUTS" value="false"/>
+                <input name="RECORD_MODE" value="ADD"/>
+                <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
+            </include>
+            
+            <!-- Move all PBD files to Scality -->
+            <include name="Move sample to archive" process="SyncSampleToScality">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="SAMPLE_ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
+                <input name="FILE_TYPES" value="pbd"/>
+                <input name="DELETE_SOURCE_FILES" value="true"/>
+            </include>
+        
+        </sequence>
+                
+        <sequence if="COMPRESSION_TYPE=Visually Lossless">
+                    
+            <!-- Create h5j files from v3dpbd files, replace the v3dpbd entities, and delete the v3dpbd files -->
+            <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3dpbd"/>
+                <input name="OUTPUT_TYPE" value="h5j"/>
+                <input name="DELETE_INPUTS" value="true"/>
+                <!-- TODO: fix this when we implement deletion from Scality so that PBDs can be purged -->
+                <input name="RECORD_MODE" value="NOT YET IMPLEMENTED"/>
+                <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
+            </include>
+            
+        </sequence>
+                
+        <sequence if="ANCESTOR_ID is not empty">
+            
+            <!-- Set the compression type on the sample in case it was passed in separately. If it wasn't passed in as a parameter, then this will set it to the current value, and have no effect. -->
+            <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.entity.SetEntityAttributeValueService">
+                <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
+                <input name="ATTRIBUTE_NAME" value="Compression Type"/>
+                <input name="ATTRIBUTE_VALUE" value="$V{COMPRESSION_TYPE}"/>
+            </operation>
+            
+        </sequence>
+        
+    </sequence>
+</process>

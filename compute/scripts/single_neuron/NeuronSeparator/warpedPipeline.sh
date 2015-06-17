@@ -35,6 +35,10 @@ REF_CHAN=$5
 PREVFILE=$6
 REF_CHAN_ONE_INDEXED=`expr $REF_CHAN + 1`
 
+export TMPDIR="$OUTDIR"
+WORKING_DIR=`mktemp -d`
+cd $WORKING_DIR
+
 echo "Neuron Separator Dir: $NSDIR"
 echo "Vaa3d Dir: $Vaa3D"
 echo "Run Dir: $DIR"
@@ -54,10 +58,6 @@ if [ ! -s "$CONSOLIDATED_LABEL" ]; then
     fi
 fi
 
-export TMPDIR="$OUTDIR"
-WORKING_DIR=`mktemp -d`
-cd $WORKING_DIR
-
 EXT=${INPUT_FILE#*.}
 if [ $EXT == "v3dpbd" ]; then
     PBD_INPUT_FILE=$INPUT_FILE
@@ -67,23 +67,48 @@ if [ $EXT == "v3dpbd" ]; then
     $Vaa3D -cmd image-loader -convert "$PBD_INPUT_FILE" "$INPUT_FILE"
 fi
 
-SEP_INPUT_FILE=$INPUT_FILE
-echo "Seperator input file: $SEP_INPUT_FILE"
+if [ -s $INPUT_FILE ]; then
 
-echo "~ Generating aligned consolidated signal"
-cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
+    echo "~ Generating full, aligned consolidated signal"
+    CONSIGNAL="ConSignal3.v3draw"
 
-echo "~ Generating aligned reference"
-cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
+    cat $INPUT_FILE | $NSDIR/v3draw_select_channels $SIGNAL_CHAN > $CONSIGNAL
 
-echo "~ Copying final output to: $OUTDIR"
-cp *.nsp $OUTDIR
-cp *.pbd $OUTDIR
-cp *.txt $OUTDIR
-cp ConsolidatedSignal.v3draw $OUTDIR
-cp Reference.v3draw $OUTDIR
+    if [ ${#SIGNAL_CHAN} -lt 5 ] ; then
+        # Less than 5 characters, which means less than 3 signal channels. 
+        MAPPED_INPUT=ConSignal3Mapped.v3draw
+        if [ ${#SIGNAL_CHAN} -lt 2 ] ; then
+            # Single channel
+            echo "Detected single channel image, duplicating channel 0 in channels 1 and 2"
+            echo "$Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT \"0,0,0,1,0,2\""
+            $Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT "0,0,0,1,0,2"
+        else
+            # Dual channel
+            echo "Detected two channel image, duplicating channel 1 in channel 2"
+            echo "$Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT \"0,0,1,1,1,2\""
+            $Vaa3D -cmd image-loader -mapchannels $CONSIGNAL $MAPPED_INPUT "0,0,1,1,1,2"
+        fi
+        CONSIGNAL=$MAPPED_INPUT
+    fi
+
+    echo "~ Generating 8-bit, y-flipped consolidated label"
+    cat $CONSIGNAL | $NSDIR/v3draw_flip_y | $NSDIR/v3draw_to_8bit > ConsolidatedSignal.v3draw
+
+    echo "~ Generating aligned reference"
+    cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
+
+    echo "~ Copying final output to: $OUTDIR"
+    mv *.nsp $OUTDIR
+    mv *.pbd $OUTDIR
+    mv *.txt $OUTDIR
+    mv $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3draw
+    mv ConsolidatedSignal.v3draw $OUTDIR
+    mv Reference.v3draw $OUTDIR
+
+fi
 
 if ls core* &> /dev/null; then
+    echo "~ Error: core dumped in warped pipeline"
     touch $OUTDIR/core
 fi
 
@@ -96,4 +121,7 @@ fi
 
 echo "~ Removing temp files"
 rm -rf $WORKING_DIR
+
+echo "~ Removing temp files: $OUTDIR/tmp*"
+rm -rf $OUTDIR/tmp*
 

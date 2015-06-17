@@ -474,7 +474,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         if (clonePermissions) {
             for(EntityActorPermission permission : getFullPermissions(sourceEntity)) {
             	if (permission.getSubjectKey().equals(targetSubjectKey)) continue; // Don't need to grant permissions to the new owner
-            	grantPermissions(clonedEntity, permission.getSubjectKey(), permission.getPermissions(), false);    
+            	grantPermissions(clonedEntity, permission.getSubjectKey(), permission.getPermissions(), false, false);    
             }
         }
         
@@ -2296,15 +2296,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         long start = System.currentTimeMillis();
-        EntityActorPermission perm = grantPermissions(entity, granteeKey, permissions, recursive);
+        EntityActorPermission perm = grantPermissions(entity, granteeKey, permissions, recursive, true);
         long stop = System.currentTimeMillis();
         log.info("grantPermissions took "+(stop-start)+" ms");
         
         return perm;
     }
     
-    public EntityActorPermission grantPermissions(final Entity rootEntity, final String granteeKey, 
-            final String permissions, boolean recursive) throws DaoException {
+    private EntityActorPermission grantPermissions(final Entity rootEntity, final String granteeKey, 
+            final String permissions, boolean recursive, boolean addToSharedDataIfNecessary) throws DaoException {
 
         if (log.isTraceEnabled()) {
             log.trace("grantPermissions(rootEntity="+rootEntity+", granteeKey="+granteeKey+", permissions="+permissions+", recursive="+recursive+")");    
@@ -2349,7 +2349,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 }
             });
             
-            if (!rootEntity.getEntityTypeName().equals(EntityConstants.TYPE_ANNOTATION)) {
+            if (addToSharedDataIfNecessary && !rootEntity.getEntityTypeName().equals(EntityConstants.TYPE_ANNOTATION)) {
                 // Check if the grantee already has a link to the entity
                 boolean granteeHasLink = !getCommonRootsWithAncestor(granteeKey, rootEntity.getId()).isEmpty();
                 
@@ -2398,11 +2398,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 log.warn("Entity "+parent.getId()+" has a null permission");
                 continue;
             }
-            grantPermissions(child, permission.getSubjectKey(), permission.getPermissions(), recursive);    
+            grantPermissions(child, permission.getSubjectKey(), permission.getPermissions(), recursive, false);    
         }
         
         if (grantOwnerPermissions) {
-            grantPermissions(child, parent.getOwnerKey(), "r", false);
+            grantPermissions(child, parent.getOwnerKey(), "r", false, false);
         }
     }
     
@@ -3511,8 +3511,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
             File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
             File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");
-            maskManager.loadMaskCompartmentList(nameIndexFile.toURI().toURL());
-            Object[] mapObjects=maskManager.loadMaskSummaryFile(summaryFile.toURI().toURL());
+            maskManager.loadMaskCompartmentList(nameIndexFile.toURI().toURL().openStream());
+            Object[] mapObjects=maskManager.loadMaskSummaryFile(summaryFile.toURI().toURL().openStream());
             return mapObjects;
         } catch (Exception ex) {
             ex.printStackTrace();

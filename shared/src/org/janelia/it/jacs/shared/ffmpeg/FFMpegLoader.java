@@ -19,7 +19,6 @@ import static org.bytedeco.javacpp.avdevice.avdevice_register_all;
 import static org.bytedeco.javacpp.avformat.*;
 import static org.bytedeco.javacpp.avutil.*;
 import static org.bytedeco.javacpp.swscale.*;
-import org.janelia.it.jacs.shared.img_3d_loader.FFMPGByteAcceptor;
 
 class ReadInput extends Read_packet_Pointer_BytePointer_int {
     private byte[] _buffer;
@@ -364,14 +363,30 @@ public class FFMpegLoader
         f.imageBytes.add( new byte[width * height] );
     }
 
-    private void extractBytes(Frame frame, BytePointer imageBytes) {
-        byte[] bytes = new byte[_video_codec.width() * _video_codec.height() * 3];
-        imageBytes.get(bytes);
-        byte[] frameBytes = frame.imageBytes.get(0);
-        for (int i = 0; i < frameBytes.length; i++)
-            frameBytes[i] = bytes[3 * i];
-    }
+    private void extractBytes(Frame frameOutput, BytePointer imageBytesInput) {
+        int width = _video_codec.width();
+        int height = _video_codec.height();
+        int padding = _image.getPaddingRight();
+        if (padding == -1) {
+            padding = 0;
+        }
 
+        byte[] outputBytes = frameOutput.imageBytes.get(0);
+        byte[] inputBytes = new byte[width * height * 3];
+        imageBytesInput.get(inputBytes);
+
+        int inputOffset = 0;
+        int outputOffset = 0;
+        for (int rows = 0; rows < height; rows++) {
+            for (int cols = 0; cols < width; cols++) {
+                outputBytes[ outputOffset ] = inputBytes[3 * inputOffset];
+                inputOffset ++;
+                outputOffset ++;
+            }
+            inputOffset += padding;
+        }
+    }
+    
     private void processImage(Frame frame) throws Exception
     {
         // Deinterlace Picture

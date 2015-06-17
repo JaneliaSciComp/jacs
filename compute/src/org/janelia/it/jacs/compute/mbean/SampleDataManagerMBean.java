@@ -12,13 +12,17 @@ public interface SampleDataManagerMBean {
     public void runUserSampleMaintenancePipelines(String user); // All maintenance pipelines for a single users
     public void runSampleCleaning(String user, Boolean testRun);
     public void runSampleTrashCompactor(String user, Boolean testRun); 
-    public void runSampleDataCompression(String user, Boolean testRun);
-    public void runSingleSampleDataCompression(String sampleId);
+    public void runSampleDataCompression(String user, String dataSetName, String compressionType);
+    public void runSingleSampleDataCompression(String sampleId, String compressionType);
     public void runSampleImageRegistration(String user);
     public void runSampleRetirement(String user);
     public void runSampleRetirement();
+    
+    // File management
     public void runSingleSampleArchival(String sampleEntityId);  
-    public void runCompleteSampleArchival(String user); 
+    public void runCompleteSampleArchival(String user);
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes);  
+    public void runSyncDataSetToScality(String user, String dataSet, String filetypes);
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void cancelAllIncompleteDataSetPipelineTasks();
@@ -40,6 +44,7 @@ public interface SampleDataManagerMBean {
     public void runRepairSeparationResultsPipeline(String user);
 
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode);
+    public void visuallyLosslessCorrectionService(String filePath, String debug);
 
     // SAGE database
     public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab, String debug, String lock);

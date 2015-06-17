@@ -6,6 +6,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Utility to retrieve and store process data items with contextual logging.
@@ -121,7 +122,11 @@ public class ProcessDataAccessor {
 
     private void appendValueToStringBuilder(Object value,
                                             StringBuilder sb) {
-
+        if (value == null) {
+            sb.append("null");
+            return;
+        }
+        final Class clazz = value.getClass();
         if (value instanceof String) {
 
             sb.append('\'');
@@ -136,14 +141,8 @@ public class ProcessDataAccessor {
 
             sb.append('\'');
 
-        } else if (value == null) {
-
-            sb.append("null");
-
         } else {
-
-            final Class clazz = value.getClass();
-            if ((clazz != null) && Collection.class.isAssignableFrom(clazz)) {
+            if (Collection.class.isAssignableFrom(clazz)) {
                 final int size = ((Collection) value).size();
                 if (size > MAX_COLLECTION_SIZE) {
                     sb.append(size);
@@ -151,7 +150,17 @@ public class ProcessDataAccessor {
                 } else {
                     sb.append(value);
                 }
-            } else {
+            }
+            else if (Map.class.isAssignableFrom(clazz)) {
+                final int size = ((Map) value).size();
+                if (size > MAX_COLLECTION_SIZE) {
+                    sb.append(size);
+                    sb.append(" items");
+                } else {
+                    sb.append(value);
+                }
+            }
+            else {
                 sb.append(value);
             }
 

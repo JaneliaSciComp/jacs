@@ -510,6 +510,13 @@ public class EntityUtils {
         }
 
         if (path == null) {
+            path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+            if (path!=null) {
+                path = EntityConstants.SCALITY_PATH_PREFIX+path;
+            }
+        }
+
+        if (path == null) {
             log.debug("  Could not find a path to return");
         }
 

@@ -27,22 +27,26 @@ public class Vaa3DHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("VAA3D.CMD");
 
-    protected static final String MERGE_PIPELINE_CMD =
+    protected static final String MERGE_PIPELINE_SCRIPT =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("MergePipeline.ScriptPath");
 
-    protected static final String MAP_CHANNEL_PIPELINE_CMD =
+    protected static final String MAP_CHANNEL_PIPELINE_SCRIPT =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("MapChannelPipeline.ScriptPath");
     
-    protected static final String INTERSECTION_CMD =
+    protected static final String INTERSECTION_SCRIPT =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("Intersection.ScriptPath");
 
-    protected static final String SPLIT_CHANNELS_CMD =
+    protected static final String SPLIT_CHANNELS_SCRIPT =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("SplitChannels.ScriptPath");
 
+    protected static final String CONVERT_SCRIPT =
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+                    SystemConfigurationProperties.getString("Convert.ScriptPath");
+    
     protected static final String FFMPEG_CMD =
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
                     SystemConfigurationProperties.getString("FFMPEG.Bin.Path");
@@ -60,7 +64,7 @@ public class Vaa3DHelper {
     
     public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath, String multiscanBlendVersion) {
         StringBuffer buf = new StringBuffer();
-        buf.append("sh "+MERGE_PIPELINE_CMD);
+        buf.append("sh "+MERGE_PIPELINE_SCRIPT);
         buf.append(" -o \""+outputFilePath+"\""); 
         if (!StringUtils.isEmpty(multiscanBlendVersion)) {
             buf.append(" -m \""+multiscanBlendVersion+"\""); 
@@ -72,7 +76,7 @@ public class Vaa3DHelper {
 
     public static String getFormattedMapChannelPipelineCommand(String inputFilePath, String outputFilePath, String channelMapping) {
         StringBuffer buf = new StringBuffer();
-        buf.append("sh "+MAP_CHANNEL_PIPELINE_CMD);
+        buf.append("sh "+MAP_CHANNEL_PIPELINE_SCRIPT);
         buf.append(" -i \""+inputFilePath+"\""); 
         buf.append(" -o \""+outputFilePath+"\""); 
         if (!StringUtils.isEmpty(channelMapping)) {
@@ -107,7 +111,7 @@ public class Vaa3DHelper {
     	return buf.toString();
     }
     
-    private static String getHostnameEcho() {
+    public static String getHostnameEcho() {
     	return "echo \"Running on \"`hostname`\n";
     }
 
@@ -261,7 +265,7 @@ public class Vaa3DHelper {
         String cmd = getVaa3dExecutableCmd() +" -cmd screen-pattern-annotator -inputNameIndexFile \""+inputNameIndexFile+"\" -inputRGBFile "+inputRGBFile+" -outputMaskDirectory "+outputMaskGuideDirectory;
         return cmd+" ;";
     }
-
+    
     public static String getFormattedConvertCommand(String inputFilepath, String outputFilepath) throws ServiceException {
         return getFormattedConvertCommand(inputFilepath, outputFilepath, "");
     }
@@ -311,11 +315,15 @@ public class Vaa3DHelper {
      * @throws ServiceException
      */
     public static String getFormattedIntersectionCommand(String inputFilepath1, String inputFilepath2, String outputFilepath, String method, String kernelSize) throws ServiceException {
-        return INTERSECTION_CMD +" \""+inputFilepath1+"\" \""+inputFilepath2+"\" \""+outputFilepath+"\" "+method+" "+kernelSize;
+        return INTERSECTION_SCRIPT +" \""+inputFilepath1+"\" \""+inputFilepath2+"\" \""+outputFilepath+"\" "+method+" "+kernelSize;
     }
 
     public static String getFormattedSplitChannelsCommand(String inputFilepath, String outputFilepath, String outputExtension) throws ServiceException {
-        return SPLIT_CHANNELS_CMD +" \""+inputFilepath+"\" \""+outputFilepath+"\" "+outputExtension;
+        return SPLIT_CHANNELS_SCRIPT +" \""+inputFilepath+"\" \""+outputFilepath+"\" "+outputExtension;
+    }
+
+    public static String getFormattedConvertScriptCommand(String inputFilepath, String outputFilepath, String saveTo8bit) throws ServiceException {
+        return CONVERT_SCRIPT +" \""+inputFilepath+"\" \""+outputFilepath+"\" "+saveTo8bit;
     }
     
     public static String getFormattedNeuronMergeCommand(String originalImageFilePath, String consolidatedSignalLabelIndexFilePath,

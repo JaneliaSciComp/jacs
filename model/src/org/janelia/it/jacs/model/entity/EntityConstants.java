@@ -8,6 +8,8 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
+    public static final String SCALITY_PATH_PREFIX = "/Scality/";
+    
     public static final String VALUE_SC_GUID                         = "GUID";
     public static final String VALUE_SC_NAME                         = "Name";
     public static final String VALUE_SC_DATE_CREATED                 = "Date Created";
@@ -22,6 +24,11 @@ public class EntityConstants {
     public static final String VALUE_BLOCKED                         = "Blocked";
     public static final String VALUE_DESYNC                          = "Desync";
     public static final String VALUE_RETIRED                         = "Retired";
+    
+    public static final String VALUE_COMPRESSION_LOSSLESS                   = "Lossless";
+    public static final String VALUE_COMPRESSION_LOSSLESS_AND_H5J           = "Lossless and H5J";
+    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD  = "Visually Lossless and PBD";
+    public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS          = "Visually Lossless";
     
     // Singleton Entity Names
     public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
@@ -94,6 +101,7 @@ public class EntityConstants {
     
     // Entity Data Attributes
     public static final String ATTRIBUTE_STATUS                              = "Status";
+    public static final String ATTRIBUTE_COMRESSION_TYPE                     = "Compression Type";
     public static final String ATTRIBUTE_LINE                                = "Line";
     public static final String ATTRIBUTE_CROSS_BARCODE                       = "Cross Barcode";
     public static final String ATTRIBUTE_SLIDE_CODE                          = "Slide Code";
@@ -138,6 +146,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE     = "Alignment Model Violation Score";
     public static final String ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE              = "Alignment Verify Movie";
     public static final String ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS       = "Alignment Board User Settings";
+    public static final String ATTRIBUTE_ALIGNMENT_OVERLAP_COEFFICIENT       = "Alignment Overlap Coefficient";
+    public static final String ATTRIBUTE_ALIGNMENT_OBJECT_PEARSON_COEFFICIENT= "Alignment Object Pearson Coefficient";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
@@ -164,6 +174,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
     public static final String ATTRIBUTE_MICRON_TO_VOXEL_MATRIX              = "Micron to Voxel Matrix";
     public static final String ATTRIBUTE_VOXEL_TO_MICRON_MATRIX              = "Voxel to Micron Matrix";
+    public static final String ATTRIBUTE_SCALITY_BPID                        = "Scality BPID";
         
     // Geometric Tree
     //

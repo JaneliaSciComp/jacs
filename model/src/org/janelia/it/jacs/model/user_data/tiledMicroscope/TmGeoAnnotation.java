@@ -174,5 +174,9 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         return getChildIds().size() == 0;
     }
 
+    public boolean isLink() {
+        return !isRoot() && getChildIds().size() == 1;
+    }
+
 }
 

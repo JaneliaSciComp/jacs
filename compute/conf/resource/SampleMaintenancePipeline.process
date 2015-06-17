@@ -1,6 +1,6 @@
 <!-- 
 	Run all the routine Samples maintenance tasks for a given user. This includes cleaning out old un-annotated 
-	results, compressing any stray V3DRAW files into PBD.
+	results, compressing any stray V3DRAW files into PBD, and generate H5J files.
 -->
 <process name="Sample Maintenance Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 
@@ -12,7 +12,7 @@
         <include name="Remove Trash" process="SampleTrashCompactor">
         </include>
         
-	    <include name="Compress Raw Files" process="SampleDataCompression">
+	    <include name="Compress Files" process="SampleCompression">
 	    </include>
         
     </sequence>

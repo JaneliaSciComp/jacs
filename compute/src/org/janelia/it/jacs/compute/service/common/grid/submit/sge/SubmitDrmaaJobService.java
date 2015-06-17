@@ -26,6 +26,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import com.google.common.base.Strings;
 
@@ -46,6 +47,7 @@ import java.util.regex.Pattern;
  * @author Sean Murphy
  * @author Todd Safford
  * @author Tareq Nabeel
+ * @author Konrad Rokicki
  */
 public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
@@ -63,6 +65,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected static final String NORMAL_QUEUE = SystemConfigurationProperties.getString("Grid.NormalQueue");
     protected static final int MAX_JOBS_IN_ARRAY = SystemConfigurationProperties.getInt("Grid.MaxNumberOfJobs");
     private GridResourceSpec gridResourceSpec;
+    private boolean cancelled = false;
     
     /**
      * This method is part of IService interface and used when this class
@@ -74,15 +77,38 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     public void submitJobAndWait(IProcessData processData) throws SubmitJobException {
         try {
             init(processData);
-            submitJob();
-            postProcess();
-            handleErrors();
+            if (cancelled) {
+                // Nothing to do.
+            }
+            else {
+                submitJob();
+                handleErrors();
+                cleanup();
+                postProcess();
+            }
         }
         catch (Exception e) {
             throw new SubmitJobException(e);
         }
     }
+    
+    public void cleanup() {
+        SystemCall system = new SystemCall(logger);
+        try {
+            String resultDirectory = resultFileNode.getDirectoryPath();
+            system.emulateCommandLine("rm -f " + resultDirectory + "/DrmaaTemplate*.oos", true);
+        }
+        catch (Exception e) {
+            logger.error("Error cleaning up after DRMAA job",e);
+        }
+    }
 
+    /**
+     * Can be called during initialization to cause the job to be skipped. 
+     */
+    protected void cancel() {
+        this.cancelled = true;
+    }
 
     /**
      * This method is invoked from GridSubmitAndWaitMDB
@@ -94,6 +120,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         //logger.debug(getClass().getSimpleName() + " Process Data : " + processData);
         try {
             init(processData);
+            if (cancelled) {
+                return null;
+            }
             if (logger.isInfoEnabled()) {
                 logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
             }

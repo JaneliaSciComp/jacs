@@ -1,17 +1,9 @@
 package org.janelia.it.jacs.compute.mbean;
 
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
-import org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -24,6 +16,11 @@ import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.rmi.RemoteException;
+import java.util.*;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -115,12 +112,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runSampleDataCompression(String user, Boolean testRun) {
+    public void runSampleDataCompression(String user, String dataSetName, String compressionType) {
         try {
-            String processName = "SampleDataCompression";
+            String processName = "SampleCompression";
             String displayName = "Sample Data Compression";
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter(SampleDataCompressionService.PARAM_testRun, Boolean.toString(testRun), null)); 
+            taskParameters.add(new TaskParameter("data set name", dataSetName, null));
+            taskParameters.add(new TaskParameter("compression type", compressionType, null));
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
@@ -128,14 +126,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSingleSampleDataCompression(String sampleId) {
+    public void runSingleSampleDataCompression(String sampleId, String compressionType) {
         try {
-            String processName = "SampleDataCompression";
+            String processName = "PostPipeline_SampleCompression";
             String displayName = "Single Sample Data Compression";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("root entity id", sampleId, null)); 
+            taskParameters.add(new TaskParameter("root entity id", sampleId, null));
+            taskParameters.add(new TaskParameter("compression type", compressionType, null));
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
@@ -185,11 +184,10 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-            Task task = new GenericTask(new HashSet<Node>(), sampleEntity.getOwnerKey(), new ArrayList<Event>(), 
-                    taskParameters, "singleSampleArchival", "Single Sample Archival");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SyncSampleToArchive", task.getObjectId());
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
+            String processName = "SyncSampleToArchive";
+            String displayName = "Single Sample Archival";
+            saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -201,6 +199,36 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String processName = "CompleteSampleArchivalService";
             String displayName = "Complete Sample Archival";
             saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
+    
+
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes) {
+        try {
+            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
+            taskParameters.add(new TaskParameter("file types", filetypes, null));
+            String processName = "SyncSampleToScality";
+            String displayName = "Sync Sample to Scality";
+            saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
+    
+    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("data set name", dataSetName, null));
+            taskParameters.add(new TaskParameter("file types", filetypes, null));
+            String processName = "SyncUserFilesToScality";
+            String displayName = "Sync User Files to Scality";
+            saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -508,10 +536,72 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 EJBFactory.getLocalComputeBean().submitJob("BzipTestService", bzipTask.getObjectId());
             }
         }
-        catch (DaoException e) {
+        catch (DaoException | RemoteException e) {
             e.printStackTrace();
         }
-        catch (RemoteException e) {
+    }
+
+    @Override
+    public void visuallyLosslessCorrectionService(String filePath, String debug) {
+        try {
+            Scanner scanner = new Scanner(new File(filePath));
+            HashSet<String> userList = new HashSet<>();
+            while (scanner.hasNextLine()) {
+                String tmpLine = scanner.nextLine().trim();
+                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
+                File tmpOriginalPBD = new File(originalPDB);
+                File tmpOriginalVL = new File(tmpLine);
+                if (!tmpOriginalVL.exists()) {
+                    log.debug("Can't find the original VL file: "+tmpLine);
+                }
+                if (!tmpOriginalPBD.exists()) {
+                    log.debug("Can't find the original PBD file: "+originalPDB);
+                }
+
+                tmpLine = tmpLine.substring(tmpLine.indexOf("filestore/")+10);
+                String tmpUser = tmpLine.substring(0,tmpLine.indexOf("/"));
+                if (!userList.contains(tmpUser)) {
+                    userList.add(tmpUser);
+                    log.debug("Adding user "+tmpUser);
+                }
+            }
+
+//            for (String targetOwner : userList) {
+//                VLCorrectionTask vlcorrectionTask = new VLCorrectionTask("system", new ArrayList<Event>(), filePath, targetOwner, Boolean.valueOf(debug));
+//                vlcorrectionTask = (VLCorrectionTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(vlcorrectionTask);
+//                EJBFactory.getLocalComputeBean().submitJob("VLCorrectionService", vlcorrectionTask.getObjectId());
+//            }
+        }
+        catch (/**DaoException | RemoteException |**/ FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/VLInputPaths.txt"));
+            HashSet<String> userList = new HashSet<>();
+            while (scanner.hasNextLine()) {
+                String tmpLine = scanner.nextLine().trim();
+                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
+                File tmpOriginalPBD = new File(originalPDB);
+                File tmpOriginalVL = new File(tmpLine);
+                if (!tmpOriginalVL.exists()) {
+                    System.out.println("Can't find the original VL file: "+tmpLine);
+                }
+                if (!tmpOriginalPBD.exists()) {
+                    System.out.println("Can't find the original PBD file: "+originalPDB);
+                }
+
+                tmpLine = tmpLine.substring(tmpLine.indexOf("filestore/")+10);
+                String tmpUser = tmpLine.substring(0,tmpLine.indexOf("/"));
+                if (!userList.contains(tmpUser)) {
+                    userList.add(tmpUser);
+                    System.out.println("Adding user "+tmpUser);
+                }
+            }
+        }
+        catch (/**DaoException | RemoteException |**/ FileNotFoundException e) {
             e.printStackTrace();
         }
     }

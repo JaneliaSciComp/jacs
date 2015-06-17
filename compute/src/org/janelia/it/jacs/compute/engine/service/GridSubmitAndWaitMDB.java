@@ -103,7 +103,8 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
             // Call postprocess method of the service so that the necessary information is set to the processData
             try {
-	            originalservice.handleErrors();
+	            originalservice.cleanup();
+                originalservice.handleErrors();
 	            originalservice.postProcess();
             }
             finally {
@@ -182,13 +183,19 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
             return;
         }
 
-        // store original message objects for use when job is completed. Otherwise
-        // reply-to/forward-to info is getting lost
-        HashMap<String, Object> originalObjectMap = new HashMap<String, Object>();
-        originalObjectMap.put(GridSubmitHelperMap.ORIGINAL_SERVICE_KEY, service);
-        originalObjectMap.put(GridSubmitHelperMap.ORIGINAL_QUEUE_MESSAGE_KEY, queueMessage);
-        originalObjectMap.put(GridSubmitHelperMap.PROCESS_OBJECT, proc);
-        GridSubmitHelperMap.getInstance().addToDataMap(submissionKey, originalObjectMap);
+        if (proc!=null) {
+            // store original message objects for use when job is completed. Otherwise
+            // reply-to/forward-to info is getting lost
+            HashMap<String, Object> originalObjectMap = new HashMap<String, Object>();
+            originalObjectMap.put(GridSubmitHelperMap.ORIGINAL_SERVICE_KEY, service);
+            originalObjectMap.put(GridSubmitHelperMap.ORIGINAL_QUEUE_MESSAGE_KEY, queueMessage);
+            originalObjectMap.put(GridSubmitHelperMap.PROCESS_OBJECT, proc);
+            GridSubmitHelperMap.getInstance().addToDataMap(submissionKey, originalObjectMap);
+        }
+        else {
+            // Process is null, which means the job was cancelled and we should continue processing
+            JmsUtil.replyToReceivedFromQueue(queueMessage, operationToProcess);
+        }
 
     }
 

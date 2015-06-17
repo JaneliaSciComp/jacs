@@ -17,7 +17,6 @@ import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
  * Copy a file or a directory tree from archive to the file share, or vice versa.

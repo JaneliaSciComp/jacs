@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
@@ -38,8 +37,8 @@ public class RepairArtifactsPipelineGridService extends AbstractEntityGridServic
         return "repair";
     }
 
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
+    @Override
+    protected void init() throws Exception {
     	
     	runMode = (String)processData.getItem("RUN_MODE");
         if (runMode==null) {

@@ -397,7 +397,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         // Should find it here
 		Entity signalVolume = EntityUtils.findChildWithName(supportingFiles, "ConsolidatedSignal.v3dpbd");
 		if (signalVolume!=null) {
-		    Entity fast3dImage = separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
+		    Entity fast3dImage = signalVolume.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
             if (fast3dImage!=null) {
                 return fast3dImage;
             }

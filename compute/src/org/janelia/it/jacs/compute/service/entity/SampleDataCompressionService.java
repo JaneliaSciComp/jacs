@@ -15,6 +15,7 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -41,12 +42,15 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	
     private boolean isDebug = false;
 
-    private String mode = MODE_UNDEFINED;
-    private String recordMode = RECORD_MODE_UPDATE;
+    private String mode;
+    private String recordMode;
+    private String rootEntityId;
+    private String inputType;
+    private String outputType;
+    
     private boolean deleteSourceFiles = true;
     private Set<String> excludeFileSet = new HashSet<String>();
     
-    private String rootEntityId;
     private final Set<String> inputFiles = new HashSet<String>();
     private final Set<Long> visited = new HashSet<Long>();
     private Map<String,Set<Long>> entityMap;
@@ -60,8 +64,15 @@ public class SampleDataCompressionService extends AbstractEntityService {
         }
         
         mode = data.getRequiredItemAsString("MODE");
+        recordMode = data.getRequiredItemAsString("RECORD_MODE");
     	rootEntityId = data.getItemAsString("ROOT_ENTITY_ID");
-    	
+    	inputType = data.getRequiredItemAsString("INPUT_TYPE");
+        outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
+
+        if (!RECORD_MODE_ADD.equals(recordMode) && !RECORD_MODE_UPDATE.equals(recordMode)) {
+            throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
+        }
+        
         if (mode.equals(MODE_CREATE_INPUT_LIST)) {
             doCreateInputList();
         }
@@ -79,8 +90,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
     private void doCreateInputList() throws ComputeException {
 
         this.entityMap = new HashMap<String,Set<Long>>();
-                
-        String inputType = data.getRequiredItemAsString("INPUT_TYPE");
+               
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
         if (!StringUtils.isEmpty(excludeFiles)) {
             for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
@@ -91,26 +101,31 @@ public class SampleDataCompressionService extends AbstractEntityService {
         this.deleteSourceFiles = !"false".equals(data.getRequiredItem("DELETE_INPUTS"));
 
         if (isDebug) {
-            logger.info("This is a test run. Nothing will actually happen.");
+            contextLogger.info("This is a test run. Nothing will actually happen.");
         }
         else {
             if (deleteSourceFiles) {
-                logger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");    
+                contextLogger.info("This is the real thing. Files will get compressed, and then the originals will be deleted!");    
             }
             else {
-                logger.info("This is the real thing. Files will get compressed, and added to the existing entities.");
+                contextLogger.info("This is the real thing. Files will get compressed, and added to the existing entities.");
             }
         }
         
         if (rootEntityId!=null) {
-            logger.info("Finding files to compress under root "+rootEntityId+" with type "+inputType);
+            contextLogger.info("Finding files to compress under root "+rootEntityId+" with type "+inputType);
             
             Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
             if (entity == null) {
-                throw new IllegalArgumentException("Entity not found with id="+rootEntityId);
+                throw new IllegalArgumentException("Entity not found: "+rootEntityId);
             }
             
-            for(Entity image : EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D)) {
+            if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                throw new IllegalArgumentException("Entity is not a sample: "+rootEntityId);
+            }
+            
+            Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
+            for(Entity image : entities.values()) {
                 String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 if (filepath!=null && filepath.endsWith(inputType)) {
                     addEntityToInputList(image);
@@ -118,18 +133,14 @@ public class SampleDataCompressionService extends AbstractEntityService {
             }
         }
         else {
-            logger.info("Finding files belonging to "+ownerKey+" with type "+inputType);
+            contextLogger.info("Finding files belonging to "+ownerKey+" with type "+inputType);
             
-            for(Entity entity : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+inputType)) {
-                if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                    logger.warn("Ignoring entity with filepath that is not an Image 3D: "+entity.getId());
+            for(Entity image : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+inputType)) {
+                if (!image.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                    contextLogger.warn("Entity is not an Image 3D: "+image.getId());
                     continue;
                 }
-                if (!entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).contains(centralDir)) {
-                    logger.warn("Ignoring entity with which does not contain the FileStore.CentralDir: "+entity.getId());
-                    continue;
-                }
-                addEntityToInputList(entity);
+                addEntityToInputList(image);
             }
         }
         
@@ -138,11 +149,105 @@ public class SampleDataCompressionService extends AbstractEntityService {
         processData.putItem("ENTITY_MAP", entityMap);
         
         if (inputFiles.isEmpty()) {
-            logger.info("Nothing to be done.");
+            contextLogger.info("Nothing to be done.");
         }
         else {
-            logger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
+            contextLogger.info("Processed "+inputFiles.size()+" entities into "+inputGroups.size()+" groups.");
         }
+    }
+    
+    private void addEntityToInputList(Entity imageEntity) throws ComputeException {
+
+        if (visited.contains(imageEntity.getId())) return;
+        visited.add(imageEntity.getId());
+        
+        if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
+
+        String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        
+        if (filepath==null) {
+            contextLogger.warn("Entity has null filepath: "+imageEntity.getId());
+            return;
+        }
+
+        if (!filepath.contains(centralDir)) {
+            contextLogger.warn("Entity has path outside of filestore: "+imageEntity.getId());
+            return;
+        }
+
+        File file = new File(filepath);
+        
+        if (excludeFileSet.contains(file.getName())) {
+            contextLogger.info("Excluding file: "+imageEntity.getId());
+            return;
+        }
+        
+        if (!file.exists()) {
+            contextLogger.warn("Entity file does not exist: "+imageEntity.getId());
+            return;
+        }
+        
+        populateChildren(imageEntity);
+        
+        if (outputType.equals("h5j")) {
+            Entity existingH5j = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE);
+            if (existingH5j!=null) {
+                // The H5J entity already exists
+                String h5jFilepath = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (RECORD_MODE_ADD.equals(recordMode)) {
+                    if (h5jFilepath!=null & h5jFilepath.endsWith(".h5j")) {
+                        // It's already in the correct place
+                        return;
+                    }
+                }
+                else if (RECORD_MODE_UPDATE.equals(recordMode)) {
+
+                    if (isDebug) {
+                        contextLogger.info("Would update existing Image with existing H5J (id="+existingH5j.getId()+")");
+                        return;
+                    }
+                    
+                    // We just need to move it into the right place
+                    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, h5jFilepath);
+                    contextLogger.info("Updated "+numUpdated+" entity data values to use compressed file: "+h5jFilepath);
+                    
+                    
+                    // Update the image to use H5J format
+                    imageEntity.setName(existingH5j.getName());
+                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, h5jFilepath);
+                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "h5j");
+                    entityBean.saveOrUpdateEntity(imageEntity);
+                    
+                    // Move all references to the H5J
+                    for(EntityData parentEd : entityBean.getParentEntityDatas(existingH5j.getId())) {
+                        if (!parentEd.getParentEntity().getId().equals(imageEntity.getId())) {
+                            parentEd.setChildEntity(imageEntity);
+                            contextLogger.info("Carrying forward reference to H5J#"+existingH5j.getId()+" from "+parentEd.getParentEntity().getName());
+                            entityBean.saveOrUpdateEntityData(parentEd);
+                        }
+                    }
+                    
+                    // Delete the old H5J entity
+                    entityBean.deleteEntityTreeById(existingH5j.getOwnerKey(), existingH5j.getId(), true);
+                    contextLogger.info("Replaced Entity#"+imageEntity.getId()+" with "+imageEntity.getName());
+                    
+                    deleteIfNecessary(filepath);
+                    return;
+                }
+                
+            }
+        }
+        
+        contextLogger.info("Will compress file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+    	
+    	inputFiles.add(filepath);
+    	
+    	Set<Long> eset = entityMap.get(filepath);
+    	if (eset == null) {
+    		eset = new HashSet<>();
+    		entityMap.put(filepath, eset);
+    	}
+    	eset.add(imageEntity.getId());
     }
 
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
@@ -164,47 +269,8 @@ public class SampleDataCompressionService extends AbstractEntityService {
         return groupList;
     }
     
-    private void addEntityToInputList(Entity imageEntity) throws ComputeException {
-
-        if (visited.contains(imageEntity.getId())) return;
-        visited.add(imageEntity.getId());
-        
-    	if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
-    	
-    	String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	
-    	if (filepath==null) {
-    		logger.warn("File path for "+imageEntity.getId()+" is null");
-    		return;
-    	}
-    	
-    	File file = new File(filepath);
-    	
-    	if (excludeFileSet.contains(file.getName())) {
-            logger.info("Excluding file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
-    	    return;
-    	}
-    	
-    	if (!file.exists()) {
-    		logger.warn("File path for "+imageEntity.getId()+" does not exist: "+filepath);
-    		return;
-    	}
-    	
-    	logger.info("Will compress file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
-    	
-    	inputFiles.add(filepath);
-    	
-    	Set<Long> eset = entityMap.get(filepath);
-    	if (eset == null) {
-    		eset = new HashSet<>();
-    		entityMap.put(filepath, eset);
-    	}
-    	eset.add(imageEntity.getId());
-    }
-    
     private void doCreateOutputList() throws ComputeException {
 
-        String outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
         List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
 
         List<String> outputPaths = new ArrayList<String>();
@@ -217,7 +283,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
     
     private void doComplete() throws ComputeException {
 
-        this.recordMode = data.getRequiredItemAsString("RECORD_MODE");
         this.deleteSourceFiles = !"false".equals(data.getRequiredItem("DELETE_INPUTS"));
     	this.entityMap = (Map<String,Set<Long>>)data.getRequiredItem("ENTITY_MAP");
     	List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
@@ -228,14 +293,14 @@ public class SampleDataCompressionService extends AbstractEntityService {
             String outputPath = outputPaths.get(i);
             File outputFile = new File(outputPath);
             if (!outputFile.exists() || !outputFile.canRead() || outputFile.length()<=0) {
-                logger.warn("Missing or corrupt output file: "+outputFile);
+                contextLogger.warn("Missing or corrupt output file: "+outputFile);
             }
             else {
                 updateEntities(inputPath, outputPath);  
             }
     	}
 
-		logger.info("Modified "+numChanges+" entities.");
+    	contextLogger.info("Modified "+numChanges+" entities.");
     }
     
     private void updateEntities(String inputPath, String outputPath) throws ComputeException {
@@ -246,7 +311,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
     	try {
             File outputFile = new File(outputPath);
             if (!outputFile.exists() || !outputFile.canRead() || outputFile.length()<=0) {
-                logger.warn("Missing or corrupt output file: "+outputFile);
+                contextLogger.warn("Missing or corrupt output file: "+outputFile);
                 return;
             }
             
@@ -254,13 +319,13 @@ public class SampleDataCompressionService extends AbstractEntityService {
                 if (!isDebug) {
             	    // Update all entities which referred to the old path
             	    int numUpdated = entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
-                    logger.info("Updated "+numUpdated+" entity data values to use new compressed file: "+outputPath);
+            	    contextLogger.info("Updated "+numUpdated+" entity data values to use new compressed file: "+outputPath);
                 }
             }
             
             Set<Long> inputEntites = entityMap.get(inputPath);
             if (inputEntites == null) {
-                logger.warn("No entities found with this path: "+inputPath);
+                contextLogger.warn("No entities found with this path: "+inputPath);
                 return;
             }
             
@@ -284,10 +349,10 @@ public class SampleDataCompressionService extends AbstractEntityService {
             		
             		if (!isDebug) {
     	            	Entity savedEntity = entityBean.saveOrUpdateEntity(entity);
-    	            	logger.info("Updated entity: "+savedEntity.getName()+" (id="+savedEntity.getId()+")");
+    	            	contextLogger.info("Updated entity: "+savedEntity.getName()+" (id="+savedEntity.getId()+")");
             		}
             		else {
-            			logger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
+            			contextLogger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
             		}
                     
                     numChanges++;
@@ -301,35 +366,35 @@ public class SampleDataCompressionService extends AbstractEntityService {
                             addEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
                             entityBean.saveOrUpdateEntity(addEntity);
                         }
-                        logger.info("Created secondary entity: "+addEntity.getName()+" (id="+addEntity.getId()+")");
+                        contextLogger.info("Created secondary entity: "+addEntity.getName()+" (id="+addEntity.getId()+")");
                     }
                     if (!isDebug) {
                         entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE, outputPath);
                     }
                 }
-                else {
-                    throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
-                }
         	}
     	
-        	if (deleteSourceFiles) {
-        		File file = new File(inputPath);
-        		if (!isDebug) {
-    				try {
-    					FileUtils.forceDelete(file);
-    					logger.info("Deleted old file: "+inputPath);
-    				}
-    				catch (Exception e) {
-    					logger.info("Error deleting symlink "+inputPath+": "+e.getMessage());
-    				}
-        		}
-        	}
-    		
+        	deleteIfNecessary(inputPath);
     	}
     	catch (ComputeException e) {
-    		logger.error("Unable to update all entities to use new compressed file: "+outputPath);
+    		contextLogger.error("Unable to update all entities to use new compressed file: "+outputPath);
     	}
 	}
+    
+    private void deleteIfNecessary(String filepath) {
+        if (!deleteSourceFiles) return;
+        File file = new File(filepath);
+        if (!isDebug) {
+            try {
+                // TODO: what if the file is stored in Scality?
+                FileUtils.forceDelete(file);
+                contextLogger.info("Deleted old file: "+filepath);
+            }
+            catch (Exception e) {
+                contextLogger.info("Error deleting symlink "+filepath+": "+e.getMessage());
+            }
+        }
+    }
 
     private String getExtension(String filepath) {
         int dot = filepath.indexOf('.');

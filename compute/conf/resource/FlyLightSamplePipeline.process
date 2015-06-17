@@ -21,7 +21,7 @@
         <input name="REUSE_ALIGNMENT"/>
         
         <!-- Import variables from the task if any were not passed in as input parameters above -->
-	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="PIPELINE_NAME"/>
@@ -34,40 +34,31 @@
             <input name="PIPELINE_PROCESS"/>
             <input name="REUSE_PROCESSING"/>
             <input name="REUSE_ALIGNMENT"/>
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="pipeline name"/>
-            <input name="PROCESS_VARIABLE_2" value="PIPELINE_NAME"/>
-            <input name="TASK_PARAMETER_3" value="merge algorithms"/>
-            <input name="PROCESS_VARIABLE_3" value="MERGE_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_4" value="stitch algorithms"/>
-            <input name="PROCESS_VARIABLE_4" value="STITCH_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_5" value="alignment algorithms"/>
-            <input name="PROCESS_VARIABLE_5" value="ALIGNMENT_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_6" value="alignment algorithm parameters"/>
-            <input name="PROCESS_VARIABLE_6" value="ALIGNMENT_ALGORITHM_PARAMS"/>
-            <input name="TASK_PARAMETER_7" value="alignment algorithm result names"/>
-            <input name="PROCESS_VARIABLE_7" value="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
-            <input name="TASK_PARAMETER_8" value="analysis algorithms"/>
-            <input name="PROCESS_VARIABLE_8" value="ANALYSIS_ALGORITHMS"/>
-            <input name="TASK_PARAMETER_9" value="pipeline process"/>
-            <input name="PROCESS_VARIABLE_9" value="PIPELINE_PROCESS"/>
-            <input name="TASK_PARAMETER_10" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_10" value="REUSE_PROCESSING"/>
-            <input name="TASK_PARAMETER_11" value="reuse alignment"/>
-            <input name="PROCESS_VARIABLE_11" value="REUSE_ALIGNMENT"/>
-	        <output name="SAMPLE_ENTITY_ID"/>
-	        <output name="PIPELINE_NAME"/>
-	        <output name="MERGE_ALGORITHMS"/>
-	        <output name="STITCH_ALGORITHMS"/>
-	        <output name="ALIGNMENT_ALGORITHMS"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="pipeline name" value="PIPELINE_NAME"/>
+                <entry key="merge algorithms" value="MERGE_ALGORITHMS"/>
+                <entry key="stitch algorithms" value="STITCH_ALGORITHMS"/>
+                <entry key="alignment algorithms" value="ALIGNMENT_ALGORITHMS"/>
+                <entry key="alignment algorithm parameters" value="ALIGNMENT_ALGORITHM_PARAMS"/>
+                <entry key="alignment algorithm result names" value="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
+                <entry key="analysis algorithms" value="ANALYSIS_ALGORITHMS"/>
+                <entry key="pipeline process" value="PIPELINE_PROCESS"/>
+                <entry key="reuse processing" value="REUSE_PROCESSING"/>
+                <entry key="reuse alignment" value="REUSE_ALIGNMENT"/>
+            </input>
+            <output name="SAMPLE_ENTITY_ID"/>
+            <output name="PIPELINE_NAME"/>
+            <output name="MERGE_ALGORITHMS"/>
+            <output name="STITCH_ALGORITHMS"/>
+            <output name="ALIGNMENT_ALGORITHMS"/>
             <output name="ALIGNMENT_ALGORITHM_PARAMS"/>
             <output name="ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
-	        <output name="ANALYSIS_ALGORITHMS"/>
-	        <output name="PIPELINE_PROCESS"/>
-	        <output name="REUSE_PROCESSING"/>
+            <output name="ANALYSIS_ALGORITHMS"/>
+            <output name="PIPELINE_PROCESS"/>
+            <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
-	    </operation>
+        </operation>
 
         <!-- Set our status -->
         <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
@@ -79,8 +70,9 @@
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="SKIP_ALIGNMENT_TILE_FILTER"/>
             <input name="OVERRIDE" value="false"/>
-            <input name="PROCESS_VARIABLE_1" value="SKIP_ALIGNMENT_TILE_FILTER"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="(?i).*lamina.*"/>
+            <input name="PROCESS_VARIABLE_MAP">
+                <entry key="SKIP_ALIGNMENT_TILE_FILTER" value="(?i).*lamina.*"/>
+            </input>
             <output name="SKIP_ALIGNMENT_TILE_FILTER"/>
         </operation>
 
@@ -149,7 +141,7 @@
                 
             </sequence>
             
-            <sequence if="RUN_PROCESSING=true">
+            <sequence if="RUN_PROCESSING=true" name="Sample processing" startEvent="running">
             
         	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
         	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateSampleResultFileNodeService">
@@ -223,8 +215,8 @@
                     <sequence forEach="MERGE_ALGORITHM">
                     
             		    <!-- Merge all the LSM pairs in parallel -->
-            	        <sequence name="Merge Lsm Pairs" waitForAsync="true">
-            		        <operation name="Merge Lsm Pairs" processor="queue/gridSubmitAndWait">
+            	        <sequence name="Merge LSM Pairs" waitForAsync="true">
+            		        <operation name="Merge LSM Pairs" processor="queue/gridSubmitAndWait">
             		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkMergeService"/>
             		    		<input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
             					<input name="BULK_MERGE_PARAMETERS"/>
@@ -262,7 +254,7 @@
     		    </operation>
     		   
             	<!-- Run stitcher? -->
-            	<sequence if="RUN_STITCH=true">
+            	<sequence if="RUN_STITCH=true" name="Tile stitching">
         	
         		    <!-- Determine tile groupings and pick the largest group for processing -->
         	        <sequence name="Determine Stitch Grouping" waitForAsync="true">
@@ -373,7 +365,7 @@
                             </operation>
                             
                             <!-- Run neuron separation on prealigned data -->
-                            <include name="Neuron Separation" process="FlyLightSeparationPipeline">
+                            <include process="FlyLightSeparationPipeline" name="Unaligned neuron separation" startEvent="running">
                                 <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
                                 <input name="SAMPLE_ENTITY_ID"/>
                                 <input name="INPUT_FILENAME" value="$V{OUTPUT_FILENAME}"/>
@@ -415,7 +407,7 @@
                 <sequence>
             
                     <!-- Run brain alignment on prealigned data -->
-                    <include name="Brain Alignment" process="FlyLightAlignmentPipeline">
+                    <include name="Alignment" process="FlyLightAlignmentPipeline" startEvent="running">
                         <input name="PIPELINE_RUN_ENTITY_ID"/>
                         <input name="SAMPLE_ENTITY_ID"/>
                         <input name="SAMPLE_AREAS"/>
@@ -430,22 +422,9 @@
             </sequence>
         </sequence>
         
-		<!-- Compress all the v3draw files we created  -->
-        <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+		<!-- Compress all v3draw files to v3dpbd, and generate accompanying h5j files -->
+        <include name="Sample compression" process="PostPipeline_SampleCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-            <input name="OUTPUTS_TYPE" value="v3dpbd"/>
-            <input name="DELETE_INPUTS" value="true"/>
-            <input name="RECORD_MODE" value="UPDATE"/>
-        </include>
-        
-        <!-- Create h5j files from v3dpbd files -->
-        <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
-            <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-            <input name="INPUT_TYPE" value="v3dpbd"/>
-            <input name="OUTPUT_TYPE" value="h5j"/>
-            <input name="DELETE_INPUTS" value="false"/>
-            <input name="RECORD_MODE" value="ADD"/>
-            <input name="EXCLUDE_FILES" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd"/>
         </include>
         
         <!-- Move all generated files to archive -->

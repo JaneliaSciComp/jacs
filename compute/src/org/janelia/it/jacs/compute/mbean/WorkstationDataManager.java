@@ -392,7 +392,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             String quantifierSummaryFilename= SystemConfigurationProperties.getString("FlyScreen.PatternAnnotationQuantifierSummaryFile");
             File summaryFile=new File(resourceDirString + File.separator+maskFolderName, quantifierSummaryFilename);
             File nameIndexFile=new File(resourceDirString + File.separator+maskFolderName, "maskNameIndex.txt");
-            maskManager.loadMaskCompartmentList(nameIndexFile.toURI().toURL());
+            maskManager.loadMaskCompartmentList(nameIndexFile.toURI().toURL().openStream());
             maskManager.createMaskAnnotationQuantifierSummaryFile(summaryFile, entityQuantifierMap);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -715,7 +715,20 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             logger.error("Error running runBenchmarks", ex);
         }
     }
-
+    
+    public void runScalityBenchmarks(String entityId) {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            taskParameters.add(new TaskParameter("sample entity id", entityId, null));
+            Task task = new GenericTask(new HashSet<Node>(), "user:system", new ArrayList<Event>(),
+                    taskParameters, "runScalityBenchmarks", "Scality Benchmark Service");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("ScalityBenchmark", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     /*
      @Deprecated going to the validation engine code instead. LLF
      */
