@@ -12,7 +12,6 @@ import java.util.Scanner;
 import java.util.Set;
 
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
@@ -214,6 +213,11 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
     protected String getAdditionalNativeSpecification() {
         return "-l scalityw=1";
+    }
+
+    @Override
+    protected boolean isShortJob() {
+        return true;
     }
 
     @Override
