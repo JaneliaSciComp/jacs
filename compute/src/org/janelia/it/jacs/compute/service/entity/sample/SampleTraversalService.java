@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
@@ -148,15 +149,30 @@ public class SampleTraversalService extends AbstractEntityService {
     
     private List<Entity> getIncludedSamples(Entity sample) throws Exception {
 
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
         List<Entity> included = new ArrayList<Entity>();
+        String dataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        if (StringUtils.isEmpty(dataSetIdentifier)) {
+        	// Don't include anything without a data set (these are most likely child samples that will be inspected as part of their parents' inspection)
+        	return included;
+        }
+        
+        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
 
-        // Ignore blocked samples
         if (isBlocked(status)) {
             logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - blocked");
             return included;
         }
 
+        if (isDesync(status)) {
+            logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - desync");
+            return included;
+        }
+        
+        if (isRetired(status)) {
+            logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - retired");
+            return included;
+        }
+        
         populateChildren(sample);
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
 
@@ -167,8 +183,7 @@ public class SampleTraversalService extends AbstractEntityService {
                 logger.info("Included " + sample + " (id=" + sample.getId() + ") - childless sample");
             }
             else {
-                boolean desync = isDesync(status);
-                logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - childless sample " + (desync ? "is desynced" : ""));
+                logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - childless sample ");
             }
         } 
         else {
@@ -185,10 +200,18 @@ public class SampleTraversalService extends AbstractEntityService {
                 }
             }
 
-            if (includeParentSamples && (!childrenIncluded.isEmpty() || isMarked(status))) {
-                // The parent sample should be included if any of the children samples are included, or if it's marked
-                included.add(sample);
-                logger.info("Included " + sample + " (id=" + sample.getId() + ") - parent sample");
+            if (includeParentSamples) {
+            	if (!childrenIncluded.isEmpty()) {
+                    logger.info("Included " + sample + " (id=" + sample.getId() + ") - child samples need processing");
+                    included.add(sample);
+            	}
+            	else if (isMarked(status)) {
+                    logger.info("Included " + sample + " (id=" + sample.getId() + ") - parent sample marked");
+                    included.add(sample);
+            	}
+            	else {
+                    logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - parent sample");
+            	}
             } 
             else {
                 logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - parent sample");
@@ -216,7 +239,7 @@ public class SampleTraversalService extends AbstractEntityService {
 
         String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
 
-        if (isBlocked(status) || isDesync(status)) {
+        if (isBlocked(status) || isDesync(status) || isRetired(status)) {
             return false;
         }
 
@@ -259,5 +282,9 @@ public class SampleTraversalService extends AbstractEntityService {
 
     private boolean isDesync(String status) {
         return (status != null && EntityConstants.VALUE_DESYNC.equals(status));
+    }
+    
+    private boolean isRetired(String status) {
+        return (status != null && EntityConstants.VALUE_RETIRED.equals(status));
     }
 }
