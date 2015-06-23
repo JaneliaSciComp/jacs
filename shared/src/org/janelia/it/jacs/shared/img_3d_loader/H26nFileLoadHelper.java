@@ -53,7 +53,7 @@ public class H26nFileLoadHelper {
         fileLoader.setSz( acceptor.getNumPages() );
         fileLoader.setPixelBytes(acceptor.getPixelBytes());
         long totalSize = acceptor.getTotalSize();
-        if (totalSize > Integer.MAX_VALUE) {
+        if (totalSize > Integer.MAX_VALUE) {            
             throw new IllegalArgumentException("The input file is too large to be represented here.  Size is " + totalSize);
         }
         byte[] texByteArr = new byte[ (int)acceptor.getTotalSize() ];
