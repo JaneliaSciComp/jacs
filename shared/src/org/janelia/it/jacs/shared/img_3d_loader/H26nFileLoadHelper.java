@@ -54,14 +54,20 @@ public class H26nFileLoadHelper {
         fileLoader.setPixelBytes(acceptor.getPixelBytes());
         long totalSize = acceptor.getTotalSize();
         if (totalSize > Integer.MAX_VALUE) {            
-            throw new IllegalArgumentException("The input file is too large to be represented here.  Size is " + totalSize);
+            // Must use segmented approach.
+            for (byte[] nextBytes: acceptor.getBytes()) {
+                fileLoader.addTextureBytes(nextBytes);
+            }
         }
-        byte[] texByteArr = new byte[ (int)acceptor.getTotalSize() ];
-        int nextPos = 0;
-        for (byte[] nextBytes: acceptor.getBytes() ) {
-            System.arraycopy(nextBytes, 0, texByteArr, nextPos, nextBytes.length);
-            nextPos += nextBytes.length;
+        else {
+            // Can load whole chunk as one.
+            byte[] texByteArr = new byte[(int) acceptor.getTotalSize()];
+            int nextPos = 0;
+            for (byte[] nextBytes : acceptor.getBytes()) {
+                System.arraycopy(nextBytes, 0, texByteArr, nextPos, nextBytes.length);
+                nextPos += nextBytes.length;
+            }
+            fileLoader.setTextureByteArray(texByteArr);
         }
-        fileLoader.setTextureByteArray(texByteArr);
     }
 }
