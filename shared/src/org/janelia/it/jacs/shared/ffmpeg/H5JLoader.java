@@ -75,8 +75,8 @@ public class H5JLoader
         IHDF5Reader ihdf5reader = conf.reader();
         if (ihdf5reader.object().hasAttribute(CHANNELS_QUERY_PATH, PAD_BOTTOM_ATTRIB)) {
             IHDF5LongReader ihdf5LongReader = ihdf5reader.int64();
-            final int baddingBottom = (int) ihdf5LongReader.getAttr(CHANNELS_QUERY_PATH, PAD_BOTTOM_ATTRIB);
-            _image.setPaddingBottom(baddingBottom);
+            final int paddingBottom = (int) ihdf5LongReader.getAttr(CHANNELS_QUERY_PATH, PAD_BOTTOM_ATTRIB);
+            _image.setPaddingBottom(paddingBottom);
         } else {
             _image.setPaddingBottom(-1);
         }

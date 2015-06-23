@@ -663,7 +663,7 @@ public class SageDAO {
             "  from image_vw i" +
             "  inner join image_property_vw ip2 on (ip2.image_id=i.id and ip2.type='data_set' and ip2.value=?)" +
             "  where i.display=true and i.path is not null" +
-            "  and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
+            "  and (i.created_by is null or i.created_by!='"+SageArtifactExportService.CREATED_BY+"') " +
             ") image_vw on ip1.image_id = image_vw.id " +
             "group by image_vw.id ";
 

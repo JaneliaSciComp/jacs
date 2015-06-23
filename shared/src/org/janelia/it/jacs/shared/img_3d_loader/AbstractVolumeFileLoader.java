@@ -7,6 +7,8 @@
 package org.janelia.it.jacs.shared.img_3d_loader;
 
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -15,6 +17,7 @@ import java.nio.ByteOrder;
 public abstract class AbstractVolumeFileLoader implements VolumeFileLoaderI {
     private int[] argbTextureIntArray;
     private byte[] textureByteArray;
+    private List<byte[]> textureByteArrays;
     private int sx = -1, sy = -1, sz = -1;
     private int channelCount = 1; // Default for non-data-bearing file formats.
     private int pixelBytes = 1;
@@ -52,6 +55,30 @@ public abstract class AbstractVolumeFileLoader implements VolumeFileLoaderI {
      */
     public void setTextureByteArray(byte[] textureByteArray) {
         this.textureByteArray = textureByteArray;
+    }
+    
+    /**
+     * Add, in order, another part to the growing list of texture byte
+     * arrays.  This is an alternative to a single texture byte array or
+     * a single ARGB integer byte array.
+     * 
+     * @param partialByteArray to add to collection.
+     */
+    public void addTextureBytes(byte[] partialByteArray) {
+        if (textureByteArrays == null) {
+            textureByteArrays = new ArrayList<>();
+        }
+        textureByteArrays.add(partialByteArray);
+    }
+    
+    /**
+     * Return the list of arrays-of-bytes, making up the total texture.
+     * May return null, if single byte array or single ARGB int array was used.
+     * 
+     * @return 
+     */
+    public List<byte[]> getTextureByteArrays() {
+        return textureByteArrays;
     }
 
     /**
