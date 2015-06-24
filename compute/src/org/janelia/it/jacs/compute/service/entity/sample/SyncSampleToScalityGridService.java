@@ -17,6 +17,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -220,9 +221,6 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("echo \"Copy target: $SCALITY_URL\"\n");
         script.append("timing=`"+ARCHIVE_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
         script.append("echo \"$timing\"\n");
-        if (deleteSourceFiles) {
-            script.append(REMOVE_COMMAND + " \"$FILE_PATH\"\n");    
-        }
         writer.write(script.toString());
     }
 
@@ -269,7 +267,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     				}
                     else if (line.startsWith("Result: failure")) {
                         hasError[index-1] = true;
-                        contextLogger.error("Error uploading "+entitiesToMove.get(index).getId()+" to Scality. Details can be found at "+outputFile.getAbsolutePath());
+                        contextLogger.error("Error uploading "+entitiesToMove.get(index-1).getId()+" to Scality. Details can be found at "+outputFile.getAbsolutePath());
                     }
     				else if (line.startsWith(TIMING_PREFIX)) {
     					timingCsv = line.substring(TIMING_PREFIX.length());
@@ -317,24 +315,23 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	i=0;
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
+                String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
     		    contextLogger.info("Synchronized "+entity.getId()+" to "+scalityUrl);
     		    
-                EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 try {
                     String bpid = ScalityDAO.getBPIDFromEntity(entity);
                     String scalityPath = EntityConstants.SCALITY_PATH_PREFIX+ScalityDAO.getBPIDFromEntity(entity);
                     
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
         			if (deleteSourceFiles) {
-        				if (filepathEd!=null) {
-	        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepathEd.getValue(), scalityPath);
-	                        if (numUpdated>0) {
-	                            contextLogger.info("Updated "+numUpdated+" entity data values to "+scalityPath);
-	                        }
-	        			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
-	                        contextLogger.info("Deleted "+filepathEd.getValue());
-        				}
+        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, scalityPath);
+                        if (numUpdated>0) {
+                            contextLogger.info("Updated "+numUpdated+" entity data values to "+scalityPath);
+                        }
+        			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
+        			    FileUtils.forceDelete(new File(filepath));
+                        contextLogger.info("Deleted "+filepath);
                     }
                 }
                 catch (Exception e) {
