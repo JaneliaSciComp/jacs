@@ -354,7 +354,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
     }
     
     private void updateEntityData(Entity entity, String attName, String value) throws ComputeException {
-		contextLogger.info("updateEntityData "+attName+"="+value+" for "+entity.getId());
+		contextLogger.debug("updateEntityData "+attName+"="+value+" for "+entity.getId());
     	if (!StringUtils.isEmpty(value)) {
     		entity.setValueByAttributeName(attName, value);
     	}
@@ -362,7 +362,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
     		EntityData ed = entity.getEntityDataByAttributeName(attName);
     		if (ed!=null) {
     			entity.getEntityData().remove(ed);
-    			contextLogger.info("Removing entity data "+ed.getEntityAttrName()+" for "+entity.getId());
+    			contextLogger.debug("Removing entity data "+ed.getEntityAttrName()+" for "+entity.getId());
         		if (!isDebug) {
         			entityBean.deleteEntityData(ed);
         		}
