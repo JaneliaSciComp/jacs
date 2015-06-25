@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -29,9 +30,10 @@ public class ScalityDAO {
     private static final Logger log = Logger.getLogger(ScalityDAO.class);
 
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 2;
-    private static final String SCALITY_PATH_NAMESPACE = "JACS";//SystemConfigurationProperties.getString("Scality.Namespace");
-    private static final String SCALITY_BASE_URL = "http://sc101-jrc:81/proxy";//SystemConfigurationProperties.getString("Scality.BaseURL");
-	private static final String SCALITY_DRIVER = "bparc2";//SystemConfigurationProperties.getString("Scality.Driver");
+    private static final String SCALITY_PATH_NAMESPACE = SystemConfigurationProperties.getString("Scality.Namespace");
+    private static final String SCALITY_CLUSTER_BASE_URL = SystemConfigurationProperties.getString("Scality.Cluster.BaseURL");
+    private static final String SCALITY_BASE_URL = SystemConfigurationProperties.getString("Scality.Cluster.BaseURL");
+	private static final String SCALITY_DRIVER = SystemConfigurationProperties.getString("Scality.Driver");
 	
 	private HttpClient httpClient;
 	
@@ -158,12 +160,17 @@ public class ScalityDAO {
 			if (get!=null) get.releaseConnection();
 		}
     }
-    
+
 	public void delete(Entity entity) throws Exception {
+		final String bpid = getBPIDFromEntity(entity);
+		delete(bpid);
+	}
+	
+	public void delete(String bpid) throws Exception {
 
 		DeleteMethod delete = null;
 		try {
-			final String url = getUrlFromEntity(entity);
+			String url = getUrlFromBPID(bpid);
 			log.info("Deleting "+url);
 		
 			delete = new DeleteMethod(url);
@@ -217,6 +224,15 @@ public class ScalityDAO {
         return sb.toString();
     }
 
+	public static String getClusterUrlFromBPID(String bpid) {
+		StringBuilder sb = new StringBuilder(SCALITY_CLUSTER_BASE_URL);
+		sb.append("/");
+		sb.append(SCALITY_DRIVER);
+		sb.append("/");
+		sb.append(bpid);
+		return sb.toString();
+	}
+
 	public static String getUrlFromBPID(String bpid) {
 		StringBuilder sb = new StringBuilder(SCALITY_BASE_URL);
 		sb.append("/");
@@ -238,6 +254,10 @@ public class ScalityDAO {
 	
     public static String getUrlFromEntity(Entity entity) {
         return getUrlFromBPID(getBPIDFromEntity(entity));
+    }
+
+    public static String getClusterUrlFromEntity(Entity entity) {
+        return getClusterUrlFromBPID(getBPIDFromEntity(entity));
     }
     
 	private static long getMbps(long bytes, long millis) {

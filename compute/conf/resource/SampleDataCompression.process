@@ -66,7 +66,14 @@
 		</operation>
 		
 	    <sequence forEach="INPUT_PATH_LIST">
-        
+		    
+		    <!-- Create a result node for this group -->
+		    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+			    <input name="NAME" value="Temp"/>
+		        <output name="RESULT_FILE_NODE"/>
+		        <output name="RESULT_FILE_NODE_ID"/>
+		    </operation>
+		    
 		    <!-- Create the output file list -->
 			<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
 		        <input name="MODE" value="CREATE_OUTPUT_LIST"/>
@@ -77,13 +84,6 @@
 				<input name="INPUT_PATH_LIST"/>
 				<output name="OUTPUT_PATH_LIST"/>
 			</operation>
-
-		    <!-- Create a result node for this group -->
-		    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-			    <input name="NAME" value="Temp"/>
-		        <output name="RESULT_FILE_NODE"/>
-		        <output name="RESULT_FILE_NODE_ID"/>
-		    </operation>
 		    
 		    <!-- Convert all the files in the group -->
             <sequence name="RAW Conversion to PBD" waitForAsync="true">

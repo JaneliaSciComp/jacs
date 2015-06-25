@@ -32,7 +32,7 @@ public class StandardizePathService implements IService {
             
             if (filepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX)) {
                 String bpid = filepath.replaceFirst(EntityConstants.SCALITY_PATH_PREFIX,"");
-                filepath = ScalityDAO.getUrlFromBPID(bpid);    
+                filepath = ScalityDAO.getClusterUrlFromBPID(bpid);
             }
             
         	logger.info("Putting standard path '"+filepath+"' in "+processVarOut);

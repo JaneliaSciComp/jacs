@@ -86,7 +86,7 @@
                 <input name="INPUT_TYPE" value="v3dpbd"/>
                 <input name="OUTPUT_TYPE" value="h5j"/>
                 <input name="DELETE_INPUTS" value="false"/>
-                <input name="RECORD_MODE" value="ADD"/>
+                <input name="RECORD_MODE" value="FLIP"/>
                 <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
             </include>
             
@@ -96,6 +96,7 @@
                 <input name="SAMPLE_ENTITY_ID" value="$V{ROOT_ENTITY_ID}"/>
                 <input name="FILE_TYPES" value="pbd"/>
                 <input name="DELETE_SOURCE_FILES" value="true"/>
+                <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
             </include>
         
         </sequence>
@@ -108,8 +109,7 @@
                 <input name="INPUT_TYPE" value="v3dpbd"/>
                 <input name="OUTPUT_TYPE" value="h5j"/>
                 <input name="DELETE_INPUTS" value="true"/>
-                <!-- TODO: fix this when we implement deletion from Scality so that PBDs can be purged -->
-                <input name="RECORD_MODE" value="NOT YET IMPLEMENTED"/>
+                <input name="RECORD_MODE" value="UPDATE"/>
                 <input name="EXCLUDE_FILES" value="$V{SEPARATION_EXCLUDE}"/>
             </include>
             

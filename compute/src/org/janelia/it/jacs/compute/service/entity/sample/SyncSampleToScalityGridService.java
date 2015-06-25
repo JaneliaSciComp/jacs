@@ -17,13 +17,14 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
@@ -46,12 +47,12 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     private static final String ARCHIVE_SYNC_CMD = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
-    
-    private static final String REMOVE_COMMAND = "rm -rf"; 
-    
+        
     private Entity sampleEntity;
+    private Set<Long> seenEntityIds = new HashSet<Long>();
     private List<Entity> entitiesToMove = new ArrayList<Entity>();
     private boolean deleteSourceFiles = false;
+    private Set<String> excludeFileSet = new HashSet<String>();
 
     @Override
     protected String getGridServicePrefixName() {
@@ -61,6 +62,13 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
     protected void init() throws Exception {
 
+        String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
+        if (!StringUtils.isEmpty(excludeFiles)) {
+            for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
+                excludeFileSet.add(excludeFile);
+            }
+        }
+        
         this.deleteSourceFiles = data.getItemAsBoolean("DELETE_SOURCE_FILES");
         
         Long sampleEntityId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
@@ -145,6 +153,11 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
     private void addToEntitiesToMove(Entity entity) {
 
+    	if (seenEntityIds.contains(entity.getId())) {
+    		return;
+    	}
+    	seenEntityIds.add(entity.getId());
+    	
         String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         
         if (filepath==null) {
@@ -153,6 +166,12 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
 
         File file = new File(filepath);
+        
+        if (excludeFileSet.contains(file.getName())) {
+            contextLogger.debug("Excluding file: "+entity.getId());
+            return;
+        }
+        
         if (!file.exists()) {
             contextLogger.warn("Entity has filepath which does not exist: "+entity.getId());
             return;
@@ -174,7 +193,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     
     private void writeInstanceFile(Entity entity, int configIndex) throws Exception {
 		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
+		String scalityUrl = ScalityDAO.getClusterUrlFromEntity(entity);
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
@@ -199,9 +218,6 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("echo \"Copy target: $SCALITY_URL\"\n");
         script.append("timing=`"+ARCHIVE_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
         script.append("echo \"$timing\"\n");
-        if (deleteSourceFiles) {
-            script.append(REMOVE_COMMAND + " \"$FILE_PATH\"\n");    
-        }
         writer.write(script.toString());
     }
 
@@ -248,7 +264,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     				}
                     else if (line.startsWith("Result: failure")) {
                         hasError[index-1] = true;
-                        contextLogger.error("Error uploading "+entitiesToMove.get(index).getId()+" to Scality. Details can be found at "+outputFile.getAbsolutePath());
+                        contextLogger.error("Error uploading "+entitiesToMove.get(index-1).getId()+" to Scality. Details can be found at "+outputFile.getAbsolutePath());
                     }
     				else if (line.startsWith(TIMING_PREFIX)) {
     					timingCsv = line.substring(TIMING_PREFIX.length());
@@ -296,26 +312,23 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	i=0;
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
-                String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
+                String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                String scalityUrl = ScalityDAO.getClusterUrlFromEntity(entity);
     		    contextLogger.info("Synchronized "+entity.getId()+" to "+scalityUrl);
     		    
-                EntityData filepathEd = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 try {
                     String bpid = ScalityDAO.getBPIDFromEntity(entity);
                     String scalityPath = EntityConstants.SCALITY_PATH_PREFIX+ScalityDAO.getBPIDFromEntity(entity);
                     
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
-        			int numUpdated = 0;
         			if (deleteSourceFiles) {
-        			    numUpdated = entityBean.bulkUpdateEntityDataValue(filepathEd.getValue(), scalityPath);
+        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, scalityPath);
+                        if (numUpdated>0) {
+                            contextLogger.info("Updated "+numUpdated+" entity data values to "+scalityPath);
+                        }
         			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
-        			}
-        			
-                    if (deleteSourceFiles) {
-                        contextLogger.info("Deleted "+filepathEd.getValue());
-                    }
-                    if (numUpdated>0) {
-                        contextLogger.info("Updated "+numUpdated+" entity data values to "+scalityPath);
+        			    FileUtils.forceDelete(new File(filepath));
+                        contextLogger.info("Deleted "+filepath);
                     }
                 }
                 catch (Exception e) {
