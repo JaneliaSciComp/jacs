@@ -36,36 +36,31 @@ public class ScalityBenchmarkService extends AbstractEntityService {
     		log.warn("Sample entity not found with id="+sampleEntityId);
     	}
 
-    	try {
-        	this.scality = new ScalityDAO();
-			log.info("Upload to Scality:");
-        	long elapsed = uploadTreeToScality(sampleEntity);
-			log.info(sampleEntity.getName()+"\t"+elapsed+" ms");
+    	this.scality = new ScalityDAO();
+		log.info("Upload to Scality:");
+    	long elapsed = uploadTreeToScality(sampleEntity);
+		log.info(sampleEntity.getName()+"\t"+elapsed+" ms");
 
-			long total = 0;
-			for(int i=0; i<NUM_ITERATIONS; i++) {
-				log.info("File iteration "+i+":");
-				elapsed = downloadTreeToLocalDisk(sampleEntity, false);
-				log.info("    "+sampleEntity.getName()+"\t"+elapsed+" ms");
-				total += elapsed;
-			}
-			log.info("File Average: "+Math.round((double)total/(double)NUM_ITERATIONS)+" ms");
-			
-			total = 0;
-			for(int i=0; i<NUM_ITERATIONS; i++) {
-				log.info("Scality iteration "+i+":");
-				elapsed = downloadTreeToLocalDisk(sampleEntity, true);
-				log.info("    "+sampleEntity.getName()+"\t"+elapsed+" ms");
-				total += elapsed;
-			}
-			log.info("Scality Average: "+Math.round((double)total/(double)NUM_ITERATIONS)+" ms");
+		long total = 0;
+		for(int i=0; i<NUM_ITERATIONS; i++) {
+			log.info("File iteration "+i+":");
+			elapsed = downloadTreeToLocalDisk(sampleEntity, false);
+			log.info("    "+sampleEntity.getName()+"\t"+elapsed+" ms");
+			total += elapsed;
+		}
+		log.info("File Average: "+Math.round((double)total/(double)NUM_ITERATIONS)+" ms");
 		
-			log.info("Deleting all the Scality objects we created...");
-			cleanScality();
-    	}
-    	finally {
-    		if (scality!=null) scality.close();	
-    	}	
+		total = 0;
+		for(int i=0; i<NUM_ITERATIONS; i++) {
+			log.info("Scality iteration "+i+":");
+			elapsed = downloadTreeToLocalDisk(sampleEntity, true);
+			log.info("    "+sampleEntity.getName()+"\t"+elapsed+" ms");
+			total += elapsed;
+		}
+		log.info("Scality Average: "+Math.round((double)total/(double)NUM_ITERATIONS)+" ms");
+	
+		log.info("Deleting all the Scality objects we created...");
+		cleanScality();
     }
 	
 	private long uploadTreeToScality(Entity entity) throws Exception {
