@@ -31,7 +31,8 @@ public class ScalityDAO {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 2;
     private static final String SCALITY_PATH_NAMESPACE = SystemConfigurationProperties.getString("Scality.Namespace");
-    private static final String SCALITY_BASE_URL = SystemConfigurationProperties.getString("Scality.BaseURL");
+    private static final String SCALITY_CLUSTER_BASE_URL = SystemConfigurationProperties.getString("Scality.Cluster.BaseURL");
+    private static final String SCALITY_BASE_URL = SystemConfigurationProperties.getString("Scality.Cluster.BaseURL");
 	private static final String SCALITY_DRIVER = SystemConfigurationProperties.getString("Scality.Driver");
 	
 	private HttpClient httpClient;
@@ -223,6 +224,15 @@ public class ScalityDAO {
         return sb.toString();
     }
 
+	public static String getClusterUrlFromBPID(String bpid) {
+		StringBuilder sb = new StringBuilder(SCALITY_CLUSTER_BASE_URL);
+		sb.append("/");
+		sb.append(SCALITY_DRIVER);
+		sb.append("/");
+		sb.append(bpid);
+		return sb.toString();
+	}
+
 	public static String getUrlFromBPID(String bpid) {
 		StringBuilder sb = new StringBuilder(SCALITY_BASE_URL);
 		sb.append("/");
@@ -244,6 +254,10 @@ public class ScalityDAO {
 	
     public static String getUrlFromEntity(Entity entity) {
         return getUrlFromBPID(getBPIDFromEntity(entity));
+    }
+
+    public static String getClusterUrlFromEntity(Entity entity) {
+        return getClusterUrlFromBPID(getBPIDFromEntity(entity));
     }
     
 	private static long getMbps(long bytes, long millis) {

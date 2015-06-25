@@ -21,7 +21,6 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -48,9 +47,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     private static final String ARCHIVE_SYNC_CMD = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
-    
-    private static final String REMOVE_COMMAND = "rm -rf"; 
-    
+        
     private Entity sampleEntity;
     private Set<Long> seenEntityIds = new HashSet<Long>();
     private List<Entity> entitiesToMove = new ArrayList<Entity>();
@@ -196,7 +193,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     
     private void writeInstanceFile(Entity entity, int configIndex) throws Exception {
 		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
+		String scalityUrl = ScalityDAO.getClusterUrlFromEntity(entity);
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
@@ -316,7 +313,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
                 String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                String scalityUrl = ScalityDAO.getUrlFromEntity(entity);
+                String scalityUrl = ScalityDAO.getClusterUrlFromEntity(entity);
     		    contextLogger.info("Synchronized "+entity.getId()+" to "+scalityUrl);
     		    
                 try {
