@@ -171,7 +171,11 @@ public class V3dRawImageStream
 		{
 			int index = x + sx * y;
 			if (pixelBytes == 1) {
-				return sliceBuffer.get(index);
+                int value = sliceBuffer.get(index);
+                if (value < 0) {
+                    value += 256;
+                }
+				return value;
 			}
 			else if (pixelBytes == 2)
 				return sliceBuffer.getShort(index * pixelBytes);

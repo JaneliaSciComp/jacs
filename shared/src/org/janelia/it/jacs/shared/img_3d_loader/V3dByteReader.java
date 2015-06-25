@@ -79,10 +79,11 @@ public class V3dByteReader {
                 int yOffset = zOffset + calcYOffset(y, sy) * sx;
                 for (int x = 0; x < sx; x ++ ) {
                     Integer value = slice.getValue(x, y);
-                    if ( value > 0 ) {
-                        values.add( value );
-                        textureByteArray[(yOffset) + x] = value.byteValue();
+                    if (value < 0) {
+                        value = 256 + value;
                     }
+                    values.add(value);
+                    textureByteArray[(yOffset) + x] = value.byteValue();
                 }
             }
         }
