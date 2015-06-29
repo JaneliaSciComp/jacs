@@ -7,6 +7,7 @@ import java.util.Set;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -124,8 +125,8 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	Set<String> pipelineSet = new HashSet<String>(pipelines);
     	
         for(Entity pipelineRun : EntityUtils.getChildrenOfType(subSample, EntityConstants.TYPE_PIPELINE_RUN)) {
-        	populateChildren(subSample);
-        	if (EntityUtils.findChildWithType(subSample, EntityConstants.TYPE_ERROR)!=null) {
+        	populateChildren(pipelineRun);
+        	if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
         		continue;
         	}
         	String pipelineName = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);

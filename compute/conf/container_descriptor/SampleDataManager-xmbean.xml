@@ -449,6 +449,16 @@
     </operation>
 
     <operation>
+        <description>Restores files which were put into Scality but shouldn't have been</description>
+        <name>runScalityCorrectionService</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight")</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+    
+    <operation>
         <description>BZip2 input LSM's defined in an ls'd file</description>
         <name>bzipLSMCompressionService</name>
         <parameter>
