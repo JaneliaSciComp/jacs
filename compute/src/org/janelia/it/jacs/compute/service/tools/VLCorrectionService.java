@@ -18,9 +18,6 @@ import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
- * User: ekelsey
- * Date: Aug 26, 2010
- * Time: 3:31:05 PM
  */
 public class VLCorrectionService extends SubmitDrmaaJobService {
 
@@ -133,4 +130,8 @@ public class VLCorrectionService extends SubmitDrmaaJobService {
         return resultFileNode;
     }
 
+    @Override
+    protected int getRequiredSlots() {
+        return 8;
+    }
 }
