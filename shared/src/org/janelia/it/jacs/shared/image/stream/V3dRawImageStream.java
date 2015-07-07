@@ -5,9 +5,14 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.zip.DataFormatException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class V3dRawImageStream 
 {
+    
+    Logger logger = LoggerFactory.getLogger(V3dRawImageStream.class);
+    
     public String getHeaderKey() {
         return headerKey;
     }
@@ -114,10 +119,13 @@ public class V3dRawImageStream
 		
 		// wrap inStream, if compressed format
 		if (format == Format.FORMAT_MURPHY_PBD) {
-			if (pixelBytes == 1)
+			if (pixelBytes == 1) {
+                            logger.info("Using Pbd8InputStream");
 				inStream = new Pbd8InputStream(inStream);
-			else
+                        } else {
+                            logger.info("Using Pbd16InputStream");
 				inStream = new Pbd16InputStream(inStream, endian);
+                        }
 		}
 		else if (format == Format.FORMAT_MYERS_PBD) {
 			// TODO
