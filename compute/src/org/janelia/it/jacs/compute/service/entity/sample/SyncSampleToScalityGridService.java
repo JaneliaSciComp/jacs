@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
@@ -49,10 +51,10 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
         
     private Entity sampleEntity;
-    private Set<Long> seenEntityIds = new HashSet<Long>();
-    private List<Entity> entitiesToMove = new ArrayList<Entity>();
+    private Set<Long> seenEntityIds = new HashSet<>();
+    private List<Entity> entitiesToMove = new ArrayList<>();
     private boolean deleteSourceFiles = false;
-    private Set<String> excludeFileSet = new HashSet<String>();
+    private Set<Pattern> exclusions = new HashSet<>();
 
     @Override
     protected String getGridServicePrefixName() {
@@ -64,8 +66,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
         if (!StringUtils.isEmpty(excludeFiles)) {
-            for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
-                excludeFileSet.add(excludeFile);
+            for(String filePattern : excludeFiles.split("\\s*,\\s*")) {
+            	Pattern p = Pattern.compile(filePattern.replaceAll("\\*", "(.*?)"));
+            	exclusions.add(p);
             }
         }
         
@@ -93,7 +96,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             cancel();
         }
     }
-    
+	
     private void processSample(Entity sample, List<String> fileTypes) throws Exception {
 
         Set<String> types = new HashSet<>(fileTypes);
@@ -167,7 +170,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
         File file = new File(filepath);
         
-        if (excludeFileSet.contains(file.getName())) {
+        if (isExcluded(file.getName())) {
             contextLogger.debug("Excluding file: "+entity.getId());
             return;
         }
@@ -179,6 +182,16 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
         contextLogger.info("Will synchronized file for entity: "+entity.getId());
         entitiesToMove.add(entity);
+    }
+    
+	private boolean isExcluded(String filename) {		
+		for(Pattern p : exclusions) {
+			Matcher m = p.matcher(filename);
+			if (m.matches()) {
+				return true;
+			}
+		}
+		return false;
     }
     
     @Override
