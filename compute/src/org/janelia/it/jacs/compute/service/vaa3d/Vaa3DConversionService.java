@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
@@ -48,10 +47,8 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     	}
     }
 
-    protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
-        boolean copyOnly = getExtension(inputFile).equals(getExtension(outputFile));
+    protected void writeInstanceFile(FileWriter fw, String inputFile, String outputFile, int configIndex) throws IOException {
         super.writeInstanceFile(fw, inputFile, outputFile, configIndex);
-        fw.write(copyOnly + "\n");
         if (global8bitFlag) {
             fw.write("8" + "\n");
         } else {
@@ -61,31 +58,18 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     
     protected void writeShellScript(FileWriter writer) throws Exception {
     	super.writeShellScript(writer);
-    	writer.write("read COPY_ONLY\n");
         writer.write("read SAVE_TO_8BIT\n");
         StringBuffer script = new StringBuffer();
         script.append(Vaa3DHelper.getVaa3dHeadlessGridCommandPrefix());
         script.append("\n");
-        script.append("if [ \"$COPY_ONLY\" == \"true\" ] && [ \"$SAVE_TO_8BIT\" == \"\" ]; then\n");
-        script.append("    echo \"Copying $INPUT_FILENAME to $OUTPUT_FILENAME\"\n");
-        script.append("    ").append(Vaa3DHelper.getFormattedCopyCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME")).append("\n");
-        script.append("else\n");
-        script.append("    ").append(Vaa3DHelper.getFormattedConvertCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT")).append("\n");
-        script.append("fi\n");
-        script.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
+        script.append(Vaa3DHelper.getFormattedConvertScriptCommand("$INPUT_FILENAME", "$OUTPUT_FILENAME", "$SAVE_TO_8BIT") + "\n");
         script.append("\n");
+        script.append(Vaa3DHelper.getHeadlessGridCommandSuffix());
         writer.write(script.toString());
     }
     
-    private String getExtension(File file) {
-        int dot = file.getName().indexOf('.');
-        if (dot>0) {
-            return file.getName().substring(dot+1);
-        }
-        return "";
-    }
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 12;
+    	return 36;
     }
 }

@@ -494,7 +494,13 @@ public class SampleHelper extends EntityHelper {
         
         Entity supportingFolder = EntityUtils.getSupportingData(sample);
         for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFolder, EntityConstants.TYPE_IMAGE_TILE)) {
-            if (!tileNameSet.contains(imageTile.getName())) {
+            boolean matchFound = false;
+            for(SlideImageGroup tileGroup : tileGroupList) {
+                if (existingTileMatches(imageTile, tileGroup)) {
+                    matchFound = true;
+                }
+            }
+            if (!matchFound) {
                 logger.info("  Removing superfluous image tile: "+imageTile.getName());
                 entityBean.deleteEntityTreeById(imageTile.getOwnerKey(), imageTile.getId());
             }
@@ -535,8 +541,11 @@ public class SampleHelper extends EntityHelper {
             Entity child = ed.getChildEntity();
             if (child!=null && child.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_TILE)) {
                 if (child.getName().equals(tileGroup.getTag())) {
-                    imageTileEd = ed;
-                    break;
+                    String area = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+                    if (area==null || area.equals(tileGroup.getAnatomicalArea())) {
+                        imageTileEd = ed;
+                        break;
+                    }
                 }
             }
         }
@@ -585,27 +594,27 @@ public class SampleHelper extends EntityHelper {
      */
     protected boolean existingTileMatches(Entity imageTile, SlideImageGroup tileGroup) {
 
-        List<SlideImage> images = tileGroup.getImages();
-        List<Entity> currTiles = EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK);
+        List<SlideImage> newImages = tileGroup.getImages();
+        List<Entity> currImages = EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK);
         
         Set<String> newFilenames = new HashSet<>();
-        for(SlideImage image : images) {
+        for(SlideImage image : newImages) {
             newFilenames.add(image.getFile().getName());
         }
         
-        if (images.size() != currTiles.size()) {
+        if (newImages.size() != currImages.size()) {
             return false;
         }
         
         Set<String> currFilenames = new HashSet<>();
-        for(Entity lsmStack : currTiles) {
+        for(Entity lsmStack : currImages) {
             currFilenames.add(lsmStack.getName());
             if (!newFilenames.contains(lsmStack.getName())) {
                 return false;
             }
         }
         
-        for(SlideImage image : tileGroup.getImages()) {
+        for(SlideImage image : newImages) {
             if (!currFilenames.contains(image.getFile().getName())) {
                 return false;
             }

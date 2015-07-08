@@ -8,11 +8,9 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
-import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
-import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Takes the bulk merge parameters, then creates lsmFileNames.txt with all the LSM filenames, and metadata files for 
- * each one. ALso creates a sampleEntityId.txt with the sample identifier. 
+ * Takes the bulk merge parameters and creates metadata files for each one. 
  * The parameters should be included in the ProcessData:
  *   SAMPLE_ENTITY_ID
  *   BULK_MERGE_PARAMETERS 
@@ -39,6 +36,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     protected Logger logger;
     private List<File> inputFiles = new ArrayList<File>();
 
+    private String sampleEntityId;
     private File lsmDataFile;
     private File jsonDataFile;
     
@@ -53,7 +51,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	}
     	outputDir = new File(outputNode.getDirectoryPath());
     	
-    	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+    	sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (sampleEntityId == null) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
@@ -75,14 +73,6 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
                 inputFiles.add(new File(mergedLsmPair.getLsmFilepath2()));    
             }
         }
-    	
-    	File sampleIdFile = new File(outputNode.getDirectoryPath(), "sampleEntityId.txt");
-    	try {
-    		FileUtils.writeStringToFile(sampleIdFile, sampleEntityId);
-    	}
-    	catch (Exception e) {
-    		logger.error("Error writing "+sampleIdFile.getAbsolutePath(),e);
-    	}
     }
 
     @Override
@@ -121,14 +111,12 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     }
 
     private void createShellScript(FileWriter writer) throws Exception {
-    	File lsmFilePathsFile = new File(outputDir,"lsmFilePaths.txt");
-    	
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_FILENAME\n");
         script.append("read METADATA_FILENAME\n");
         script.append("read JSON_FILENAME\n");
         script.append("cd "+outputDir.getAbsolutePath()).append("\n");
-        script.append("echo " + addQuotes("$INPUT_FILENAME") + " >> " + lsmFilePathsFile.getAbsolutePath()).append("\n");
+        script.append("echo \"Generating metadata for LSM files in sample "+sampleEntityId+"\" \n");
         script.append(getScriptToCreateLsmMetadataFile("$INPUT_FILENAME", "$METADATA_FILENAME")).append("\n");
         script.append(getScriptToCreateLsmJsonFile("$INPUT_FILENAME", "$JSON_FILENAME")).append("\n");
         

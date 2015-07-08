@@ -7,6 +7,7 @@
         <input name="SAMPLE_ENTITY_ID"/>
         <input name="FILE_TYPES"/>
         <input name="DELETE_SOURCE_FILES"/>
+        <input name="EXCLUDE_FILES"/>
     
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -53,6 +54,7 @@
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="FILE_TYPES"/>
                 <input name="DELETE_SOURCE_FILES"/>
+        		<input name="EXCLUDE_FILES"/>
             </operation>
         </sequence>
         

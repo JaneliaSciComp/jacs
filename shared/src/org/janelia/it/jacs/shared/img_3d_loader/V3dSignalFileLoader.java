@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.DataFormatException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,6 +19,8 @@ import java.util.zip.DataFormatException;
  * Loader of signal data, from v3dpbd format input file.
  */
 public class V3dSignalFileLoader extends LociFileLoader {
+    
+    Logger logger = LoggerFactory.getLogger(V3dSignalFileLoader.class);
 
     @Override
     public void loadVolumeFile( String fileName ) throws Exception {
@@ -28,6 +32,7 @@ public class V3dSignalFileLoader extends LociFileLoader {
     }
 
     private void loadV3dRaw(InputStream inputStream) throws IOException, DataFormatException {
+        logger.info("loadV3dRaw");
         V3dRawImageStream sliceStream = new V3dRawImageStream(inputStream);
         setSx(sliceStream.getDimension(0));
         setSy(sliceStream.getDimension(1));
@@ -37,8 +42,11 @@ public class V3dSignalFileLoader extends LociFileLoader {
         setChannelCount(sc);
         setPixelByteOrder(sliceStream.getEndian());
 
-        if ( sc >= 3 ) {
-            loadV3dIntRaw( sliceStream, sc );
+//        if ( sc >= 3 ) {
+//            loadV3dIntRaw( sliceStream, sc );
+//        }
+        if (sliceStream.getPixelBytes()>1) {
+            loadV3dIntRaw(sliceStream, sc);
         }
         else if ( sliceStream.getPixelBytes() == 1 ) {
             loadV3dByteRaw( sliceStream );
@@ -50,6 +58,8 @@ public class V3dSignalFileLoader extends LociFileLoader {
 
     private void loadV3dIntRaw(V3dRawImageStream sliceStream, int sc )
             throws IOException, DataFormatException {
+        
+        logger.info("loadV3dIntRaw");
 
         double scale = 1.0;
         if (sliceStream.getPixelBytes() > 1)
@@ -92,11 +102,13 @@ public class V3dSignalFileLoader extends LociFileLoader {
 
     private void loadV3dByteRaw(V3dRawImageStream sliceStream)
             throws IOException, DataFormatException {
+        
+        logger.info("loadV3dByteRaw");
 
         V3dByteReader byteReader = new V3dByteReader();
         byteReader.setInvertedY( false );
         // Bypass some bytes.
-        byteReader.readBytes( sliceStream, getSx(), getSy(), getSz(), getPixelBytes() );
+        byteReader.readBytes( sliceStream, getSx(), getSy(), getSz(), getChannelCount(), getPixelBytes() );
         setTextureByteArray(byteReader.getTextureBytes());
         setHeader(sliceStream.getHeaderKey());
     }

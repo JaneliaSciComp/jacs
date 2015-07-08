@@ -12,7 +12,7 @@
         <include name="Remove Trash" process="SampleTrashCompactor">
         </include>
         
-	    <include name="Compress Files" process="PostPipeline_SampleCompression">
+	    <include name="Compress Files" process="SampleCompression">
 	    </include>
         
     </sequence>

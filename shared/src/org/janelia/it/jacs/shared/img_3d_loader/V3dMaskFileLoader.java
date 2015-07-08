@@ -73,7 +73,7 @@ public class V3dMaskFileLoader extends LociFileLoader {
         }
         else {
             V3dByteReader byteReader = new V3dByteReader();
-            values = byteReader.readBytes( sliceStream, sx, sy, sz, pixelBytes );            
+            values = byteReader.readBytes( sliceStream, sx, sy, sz, sc, pixelBytes );            
             setTextureByteArray(byteReader.getTextureBytes());
         }
 

@@ -28,9 +28,14 @@ public class PPMFileAcceptor implements FFMPGByteAcceptor {
     @Override
     public void accept(BytePointer data, int linesize, int width, int height) {
         final String FILENAME_FORMAT = "image%05d.ppm";
+        // NOTE:  This code must remain at Java version 1.6, for use in export
+        // in a separate library.
+        
         // Open file
-        try (OutputStream stream = new FileOutputStream(String.format(FILENAME_FORMAT,frameNum))) {
-
+        OutputStream stream = null;
+        try {
+            stream = new FileOutputStream(String.format(FILENAME_FORMAT,frameNum));
+            
             // Write header
             stream.write(("P6\n" + width + " " + height + "\n255\n").getBytes());
 
@@ -43,15 +48,19 @@ public class PPMFileAcceptor implements FFMPGByteAcceptor {
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
+        } finally {
+            closeStream(stream);
         }
 
     }
-    
+
     @Override
     public void accept(byte[] bytes, int linesize, int width, int height) {
         final String FILENAME_FORMAT = "image%05d.ppm";
         // Open file
-        try (OutputStream stream = new FileOutputStream(String.format(FILENAME_FORMAT,frameNum))) {
+        OutputStream stream = null;
+        try {
+            stream = new FileOutputStream(String.format(FILENAME_FORMAT,frameNum));
 
             // Write header
             stream.write(("P6\n" + width + " " + height + "\n255\n").getBytes());
@@ -63,6 +72,8 @@ public class PPMFileAcceptor implements FFMPGByteAcceptor {
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
+        } finally {
+            closeStream(stream);
         }
 
     }
@@ -72,4 +83,16 @@ public class PPMFileAcceptor implements FFMPGByteAcceptor {
         this.pixelBytes = pixelBytes;
     }
     
+    /** Supports robust closure of output stream. */
+    protected void closeStream(OutputStream stream) throws RuntimeException {
+        try {
+            if (stream != null) {
+                stream.close();
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            throw new RuntimeException(ex);
+        }
+    }
+
 }

@@ -8,12 +8,14 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import java.util.List;
 
 /**
- * A configured aligner which takes additional parameters to align a VNC along with a Brain area.
+ * A configured aligner which aligns a VNC on its own.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
 
+    private static final String VNC_AREA = "VNC";
+    
     @Override
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
         for(AnatomicalArea anatomicalArea : sampleAreas) {
@@ -24,21 +26,18 @@ public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
                 entityLoader.populateChildren(result);
                 Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                 if (image!=null)  {
-                    if ("VNC".equalsIgnoreCase(areaName)) {
+                    if (VNC_AREA.equalsIgnoreCase(areaName)) {
                         alignedAreas.add(anatomicalArea);
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
                         if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
-                    }
-                    else {
-                        logger.warn("Unrecognized sample area: "+areaName);
                     }
                 }
             }
         }
 
         if (input1==null) {
-            throw new SAGEMetadataException("Tile with anatomical area 'VNC' not found for alignment");
+        	runAligner = false;
         }
     }
 

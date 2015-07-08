@@ -11,7 +11,15 @@ import java.util.*;
  * Created by fosterl on 4/3/14.
  */
 public class VertexInfoBean {
+    private VertexInfoKey key;
+    private int vtxBufOffset;
+
+    private Map<String, float[]> attributeMap = new HashMap<>();
+    private Map<String, Integer> attributeNameVsCount = new HashMap<>();
+    private List<Triangle> triangleInclusions = new ArrayList<>();
+
     private float[] coordinates;
+    
     public float[] getCoordinates() {
         if ( coordinates == null ) {
             coordinates = new float[3];
@@ -31,15 +39,8 @@ public class VertexInfoBean {
     }
 
     public enum KnownAttributes {
-        normal, color
+        a_normal, b_color
     }
-
-    private VertexInfoKey key;
-    private int vtxBufOffset;
-
-    private Map<String,float[]> attributeMap = new HashMap<String,float[]>();
-    private Map<String,Integer> attributeNameVsCount = new HashMap<String,Integer>();
-    private List<Triangle> triangleInclusions = new ArrayList<Triangle>();
 
     /**
      * Attributes are meant to become vertex attributes: float arrays describing a vertex.
@@ -89,8 +90,25 @@ public class VertexInfoBean {
         this.key = key;
     }
 
-    public void setIncludingTriangle( Triangle triangle ) {
+    public void addIncludingTriangle( Triangle triangle ) {
         triangleInclusions.add( triangle );
+    }
+    
+    /**
+     * This clone is partially-deep.  It uses same key ref, but copies
+     * attribute values.  Note: not overriding clone, purposely.
+     * 
+     * @return separately-changeable copy of this bean.
+     */
+    public VertexInfoBean cloneIt() {
+        // Specifically avoid triangle inclusions, here.
+        VertexInfoBean rtnVal = new VertexInfoBean();
+        rtnVal.setKey(key);
+        rtnVal.attributeMap = new HashMap<>( this.getAttributeMap() );
+        rtnVal.coordinates = getCoordinates();
+        rtnVal.setVtxBufOffset( this.getVtxBufOffset() );
+        rtnVal.attributeNameVsCount = new HashMap<>( this.attributeNameVsCount );
+        return rtnVal;
     }
 
     /**
@@ -99,14 +117,18 @@ public class VertexInfoBean {
      *
      * @return unique list of normal directions.
      */
-    public Set<VertexFactory.NormalDirection> getUniqueNormals() {
-        Set<VertexFactory.NormalDirection> rtnVal = new HashSet<VertexFactory.NormalDirection>();
+    public Set<AxialNormalDirection> getUniqueNormals() {
+        Set<AxialNormalDirection> rtnVal = new HashSet<>();
         for ( Triangle triangle: triangleInclusions ) {
             rtnVal.add( triangle.getNormalVector() );
         }
         return rtnVal;
     }
-
+    
+    public Collection<Triangle> getIncludingTriangles() {
+        return triangleInclusions;
+    }
+    
     //------------------------------------HELPERS
     private void checkAttributeSanity(String attributeName, int attributeCount) {
         Integer previousCount = attributeNameVsCount.get( attributeName );

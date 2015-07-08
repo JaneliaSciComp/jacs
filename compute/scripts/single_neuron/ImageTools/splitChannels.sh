@@ -1,21 +1,18 @@
 #!/bin/sh
 #
-# Channel splitting pipeline
+# Split channels and convert
 #
+# Given an input file which is accessible either in Scality or on disk, and is a vaa3d compatible format,
+# process the file to split each channel into an individual file, and then convert those output files
+# into a given vaa3d compatible format. 
+# 
 
 DIR=$(cd "$(dirname "$0")"; pwd)
-
-####
-# TOOLKITS
-####
+. $DIR/common.sh
 
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
-
+SyncScript="$DIR/restSync.py"
 export TMPDIR=""
-
-####
-# Inputs
-####
 
 NUMPARAMS=$#
 if [ $NUMPARAMS -lt 3  ]
@@ -37,6 +34,15 @@ echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
 echo "Input file: $INPUT_FILE"
 echo "Outputs: $OUTPUT_DIR/*.$OUT_EXT"
+
+ensureLocalFile "$SyncScript" "$WORKING_DIR" "$INPUT_FILE" INPUT_FILE
+echo "Local input file: $INPUT_FILE"
+ensureUncompressedFile "$WORKING_DIR" "$INPUT_FILE" INPUT_FILE
+echo "Uncompressed input file: $INPUT_FILE"
+
+# Yang says that splitColorChannels works best with v3draw input, so here we ensure the file is v3draw
+ensureRawFile "$Vaa3D" "$WORKING_DIR" "$INPUT_FILE" INPUT_FILE
+echo "Raw input file: $INPUT_FILE"
 
 INPUT_NAME=`basename $INPUT_FILE`
 ln -s $INPUT_FILE $WORKING_DIR/$INPUT_NAME
@@ -60,7 +66,7 @@ do
 done
 
 echo "~ Copying outputs to $OUTPUT_DIR"
-cp $WORKING_DIR/*.$OUT_EXT $OUTPUT_DIR
+cp $WORKING_DIR/*_c*.$OUT_EXT $OUTPUT_DIR
 
 echo "~ Removing working directory $WORKING_DIR"
 rm -rf $WORKING_DIR
