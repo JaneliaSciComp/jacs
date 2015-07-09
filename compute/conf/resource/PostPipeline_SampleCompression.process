@@ -48,7 +48,7 @@
             <input name="SEPARATION_EXCLUDE"/>
             <input name="COMPRESSION_TYPE"/>
             <input name="PROCESS_VARIABLE_MAP">
-                <entry key="SEPARATION_EXCLUDE" value="ConsolidatedSignal.v3dpbd,ConsolidatedLabel.v3dpbd,Reference.v3dpbd,NeuronAligned20xScale.v3dpbd,NeuronAligned63xScale.v3dpbd"/>
+                <entry key="SEPARATION_EXCLUDE" value="Consolidated*,Reference*,NeuronAligned*"/>
                 <entry key="COMPRESSION_TYPE" value="Lossless and H5J"/>
             </input>
             <output name="SEPARATION_EXCLUDE"/>
