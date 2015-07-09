@@ -224,7 +224,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
 		            // Add in case we flip them, we don't want to see it again. 
 		            visited.add(existingH5j.getId());
 		            
-	                contextLogger.info("Slightly lossy entity already has correct output type: "+existingH5j.getId());
+	                contextLogger.debug("Slightly lossy entity already has correct output type: "+existingH5j.getId());
 	                
 	                // The H5J entity already exists
 	                String h5jFilepath = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
