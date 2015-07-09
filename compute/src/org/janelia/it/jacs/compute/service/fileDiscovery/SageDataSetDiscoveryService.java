@@ -1,7 +1,14 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -13,7 +20,8 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 
-import java.util.*;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
@@ -48,7 +56,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         Entity topLevelFolder = sampleHelper.getTopLevelDataSetFolder();
 		logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
 
-    	logger.info("Processing data sets...");
         for(Entity dataSet : sampleHelper.getDataSets()) {
             if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
                 logger.info("Skipping non-SAGE data set: "+dataSet.getName());
@@ -63,10 +70,18 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         }
 
         logger.info("Processed "+sageRowsProcessed+" rows for "+ownerKey+", created "+sampleHelper.getNumSamplesCreated()+
-        		" samples, updated "+sampleHelper.getNumSamplesUpdated()+" samples, added "+sampleHelper.getNumSamplesAdded()+
-        		" samples to their corresponding data set folders. Annexed "+sampleHelper.getNumSamplesAnnexed()+
-        		" samples, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
-        		" samples to Blocked Data folder, and marked "+samplesMarkedDesync+" samples as desynced.");
+        		" samples, updated "+sampleHelper.getNumSamplesUpdated()+
+        		" samples, marked "+sampleHelper.getNumSamplesReprocessed()+
+        		" samples for reprocessing, marked "+samplesMarkedDesync+
+        		" samples as desynced, annexed "+sampleHelper.getNumSamplesAnnexed()+
+        		" samples, added "+sampleHelper.getNumSamplesAdded()+
+                " samples to their corresponding data set folders, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
+        		" samples to Blocked Data folder.");
+        
+        if (samplesMarkedDesync>0) {
+            logger.warn("IMPORTANT: "+samplesMarkedDesync+" samples were marked as desynchronized. These need to be manually curated and fixed or retired as soon as possible, to avoid confusion caused by duplicate samples!");
+        }
+       
     }
     
     /**
@@ -112,10 +127,6 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     }
     
     protected SlideImage createSlideImage(Map<String,Object> row) throws Exception {
-//        for (String s : row.keySet()) {
-//            System.out.println("Key "+s+" maps to "+row.get(s));
-//        }
-//        throw new Exception("Done listing the values returned from the row");
 
         SlideImage slideImage = new SlideImage();
         slideImage.setSageId((Long)row.get("image_query_id"));
@@ -132,6 +143,15 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		slideImage.setMountingProtocol((String) row.get("light_imagery_mounting_protocol"));
         slideImage.setTissueOrientation((String) row.get("light_imagery_tissue_orientation"));
         slideImage.setVtLine((String) row.get("light_imagery_vt_line"));
+        
+        Date createDate = (Date) row.get("image_query_create_date");
+        if (createDate!=null) {
+            String tmogDate = sampleHelper.format(createDate);
+            if (tmogDate!=null) {
+                slideImage.setTmogDate(tmogDate);
+            }
+        }
+        
 		slideImage.setEffector((String)row.get("fly_effector"));
 		String objectiveStr = (String)row.get("light_imagery_objective");
 		if (objectiveStr!=null) {
