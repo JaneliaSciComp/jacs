@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -51,9 +53,9 @@ public class SampleDataCompressionService extends AbstractEntityService {
     private String outputType;
     
     private boolean deleteSourceFiles = true;
-    private Set<String> excludeFileSet = new HashSet<String>();
+    private Set<Pattern> exclusions = new HashSet<>();
     
-    private final Set<String> inputFiles = new HashSet<String>();
+    private final Set<String> inputFiles = new HashSet<>();
     private final Set<Long> visited = new HashSet<Long>();
     private Map<String,Set<Long>> entityMap;
     protected int numChanges;
@@ -95,8 +97,9 @@ public class SampleDataCompressionService extends AbstractEntityService {
                
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
         if (!StringUtils.isEmpty(excludeFiles)) {
-            for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
-                excludeFileSet.add(excludeFile);
+            for(String filePattern : excludeFiles.split("\\s*,\\s*")) {
+            	Pattern p = Pattern.compile(filePattern.replaceAll("\\*", "(.*?)"));
+                exclusions.add(p);
             }
         }
 
@@ -221,7 +224,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
 		            // Add in case we flip them, we don't want to see it again. 
 		            visited.add(existingH5j.getId());
 		            
-	                contextLogger.info("Slightly lossy entity already has correct output type: "+existingH5j.getId());
+	                contextLogger.debug("Slightly lossy entity already has correct output type: "+existingH5j.getId());
 	                
 	                // The H5J entity already exists
 	                String h5jFilepath = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -331,7 +334,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
             return;
         }
         
-        if (excludeFileSet.contains(file.getName())) {
+        if (isExcluded(file.getName())) {
             contextLogger.debug("Excluding file: "+imageEntity.getId());
             return;
         }
@@ -352,7 +355,17 @@ public class SampleDataCompressionService extends AbstractEntityService {
     	}
     	eset.add(imageEntity.getId());
     }
-    
+
+	private boolean isExcluded(String filename) {		
+		for(Pattern p : exclusions) {
+			Matcher m = p.matcher(filename);
+			if (m.matches()) {
+				return true;
+			}
+		}
+		return false;
+    }
+	
     private void updateEntityData(Entity entity, String attName, String value) throws ComputeException {
 		contextLogger.debug("updateEntityData "+attName+"="+value+" for "+entity.getId());
     	if (!StringUtils.isEmpty(value)) {

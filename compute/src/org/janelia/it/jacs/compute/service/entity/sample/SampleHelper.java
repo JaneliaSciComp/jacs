@@ -1,7 +1,19 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -16,9 +28,9 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Helper methods for dealing with Samples.
@@ -26,13 +38,19 @@ import java.util.regex.Pattern;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleHelper extends EntityHelper {
-
+    
     private static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
-
     private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
+    private static final ISO8601DateFormat df = new ISO8601DateFormat();
+    private static final Set<String> explicitSampleAttrs = new HashSet<>();
+    
+    static {
+        explicitSampleAttrs.add(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        explicitSampleAttrs.add(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        explicitSampleAttrs.add(EntityConstants.ATTRIBUTE_OBJECTIVE);
+    }
     
     protected AnnotationBeanLocal annotationBean;
-    protected boolean resetSampleNames = true;
     
     private Entity topLevelFolder;
     private Entity retiredDataFolder;
@@ -47,6 +65,7 @@ public class SampleHelper extends EntityHelper {
     private int numSamplesAdded = 0;
     private int numSamplesAnnexed = 0;
     private int numSamplesMovedToBlockedFolder = 0;
+    private int numSamplesReprocessed = 0;
     
     public SampleHelper(EntityBeanLocal entityBean, ComputeBeanLocal computeBean, AnnotationBeanLocal annotationBean, String ownerKey, Logger logger) {
         this(entityBean, computeBean, annotationBean, ownerKey, logger, null);
@@ -61,7 +80,21 @@ public class SampleHelper extends EntityHelper {
         super(entityBean, computeBean, ownerKey, logger, contextLogger);
         this.annotationBean = annotationBean;
     }
+    
+    public Date parse(String dateTimeStr) {
+        try {
+            return df.parse(dateTimeStr);
+        }
+        catch (ParseException e) {
+            logger.error("Cannot parse ISO8601 date: "+dateTimeStr,e);
+            return null;
+        }
+    }
 
+    public String format(Date date) {
+        return df.format(date);
+    }
+    
     /**
      * Clear all the visited flags on all entities owned by the user.
      */
@@ -137,9 +170,7 @@ public class SampleHelper extends EntityHelper {
             }
             
             // There is more than one objective. Create a parent Sample, and then a SubSample for each objective.
-            sample = getOrCreateSample(slideCode, dataSet, null, null, tileGroupList, null);
-            
-            synchronizeTiles(sample, tileGroupList, false);
+            sample = getOrCreateSample(slideCode, dataSet, null, null, tileGroupList, null, false);
             
             List<String> objectives = new ArrayList<>(objectiveGroups.keySet());
             Collections.sort(objectives);
@@ -153,17 +184,16 @@ public class SampleHelper extends EntityHelper {
         else {
             String objective = objectiveGroups.keySet().iterator().next();
             
-            logger.info("  Sample has a single objective group: "+objective);
-            
             // Figure out the number of channels that should be in the final merged/stitched sample
             int sampleNumSignals = getNumSignalChannels(tileGroupList);
             int sampleNumChannels = sampleNumSignals+1;
             String sampleChannelSpec = ChanSpecUtils.createChanSpec(sampleNumChannels, sampleNumChannels);
-            logger.info("  Sample has "+sampleNumSignals+" signal channels, and thus specification '"+sampleChannelSpec+"'");
+
+            logger.info("  Sample attributes: objective="+objective+", signalChannels="+sampleNumSignals+", chanSpec="+sampleChannelSpec);
             
             // Find the sample, if it exists, or create a new one.
             int prevNumSamplesUpdated = numSamplesUpdated;
-            sample = getOrCreateSample(slideCode, dataSet, sampleChannelSpec, objective, tileGroupList, parentSample);
+            sample = getOrCreateSample(slideCode, dataSet, sampleChannelSpec, objective, tileGroupList, parentSample, true);
             
             if (parentSample!=null && prevNumSamplesUpdated != numSamplesUpdated) {
                 // Updated an existing sub-sample, make sure it's converted fully 
@@ -176,8 +206,6 @@ public class SampleHelper extends EntityHelper {
                 }
             }
             
-            synchronizeTiles(sample, tileGroupList, true);
-            
             // Ensure the sample is a child of something
             if (parentSample==null) {
                 putInCorrectDataSetFolder(sample);
@@ -189,30 +217,48 @@ public class SampleHelper extends EntityHelper {
             }
         }
 
-        logger.info("  Setting visited flag on sample: "+sample.getName()+" (id="+sample.getId()+")");
+        logger.debug("  Setting visited flag on sample: "+sample.getName()+" (id="+sample.getId()+")");
         setVisited(sample);
         return sample;
     }
     
     protected Entity getOrCreateSample(String slideCode, Entity dataSet, String channelSpec, String objective, 
-            Collection<SlideImageGroup> tileGroupList, Entity parentSample) throws Exception {
+            Collection<SlideImageGroup> tileGroupList, Entity parentSample, boolean setLsmAttributes) throws Exception {
 
-        // Find consensus values in the images which could be represented in the sample
+        boolean sampleDirty = false;
+        boolean tilesDirty = false;
+        
+        Date maxTmogDate = null;
+        
+        // Find consensus values in the images which could be represented in the sample.
         Map<String,String> sampleProperties = new HashMap<>();
         for(SlideImageGroup slideImageGroup : tileGroupList) {
             for(SlideImage slideImage : slideImageGroup.getImages()) {
                 Map<String,String> imageProps = slideImage.getProperties();
                 for(String key : imageProps.keySet()) {
                     String value = imageProps.get(key);
-                    String consensusValue = sampleProperties.get(key);
-                    if (consensusValue==null) {
-                        sampleProperties.put(key, value);
+                    // Special consideration is given to the TMOG Date, so that the latest LSM TMOG date is recorded as the Sample TMOG date. 
+                    if (key.equals(EntityConstants.ATTRIBUTE_TMOG_DATE)) {
+                        Date date = parse(value);
+                        if (maxTmogDate==null || date.after(maxTmogDate)) {
+                            maxTmogDate = date;
+                        }
                     }
-                    else if (!consensusValue.equals(value)) {
-                        sampleProperties.put(key, NO_CONSENSUS_VALUE);
+                    else {
+                        String consensusValue = sampleProperties.get(key);
+                        if (consensusValue==null) {
+                            sampleProperties.put(key, value);
+                        }
+                        else if (!consensusValue.equals(value)) {
+                            sampleProperties.put(key, NO_CONSENSUS_VALUE);
+                        }    
                     }
                 }
             }
+        }
+        
+        if (maxTmogDate!=null) {
+        	sampleProperties.put(EntityConstants.ATTRIBUTE_TMOG_DATE, format(maxTmogDate));
         }
         
         if (!slideCode.equals(sampleProperties.get(EntityConstants.ATTRIBUTE_SLIDE_CODE))) {
@@ -223,21 +269,37 @@ public class SampleHelper extends EntityHelper {
         
         if (sample == null) {
             sample = createSample(dataSet, channelSpec, objective, sampleProperties, parentSample);
+            synchronizeTiles(sample, tileGroupList, setLsmAttributes);
             numSamplesCreated++;
         }
         else {
             String newName = getSampleName(dataSet, objective, parentSample, sampleProperties);
-            if (resetSampleNames && !sample.getName().equals(newName)) {
+            if (!sample.getName().equals(newName)) {
                 logger.info("  Updating sample name to: "+newName);
                 sample.setName(newName);
-                // No need to save the new name, since we'll save the sample in setSampleAttributes below
+                sampleDirty = true;
             }
             
-            setSampleAttributes(sample, dataSet, channelSpec, objective, sampleProperties);
-            entityLoader.populateChildren(sample);
-            numSamplesUpdated++;
+            if (setSampleAttributes(sample, dataSet, channelSpec, objective, sampleProperties)) {
+                sampleDirty = true;
+            }
+            
+            if (synchronizeTiles(sample, tileGroupList, setLsmAttributes)) {
+                tilesDirty = true;
+            }
+            
+            if (tilesDirty || sampleDirty) {
+                if (tilesDirty) {
+                    // Only reprocess the sample if the LSMs have changed
+                    markForReprocessing(sample);
+                }
+                logger.debug("Updating sample "+sample.getName());
+                sample = entityBean.saveOrUpdateEntity(sample);
+                numSamplesUpdated++;
+            }
+            
         }
-        
+
         return sample;
     }
     
@@ -367,7 +429,7 @@ public class SampleHelper extends EntityHelper {
     public Entity createSample(Entity dataSet, String channelSpec, String objective, Map<String,String> sampleProperties, Entity parentSample) throws Exception {
 
         String name = getSampleName(dataSet, objective, parentSample, sampleProperties);
-        logger.info("  Creating sample "+name);
+        logger.info("  Creating new sample: "+name);
         Date createDate = new Date();
         Entity sample = new Entity();
         sample.setOwnerKey(ownerKey);
@@ -377,6 +439,7 @@ public class SampleHelper extends EntityHelper {
         sample.setName(name);
         
         setSampleAttributes(sample, dataSet, channelSpec, objective, sampleProperties);
+        sample = entityBean.saveOrUpdateEntity(sample);
         
         return sample;
     }
@@ -441,7 +504,9 @@ public class SampleHelper extends EntityHelper {
      * @return returns sample entity with the attributes set
      * @throws Exception
      */
-    public Entity setSampleAttributes(Entity sample, Entity dataSet, String channelSpec, String objective, Map<String,String> sampleProperties) throws Exception {
+    public boolean setSampleAttributes(Entity sample, Entity dataSet, String channelSpec, String objective, Map<String,String> sampleProperties) throws Exception {
+        
+        boolean dirty = false;
         
         String dataSetIdentifier = dataSet==null?null:dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         logger.debug("    Setting sample properties: "+sampleProperties);
@@ -454,25 +519,29 @@ public class SampleHelper extends EntityHelper {
         
         // Set all the properties that we can. 
         for(String key : sampleProperties.keySet()) {
+            if (explicitSampleAttrs.contains(key)) {
+                continue;
+            }
             String value = sampleProperties.get(key);
             if (attrs.contains(key) && value!=null && !NO_CONSENSUS_VALUE.equals(value)) {
-                sample.setValueByAttributeName(key, value);   
+                if (setAttribute(sample, key, value)) {
+                    dirty = true;
+                }
             }
         }
 
-        // Some attributes are known explicitly, so let's overwrite whatever the image properties gave us above. 
-        if (dataSetIdentifier!=null) {
-            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier);   
-        }
-        if (channelSpec!=null) {
-            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec);   
-        }
-        if (objective!=null) {
-            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, objective); 
+        // Some attributes are known explicitly. These should all be listed in explicitSampleAttrs, so they're not set above.
+        if (setAttribute(sample, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier)) {
+            dirty = true;
+        }   
+        if (setAttribute(sample, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec)) {
+            dirty = true;
+        }  
+        if (setAttribute(sample, EntityConstants.ATTRIBUTE_OBJECTIVE, objective)) {
+            dirty = true;
         }
         
-        sample = entityBean.saveOrUpdateEntity(sample);
-        return sample;
+        return dirty;
     }    
 
     /**
@@ -484,14 +553,19 @@ public class SampleHelper extends EntityHelper {
      * @param setLsmAttributes boolean to decide whether to set the LSM attributes as well
      * @throws Exception
      */
-    public void synchronizeTiles(Entity sample, Collection<SlideImageGroup> tileGroupList, boolean setLsmAttributes) throws Exception {
+    public boolean synchronizeTiles(Entity sample, Collection<SlideImageGroup> tileGroupList, boolean setLsmAttributes) throws Exception {
+        
+        boolean dirty = false;
         
         Set<String> tileNameSet = new HashSet<>();
         for (SlideImageGroup tileGroup : tileGroupList) {
-            addTileToSample(sample, tileGroup, setLsmAttributes);
+            if (addTileToSample(sample, tileGroup, setLsmAttributes)) {
+                dirty = true;
+            }
             tileNameSet.add(tileGroup.getTag());
         }
-        
+
+        entityLoader.populateChildren(sample);
         Entity supportingFolder = EntityUtils.getSupportingData(sample);
         for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFolder, EntityConstants.TYPE_IMAGE_TILE)) {
             boolean matchFound = false;
@@ -503,8 +577,12 @@ public class SampleHelper extends EntityHelper {
             if (!matchFound) {
                 logger.info("  Removing superfluous image tile: "+imageTile.getName());
                 entityBean.deleteEntityTreeById(imageTile.getOwnerKey(), imageTile.getId());
+                dirty = true;
             }
         }
+
+        logger.debug("  Synchronized tiles for '"+sample.getName()+"' (setLsmAttributes="+setLsmAttributes+")");
+        return dirty;
     }
     
     /**
@@ -516,9 +594,12 @@ public class SampleHelper extends EntityHelper {
      * @param sample sample to synchronize image tiles to
      * @param tileGroup specific tile group to sync with to the sample
      * @param setLsmAttributes boolean to decide whether to set the LSM attributes as well
+     * @return true if the tile has changed
      * @throws Exception
      */
-    public void addTileToSample(Entity sample, SlideImageGroup tileGroup, boolean setLsmAttributes) throws Exception {
+    public boolean addTileToSample(Entity sample, SlideImageGroup tileGroup, boolean setLsmAttributes) throws Exception {
+        
+        boolean dirty = false;
         
         // Get the existing Supporting Files, or create a new one
         Entity supportingFiles = EntityUtils.getSupportingData(sample);
@@ -557,6 +638,7 @@ public class SampleHelper extends EntityHelper {
                 logger.info("  Tile '"+imageTile.getName()+"' (id="+imageTileEd.getId()+") has changed, will delete and recreate it.");
                 entityBean.deleteEntityTreeById(imageTile.getOwnerKey(), imageTile.getId());
                 imageTile = null;
+                dirty = true;
             }
             else {
                 logger.debug("  Tile '"+imageTile.getName()+"' exists (id="+imageTileEd.getId()+")");
@@ -564,7 +646,9 @@ public class SampleHelper extends EntityHelper {
                     for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
                         for(SlideImage image : tileGroup.getImages()) {
                             if (image.getFile().getName().equals(lsmStack.getName())) {
-                                setLsmStackAttributes(lsmStack, image);
+                                if (setLsmStackAttributes(lsmStack, image)) {
+                                    dirty = true;
+                                }
                             }
                         }
                     }
@@ -580,10 +664,16 @@ public class SampleHelper extends EntityHelper {
                 Entity lsmEntity = createLsmStackFromFile(image, setLsmAttributes);
                 addToParent(imageTile, lsmEntity, imageTile.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
             }
+            dirty = true;
         }
         else {
-            imageTile = setTileAttributes(imageTile, tileGroup);
+            if (setTileAttributes(imageTile, tileGroup)) {
+                imageTile = entityBean.saveOrUpdateEntity(imageTile);
+                dirty = true;
+            }
         }
+        
+        return dirty;
     }
 
     /**
@@ -653,29 +743,33 @@ public class SampleHelper extends EntityHelper {
         imageTile.setEntityTypeName(EntityConstants.TYPE_IMAGE_TILE);
         imageTile.setCreationDate(createDate);
         imageTile.setUpdatedDate(createDate);
-        imageTile.setName(tileGroup.getTag());
-        imageTile = entityBean.saveOrUpdateEntity(imageTile);
         if (setTileAttributes) {
-            imageTile = setTileAttributes(imageTile, tileGroup);
+            setTileAttributes(imageTile, tileGroup);
         }
-        else {
-            imageTile = entityBean.saveOrUpdateEntity(imageTile);
-        }
+        imageTile = entityBean.saveOrUpdateEntity(imageTile);
         logger.info("  Saved image tile '"+imageTile.getName()+"' as "+imageTile.getId());
         return imageTile;
     }
     
     /**
      * Set the tile attributes from the given SAGE image data.
-     * @return
+     * @return true if something changed
      * @throws Exception
      */
-    public Entity setTileAttributes(Entity imageTile, SlideImageGroup tileGroup) throws Exception {
+    public boolean setTileAttributes(Entity imageTile, SlideImageGroup tileGroup) throws Exception {
+        boolean tileDirty = false;
         logger.debug("    Setting tile properties: name="+tileGroup.getTag()+", anatomicalArea="+tileGroup.getAnatomicalArea());
-        imageTile.setName(tileGroup.getTag());
-        imageTile.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, tileGroup.getAnatomicalArea());
-        imageTile = entityBean.saveOrUpdateEntity(imageTile);
-        return imageTile;
+        if (imageTile.getName()==null || !imageTile.getName().equals(tileGroup.getTag())) {
+            logger.debug("    Updating tile name for Image Tile#"+imageTile.getId());
+            imageTile.setName(tileGroup.getTag());
+            tileDirty = true;
+        }
+
+        if (setAttribute(imageTile, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, tileGroup.getAnatomicalArea())) {
+            tileDirty = true;
+        }
+        
+        return tileDirty;
     }
     
     /**
@@ -693,11 +787,15 @@ public class SampleHelper extends EntityHelper {
         lsmStack.setUpdatedDate(createDate);
         lsmStack.setName(image.getFile().getName());
         if (setLsmAttributes) {
-            lsmStack = setLsmStackAttributes(lsmStack, image);
+            if (!setLsmStackAttributes(lsmStack, image)) {
+                // If it wasn't saved by setLsmStackAttributes, we have to save it here
+                lsmStack = entityBean.saveOrUpdateEntity(lsmStack);    
+            }
         }
         else {
-            lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
+            lsmStack = entityBean.saveOrUpdateEntity(lsmStack);    
         }
+        
         logger.info("      Saved LSM stack as "+lsmStack.getId());
         return lsmStack;
     }
@@ -706,10 +804,13 @@ public class SampleHelper extends EntityHelper {
      * Set the LSM stack attribuets from the given SAGE image data.
      * @param lsmStack
      * @param image
-     * @return
+     * @return true if something changed
      * @throws Exception
      */
-    public Entity setLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
+    public boolean setLsmStackAttributes(Entity lsmStack, SlideImage image) throws Exception {
+        
+        boolean lsmDirty = false;
+        boolean dirty = false;
         Map<String,String> imageProperties = image.getProperties();
         logger.debug("    Setting LSM stack properties:"+imageProperties);
         
@@ -727,14 +828,63 @@ public class SampleHelper extends EntityHelper {
                     logger.warn("LSM stack does not support property: "+key);
                 }
                 else {
-                    lsmStack.setValueByAttributeName(key, value);   
+                    if (setAttribute(lsmStack, key, value)) {
+                        if (key.equals(EntityConstants.ATTRIBUTE_TMOG_DATE)) {
+                            // TODO: we can remove this once all LSMs have a TMOG date on them. 
+                            // In the meantime, we don't want to trigger reprocessing on all samples so we use a separate dirty flag to save the LSM silently. 
+                            lsmDirty = true;
+                        }
+                        else {
+                            lsmDirty = true;
+                            dirty = true;
+                        }
+                    }
                 }
             }
         }
-        lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
-        return lsmStack;
+
+        if (lsmDirty) {
+            lsmStack = entityBean.saveOrUpdateEntity(lsmStack);
+        }
+        
+        return dirty;
     }
     
+    /**
+     * Set the given attribute if the provided value is not null and not already set. 
+     * @param entity
+     * @param key
+     * @param value
+     * @return true if the value was changed, false otherwise
+     */
+    public boolean setAttribute(Entity entity, String key, String value) {
+        String currValue = entity.getValueByAttributeName(key);
+        if (value!=null && !value.equals(currValue)) {
+            String label = entity.getId()==null?entity.getName():entity.getEntityTypeName()+"#"+entity.getId();
+            if (currValue!=null) {
+                logger.info("    Updating "+key+"="+value+" on "+label);
+            }
+            else {
+                logger.debug("    Setting "+key+"="+value+" on "+label);
+            }
+            entity.setValueByAttributeName(key, value);
+            return true;
+        }
+        return false;
+    }
+    
+    private void markForReprocessing(Entity sample) {
+        String sampleStatus = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        if (sampleStatus!=null) {
+            // Certain statuses mean that a sample should not be reprocessed
+            if (sampleStatus.equals(EntityConstants.VALUE_BLOCKED) || sampleStatus.equals(EntityConstants.VALUE_RETIRED)) {
+                return;
+            }
+        }
+        logger.info("  Sample tiles changed, marking for reprocessing: "+sample.getName());
+        setAttribute(sample, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
+        numSamplesReprocessed++;
+    }
     
     /**
      * Return the channel specification for the LSM (or create a default one using the number of channels).
@@ -873,10 +1023,10 @@ public class SampleHelper extends EntityHelper {
         
         boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sampleStatus);
         if (blocked) {
-            logger.info("  Ensuring blocked sample "+sample.getName()+" is in Blocked Data folder");   
+            logger.debug("  Ensuring blocked sample "+sample.getName()+" is in Blocked Data folder");   
         }
         else {
-            logger.info("  Ensuring sample "+sample.getName()+" is in "+sampleDataSetIdentifier+" folder");       
+            logger.debug("  Ensuring sample "+sample.getName()+" is in "+sampleDataSetIdentifier+" folder");       
         }
         
         for(String dataSetIdentifier : dataSetEntityByIdentifier.keySet()) {
@@ -1005,6 +1155,10 @@ public class SampleHelper extends EntityHelper {
     public int getNumSamplesMovedToBlockedFolder() {
         return numSamplesMovedToBlockedFolder;
     }
+    
+    public int getNumSamplesReprocessed() {
+        return numSamplesReprocessed;
+    }
 
     public Map<String, Entity> getDataSetFolderByIdentifierMap() throws Exception {
         if (dataSetFolderByIdentifier==null) {
@@ -1098,13 +1252,5 @@ public class SampleHelper extends EntityHelper {
             EntityUtils.addAttributeAsTag(blockedDataFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
             entityBean.saveOrUpdateEntity(blockedDataFolder);
         }
-    }
-    
-    public boolean isResetSampleNames() {
-        return resetSampleNames;
-    }
-
-    public void setResetSampleNames(boolean resetSampleNames) {
-        this.resetSampleNames = resetSampleNames;
     }
 }

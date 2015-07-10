@@ -19,13 +19,13 @@ public class ScalityCorrectionService extends AbstractEntityService {
 	private boolean isDebug = false;
 	
 	private ScalityDAO dao;
-    private int numProcessed = 0;
-    private int numFixed = 0;
     
     public void execute() throws Exception {
 
     	this.dao = new ScalityDAO();
-    	
+
+        logger.info("Starting Scality correction service for "+ownerKey);
+        
         if (isDebug) {
             logger.info("This is a test run. No files will be moved.");
         }
@@ -33,7 +33,16 @@ public class ScalityCorrectionService extends AbstractEntityService {
             logger.info("This is the real thing. Files will be moved from Scality to the filestore!");
         }
 
-        for(Entity entity : entityBean.getEntitiesByName(ownerKey, "ConsolidatedLabel.v3dpbd")) {
+        fixFiles(EntityConstants.TYPE_IMAGE_3D, "ConsolidatedLabel.v3dpbd");
+        fixFiles(EntityConstants.TYPE_IMAGE_3D, "ConsolidatedLabelBrain.v3dpbd");
+    }
+    
+    private void fixFiles(String entityType, String name) throws Exception {
+
+    	int numFixed = 0;
+    	int numProcessed = 0;
+    	
+        for(Entity entity : entityBean.getUserEntitiesByNameAndTypeName(ownerKey, name, entityType)) {
         	
         	String bpid = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
         	if (bpid!=null) {
@@ -43,7 +52,7 @@ public class ScalityCorrectionService extends AbstractEntityService {
         		
         		if (!isDebug) {
         			dao.get(entity, filepath);
-//        			dao.delete(entity);
+        			dao.delete(entity);
             		EntityData ed = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
         			entity.getEntityData().remove(ed);
         			entityBean.deleteEntityData(ed);
@@ -53,14 +62,12 @@ public class ScalityCorrectionService extends AbstractEntityService {
         		logger.info("Moved "+entity.getId()+" to filestore");
         		
         		numFixed++;
-        		break;
         	}
         	
         	numProcessed++;
         }
         
-		logger.info("Processed "+numProcessed+" entities, fixed "+numFixed+".");
+		logger.info("Processed "+numProcessed+" "+name+" entities, fixed "+numFixed+".");
     }
-    
     
 }
