@@ -117,7 +117,7 @@ public class EntityHelper {
                     } else {
                         topLevelFolder = entity;
                     }
-                    logger.info("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
+                    logger.debug("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
                     break;
                 }
             }
@@ -125,17 +125,17 @@ public class EntityHelper {
 
         if (topLevelFolder == null) {
             if (createIfNecessary) {
-                logger.info("Creating new topLevelFolder with name=" + topLevelFolderName);
+                logger.debug("Creating new topLevelFolder with name=" + topLevelFolderName);
                 Entity workspace = entityBean.getDefaultWorkspace(ownerKey);
                 EntityData ed = entityBean.createFolderInWorkspace(ownerKey, workspace.getId(), topLevelFolderName);
                 topLevelFolder = ed.getChildEntity();
-                logger.info("Saved top level folder as " + topLevelFolder.getId());
+                logger.debug("Saved top level folder as " + topLevelFolder.getId());
             } else {
                 throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
             }
         }
 
-        logger.info("Using topLevelFolder with id=" + topLevelFolder.getId());
+        logger.debug("Using topLevelFolder with id=" + topLevelFolder.getId());
         return topLevelFolder;
     }
 

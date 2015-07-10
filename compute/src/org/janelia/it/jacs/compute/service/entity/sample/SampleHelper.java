@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,8 +26,10 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -41,7 +42,7 @@ public class SampleHelper extends EntityHelper {
     
     private static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
     private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
-    private static final ISO8601DateFormat df = new ISO8601DateFormat();
+    private static final DateTimeFormatter parser = ISODateTimeFormat.dateTimeNoMillis();
     private static final Set<String> explicitSampleAttrs = new HashSet<>();
     
     static {
@@ -83,16 +84,17 @@ public class SampleHelper extends EntityHelper {
     
     public Date parse(String dateTimeStr) {
         try {
-            return df.parse(dateTimeStr);
+            return parser.parseDateTime(dateTimeStr).toDate();
         }
-        catch (ParseException e) {
+        catch (Exception e) {
             logger.error("Cannot parse ISO8601 date: "+dateTimeStr,e);
             return null;
         }
     }
 
     public String format(Date date) {
-        return df.format(date);
+        DateTime dt = date==null?null:new DateTime(date);
+        return parser.print(dt);
     }
     
     /**
