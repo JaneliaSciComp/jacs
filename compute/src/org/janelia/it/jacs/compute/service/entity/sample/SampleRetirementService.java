@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,18 +31,25 @@ public class SampleRetirementService extends AbstractEntityService {
     
     // Processing state
     protected Set<Long> visited = new HashSet<>();
-    protected int numSamples;
+    protected int numSamplesProcessed;
+    protected int numSamplesRetired;
     protected Entity retiredDataFolder;
     protected Set<Long> retiredIds;
+    protected String dataSetName;
     
     public void execute() throws Exception {
 
-        if (isDebug) {
-            logger.info("This is a test run. No entities will be moved or deleted.");
-        }
-        else {
-            logger.info("This is the real thing. Entities will be moved and/or deleted!");
-        }
+//        if (isDebug) {
+//            logger.info("This is a test run. No entities will be moved or deleted.");
+//        }
+//        else {
+//            logger.info("This is the real thing. Entities will be moved and/or deleted!");
+//        }
+        
+        this.dataSetName = (String) processData.getItem("DATA_SET_NAME");
+        Long maxSamples = data.getItemAsLong("MAX_SAMPLES");
+        
+        logger.info("Running sample retirement for "+ownerKey+" (dataSetName="+dataSetName+", maxSamples="+maxSamples+")");
 
         this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
@@ -54,35 +62,43 @@ public class SampleRetirementService extends AbstractEntityService {
             }
         }
         
-        
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (StringUtils.isEmpty(sampleEntityId)) {
-            logger.info("Running desynced sample retirement for all "+ownerKey+" samples");
-    	    
-        	List<Entity> samples = entityBean.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_DESYNC);
-        	if (null==samples) {
-				logger.info("User "+ownerKey+" has null returned for samples");
-				return;
+
+            List<Entity> toRetire = new ArrayList<>();
+			for(Entity sample : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_DESYNC)) {
+                if (dataSetName!=null && !dataSetName.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER))) {
+                    continue;
+                }
+                if (!sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                    logger.warn("Ignoring non-Sample entity with desync status: "+sample.getId());
+                    continue;
+                }
+				toRetire.add(sample);
+            }    		
+
+			if (toRetire.isEmpty()) {
+			    return;
 			}
-			logger.info("Processing "+samples.size()+" desynced samples");
-            int counter = 0;
-			for(Entity sample : samples) {
+			
+            if (maxSamples!=null && toRetire.size()>maxSamples) {
+                logger.warn("Too many desynchronized samples for retirement processing ("+toRetire.size()+">"+maxSamples+")");
+                return;
+            }
+            
+            logger.info("Processing "+toRetire.size()+" desynced samples");
+
+            int i = 1;
+			for(Entity sample : toRetire) {
+                logger.info("Processing sample "+i+" of "+toRetire.size()+": "+sample.getName()+" (id="+sample.getId()+")");
                 try {
-                    if (!sample.getOwnerKey().equals(ownerKey)) {
-                        continue;
-                    }
-                    if (!sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
-                        logger.warn("Ignoring non-Sample entity with desync status: "+sample.getId());
-                        continue;
-                    }
-                    counter++;
-					logger.info("Processing sample "+counter+" of "+samples.size()+": "+sample.getName()+" (id="+sample.getId()+")");
-					retireSample(sample);
+                    retireSample(sample);
                 }
                 catch (Exception e) {
-                    logger.error("Error processing sample: "+sample.getName(),e);
+                    logger.error("Error retiring sample: "+sample.getName(),e);
                 }
-            }    		
+                i++;
+			}
     	}
     	else {
     		logger.info("Processing single sample: "+sampleEntityId);
@@ -93,7 +109,7 @@ public class SampleRetirementService extends AbstractEntityService {
             retireSample(sampleEntity);
     	}
 
-		logger.info("Processed "+numSamples+" samples.");
+		logger.info("Processed "+numSamplesProcessed+" samples, retired "+numSamplesRetired+" samples.");
     }
     
     public void retireSample(Entity sample) throws Exception {
@@ -101,7 +117,7 @@ public class SampleRetirementService extends AbstractEntityService {
     	if (visited.contains(sample.getId())) return;
     	visited.add(sample.getId());
     	
-		numSamples++;
+		numSamplesProcessed++;
 
 		String dataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
@@ -137,6 +153,8 @@ public class SampleRetirementService extends AbstractEntityService {
         if (!isDebug) {
             entityBean.saveOrUpdateEntity(sample);
         }
+        
+        numSamplesRetired++;
     }
     
     

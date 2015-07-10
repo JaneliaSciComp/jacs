@@ -175,6 +175,8 @@ public class EntityConstants {
     public static final String ATTRIBUTE_MICRON_TO_VOXEL_MATRIX              = "Micron to Voxel Matrix";
     public static final String ATTRIBUTE_VOXEL_TO_MICRON_MATRIX              = "Voxel to Micron Matrix";
     public static final String ATTRIBUTE_SCALITY_BPID                        = "Scality BPID";
+    public static final String ATTRIBUTE_TMOG_DATE                           = "TMOG Date"; // Timestamp indicating when the LSM or Sample was TMOG'd. For Samples, this is the max TMOG date of all the LSMs. 
+    public static final String ATTRIBUTE_COMPLETION_DATE                     = "Completion Date"; // Timestamp indicating when the LSM or Sample was first completed.
         
     // Geometric Tree
     //
