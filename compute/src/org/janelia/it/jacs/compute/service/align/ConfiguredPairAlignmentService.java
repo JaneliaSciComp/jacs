@@ -74,6 +74,10 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             entityLoader.populateChildren(pipelineRun);
 
             contextLogger.debug("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
+
+            if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR) != null) {
+                continue;
+            }
             
             List<Entity> results = EntityUtils.getChildrenForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT);
             Collections.reverse(results);
@@ -84,9 +88,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
                 if (result.getEntityTypeName().equals(resultType)) {
                     if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
                         entityLoader.populateChildren(result);
-                        if (EntityUtils.findChildWithType(result, EntityConstants.TYPE_ERROR) == null) {
-                            return result;
-                        }
+                        return result;
                     }
                 }
             }   

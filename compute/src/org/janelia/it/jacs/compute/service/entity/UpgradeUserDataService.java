@@ -1,16 +1,15 @@
 package org.janelia.it.jacs.compute.service.entity;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.ontology.types.Category;
-import org.janelia.it.jacs.model.ontology.types.Tag;
-import org.janelia.it.jacs.model.ontology.types.Text;
-import org.janelia.it.jacs.model.user_data.Group;
-import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Upgrade the model to use the most current entity structure.
@@ -18,63 +17,91 @@ import org.janelia.it.jacs.model.user_data.User;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class UpgradeUserDataService extends AbstractEntityService {
-    
-    private static final Logger log = Logger.getLogger(UpgradeUserDataService.class);
+
+    private SampleHelper sampleHelper;
     
     public void execute() throws Exception {
+
+        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model for "+ownerKey+" to latest version: "+serverVersion);
 
-        createGroupEveryone();
-        createCommonOntology();
+        addCompletionDates(ownerKey);
     }
+    
+    private void addCompletionDates(String subjectKey) throws Exception {
+        for(Entity sample : entityBean.getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_SAMPLE)) {
+            if (sample.getName().contains("~")) continue;
+            addCompletionDates(sample);
+            // Free memory
+            sample.setEntityData(null);
+        }
+    }
+    
+    private Date addCompletionDates(Entity sample) throws Exception {
 
-	private void createGroupEveryone() throws Exception {
+        logger.info("Processing "+sample.getName()+" (id="+sample.getId()+")");
+        
+        entityLoader.populateChildren(sample);
+        List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, "Sample");
+        if (!childSamples.isEmpty()) {
+            Date latestDate = null;
+            for(Entity childSample : childSamples) {
+                Date subSampleDate = addCompletionDates(childSample);
+                if (latestDate==null||latestDate.before(subSampleDate)) {
+                    latestDate = subSampleDate;
+                }
+            }
+            if (latestDate!=null) {
+                setCompletionDate(sample, latestDate, false);
+                return latestDate;
+            }
+            return null;
+        }
+        
+        Entity pipelineRun = getLatestSuccessfulRun(sample);
+        if (pipelineRun!=null) {
+            setCompletionDate(sample, pipelineRun.getCreationDate(), true);
+            return pipelineRun.getCreationDate();
+        }
+        return null;
+    }
+    
+    private Entity getLatestSuccessfulRun(Entity sample) throws Exception {
 
-		log.info("Creating "+Group.ALL_USERS_GROUP_KEY);
-		Group allUsers = computeBean.createGroup("user:system", Group.ALL_USERS_GROUP_NAME);
-		
-		allUsers.setFullName("Workstation Users");
-		computeBean.saveOrUpdateSubject(allUsers);
-		
-        annotationBean.createWorkspace(allUsers.getKey());
+        List<Entity> pipelineRuns = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
+        Collections.reverse(pipelineRuns);
+        for(Entity pipelineRun : pipelineRuns) {
+            entityLoader.populateChildren(pipelineRun);
+            if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR) != null) {
+                continue;
+            }
+            return pipelineRun;
+        }
+        
+        return null;
+    }
+    
+    private void setCompletionDate(Entity sample, Date date, boolean setLsmAttributes) throws Exception {
 
-		log.info("Adding all users to "+allUsers.getKey());
-		for(User user : computeBean.getUsers()) {
-			computeBean.addUserToGroup(user.getKey(), Group.ALL_USERS_GROUP_KEY);
-			annotationBean.addGroupWorkspaceToUserWorkspace(user.getKey(), Group.ALL_USERS_GROUP_KEY);
-		}
-	}
-	
-	private void createCommonOntology() throws Exception {
-
-		log.info("Creating common ontology");
-		
-		Entity ontology = annotationBean.createOntologyRoot(Group.ALL_USERS_GROUP_KEY, "Image Evaluation");
-		
-		// Convert "Error Ontology" into a subtree of the common ontology
-		Set<Entity> errorOntologySet = entityBean.getEntitiesByName("group:flylight", "Error Ontology");
-		if (!errorOntologySet.isEmpty()) {
-			Entity errorOntology = errorOntologySet.iterator().next();
-			errorOntology.setEntityTypeName(EntityConstants.TYPE_ONTOLOGY_ELEMENT);
-			errorOntology.setValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE, "Category");
-			errorOntology.setName("Report");
-			entityBean.saveOrUpdateEntity(errorOntology);
-			entityBean.annexEntityTree(Group.ALL_USERS_GROUP_KEY, errorOntology.getId());
-			errorOntology = entityBean.getEntityById(errorOntology.getId()); // Get annexed entity with correct ownership
-			entityBean.addEntityToParent(ontology, errorOntology, 1, EntityConstants.ATTRIBUTE_ONTOLOGY_ELEMENT);
-		}
-		
-		// Create "Disposition" subtree
-		EntityData dispositionEd = annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, ontology.getId(), "Disposition", new Category(), 2);
-		Entity disposition = dispositionEd.getChildEntity();
-		int i = 1;
-		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Accepted", new Tag(), i++);
-		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Discard", new Tag(), i++);
-		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Re-image", new Tag(), i++);
-		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Image at 63x", new Tag(), i++);
-		annotationBean.createOntologyTerm(Group.ALL_USERS_GROUP_KEY, disposition.getId(), "Image ROI at 63x", new Text(), i++);
-		
-	}
+        String completionDate = sampleHelper.format(date);
+        logger.info("Setting completion "+completionDate+" on "+sample.getName()+" (id="+sample.getId()+")");
+        
+        // Set completion date for sample
+        entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_COMPLETION_DATE, completionDate);
+        
+        if (setLsmAttributes) {
+            // Set completion date for LSMs
+            entityLoader.populateChildren(sample);
+            Entity supportingFolder = EntityUtils.getSupportingData(sample);
+            entityLoader.populateChildren(supportingFolder);
+            for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFolder, EntityConstants.TYPE_IMAGE_TILE)) {
+                entityLoader.populateChildren(imageTile);
+                for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
+                    entityBean.setOrUpdateValue(lsmStack.getId(), EntityConstants.ATTRIBUTE_COMPLETION_DATE, completionDate);
+                }
+            }
+        }
+    }
 }
