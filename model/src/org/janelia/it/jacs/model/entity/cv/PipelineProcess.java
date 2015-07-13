@@ -30,6 +30,7 @@ public enum PipelineProcess implements NamedEnum {
     NernaPolarityCase3("Aljoscha Polarity Case 3 Pipeline"),
 
     PolarityCase3WithCMTKVnc("Polarity Case 3 With VNC CMTK Pipeline"),
+    PolarityCase4WithCMTKVnc("Polarity Case 4 With VNC CMTK Pipeline"),
 
     PTR10ProjectionOnly("PTR 10 Projection Only Pipeline"),
     PTR20JBAAlignment("PTR 20 JBA Alignment Pipeline"),
