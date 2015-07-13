@@ -178,27 +178,27 @@
                 </operation>
                 
                 <!-- Copy the files to archive -->
-                <sequence name="Wait Async" waitForAsync="true">
-                    <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
-                        <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
-                        <input name="RESULT_FILE_NODE"/>
-                        <input name="SOURCE_FILE_PATHS" value="$V{NODE_FILE_PATHS}"/>
-                        <input name="DELETE_SOURCE_FILES" value="true"/>
-                        <output name="INPUT_FILE_PATHS"/>
-                        <output name="OUTPUT_FILE_PATHS"/>
-                    </operation>
-                </sequence>
+                <!--<sequence name="Wait Async" waitForAsync="true">-->
+                    <!--<operation name="Copy LSMs" processor="queue/gridSubmitAndWait">-->
+                        <!--<input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>-->
+                        <!--<input name="RESULT_FILE_NODE"/>-->
+                        <!--<input name="SOURCE_FILE_PATHS" value="$V{NODE_FILE_PATHS}"/>-->
+                        <!--<input name="DELETE_SOURCE_FILES" value="true"/>-->
+                        <!--<output name="INPUT_FILE_PATHS"/>-->
+                        <!--<output name="OUTPUT_FILE_PATHS"/>-->
+                    <!--</operation>-->
+                <!--</sequence>-->
                 
                 <!-- We're done with the node -->
                 <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
                     <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
                 </operation>
                 
-                <!-- Update the nodes and entities -->
-                <operation name="Update Nodes and Entites" processor="org.janelia.it.jacs.compute.service.utility.UpdateFileNodeService">
-                    <input name="INPUT_FILE_PATHS"/>
-                    <input name="OUTPUT_FILE_PATHS"/>
-                </operation>
+                <!--&lt;!&ndash; Update the nodes and entities &ndash;&gt;-->
+                <!--<operation name="Update Nodes and Entites" processor="org.janelia.it.jacs.compute.service.utility.UpdateFileNodeService">-->
+                    <!--<input name="INPUT_FILE_PATHS"/>-->
+                    <!--<input name="OUTPUT_FILE_PATHS"/>-->
+                <!--</operation>-->
                 
             </sequence>
 
