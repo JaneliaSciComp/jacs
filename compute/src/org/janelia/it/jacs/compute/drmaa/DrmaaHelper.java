@@ -49,8 +49,32 @@ public class DrmaaHelper {
         sunSession = factory.getSession();                 // DRMAA Session
         synchronized (sunSession) {
             if (!initialized) {
-                sunSession.init(null);
-                initialized = true;
+                boolean succeeded=false;
+                DrmaaException mostRecentException=null;
+                for (int i=0; i < 10; i++) {
+                    try {
+                        sunSession.init(null);
+                        succeeded=true;
+                    }
+                    catch (DrmaaException e) {
+                        mostRecentException = e;
+                        logger.debug(e.getMessage());
+                        i++;
+                        try {
+                            logger.debug("Retrying DRMAA initialization attempt: "+i);
+                            Thread.sleep(5000);
+                        }
+                        catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
+                        succeeded=false;
+                    }
+                    if (succeeded) {break;}
+                }
+                if (succeeded) {initialized = true;}
+                else {
+                    throw mostRecentException;
+                }
             }
         }
     }
