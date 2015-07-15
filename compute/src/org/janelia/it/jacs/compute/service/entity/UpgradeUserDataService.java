@@ -2,13 +2,12 @@ package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
@@ -46,18 +45,33 @@ public class UpgradeUserDataService extends AbstractEntityService {
         entityLoader.populateChildren(sample);
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, "Sample");
         if (!childSamples.isEmpty()) {
+        	
+        	boolean allSubSamplesComplete = true;
             Date latestDate = null;
+            
             for(Entity childSample : childSamples) {
                 Date subSampleDate = addCompletionDates(childSample);
-                if (latestDate==null||latestDate.before(subSampleDate)) {
+                if (subSampleDate==null) {
+                	allSubSamplesComplete = false;
+                }
+                else if (latestDate==null || latestDate.before(subSampleDate)) {
                     latestDate = subSampleDate;
                 }
             }
-            if (latestDate!=null) {
+            
+            if (!allSubSamplesComplete) {
+            	logger.info("All sub-samples are not complete for "+sample.getName());
+            	latestDate = null;
+            }
+            
+        	if (latestDate!=null) {
                 setCompletionDate(sample, latestDate, false);
                 return latestDate;
+        	}
+            else {
+            	removeCompletionDate(sample);
+                return null;
             }
-            return null;
         }
         
         Entity pipelineRun = getLatestSuccessfulRun(sample);
@@ -103,5 +117,16 @@ public class UpgradeUserDataService extends AbstractEntityService {
                 }
             }
         }
+    }
+
+    private void removeCompletionDate(Entity sample) throws Exception {
+
+    	EntityData completionDateEd = sample.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
+    	
+    	if (completionDateEd!=null) {
+    		sample.getEntityData().remove(completionDateEd);
+    		entityBean.deleteEntityData(completionDateEd);
+    		logger.info("Removing completion date on "+sample.getName()+" (id="+sample.getId()+")");
+    	}
     }
 }
