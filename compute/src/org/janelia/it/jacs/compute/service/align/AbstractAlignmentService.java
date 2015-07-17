@@ -62,6 +62,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected AlignmentInputFile input2;
     protected List<String> archivedFiles = new ArrayList<>();
     protected List<String> targetFiles = new ArrayList<>();
+    protected boolean runAligner = true;
     
     // ****************************************************************************************************************
     // When this service is run with the Aligner interface method, it determines and outputs the alignment inputs
@@ -218,6 +219,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
         
         data.putItem("ALIGNED_AREAS", alignedAreas);
+        data.putItem("RUN_ALIGNER", runAligner);
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {

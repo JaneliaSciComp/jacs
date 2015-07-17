@@ -1,10 +1,10 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.model.entity.EntityConstants;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
  * Image data from SAGE that is used for creating Sample and LSM Stack entities. 
@@ -31,6 +31,7 @@ public class SlideImage {
     private String mountingProtocol;
     private String tissueOrientation;
     private String vtLine;
+    private String tmogDate;
     private File file;
 	
     public Map<String,String> getProperties() {
@@ -92,6 +93,10 @@ public class SlideImage {
             properties.put(EntityConstants.ATTRIBUTE_VT_LINE, vtLine);
         }
 
+        if (tmogDate!=null) {
+            properties.put(EntityConstants.ATTRIBUTE_TMOG_DATE, tmogDate);
+        }
+        
         return properties;
     }
     
@@ -204,12 +209,17 @@ public class SlideImage {
     public void setFile(File file) {
         this.file = file;
     }
-
     public String getVtLine() {
         return vtLine;
     }
-
     public void setVtLine(String vtLine) {
         this.vtLine = vtLine;
     }
+    public String getTmogDate() {
+        return tmogDate;
+    }
+    public void setTmogDate(String tmogDate) {
+        this.tmogDate = tmogDate;
+    }
+    
 }

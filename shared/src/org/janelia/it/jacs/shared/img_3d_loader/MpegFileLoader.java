@@ -88,7 +88,7 @@ public class MpegFileLoader extends LociFileLoader {
         int offset = frameIndex * sx * sy;
         image.getRGB(0, 0, sx, sy,
                 getArgbTextureIntArray(),
-                offset, sx);
+                offset, sx);        
     }
 
     private void zeroColors() {

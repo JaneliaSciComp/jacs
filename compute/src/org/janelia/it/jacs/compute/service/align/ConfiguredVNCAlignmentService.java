@@ -37,7 +37,7 @@ public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
         }
 
         if (input1==null) {
-            throw new SAGEMetadataException("Tile with anatomical area '"+VNC_AREA+"' not found for alignment");
+        	runAligner = false;
         }
     }
 

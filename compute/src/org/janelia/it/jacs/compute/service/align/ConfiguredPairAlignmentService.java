@@ -16,6 +16,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         
+	private static final String BRAIN_AREA = "Brain";
+	
     @Override
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
     	alignedAreas.addAll(sampleAreas);
@@ -41,14 +43,18 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                 contextLogger.info("Found 20x sub-sample: "+objectiveSample.getName());
-                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, "Brain");
+                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
                 input2 = buildInputFromResult("second input (20x stack)", result);
             }
             else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
                 contextLogger.info("Found 63x sub-sample: "+objectiveSample.getName());
-                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
+                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
                 input1 = buildInputFromResult("first input (63x stack)", result);
             }
+        }
+
+        if (input1==null || input2==null) {
+        	runAligner = false;
         }
     }
 
@@ -60,27 +66,29 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     private Entity getLatestResultOfType(Entity objectiveSample, String resultType, String anatomicalArea) throws Exception {
         entityLoader.populateChildren(objectiveSample);
 
-        contextLogger.info("Looking for latest result of type "+resultType+" with anatomicalArea="+anatomicalArea);
+        contextLogger.debug("Looking for latest result of type "+resultType+" with anatomicalArea="+anatomicalArea);
         
         List<Entity> pipelineRuns = EntityUtils.getChildrenOfType(objectiveSample, EntityConstants.TYPE_PIPELINE_RUN);
         Collections.reverse(pipelineRuns);
         for(Entity pipelineRun : pipelineRuns) {
             entityLoader.populateChildren(pipelineRun);
 
-            contextLogger.info("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
+            contextLogger.debug("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
+
+            if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR) != null) {
+                continue;
+            }
             
             List<Entity> results = EntityUtils.getChildrenForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT);
             Collections.reverse(results);
             for(Entity result : results) {
 
-                contextLogger.info("    Check result "+result.getName()+" (id="+result.getId()+")");
+                contextLogger.debug("    Check result "+result.getName()+" (id="+result.getId()+")");
                 
                 if (result.getEntityTypeName().equals(resultType)) {
                     if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
                         entityLoader.populateChildren(result);
-                        if (EntityUtils.findChildWithType(result, EntityConstants.TYPE_ERROR) == null) {
-                            return result;
-                        }
+                        return result;
                     }
                 }
             }   
@@ -100,7 +108,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             if (warpNeurons) {
                 inputFile.setInputSeparationFilename(getConsolidatedLabel(sampleProcessingResult));
             }
-            logInputFound(inputType, inputFile);
+            //logInputFound(inputType, inputFile);
         } 
         else {
             contextLogger.error("Could not find default 3d image for result " + sampleProcessingResult +

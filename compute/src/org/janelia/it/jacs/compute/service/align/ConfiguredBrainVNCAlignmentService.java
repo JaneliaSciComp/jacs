@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.align;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.compute.service.exceptions.SAGEMetadataException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -44,7 +43,7 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
         }
         
         if (input1==null) {
-            throw new SAGEMetadataException("Tile with anatomical area 'Brain' not found for alignment");
+        	runAligner = false;
         }
     }
     

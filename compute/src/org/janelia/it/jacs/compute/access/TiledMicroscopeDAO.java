@@ -616,8 +616,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     /**
      * move the neurite containing the input annotation to the specified neuron;
-     * moves TmStructuredTextAnnotations but not anchored paths (you should
-     * delete and recalc those)
+     * also moves TmStructuredTextAnnotations and TmAnchoredPaths
      *
      * @throws DaoException
      */
@@ -646,8 +645,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         try {
             // move each annotation's entity data to a new entity (the new neuron)
+            Set<Long> movedAnnotationIDs = new HashSet<>();
             Entity newNeuronEntity = annotationDAO.getEntityById(newNeuron.getId());
             for (TmGeoAnnotation ann : oldNeuron.getSubTreeList(rootAnnotation)) {
+                movedAnnotationIDs.add(ann.getId());
                 EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, ann.getId());
                 ed.setParentEntity(newNeuronEntity);
                 annotationDAO.saveOrUpdate(ed);
@@ -655,6 +656,19 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 if (oldNeuron.getStructuredTextAnnotationMap().containsKey(ann.getId())) {
                     TmStructuredTextAnnotation note = oldNeuron.getStructuredTextAnnotationMap().get(ann.getId());
                     ed = (EntityData) computeDAO.genericLoad(EntityData.class, note.getId());
+                    ed.setParentEntity(newNeuronEntity);
+                    annotationDAO.saveOrUpdate(ed);
+                }
+            }
+
+            // loop over anchored paths; if endpoints are in set of moved annotations,
+            //  move the path as well
+            for (TmAnchoredPathEndpoints endpoints: oldNeuron.getAnchoredPathMap().keySet()) {
+                // both endpoints are necessarily in the same neurite, so only need
+                //  to test one:
+                if (movedAnnotationIDs.contains(endpoints.getAnnotationID1())) {
+                    EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class,
+                            oldNeuron.getAnchoredPathMap().get(endpoints).getId());
                     ed.setParentEntity(newNeuronEntity);
                     annotationDAO.saveOrUpdate(ed);
                 }
@@ -699,8 +713,17 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     }
                 }
             }
-            Collections.sort(descriptorList, new Comparator<TmWorkspaceDescriptor>() { @Override public int compare(TmWorkspaceDescriptor a,
-                    TmWorkspaceDescriptor b) { if (a.getId() < b.getId()) { return 1; } else { return 0; } } });
+            Collections.sort(descriptorList, new Comparator<TmWorkspaceDescriptor>() {
+                @Override
+                public int compare(TmWorkspaceDescriptor a,
+                                   TmWorkspaceDescriptor b) {
+                    if (a.getId() < b.getId()) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            });
             return descriptorList;
         } catch (Exception e) {
             e.printStackTrace();

@@ -654,16 +654,16 @@ public class SageDAO {
 //
     private static final String ALL_IMAGE_PROPERTY_SQL_1 =
             "select image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
-            "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, image_vw.created_by light_imagery_created_by";
+            "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, image_vw.created_by light_imagery_created_by, image_vw.create_date image_query_create_date";
 
     private static final String ALL_IMAGE_PROPERTY_SQL_2 =
             " from image_property_vw ip1 " +
             "inner join (" +
-            "  select i.id, i.line, i.name, i.path, i.family, i.capture_date, i.representative, i.created_by" +
+            "  select i.id, i.line, i.name, i.path, i.family, i.capture_date, i.representative, i.created_by, i.create_date" +
             "  from image_vw i" +
             "  inner join image_property_vw ip2 on (ip2.image_id=i.id and ip2.type='data_set' and ip2.value=?)" +
             "  where i.display=true and i.path is not null" +
-            "  and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
+            "  and (i.created_by is null or i.created_by!='"+SageArtifactExportService.CREATED_BY+"') " +
             ") image_vw on ip1.image_id = image_vw.id " +
             "group by image_vw.id ";
 

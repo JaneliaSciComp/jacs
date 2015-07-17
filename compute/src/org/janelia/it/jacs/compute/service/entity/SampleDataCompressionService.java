@@ -8,7 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.util.FileUtils;
@@ -32,6 +35,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	
 	public static final String RECORD_MODE_UPDATE = "UPDATE";
     public static final String RECORD_MODE_ADD = "ADD";
+    public static final String RECORD_MODE_FLIP = "FLIP";
 	
     public static final String MODE_UNDEFINED = "UNDEFINED";
     public static final String MODE_CREATE_INPUT_LIST = "CREATE_INPUT_LIST";
@@ -49,9 +53,9 @@ public class SampleDataCompressionService extends AbstractEntityService {
     private String outputType;
     
     private boolean deleteSourceFiles = true;
-    private Set<String> excludeFileSet = new HashSet<String>();
+    private Set<Pattern> exclusions = new HashSet<>();
     
-    private final Set<String> inputFiles = new HashSet<String>();
+    private final Set<String> inputFiles = new HashSet<>();
     private final Set<Long> visited = new HashSet<Long>();
     private Map<String,Set<Long>> entityMap;
     protected int numChanges;
@@ -69,7 +73,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
     	inputType = data.getRequiredItemAsString("INPUT_TYPE");
         outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
 
-        if (!RECORD_MODE_ADD.equals(recordMode) && !RECORD_MODE_UPDATE.equals(recordMode)) {
+        if (!RECORD_MODE_ADD.equals(recordMode) && !RECORD_MODE_UPDATE.equals(recordMode) && !RECORD_MODE_FLIP.equals(recordMode)) {
             throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
         }
         
@@ -93,8 +97,9 @@ public class SampleDataCompressionService extends AbstractEntityService {
                
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
         if (!StringUtils.isEmpty(excludeFiles)) {
-            for(String excludeFile : excludeFiles.split("\\s*,\\s*")) {
-                excludeFileSet.add(excludeFile);
+            for(String filePattern : excludeFiles.split("\\s*,\\s*")) {
+            	Pattern p = Pattern.compile(filePattern.replaceAll("\\*", "(.*?)"));
+                exclusions.add(p);
             }
         }
 
@@ -127,7 +132,8 @@ public class SampleDataCompressionService extends AbstractEntityService {
             Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
             for(Entity image : entities.values()) {
                 String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                if (filepath!=null && filepath.endsWith(inputType)) {
+                String bpid = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+                if ((filepath!=null && filepath.endsWith(inputType)) || (bpid!=null && bpid.endsWith(inputType))) {
                     addEntityToInputList(image);
                 }
             }
@@ -161,81 +167,181 @@ public class SampleDataCompressionService extends AbstractEntityService {
         if (visited.contains(imageEntity.getId())) return;
         visited.add(imageEntity.getId());
         
-        if (!imageEntity.getOwnerKey().equals(ownerKey)) return;
-
-        String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        
-        if (filepath==null) {
-            contextLogger.warn("Entity has null filepath: "+imageEntity.getId());
-            return;
+        if (!imageEntity.getOwnerKey().equals(ownerKey)) {
+            contextLogger.warn("Entity is not owned by "+ownerKey);
+        	return;
         }
 
-        if (!filepath.contains(centralDir)) {
-            contextLogger.warn("Entity has path outside of filestore: "+imageEntity.getId());
-            return;
+        String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        String bpid = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+        
+        if (filepath==null) {
+        	if (bpid==null) {
+                contextLogger.warn("Entity has null filepath and BPID: "+imageEntity.getId());
+                return;	
+        	}
+        	filepath = EntityConstants.SCALITY_PATH_PREFIX+bpid;
+        }
+        
+        populateChildren(imageEntity);
+        
+        if (outputType.equals("h5j")) {
+
+            // The H5J already exists as the prime image?
+        	if (filepath.endsWith("h5j")) {
+        		
+                contextLogger.info("Entity already has correct output type: "+imageEntity.getId());
+                
+                if (RECORD_MODE_ADD.equals(recordMode)) {
+                	contextLogger.warn("Unflipping H5J/PBD entities is not supported: "+imageEntity.getId());
+                	return;
+                }
+                else if (RECORD_MODE_UPDATE.equals(recordMode)) {
+                	// The H5J is in the correct place. If we previously ran this compression in "FLIP" mode, then there may be a PBD that is no longer required. 
+                    Entity existingPbd = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
+                    if (existingPbd!=null) {
+	                    String pbdFilepath = existingPbd.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+	                    deleteIfNecessary(pbdFilepath);
+                    }
+                	return;
+                }
+                else if (RECORD_MODE_FLIP.equals(recordMode)) {
+                	// The H5J is already in the correct place. We hope there is a Scality-based PBD file underneath.
+                    Entity existingPbd = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
+                    if (existingPbd==null) {
+                    	contextLogger.warn("Flipped H5J is missing a lossless image child: "+imageEntity.getId());
+                    }
+                	return;
+                }
+        	}
+
+            // The H5J already exists as the secondary image?
+            EntityData existingH5jEd = imageEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE);
+            if (existingH5jEd!=null) {
+	            Entity existingH5j = existingH5jEd.getChildEntity();
+	            if (existingH5j!=null) {
+
+		            // Add in case we flip them, we don't want to see it again. 
+		            visited.add(existingH5j.getId());
+		            
+	                contextLogger.debug("Slightly lossy entity already has correct output type: "+existingH5j.getId());
+	                
+	                // The H5J entity already exists
+	                String h5jFilepath = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+	                if (RECORD_MODE_ADD.equals(recordMode)) {
+	                    if (h5jFilepath!=null & h5jFilepath.endsWith(".h5j")) {
+	                        // It's already in the correct place
+	                        contextLogger.info("Slightly lossy image already has correct output type: "+existingH5j.getId());
+	                        return;
+	                    }
+	                }
+	                else if (RECORD_MODE_UPDATE.equals(recordMode)) {
+	
+	                    if (isDebug) {
+	                        contextLogger.info("Would update existing Image with existing H5J (id="+existingH5j.getId()+")");
+	                        return;
+	                    }
+	                    
+	                    // We just need to move it into the right place
+	                    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, h5jFilepath);
+	                    contextLogger.info("Updated "+numUpdated+" entity data values to use compressed file: "+h5jFilepath);
+	                    
+	                    // Update the image to use H5J format
+	                    imageEntity.setName(existingH5j.getName());
+	                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, h5jFilepath);
+	                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "h5j");
+	                    entityBean.saveOrUpdateEntity(imageEntity);
+	                    
+	                    // Move all references to the H5J
+	                    for(EntityData parentEd : entityBean.getParentEntityDatas(existingH5j.getId())) {
+	                        if (!parentEd.getParentEntity().getId().equals(imageEntity.getId())) {
+	                            parentEd.setChildEntity(imageEntity);
+	                            contextLogger.info("Carrying forward reference to H5J#"+existingH5j.getId()+" from "+parentEd.getParentEntity().getName());
+	                            entityBean.saveOrUpdateEntityData(parentEd);
+	                        }
+	                    }
+	                    
+	                    // Delete the old H5J entity
+	                    entityBean.deleteEntityTreeById(existingH5j.getOwnerKey(), existingH5j.getId(), true);
+	                    contextLogger.info("Replaced Entity#"+imageEntity.getId()+" with "+imageEntity.getName());
+	                    
+	                    deleteIfNecessary(filepath);
+	                    return;
+	                }
+	                else if (RECORD_MODE_FLIP.equals(recordMode)) {
+	
+	                	String h5jName = existingH5j.getName();
+	                	String h5jScalityBpid = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+	                	String h5jFormat = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
+	                	if (StringUtils.isEmpty(h5jFormat)) {
+	                		h5jFormat = "h5j";
+	                	}
+	                	
+	                	String pbdName = imageEntity.getName();
+	                	String pbdFilepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+	                	String pbdScalityBpid = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+	                	String pbdFormat = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
+	                	if (StringUtils.isEmpty(pbdFormat)) {
+	                		pbdFormat = "v3dpbd";
+	                	}
+	                	
+	                	// Flip them
+	                	
+	                    int numUpdated = entityBean.bulkUpdateEntityDataValue(pbdFilepath, h5jFilepath);
+	                    contextLogger.info("Updated "+numUpdated+" entity data values to use: "+h5jFilepath);
+	                	
+	                	imageEntity.setName(h5jName);
+	                	updateEntityData(imageEntity, EntityConstants.ATTRIBUTE_FILE_PATH, h5jFilepath);
+	                	updateEntityData(imageEntity, EntityConstants.ATTRIBUTE_SCALITY_BPID, h5jScalityBpid);
+	                	updateEntityData(imageEntity, EntityConstants.ATTRIBUTE_IMAGE_FORMAT, h5jFormat);
+	                	
+	                	existingH5j.setName(pbdName);
+	                	updateEntityData(existingH5j, EntityConstants.ATTRIBUTE_FILE_PATH, pbdFilepath);
+	                	updateEntityData(existingH5j, EntityConstants.ATTRIBUTE_SCALITY_BPID, pbdScalityBpid);
+	                	updateEntityData(existingH5j, EntityConstants.ATTRIBUTE_IMAGE_FORMAT, pbdFormat);
+	                	
+	                    if (!isDebug) {
+	                    	entityBean.saveOrUpdateEntity(imageEntity);
+	                    }
+	        			contextLogger.info("Updated entity: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
+	        			
+	                    if (!isDebug) {
+	                    	entityBean.saveOrUpdateEntity(existingH5j);
+	                    }
+	        			contextLogger.info("Updated entity: "+existingH5j.getName()+" (id="+existingH5j.getId()+")");
+	
+	                    if (!isDebug) {
+		        			existingH5jEd.setEntityAttrName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
+		        			entityBean.saveOrUpdateEntityData(existingH5jEd);
+	                    }
+	        			contextLogger.info("Updated entity data type from slightly lossy to input image: "+existingH5jEd.getId());
+	        			
+	                    return;
+	                }
+	            }
+	        }
+        }
+
+        if (filepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX)) {
+            contextLogger.warn("Cannot process entity that is in Scality: "+imageEntity.getId());
+        	return;
         }
 
         File file = new File(filepath);
+
+        if (!filepath.startsWith(centralDir)) {
+            contextLogger.warn("Entity has path outside of filestore: "+imageEntity.getId());
+            return;
+        }
         
-        if (excludeFileSet.contains(file.getName())) {
-            contextLogger.info("Excluding file: "+imageEntity.getId());
+        if (isExcluded(file.getName())) {
+            contextLogger.debug("Excluding file: "+imageEntity.getId());
             return;
         }
         
         if (!file.exists()) {
             contextLogger.warn("Entity file does not exist: "+imageEntity.getId());
             return;
-        }
-        
-        populateChildren(imageEntity);
-        
-        if (outputType.equals("h5j")) {
-            Entity existingH5j = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE);
-            if (existingH5j!=null) {
-                // The H5J entity already exists
-                String h5jFilepath = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                if (RECORD_MODE_ADD.equals(recordMode)) {
-                    if (h5jFilepath!=null & h5jFilepath.endsWith(".h5j")) {
-                        // It's already in the correct place
-                        return;
-                    }
-                }
-                else if (RECORD_MODE_UPDATE.equals(recordMode)) {
-
-                    if (isDebug) {
-                        contextLogger.info("Would update existing Image with existing H5J (id="+existingH5j.getId()+")");
-                        return;
-                    }
-                    
-                    // We just need to move it into the right place
-                    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, h5jFilepath);
-                    contextLogger.info("Updated "+numUpdated+" entity data values to use compressed file: "+h5jFilepath);
-                    
-                    
-                    // Update the image to use H5J format
-                    imageEntity.setName(existingH5j.getName());
-                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, h5jFilepath);
-                    imageEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT, "h5j");
-                    entityBean.saveOrUpdateEntity(imageEntity);
-                    
-                    // Move all references to the H5J
-                    for(EntityData parentEd : entityBean.getParentEntityDatas(existingH5j.getId())) {
-                        if (!parentEd.getParentEntity().getId().equals(imageEntity.getId())) {
-                            parentEd.setChildEntity(imageEntity);
-                            contextLogger.info("Carrying forward reference to H5J#"+existingH5j.getId()+" from "+parentEd.getParentEntity().getName());
-                            entityBean.saveOrUpdateEntityData(parentEd);
-                        }
-                    }
-                    
-                    // Delete the old H5J entity
-                    entityBean.deleteEntityTreeById(existingH5j.getOwnerKey(), existingH5j.getId(), true);
-                    contextLogger.info("Replaced Entity#"+imageEntity.getId()+" with "+imageEntity.getName());
-                    
-                    deleteIfNecessary(filepath);
-                    return;
-                }
-                
-            }
         }
         
         contextLogger.info("Will compress file: "+imageEntity.getName()+" (id="+imageEntity.getId()+")");
@@ -248,6 +354,33 @@ public class SampleDataCompressionService extends AbstractEntityService {
     		entityMap.put(filepath, eset);
     	}
     	eset.add(imageEntity.getId());
+    }
+
+	private boolean isExcluded(String filename) {		
+		for(Pattern p : exclusions) {
+			Matcher m = p.matcher(filename);
+			if (m.matches()) {
+				return true;
+			}
+		}
+		return false;
+    }
+	
+    private void updateEntityData(Entity entity, String attName, String value) throws ComputeException {
+		contextLogger.debug("updateEntityData "+attName+"="+value+" for "+entity.getId());
+    	if (!StringUtils.isEmpty(value)) {
+    		entity.setValueByAttributeName(attName, value);
+    	}
+    	else {
+    		EntityData ed = entity.getEntityDataByAttributeName(attName);
+    		if (ed!=null) {
+    			entity.getEntityData().remove(ed);
+    			contextLogger.debug("Removing entity data "+ed.getEntityAttrName()+" for "+entity.getId());
+        		if (!isDebug) {
+        			entityBean.deleteEntityData(ed);
+        		}
+    		}
+    	}
     }
 
     private List<List<String>> createGroups(Collection<String> fullList, int groupSize) {
@@ -309,13 +442,14 @@ public class SampleDataCompressionService extends AbstractEntityService {
         String outputExtension = getExtension(outputPath);
         
     	try {
-            File outputFile = new File(outputPath);
+			// Check to make sure we generated the file
+    		File outputFile = new File(outputPath);
             if (!outputFile.exists() || !outputFile.canRead() || outputFile.length()<=0) {
                 contextLogger.warn("Missing or corrupt output file: "+outputFile);
                 return;
             }
             
-            if (RECORD_MODE_UPDATE.equals(recordMode)) {
+            if (RECORD_MODE_UPDATE.equals(recordMode) || RECORD_MODE_FLIP.equals(recordMode)) {
                 if (!isDebug) {
             	    // Update all entities which referred to the old path
             	    int numUpdated = entityBean.bulkUpdateEntityDataValue(inputPath, outputPath);
@@ -371,6 +505,36 @@ public class SampleDataCompressionService extends AbstractEntityService {
                     if (!isDebug) {
                         entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE, outputPath);
                     }
+                    
+                    numChanges++;
+                }
+                else if (RECORD_MODE_FLIP.equals(recordMode)) {
+                    
+                    if (addEntity==null) {
+                        if (!isDebug) {
+	                    	// Create "new" PBD entity, so we don't need to update all the default 3d image links
+	                        addEntity = entityBean.createEntity(entity.getOwnerKey(), EntityConstants.TYPE_IMAGE_3D, entity.getName());
+                        	updateEntityData(addEntity, EntityConstants.ATTRIBUTE_FILE_PATH, inputPath);
+                        	updateEntityData(addEntity, EntityConstants.ATTRIBUTE_IMAGE_FORMAT, entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT));
+                        	entityBean.saveOrUpdateEntity(addEntity);
+                        }
+                        contextLogger.info("Created secondary entity: "+addEntity.getName()+" (id="+addEntity.getId()+")");
+                    }
+                    if (!isDebug) {
+                        entityBean.addEntityToParent(entity, addEntity, entity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE, inputPath);
+                    }
+
+                    // Now convert the original PBD entity into an H5J entity
+        			entity.setName(entity.getName().replaceAll(inputExtension, outputExtension));
+                	updateEntityData(entity, EntityConstants.ATTRIBUTE_IMAGE_FORMAT, outputExtension);
+                	
+            		if (!isDebug) {
+    	            	entityBean.saveOrUpdateEntity(entity);
+            		}
+            		
+        			contextLogger.info("Updated entity: "+entity.getName()+" (id="+entity.getId()+")");
+                    
+                    numChanges++;
                 }
         	}
     	
@@ -382,16 +546,35 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	}
     
     private void deleteIfNecessary(String filepath) {
+    	
         if (!deleteSourceFiles) return;
-        File file = new File(filepath);
+        
+        if (!filepath.startsWith(centralDir)) {
+            contextLogger.warn("Path outside of filestore: "+filepath);
+            return;
+        }
+        
         if (!isDebug) {
-            try {
-                // TODO: what if the file is stored in Scality?
-                FileUtils.forceDelete(file);
-                contextLogger.info("Deleted old file: "+filepath);
+            if (filepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX)) {
+            	String bpid = filepath.replaceFirst(EntityConstants.SCALITY_PATH_PREFIX,"");
+            	ScalityDAO scality = new ScalityDAO();
+                try {
+                	scality.delete(bpid);
+                    contextLogger.info("Deleted old Scality object: "+bpid);
+                }
+                catch (Exception e) {
+                	logger.info("Error deleting Scality object "+bpid+"",e);
+                }
             }
-            catch (Exception e) {
-                contextLogger.info("Error deleting symlink "+filepath+": "+e.getMessage());
+            else {
+                File file = new File(filepath);
+                try {
+                    FileUtils.forceDelete(file);
+                    contextLogger.info("Deleted old file: "+filepath);
+                }
+                catch (Exception e) {
+                    logger.info("Error deleting file "+filepath,e);
+                }
             }
         }
     }

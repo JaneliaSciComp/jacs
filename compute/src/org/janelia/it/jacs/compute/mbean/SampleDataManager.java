@@ -13,6 +13,7 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
+import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -523,6 +524,17 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    public void runScalityCorrectionService(String user) {
+        try {
+            String processName = "ScalityCorrectionPipeline";
+            String displayName = "Scality Correction Pipeline";
+            saveAndRunTask(user, processName, displayName);
+        } 
+        catch (Exception ex) {
+            log.error("Error running pipeline", ex);
+        }
+    }
+
     /**
      * Method to point to an ls file and pull out LSM's to be bzip2'd.
      * Example file exists in /groups/jacs/jacsShare/saffordTest/leetLSMs28days.txt (or older file)
@@ -566,17 +578,17 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 }
             }
 
-//            for (String targetOwner : userList) {
-//                VLCorrectionTask vlcorrectionTask = new VLCorrectionTask("system", new ArrayList<Event>(), filePath, targetOwner, Boolean.valueOf(debug));
-//                vlcorrectionTask = (VLCorrectionTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(vlcorrectionTask);
-//                EJBFactory.getLocalComputeBean().submitJob("VLCorrectionService", vlcorrectionTask.getObjectId());
-//            }
+            for (String targetOwner : userList) {
+                VLCorrectionTask vlcorrectionTask = new VLCorrectionTask("system", new ArrayList<Event>(), filePath, targetOwner, Boolean.valueOf(debug));
+                vlcorrectionTask = (VLCorrectionTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(vlcorrectionTask);
+                EJBFactory.getLocalComputeBean().submitJob("VLCorrectionService", vlcorrectionTask.getObjectId());
+            }
         }
-        catch (/**DaoException | RemoteException |**/ FileNotFoundException e) {
+        catch (DaoException | RemoteException | FileNotFoundException e) {
             e.printStackTrace();
         }
     }
-
+    
     public static void main(String[] args) {
         try {
             Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/VLInputPaths.txt"));

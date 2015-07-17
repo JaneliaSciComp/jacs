@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.utility.ParallelFileProcessingService;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
@@ -71,6 +70,6 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 12;
+    	return 36;
     }
 }
