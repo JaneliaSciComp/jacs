@@ -148,8 +148,9 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                 }
             }
         }
+        
         if (input1==null) {
-            throw new SAGEMetadataException("Tile with anatomical area 'Brain' or '' not found for alignment");
+        	runAligner = false;
         }
     }
 
