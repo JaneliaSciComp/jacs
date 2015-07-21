@@ -16,7 +16,7 @@ import com.google.common.collect.Multimap;
 import com.mongodb.WriteConcern;
 
 /**
- * Data access to the MongoDB data store.
+ * Data maintenance for the MongoDB data store. For example, denormalization operations. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
