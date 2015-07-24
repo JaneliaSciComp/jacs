@@ -35,9 +35,6 @@ public class ObjectSet extends AbstractDomainObject {
             return;
         }
         members.remove(memberId);
-        if (members.isEmpty()) {
-            members = null;
-        }
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */

@@ -54,9 +54,6 @@ public class SamplePipelineRun {
             return;
         }
         results.remove(result);
-        if (results.isEmpty()) {
-            results = null;
-        }
     }
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */

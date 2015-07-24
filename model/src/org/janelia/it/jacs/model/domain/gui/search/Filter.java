@@ -34,9 +34,6 @@ public class Filter extends AbstractDomainObject {
             return;
         }
         criteriaList.remove(criteria);
-        if (criteriaList.isEmpty()) {
-        	criteriaList = null;
-        }
     }
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */
