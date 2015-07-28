@@ -195,7 +195,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
             		o2w = Double.parseDouble(o2.getDyeName().substring(DETECTION_CHANNEL_DYE_PREFIX.length()));
             	}
             	else {
-            		o1w = getWavelengthForDye(o1.getDyeName());
+            		o2w = getWavelengthForDye(o2.getDyeName());
             	}
                 return o1w.compareTo(o2w);
             }
