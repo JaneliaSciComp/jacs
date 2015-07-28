@@ -233,6 +233,7 @@ public class SageDAO {
 
     public Map<String,SageTerm> getSageVocabulary() throws DaoException {
         Map<String, SageTerm> entireVocabulary = new HashMap<>();
+        entireVocabulary.putAll(getStaticTerms());
         entireVocabulary.putAll(getSageVocabulary("light_imagery"));
         entireVocabulary.putAll(getSageVocabulary("line"));
         entireVocabulary.putAll(getSageVocabulary("fly"));
@@ -248,7 +249,6 @@ public class SageDAO {
         String pathSuffix = "/with-all-related-cvs";
 
         Map<String,SageTerm> map = new HashMap<>();
-        map.putAll(getStaticTerms());
 
         try {
             HttpClient client = new HttpClient();
@@ -455,17 +455,18 @@ public class SageDAO {
 
         final String[][] terms = {
                 //name           displayName        dataType     definition                               vocabulary
-                {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database", "image_query"},
-                {"name",         "Image Path",      "text",      "Relative path to the image",            "image_query"},
-                {"path",         "Full Image Path", "text",      "Absolute path to the image",            "image_query"},
-                {"line",         "Fly Line",        "text",      "Name of the genetic line",              "image_query"},
+                {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database",   "image_query"},
+                {"name",         "Image Path",      "text",      "Relative path to the image",              "image_query"},
+                {"path",         "Full Image Path", "text",      "Absolute path to the image",              "image_query"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",                "image_query"},
+                {"create_date",  "Create Date",     "date_time", "Date when the image was created in SAGE", "image_query"},
                 
-                {"id",           "SAGE Line Id",    "integer",   "Line identifier within SAGE database",  "line_query"},
-                {"lab",          "Lab",             "text",      "Lab",                                   "line_query"},
-                {"gene",         "Gene",            "text",      "Gene",                                  "line_query"},
-                {"organism",     "Organism",        "text",      "Organism",                              "line_query"},
-                {"line",         "Fly Line",        "text",      "Name of the genetic line",              "line_query"},
-                {"synonyms",     "Synonyms",        "text",      "Synonyms for the genetic line",         "line_query"}
+                {"id",           "SAGE Line Id",    "integer",   "Line identifier within SAGE database",    "line_query"},
+                {"lab",          "Lab",             "text",      "Lab",                                     "line_query"},
+                {"gene",         "Gene",            "text",      "Gene",                                    "line_query"},
+                {"organism",     "Organism",        "text",      "Organism",                                "line_query"},
+                {"line",         "Fly Line",        "text",      "Name of the genetic line",                "line_query"},
+                {"synonyms",     "Synonyms",        "text",      "Synonyms for the genetic line",           "line_query"}
         };
 
         Map<String,SageTerm> map = new HashMap<>();
