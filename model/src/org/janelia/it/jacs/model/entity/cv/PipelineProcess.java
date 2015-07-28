@@ -38,7 +38,9 @@ public enum PipelineProcess implements NamedEnum {
     PTR40NeuronSeparation("PTR 40 Neuron Separation Pipeline"),
 
     SimpsonDescending("Simpson Lab Sensory Descending Alignment Pipeline"),
-
+    
+    TerraIncognita40x("Terra Incognita 40x Whole Brain Pipeline"),
+    
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
     WolfftMCFOCase1Unaligned("Tanya MCFO Case 1 Unaligned Pipeline"),
 
