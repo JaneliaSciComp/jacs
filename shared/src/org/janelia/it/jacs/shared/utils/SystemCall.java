@@ -39,6 +39,8 @@ public class SystemCall {
     
     private StringBuffer stderr;
     private StringBuffer stdout;
+
+    private boolean deleteExecTmpFile=true;
     
     private Random random = new Random();
 
@@ -63,6 +65,10 @@ public class SystemCall {
     public SystemCall(Properties props, File scratchParentDir, Logger logger) {
         this.logger = logger;
         configure(props, scratchParentDir);
+    }
+
+    public void setDeleteExecTmpFile(boolean deleteExecTmpFile) {
+        this.deleteExecTmpFile=deleteExecTmpFile;
     }
 
     protected void configure(Properties props, File scratchParentDir) {
@@ -124,7 +130,12 @@ public class SystemCall {
         else {
             throw new IOException("Could not verify scratchDir=" + scratchDir.getAbsolutePath());
         }
-        File tmpFile = new File(scratchDir, "system_exec_" + getNextIDString());
+        File tmpFile;
+        if (shellPath.contains("cmd")) {
+            tmpFile = new File(scratchDir, "system_exec_" + getNextIDString() + ".bat");
+        } else {
+            tmpFile = new File(scratchDir, "system_exec_" + getNextIDString());
+        }
         File outFile = new File(tmpFile.getAbsolutePath() + ".out");
         FileWriter writer = new FileWriter(tmpFile);
         try {
@@ -176,7 +187,7 @@ public class SystemCall {
                 process.destroy(); // force immediate release of resources back to OS
             }
         }
-        if (exitVal == 0) {
+        if (exitVal == 0 && deleteExecTmpFile) {
             boolean tmpDelSuccess = tmpFile.delete();
             boolean tmpOutSuccess = outFile.delete();
             if (!tmpDelSuccess) {
