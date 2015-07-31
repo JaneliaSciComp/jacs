@@ -134,7 +134,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
-            taskParameters.add(new TaskParameter("root entity id", sampleId, null));
+            taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
             taskParameters.add(new TaskParameter("compression type", compressionType, null));
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, displayName, taskParameters);
