@@ -52,9 +52,6 @@ public class PipelineResult implements HasFilepath, HasFiles {
             return;
         }
         results.remove(result);
-        if (results.isEmpty()) {
-            results = null;
-        }
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */

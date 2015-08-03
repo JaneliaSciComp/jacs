@@ -42,9 +42,6 @@ public class TreeNode extends AbstractDomainObject {
             return;
         }
         children.remove(ref);
-        if (children.isEmpty()) {
-            children = null;
-        }
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
