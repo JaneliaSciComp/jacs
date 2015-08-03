@@ -1,0 +1,184 @@
+apply plugin: 'java'
+
+// set general info and version
+sourceCompatibility = 1.7
+version = '3.10'
+
+// import some ant dependencies in case we need them
+ant.importBuild ('../buildprocess/build-module.xml') { antTargetName ->
+    'a-' + antTargetName
+}
+
+// declaring properties based off old ant build file
+Properties props = new Properties()
+props.load(new FileInputStream("../buildprocess/config/${ant.properties['user.name']}.properties"))
+def localname = "compute"
+def condescDir = "conf/container_descriptor"
+
+// dependency repo
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    jwmodel {
+        java {
+            srcDir '../model/src/'
+        }
+    }
+    jwshared {
+        java {
+            srcDir '../shared/src/'
+        }
+    }
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+
+}
+
+def commonLibs = fileTree(dir: '../common').matching {
+	include 'Apache-Commons/**/*.jar'
+	include 'Solrj/**/*.jar'
+	include 'ehcache/**/*.jar'
+	include 'MongoDB/**/*.jar'
+	include 'jama-1.0.1/**/*.jar'
+	include 'Guava/**/*.jar'
+	include 'Scality/**/*.jar'
+	include 'Reflections/**/*.jar'
+	include 'snakeyaml-1.11/**/*.jar'
+	include 'commons-vfs/**/*.jar'
+	include 'commons-net/**/*.jar'
+	include 'JodaTime/**/*.jar'
+	include 'GWT/gwt-servlet.jar'
+	include 'Spring/jxl.jar'
+}
+def sharedLibs = fileTree(dir: '../shared/lib').matching { 
+    include '**/*.jar'
+}
+def computeLibs = fileTree(dir: 'lib').matching { 
+    include '**/*.jar'
+}
+
+
+task computeJar(dependsOn:classes, type: Jar) {
+    from sourceSets.main.output
+    from fileTree (dir: 'conf/resource').matching {
+         include '*.process'
+    }		
+    
+    baseName = "compute"
+}
+
+task drmaaJar(dependsOn:classes, type: Jar) {
+    from fileTree(dir: 'build/classes/main').matching { 
+        include 'org/janelia/it/jacs/compute/drmaa/*.class'
+        include 'org/janelia/it/jacs/compute/service/common/grid/submit/GridProcessResult.class'
+        include 'org/janelia/it/jacs/compute/service/common/grid/submit/sge/RemoteJobStatusLogger.class'
+        include 'org/janelia/it/jacs/compute/api/JobControlBeanRemote.class'
+    } 
+    from fileTree(dir: 'build/classes/jwmodel').matching {  
+        include 'org/janelia/it/jacs/model/**/*.class'
+    }
+    from fileTree(dir: 'conf').matching { 
+        include 'drmaa/**' 
+    }
+    from zipTree('../common/Spring/log4j-1.2.14.jar').matching {
+        exclude 'META-INF/**'
+        exclude 'meta-inf/**'
+    }
+    from zipTree('../common/Spring/commons-logging.jar').matching {
+        exclude 'META-INF/**'
+        exclude 'meta-inf/**'
+    }
+    from zipTree('../common/Spring/spring.jar').matching {
+        exclude 'META-INF/**'
+        exclude 'meta-inf/**'
+    }
+    from zipTree('../common/JBoss-Server-4.2.3.GA/jbossall-client.jar').matching {
+        exclude 'META-INF/**'
+        exclude 'meta-inf/**'
+    }
+    from zipTree('../common/JBoss-Server-4.2.3.GA/concurrent.jar').matching {
+        exclude 'META-INF/**'
+        exclude 'meta-inf/**'
+    }
+    from zipTree('lib/drmaa.jar').matching {
+        include '**/*.properties'
+        include 'com/**'
+        include 'org/**'
+    }
+    baseName = 'drmaa'
+}
+
+task computeWar(dependsOn:classes, type: War) {
+    webInf {
+        from fileTree(dir: 'build/classes/main').matching {  
+           into 'classes'
+           include 'org/janelia/it/jacs/compute/web/**/*.class'
+        }
+    }  
+    from file('../shared/conf/jacs.properties')
+    from fileTree(dir: 'jsp').matching { 
+        into '/'
+        include 'index.jsp' 
+        include 'css/*' 
+        include 'images/*' 
+        include 'includes/*'
+        include 'js/*'
+        include '*.jsp'
+        include '*.css'
+    }
+    webInf { from 'conf/container_descriptor/jboss-web.xml' }
+    webXml = file('WEB-INF/web.xml') 
+    baseName = 'compute'
+}
+
+task computeEar(dependsOn:['computeWar','computeJar','drmaaJar'], type: Ear) {
+    from computeJar.archivePath
+    from drmaaJar.archivePath
+    from computeWar.archivePath
+    from file('conf/ehcache2-jacs.xml')
+    from file('../shared/conf/jacs.properties')
+    into ('lib') {
+        from commonLibs.files
+        from sharedLibs.files
+        from computeLibs.files
+    } 
+    into ('META-INF') {
+        from file('conf/container_descriptor/jboss-app.xml')
+        from file('conf/container_descriptor/application.xml')
+    }
+    baseName = 'compute'
+}
+
+dependencies {
+    jwmodelCompile fileTree(dir: "../shared/lib", include: '**/*.jar')
+    jwmodelCompile fileTree(dir: "../common", include: '**/*.jar')
+    jwsharedCompile fileTree(dir: "../shared/lib", include: '**/*.jar')
+    jwsharedCompile fileTree(dir: "../common", include: '**/*.jar')
+    jwsharedCompile fileTree(dir: "../shared/lib", include: '**/*.jar')
+    jwsharedCompile sourceSets.jwmodel.output
+    compile fileTree(dir: "lib", include: '**/*.jar')
+    compile fileTree(dir: "../shared/lib", include: '**/*.jar')
+    compile fileTree(dir: "../common", include: '**/*.jar')
+    compile sourceSets.jwshared.output + sourceSets.jwmodel.output
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet-core', version: '2.19'
+    compile group: 'org.glassfish.jersey.core', name: 'jersey-container-servlet-core', version: '2.19'
+}
+
+artifacts {
+	archives computeJar
+	archives drmaaJar
+	archives computeEar
+}
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'build/jars'
+       }
+    }
+}
