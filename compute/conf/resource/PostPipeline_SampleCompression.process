@@ -13,7 +13,7 @@
             <input name="ROOT_ENTITY_ID"/>
             <input name="COMPRESSION_TYPE"/>
             <input name="TASK_PARAMETER_MAP">
-                <entry key="root entity id" value="ROOT_ENTITY_ID"/>
+                <entry key="sample entity id" value="ROOT_ENTITY_ID"/>
                 <entry key="compression type" value="COMPRESSION_TYPE"/>
             </input>
 	        <output name="ROOT_ENTITY_ID"/>
