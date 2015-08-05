@@ -588,35 +588,59 @@ public class SampleDataManager implements SampleDataManagerMBean {
             e.printStackTrace();
         }
     }
-    
-    public static void main(String[] args) {
-        try {
-            Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/VLInputPaths.txt"));
-            HashSet<String> userList = new HashSet<>();
-            while (scanner.hasNextLine()) {
-                String tmpLine = scanner.nextLine().trim();
-                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
-                File tmpOriginalPBD = new File(originalPDB);
-                File tmpOriginalVL = new File(tmpLine);
-                if (!tmpOriginalVL.exists()) {
-                    System.out.println("Can't find the original VL file: "+tmpLine);
-                }
-                if (!tmpOriginalPBD.exists()) {
-                    System.out.println("Can't find the original PBD file: "+originalPDB);
-                }
 
-                tmpLine = tmpLine.substring(tmpLine.indexOf("filestore/")+10);
-                String tmpUser = tmpLine.substring(0,tmpLine.indexOf("/"));
-                if (!userList.contains(tmpUser)) {
-                    userList.add(tmpUser);
-                    System.out.println("Adding user "+tmpUser);
-                }
-            }
-        }
-        catch (/**DaoException | RemoteException |**/ FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+//    public static void main(String[] args) {
+//        String targetUser = "leetlab";
+//        try (FileWriter cleanupFile = new FileWriter(new File("/Users/saffordt/Desktop/CleanupVLInputPaths"+targetUser+".txt"));) {
+//            Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/VLInputPaths.txt"));
+//            while (scanner.hasNextLine()) {
+//                String tmpLine = scanner.nextLine().trim();
+//                if (!tmpLine.contains(targetUser)) {continue;}
+//                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
+//                File tmpOriginalPBD = new File(originalPDB);
+//                File tmpOriginalVL = new File(tmpLine);
+//                if (!tmpOriginalVL.exists()) {
+//                    System.out.println("Can't find the original VL file: "+tmpLine);
+//                    continue;
+//                }
+//                if (!tmpOriginalPBD.exists()) {
+//                    System.out.println("Can't find the original PBD file: "+originalPDB);
+//                    continue;
+//                }
+//
+//                long diff = new Date().getTime() - tmpOriginalVL.lastModified();
+//                int daysOlderThan = 3;
+//                if (diff > daysOlderThan * 24 * 60 * 60 * 1000) {
+//                    cleanupFile.append(tmpLine).append("\n");
+//                }
+//            }
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+//    public static void main(String[] args) {
+//        String nernaFilePath = "/groups/jacs/jacsShare/saffordTest/nernaVLConvertHangsGrid.txt";
+//        File nernaFile = new File(nernaFilePath);
+//        try (FileWriter writer = new FileWriter(new File("/groups/jacs/jacsShare/saffordTest/nernaVLFixes.txt"))){
+//            Scanner scanner = new Scanner(nernaFile);
+//            while (scanner.hasNextLine()) {
+//                String tmpLine = scanner.nextLine().trim();
+//                String[] pieces = tmpLine.split("\\s");
+//                String suffix = pieces[6].substring(pieces[6].lastIndexOf(".")+1);
+//                Scanner tmpScanner = new Scanner(
+//                        new File("/nobackup/jacs/jacsData/filestore/system/GenericResults/572/935/2154836344520572935/sge_config/vlCorrectionTestConfiguration."+suffix));
+//                String pbd = tmpScanner.nextLine();
+//                String h5j = tmpScanner.nextLine();
+//                writer.write(h5j+"\n");
+//            }
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
 
     public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab,
             String debug, String lock) {
