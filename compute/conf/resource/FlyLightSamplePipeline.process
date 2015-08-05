@@ -425,6 +425,7 @@
 		<!-- Compress all v3draw files to v3dpbd, and generate accompanying h5j files -->
         <include name="Sample compression" process="PostPipeline_SampleCompression">
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+            <input name="COMPRESSION_TYPE" value="Visually Lossless and PBD"/>
         </include>
         
         <!-- Move all generated files to archive -->
