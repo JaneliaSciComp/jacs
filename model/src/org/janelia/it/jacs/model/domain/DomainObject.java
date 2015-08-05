@@ -3,7 +3,9 @@ package org.janelia.it.jacs.model.domain;
 import java.util.Date;
 import java.util.Set;
 
-public interface DomainObject {
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
+
+public interface DomainObject extends HasIdentifier {
 
     public Long getId();
 

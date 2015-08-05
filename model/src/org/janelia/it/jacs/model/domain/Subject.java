@@ -2,11 +2,12 @@ package org.janelia.it.jacs.model.domain;
 
 import java.util.Set;
 
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.jongo.marshall.jackson.oid.Id;
 
 @MongoMapped(collectionName = "subject")
-public class Subject {
+public class Subject implements HasIdentifier {
 
     @Id
     private Long id;
