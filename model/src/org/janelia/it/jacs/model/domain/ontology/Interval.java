@@ -8,7 +8,7 @@ public class Interval extends OntologyTerm {
     public Interval() {
     }
 
-    public Interval(Long lowerBound, Long upperBound) {
+    public void init(Long lowerBound, Long upperBound) {
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
         if (lowerBound.compareTo(upperBound)>=0) {

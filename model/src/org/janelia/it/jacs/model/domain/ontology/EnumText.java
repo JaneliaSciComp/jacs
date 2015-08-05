@@ -7,7 +7,7 @@ public class EnumText extends OntologyTerm {
     public EnumText() {
     }
 
-    public EnumText(Long valueEnumId) {
+    public void init(Long valueEnumId) {
         this.valueEnumId = valueEnumId;
     }
 
