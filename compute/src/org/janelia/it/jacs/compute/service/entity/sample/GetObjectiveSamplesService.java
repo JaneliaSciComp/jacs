@@ -97,7 +97,7 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
                 } 
                 else if (run40x && Objective.OBJECTIVE_40X.getName().equals(objective)) {
                     if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines40x)) {
-                        data.putItem("SAMPLE_63X_ID", subSampleId);
+                        data.putItem("SAMPLE_40X_ID", subSampleId);
                 	}
                 } 
                 else if (run63x && Objective.OBJECTIVE_63X.getName().equals(objective)) {
