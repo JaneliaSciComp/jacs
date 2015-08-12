@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -37,8 +38,10 @@ import java.util.regex.Pattern;
 public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	private Map<Long,Entity> images3d = new HashMap<Long,Entity>();
+	private Map<String,Entity> allMipPrefixMap = new HashMap<String,Entity>();
 	private Map<String,Entity> signalMipPrefixMap = new HashMap<String,Entity>();
 	private Map<String,Entity> refMipPrefixMap = new HashMap<String,Entity>();
+	private Map<String,Entity> moviePrefixMap = new HashMap<String,Entity>();
 	
 	public void execute() throws Exception {
 
@@ -107,6 +110,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	
     	findImages(resultEntity);
     	logger.info("Found "+images3d.size()+" 3d images");
+    	logger.info("Found "+allMipPrefixMap.size()+" all MIPs");
+    	logger.info("Found "+signalMipPrefixMap.size()+" signal MIPs");
+    	logger.info("Found "+refMipPrefixMap.size()+" ref MIPs");
+    	logger.info("Found "+moviePrefixMap.size()+" movies");
     	
     	// Ensure all 3d images have their shortcut images correctly set. At the same time, find which of these
     	// 3d images is the default image for this result.
@@ -125,41 +132,53 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				default3dImage = image3d;
 			}
 				
-			Pattern p = Pattern.compile("^(.*?)\\.(\\w+?)$");
-			Matcher m = p.matcher(filepath);
+			if (image3d.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
 			
-			if (m.matches()) {
-				String prefix = m.group(1);
+				Pattern p = Pattern.compile("^(.*?)\\.(\\w+?)$");
+				Matcher m = p.matcher(filepath);
 				
-				Entity signalMip = signalMipPrefixMap.get(prefix);
-				Entity refMip = refMipPrefixMap.get(prefix);
-
-				if (signalMip!=null) {
-			    	EntityData currDefault2dImage = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-			    	if (currDefault2dImage==null || currDefault2dImage.getChildEntity()==null || !currDefault2dImage.getId().equals(signalMip.getId())) {
-			    	    logger.info("    Setting default 2d MIP on "+image3d.getName()+" to: "+signalMip.getName());
-			    		entityHelper.setDefault2dImage(image3d, signalMip);
-			    	}
-			    	EntityData currSignalMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-			    	if (currSignalMip==null || currSignalMip.getChildEntity()==null || !currSignalMip.getId().equals(signalMip.getId())) {
-			    	    logger.info("    Setting signal MIP on "+image3d.getName()+" to: "+signalMip.getName());
-			    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
-			    	}
-				}
-				
-				if (refMip!=null) {
-			    	EntityData currRefMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-			    	if (currRefMip==null || currRefMip.getChildEntity()==null || !currRefMip.getId().equals(refMip.getId())) {
-			    	    logger.info("    Setting reference MIP on "+image3d.getName()+" to: "+refMip.getName());
-			    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
-			    	}
-			    	if (signalMip==null) {
-			    	    // No signal MIP, use the reference as the default 
-			    	    logger.info("    Setting default 2d MIP on "+image3d.getName()+" to: "+refMip.getName());
-                        entityHelper.setDefault2dImage(image3d, refMip);
-			    	}
-				}
-			}	
+				if (m.matches()) {
+					String prefix = m.group(1);
+	
+					Entity allMip = allMipPrefixMap.get(prefix);
+					Entity signalMip = signalMipPrefixMap.get(prefix);
+					Entity refMip = refMipPrefixMap.get(prefix);
+	
+					if (allMip!=null) {
+				    	EntityData currAllMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE);
+				    	if (currAllMip==null || currAllMip.getChildEntity()==null || !currAllMip.getId().equals(allMip.getId())) {
+				    	    logger.info("    Setting all MIP on "+image3d.getName()+" to: "+allMip.getName());
+				    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);
+				    	}
+					}
+					
+					if (signalMip!=null) {
+				    	EntityData currDefault2dImage = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+				    	if (currDefault2dImage==null || currDefault2dImage.getChildEntity()==null || !currDefault2dImage.getId().equals(signalMip.getId())) {
+				    	    logger.info("    Setting default 2d MIP on "+image3d.getName()+" to: "+signalMip.getName());
+				    		entityHelper.setDefault2dImage(image3d, signalMip);
+				    	}
+				    	EntityData currSignalMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
+				    	if (currSignalMip==null || currSignalMip.getChildEntity()==null || !currSignalMip.getId().equals(signalMip.getId())) {
+				    	    logger.info("    Setting signal MIP on "+image3d.getName()+" to: "+signalMip.getName());
+				    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+				    	}
+					}
+					
+					if (refMip!=null) {
+				    	EntityData currRefMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
+				    	if (currRefMip==null || currRefMip.getChildEntity()==null || !currRefMip.getId().equals(refMip.getId())) {
+				    	    logger.info("    Setting reference MIP on "+image3d.getName()+" to: "+refMip.getName());
+				    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+				    	}
+				    	if (signalMip==null) {
+				    	    // No signal MIP, use the reference as the default 
+				    	    logger.info("    Setting default 2d MIP on "+image3d.getName()+" to: "+refMip.getName());
+	                        entityHelper.setDefault2dImage(image3d, refMip);
+				    	}
+					}
+				}	
+			}
     	}
     	
     	if (default3dImage!=null) {
@@ -226,25 +245,49 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		populateChildren(supportingFiles);
     	
             for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE)) {
+            	selectAndSetMIPs(imageTile, "(.*?)/(merged|tile)-"+imageTile.getId());
             	
-            	Entity signalMip = null;
-            	for(String key : signalMipPrefixMap.keySet()) {
-            		if (key.matches("(.*?)/(merged|tile)-"+imageTile.getId())) {
-            			signalMip = signalMipPrefixMap.get(key);
-            		}
-            	}
+        		populateChildren(imageTile);
+                for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
+                	String name = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
+                	String imageName = name.substring(0, name.lastIndexOf('.'));
+                	selectAndSetMIPs(lsmStack, "(.*?)/"+imageName);
+                }
             	
-            	Entity refMip = null;
-            	for(String key : refMipPrefixMap.keySet()) {
-            		if (key.matches("(.*?)/(merged|tile)-"+imageTile.getId())) {
-            			refMip = refMipPrefixMap.get(key);
-            		}
-            	}
-            	
-            	setMIPs(imageTile, signalMip, refMip);
             }
     	}
 	}
+	
+	private void selectAndSetMIPs(Entity imageTile, String keyPattern) throws ComputeException {
+    	Entity allMip = findMatchingEntity(allMipPrefixMap, keyPattern);
+    	Entity signalMip = findMatchingEntity(signalMipPrefixMap, keyPattern);
+    	Entity refMip = findMatchingEntity(refMipPrefixMap, keyPattern);
+    	Entity movie = findMatchingEntity(moviePrefixMap, keyPattern);
+    	setMIPs(imageTile, allMip, signalMip, refMip, movie);
+	}
+
+	private Entity findMatchingEntity(Map<String,Entity> prefixMap, String keyPattern) {
+    	Entity image = null;
+    	for(String key : prefixMap.keySet()) {
+    		if (key.matches(keyPattern)) {
+    			if (image!=null) {
+    				logger.warn("Multiple matches for "+keyPattern+" in prefix map");
+    			}
+    			image = prefixMap.get(key);
+    		}
+    	}
+    	return image;
+	}
+	
+	private void setMIPs(Entity entity, Entity allMip, Entity signalMip, Entity refMip, Entity movie) throws ComputeException {
+        logger.info("Applying MIP and movies on "+entity.getName()+" (id="+entity.getId()+")");
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip==null?refMip:signalMip);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, movie);
+	}
+	
 
 	/**
 	 * Find the corresponding neuron separation for the given 3d image. 
@@ -362,20 +405,33 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	private void findImages(Entity entity) throws Exception {
 		
 		String entityType = entity.getEntityTypeName();
-		if (entityType.equals(EntityConstants.TYPE_IMAGE_2D)) {
+		if (entityType.equals(EntityConstants.TYPE_IMAGE_2D) || entityType.equals(EntityConstants.TYPE_MOVIE)) {
 			String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-			Pattern p = Pattern.compile("^(.*?)_(\\w+)\\.(\\w+?)$");
+			Pattern p = Pattern.compile("^(.*)(_.*)\\.(\\w+)$");
 			Matcher m = p.matcher(filepath);
 			
 			if (m.matches()) {
 				String prefix = m.group(1);
 				String type = m.group(2);
+				String ext = m.group(3);
 				
-				if ("signal".equals(type)) {
-					signalMipPrefixMap.put(prefix, entity);
+				logger.debug("Found prefix="+prefix+", type="+type+", ext="+ext);
+				
+				if ("png".equals(ext)) {
+					if ("_all".equals(type)) {
+						allMipPrefixMap.put(prefix, entity);
+					}
+					else if ("_signal".equals(type)) {
+						signalMipPrefixMap.put(prefix, entity);
+					}
+					else if ("_reference".equals(type)) {
+						refMipPrefixMap.put(prefix, entity);
+					}
 				}
-				else if ("reference".equals(type)) {
-					refMipPrefixMap.put(prefix, entity);
+				else if ("mp4".equals(ext)) {
+					if ("_movie".equals(type)) {
+						moviePrefixMap.put(prefix, entity);
+					}
 				}
 			}
 		}
@@ -409,19 +465,5 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 
         populateChildren(fastLoad);
 		return EntityUtils.findChildWithName(fastLoad, "ConsolidatedSignal2_25.mp4");
-	}
-	
-	private void setMIPs(Entity entity, Entity signalMip, Entity refMip) throws ComputeException {
-	    if (signalMip!=null) {
-	        logger.info("Applying signal/reference MIPs to tile "+entity.getName());
-	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip);
-	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
-	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
-	    }
-	    else {
-	        logger.info("Applying reference MIPs to tile "+entity.getName());
-	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, refMip);
-	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
-	    }
 	}
 }

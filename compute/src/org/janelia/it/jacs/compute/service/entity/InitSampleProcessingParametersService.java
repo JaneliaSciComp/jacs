@@ -127,34 +127,35 @@ public class InitSampleProcessingParametersService extends
 			
 			populateChildren(tileEntity);
 			
-			String lsmFilepath1 = null;
-			String lsmFilepath2 = null;
+			Entity lsm1 = null;
+			Entity lsm2 = null;
 
 			Entity first = null;
 			for (EntityData ed : tileEntity.getOrderedEntityData()) {
 				Entity lsmStack = ed.getChildEntity();
 				if (lsmStack != null && lsmStack.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
-					String filepath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 					if (first != null) {
-						lsmFilepath2 = filepath;
+						lsm2 = lsmStack;
 					} 
 					else {
-						lsmFilepath1 = filepath;
+						lsm1 = lsmStack;
 						first = lsmStack;
 					}
 				}
 			}
 
-			if ("2".equals(first.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS)) && lsmFilepath2 != null) {
-				logger.info("Putting 3 channel image first: " + lsmFilepath2);
+			if (lsm2 != null && "2".equals(first.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS))) {
+				logger.info("Putting 3 channel image first: " + lsm2.getName());
 				// Switch the LSMs so that the 3 channel image always comes first
-				String temp = lsmFilepath1;
-				lsmFilepath1 = lsmFilepath2;
-				lsmFilepath2 = temp;
+				Entity temp = lsm1;
+				lsm1 = lsm2;
+				lsm2 = temp;
 			}
 
+			String lsmFilepath1 = lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			String lsmFilepath2 = lsm2==null?null:lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			
 			File mergedFile = null;
-
 			File lsmFile1 = new File(lsmFilepath1);
 			File lsmFile2 = null;
 			if (lsmFilepath2 != null) {
@@ -173,7 +174,12 @@ public class InitSampleProcessingParametersService extends
 				archived = true;
 			}
 
-			mergedLsmPairs.add(new MergedLsmPair(lsmFilepath1, lsmFilepath2, lsmRealPath1, lsmRealPath2, mergedFile.getAbsolutePath(), tileEntity.getName()));
+			Long lsmId1 = lsm1==null?null:lsm1.getId();
+			Long lsmId2 = lsm2==null?null:lsm2.getId();
+			
+			MergedLsmPair mergedPair = new MergedLsmPair(lsmId1, lsmId2, lsmFilepath1, lsmFilepath2, lsmRealPath1, lsmRealPath2, mergedFile.getAbsolutePath(), tileEntity.getName());
+			
+			mergedLsmPairs.add(mergedPair);
 		}
 
 		return archived;

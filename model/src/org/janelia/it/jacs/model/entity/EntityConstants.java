@@ -114,6 +114,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_DEFAULT_FAST_3D_IMAGE               = "Default Fast 3D Image";
     public static final String ATTRIBUTE_REFERENCE_MIP_IMAGE                 = "Reference MIP Image";
     public static final String ATTRIBUTE_SIGNAL_MIP_IMAGE                    = "Signal MIP Image";
+    public static final String ATTRIBUTE_ALL_MIP_IMAGE                       = "All MIP Image";
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
     public static final String ATTRIBUTE_IMAGE_FORMAT                        = "Image Format";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";

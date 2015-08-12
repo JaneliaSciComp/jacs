@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Create Maximum Intensity Pojections
+# Create all summary files for LSMs, including MIPs and movies
 #
 DIR=$(cd "$(dirname "$0")"; pwd)
 
@@ -8,7 +8,6 @@ NETPBM_PATH="$DIR/../../../netpbm-redhat/"
 NETPBM_BIN="$NETPBM_PATH/bin"
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 NSDIR="$DIR/../../../neusep-redhat"
-
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$NETPBM_PATH/lib"
 
 ##################
@@ -20,18 +19,24 @@ if [ $NUMPARAMS -lt 3 ]
 then
     echo " "
     echo " USAGE ::  "
-    echo " sh mipCreator.sh <output dir> <output format> <input file> \"<signal channels>\" \"<ref channel>\""
+    echo " sh summaryCreator.sh <output dir> <input file> \"<signal channels>\" \"<ref channel>\""
     echo " Note: channel numbers are separated by spaces, and zero indexed."
-    echo " Output format may be any 'png' or 'jpg', but defaults to 'png'"
     echo " "
     exit
 fi
 
 OUTDIR=$1
-FORMAT=$2
-INPUT_FILE=$3
-SIGNAL_CHAN=$4
-REF_CHAN=$5
+INPUT_FILE=$2
+SIGNAL_CHAN=$3
+REF_CHAN=$4
+FORMAT=png
+
+ALL_CHAN=""
+if [ "$REF_CHAN" == "0" ]; then
+    ALL_CHAN="$REF_CHAN $SIGNAL_CHAN"
+else 
+    ALL_CHAN="$SIGNAL_CHAN $REF_CHAN"
+fi
 
 export TMPDIR="$OUTDIR"
 WORKING_DIR=`mktemp -d`
@@ -40,11 +45,6 @@ cd $WORKING_DIR
 if [ ! -s $INPUT_FILE ]; then
     echo "Input file does not exist: $INPUT_FILE"
     exit 1
-fi
-
-OUTEXT=$FORMAT
-if [ "$FORMAT" == "jpg" ]; then
-    FORMAT="jpeg"
 fi
 
 INPUT_FILENAME=`basename $INPUT_FILE`
@@ -56,8 +56,7 @@ echo "Input file: $INPUT_FILE"
 echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
-echo "Output format: $FORMAT"
-echo "Output extension: $OUTEXT"
+echo "All channels: $ALL_CHAN"
 
 EXT=${INPUT_FILE#*.}
 if [ "$EXT" == "v3dpbd" ] || [ "$EXT" == "lsm" ]; then
@@ -68,6 +67,7 @@ if [ "$EXT" == "v3dpbd" ] || [ "$EXT" == "lsm" ]; then
     $Vaa3D -cmd image-loader -convert "$PBD_INPUT_FILE" "$INPUT_FILE"
 fi
 
+# This function is taken from ../NeuronSeperator/mipCreator.sh. It should be factored out into a common script. 
 createMip() 
 {
     NAME="$1"
@@ -75,7 +75,7 @@ createMip()
     CE_FLAGS="$3"
     MIP="${FILE_STUB}_${NAME}.tif"
     MIP_EN="${FILE_STUB}_${NAME}_en.tif"
-    MIP_FINAL="${FILE_STUB}_${NAME}.${OUTEXT}"
+    MIP_FINAL="${FILE_STUB}_${NAME}.${FORMAT}"
     echo "~ Generating $NAME MIP from channels $CHANNELS with flags $CE_FLAGS"
 
     SIGNAL_MIP_PPM="${FILE_STUB}_${NAME}.ppm"
@@ -105,9 +105,27 @@ if [ ! -z "$REF_CHAN" ]; then
     createMip "reference" "$REF_CHAN" ""
 fi
 
+if [ ! -z "$ALL_CHAN" ]; then
+    createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
+fi
+
+# For now this doesn't work, because the zmip plugin is ignoring the -o flag for some reason.
+#if [ ${#ALL_CHAN} -lt 6 ]; then
+#    ZMIP="${FILE_STUB}_mip.tif"
+#    ZMIP_FINAL="${FILE_STUB}_mip.${FORMAT}"
+#    echo "Generating ZMIP: $Vaa3D -x ireg -f zmip -i $INPUT_FILE -o $ZMIP"
+#    $Vaa3D -x ireg -f zmip -i $INPUT_FILE -o $ZMIP
+#    $Vaa3D -x ireg -f iContrastEnhancer -i $ZMIP -o $ZMIP -p "#m 5"
+#    $MAGICK/convert -flip $ZMIP $ZMIP_FINAL   
+#fi
+
+MOVIE="${FILE_STUB}_movie.mp4"
+$Vaa3D -cmd image-loader -convert $INPUT_FILE $MOVIE
+
 echo "~ Copying final output to: $OUTDIR"
 mkdir -p $OUTDIR
-cp *.${OUTEXT} $OUTDIR
+cp *.${FORMAT} $OUTDIR
+cp *.mp4 $OUTDIR
 
 echo "~ Removing temp directory: $WORKING_DIR"
 rm -rf $WORKING_DIR

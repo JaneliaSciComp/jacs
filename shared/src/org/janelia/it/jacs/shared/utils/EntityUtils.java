@@ -753,6 +753,7 @@ public class EntityUtils {
 		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_INPUT_IMAGE.equals(attrName)
@@ -775,6 +776,7 @@ public class EntityUtils {
 	public static boolean hasImageRole(EntityData entityData) {
 		String attrName = entityData.getEntityAttrName();
 		return (attrName.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE) || 
+				attrName.equals(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE) || 
 				attrName.equals(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE) || 
 				attrName.equals(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
 	}

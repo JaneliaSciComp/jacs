@@ -32,6 +32,10 @@ public class NeuronSeparatorHelper {
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("MipCreator.ScriptPath");
     
+    protected static final String SUMMARY_CREATOR_SCRIPT = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("SummaryCreator.ScriptPath");
+    
     protected static final String NEURON_MAPPING_SCRIPT = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("NeuronMapping.ScriptPath");
@@ -71,6 +75,12 @@ public class NeuronSeparatorHelper {
         StringBuilder script = new StringBuilder();
         script.append("export NFE_MAX_THREAD_COUNT="+numThreads+"\n");
         script.append("sh "+MIP_CREATOR_SCRIPT+" $OUTPUT_DIR png $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\"");
+        return script.toString();
+	}
+
+	public static String getSummaryCreatorCommands() {
+        StringBuilder script = new StringBuilder();
+        script.append("sh "+SUMMARY_CREATOR_SCRIPT+" $OUTPUT_DIR $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\"");
         return script.toString();
 	}
 	

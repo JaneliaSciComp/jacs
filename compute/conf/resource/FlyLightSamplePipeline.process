@@ -197,15 +197,26 @@
                     </operation>
                 </sequence>
                 
-        	    <!-- Asynchronously create the metadata describing the input LSM files -->
-                <sequence name="Create Lsm Metadata Files" waitForAsync="true">
-        	        <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
+        	    <!-- Create the metadata describing the input LSM files -->
+                <sequence name="Create LSM Metadata Files" waitForAsync="true">
+        	        <operation name="Create LSM Metadata Files" processor="queue/gridSubmitAndWait">
         	            <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
         		        <input name="SAMPLE_ENTITY_ID"/>
                         <input name="BULK_MERGE_PARAMETERS"/>
         		        <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
         	    		<input name="OUTPUT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
         	        </operation>
+                </sequence>
+                
+                <!-- Create MIPs and movies for all LSMs -->
+                <sequence name="Create LSM Summary Artifacts" waitForAsync="true">
+                    <operation name="Create LSM Summary Artifacts" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmSummaryFilesService"/>
+                        <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="BULK_MERGE_PARAMETERS"/>
+                        <input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
+                        <input name="OUTPUT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
+                    </operation>
                 </sequence>
                 
                 <!-- Run merging? -->
