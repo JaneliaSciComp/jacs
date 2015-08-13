@@ -45,7 +45,6 @@ public class CreateSampleResultFileNodeService implements IService {
             processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultFileNode.getObjectId());
 
             processData.putItem("SAMPLE_RESULT_FILE_NODE", resultFileNode);
-            processData.putItem("METADATA_RESULT_FILE_NODE", createChildFileNode("metadata"));
             processData.putItem("MERGE_RESULT_FILE_NODE", createChildFileNode("merge"));
             processData.putItem("GROUP_RESULT_FILE_NODE", createChildFileNode("group"));
             processData.putItem("STITCH_RESULT_FILE_NODE", createChildFileNode("stitch"));

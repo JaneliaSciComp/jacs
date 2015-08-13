@@ -91,18 +91,17 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	        default3dImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
 	        if (default3dImage==null) {
 	            default3dImage = findDefaultImage(resultEntity);
-	            if (default3dImage==null) {
-	                throw new IllegalArgumentException("Could not determine default image for result entity "+resultEntity.getId());
-	            }
 	        }
-	        defaultImageFilename = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+	        if (default3dImage!=null) {
+	        	defaultImageFilename = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+	        }
 	    }
 	    
 	    logger.info("Registering images for result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
 	    if (default3dImage!=null) {
 	        logger.info("Using default image: "+default3dImage.getName()+" (id="+default3dImage.getId()+")");
 	    }
-	    else {
+	    else if (defaultImageFilename!=null) {
 	        logger.info("Will find default image: "+defaultImageFilename);
 	    }
 	    
@@ -118,7 +117,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	// Ensure all 3d images have their shortcut images correctly set. At the same time, find which of these
     	// 3d images is the default image for this result.
 
-    	String defaultImageCanonicalFilename = new File(defaultImageFilename).getCanonicalPath();
+    	String defaultImageCanonicalFilename = defaultImageFilename == null ? null : new File(defaultImageFilename).getCanonicalPath();
     	
     	for(Entity image3d : images3d.values()) {
 			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -236,8 +235,21 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             
             processData.putItem("DEFAULT_IMAGE_ID", default3dImage.getId().toString());
     	}		
-		
-    	// Finally, set the images on the sample tiles 
+    	else {
+    		// Is there a montage?
+    		Entity allMip = getMontage(allMipPrefixMap);
+    		Entity signalMip = getMontage(signalMipPrefixMap);
+    		Entity refMip = getMontage(refMipPrefixMap);
+
+    		if (allMip!=null || signalMip!=null ||  refMip!=null) {
+	            logger.info("Applying 2d montages to the result ("+resultEntity.getId()+")");
+	        	entityHelper.set2dImages(resultEntity, signalMip, allMip, signalMip, refMip);
+	            logger.info("Applying 2d montages to the pipeline run ("+pipelineRunEntity.getId()+")");
+	        	entityHelper.set2dImages(pipelineRunEntity, signalMip, allMip, signalMip, refMip);
+    		}
+    	}
+    	
+    	// Finally, set the images on the tiles and LSMs, if they are available in this result
     	
     	populateChildren(sampleEntity);
     	Entity supportingFiles = EntityUtils.getSupportingData(sampleEntity);
@@ -256,6 +268,15 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             	
             }
     	}
+	}
+	
+	private Entity getMontage(Map<String,Entity> prefixMap) {
+    	for(String key : prefixMap.keySet()) {
+    		if (key.endsWith("montage")) {
+    			return prefixMap.get(key);
+    		}
+    	}
+    	return null;
 	}
 	
 	private void selectAndSetMIPs(Entity imageTile, String keyPattern) throws ComputeException {
@@ -288,7 +309,6 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, movie);
 	}
 	
-
 	/**
 	 * Find the corresponding neuron separation for the given 3d image. 
 	 * @param resultEntity
@@ -311,9 +331,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
     private Entity findDefaultImage(Entity result) throws Exception {
         
-        logger.info("  Result's default 3d image is missing. Attempting to infer...");
         Entity supportingFiles = EntityUtils.getSupportingData(result);
-        
         Entity defaultImage = null;
         
         String resultDefault2dImage = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);

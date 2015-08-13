@@ -1,31 +1,8 @@
 <process name="Dickson VT Gal4 Screen Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
-        <!-- Import variables from the task -->
-        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
-            <input name="TASK_PARAMETER_3" value="reuse alignment"/>
-            <input name="PROCESS_VARIABLE_3" value="REUSE_ALIGNMENT"/>
-            <output name="SAMPLE_ENTITY_ID"/>
-            <output name="REUSE_PROCESSING"/>
-            <output name="REUSE_ALIGNMENT"/>
-        </operation>
-
-        <!-- Default variables if they haven't been explicitly defined by task. -->
-        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-            <input name="OVERRIDE" value="false"/>
-            <input name="REUSE_ALIGNMENT"/>
-            <input name="PROCESS_VARIABLE_1" value="REUSE_ALIGNMENT"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="true"/>
-            <output name="REUSE_ALIGNMENT"/>
-        </operation>
-
         <!-- Run 20x pipeline -->
         <include name="20x Pipeline" process="FlyLightSamplePipeline">
-            <input name="SAMPLE_ENTITY_ID"/>
             <input name="PIPELINE_NAME" value="Dickson Sample Pipeline"/>
             <input name="PIPELINE_PROCESS" value="DicksonVTGal4Screen"/>
             <input name="MERGE_ALGORITHMS" value=""/> <!-- no merge -->
@@ -36,8 +13,6 @@
             <!-- skip alignment for VNC images -->
             <input name="SKIP_ALIGNMENT_TILE_FILTER" value="(?i).*(ventral_nerve_cord).*"/>
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
-            <input name="REUSE_PROCESSING"/>
-            <input name="REUSE_ALIGNMENT"/>
         </include>
 
     </sequence>

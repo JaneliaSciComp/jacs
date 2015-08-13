@@ -4,7 +4,6 @@
         <archive path="/common/Apache-Commons/commons-vfs-1.0.jar"/>
         <archive path="/common/Apache-Commons/commons-net-2.0.jar"/>
         <archive path="/common/Apache-Commons/commons-logging-1.1.1.jar"/>
-        <archive path="/common/Apache-Commons/commons-io-2.0.1.jar"/>
         <archive path="/common/Apache-Commons/commons-httpclient-3.1.jar"/>
         <archive path="/common/Apache-Commons/commons-fileupload-1.2.jar"/>
         <archive path="/common/Apache-Commons/commons-collections-2.1.1.jar"/>
@@ -242,7 +241,6 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xmlbeans-2.3.0.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/XmlSchema-1.4.3.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xuggle-xuggler-5.4.jar"/>
-        <archive path="/common/Apache-Commons/commons-io-2.0.1.jar"/>
     </library>
     <library name="Ehcache" systemlibrary="false">
         <archive path="/common/ehcache/ehcache-core-2.5.1.jar"/>

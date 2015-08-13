@@ -66,7 +66,7 @@ public class InitVariablesFromTaskService implements IService {
     
     private void processEntry(String taskParamName, String processVarName) throws Exception {
         String value = task.getParameter(taskParamName);
-        contextLogger.debug("Init "+processVarName+" with value '"+value+"' from task parameter "+taskParamName);
+        contextLogger.info("Init "+processVarName+" with value '"+value+"' from '"+taskParamName+"'");
         if (value != null) {
             // We specifically avoid overriding existing values in ProcessData, because if the process file
             // is being <include>'d, then the task may not contain the parameter which is already in

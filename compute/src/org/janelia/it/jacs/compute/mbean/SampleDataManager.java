@@ -298,6 +298,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (reusePipelineRuns!=null) {
             	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
             }
+            taskParameters.add(new TaskParameter("reuse summary", "true", null));
             if (reuseProcessing!=null) {
             	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
             }
@@ -372,6 +373,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (reusePipelineRuns!=null) {
             	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
             }
+            taskParameters.add(new TaskParameter("reuse summary", "true", null));
             if (reuseProcessing!=null) {
             	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
             }
@@ -393,8 +395,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-            taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null)); 
-            taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+            taskParameters.add(new TaskParameter("reuse summary", "true", null));
+            if (reuseProcessing!=null) {
+            	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            }
+            if (reuseAlignment!=null) {
+            	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+            }
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, processName, taskParameters);
         } 

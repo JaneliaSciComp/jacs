@@ -174,6 +174,11 @@ public class EntityHelper {
         		removeDefaultImageFilePath(default3dImage);
         	}
     	}
+    	
+    	Entity allMip = default3dImage.getChildByAttributeName(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE);
+    	if (allMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);	
+    	}
 
     	Entity signalMip = default3dImage.getChildByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
     	if (signalMip!=null) {
@@ -187,6 +192,25 @@ public class EntityHelper {
 		
     }
 
+	public void set2dImages(Entity entity, Entity default2dImage, Entity allMip, Entity signalMip, Entity refMip) throws ComputeException {
+
+    	if (default2dImage!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
+    	}
+    	
+    	if (allMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);	
+    	}
+
+    	if (signalMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+    	}
+
+    	if (refMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);	
+    	}
+	}
+	
 	/**
 	 * Sets the given image as the default 2d image for the given entity.
 	 * @param entity

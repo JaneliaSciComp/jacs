@@ -3,24 +3,18 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
-import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
-import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
 
 /**
  * File discovery service for sample processing results.
@@ -79,14 +73,8 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         String pixelRes = null;
         Entity image3d = null;
         
-        Map<String,Entity> jsonEntityMap = new HashMap<String,Entity>();
         for(Entity resultItem : supportingFiles.getChildren()) {
-            if (resultItem.getName().endsWith(".json")) {
-                String stub = resultItem.getName().replaceFirst("\\.json", "");
-                jsonEntityMap.put(stub, resultItem);
-                logger.info("Found JSON metadata file: "+resultItem.getName());
-            }
-            else if (resultItem.getName().endsWith(".tc")) {
+            if (resultItem.getName().endsWith(".tc")) {
                 pixelRes = getStitchedDimensions(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
             }
             else if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
@@ -136,48 +124,14 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             List<String> allLsmColors = new ArrayList<String>();
 
             for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
-        	                        
-                String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
-                
-                logger.info("Processing metadata for LSM: "+lsmFilename);
-                
-                Entity jsonEntity = jsonEntityMap.get(lsmFilename);
-                if (jsonEntity==null) {
-                    logger.warn("  No JSON metadata file found for LSM: "+lsmFilename);
-                    continue;
+                String colorStr = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
+                if (colorStr!=null) {
+	                List<String> colors = Task.listOfStringsFromCsvString(colorStr);
+	                allLsmColors.addAll(colors);
                 }
-
-                List<String> colors = new ArrayList<String>();
-                List<String> dyeNames = new ArrayList<String>();
-                File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                
-                try {
-                    LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
-                    for(Channel channel : metadata.getChannels()) {
-                        colors.add(channel.getColor());
-                        DetectionChannel detection = metadata.getDetectionChannel(channel);
-                        if (detection!=null) {
-                            dyeNames.add(detection.getDyeName());
-                        }
-                    }
+                else {
+                	logger.warn("LSM does not have channel colors: "+lsmStack.getId());
                 }
-                catch (Exception e) {
-                    throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
-                }
-                
-                allLsmColors.addAll(colors);
-
-                if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
-                    logger.info("  Setting LSM colors: "+colors);
-                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors));
-                }
-                
-                if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
-                    logger.info("  Setting LSM dyes: "+dyeNames);
-                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames));
-                }
-                
-                entityBean.saveOrUpdateEntity(lsmStack);
             }
             
             if (consensusLsmColors==null) {
@@ -214,7 +168,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         }
     }
 
-    public static String getStitchedDimensions(String filePath) throws Exception {
+    private String getStitchedDimensions(String filePath) throws Exception {
         
         boolean takeNext = false;
         String dimensions = null;

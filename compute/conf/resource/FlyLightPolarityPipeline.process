@@ -13,23 +13,14 @@
             <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="REUSE_PIPELINE_RUNS"/>
-            <input name="REUSE_PROCESSING"/>
-            <input name="REUSE_ALIGNMENT"/>
             <input name="RUN_OBJECTIVES"/>
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PIPELINE_RUNS"/>
-            <input name="TASK_PARAMETER_3" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_3" value="REUSE_PROCESSING"/>
-            <input name="TASK_PARAMETER_4" value="reuse alignment"/>
-            <input name="PROCESS_VARIABLE_4" value="REUSE_ALIGNMENT"/>
-            <input name="TASK_PARAMETER_5" value="run objectives"/>
-            <input name="PROCESS_VARIABLE_5" value="RUN_OBJECTIVES"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="reuse pipeline runs" value="REUSE_PIPELINE_RUNS"/>
+                <entry key="run objectives" value="RUN_OBJECTIVES"/>
+            </input>
             <output name="SAMPLE_ENTITY_ID"/>
             <output name="REUSE_PIPELINE_RUNS"/>
-            <output name="REUSE_PROCESSING"/>
-            <output name="REUSE_ALIGNMENT"/>
             <output name="RUN_OBJECTIVES"/>
         </operation>
         
@@ -37,17 +28,9 @@
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
             <input name="REUSE_PIPELINE_RUNS"/>
-            <input name="REUSE_PROCESSING"/>
-            <input name="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_1" value="REUSE_PIPELINE_RUNS"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="false"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
-            <input name="PROCESS_VARIABLE_VALUE_2" value="false"/>
-            <input name="PROCESS_VARIABLE_3" value="REUSE_ALIGNMENT"/>
-            <input name="PROCESS_VARIABLE_VALUE_3" value="false"/>
             <output name="REUSE_PIPELINE_RUNS"/>
-            <output name="REUSE_PROCESSING"/>
-            <output name="REUSE_ALIGNMENT"/>
         </operation>
         
         <!-- Get sub-samples -->
@@ -76,8 +59,6 @@
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
                 <input name="PIPELINE_PROCESS"/>
-                <input name="REUSE_PROCESSING"/>
-                <input name="REUSE_ALIGNMENT"/>
             </include>
         
         </sequence>
@@ -96,8 +77,6 @@
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
                 <input name="PIPELINE_PROCESS"/>
-                <input name="REUSE_PROCESSING"/>
-                <input name="REUSE_ALIGNMENT"/>
             </include>
             
         </sequence>

@@ -69,6 +69,7 @@ public class EntityConstants {
     public static final String TYPE_LSM_STACK                        = "LSM Stack";
     public static final String TYPE_IMAGE_TILE                       = "Image Tile";
     public static final String TYPE_PIPELINE_RUN                     = "Pipeline Run";
+    public static final String TYPE_LSM_SUMMARY_RESULT               = "LSM Summary Result";
     public static final String TYPE_SAMPLE_PROCESSING_RESULT         = "Sample Processing Result";
     public static final String TYPE_ALIGNMENT_RESULT                 = "Alignment Result";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";

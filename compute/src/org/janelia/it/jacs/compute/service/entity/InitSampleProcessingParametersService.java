@@ -19,8 +19,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InitSampleProcessingParametersService extends
-		AbstractEntityService {
+public class InitSampleProcessingParametersService extends AbstractEntityService {
 
 	protected static final String ARCHIVE_PREFIX = "/archive";
 
@@ -28,26 +27,16 @@ public class InitSampleProcessingParametersService extends
 
 	public void execute() throws Exception {
 
-		mergeResultNode = (FileNode) processData
-				.getItem("MERGE_RESULT_FILE_NODE");
-		if (mergeResultNode == null) {
-			throw new IllegalArgumentException(
-					"MERGE_RESULT_FILE_NODE may not be null");
-		}
+		mergeResultNode = (FileNode) processData.getItem("MERGE_RESULT_FILE_NODE");
 
-		String sampleEntityId = (String) data
-				.getRequiredItemAsString("SAMPLE_ENTITY_ID");
+		String sampleEntityId = (String) data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
+		logger.info("Running InitSampleProcessingParametersService for sample " + sampleEntityId);
 		Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
 		if (sampleEntity == null) {
-			throw new IllegalArgumentException(
-					"Sample entity not found with id=" + sampleEntityId);
+			throw new IllegalArgumentException("Sample entity not found with id=" + sampleEntityId);
 		}
 
-		AnatomicalArea sampleArea = (AnatomicalArea) processData
-				.getItem("SAMPLE_AREA");
-
-		logger.info("Running InitSampleProcessingParametersService for sampleId="
-				+ sampleEntityId);
+		AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
 
 		List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
 
@@ -71,28 +60,21 @@ public class InitSampleProcessingParametersService extends
 		processData.putItem("COPY_FROM_ARCHIVE", archived);
 
 		if (mergedLsmPairs.isEmpty()) {
-			throw new Exception("Sample (id=" + sampleEntityId
-					+ ") has no tiles");
+			throw new Exception("Sample (id=" + sampleEntityId + ") has no tiles");
 		}
 
 		List<String> stackFilenames = new ArrayList<String>();
 
 		// Running stitching?
 		Boolean runStitchBool = (Boolean) processData.getItem("RUN_STITCH");
-
 		if (runStitchBool != null && runStitchBool.booleanValue()) {
-			FileNode stitchResultNode = (FileNode) processData
-					.getItem("STITCH_RESULT_FILE_NODE");
+			FileNode stitchResultNode = (FileNode) processData.getItem("STITCH_RESULT_FILE_NODE");
 			if (stitchResultNode == null) {
-				throw new IllegalArgumentException(
-						"STITCH_RESULT_FILE_NODE may not be null");
+				throw new IllegalArgumentException("STITCH_RESULT_FILE_NODE may not be null");
 			}
-			File stitchedFile = new File(stitchResultNode.getDirectoryPath(),
-					"stitched-" + sampleEntity.getId() + ".v3draw");
-			logger.info("Putting " + stitchedFile.getAbsolutePath()
-					+ " in STITCHED_FILENAME");
-			processData.putItem("STITCHED_FILENAME",
-					stitchedFile.getAbsolutePath());
+			File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-" + sampleEntity.getId() + ".v3draw");
+			logger.info("Putting " + stitchedFile.getAbsolutePath() + " in STITCHED_FILENAME");
+			processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
 			stackFilenames.add(stitchedFile.getAbsolutePath());
 		}
 
@@ -152,33 +134,19 @@ public class InitSampleProcessingParametersService extends
 				lsm2 = temp;
 			}
 
-			String lsmFilepath1 = lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-			String lsmFilepath2 = lsm2==null?null:lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-			
-			File mergedFile = null;
-			File lsmFile1 = new File(lsmFilepath1);
-			File lsmFile2 = null;
-			if (lsmFilepath2 != null) {
-				lsmFile2 = new File(lsmFilepath2);
-				mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-" + tileEntity.getId() + ".v3draw");
-			} 
-			else {
-				// lsmFilepath2 may be null
-				mergedFile = new File(mergeResultNode.getDirectoryPath(), "tile-" + tileEntity.getId() + ".v3draw");
-			}
-
-			String lsmRealPath1 = lsmFile1.getCanonicalPath();
-			String lsmRealPath2 = lsmFile2 == null ? null : lsmFile2.getCanonicalPath();
+			Long lsmId1 = lsm1==null?null:lsm1.getId();
+			Long lsmId2 = lsm2==null?null:lsm2.getId();
+			String lsmFilepath1 = lsm1 == null ? null : lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			String lsmFilepath2 = lsm2 == null ? null : lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			String lsmRealPath1 = lsmFilepath1 == null ? null : new File(lsmFilepath1).getCanonicalPath();
+			String lsmRealPath2 = lsmFilepath2 == null ? null : new File(lsmFilepath2).getCanonicalPath();
 
 			if (lsmRealPath1.startsWith(ARCHIVE_PREFIX) || (lsmRealPath2 != null && lsmRealPath2.startsWith(ARCHIVE_PREFIX))) {
 				archived = true;
 			}
 
-			Long lsmId1 = lsm1==null?null:lsm1.getId();
-			Long lsmId2 = lsm2==null?null:lsm2.getId();
-			
-			MergedLsmPair mergedPair = new MergedLsmPair(lsmId1, lsmId2, lsmFilepath1, lsmFilepath2, lsmRealPath1, lsmRealPath2, mergedFile.getAbsolutePath(), tileEntity.getName());
-			
+			String mergedFilepath = mergeResultNode == null ? null : new File(mergeResultNode.getDirectoryPath(), "tile-" + tileEntity.getId() + ".v3draw").getAbsolutePath();
+			MergedLsmPair mergedPair = new MergedLsmPair(lsmId1, lsmId2, lsmFilepath1, lsmFilepath2, lsmRealPath1, lsmRealPath2, mergedFilepath, tileEntity.getName());
 			mergedLsmPairs.add(mergedPair);
 		}
 

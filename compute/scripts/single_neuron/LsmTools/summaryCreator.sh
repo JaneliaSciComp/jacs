@@ -57,6 +57,7 @@ echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
 echo "All channels: $ALL_CHAN"
+echo "Output format: $FORMAT"
 
 EXT=${INPUT_FILE#*.}
 if [ "$EXT" == "v3dpbd" ] || [ "$EXT" == "lsm" ]; then

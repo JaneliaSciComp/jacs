@@ -1,0 +1,141 @@
+ <!-- 
+      Generate summary secondary data files for the LSMs of the given sample. 
+ -->
+ <process name="FlyLight Summary Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence>
+
+        <input name="PIPELINE_RUN_ENTITY_ID"/>
+        <input name="SAMPLE_ENTITY_ID"/>
+        <input name="REUSE_SUMMARY"/>
+    
+        <!-- Decide which types of processing will be run -->
+        <operation name="Choose Summary Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSummaryPipelineStepsService">
+            <output name="RUN_SUMMARY"/>
+        </operation>
+        
+        <sequence if="REUSE_SUMMARY=true">
+            
+            <!-- Reuse sample processing from previous pipeline run -->
+            <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.ReuseSummaryResultService">
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
+                <output name="RESULT_ENTITY"/>
+                <output name="RESULT_ENTITY_ID"/>
+                <output name="RUN_SUMMARY"/>
+            </operation>
+            
+            <sequence if="RUN_SUMMARY=false">
+        
+                <!-- Register images -->
+                <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+                    <input name="RESULT_ENTITY_ID"/>
+                    <input name="PIPELINE_RUN_ENTITY_ID"/>
+                </operation>
+        
+            </sequence>
+            
+        </sequence>
+        
+        <sequence if="RUN_SUMMARY=true">
+        
+            <!-- Create a result node for this group -->
+            <operation name="Create Summary Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                <input name="NAME" value="Summary"/>
+                <input name="OUTPUT_VAR_NAME" value="SUMMARY_RESULT_FILE_NODE"/>
+                <output name="SUMMARY_RESULT_FILE_NODE"/>
+                <output name="SUMMARY_RESULT_FILE_NODE_ID"/>
+            </operation>
+            
+            <!-- Create temporary place for the LSMs -->
+            <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                <input name="NAME" value="Temp"/>
+                <input name="OUTPUT_VAR_NAME" value="LSM_FILE_NODE"/>
+                <output name="LSM_FILE_NODE"/>
+                <output name="LSM_FILE_NODE_ID"/>
+            </operation>
+        
+            <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+            <sequence name="Wait Async" waitForAsync="true">
+                <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
+                    <input name="MERGE_RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="SAMPLE_ENTITY_ID"/>
+                    <output name="BULK_MERGE_PARAMETERS"/>
+                </operation>
+            </sequence>
+            
+            <!-- Get the LSM file paths and update the bulk merge parameters to use the copied files -->
+            <operation name="Get LSM file paths" processor="org.janelia.it.jacs.compute.service.entity.sample.GetLsmFilePathsService">
+                <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
+                <input name="BULK_MERGE_PARAMETERS"/>
+                <output name="BULK_MERGE_PARAMETERS"/>
+                <output name="LSM_SOURCE_FILE_PATHS"/>
+                <output name="LSM_TARGET_FILE_PATHS"/>
+            </operation>
+        
+            <!-- Copy the files from archive -->
+            <sequence name="Wait Async" waitForAsync="true">
+                <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+                    <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
+                    <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
+                    <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
+                    <input name="TARGET_FILE_PATHS" value="$V{LSM_TARGET_FILE_PATHS}"/>
+                </operation>
+            </sequence>
+            
+            <!-- Create the metadata describing the LSM files -->
+            <sequence name="Create LSM Metadata Files" waitForAsync="true">
+                <operation name="Create LSM Metadata Files" processor="queue/gridSubmitAndWait">
+                    <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
+                    <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="BULK_MERGE_PARAMETERS"/>
+                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="OUTPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                </operation>
+            </sequence>
+            
+            <!-- Create MIPs and movies for all LSMs -->
+            <sequence name="Create LSM Summary Artifacts" waitForAsync="true">
+                <operation name="Create LSM Summary Artifacts" processor="queue/gridSubmitAndWait">
+                    <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmSummaryFilesService"/>
+                    <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="BULK_MERGE_PARAMETERS"/>
+                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="OUTPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                </operation>
+            </sequence>
+
+            <!-- Create montages from LSM MIPs -->
+            <sequence name="Create LSM Montages" waitForAsync="true">
+                <operation name="Create LSM Montages" processor="queue/gridSubmitAndWait">
+                    <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.MontageService"/>
+                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="INPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                </operation>
+            </sequence>
+
+            <!-- We're done with the LSMs -->
+            <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+                <input name="FILE_NODE_ID" value="$V{LSM_FILE_NODE_ID}"/>
+            </operation>
+           
+            <!-- Load the sample analysis results into the database -->
+            <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SummaryResultsDiscoveryService">
+                <input name="ROOT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                <input name="RESULT_ENTITY_TYPE" value="LSM Summary Result"/>
+                <input name="RESULT_ENTITY_NAME" value="LSM Summary Result"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <output name="RESULT_ENTITY_ID"/>
+            </operation>
+                
+            <!-- Register images -->
+            <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
+                <input name="RESULT_ENTITY_ID"/>
+            </operation>
+            
+        </sequence>
+    
+    </sequence>
+    
+</process>

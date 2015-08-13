@@ -138,7 +138,7 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
 		final String lsmName = ArchiveUtils.getDecompressedFilepath(lsm.getName());
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
                 .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
-                .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+                .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT) // LSM Summary Result, or Sample Processing Result for legacy samples 
                 .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA).first()
                 .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
                 .run(new EntityVisitor() {
