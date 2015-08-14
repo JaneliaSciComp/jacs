@@ -106,19 +106,20 @@ if [ ! -z "$REF_CHAN" ]; then
     createMip "reference" "$REF_CHAN" ""
 fi
 
-if [ ! -z "$ALL_CHAN" ]; then
-    createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
-fi
-
+if [ ${#ALL_CHAN} -lt 6 ]; then
+    if [ ! -z "$ALL_CHAN" ]; then
+        createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
+    fi
+    
 # For now this doesn't work, because the zmip plugin is ignoring the -o flag for some reason.
-#if [ ${#ALL_CHAN} -lt 6 ]; then
 #    ZMIP="${FILE_STUB}_mip.tif"
 #    ZMIP_FINAL="${FILE_STUB}_mip.${FORMAT}"
 #    echo "Generating ZMIP: $Vaa3D -x ireg -f zmip -i $INPUT_FILE -o $ZMIP"
 #    $Vaa3D -x ireg -f zmip -i $INPUT_FILE -o $ZMIP
 #    $Vaa3D -x ireg -f iContrastEnhancer -i $ZMIP -o $ZMIP -p "#m 5"
 #    $MAGICK/convert -flip $ZMIP $ZMIP_FINAL   
-#fi
+    
+fi
 
 MOVIE="${FILE_STUB}_movie.mp4"
 $Vaa3D -cmd image-loader -convert $INPUT_FILE $MOVIE

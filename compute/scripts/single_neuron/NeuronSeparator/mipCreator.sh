@@ -8,7 +8,6 @@ NETPBM_PATH="$DIR/../../../netpbm-redhat/"
 NETPBM_BIN="$NETPBM_PATH/bin"
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 NSDIR="$DIR/../../../neusep-redhat"
-
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$NETPBM_PATH/lib"
 
 ##################
@@ -113,8 +112,10 @@ if [ ! -z "$REF_CHAN" ]; then
     createMip "reference" "$REF_CHAN" ""
 fi
 
-if [ ! -z "$ALL_CHAN" ]; then
-    createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
+if [ ${#ALL_CHAN} -lt 6 ]; then
+    if [ ! -z "$ALL_CHAN" ]; then
+        createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
+    fi
 fi
 
 echo "~ Copying final output to: $OUTDIR"
