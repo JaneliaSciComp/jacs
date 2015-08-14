@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -15,6 +16,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
@@ -45,6 +47,10 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
     protected static final String ARCHIVE_SYNC_CMD = SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ArchiveSync.ScriptPath");
 
+    protected static final String SCALITY_SYNC_CMD = 
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+            SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
+    
     protected static final String REMOVE_COMMAND = "rm -rf"; 
     
     @Override
@@ -160,7 +166,16 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
     }
 
     protected void writeInstanceFile(FileWriter fw, String sourceFilepath, String targetFilepath) throws IOException {
-        fw.write(sourceFilepath + "\n");
+
+    	if (sourceFilepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX)) {
+    		String bpid = sourceFilepath.replaceFirst(EntityConstants.SCALITY_PATH_PREFIX, "");
+    		String scalityUrl = ScalityDAO.getClusterUrlFromBPID(bpid);
+            fw.write(scalityUrl + "\n");
+    	}
+    	else {
+            fw.write(sourceFilepath + "\n");
+    	}
+    	
         fw.write(targetFilepath + "\n");
     }
 
@@ -169,12 +184,18 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         script.append("read SOURCE_FILE\n");
         script.append("read TARGET_FILE\n");
         script.append("if [ \"$SOURCE_FILE\" == \"$TARGET_FILE\" ]; then\n");
-        script.append("    echo \"Source and target are identical\"\n");
+        script.append("  echo \"Source and target are identical\"\n");
         script.append("else\n");
+        // Scality PUT is not supported here. Use the SyncSampleToScalityService instead
+        script.append("  if [[ $SOURCE_FILE == http* ]]; then\n");
+        script.append("    timing=`"+SCALITY_SYNC_CMD + " GET \"$SOURCE_FILE\" \"$TARGET_FILE\"`\n");
+        script.append("    echo \"$timing\"\n");
+        script.append("  else\n");
         script.append("    "+ARCHIVE_SYNC_CMD + " \"$SOURCE_FILE\" \"$TARGET_FILE\"\n");
         if (deleteSourceFiles) {
             script.append("    "+REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
         }
+        script.append("  fi\n");
         script.append("fi\n");
         writer.write(script.toString());
     }
@@ -201,6 +222,5 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         		throw new MissingGridResultException(node.getDirectoryPath(), "Target file not found at "+file.getAbsolutePath());
         	}
     	}
-        
     }
 }

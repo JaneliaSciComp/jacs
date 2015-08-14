@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -17,7 +18,6 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.compute.service.exceptions.SAGEMetadataException;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -245,7 +245,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
     protected void checkForArchival(AlignmentInputFile input) throws Exception {
 
-        if (input.getFilepath().startsWith(ARCHIVE_PREFIX)) {
+        if (pathIsArchived(input.getFilepath())) {
             archivedFiles.add(input.getFilepath());
             String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getFilepath()).getName()).getAbsolutePath();
             targetFiles.add(newInput);
@@ -253,13 +253,17 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
         
         if (input.getInputSeparationFilename()!=null) {
-            if (input.getInputSeparationFilename().startsWith(ARCHIVE_PREFIX)) {
+            if (pathIsArchived(input.getInputSeparationFilename())) {
                 archivedFiles.add(input.getInputSeparationFilename());
                 String newInputSeperation = new File(resultFileNode.getDirectoryPath(), new File(input.getInputSeparationFilename()).getName()).getAbsolutePath();
                 targetFiles.add(newInputSeperation);
                 input.setInputSeparationFilename(newInputSeperation);
             }
         }
+    }
+    
+    private boolean pathIsArchived(String filepath) {
+    	return filepath.startsWith(ARCHIVE_PREFIX) || filepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX);
     }
     
     // ****************************************************************************************************************

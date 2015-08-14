@@ -46,7 +46,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
-    private static final String ARCHIVE_SYNC_CMD = 
+    private static final String SCALITY_SYNC_CMD = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
         
@@ -229,7 +229,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append(Vaa3DHelper.getHostnameEcho());
         script.append("echo \"Copy source: $FILE_PATH\"\n");
         script.append("echo \"Copy target: $SCALITY_URL\"\n");
-        script.append("timing=`"+ARCHIVE_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
+        script.append("timing=`"+SCALITY_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
         script.append("echo \"$timing\"\n");
         writer.write(script.toString());
     }

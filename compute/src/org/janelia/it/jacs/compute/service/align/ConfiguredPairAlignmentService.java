@@ -105,6 +105,15 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         if (image != null) {
             inputFile = new AlignmentInputFile();
             inputFile.setPropertiesFromEntity(image);
+            if (inputFile.getFilepath().endsWith("h5j")) {
+                entityLoader.populateChildren(image);
+            	String losslessPath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
+            	if (losslessPath==null) {
+            		throw new IllegalStateException("No lossless image found for alignment input "+image.getName());
+            	}
+            	inputFile.setFilepath(losslessPath);
+            }
+            
             if (warpNeurons) {
                 inputFile.setInputSeparationFilename(getConsolidatedLabel(sampleProcessingResult));
             }
