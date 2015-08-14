@@ -11,7 +11,8 @@ public interface SampleDataManagerMBean {
     public void runAllSampleMaintenancePipelines(); // All maintenance pipelines for all users
     public void runUserSampleMaintenancePipelines(String user); // All maintenance pipelines for a single users
     public void runSampleCleaning(String user, Boolean testRun);
-    public void runSampleTrashCompactor(String user, Boolean testRun); 
+    public void runSampleTrashCompactor(String user, Boolean testRun);
+    public void runAllSampleDataCompression(String compressionType);
     public void runSampleDataCompression(String user, String dataSetName, String compressionType);
     public void runSingleSampleDataCompression(String sampleId, String compressionType);
     public void runSampleImageRegistration(String user);

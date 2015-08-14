@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
@@ -28,7 +29,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     private static final Logger log = Logger.getLogger(SampleDataManager.class);
 
     private void saveAndRunTask(String user, String processName, String displayName) throws Exception {
-        HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+        HashSet<TaskParameter> taskParameters = new HashSet<>();
         saveAndRunTask(user, processName, displayName, taskParameters);
     }
     
@@ -61,7 +62,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runAllSampleMaintenancePipelines() {
         try {
             log.info("Building list of users with samples...");
-            Set<String> subjectKeys = new TreeSet<String>();
+            Set<String> subjectKeys = new TreeSet<>();
             for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
@@ -91,7 +92,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "SampleCleaning";
             String displayName = "Sample Cleaning";
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
@@ -104,7 +105,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "SampleTrashCompactor";
             String displayName = "Sample Trash Compactor";
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter(SampleTrashCompactorService.PARAM_testRun, Boolean.toString(testRun), null)); 
             saveAndRunTask(user, processName, displayName, taskParameters);
         } 
@@ -113,11 +114,29 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
+    public void runAllSampleDataCompression(String compressionType){
+        try {
+            log.info("Building list of users with data sets...");
+            Set<String> subjectKeys = new TreeSet<>();
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+                subjectKeys.add(dataSet.getOwnerKey());
+            }
+            log.info("Found users with data sets: "+subjectKeys);
+            for(String subjectKey : subjectKeys) {
+                log.info("Queuing sample data compression for "+subjectKey);
+                runSampleDataCompression(subjectKey, null, compressionType);
+            }
+        }
+        catch (Exception e) {
+            log.error("Error running All Sample Data Compression",e);
+        }
+    }
+
     public void runSampleDataCompression(String user, String dataSetName, String compressionType) {
         try {
             String processName = "SampleCompression";
             String displayName = "Sample Data Compression";
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             taskParameters.add(new TaskParameter("compression type", compressionType, null));
             saveAndRunTask(user, processName, displayName, taskParameters);
@@ -133,7 +152,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String displayName = "Single Sample Data Compression";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
             taskParameters.add(new TaskParameter("compression type", compressionType, null));
             String user = sample.getOwnerKey();
@@ -168,7 +187,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runSampleRetirement() {
         try {
-            Set<String> subjectKeys = new TreeSet<String>();
+            Set<String> subjectKeys = new TreeSet<>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
@@ -184,7 +203,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runSingleSampleArchival(String sampleEntityId) {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
             String processName = "SyncSampleToArchive";
             String displayName = "Single Sample Archival";
@@ -210,7 +229,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runSyncSampleToScality(String sampleEntityId, String filetypes) {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
             String processName = "SyncSampleToScality";
@@ -224,7 +243,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runSyncDataSetToScality(String user, String dataSetName, String filetypes) {
         try {
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
             String processName = "SyncUserFilesToScality";
@@ -243,7 +262,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void cancelAllIncompleteDataSetPipelineTasks() {
         try {
             log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<String>();
+            Set<String> subjectKeys = new TreeSet<>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
@@ -266,7 +285,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
         try {
             log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<String>();
+            Set<String> subjectKeys = new TreeSet<>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
@@ -290,7 +309,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("run mode", runMode, null));
             if (runSampleDiscovery!=null) {
             	taskParameters.add(new TaskParameter("run sample discovery", runSampleDiscovery.toString(), null));
@@ -368,7 +387,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String processName = "GSPS_CompleteSamplePipeline";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
             if (reusePipelineRuns!=null) {
             	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
@@ -393,7 +412,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String processName = "PipelineConfig_"+configurationName;
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
             taskParameters.add(new TaskParameter("reuse summary", "true", null));
             if (reuseProcessing!=null) {
@@ -416,7 +435,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String displayName = "Standalone Neuron Separation Pipeline";
             Entity result = EJBFactory.getLocalEntityBean().getEntityById(resultEntityId);
             if (result==null) throw new IllegalArgumentException("Entity with id "+resultEntityId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("result entity id", resultEntityId, null)); 
             String user = result.getOwnerKey();
             saveAndRunTask(user, processName, displayName, taskParameters);
@@ -434,7 +453,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (result1==null) throw new IllegalArgumentException("Entity with id "+separationId1+" does not exist");
             Entity result2 = EJBFactory.getLocalEntityBean().getEntityById(separationId2);
             if (result2==null) throw new IllegalArgumentException("Entity with id "+separationId2+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("separation id 1", separationId1, null));
             taskParameters.add(new TaskParameter("separation id 2", separationId2, null));
             String user = result2.getOwnerKey();
@@ -457,7 +476,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             }
             String parentProcessName = "GSPS_ApplyProcessToSamples";
             String displayName = "Apply Process To Dataset";
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null)); 
             taskParameters.add(new TaskParameter("process def name", processName, null));
             taskParameters.add(new TaskParameter("parent or children", parentOrChildren, null));
@@ -474,7 +493,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             String displayName = "Apply Process To Sample";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
             addExtraParams(taskParameters, extraParams);
             String user = sample.getOwnerKey();
@@ -687,7 +706,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "SageQiScoreSync";
             String displayName = "Sage Qi Score Sync";
-            HashSet<TaskParameter> taskParameters = new HashSet<TaskParameter>();
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter(SageQiScoreSyncService.PARAM_testRun, Boolean.toString(testRun), null)); 
             saveAndRunTask("system", processName, displayName, taskParameters);
         } 
