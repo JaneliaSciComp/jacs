@@ -221,6 +221,7 @@ public class DomainDAO {
         
         for(String type : referenceMap.keySet()) {
             List<DomainObject> objs = getDomainObjects(subjectKey, type, referenceMap.get(type));
+            System.out.println (objs);
             //log.info("Found {} objects of type {}",objs.size(),type);
             domainObjects.addAll(objs);
         }
@@ -237,7 +238,7 @@ public class DomainDAO {
         if (objectSet.getMembers()==null || objectSet.getMembers().isEmpty()) return domainObjects;
         
         List<Long> members = objectSet.getMembers();
-        
+        System.out.println ("ffooofsdf");
         log.trace("getDomainObjects(subjectKey="+subjectKey+",references.size="+members.size()+")");
   
         Multimap<String,Long> referenceMap = ArrayListMultimap.<String,Long>create();
@@ -284,6 +285,8 @@ public class DomainDAO {
         }
 
         List<DomainObject> list = toList(cursor, ids);
+        System.out.println (list.size());
+        System.out.println (list);
         log.trace("Getting "+list.size()+" "+type+" objects took "+(System.currentTimeMillis()-start)+" ms");
         return list;
     }
@@ -329,7 +332,8 @@ public class DomainDAO {
     
     public Collection<Workspace> getWorkspaces(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(treeNodeCollection.find("{class:#,readers:{$in:#}}",Workspace.class.getName(),subjects).as(Workspace.class));
+        System.out.println (subjects);
+        return toList(treeNodeCollection.find("{class:#, readers:{$in:#}}",Workspace.class.getName(), subjects).as(Workspace.class));
     }
 
     public Collection<Ontology> getOntologies(String subjectKey) {

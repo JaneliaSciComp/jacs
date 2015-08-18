@@ -15,6 +15,8 @@ public class TreeNode extends AbstractDomainObject {
 
     private List<Reference> children;
 
+    private String name;
+
     public boolean hasChildren() {
     	return children!=null && !children.isEmpty();
     }
@@ -42,6 +44,14 @@ public class TreeNode extends AbstractDomainObject {
             return;
         }
         children.remove(ref);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */

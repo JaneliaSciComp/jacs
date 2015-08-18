@@ -11,32 +11,17 @@
          For RESTEasy configuration documentation, see
          http://www.jboss.org/file-access/default/members/resteasy/freezone/docs/1.1.GA/userguide/html_single/index.html#Installation_Configuration
     -->
-    <context-param>
-        <param-name>resteasy.scan</param-name>
-        <param-value>true</param-value>
-    </context-param>
-
-    <!-- URL based negotiation -->
-    <context-param>
-        <param-name>resteasy.media.type.mappings</param-name>
-        <param-value>html : text/html, xml : application/xml, json : application/json</param-value>
-    </context-param>
-
-    <listener>
-        <listener-class>
-            org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap
-        </listener-class>
-    </listener>
-
     <servlet>
-        <servlet-name>Resteasy</servlet-name>
-        <servlet-class>
-            org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher
-        </servlet-class>
+        <servlet-name>Jersey Web Application</servlet-name>
+        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>jersey.config.server.provider.packages</param-name>
+            <param-value>org.janelia.it.jacs.compute.wsrest</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
-
     <servlet-mapping>
-        <servlet-name>Resteasy</servlet-name>
+        <servlet-name>Jersey Web Application</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
 
