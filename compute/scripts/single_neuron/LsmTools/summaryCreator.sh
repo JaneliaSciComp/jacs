@@ -6,6 +6,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 
 NETPBM_PATH="$DIR/../../../netpbm-redhat/"
 NETPBM_BIN="$NETPBM_PATH/bin"
+ffmpeg="$DIR/../../../ffmpeg/ffmpeg"
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 NSDIR="$DIR/../../../neusep-redhat"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$NETPBM_PATH/lib"
@@ -121,13 +122,18 @@ if [ ${#ALL_CHAN} -lt 6 ]; then
     
 fi
 
+# Generate movie using Vaa3d
+FASTLOAD_MOVIE="${FILE_STUB}_fastload.mp4"
+$Vaa3D -cmd image-loader -convert $INPUT_FILE $FASTLOAD_MOVIE
+
+# Transcode the movie produced by Vaa3d so that it's web-friendly (slower framerate and opens in Firefox/Chrome)
 MOVIE="${FILE_STUB}_movie.mp4"
-$Vaa3D -cmd image-loader -convert $INPUT_FILE $MOVIE
+$ffmpeg -r 10 -i $FASTLOAD_MOVIE -vcodec libx264 -b:v 1M -pix_fmt yuv420p -r 60 $MOVIE
 
 echo "~ Copying final output to: $OUTDIR"
 mkdir -p $OUTDIR
 cp *.${FORMAT} $OUTDIR
-cp *.mp4 $OUTDIR
+cp $MOVIE $OUTDIR
 
 echo "~ Removing temp directory: $WORKING_DIR"
 rm -rf $WORKING_DIR
