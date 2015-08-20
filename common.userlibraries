@@ -522,24 +522,25 @@
         <archive path="/ConsoleApplication/platform/modules/org-netbeans-swing-plaf.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-netbeans-swing-tabcontrol.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-actions.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-awt.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-awt.jar" source="/netbeans-7.4"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-compat.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-dialogs.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-execution.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-explorer.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-explorer.jar" source="/netbeans-7.4"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-io.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-loaders.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-nodes.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-nodes.jar" source="/netbeans-7.4/openide.nodes"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-options.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-text.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-util-enumerations.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-windows.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-windows.jar" source="/netbeans-7.4"/>
         <archive path="/ConsoleApplication/platform/lib/org-openide-modules.jar"/>
-        <archive path="/ConsoleApplication/platform/lib/org-openide-util-lookup.jar"/>
-        <archive path="/ConsoleApplication/platform/lib/org-openide-util.jar"/>
+        <archive path="/ConsoleApplication/platform/lib/org-openide-util-lookup.jar" source="/netbeans-7.4/openide.util.lookup/src"/>
+        <archive path="/ConsoleApplication/platform/lib/org-openide-util.jar" source="/netbeans-7.4/openide.util/src"/>
     </library>
     <library name="Reflections" systemlibrary="false">
         <archive path="/common/Reflections/reflections-0.9.9-RC1.jar"/>
+        <archive path="/common/Reflections/javassist-3.16.1-GA.jar"/>
     </library>
     <library name="RESTEasy" systemlibrary="false">
         <archive path="/compute/lib/resteasy-2.3.4/activation-1.1.jar"/>
