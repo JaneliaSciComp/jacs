@@ -1,0 +1,10 @@
+{
+    "mongodb": {
+        "connection": {
+            "host": "schauderd-ws1.janelia.priv",
+            "dbname": "jacs",
+            "username": "flylight",
+            "password": "flylight"
+        }
+    }
+}
