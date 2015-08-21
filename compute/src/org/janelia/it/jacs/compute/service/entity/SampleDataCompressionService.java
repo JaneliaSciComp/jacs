@@ -312,9 +312,10 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	
 	                    if (!isDebug) {
 		        			existingH5jEd.setEntityAttrName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
+		        			existingH5jEd.setValue(pbdFilepath);
 		        			entityBean.saveOrUpdateEntityData(existingH5jEd);
 	                    }
-	        			contextLogger.info("Updated entity data type from slightly lossy to input image: "+existingH5jEd.getId());
+	        			contextLogger.info("Updated entity data from slightly lossy to lossless image: "+existingH5jEd.getId());
 	        			
 	                    return;
 	                }
