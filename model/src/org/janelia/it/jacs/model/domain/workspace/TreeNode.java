@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @MongoMapped(collectionName = "treeNode")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
@@ -15,12 +16,11 @@ public class TreeNode extends AbstractDomainObject {
 
     private List<Reference> children;
 
-    private String name;
-
     public boolean hasChildren() {
     	return children!=null && !children.isEmpty();
     }
-    
+
+    @JsonIgnore
     public int getNumChildren() {
         return children==null ? 0 : children.size();
     }
@@ -44,14 +44,6 @@ public class TreeNode extends AbstractDomainObject {
             return;
         }
         children.remove(ref);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */

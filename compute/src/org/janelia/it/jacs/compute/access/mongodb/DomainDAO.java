@@ -208,7 +208,7 @@ public class DomainDAO {
         List<DomainObject> domainObjects = new ArrayList<>();
         if (references==null || references.isEmpty()) return domainObjects;
         
-        log.trace("getDomainObjects(subjectKey="+subjectKey+",references.size="+references.size()+")");
+        log.trace("getDomainObjects(subjectKey=" + subjectKey + ",references.size=" + references.size() + ")");
   
         Multimap<String,Long> referenceMap = ArrayListMultimap.<String,Long>create();
         for(Reference reference : references) {
@@ -221,7 +221,6 @@ public class DomainDAO {
         
         for(String type : referenceMap.keySet()) {
             List<DomainObject> objs = getDomainObjects(subjectKey, type, referenceMap.get(type));
-            System.out.println (objs);
             //log.info("Found {} objects of type {}",objs.size(),type);
             domainObjects.addAll(objs);
         }
@@ -238,7 +237,6 @@ public class DomainDAO {
         if (objectSet.getMembers()==null || objectSet.getMembers().isEmpty()) return domainObjects;
         
         List<Long> members = objectSet.getMembers();
-        System.out.println ("ffooofsdf");
         log.trace("getDomainObjects(subjectKey="+subjectKey+",references.size="+members.size()+")");
   
         Multimap<String,Long> referenceMap = ArrayListMultimap.<String,Long>create();
@@ -263,15 +261,12 @@ public class DomainDAO {
      * Get the domain objects of the given type and ids.
      */
     public List<DomainObject> getDomainObjects(String subjectKey, String type, Collection<Long> ids) {
-        // TODO: remove this after the next db load fixes it
-        if ("workspace".equals(type)) type = "treeNode"; 
-        
         long start = System.currentTimeMillis();
         log.trace("getDomainObjects(subjectKey="+subjectKey+",type="+type+",ids.size="+ids.size()+")");
 
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
-
         Class<? extends DomainObject> clazz = getObjectClass(type);
+
         if (clazz==null) {
             return new ArrayList<>();
         }
@@ -285,8 +280,6 @@ public class DomainDAO {
         }
 
         List<DomainObject> list = toList(cursor, ids);
-        System.out.println (list.size());
-        System.out.println (list);
         log.trace("Getting "+list.size()+" "+type+" objects took "+(System.currentTimeMillis()-start)+" ms");
         return list;
     }
@@ -332,8 +325,11 @@ public class DomainDAO {
     
     public Collection<Workspace> getWorkspaces(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        System.out.println (subjects);
         return toList(treeNodeCollection.find("{class:#, readers:{$in:#}}",Workspace.class.getName(), subjects).as(Workspace.class));
+    }
+
+    public Workspace getDefaultWorkspace(String subjectKey) {
+        return treeNodeCollection.findOne("{class:#,ownerKey:#}",Workspace.class.getName(),subjectKey).as(Workspace.class);
     }
 
     public Collection<Ontology> getOntologies(String subjectKey) {

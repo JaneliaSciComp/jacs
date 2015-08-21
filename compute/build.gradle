@@ -168,7 +168,8 @@ task computeNGWar(dependsOn:classes, type: War) {
         include 'index.jsp' 
     }
     webXml = file('WEB-INF/secure-web-rest-ws.xml') 
-    baseName = 'computer'
+    archiveName = 'compute.war'
+    version = null
 }
 
 task computeEar(dependsOn:['computeWar','computeJar','drmaaJar'], type: Ear) {
@@ -206,6 +207,7 @@ dependencies {
     ngWarLib group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet-core', version: '2.19'
     ngWarLib group: 'org.glassfish.jersey.connectors', name: 'jersey-apache-connector', version: '2.19'
     ngWarLib group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.2.2'
+    ngWarLib group: 'com.fasterxml.jackson.jaxrs', name: 'jackson-jaxrs-json-provider', version: '2.2.2'
     ngWarLib group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.1'
     ngWarLib group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
     ngWarLib group: 'com.google.guava', name: 'guava', version: '11.0.2'

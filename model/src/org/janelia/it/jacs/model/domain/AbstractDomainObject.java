@@ -7,6 +7,9 @@ import java.util.Set;
 import org.janelia.it.jacs.model.domain.support.MongoUtils;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jongo.marshall.jackson.oid.Id;
 
 /**
@@ -20,6 +23,7 @@ public abstract class AbstractDomainObject implements DomainObject {
 
     @Id
     @SearchAttribute(key="id",label="GUID")
+    @JsonProperty("id")
     private Long id;
     
     @SearchAttribute(key="name",label="Name")
@@ -30,17 +34,21 @@ public abstract class AbstractDomainObject implements DomainObject {
     private Set<String> writers;
 
     @SearchAttribute(key="creation_date",label="Creation Date")
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss aa")
     private Date creationDate;
 
     @SearchAttribute(key="updated_date",label="Updated Date")
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss aa")
     private Date updatedDate;
 
     @SearchAttribute(key="owner",label="Owner",facet=true)
+    @JsonIgnore
     public String getOwnerName() {
         return MongoUtils.getNameFromSubjectKey(ownerKey);
     }
     
     @SearchAttribute(key="subjects",label="Subjects",display=false)
+    @JsonIgnore
     public Set<String> getSubjectNames() {
         Set<String> names = new HashSet<String>();
         for(String subjectKey : readers) {
@@ -51,6 +59,7 @@ public abstract class AbstractDomainObject implements DomainObject {
     }
 
     @SearchAttribute(key="type",label="Type")
+    @JsonIgnore
     public String getType() {
         SearchType searchType = (SearchType)getClass().getAnnotation(SearchType.class);
         if (searchType!=null) {
