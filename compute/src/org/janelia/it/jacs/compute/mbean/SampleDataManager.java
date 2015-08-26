@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
@@ -136,6 +135,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "SampleCompression";
             String displayName = "Sample Data Compression";
+            if ("".equals(dataSetName)) {dataSetName=null;}
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             taskParameters.add(new TaskParameter("compression type", compressionType, null));
