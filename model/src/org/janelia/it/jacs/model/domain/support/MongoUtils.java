@@ -9,6 +9,9 @@ import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.reflections.Reflections;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.FilterBuilder;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
@@ -31,8 +34,16 @@ public class MongoUtils {
     private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.<Class<? extends DomainObject>, Class<? extends DomainObject>>create();
 
     static {
-        reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
+        ConfigurationBuilder config = new ConfigurationBuilder();
+        config.addClassLoaders(ClasspathHelper.contextClassLoader());
+        config.addClassLoaders(ClasspathHelper.staticClassLoader());
+        config.filterInputsBy(new FilterBuilder().include(DOMAIN_OBJECT_PACKAGE_NAME));
+
+        reflections = new Reflections(config);
+        //reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
         registerAnnotatedClasses();
+        typeClasses.put("sample", org.janelia.it.jacs.model.domain.sample.Sample.class);
+        typeClasses.put("treeNode", org.janelia.it.jacs.model.domain.workspace.TreeNode.class);
     }
 
     private static void registerAnnotatedClasses() {
@@ -139,9 +150,9 @@ public class MongoUtils {
         System.out.println("getObjectClass(treeNode): "+MongoUtils.getObjectClass("treeNode"));
         System.out.println("getObjectClass(sample): "+MongoUtils.getObjectClass("sample"));
         System.out.println("getObjectClass(image): "+MongoUtils.getObjectClass("image"));
-        System.out.println("getSubClasses(TreeNode.class): "+MongoUtils.getSubClasses(TreeNode.class));
+        System.out.println("getSubClasses(TreeNode.class): " + MongoUtils.getSubClasses(TreeNode.class));
         System.out.println("getObjectClasses(image): "+MongoUtils.getObjectClasses("image"));
-        System.out.println("getObjectClasses(LSMImage): "+MongoUtils.getObjectClasses(LSMImage.class));
+        System.out.println("getObjectClasses(LSMImage): " + MongoUtils.getObjectClasses(LSMImage.class));
         System.out.println("getCollectionName(Sample.class): "+MongoUtils.getCollectionName(Sample.class));
         System.out.println("getCollectionName(LSMImage): "+MongoUtils.getCollectionName(new LSMImage()));
     }

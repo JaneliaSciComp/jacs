@@ -153,6 +153,11 @@ task computeNGWar(dependsOn:classes, type: War) {
         from fileTree(dir: 'build/classes/jwmodel').matching {  
            into 'classes'
         }
+
+        from fileTree(dir: 'build/classes/jwshared').matching {  
+           into 'classes'
+        }
+
         from fileTree('../shared/conf').matching {
            into 'classes'
            include 'jacs.properties'
@@ -212,7 +217,7 @@ dependencies {
     ngWarLib group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
     ngWarLib group: 'com.google.guava', name: 'guava', version: '11.0.2'
     ngWarLib group: 'org.jongo', name: 'jongo', version: '1.2'
-    ngWarLib group: 'org.mongodb', name: 'mongo-java-driver', version: '3.0.3'
+    ngWarLib group: 'org.mongodb', name: 'mongo-java-driver', version: '3.0.2'
     ngWarLib group: 'org.reflections', name: 'reflections', version: '0.9.8'
 }
 
