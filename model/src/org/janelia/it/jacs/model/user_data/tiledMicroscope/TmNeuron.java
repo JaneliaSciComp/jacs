@@ -105,7 +105,7 @@ public class TmNeuron implements IsSerializable, Serializable {
             String edAttr = ed.getEntityAttrName();
             if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
                     edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                TmGeoAnnotation ga = new TmGeoAnnotation(ed.getValue());
+                TmGeoAnnotation ga = new TmGeoAnnotation(ed);
                 if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                     rootAnnotations.add(ga);
                 }
