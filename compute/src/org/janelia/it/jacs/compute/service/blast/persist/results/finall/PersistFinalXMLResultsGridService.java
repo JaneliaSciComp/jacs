@@ -51,7 +51,7 @@ public class PersistFinalXMLResultsGridService extends SubmitDrmaaJobService {
     public PersistFinalXMLResultsGridService() {
     }
 
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
         super.init(processData);
         blastDestOutputDirs = (List<File>) processData.getMandatoryItem(BlastProcessDataConstants.BLAST_DEST_OUTPUT_DIR);
         totalBlastHits = (Long) processData.getMandatoryItem(BlastProcessDataConstants.TOTAL_BLAST_HITS);

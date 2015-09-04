@@ -15,7 +15,7 @@ import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode
  */
 public class FrvImageResubmissionService extends FrvImageService {
 
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
         this.task = ProcessDataHelper.getTask(processData);
         RecruitmentResultFileNode resultNode = (RecruitmentResultFileNode) new ComputeDAO(logger).getResultNodeByTaskId(this.task.getObjectId());
         // There should at least be one RecruitmentResultFileNode since we are supposed to update the images

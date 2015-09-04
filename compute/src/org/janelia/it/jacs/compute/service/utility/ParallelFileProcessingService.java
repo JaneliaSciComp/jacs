@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +45,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 
     private boolean ignoreErrors = false;
     
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
 
         String ignoreErrorsStr = (String)processData.getItem("IGNORE_ERRORS");
         ignoreErrors = ignoreErrorsStr!=null && ignoreErrorsStr.equalsIgnoreCase("true");

@@ -36,7 +36,7 @@ public class Vaa3DBulkChannelSplitService extends SubmitDrmaaJobService {
     private String outputDir;
     private String outputExtension;
     
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
     	super.init(processData);
 
         this.inputFiles = (List<String>)processData.getItem("INPUT_FILES");

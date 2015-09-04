@@ -13,7 +13,7 @@ public class MapChannelService extends ParallelFileProcessingService {
     protected String mapChannelString="";
 
     @Override
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
         super.init(processData);
         mapChannelString=processData.getString("MAP_CHANNEL_STRING");
         if (mapChannelString==null || mapChannelString.trim().length()==0) {

@@ -1,4 +1,3 @@
-
 package org.janelia.it.jacs.compute.engine.data;
 
 import java.util.List;
@@ -10,14 +9,22 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.def.ActionDef;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+
+
 /**
  * The class encapsulates the running state of process
  */
+@XmlRootElement
+@XmlType(name = "ProcessData")
 public class ProcessData implements IProcessData {
-	
-	private static Logger logger = Logger.getLogger(ProcessData.class);
-	
-    private Map<String, Object> processObjects = new TreeMap<String, Object>();
+
+    private static Logger logger = Logger.getLogger(ProcessData.class);
+
+    @XmlElement
+    private Map<String, Object> processObjects = new TreeMap<>();
 
     public void putItem(String key, Object value) {
         processObjects.put(key, value);

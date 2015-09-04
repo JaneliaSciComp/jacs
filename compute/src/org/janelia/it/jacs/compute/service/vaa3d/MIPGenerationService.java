@@ -23,7 +23,7 @@ public class MIPGenerationService extends ParallelFileProcessingService {
     }
     
     @Override
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
     	super.init(processData);
     	
     	int configIndex = 1;

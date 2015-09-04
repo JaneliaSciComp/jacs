@@ -25,7 +25,7 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     }
 
     @Override
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
     	super.init(processData);
 
         String global8bitString=processData.getString("OUTPUT_8BIT");

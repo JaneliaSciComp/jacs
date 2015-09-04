@@ -40,7 +40,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     private File lsmDataFile;
     private File jsonDataFile;
     
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
     	super.init(processData);
     	
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());

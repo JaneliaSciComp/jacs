@@ -166,7 +166,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     }
 
 
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
         initLoggersAndData(processData);
 
         // Permit the task to be predefined elsewhere

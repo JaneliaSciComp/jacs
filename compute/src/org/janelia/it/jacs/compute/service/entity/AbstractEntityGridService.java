@@ -35,7 +35,7 @@ public abstract class AbstractEntityGridService extends SubmitDrmaaJobService {
     protected EntityHelper entityHelper;
     protected EntityBeanEntityLoader entityLoader;
     
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
     	super.init(processData);
         try {
             this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());

@@ -21,7 +21,7 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "maskSearchConfiguration.";
 
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
         super.init(processData);
     }
 

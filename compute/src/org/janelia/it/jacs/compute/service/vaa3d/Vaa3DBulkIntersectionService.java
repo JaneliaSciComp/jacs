@@ -36,7 +36,7 @@ public class Vaa3DBulkIntersectionService extends SubmitDrmaaJobService {
     private int intersectionMethod;
     private int kernelSize;
     
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
     	super.init(processData);
 
         Object intersectionMethodStr = processData.getItem("INTERSECTION_METHOD");

@@ -26,7 +26,7 @@ public class Vaa3DSimilarityService extends SubmitDrmaaJobService {
     private File inputListFile;
     private File outputListFile;
     
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
     	super.init(processData);
     }
 

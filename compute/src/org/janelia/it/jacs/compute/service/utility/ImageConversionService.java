@@ -22,7 +22,7 @@ public class ImageConversionService extends ParallelFileProcessingService {
             SystemConfigurationProperties.getString("ImageMagick.Lib.Path");
     
     @Override
-    protected void init(IProcessData processData) throws Exception {
+    public void init(IProcessData processData) throws Exception {
         String altWorkingPath=processData.getString("ALTERNATE_WORKING_DIR_PATH");
         Map<String, FileNode> nodeMap=(Map<String, FileNode>)processData.getItem("IMAGE_CONVERSION_RESULT_NODE_MAP");
         if (altWorkingPath!=null && nodeMap!=null) {
