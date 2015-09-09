@@ -102,7 +102,7 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
         validateChildActionDef(actionDef);
         childDefs.add(actionDef);
         actionDef.setParentDef(this); // this would have been set in constructor but i'm paranoid
-        setContainsUpdateStatusOnSuccessAction(actionDef);
+        setContainsUpdateStatusOnSuccessActionFromActionDef(actionDef);
     }
 
     /**
@@ -231,7 +231,7 @@ public abstract class SeriesDef extends ActionDef implements Serializable {
      *
      * @param actionDef The operation or sequence definition that we're about to add
      */
-    private void setContainsUpdateStatusOnSuccessAction(ActionDef actionDef) {
+    private void setContainsUpdateStatusOnSuccessActionFromActionDef(ActionDef actionDef) {
         if (actionDef.updateProcessStatusOnSuccess()) {
             SeriesDef parentDef = actionDef.getParentDef();
             while (parentDef != null) {

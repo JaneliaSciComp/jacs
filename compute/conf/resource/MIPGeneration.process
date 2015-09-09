@@ -1,0 +1,8 @@
+<process name="MIP Generation">
+    <operation name="MIP Generation" processor="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService">
+        <input name ="INPUT_IMAGES" />
+        <output name="RESULT_FILE_NODE_ID" />
+        <output name="RESULT_FILE_NODE" />
+    </operation>
+    <operation
+</process>

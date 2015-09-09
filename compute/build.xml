@@ -200,6 +200,7 @@
         <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/RestfulWebService.class"/>
+                <include name="org/**/wsrest/computeresources/**/*.class"/>
             </classes>
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
@@ -212,6 +213,7 @@
         <war warfile="${basedir}/build/jars/${secure-rest-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/SecureRestfulWebService.class"/>
+                <include name="org/**/wsrest/computeresources/**/*.class"/>
             </classes>
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>

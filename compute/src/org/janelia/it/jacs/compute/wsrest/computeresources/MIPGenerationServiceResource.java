@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.compute.wsrest.computeresources;
 
-import org.hibernate.Session;
-import org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService;
-import org.janelia.it.jacs.compute.engine.data.ProcessData;
-
-import org.janelia.it.jacs.model.tasks.SessionTask;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.mip.AbstractMIPGenerationTask;
+import org.janelia.it.jacs.model.tasks.mip.BatchMIPGenerationTask;
+import org.janelia.it.jacs.model.tasks.mip.SingleMIPGenerationTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,16 +20,17 @@ import javax.ws.rs.core.Request;
  *
  * Created by goinac on 9/2/15.
  */
-@Path("/mips-service")
+@Path("/mip")
 public class MIPGenerationServiceResource extends AbstractAsyncComputationResource {
-    private static final String APP_ID = "MIPGenerator";
+    private static final String APP_ID = "MIPGeneration";
     private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationServiceResource.class);
 
     public MIPGenerationServiceResource() {
-        super(APP_ID, new MIPGenerationService());
+        super(APP_ID);
     }
 
     @POST
+    @Path("/single")
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
@@ -40,12 +39,30 @@ public class MIPGenerationServiceResource extends AbstractAsyncComputationResour
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Task post(ProcessData processData, @Context Request req) throws ProcessingException {
-        Task task = init(processData);
+    public Task post(SingleMIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
+        Task persistedTask = init(mipGenerationTask);
         // TODO
-        System.out.println("!!!!!!!!! PROCESS DATA" + processData);
-        LOG.debug("!!!!!!!!! PROCESS DATA", processData);
-        return task;
+        System.out.println("!!!!!!!!! PROCESS DATA" + mipGenerationTask);
+        LOG.debug("!!!!!!!!! PROCESS DATA", mipGenerationTask);
+        return persistedTask;
+    }
+
+    @POST
+    @Path("/batch")
+    @Consumes({
+            MediaType.APPLICATION_JSON,
+            MediaType.APPLICATION_XML
+    })
+    @Produces({
+            MediaType.APPLICATION_JSON,
+            MediaType.APPLICATION_XML
+    })
+    public Task post(BatchMIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
+        Task persistedTask = init(mipGenerationTask);
+        // TODO
+        System.out.println("!!!!!!!!! PROCESS DATA" + mipGenerationTask);
+        LOG.debug("!!!!!!!!! PROCESS DATA", mipGenerationTask);
+        return persistedTask;
     }
 
 }
