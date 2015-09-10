@@ -56,7 +56,7 @@ public class DataViewsWebService extends ResourceConfig {
             if (query.getReferences()!=null) {
                 detailObjects = dao.getDomainObjects(query.getSubjectKey(), query.getReferences());
             } else if (query.getObjectIds()!=null) {
-                detailObjects = dao.getDomainObjects(query.getSubjectKey(), query.getObjectType(),
+                detailObjects = dao.getDomainObjects(query.getSubjectKey(), query.getObjectType().toLowerCase(),
                         query.getObjectIds());
             }
             return mapper.writeValueAsString(detailObjects);
@@ -148,66 +148,6 @@ public class DataViewsWebService extends ResourceConfig {
     @DELETE
     @Path("/dataset")
     public void deleteDataSet(@PathParam("datasetId") Long datasetId, @Context UriInfo uriInfo) {
-
-    }
-
-    // filters
-    @GET
-    @Path("/filter")
-    @Produces("application/json")
-    public Response getFilter(@Context UriInfo uriInfo) {
-        return Response.status(200).entity("foo foo").build();
-    }
-
-    @PUT
-    @Path("/filter")
-    public void setFilter(@PathParam("filterId") Long filterId, @Context UriInfo uriInfo) {
-
-    }
-
-    @POST
-    @Path("/filter")
-    public void updateFilter(@PathParam("filterId") Long filterId, @Context UriInfo uriInfo) {
-
-    }
-
-    @DELETE
-    @Path("/filter")
-    public void deleteFilter(@PathParam("filterId") Long filterId, @Context UriInfo uriInfo) {
-
-    }
-
-    // objectset
-    @GET
-    @Path("/objectset/{objectsetId}")
-    @Produces("application/json")
-    public Response getObjectSet(@PathParam("objectsetId") Long objectsetId, @Context UriInfo uriInfo) {
-        Response response = null;
-
-        return response;
-    }
-
-    @PUT
-    @Path("/objectset")
-    public void addObjectSet(@Context UriInfo uriInfo) {
-
-    }
-
-    @POST
-    @Path("/objectset/reorder")
-    public void updateObjectSetOrder(@PathParam("objectsetId") Long objectsetId, @Context UriInfo uriInfo) {
-
-    }
-
-    @PUT
-    @Path("/objectset/object")
-    public void addObjectToObjectSet(@PathParam("objectsetId") Long objectsetId, @Context UriInfo uriInfo) {
-
-    }
-
-    @DELETE
-    @Path("/objectset/object/{objectId}")
-    public void deleteObjectFromObjectSet(@PathParam("objectId") Long objectsetId, @Context UriInfo uriInfo) {
 
     }
 

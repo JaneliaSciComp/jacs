@@ -1,7 +1,7 @@
 {
     "mongodb": {
         "connection": {
-            "host": "schauderd-ws1.janelia.priv",
+            "host": "rokicki-ws.janelia.priv",
             "dbname": "jacs",
             "username": "flylight",
             "password": "flylight"

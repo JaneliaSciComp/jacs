@@ -132,7 +132,7 @@ public class UserWorkstationWebService extends ResourceConfig {
     }
 
 
-    @DELETE
+    /*@DELETE
     @Path("/treenode/children")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -150,7 +150,7 @@ public class UserWorkstationWebService extends ResourceConfig {
             e.printStackTrace();
         }
         return null;
-    }
+    }*/
 
     @PUT
     @Path("/objectset")

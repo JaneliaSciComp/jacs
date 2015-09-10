@@ -231,7 +231,7 @@ public class DomainDAO {
                 log.warn("Requested null reference");
                 continue;
             }
-            referenceMap.put(reference.getTargetType(), reference.getTargetId());
+            referenceMap.put(reference.getTargetType().toLowerCase(), reference.getTargetId());
         }
         
         for(String type : referenceMap.keySet()) {
@@ -283,7 +283,6 @@ public class DomainDAO {
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
 
         Class<? extends DomainObject> clazz = getObjectClass(type);
-
         if (clazz==null) {
             return new ArrayList<>();
         }
