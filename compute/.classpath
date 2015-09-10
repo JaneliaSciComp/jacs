@@ -29,5 +29,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Yaml"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/RESTEasy"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JodaTime"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JAX-RS"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>
