@@ -11,6 +11,8 @@ import org.janelia.it.jacs.model.vo.TextParameterVO;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -22,8 +24,9 @@ public abstract class AbstractMIPGenerationTask extends Task {
     transient public static final String DISPLAY_NAME = "MIP Generator";
 
     // Parameter Keys
-    transient public static final String PARAM_inputTifFilePath = "input tif file path";
-    transient public static final String PARAM_inputLsmFilePathList = "input lsm file path list";
+    transient public static final String PARAM_inputFileList = "input file list";
+    transient public static final String PARAM_signalChannels = "signal channels";
+    transient public static final String PARAM_referenceChannel = "reference channel";
 
     public AbstractMIPGenerationTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -35,8 +38,9 @@ public abstract class AbstractMIPGenerationTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_inputTifFilePath, "");
-        setParameter(PARAM_inputLsmFilePathList, "");
+        setParameter(PARAM_inputFileList, "");
+        setParameter(PARAM_signalChannels, "");
+        setParameter(PARAM_referenceChannel, "");
         setTaskName(getDefaultTaskName());
     }
 
@@ -47,11 +51,14 @@ public abstract class AbstractMIPGenerationTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_inputTifFilePath)) {
+        if (key.equals(PARAM_inputFileList)) {
             return new TextParameterVO(value, 400);
         }
-        if (key.equals(PARAM_inputLsmFilePathList)) {
-            return new TextParameterVO(value, 1000);
+        if (key.equals(PARAM_signalChannels)) {
+            return new TextParameterVO(value, 400);
+        }
+        if (key.equals(PARAM_referenceChannel)) {
+            return new TextParameterVO(value, 400);
         }
         // No match
         return null;
@@ -61,13 +68,35 @@ public abstract class AbstractMIPGenerationTask extends Task {
         return DISPLAY_NAME;
     }
 
-    @XmlElement
-    public String getInputTifFilePath() {
-        return getParameter(PARAM_inputTifFilePath);
+    @XmlElement(name = "csInputFiles")
+    public String getCsInputFiles() {
+        return getParameter(PARAM_inputFileList);
     }
 
-    public void setInputTifFilePath(String inputTifFilePath) {
-        setParameter(PARAM_inputTifFilePath, inputTifFilePath);
+    public void setCsInputFiles(String csInputFiles) {
+        setParameter(PARAM_inputFileList, csInputFiles);
+    }
+
+    public List<String> getInputFileList() {
+        return Task.listOfStringsFromCsvString(getParameter(PARAM_inputFileList));
+    }
+
+    @XmlElement
+    public String getSignalChannels() {
+        return getParameter(PARAM_signalChannels);
+    }
+
+    public void setSignalChannels(String signalChannels) {
+        setParameter(PARAM_signalChannels, signalChannels);
+    }
+
+    @XmlElement
+    public String getReferenceChannel() {
+        return getParameter(PARAM_referenceChannel);
+    }
+
+    public void setReferenceChannel(String referenceChannel) {
+        setParameter(PARAM_referenceChannel, referenceChannel);
     }
 
     abstract protected String getDefaultTaskName();

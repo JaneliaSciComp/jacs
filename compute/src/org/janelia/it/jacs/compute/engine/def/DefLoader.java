@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -29,6 +30,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  */
 public class DefLoader implements Serializable {
 
+    private static final Logger logger = Logger.getLogger(DefLoader.class);
     private static final String PROCESS_ELE = "process";
     private static final String INCLUDE_ELE = "include";
     private static final String SEQUENCE_ELE = "sequence";
@@ -65,6 +67,7 @@ public class DefLoader implements Serializable {
      */
     public ProcessDef loadProcessDef(String processName) {
         try {
+            logger.debug("Loading definition for processName " + processName + ".process");
             InputStream contentStream = FileUtil.getResourceAsStream(processName + ".process");
             Document defDocument = new SAXReader().read(contentStream);
             Element processElement = defDocument.getRootElement();

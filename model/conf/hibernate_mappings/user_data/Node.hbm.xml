@@ -1338,6 +1338,11 @@
             </set>
         </subclass>
 
+        <subclass name="org.janelia.it.jacs.model.user_data.mip.MIPGenerationResultNode" discriminator-value="MIPGenerationResultNode"
+                  dynamic-update="true"
+                  dynamic-insert="true"
+                  select-before-update="false">
+        </subclass>
 
     </class>
 

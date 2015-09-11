@@ -3,7 +3,6 @@ package org.janelia.it.jacs.model.tasks.mip;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
 /**
  * Created by goinac on 9/9/15.

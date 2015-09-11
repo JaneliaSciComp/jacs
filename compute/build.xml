@@ -67,7 +67,7 @@
         <mkdir dir="${dep.dir}" />
 
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
-		<path id="compute.classpath">
+	<path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
@@ -99,7 +99,7 @@
        		<classpath refid="dependency.classpath" />
         </manifestclasspath>
 
-		<jar destfile="${build.jars.dir}/${jar.name}">
+	<jar destfile="${build.jars.dir}/${jar.name}">
             <fileset dir="${build.classes.dir}" includes="**/*.class"/>
             <fileset dir="${basedir}/conf/resource" includes="*.process"/>
             <manifest>
@@ -205,6 +205,7 @@
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
             </lib>
+            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
@@ -218,6 +219,7 @@
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
             </lib>
+            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
