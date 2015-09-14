@@ -2,8 +2,7 @@ package org.janelia.it.jacs.compute.wsrest.computeresources;
 
 
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.mip.AbstractMIPGenerationTask;
-import org.janelia.it.jacs.model.tasks.mip.SingleMIPGenerationTask;
+import org.janelia.it.jacs.model.tasks.mip.MIPGenerationTask;
 import org.janelia.it.jacs.model.user_data.mip.MIPGenerationResultNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,7 @@ import java.util.Map;
  * Created by goinac on 9/2/15.
  */
 @Path("/mip")
-public class MIPGenerationServiceResource extends AbstractComputationResource<AbstractMIPGenerationTask, MIPGenerationResultNode> {
+public class MIPGenerationServiceResource extends AbstractComputationResource<MIPGenerationTask, MIPGenerationResultNode> {
     private static final String RESOURCE_NAME = "MIPGeneration";
     private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationServiceResource.class);
 
@@ -41,15 +40,15 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<Ab
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Task post(SingleMIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
+    public Task post(MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
         LOG.info("post single MIP task " + mipGenerationTask.getClass());
-        AbstractMIPGenerationTask persistedTask = init(mipGenerationTask);
+        MIPGenerationTask persistedTask = init(mipGenerationTask);
         submitJob(persistedTask);
         return persistedTask;
     }
 
     @Override
-    protected MIPGenerationResultNode createResultNode(AbstractMIPGenerationTask task, String visibility) {
+    protected MIPGenerationResultNode createResultNode(MIPGenerationTask task, String visibility) {
         return new MIPGenerationResultNode(task.getOwner(),
                 task,
                 "MIPGenerationResultNode",
@@ -59,7 +58,7 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<Ab
     }
 
     @Override
-    protected Map<String, Object> prepareProcessConfiguration(AbstractMIPGenerationTask task) throws ProcessingException {
+    protected Map<String, Object> prepareProcessConfiguration(MIPGenerationTask task) throws ProcessingException {
         Map<String, Object> processConfig = super.prepareProcessConfiguration(task);
         processConfig.put("INPUT_FILENAMES", task.getInputFileList());
         processConfig.put("SIGNAL_CHANNELS", task.getSignalChannels());

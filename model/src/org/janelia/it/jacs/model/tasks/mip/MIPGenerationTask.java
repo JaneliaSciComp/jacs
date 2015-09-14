@@ -8,10 +8,7 @@ import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 import org.janelia.it.jacs.model.vo.TextParameterVO;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -19,8 +16,10 @@ import java.util.Set;
 /**
  * Created by goinac on 9/9/15.
  */
+@XmlRootElement(name = "mipGeneration")
 @XmlAccessorType(XmlAccessType.NONE)
-public abstract class AbstractMIPGenerationTask extends Task {
+public class MIPGenerationTask extends Task {
+    transient public static final String TASK_NAME = "mipGenerator";
     transient public static final String DISPLAY_NAME = "MIP Generator";
 
     // Parameter Keys
@@ -28,12 +27,12 @@ public abstract class AbstractMIPGenerationTask extends Task {
     transient public static final String PARAM_signalChannels = "signal channels";
     transient public static final String PARAM_referenceChannel = "reference channel";
 
-    public AbstractMIPGenerationTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
+    public MIPGenerationTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
         setDefaultValues();
     }
 
-    public AbstractMIPGenerationTask() {
+    public MIPGenerationTask() {
         setDefaultValues();
     }
 
@@ -41,7 +40,7 @@ public abstract class AbstractMIPGenerationTask extends Task {
         setParameter(PARAM_inputFileList, "");
         setParameter(PARAM_signalChannels, "");
         setParameter(PARAM_referenceChannel, "");
-        setTaskName(getDefaultTaskName());
+        setTaskName(TASK_NAME);
     }
 
     @Override
@@ -98,7 +97,5 @@ public abstract class AbstractMIPGenerationTask extends Task {
     public void setReferenceChannel(String referenceChannel) {
         setParameter(PARAM_referenceChannel, referenceChannel);
     }
-
-    abstract protected String getDefaultTaskName();
 
 }

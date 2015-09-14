@@ -32,9 +32,7 @@
                    default-lazy="false"
                    auto-import="true"
                    default-cascade="none" >
-        <subclass name="AbstractMIPGenerationTask" extends="org.janelia.it.jacs.model.tasks.Task"
-                  discriminator-value="mipGeneration" abstract="false">
-            <subclass name="SingleMIPGenerationTask" discriminator-value="singleMIGGenerationTask" abstract="false" />
-            <subclass name="BatchMIPGenerationTask" discriminator-value="batchMIGGenerationTask" abstract="false" />
-        </subclass>
+        <subclass name="org.janelia.it.jacs.model.tasks.mip.MIPGenerationTask"
+                  extends="org.janelia.it.jacs.model.tasks.Task"
+                  discriminator-value="mipGeneration" abstract="false" />
 </hibernate-mapping>
