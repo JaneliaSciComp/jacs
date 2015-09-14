@@ -283,6 +283,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         Long pId=new Long(vArr[0]);
                         if (pId.equals(parentAnnotationId)) {
                             foundParent=true;
+                            break;
                         }
                     }
                 }
