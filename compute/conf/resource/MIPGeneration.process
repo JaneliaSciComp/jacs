@@ -6,6 +6,7 @@
             <input name="INPUT_FILENAMES" />
             <input name="SIGNAL_CHANNELS" />
             <input name="REFERENCE_CHANNEL" />
+            <input name="COLOR_DEPTH" />
         </operation>
     </sequence>
 </process>

@@ -26,6 +26,7 @@ public class MIPGenerationTask extends Task {
     transient public static final String PARAM_inputFileList = "input file list";
     transient public static final String PARAM_signalChannels = "signal channels";
     transient public static final String PARAM_referenceChannel = "reference channel";
+    transient public static final String PARAM_colorDepth = "color depth";
 
     public MIPGenerationTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -40,6 +41,7 @@ public class MIPGenerationTask extends Task {
         setParameter(PARAM_inputFileList, "");
         setParameter(PARAM_signalChannels, "");
         setParameter(PARAM_referenceChannel, "");
+        setParameter(PARAM_colorDepth, "");
         setTaskName(TASK_NAME);
     }
 
@@ -57,6 +59,9 @@ public class MIPGenerationTask extends Task {
             return new TextParameterVO(value, 400);
         }
         if (key.equals(PARAM_referenceChannel)) {
+            return new TextParameterVO(value, 400);
+        }
+        if (key.equals(PARAM_colorDepth)) {
             return new TextParameterVO(value, 400);
         }
         // No match
@@ -98,4 +103,12 @@ public class MIPGenerationTask extends Task {
         setParameter(PARAM_referenceChannel, referenceChannel);
     }
 
+    @XmlElement
+    public String getColorDepth() {
+        return getParameter(PARAM_colorDepth);
+    }
+
+    public void setColorDepth(String colorDepth) {
+        setParameter(PARAM_colorDepth, colorDepth);
+    }
 }
