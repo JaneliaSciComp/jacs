@@ -23,7 +23,7 @@ import org.janelia.it.jacs.compute.util.ChanSpecUtils;
  */
 public class MIPGenerationService extends SubmitDrmaaJobService {
 
-	private static final int START_DISPLAY_PORT = 990;
+    private static final int START_DISPLAY_PORT = 990;
     private String signalChannels;
     private String referenceChannel;
     private List<String> inputFilenames;
@@ -34,69 +34,69 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
         return "mip";
     }
     
-	@Override
+    @Override
     @SuppressWarnings("unchecked")
     protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-    	
-    	inputFilenames = (List<String>)processData.getItem("INPUT_FILENAMES");
-    	
-    	if (inputFilenames==null) {
-    		String inputFilename = (String)processData.getItem("INPUT_FILENAME");	
-    		if (inputFilename!=null) {
-    			logger.info("Got input filename: "+inputFilename);
-        		inputFilenames = new ArrayList<String>();
-        		inputFilenames.add(inputFilename);
+        super.init(processData);
+
+        inputFilenames = (List<String>)processData.getItem("INPUT_FILENAMES");
+    
+        if (inputFilenames==null) {
+            String inputFilename = (String)processData.getItem("INPUT_FILENAME");
+            if (inputFilename!=null) {
+                logger.info("Got input filename: "+inputFilename);
+                inputFilenames = new ArrayList<>();
+                inputFilenames.add(inputFilename);
             }
-    		else {
-    			inputImages = (List<ImageStack>)processData.getItem("INPUT_IMAGES");
-    			logger.info("Got "+inputImages.size()+" input images");
-        		if (inputImages==null) {
-        			throw new IllegalArgumentException("All of the following may not be null: INPUT_FILENAMES, INPUT_FILENAME, INPUT_IMAGES");
-        		}
-    		}
-    	}
-    	else {
-    		logger.info("Got "+inputFilenames.size()+" input filenames");
-    	}
-    	
-    	if (inputImages==null) {
-	        signalChannels = (String)processData.getItem("SIGNAL_CHANNELS");
-	        if (signalChannels==null) {
-	        	throw new IllegalArgumentException("SIGNAL_CHANNELS may not be null if INPUT_IMAGES is not used");
-	        }
-	        referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL");
-	        if (referenceChannel==null) {
-	        	throw new IllegalArgumentException("REFERENCE_CHANNEL may not be null if INPUT_IMAGES is not used");
-	        }
-    	}
+            else {
+                inputImages = (List<ImageStack>)processData.getItem("INPUT_IMAGES");
+                logger.info("Got "+inputImages.size()+" input images");
+                if (inputImages==null) {
+                    throw new IllegalArgumentException("All of the following may not be null: INPUT_FILENAMES, INPUT_FILENAME, INPUT_IMAGES");
+                }
+            }
+        }
+        else {
+            logger.info("Got "+inputFilenames.size()+" input filenames");
+        }
+        
+        if (inputImages==null) {
+            signalChannels = (String)processData.getItem("SIGNAL_CHANNELS");
+            if (signalChannels==null) {
+                throw new IllegalArgumentException("SIGNAL_CHANNELS may not be null if INPUT_IMAGES is not used");
+            }
+            referenceChannel = (String)processData.getItem("REFERENCE_CHANNEL");
+            if (referenceChannel==null) {
+                throw new IllegalArgumentException("REFERENCE_CHANNEL may not be null if INPUT_IMAGES is not used");
+            }
+        }
     }
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
-    	int configIndex = 1;
+        int configIndex = 1;
         
-    	if (inputFilenames!=null) {
-    		for(String inputFilename : inputFilenames) {	
-	        	File inputFile = new File(inputFilename);
-	        	File outputDir = inputFile.getParentFile();
-	        	writeInstanceFiles(inputFile, outputDir, signalChannels, referenceChannel, configIndex++);
-	    	}
-    	}
-    	else if (inputImages!=null) {
-    		for(ImageStack inputImage : inputImages) {	
-	        	File inputFile = new File(inputImage.getFilepath());
-	        	File outputDir = inputFile.getParentFile();
-	        	String chanSpec = inputImage.getChannelSpec();
-	        	// The MIP pipeline expects a space-delimited list of indexes which are zero-indexed.
-	        	String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
-	        	String referenceChannel = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
-	        	writeInstanceFiles(inputFile, outputDir, signalChannels, referenceChannel, configIndex++);
-	    	}
-    	}
-    	
-    	writeShellScript(writer);
+        if (inputFilenames!=null) {
+            for(String inputFilename : inputFilenames) {    
+                File inputFile = new File(inputFilename);
+                File outputDir = inputFile.getParentFile();
+                writeInstanceFiles(inputFile, outputDir, signalChannels, referenceChannel, configIndex++);
+            }
+        }
+        else if (inputImages!=null) {
+            for(ImageStack inputImage : inputImages) {    
+                File inputFile = new File(inputImage.getFilepath());
+                File outputDir = inputFile.getParentFile();
+                String chanSpec = inputImage.getChannelSpec();
+                // The MIP pipeline expects a space-delimited list of indexes which are zero-indexed.
+                String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
+                String referenceChannel = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
+                writeInstanceFiles(inputFile, outputDir, signalChannels, referenceChannel, configIndex++);
+            }
+        }
+        
+        writeShellScript(writer);
         setJobIncrementStop(configIndex-1);
     }
 
@@ -107,7 +107,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
             writeInstanceFile(fw, inputFile, outputDir, signalChannels, referenceChannel, configIndex);
         }
         catch (IOException e) {
-        	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
+            throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
         }
         finally {
             fw.close();
@@ -124,9 +124,9 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
      * @throws IOException
      */
     protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, String signalChannels, String referenceChannel, int configIndex) throws IOException {
-    	int randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
-    	fw.write(outputFile.getAbsolutePath() + "\n");
-    	fw.write(inputFile.getAbsolutePath() + "\n");
+        int randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
+        fw.write(outputFile.getAbsolutePath() + "\n");
+        fw.write(inputFile.getAbsolutePath() + "\n");
         fw.write(signalChannels + "\n");
         fw.write(referenceChannel + "\n");
         fw.write((randomPort+configIndex) + "\n");
@@ -154,6 +154,6 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 3;
+        return 3;
     }
 }

@@ -335,7 +335,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!valueStringUpdated) {
                 throw new Exception("Could not find geo entry to update for value string");
             }
-            TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(valueString);
+            TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(geoEd);
             // normally this is filled in automatically when the annotation is part of
             //  a neuron, but here it's not (explicitly); however, we know the value
             //  to put in:
@@ -987,7 +987,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             //  that seems to be the pattern:
             TmGeoAnnotation annotation;
             try {
-                annotation = new TmGeoAnnotation(ed.getValue());
+                annotation = new TmGeoAnnotation(ed);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new DaoException(e);

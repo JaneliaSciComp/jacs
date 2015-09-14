@@ -53,7 +53,7 @@ public class CufflinksService extends SubmitDrmaaJobService {
         return new CufflinksTask();
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         cufflinksTask = getCufflinksTask(processData);
         task = cufflinksTask;
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);

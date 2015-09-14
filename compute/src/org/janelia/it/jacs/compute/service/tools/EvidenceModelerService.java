@@ -217,7 +217,7 @@ public class EvidenceModelerService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         evidenceModelerTask = getEvidenceModelerTask(processData);
         task = evidenceModelerTask;

@@ -195,7 +195,7 @@ public class Fasta2BsmlService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         fasta2bsmlTask = getFasta2BsmlTask(processData);
         task = fasta2bsmlTask;

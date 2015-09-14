@@ -178,7 +178,7 @@ public class Clustalw2Service extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         clustalw2Task = getClustalw2Task(processData);
         task = clustalw2Task;

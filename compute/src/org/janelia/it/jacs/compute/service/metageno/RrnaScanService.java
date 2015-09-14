@@ -286,7 +286,7 @@ public class RrnaScanService extends SubmitDrmaaJobService {
      *
      */
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         rrnaScanTask = getRrnaScanTask(processData);
         task = rrnaScanTask;
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);
