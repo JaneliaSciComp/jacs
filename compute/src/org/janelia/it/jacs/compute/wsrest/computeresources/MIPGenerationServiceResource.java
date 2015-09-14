@@ -7,10 +7,7 @@ import org.janelia.it.jacs.model.user_data.mip.MIPGenerationResultNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -21,7 +18,7 @@ import java.util.Map;
  *
  * Created by goinac on 9/2/15.
  */
-@Path("/mip")
+@Path("/images")
 public class MIPGenerationServiceResource extends AbstractComputationResource<MIPGenerationTask, MIPGenerationResultNode> {
     private static final String RESOURCE_NAME = "MIPGeneration";
     private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationServiceResource.class);
@@ -31,7 +28,7 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
     }
 
     @POST
-    @Path("/single")
+    @Path("/{owner}/mips")
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
@@ -40,8 +37,9 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Task post(MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
-        LOG.info("post single MIP task " + mipGenerationTask.getClass());
+    public Task post(@PathParam("owner") String owner, MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
+        LOG.info("MIP generation request from {} ffor {}", owner, mipGenerationTask.getClass());
+        mipGenerationTask.setOwner(owner);
         MIPGenerationTask persistedTask = init(mipGenerationTask);
         submitJob(persistedTask);
         return persistedTask;
