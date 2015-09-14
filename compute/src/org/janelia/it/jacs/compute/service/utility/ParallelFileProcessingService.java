@@ -45,7 +45,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
 
     private boolean ignoreErrors = false;
     
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
 
         String ignoreErrorsStr = (String)processData.getItem("IGNORE_ERRORS");
         ignoreErrors = ignoreErrorsStr!=null && ignoreErrorsStr.equalsIgnoreCase("true");

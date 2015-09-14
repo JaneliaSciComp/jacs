@@ -179,7 +179,7 @@ public class MuscleService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         muscleTask = getMuscleTask(processData);
         task = muscleTask;

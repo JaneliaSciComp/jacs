@@ -62,7 +62,7 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
     private List<String> targetPaths;
     private boolean deleteSourceFiles = false;
     
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         super.init(processData);
 
         try {

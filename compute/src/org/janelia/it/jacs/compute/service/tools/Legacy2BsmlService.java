@@ -458,7 +458,7 @@ public class Legacy2BsmlService extends SubmitDrmaaJobService {
         }
     };
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         legacy2bsmlTask = getLegacy2BsmlTask(processData);
         task = legacy2bsmlTask;

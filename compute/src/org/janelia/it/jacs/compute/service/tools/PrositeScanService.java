@@ -164,7 +164,7 @@ public class PrositeScanService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         prositescanTask = getPrositeScanTask(processData);
         task = prositescanTask;

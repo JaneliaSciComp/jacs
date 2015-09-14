@@ -98,7 +98,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
     protected String mode;
     FileDiscoveryHelper helper;
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         try {
             this.processData=processData;
             configure();

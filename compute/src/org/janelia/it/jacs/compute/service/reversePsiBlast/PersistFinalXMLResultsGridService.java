@@ -51,7 +51,7 @@ public class PersistFinalXMLResultsGridService extends SubmitDrmaaJobService {
     public PersistFinalXMLResultsGridService() {
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         blastDestOutputDirs = (List<File>) processData.getMandatoryItem(FileServiceConstants.OUTPUT_DIR_LIST);
         // totalBlastHits = (Long) processData.getMandatoryItem(BlastProcessDataConstants.TOTAL_BLAST_HITS);
         resultFileNode = (ReversePsiBlastResultNode) ProcessDataHelper.getResultFileNode(processData);

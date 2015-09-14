@@ -45,7 +45,7 @@ public class FrvImageService extends SubmitDrmaaJobService {
 
     protected RecruitmentFileNode dataFileNode = null;
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         this.task = ProcessDataHelper.getTask(processData);
         // There should at least be one RecruitmentResultFileNode since we are supped to update the images
         dataFileNode = (RecruitmentFileNode) this.task.getInputNodes().iterator().next();

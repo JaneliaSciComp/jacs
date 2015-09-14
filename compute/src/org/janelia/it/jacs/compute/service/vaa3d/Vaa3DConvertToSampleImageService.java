@@ -88,7 +88,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     protected String referenceDye;
     
     @Override
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         try {
             this.entityBean = EJBFactory.getLocalEntityBean();

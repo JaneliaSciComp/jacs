@@ -36,7 +36,7 @@ public abstract class ProkAnnotationBaseService extends SubmitDrmaaJobService {
     protected String _targetDirectory;
     protected Logger _logger;
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         this.processData = processData;
         // Permit the task to be predefined elsewhere

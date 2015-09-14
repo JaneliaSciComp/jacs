@@ -30,7 +30,7 @@ public class Vaa3DPatternAnnotationService extends SubmitDrmaaJobService {
         int patternChannel;
 
     @Override
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         sampleIdList=(List<String>)processData.getItem("SAMPLE_ID_LIST");
         sampleNameList=(List<String>)processData.getItem("SAMPLE_NAME_LIST");

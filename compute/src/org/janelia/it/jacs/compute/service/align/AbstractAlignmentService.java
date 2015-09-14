@@ -280,7 +280,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     }
     
     @Override
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
 
         try {
             super.init(processData);

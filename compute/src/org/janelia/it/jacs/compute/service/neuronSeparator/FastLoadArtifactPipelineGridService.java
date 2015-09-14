@@ -42,7 +42,7 @@ public class FastLoadArtifactPipelineGridService extends SubmitDrmaaJobService {
         return "fastLoad";
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
 
         inputPaths = (List<String>)processData.getItem("FILE_PATHS");

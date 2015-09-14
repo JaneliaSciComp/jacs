@@ -68,7 +68,7 @@ public class GridMergeSortResultsService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         BlastTask blastTask = (BlastTask) ProcessDataHelper.getTask(processData);
         blastDestOutputDirList = (List<File>) processData.getMandatoryItem(BlastProcessDataConstants.BLAST_DEST_OUTPUT_DIR);
         partitionList = BlastServiceUtil.getPartitionList(processData, blastTask);

@@ -101,7 +101,7 @@ public class SimpleOrfCallerService extends SubmitDrmaaJobService {
         return task;
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         simpleOrfCallerTask = getSimpleOrfCallerTask(processData);
         task = simpleOrfCallerTask;
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);

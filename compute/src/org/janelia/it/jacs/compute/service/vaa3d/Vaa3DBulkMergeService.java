@@ -31,7 +31,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     private String multiscanblendVersion = "";
 
     @Override
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
     }
 

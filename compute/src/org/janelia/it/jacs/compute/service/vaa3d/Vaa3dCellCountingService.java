@@ -33,7 +33,7 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
 
     private String signalChannel, referenceChannel, inputFilePath, convertedFilePath, tifOutputPath, rawOutputPath;
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         super.init(processData);
     }
 

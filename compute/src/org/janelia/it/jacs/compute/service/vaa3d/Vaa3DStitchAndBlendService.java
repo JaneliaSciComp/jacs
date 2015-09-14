@@ -34,7 +34,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         return "stitch";
     }
     
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         super.init(processData);
     }
 

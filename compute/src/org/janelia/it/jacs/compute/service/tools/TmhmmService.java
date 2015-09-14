@@ -160,7 +160,7 @@ public class TmhmmService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         tmhmmTask = getTmhmmTask(processData);
         task = tmhmmTask;

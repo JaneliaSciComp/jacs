@@ -44,7 +44,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     protected String genderCode;
 
     @Override
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         try {
             this.scriptFile = data.getRequiredItemAsString("ALIGNMENT_SCRIPT_NAME");

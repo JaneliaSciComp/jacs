@@ -36,7 +36,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
     
     @Override
     @SuppressWarnings("unchecked")
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         super.init(processData);
 
         inputFilenames = (List<String>)processData.getItem("INPUT_FILENAMES");

@@ -235,7 +235,7 @@ public class RepeatMaskerService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         repeatMaskerTask = getRepeatMaskerTask(processData);
         task = repeatMaskerTask;
