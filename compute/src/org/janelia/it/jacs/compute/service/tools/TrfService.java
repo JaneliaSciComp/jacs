@@ -182,7 +182,7 @@ public class TrfService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         trfTask = getTrfTask(processData);
         task = trfTask;

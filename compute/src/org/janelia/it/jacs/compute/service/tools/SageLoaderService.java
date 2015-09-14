@@ -120,7 +120,7 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         task = ProcessDataHelper.getTask(processData);
         if (computeDAO == null) {computeDAO = new ComputeDAO(logger);}

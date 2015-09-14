@@ -57,7 +57,7 @@ import java.util.List;
 @Path("/")
 public class RestfulWebService {
 
-    private Logger logger = Logger.getLogger(this.getClass());
+    private final Logger logger = Logger.getLogger(this.getClass());
 
     /**
      * Retrieve LSM summary imagery that match specified LSM's.

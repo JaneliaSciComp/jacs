@@ -160,7 +160,7 @@ public class GenezillaService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         genezillaTask = getGenezillaTask(processData);
         task = genezillaTask;

@@ -206,7 +206,7 @@ public class SiftProteinSubstitutionService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         siftProteinSubstitutionTask = getSiftProteinSubstitutionTask(processData);
         task = siftProteinSubstitutionTask;

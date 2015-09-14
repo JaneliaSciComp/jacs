@@ -68,7 +68,7 @@ public class LsTestService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         lsTask = (LsTestTask)ProcessDataHelper.getTask(processData);
         resultFileNode = createResultFileNode();

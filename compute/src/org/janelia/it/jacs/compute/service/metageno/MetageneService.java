@@ -65,7 +65,7 @@ public class MetageneService extends SubmitDrmaaJobService {
         return new MetageneTask();
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         metageneTask = getMetageneTask(processData);
         task = metageneTask;
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);

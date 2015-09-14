@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -281,7 +280,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     }
     
     @Override
-    protected void init(IProcessData processData) throws Exception {        
+    protected void init(IProcessData processData) throws Exception {
 
         try {
             super.init(processData);

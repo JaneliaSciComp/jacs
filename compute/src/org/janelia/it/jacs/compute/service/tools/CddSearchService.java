@@ -175,7 +175,7 @@ public class CddSearchService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         if (processData.getItem("MGA_FILE_ID") != null) {
             fileId = (String) processData.getItem("MGA_FILE_ID");
