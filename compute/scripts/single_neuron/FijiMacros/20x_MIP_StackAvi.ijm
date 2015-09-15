@@ -1,11 +1,11 @@
 // Date released:  2014-10-01
 // FIJI macro for generating intensity-normalized Movies and MIPs
 //
-// Argument should be in this format: "Prefix,Basedir,BrainPath,VNCPath,Laser,Gain,ChanSpec,ColorSpec,DivSpec,Outputs"
+// Argument should be in this format: "Basedir,Prefix,BrainPath,VNCPath,Laser,Gain,ChanSpec,ColorSpec,DivSpec,Outputs"
 // 
 // Input parameters:
-//     Prefix: output filename prefix 
 //     Basedir: output directory for MIPs and movies
+//     Prefix: output filename prefix 
 //     BrainPath: absolute path to the Brain stack 
 //     VNCPath: absolute path to the VNC stack (may be blank if there is no VNC)
 //     Laser: laser power (BC1) for the signal channel (optional annotation)
