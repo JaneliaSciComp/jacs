@@ -48,7 +48,7 @@ public abstract class Task implements Serializable, IsSerializable {
 
 	@XmlTransient
     private Set<Node> outputNodes = new HashSet<Node>();
-	
+
 	@XmlAttribute
     private String owner = "";
 
@@ -61,7 +61,7 @@ public abstract class Task implements Serializable, IsSerializable {
 	@XmlTransient
     private Set<TaskMessage> messages = new HashSet<TaskMessage>();
 	
-	@XmlTransient
+	@XmlElement
     private String taskNote;
 
 	@XmlTransient
