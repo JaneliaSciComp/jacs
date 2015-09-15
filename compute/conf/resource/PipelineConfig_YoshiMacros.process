@@ -8,6 +8,7 @@
         <input name="OUTPUT_CHANNEL_ORDER_63X"/>
         <input name="MACRO_NAME_20x"/>
         <input name="MACRO_NAME_63x"/>
+        <input name="MACRO_MODE_63x"/>
         <input name="OUTPUT_COLOR_SPEC_63x"/>
         <input name="REUSE_PIPELINE_RUNS"/>
         <input name="RUN_OBJECTIVES"/>
@@ -58,6 +59,7 @@
             <include name="63x Pipeline" process="PipelineConfig_YoshiMacro63x">
                 <input name="PIPELINE_PROCESS"/>
                 <input name="MACRO_NAME" value="$V{MACRO_NAME_63x}"/>
+                <input name="MACRO_MODE" value="$V{MACRO_MODE_63x}"/>
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_63X_ID}"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
