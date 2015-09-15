@@ -201,6 +201,7 @@
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/RestfulWebService.class"/>
                 <include name="org/**/wsrest/computeresources/**/*.class"/>
+                <include name="org/**/wsrest/dataresources/**/*.class"/>
             </classes>
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
@@ -215,6 +216,7 @@
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/SecureRestfulWebService.class"/>
                 <include name="org/**/wsrest/computeresources/**/*.class"/>
+                <include name="org/**/wsrest/dataresources/**/*.class"/>
             </classes>
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>

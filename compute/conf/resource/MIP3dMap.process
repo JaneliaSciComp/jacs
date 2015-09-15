@@ -1,0 +1,9 @@
+<process name="MIP3dMap"  startEvent="pending" processor="queue/genericServiceLauncher" updateProcessStatus="on_success">
+    <sequence name="Generate sample MIPs" waitForAsync="true">
+        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+            <input name="iservice" value="!!This needs to be defined!!"/>
+            <input name="RESULT_FILE_NODE_ID" />
+            <input name="INPUT_DIRECTORY" />
+        </operation>
+    </sequence>
+</process>

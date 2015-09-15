@@ -1309,6 +1309,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.mip.MIP3dMapResultNode" discriminator-value="MIP3dMapResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
         </subclass>
 
         <!--Want to end file node here-->
