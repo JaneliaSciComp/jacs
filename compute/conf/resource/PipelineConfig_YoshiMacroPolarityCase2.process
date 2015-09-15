@@ -8,7 +8,7 @@
             <input name="CHANNEL_DYE_SPEC_63X" value="presynaptic=Alexa Fluor 568,Cy3;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"/>
             <input name="OUTPUT_CHANNEL_ORDER_63X" value="presynaptic,membrane,reference"/>
             <input name="MACRO_NAME_20x" value="20x_MIP_StackAvi"/>
-            <input name="MACRO_NAME_63x" value="63x_polarity_secondary_data"/>
+            <input name="MACRO_NAME_63x" value="63x_MIP_StackAvi"/>
             <input name="MACRO_MODE_63x" value="polarity"/>
             <input name="OUTPUT_COLOR_SPEC_63x" value="MG1"/>
         </include>
