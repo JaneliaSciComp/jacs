@@ -185,6 +185,7 @@ if (createMIPS) {
     print("Creating MIPs");
     titleMIP = prefix + "_MIP";
     titleSignalMIP = prefix + "-Signal_MIP";
+    titleRefMIP = prefix + "-Ref_MIP";
     
     selectWindow("RGB");
     run("Z Project...", "projection=[Max Intensity]");
@@ -193,13 +194,18 @@ if (createMIPS) {
     run("8-bit");
     run("Divide...", "value=3");
     run("RGB Color");
+    saveAs(mipFormat, basedir+'/'+titleRefMIP);
+    rename("STD_reference");
+    
     selectWindow("MAX_RGB");
     saveAs(mipFormat, basedir+'/'+titleSignalMIP);
     rename("MAX_RGB");
+    
     imageCalculator("Add", "MAX_RGB", "STD_reference");
     selectWindow("MAX_RGB");
     saveAs(mipFormat, basedir+'/'+titleMIP);
     close();
+    
     selectWindow("STD_reference");
     close();
 }
@@ -208,6 +214,7 @@ if (createMovies) {
     print("Creating movies");
     titleAvi = prefix + ".avi";
     titleSignalAvi = prefix + "-Signal.avi";
+    titleRefAvi = prefix + "-Ref.avi";
     
     selectWindow("RGB");
     run("Duplicate...", "title=SignalMovie duplicate");
@@ -218,6 +225,12 @@ if (createMovies) {
     
     selectWindow("reference");
     run("RGB Color");
+    run("Duplicate...", "title=RefMovie duplicate");
+    padImageDimensions("RefMovie");
+    print("Saving Reference AVI");
+    run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
+    close();
+    
     imageCalculator("Add create stack", "RGB", "reference");
     rename("FinalMovie");
     selectWindow("RGB");

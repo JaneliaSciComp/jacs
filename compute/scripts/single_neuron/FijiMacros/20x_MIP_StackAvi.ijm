@@ -110,19 +110,23 @@ print("Brain channel mapping: "+brainChannelMapping);
 print("VNC channel mapping: "+vncChannelMapping);
 
 var signalChannels = "";
+var refChannels = "";
 for (j=0; j<numOutputChannels; j++) {
     i = reverseMapping[j];
     cc = substring(chanspec,i,i+1);
-    print("reverse mapped "+j+" -> "+i+ " cc="+cc);
+    print("reverse mapped "+j+" -> "+i+ " ("+cc+")");
     if (cc == 'r') {
         signalChannels = signalChannels + "0";
+        refChannels += "1";
     }
     else {
         signalChannels = signalChannels + "1";
+        refChannels += "0";
     }
 }
 
 print("Signal channels: "+signalChannels);
+print("Reference channels: "+refChannels);
 
 // Array of the max values for each Brain channel
 brainMax=newArray(numChannels);
@@ -231,21 +235,10 @@ function getChannelMapping(name) {
         }
     }
     
-//    print("numChannels="+numChannels);
-//    print("numOutputChannels="+numOutputChannels);
-    
     // Compute reverse mapping
     var ordered = Array.copy(targets);
     Array.sort(ordered);
-    
-//    for (i=0; i<numChannels; i++) {
-//        print("targets["+i+"] = "+targets[i]);
-//    }
-//    
-//    for (i=0; i<numChannels; i++) {
-//        print("ordered["+i+"] = "+ordered[i]);
-//    }
-    
+        
     reverseMapping = newArray(numOutputChannels);
     j = 0;
     for (ij=0; ij<numChannels; ij++) {
@@ -258,10 +251,6 @@ function getChannelMapping(name) {
             j++;
         }
     }
-    
-//    for (j=0; j<numOutputChannels; j++) {
-//        print("reverseMapping["+j+"] = "+ordered[j]);
-//    }
     
     return merge_name;
 }
@@ -290,6 +279,7 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
         print("Creating MIPs for "+name);
         titleMIP = prefix + "-"+name+"_MIP";
         titleSignalMIP = prefix + "-"+name+"-Signal_MIP";
+        titleRefMIP = prefix + "-"+name+"-Ref_MIP";
         
         run("Z Project...", "projection=[Max Intensity]");
         
@@ -316,6 +306,8 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
         saveAs(mipFormat, basedir+'/'+titleMIP);
         Stack.setActiveChannels(signalChannels);
         saveAs(mipFormat, basedir+'/'+titleSignalMIP);
+        Stack.setActiveChannels(refChannels);
+        saveAs(mipFormat, basedir+'/'+titleRefMIP);
         close();
     }
     
@@ -323,12 +315,15 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
         print("Creating movies for "+name);
         titleAvi = prefix + "-"+name+".avi";
         titleSignalAvi = prefix + "-"+name+"-Signal.avi";
+        titleRefAvi = prefix + "-"+name+"-Ref.avi";
         
         padImageDimensions(name);
         
         run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
         Stack.setActiveChannels(signalChannels);
         run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleSignalAvi);
+        Stack.setActiveChannels(refChannels);
+        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
     }
         
     close();
