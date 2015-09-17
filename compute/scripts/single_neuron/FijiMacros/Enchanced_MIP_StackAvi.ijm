@@ -9,7 +9,7 @@
 //     Mode: processing mode, i.e. ["none","mcfo","polarity"]
 //     Image: image path
 //     ChannelSpec: channel specification
-//     ColorSpec: color specification
+//     ColorSpec: color specification [(R)ed, (G)reen, (B)lue, grey(1), (C)yan, (M)agenta, (Y)ellow]
 //     Outputs: colon-delimited list of outputs to generate ["mips","movies"], e.g. "mips:movies"
 // 
 // Currently this macro always outputs a grey reference channel, thus the colorspec should 

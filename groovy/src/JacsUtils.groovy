@@ -1,22 +1,22 @@
-import org.janelia.it.jacs.model.entity.EntityConstants
-
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
 import org.apache.log4j.Logger
-import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFacadeManager
-import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFactory
-import org.janelia.it.workstation.api.facade.facade_mgr.FacadeManager
-import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote
 import org.janelia.it.jacs.compute.api.EntityBeanRemote
 import org.janelia.it.jacs.compute.api.SolrBeanRemote
-import org.janelia.it.jacs.shared.solr.SolrResults
 import org.janelia.it.jacs.model.entity.Entity
+import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.model.user_data.Subject
+import org.janelia.it.jacs.shared.solr.SolrResults
 import org.janelia.it.jacs.shared.utils.EntityUtils
 import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader
+import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFacadeManager
+import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFactory
+import org.janelia.it.workstation.api.facade.facade_mgr.FacadeManager
+import org.janelia.it.workstation.gui.framework.exception_handlers.ExitHandler
+import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
 
 class JacsUtils {
 
@@ -39,8 +39,8 @@ class JacsUtils {
 		this.persist = persist
 		
 		FacadeManager.registerFacade(FacadeManager.getEJBProtocolString(), EJBFacadeManager.class, "JACS EJB Facade Manager");
-		// This initializes the EJBFactory
-		SessionMgr.getSessionMgr();
+		SessionMgr sessionMgr = SessionMgr.getSessionMgr();
+        sessionMgr.registerExceptionHandler(new ExitHandler());
 		String username = (String)SessionMgr.getSessionMgr().getModelProperty(SessionMgr.USER_NAME);
 		String password = (String)SessionMgr.getSessionMgr().getModelProperty(SessionMgr.USER_PASSWORD);
 		SessionMgr.getSessionMgr().loginSubject(username, password);

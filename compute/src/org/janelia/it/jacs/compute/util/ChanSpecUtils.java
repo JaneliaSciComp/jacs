@@ -125,4 +125,41 @@ public class ChanSpecUtils {
         }
         return sb.toString();
     }
+    
+
+    /**
+     * Fiji defines color channels as follows: (R)ed, (G)reen, (B)lue, grey(1), (C)yan, (M)agenta, (Y)ellow
+     * We also control a divisor (inverse brightness, where 1 is brightest) that can be used to control the 
+     * color when it is used for a reference channel. 
+     * @param hexColor
+     * @param channelType
+     * @return
+     */
+    public static FijiColor getColorCode(String hexColor, char channelType) {
+        if ("#ff0000".equals(hexColor)) {
+            return new FijiColor('R',channelType=='r' ? '3' : '1'); // Red
+        }
+        else if ("#00ff00".equals(hexColor)) {
+            return new FijiColor('G',channelType=='r' ? '2' : '1'); // Green
+        }
+        else if ("#0000ff".equals(hexColor)) {
+            return new FijiColor('B',channelType=='r' ? '1' : '1'); // Blue
+        }
+        else if ("#ffffff".equals(hexColor)) {
+            return new FijiColor('1',channelType=='r' ? '2' : '1'); // Grey
+        }
+        else if ("#0000ff".equals(hexColor)) {
+            return new FijiColor('C',channelType=='r' ? '2' : '1'); // Cyan
+        }
+        else if ("#ff00ff".equals(hexColor)) {
+            return new FijiColor('M',channelType=='r' ? '2' : '1'); // Magenta
+        }
+        else if ("#ffff00".equals(hexColor)) {
+            return new FijiColor('Y',channelType=='r' ? '2' : '1'); // Yellow
+        }
+        else if ("#7e5200".equals(hexColor)) {
+            return new FijiColor('Y',channelType=='r' ? '3' : '2'); // Brown
+        }
+        return new FijiColor('?',1);
+    }
 }
