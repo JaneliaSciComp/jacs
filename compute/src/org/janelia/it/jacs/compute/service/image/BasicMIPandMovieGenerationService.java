@@ -167,14 +167,15 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 600));
         
         // Encode avi movies as mp4 and delete the input avi's
-        script.append("cd $TMPDIR\n");
+        script.append("cd $TEMP_DIR\n");
         script.append("for fin in *.avi; do\n");
         script.append("    fout=${fin%.avi}.mp4\n");
         script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
         script.append("done\n");
         
         // Move everything to the final output directory
-        script.append("cp $TEMP_DIR/* $OUTPUT_DIR\n");
+        script.append("cp $TEMP_DIR/*.png $OUTPUT_DIR\n");
+        script.append("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR\n");
         
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         
