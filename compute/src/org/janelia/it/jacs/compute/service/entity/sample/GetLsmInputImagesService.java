@@ -37,45 +37,54 @@ public class GetLsmInputImagesService extends AbstractEntityService {
         List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
         
         List<InputImage> inputImages = new ArrayList<>();
-
-        String areas = "";
         
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
-            
-            InputImage inputImage1 = getInputImage(mergedLsmPair.getLsmEntityId1());
-            areas += inputImage1.getArea();
-            inputImages.add(inputImage1);
-            
+            inputImages.add(getInputImage(mergedLsmPair.getLsmEntityId1(), mergedLsmPair.getFilepath1()));
             if (mergedLsmPair.getLsmEntityId2() != null) {
-                InputImage inputImage2 = getInputImage(mergedLsmPair.getLsmEntityId2());
-                areas += inputImage2.getArea();
-                inputImages.add(inputImage2);    
+                inputImages.add(getInputImage(mergedLsmPair.getLsmEntityId2(), mergedLsmPair.getFilepath2()));    
             }
         }
-
-        boolean normalize = false;
-        if ("Brain,VNC".equalsIgnoreCase(areas) || "VNC,Brain".equalsIgnoreCase(areas)) {
-            normalize = true;
-        }
+        
+//        Collections.sort(inputImages, new Comparator<InputImage>() {
+//            @Override
+//            public int compare(InputImage o1, InputImage o2) {
+//                return ComparisonChain.start()
+//                        .compare(o1.getArea(), o2.getArea(), Ordering.natural().nullsFirst()) // Brain before VNC
+//                        .compare(o1.getFilepath(), o2.getFilepath(), Ordering.natural().nullsFirst()) 
+//                        .result();
+//            }
+//        });
+//
+//        String areas = "";
+//        for(InputImage inputImage : inputImages) {
+//            if (!"".equals(areas)) areas += ',';
+//            areas += inputImage.getArea();
+//        }
+//
+//        logger.info("Anatomical areas: "+areas);
+//
+//        boolean normalize = false;
+//        if ("Brain,VNC".equalsIgnoreCase(areas)) {
+//            normalize = true;
+//        }
         
     	logger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
     	processData.putItem("INPUT_IMAGES", inputImages);
-    	logger.info("Putting "+normalize+" into NORMALIZE_TO_FIRST_IMAGE");
-    	processData.putItem("NORMALIZE_TO_FIRST_IMAGE", Boolean.valueOf(normalize));
+//    	logger.info("Putting "+normalize+" into NORMALIZE_TO_FIRST_IMAGE");
+//    	processData.putItem("NORMALIZE_TO_FIRST_IMAGE", Boolean.valueOf(normalize));
     }
     
-    private InputImage getInputImage(Long lsmId) throws ComputeException {
+    private InputImage getInputImage(Long lsmId, String tempFilepath) throws ComputeException {
 
         Entity lsm = entityBean.getEntityById(lsmId);
-        
-        String filepath = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+
+        File file = new File(tempFilepath);
+        String prefix = file.getName().replace(".lsm", "");
         String chanSpec = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         String chanColors = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
         String area = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-        File file = new File(filepath);
         
         // Attempt to use the colors stored in the LSM
-        
         String colorspec = "";
         String divspec = "";
         if (chanColors!=null) {
@@ -94,7 +103,7 @@ public class GetLsmInputImagesService extends AbstractEntityService {
         // If there are any uncertainties, default to RGB1
         if (StringUtils.isEmpty(colorspec) || colorspec.contains("?")) {
             
-            logger.warn("LSM "+lsmId+" has illegal color specification: "+chanColors+" (interpreted as "+colorspec+")");
+            logger.warn("LSM "+lsmId+" has illegal color specification "+chanColors+" (interpreted as "+colorspec+"). Defaulting to RGB.");
             
             List<String> tags = new ArrayList<String>();
             tags.add("R");
@@ -119,13 +128,20 @@ public class GetLsmInputImagesService extends AbstractEntityService {
             divspec = dsb.toString();
         }
         
+        logger.info("Input file: "+tempFilepath);
+        logger.info("  Area: "+area);
+        logger.info("  Channel specification: "+chanSpec);
+        logger.info("  Color specification: "+colorspec);
+        logger.info("  Divisor specification: "+divspec);
+        logger.info("  Output prefix: "+prefix);
+        
         InputImage inputImage = new InputImage();
-        inputImage.setFilepath(filepath);
+        inputImage.setFilepath(tempFilepath);
+        inputImage.setArea(area);
         inputImage.setChanspec(chanSpec);
         inputImage.setColorspec(colorspec);
         inputImage.setDivspec(divspec);
-        inputImage.setOutputPrefix(file.getName().replace(".lsm", ""));
-        inputImage.setArea(area);
+        inputImage.setOutputPrefix(prefix);
         
         return inputImage;
     }

@@ -48,6 +48,7 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
         helper.addFileExclusion("tmp.*");
         helper.addFileExclusion("core.*");
         helper.addFileExclusion("*.sh");
+        helper.addFileExclusion("screenshot_*");
 
         Entity resultEntity = (Entity)data.getItem("RESULT_ENTITY");
         if (resultEntity==null) {
@@ -102,13 +103,14 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
     }
     
     protected Entity getOrCreateResultItem(Entity separation, File resultFile) throws Exception {
-        
+
         logger.trace("Get or create "+resultFile.getAbsolutePath());
         Entity resultItem = resultItems.get(resultFile.getAbsolutePath());
         if (resultItem==null) {
             resultItem = helper.createResultItemForFile(resultFile);
             resultItems.put(resultFile.getAbsolutePath(), resultItem);
         }
+        
         return resultItem;
     }
 

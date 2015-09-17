@@ -21,6 +21,7 @@ import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
  * 
  * Input variables if adding files to an existing result:
  *   RESULT_ENTITY or RESULT_ENTITY_ID  
+ *   SAMPLE_ENTITY_ID - the sample entity containing the ROOT_ENTITY_ID
  * 
  * Input variables if discovering new result:
  *   ROOT_ENTITY_ID - the parent of the result
