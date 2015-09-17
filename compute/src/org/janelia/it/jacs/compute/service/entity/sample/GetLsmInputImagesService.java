@@ -45,33 +45,8 @@ public class GetLsmInputImagesService extends AbstractEntityService {
             }
         }
         
-//        Collections.sort(inputImages, new Comparator<InputImage>() {
-//            @Override
-//            public int compare(InputImage o1, InputImage o2) {
-//                return ComparisonChain.start()
-//                        .compare(o1.getArea(), o2.getArea(), Ordering.natural().nullsFirst()) // Brain before VNC
-//                        .compare(o1.getFilepath(), o2.getFilepath(), Ordering.natural().nullsFirst()) 
-//                        .result();
-//            }
-//        });
-//
-//        String areas = "";
-//        for(InputImage inputImage : inputImages) {
-//            if (!"".equals(areas)) areas += ',';
-//            areas += inputImage.getArea();
-//        }
-//
-//        logger.info("Anatomical areas: "+areas);
-//
-//        boolean normalize = false;
-//        if ("Brain,VNC".equalsIgnoreCase(areas)) {
-//            normalize = true;
-//        }
-        
     	logger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
     	processData.putItem("INPUT_IMAGES", inputImages);
-//    	logger.info("Putting "+normalize+" into NORMALIZE_TO_FIRST_IMAGE");
-//    	processData.putItem("NORMALIZE_TO_FIRST_IMAGE", Boolean.valueOf(normalize));
     }
     
     private InputImage getInputImage(Long lsmId, String tempFilepath) throws ComputeException {
@@ -145,5 +120,4 @@ public class GetLsmInputImagesService extends AbstractEntityService {
         
         return inputImage;
     }
-    
 }
