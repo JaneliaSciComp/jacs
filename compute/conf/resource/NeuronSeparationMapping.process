@@ -41,7 +41,7 @@
         
         <!-- Update the new separation to include the mapping file -->
         <operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSeparationDiscoveryService">
-            <input name="SEPARATION_ID" value="$V{SEPARATION_ID_2}"/>
+            <input name="RESULT_ENTITY_ID" value="$V{SEPARATION_ID_2}"/>
         </operation>
         
     </sequence>

@@ -195,6 +195,11 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
@@ -241,6 +246,11 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
@@ -269,6 +279,16 @@
         <parameter>
             <description>Reuse existing pipeline runs</description>
             <name>reusePipelineRuns</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
@@ -302,6 +322,11 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
@@ -330,6 +355,11 @@
            <description>Name of configuration (e.g. "FlyLightOpticLobe" will select the process file named "PipelineConfig_FlyLightOpticLobe.process")</description>
            <name>configurationName</name>
            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
             <description>Reuse previous sample processing results</description>

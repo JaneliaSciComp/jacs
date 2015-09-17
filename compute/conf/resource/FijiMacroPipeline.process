@@ -10,6 +10,7 @@
         <input name="PIPELINE_PROCESS"/>
         <input name="MACRO_NAME"/>
         <input name="MACRO_CLASS"/>
+        <input name="MACRO_MODE"/>
         <input name="OBJECTIVE"/>
         <input name="OUTPUT_COLOR_SPEC"/>
         <input name="BULK_MERGE_PARAMETERS"/>
@@ -79,6 +80,7 @@
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="MACRO_NAME"/>
+                <input name="MACRO_MODE"/>
                 <input name="BULK_MERGE_PARAMETERS"/>
                 <input name="OUTPUT_CHANNEL_ORDER"/>
                 <input name="OUTPUT_COLOR_SPEC"/>

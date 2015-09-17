@@ -307,7 +307,13 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         
         // Format parameter string for the Fiji script
         
+        String colorSpec = chanSpec.replaceAll("s", "G").replaceAll("r", "M");
+        String divSpec = chanSpec.replaceAll("s", "1").replaceAll("r", "2");
+        String outputs = "mips:movies:legends";
+        
         StringBuilder paramSb = new StringBuilder();
+        paramSb.append(resultFileNode.getDirectoryPath());
+        paramSb.append(",");
         paramSb.append(outputFilePrefix);
         paramSb.append(",");
         paramSb.append("$BRAIN_FILE");
@@ -319,6 +325,12 @@ public class RunFiji20xBrainVNCMacro extends AbstractEntityGridService {
         paramSb.append(gain);
         paramSb.append(",");
         paramSb.append(chanSpec);
+        paramSb.append(",");
+        paramSb.append(colorSpec);
+        paramSb.append(",");
+        paramSb.append(divSpec);
+        paramSb.append(",");
+        paramSb.append(outputs);
         
         script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm "+paramSb).append(" &\n");
         script.append("fpid=$!\n");

@@ -7,6 +7,7 @@
         <input name="OUTPUT_CHANNEL_ORDER"/>
         <input name="OUTPUT_COLOR_SPEC"/>
         <input name="MACRO_NAME"/>
+        <input name="MACRO_MODE"/>
         <input name="MERGE_ALGORITHM"/>
     
         <!-- By default, use ordered merged -->
@@ -102,10 +103,11 @@
         <include name="Pipeline" process="FijiMacroPipeline">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="OUTPUT_CHANNEL_ORDER"/>
-            <input name="PIPELINE_NAME" value="MBEW Pipeline 63x (v17)"/>
+            <input name="PIPELINE_NAME" value="MBEW Pipeline 63x"/>
             <input name="PIPELINE_PROCESS"/>
             <input name="MACRO_NAME"/>
             <input name="MACRO_CLASS" value="org.janelia.it.jacs.compute.service.image.RunFiji63xTilesAndStitchedFileMacro"/>
+            <input name="MACRO_MODE"/>
             <input name="OBJECTIVE" value="63x"/>
             <input name="OUTPUT_COLOR_SPEC"/>
             <input name="BULK_MERGE_PARAMETERS"/>

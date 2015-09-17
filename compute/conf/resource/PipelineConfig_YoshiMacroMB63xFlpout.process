@@ -16,6 +16,7 @@
             <input name="OUTPUT_CHANNEL_ORDER" value="signal,signal,signal,reference"/>
             <input name="OUTPUT_COLOR_SPEC" value="RGB1"/>
             <input name="MACRO_NAME" value="63x_MCFO_secondary_data"/>
+            <input name="MACRO_MODE" value="mcfo"/>
             <input name="MERGE_ALGORITHM" value="FLYLIGHT"/>
         </include>
             

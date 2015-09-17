@@ -1,10 +1,10 @@
 <process name="FlyLight Polarity Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	    
-	    <input name="PIPELINE_PROCESS"/>
+        <input name="PIPELINE_PROCESS"/>
         <input name="CHANNEL_DYE_SPEC_20X"/>
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
-	    <input name="CHANNEL_DYE_SPEC_63X"/>
+        <input name="CHANNEL_DYE_SPEC_63X"/>
         <input name="OUTPUT_CHANNEL_ORDER_63X"/>
         <input name="RUN_OBJECTIVES"/>
         

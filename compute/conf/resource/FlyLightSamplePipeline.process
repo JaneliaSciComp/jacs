@@ -63,36 +63,30 @@
             <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
         </operation>
-
-        <!-- Set our status -->
-        <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
-            <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
-            <input name="STATUS" value="Processing"/>
-        </operation>
         
-        <!-- By default, skip alignment if any lamina tiles are present. -->
+        <!-- Init default values for uninitialized variables --> 
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="SKIP_ALIGNMENT_TILE_FILTER"/>
             <input name="OVERRIDE" value="false"/>
             <input name="PROCESS_VARIABLE_MAP">
+                <!-- By default, skip alignment if any lamina tiles are present. -->
                 <entry key="SKIP_ALIGNMENT_TILE_FILTER" value="(?i).*lamina.*"/>
             </input>
             <output name="SKIP_ALIGNMENT_TILE_FILTER"/>
         </operation>
 
-        <!-- Create the pipeline run entity -->
-        <operation name="Create Pipeline Run Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
+        <!-- Set the sample status -->
+        <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
+            <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+            <input name="STATUS" value="Processing"/>
+        </operation>
+
+        <!-- Create a pipeline run -->
+        <operation name="Create Pipeline Run" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="PIPELINE_NAME"/>
             <input name="PIPELINE_PROCESS"/>
             <output name="PIPELINE_RUN_ENTITY_ID"/>
-        </operation>
-        
-        <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-        <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
-            <input name="SAMPLE_ENTITY_ID"/>
-            <output name="SAMPLE_AREAS"/>
-            <output name="SAMPLE_AREA"/>
         </operation>
         
         <!-- Run summary service on all LSMs -->
@@ -102,6 +96,13 @@
             <input name="REUSE_SUMMARY"/>
             <output name="SUMMARY_RESULT_FILE_NODE"/>
         </include>
+        
+        <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+        <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <output name="SAMPLE_AREAS"/>
+            <output name="SAMPLE_AREA"/>
+        </operation>
         
         <sequence forEach="SAMPLE_AREA">
             
@@ -428,11 +429,12 @@
             <input name="COMPRESSION_TYPE" value="Visually Lossless and PBD"/>
         </include>
         
-        <!-- Move all generated files to archive -->
+        <!-- Move all generated files to archive
         <include name="Move sample to archive" process="SyncSampleToArchive">
             <input name="SAMPLE_ENTITY_ID"/>
         </include>
-        
+        -->
+         
         <!-- Set our status -->
         <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
             <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>

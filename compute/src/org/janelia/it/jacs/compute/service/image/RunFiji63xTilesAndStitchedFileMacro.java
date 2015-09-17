@@ -45,6 +45,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     private int configIndex = 1;
     
     private String macroName;
+    private String mode;
     private String outputFilePrefix;
     private Entity sampleEntity;
     private Entity pipelineRun;
@@ -59,6 +60,8 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     protected void init() throws Exception {
     	
     	this.macroName = data.getRequiredItemAsString("MACRO_NAME");
+        this.mode = data.getRequiredItemAsString("MACRO_MODE");
+        
         String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
 
         sampleEntity = entityBean.getEntityById(sampleEntityId);
@@ -188,41 +191,15 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
             File lsm1 = new File(mergedLsmPair.getLsmFilepath1());
             Entity lsm1Entity = lsmEntityMap.get(lsm1.getName());
             
-            String inputFile1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    		String chanSpec1 = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-    		String effector1 = effector = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
-    		String inputFile2 = null;
-    		String chanSpec2 = null;
-    		String effector2 = null;
-            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag().replaceAll("\\s+","_")+"-"+effector1;
-            String colorSpec1 = outputColorSpec;
-            String colorSpec2 = null;
-
-    		if (mergedLsmPair.getMergedFilepath()!=null) {
-    			inputFile1 = mergedLsmPair.getMergedFilepath();
-    			chanSpec1 = mergedChanSpec;
-    		}
-    		else if (mergedLsmPair.getFilepath2()!=null) {
-                File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
-                Entity lsm2Entity = lsmEntityMap.get(lsm2.getName());
-        		inputFile2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        		chanSpec2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        		effector2 = lsm2Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
-        		colorSpec2 = outputColorSpec;
-        		if (!effector1.equals(effector2)) {
-                    logger.warn("Inconsistent effector ("+effector1+"!="+effector2+") for "+sampleEntity.getName());
-                    effector = "NO_CONSENSUS";
-        		}
-            }
-    		else {
-    			throw new IllegalStateException("Could not write instance file for LSM pair (file1:"+
-    					mergedLsmPair.getFilepath1()+", file2:"+mergedLsmPair.getFilepath1()+" merged:"+
-    					mergedLsmPair.getMergedFilepath());
-    		}
+            String inputFile = mergedLsmPair.getMergedFilepath();
+    		String chanSpec = mergedChanSpec;
+    		String effector = lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+            this.outputFilePrefix = sampleName+"-"+mergedLsmPair.getTag().replaceAll("\\s+","_")+"-"+effector;
+            String colorSpec = outputColorSpec;
 
 			prefixToChanspec.put(outputFilePrefix, mergedChanSpec);
 			prefixToPixelRes.put(outputFilePrefix, lsm1Entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
-			writeInstanceFile(outputFilePrefix, inputFile1, inputFile2, chanSpec1, chanSpec2, colorSpec1, colorSpec2, configIndex++);
+			writeInstanceFile(outputFilePrefix, mode, inputFile, chanSpec, colorSpec, configIndex++);
     	}
 
     	// Stitched file is only relevant if there is more than one tile
@@ -234,25 +211,23 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
 			}
 			prefixToChanspec.put(outputFilePrefix, mergedChanSpec);
 			prefixToPixelRes.put(outputFilePrefix, stitchedFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
-	    	writeInstanceFile(outputFilePrefix, inputFile, null, mergedChanSpec, null, outputColorSpec, null, configIndex++);
+	    	writeInstanceFile(outputFilePrefix, mode, inputFile, mergedChanSpec, outputColorSpec, configIndex++);
 		}
     }
     
     private Map<String,String> prefixToChanspec = new HashMap<String,String>();
     private Map<String,String> prefixToPixelRes = new HashMap<String,String>();
 
-    private void writeInstanceFile(String outputPrefix, String inputFile1, String inputFile2, String chanSpec1, String chanSpec2, String colorSpec1, String colorSpec2, int configIndex) throws Exception {
+    private void writeInstanceFile(String outputPrefix, String mode, String inputFile, String chanSpec, String colorSpec, int configIndex) throws Exception {
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
-        	fw.write(outputPrefix + "\n");
         	fw.write(resultFileNode.getDirectoryPath() + "\n");
-            fw.write((inputFile1==null?"":inputFile1) + "\n");
-            fw.write((chanSpec1==null?"":chanSpec1) + "\n");
-            fw.write((colorSpec1==null?"":colorSpec1) + "\n");
-            fw.write((inputFile2==null?"":inputFile2) + "\n");
-            fw.write((chanSpec2==null?"":chanSpec2) + "\n");
-            fw.write((colorSpec2==null?"":colorSpec2) + "\n");
+            fw.write(outputPrefix + "\n");
+            fw.write((mode==null?"none":mode) + "\n");
+            fw.write((inputFile==null?"":inputFile) + "\n");
+            fw.write((chanSpec==null?"":chanSpec) + "\n");
+            fw.write((colorSpec==null?"":colorSpec) + "\n");
             fw.write((randomPort+configIndex) + "\n");
         }
         catch (IOException e) {
@@ -265,14 +240,12 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
     
     private void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
-        script.append("read OUTPUT_PREFIX\n");
         script.append("read OUTPUT_DIR\n");
-        script.append("read INPUT_FILE_1\n");
-        script.append("read CHAN_SPEC_1\n");
-        script.append("read COLOR_SPEC_1\n");
-        script.append("read INPUT_FILE_2\n");
-        script.append("read CHAN_SPEC_2\n");
-        script.append("read COLOR_SPEC_2\n");
+        script.append("read OUTPUT_PREFIX\n");
+        script.append("read MODE\n");
+        script.append("read INPUT_FILE\n");
+        script.append("read CHAN_SPEC\n");
+        script.append("read COLOR_SPEC\n");
         script.append("read DISPLAY_PORT\n");
         script.append("cd ").append(resultFileNode.getDirectoryPath()).append("\n");
         
@@ -303,7 +276,7 @@ public class RunFiji63xTilesAndStitchedFileMacro extends AbstractEntityGridServi
         script.append("fi\n");
 
         // Run Fiji macro in the background
-        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_PREFIX,$OUTPUT_DIR,$RAW_1,$CHAN_SPEC_1,$COLOR_SPEC_1,$RAW_2,$CHAN_SPEC_2,$COLOR_SPEC_2").append(" &\n");
+        script.append(FIJI_BIN_PATH+" -macro "+FIJI_MACRO_PATH+"/"+macroName+".ijm $OUTPUT_DIR,$OUTPUT_PREFIX,$MODE,$RAW,$CHAN_SPEC,$COLOR_SPEC,mips:movies").append(" &\n");
         script.append("fpid=$!\n");
         
         // Spy on Xvfb
