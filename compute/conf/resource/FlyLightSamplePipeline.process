@@ -300,16 +300,24 @@
         			</operation>
         				
                 </sequence>
-                    
-        	    <!-- Generate MIP for the stitched file -->
-                <sequence name="Generate sample MIPs" waitForAsync="true">
-        	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
-        	            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
-        				<input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
-        				<input name="INPUT_FILENAMES" value="$V{STACK_FILENAMES}"/>
-        				<input name="SIGNAL_CHANNELS"/>
-        				<input name="REFERENCE_CHANNEL"/>
-        	        </operation>
+                
+                <!-- Get a list of tile images to create summaries for -->
+                <operation name="Get Tile List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetTileInputImagesService">
+                    <input name="STACK_FILENAMES"/>
+                    <input name="CHANNEL_SPEC"/>
+                    <output name="INPUT_IMAGES"/>
+                </operation>
+                
+                <!-- Create MIPs and movies for all tiles -->
+                <sequence name="Create Tile Summary Artifacts" waitForAsync="true">
+                    <operation name="Create Tile Summary Artifacts" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.image.BasicMIPandMovieGenerationService"/>
+                        <input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
+                        <input name="OUTPUT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
+                        <input name="INPUT_IMAGES"/>
+                        <input name="NORMALIZE_TO_FIRST_IMAGE" value="false"/>
+                        <input name="OUTPUTS" value="mips:movies"/>
+                    </operation>
                 </sequence>
                 
         	    <!-- Clean up merged files, unless there is one tile that is being used as the stitched image -->

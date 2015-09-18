@@ -3,6 +3,9 @@ package org.janelia.it.jacs.compute.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import sun.util.logging.resources.logging;
+import jxl.demo.CSV;
+
 /**
  * Common utility methods for dealing with channel specification strings.
  * 
@@ -161,5 +164,38 @@ public class ChanSpecUtils {
             return new FijiColor('Y',channelType=='r' ? 3 : 2); // Brown
         }
         return new FijiColor('?',1);
+    }
+    
+    /**
+     * Returns the default color spec for the given chanspec. 
+     * By default, we assign RGB to the first 3 signal channels, and white to the reference channel.
+     * If there are more than 3 signal channels, this method assigns the color as '?'. 
+     * @param channelSpec channel specification (e.g. "ssr")
+     * @return color specification (e.g. "RG1")
+     */
+    public static String getDefaultColorSpec(String chanSpec) {
+
+        List<String> tags = new ArrayList<String>();
+        tags.add("R");
+        tags.add("G");
+        tags.add("B");
+        StringBuilder csb = new StringBuilder();
+        
+        for(int i=0; i<chanSpec.length(); i++) {
+            char type = chanSpec.charAt(i);
+            if (type=='r') {
+                csb.append('1');
+            }
+            else {
+                if (tags.isEmpty()) {
+                    csb.append("?");
+                }
+                else {
+                    csb.append(tags.remove(0));
+                }
+            }
+        }
+        
+        return csb.toString();
     }
 }

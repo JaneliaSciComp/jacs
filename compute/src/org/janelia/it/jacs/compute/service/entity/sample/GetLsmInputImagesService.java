@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +10,7 @@ import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.compute.util.FijiColor;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -49,12 +49,11 @@ public class GetLsmInputImagesService extends AbstractEntityService {
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
     
-    private InputImage getInputImage(Long lsmId, String tempFilepath) throws ComputeException {
+    private InputImage getInputImage(Long lsmId, String filepath) throws ComputeException {
 
         Entity lsm = entityBean.getEntityById(lsmId);
 
-        File file = new File(tempFilepath);
-        String prefix = file.getName().replace(".lsm", "");
+        String prefix = FileUtils.getFilePrefix(filepath);
         String chanSpec = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         String chanColors = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
         String area = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
@@ -77,33 +76,12 @@ public class GetLsmInputImagesService extends AbstractEntityService {
         
         // If there are any uncertainties, default to RGB1
         if (StringUtils.isEmpty(colorspec) || colorspec.contains("?")) {
-            
-            logger.warn("LSM "+lsmId+" has illegal color specification "+chanColors+" (interpreted as "+colorspec+"). Defaulting to RGB.");
-            
-            List<String> tags = new ArrayList<String>();
-            tags.add("R");
-            tags.add("G");
-            tags.add("B");
-            StringBuilder csb = new StringBuilder();
-            StringBuilder dsb = new StringBuilder();
-            
-            for(int i=0; i<chanSpec.length(); i++) {
-                char type = chanSpec.charAt(i);
-                if (type=='r') {
-                    csb.append('1');
-                    dsb.append('2');
-                }
-                else {
-                    csb.append(tags.remove(0));
-                    dsb.append('1');
-                }
-            }
-            
-            colorspec = csb.toString();
-            divspec = dsb.toString();
+            String invalidColorspec = colorspec;
+            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec);
+            logger.warn("LSM "+lsmId+" has illegal color specification "+chanColors+" (interpreted as "+invalidColorspec+"). Defaulting to "+colorspec);
         }
         
-        logger.info("Input file: "+tempFilepath);
+        logger.info("Input file: "+filepath);
         logger.info("  Area: "+area);
         logger.info("  Channel specification: "+chanSpec);
         logger.info("  Color specification: "+colorspec);
@@ -111,7 +89,7 @@ public class GetLsmInputImagesService extends AbstractEntityService {
         logger.info("  Output prefix: "+prefix);
         
         InputImage inputImage = new InputImage();
-        inputImage.setFilepath(tempFilepath);
+        inputImage.setFilepath(filepath);
         inputImage.setArea(area);
         inputImage.setChanspec(chanSpec);
         inputImage.setColorspec(colorspec);

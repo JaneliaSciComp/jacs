@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.util;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -201,5 +203,22 @@ public class FileUtils {
         		return file1.getName().compareTo(file2.getName());
         	}
 		});
+    }
+
+    public static String getFilePrefix(String filepath) {
+
+        File file = new File(filepath);
+        String name = file.getName();
+        
+        Pattern p = Pattern.compile("^(.*)\\.(\\w+)$");
+        Matcher m = p.matcher(name);
+        
+        if (m.matches()) {
+            String prefix = m.group(1);
+            //String ext = m.group(2);
+            return prefix;
+        }
+        
+        return "";
     }
 }

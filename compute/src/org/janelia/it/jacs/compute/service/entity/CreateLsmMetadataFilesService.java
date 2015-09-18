@@ -96,7 +96,6 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
         FileWriter fw = new FileWriter(configFile);
         try {
             String metadataStub = createLsmMetadataFilename(inputFile);
-            this.lsmDataFile = new File(outputDir, metadataStub+".metadata");
             this.jsonDataFile = new File(outputDir, metadataStub+".json");
             fw.write(inputFile.getAbsolutePath() + "\n");
             fw.write(lsmDataFile.getAbsolutePath() + "\n");
@@ -113,23 +112,14 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     private void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_FILENAME\n");
-        script.append("read METADATA_FILENAME\n");
         script.append("read JSON_FILENAME\n");
         script.append("cd "+outputDir.getAbsolutePath()).append("\n");
         script.append("echo \"Generating metadata for LSM files in sample "+sampleEntityId+"\" \n");
-        script.append(getScriptToCreateLsmMetadataFile("$INPUT_FILENAME", "$METADATA_FILENAME")).append("\n");
         script.append(getScriptToCreateLsmJsonFile("$INPUT_FILENAME", "$JSON_FILENAME")).append("\n");
         
         writer.write(script.toString());
     }
     
-    private String getScriptToCreateLsmMetadataFile(String inputFile, String outputFile) throws ServiceException {
-        return "perl " +
-                SystemConfigurationProperties.getString("Executables.ModuleBase") + 
-                SystemConfigurationProperties.getString("LSMMetadataDump.CMD")+ " " +
-                addQuotes(inputFile) + " " + addQuotes(outputFile);
-    }
-
     private String getScriptToCreateLsmJsonFile(String inputFile, String outputFile) throws ServiceException {
         return "perl " +
                 SystemConfigurationProperties.getString("Executables.ModuleBase") + 
