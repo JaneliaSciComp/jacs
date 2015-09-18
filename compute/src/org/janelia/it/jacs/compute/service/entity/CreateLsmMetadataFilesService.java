@@ -37,7 +37,6 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     private List<File> inputFiles = new ArrayList<File>();
 
     private String sampleEntityId;
-    private File lsmDataFile;
     private File jsonDataFile;
     
     protected void init(IProcessData processData) throws Exception {
@@ -98,7 +97,6 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
             String metadataStub = createLsmMetadataFilename(inputFile);
             this.jsonDataFile = new File(outputDir, metadataStub+".json");
             fw.write(inputFile.getAbsolutePath() + "\n");
-            fw.write(lsmDataFile.getAbsolutePath() + "\n");
             fw.write(jsonDataFile.getAbsolutePath() + "\n");
         }
         catch (IOException e) {
