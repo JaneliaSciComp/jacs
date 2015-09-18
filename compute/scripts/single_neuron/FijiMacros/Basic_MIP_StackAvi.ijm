@@ -277,9 +277,9 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
     
     if (createMIPS) {
         print("Creating MIPs for "+name);
-        titleMIP = prefix + "-"+name+"_MIP";
-        titleSignalMIP = prefix + "-"+name+"-Signal_MIP";
-        titleRefMIP = prefix + "-"+name+"-Ref_MIP";
+        titleMIP = prefix + "_all";
+        titleSignalMIP = prefix + "_signal";
+        titleRefMIP = prefix + "_reference";
         
         run("Z Project...", "projection=[Max Intensity]");
         
@@ -313,9 +313,9 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
     
     if (createMovies) {
         print("Creating movies for "+name);
-        titleAvi = prefix + "-"+name+".avi";
-        titleSignalAvi = prefix + "-"+name+"-Signal.avi";
-        titleRefAvi = prefix + "-"+name+"-Ref.avi";
+        titleMIP = prefix + "_all.avi";
+        titleSignalMIP = prefix + "_signal.avi";
+        titleRefMIP = prefix + "_reference.avi";
         
         padImageDimensions(name);
         
