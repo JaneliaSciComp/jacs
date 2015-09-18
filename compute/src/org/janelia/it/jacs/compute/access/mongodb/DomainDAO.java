@@ -606,6 +606,30 @@ public class DomainDAO {
         saveImpl(subjectKey, treeNode);
         return getDomainObject(subjectKey, treeNode);
     }
+
+    public ObjectSet addMembers(String subjectKey, ObjectSet objectSet, List<Long> newMembers) throws Exception {
+        if (newMembers==null) {
+            throw new IllegalArgumentException("Cannot add null members");
+        }
+        for(Long member : newMembers) {
+            objectSet.addMember(member);
+        }
+        log.info("Adding " + newMembers.size() + " objects to " + objectSet.getName());
+        saveImpl(subjectKey, objectSet);
+        return getDomainObject(subjectKey, objectSet);
+    }
+
+    public ObjectSet removeMembers(String subjectKey, ObjectSet objectSet, List<Long> deleteMembers) throws Exception {
+        if (deleteMembers==null) {
+            throw new IllegalArgumentException("Cannot add null members");
+        }
+        for(Long member : deleteMembers) {
+            objectSet.removeMember(member);
+        }
+        log.info("Removing " + deleteMembers.size() + " objects from " + objectSet.getName());
+        saveImpl(subjectKey, objectSet);
+        return getDomainObject(subjectKey, objectSet);
+    }
     
     public void removeReference(String subjectKey, TreeNode treeNode, Reference reference) throws Exception {
         for(Iterator<Reference> i = treeNode.getChildren().iterator(); i.hasNext(); ) {

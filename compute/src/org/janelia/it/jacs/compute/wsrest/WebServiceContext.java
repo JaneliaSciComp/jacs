@@ -19,7 +19,6 @@ public class WebServiceContext implements ServletContextListener  {
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         try {
-            System.out.println ("aaaa");
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> config = (Map<String,Object>)mapper.readValue(new File(classLoader.getResource("c3p0-nosql.json").getFile()), Map.class);

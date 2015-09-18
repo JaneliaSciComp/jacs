@@ -46,6 +46,20 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Context
     SecurityContext securityContext;
 
+    DomainDAO dao;
+
+    public DomainDAO getDao() {
+        if (dao==null) {
+            dao = WebServiceContext.getDomainManager();
+        }
+        return dao;
+    }
+
+    public void setDao(DomainDAO dao) {
+        this.dao = dao;
+        WebServiceContext.setDomainManager(dao);
+    }
+
     public UserWorkstationWebService() {
         register(JacksonJsonProvider.class);
     }
@@ -56,7 +70,6 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public String getWorkspace(@QueryParam("subjectKey") String subjectKey,
                                @QueryParam("option") String option) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
             if (option!=null && option.toLowerCase().equals("full")) {
@@ -79,7 +92,6 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public String createTreeNode(@QueryParam("subjectKey") final String subjectKey,
                                TreeNode treeNode) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
             TreeNode newTreeNode = dao.save(subjectKey, treeNode);
@@ -97,7 +109,6 @@ public class UserWorkstationWebService extends ResourceConfig {
     public String reorderTreeNode(@QueryParam("subjectKey") final String subjectKey,
                                   @QueryParam("treeNodeId") final Long treeNodeId,
                                   List<Integer> orderList) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         int[] order = new int[orderList.size()];
         for (int i=0; i<orderList.size(); i++) {
@@ -119,11 +130,13 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String addChildren(@QueryParam("subjectKey") final String subjectKey,
-                              final TreeNode treeNode) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+                              @QueryParam("treeNodeId") final Long treeNodeId,
+                              @QueryParam("children") final List<Reference> children) {
         ObjectMapper mapper = new ObjectMapper();
+        Reference treeNodeRef = new Reference("treeNode",treeNodeId);
         try {
-            TreeNode updatedNode = dao.save(subjectKey, treeNode);
+            TreeNode treeNode = (TreeNode)dao.getDomainObject(subjectKey, treeNodeRef);
+            TreeNode updatedNode = dao.addChildren(subjectKey, treeNode, children);
             return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
             e.printStackTrace();
@@ -132,14 +145,13 @@ public class UserWorkstationWebService extends ResourceConfig {
     }
 
 
-    /*@DELETE
+    @DELETE
     @Path("/treenode/children")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String removeChildren(@QueryParam("subjectKey") final String subjectKey,
                                  @QueryParam("treeNodeId") final Long treeNodeId,
                                  @QueryParam("children") final List<Reference> children) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         Reference treeNodeRef = new Reference("treeNode",treeNodeId);
         try {
@@ -150,7 +162,7 @@ public class UserWorkstationWebService extends ResourceConfig {
             e.printStackTrace();
         }
         return null;
-    }*/
+    }
 
     @PUT
     @Path("/objectset")
@@ -158,7 +170,6 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public String createObjectSet(@QueryParam("subjectKey") final String subjectKey,
                                  ObjectSet objectSet) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
             ObjectSet newObjectSet = dao.save(subjectKey, objectSet);
@@ -173,13 +184,34 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Path("/objectset/member")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String addMember(@QueryParam("subjectKey") final String subjectKey,
-                              final ObjectSet objectSet) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String addMembers(@QueryParam("subjectKey") final String subjectKey,
+                              @QueryParam("objectSetId") final Long objectSetId,
+                              @QueryParam("members") final List<Long> members) {
         ObjectMapper mapper = new ObjectMapper();
+        Reference objectSetRef = new Reference("objectSet",objectSetId);
         try {
-            ObjectSet updatedObjectSet = dao.save(subjectKey, objectSet);
-            return mapper.writeValueAsString(updatedObjectSet);
+            ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
+            ObjectSet updatedNode = dao.addMembers(subjectKey, objectSet, members);
+            return mapper.writeValueAsString(updatedNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @DELETE
+    @Path("/objectset/member")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String removeMembers(@QueryParam("subjectKey") final String subjectKey,
+                            @QueryParam("objectSetId") final Long objectSetId,
+                            @QueryParam("members") final List<Long> members) {
+        ObjectMapper mapper = new ObjectMapper();
+        Reference objectSetRef = new Reference("objectSet",objectSetId);
+        try {
+            ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
+            ObjectSet updatedNode = dao.removeMembers(subjectKey, objectSet, members);
+            return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -190,7 +222,6 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Path("/user/subjects")
     @Produces(MediaType.APPLICATION_JSON)
     public String getSubjects() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
             List<Subject> subjects = dao.getSubjects();

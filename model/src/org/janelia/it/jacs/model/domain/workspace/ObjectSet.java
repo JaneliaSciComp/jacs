@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @MongoMapped(collectionName = "objectSet")
 public class ObjectSet extends AbstractDomainObject {
@@ -15,7 +16,8 @@ public class ObjectSet extends AbstractDomainObject {
     public boolean hasMembers() {
     	return members!=null && !members.isEmpty();
     }
-    
+
+    @JsonIgnore
     public int getNumMembers() {
         return members==null ? 0 : members.size();
     }
