@@ -185,6 +185,13 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
     
     protected void processSlideGroup(Entity dataSet, String slideCode, Collection<SlideImage> slideGroup) throws Exception {
     	
+        if (slideCode==null) {
+            for(SlideImage slideImage : slideGroup) {
+                logger.error("SAGE id "+slideImage.getSageId()+" has null slide code");
+            }
+            return;
+        }
+        
         HashMap<String, SlideImageGroup> tileGroups = new HashMap<>();
         
         logger.info("Processing "+slideCode+", "+slideGroup.size()+" slide images");
