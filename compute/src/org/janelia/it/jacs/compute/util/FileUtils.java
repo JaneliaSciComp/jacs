@@ -206,19 +206,10 @@ public class FileUtils {
     }
 
     public static String getFilePrefix(String filepath) {
-
         File file = new File(filepath);
         String name = file.getName();
-        
-        Pattern p = Pattern.compile("^(.*)\\.(\\w+)$");
-        Matcher m = p.matcher(name);
-        
-        if (m.matches()) {
-            String prefix = m.group(1);
-            //String ext = m.group(2);
-            return prefix;
-        }
-        
-        return "";
+        int index = name.lastIndexOf('.');
+        if (index<0) return name;
+        return name.substring(0, index);
     }
 }
