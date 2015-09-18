@@ -109,22 +109,25 @@ vncChannelMapping = getChannelMapping("VNC");
 print("Brain channel mapping: "+brainChannelMapping);
 print("VNC channel mapping: "+vncChannelMapping);
 
+var allChannels = "";
 var signalChannels = "";
 var refChannels = "";
 for (j=0; j<numOutputChannels; j++) {
     i = reverseMapping[j];
     cc = substring(chanspec,i,i+1);
     print("reverse mapped "+j+" -> "+i+ " ("+cc+")");
+    allChannels += "1";
     if (cc == 'r') {
-        signalChannels = signalChannels + "0";
+        signalChannels += "0";
         refChannels += "1";
     }
     else {
-        signalChannels = signalChannels + "1";
+        signalChannels += "1";
         refChannels += "0";
     }
 }
 
+print("All channels: "+allChannels);
 print("Signal channels: "+signalChannels);
 print("Reference channels: "+refChannels);
 
@@ -230,7 +233,7 @@ function getChannelMapping(name) {
         
         targets[i] = targetChannel;
         if (targetChannel > 0) {
-            merge_name = merge_name + "c" + targetChannel + "=" + cname + " ";
+            merge_name += "c" + targetChannel + "=" + cname + " ";
             numOutputChannels++;
         }
     }
@@ -283,7 +286,16 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
         
         run("Z Project...", "projection=[Max Intensity]");
         
-        // Reduce signal channels and re-merge
+        run("Duplicate...", "title=mip duplicate");
+        Stack.setActiveChannels(refChannels);
+        saveAs(mipFormat, basedir+'/'+titleRefMIP);
+        Stack.setActiveChannels(signalChannels);
+        saveAs(mipFormat, basedir+'/'+titleSignalMIP);
+        close();
+        
+        Stack.setActiveChannels(allChannels);
+        
+        // Divide channels and re-merge 
         run("Split Channels");
         merge_name = "";
         for (j=0; j<numOutputChannels; j++) {
@@ -299,15 +311,10 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
                 selectWindow(wname);
                 run("Divide...", "value="+parseInt(divisor));
             }
-            merge_name = merge_name + "c" + c + "=" + wname + " ";
+            merge_name += "c" + c + "=" + wname + " ";
         }
         run("Merge Channels...", merge_name+" create");
-        
         saveAs(mipFormat, basedir+'/'+titleMIP);
-        Stack.setActiveChannels(signalChannels);
-        saveAs(mipFormat, basedir+'/'+titleSignalMIP);
-        Stack.setActiveChannels(refChannels);
-        saveAs(mipFormat, basedir+'/'+titleRefMIP);
         close();
     }
     
