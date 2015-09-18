@@ -10,7 +10,7 @@
                lsm-2:    dye-1: Alexa Fluor 488, dye-2: Alexa Fluor 594
         -->
 
-        <include name="Pipeline" process="FlyLightPolarityPipeline">
+        <include name="Pipeline" process="FlyLightPairedSamplePipeline">
             <input name="PIPELINE_PROCESS" value="NernaMCFOCase1Without20xMerge"/>
             <input name="CHANNEL_DYE_SPEC_20X" value="membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;reference=Alexa Fluor 488,Cy2"/>
             <input name="OUTPUT_CHANNEL_ORDER_20X" value="membrane_ha,membrane_v5,reference"/>
