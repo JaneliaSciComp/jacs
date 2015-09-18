@@ -320,9 +320,9 @@ function saveMipsAndMovies(name, maxValues, merge_name) {
     
     if (createMovies) {
         print("Creating movies for "+name);
-        titleMIP = prefix + "_all.avi";
-        titleSignalMIP = prefix + "_signal.avi";
-        titleRefMIP = prefix + "_reference.avi";
+        titleAvi = prefix + "_all.avi";
+        titleSignalAvi = prefix + "_signal.avi";
+        titleRefAvi = prefix + "_reference.avi";
         
         padImageDimensions(name);
         
