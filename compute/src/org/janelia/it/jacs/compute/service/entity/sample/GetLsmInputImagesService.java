@@ -77,7 +77,7 @@ public class GetLsmInputImagesService extends AbstractEntityService {
         // If there are any uncertainties, default to RGB1
         if (StringUtils.isEmpty(colorspec) || colorspec.contains("?")) {
             String invalidColorspec = colorspec;
-            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec);
+            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
             logger.warn("LSM "+lsmId+" has illegal color specification "+chanColors+" (interpreted as "+invalidColorspec+"). Defaulting to "+colorspec);
         }
         

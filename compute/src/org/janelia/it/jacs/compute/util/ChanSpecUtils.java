@@ -173,18 +173,19 @@ public class ChanSpecUtils {
      * @param channelSpec channel specification (e.g. "ssr")
      * @return color specification (e.g. "RG1")
      */
-    public static String getDefaultColorSpec(String chanSpec) {
+    public static String getDefaultColorSpec(String chanSpec, String signalColors, String referenceColor) {
 
         List<String> tags = new ArrayList<String>();
-        tags.add("R");
-        tags.add("G");
-        tags.add("B");
+        for(int i=0; i<signalColors.length(); i++) {
+            tags.add(signalColors.substring(i, i+1).toUpperCase());
+        }
+        
         StringBuilder csb = new StringBuilder();
         
         for(int i=0; i<chanSpec.length(); i++) {
             char type = chanSpec.charAt(i);
             if (type=='r') {
-                csb.append('1');
+                csb.append(referenceColor);
             }
             else {
                 if (tags.isEmpty()) {

@@ -135,7 +135,7 @@
             </operation>
            
             <!-- Load the MIPs and movies into the database -->
-            <operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSummaryResultsDiscoveryService">
+            <operation name="Discover Summary Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSummaryResultsDiscoveryService">
                 <input name="ROOT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
                 <input name="RESULT_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>

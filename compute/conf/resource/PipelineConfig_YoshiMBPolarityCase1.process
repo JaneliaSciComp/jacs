@@ -7,6 +7,7 @@
             <input name="OUTPUT_CHANNEL_ORDER_20X" value="membrane,reference"/>
             <input name="CHANNEL_DYE_SPEC_63X" value="presynaptic=Alexa Fluor 633,Alexa Fluor 647,Cy5;ignore=DY-547,Alexa Fluor 568;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"/>
             <input name="OUTPUT_CHANNEL_ORDER_63X" value="presynaptic,membrane,reference"/>
+            <input name="IMAGE_TYPE" value="polarity"/>
         </include>
         
     </sequence>

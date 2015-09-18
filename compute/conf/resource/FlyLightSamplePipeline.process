@@ -17,6 +17,7 @@
         <input name="PIPELINE_PROCESS"/>
         <input name="CHANNEL_DYE_SPEC"/>
         <input name="OUTPUT_CHANNEL_ORDER"/>
+        <input name="IMAGE_TYPE"/>
         <input name="REUSE_SUMMARY"/>
         <input name="REUSE_PROCESSING"/>
         <input name="REUSE_ALIGNMENT"/>
@@ -90,7 +91,7 @@
         </operation>
         
         <!-- Run summary service on all LSMs -->
-        <include name="Summary" process="FlyLightSummaryPipeline" startEvent="running">
+        <include name="Summary" process="FlyLightLSMSummaryPipeline" startEvent="running">
             <input name="PIPELINE_RUN_ENTITY_ID"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="REUSE_SUMMARY"/>
@@ -302,7 +303,7 @@
                 </sequence>
                 
                 <!-- Get a list of tile images to create summaries for -->
-                <operation name="Get Tile List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetTileInputImagesService">
+                <operation name="Get Tile List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetInputImagesService">
                     <input name="STACK_FILENAMES"/>
                     <input name="CHANNEL_SPEC"/>
                     <output name="INPUT_IMAGES"/>
@@ -395,7 +396,16 @@
             </sequence>
                 
         </sequence>
-            
+         
+        <!-- Run post processing service
+        <include name="Post-processing" process="FlyLightPostProcessingPipeline" startEvent="running">
+            <input name="PIPELINE_RUN_ENTITY_ID"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_POST" value="$V{REUSE_SUMMARY}"/>
+            <input name="IMAGE_TYPE"/>
+        </include>
+        -->
+           
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
             <input name="SAMPLE_ENTITY_ID"/>
