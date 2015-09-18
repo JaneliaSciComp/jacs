@@ -70,6 +70,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         if (!SCALITY_ALLOW_WRITES) {
             contextLogger.info("Scality writes are disallowed by configuration. Scality.AllowWrites is set to false in jacs.properties.");
             cancel();
+            return;
         }
         
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
@@ -102,6 +103,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         if (entitiesToMove.isEmpty()) {
             contextLogger.info("No entities to process, aborting.");
             cancel();
+            return;
         }
     }
 	

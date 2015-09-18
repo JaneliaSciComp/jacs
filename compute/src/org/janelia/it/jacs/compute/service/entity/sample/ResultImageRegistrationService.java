@@ -301,6 +301,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	}
 	
 	private void setMIPs(Entity entity, Entity allMip, Entity signalMip, Entity refMip, Entity movie) throws ComputeException {
+	    if (allMip==null && signalMip==null && refMip==null && movie==null) return;
         logger.info("Applying MIP and movies on "+entity.getName()+" (id="+entity.getId()+")");
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip==null?refMip:signalMip);
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);
@@ -436,18 +437,18 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				logger.debug("Found prefix="+prefix+", type="+type+", ext="+ext);
 				
 				if ("png".equals(ext)) {
-					if ("_all".equals(type)) {
+					if ("_all".equals(type) || "".equals(type)) {
 						allMipPrefixMap.put(prefix, entity);
 					}
-					else if ("_signal".equals(type)) {
+					else if ("_signal".equals(type) || "_sig".equals(type)) {
 						signalMipPrefixMap.put(prefix, entity);
 					}
-					else if ("_reference".equals(type)) {
+					else if ("_reference".equals(type) || "_ref".equals(type)) {
 						refMipPrefixMap.put(prefix, entity);
 					}
 				}
 				else if ("mp4".equals(ext)) {
-					if ("_movie".equals(type)) {
+					if ("_movie".equals(type) || "".equals(type)) {
 						moviePrefixMap.put(prefix, entity);
 					}
 				}

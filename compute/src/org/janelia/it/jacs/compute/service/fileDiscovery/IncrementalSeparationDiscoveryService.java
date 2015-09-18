@@ -156,48 +156,48 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
                 fragmentMipFiles.add(file); // will be added to an entity later
             }
             else if ("Reference.v3dpbd".equals(filename) || "Reference.v3draw".equals(filename)) {
-                referenceVolume = getOrCreateResultItem(separation, file);
+                referenceVolume = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedSignal.v3dpbd".equals(filename) || "ConsolidatedSignal.v3draw".equals(filename)) {
-                signalVolume = getOrCreateResultItem(separation, file);
+                signalVolume = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedLabel.v3dpbd".equals(filename) || "ConsolidatedLabel.v3draw".equals(filename)) {
-            	labelVolume = getOrCreateResultItem(separation, file);
+            	labelVolume = getOrCreateResultItem(file);
             }
             else if ("ReferenceMIP.png".equals(filename)) {
-                referenceMIP = getOrCreateResultItem(separation, file);
+                referenceMIP = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedSignalMIP.png".equals(filename)) {
-                signalMIP = getOrCreateResultItem(separation, file);
+                signalMIP = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedSignal2_25.mp4".equals(filename)) {
-                fastSignal = getOrCreateResultItem(separation, file);
+                fastSignal = getOrCreateResultItem(file);
             }
             else if ("Reference2_100.mp4".equals(filename)) {
-                fastReference = getOrCreateResultItem(separation, file);
+                fastReference = getOrCreateResultItem(file);
             }
             else if (filename.startsWith("SeparationResult") && filename.endsWith(".nsp")) {
-            	resultFiles.add(getOrCreateResultItem(separation, file));
+            	resultFiles.add(getOrCreateResultItem(file));
             }
             else if (filename.startsWith("SeparationResult") && filename.endsWith(".pbd")) {
-            	resultFiles.add(getOrCreateResultItem(separation, file));
+            	resultFiles.add(getOrCreateResultItem(file));
             }
             else if (filename.startsWith("mapping_issues")) {
-            	resultFiles.add(getOrCreateResultItem(separation, file));
+            	resultFiles.add(getOrCreateResultItem(file));
             }
             else if (filename.equals("ref.mask")) {
-            	refMask = getOrCreateResultItem(separation, file);
+            	refMask = getOrCreateResultItem(file);
             }
             else if (filename.equals("ref.chan")) {
-            	refChan = getOrCreateResultItem(separation, file);
+            	refChan = getOrCreateResultItem(file);
             }
             else if (filename.endsWith("mask")) {
-            	Entity maskImage = getOrCreateResultItem(separation, file);
+            	Entity maskImage = getOrCreateResultItem(file);
                 Integer index = getNeuronIndexFromMaskChanFile(filename);
                 maskEntities.put(index, maskImage);
             }
             else if (filename.endsWith("chan")) {
-            	Entity maskImage = getOrCreateResultItem(separation, file);
+            	Entity maskImage = getOrCreateResultItem(file);
                 Integer index = getNeuronIndexFromMaskChanFile(filename);
                 chanEntities.put(index, maskImage);
             }
@@ -246,7 +246,7 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
         });
         
         for(File file : fragmentMipFiles) {
-            Entity fragmentMIP = getOrCreateResultItem(separation, file);         
+            Entity fragmentMIP = getOrCreateResultItem(file);         
             Integer index = getIndex(fragmentMIP.getName());
             
             logger.trace("Processing neuron #"+index+" with MIP "+fragmentMIP.getName());
