@@ -299,6 +299,28 @@
         <archive path="/common/javacpp-presets-bin/ffmpeg.jar"/>
         <archive path="/common/javacpp-presets-bin/javacpp.jar"/>
     </library>
+    <library name="JAX-RS" systemlibrary="false">
+        <archive path="/common/Jersey-2.19/hk2-api-2.4.0-b25.jar"/>
+        <archive path="/common/Jersey-2.19/hk2-locator-2.4.0-b25.jar"/>
+        <archive path="/common/Jersey-2.19/hk2-utils-2.4.0-b25.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-annotations-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-core-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-databind-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-jaxrs-base-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-jaxrs-json-provider-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-module-jaxb-annotations-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/javax.annotation-api-1.2.jar"/>
+        <archive path="/common/Jersey-2.19/javax.inject-2.4.0-b25.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-client-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-common-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-container-servlet-core-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-entity-filtering-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-guava-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-media-jaxb-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-media-json-jackson-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-server-2.19.jar"/>
+        <archive path="/common/JAX-RS-2.0.1/javax.ws.rs-api-2.0.1.jar"/>
+    </library>
     <library name="JAXB" systemlibrary="false">
         <archive path="/common/JAXB-2.1.5/activation.jar"/>
         <archive path="/common/JAXB-2.1.5/jaxb-api.jar"/>
@@ -387,8 +409,8 @@
         <archive path="/common/JBoss-Server-4.2.3.GA/jboss-ejb3x.jar"/>
         <archive path="/common/JBoss-Server-4.2.3.GA/jboss-ejb3.jar"/>
         <archive path="/common/JBoss-Server-4.2.3.GA/quartz.jar"/>
-        <archive path="/common/JBoss-Server-4.2.3.GA/servlet-api.jar"/>
         <archive path="/common/JBoss-Server-4.2.3.GA/jboss-system.jar"/>
+        <archive path="/common/Jetty/servlet-api-3.0.jar"/>
     </library>
     <library name="Jetty" systemlibrary="false">
         <archive path="/common/Jetty/jetty-continuation-8.1.8.v20121106.jar"/>
