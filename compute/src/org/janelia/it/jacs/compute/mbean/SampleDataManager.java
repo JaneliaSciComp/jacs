@@ -16,6 +16,7 @@ import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.io.File;
@@ -65,7 +66,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
-            log.info("Found users with samples: "+subjectKeys);
+            log.info("Found users with samples: " + subjectKeys);
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
@@ -120,7 +121,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
-            log.info("Found users with data sets: "+subjectKeys);
+            log.info("Found users with data sets: " + subjectKeys);
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing sample data compression for "+subjectKey);
                 runSampleDataCompression(subjectKey, null, compressionType);
@@ -254,7 +255,32 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.error("Error running pipeline", ex);
         }
     }
-    
+
+    // todo Proved to be too slow.  Used the commented out main method below to generate insert statements adding canceled event (insanely faster)
+    public void cancelAllIncompleteUserTasks(String user){
+        try {
+            log.info("Building list of users with data sets...");
+            Set<String> subjectKeys = new TreeSet<>();
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+                subjectKeys.add(dataSet.getOwnerKey());
+            }
+            log.info("Found users with data sets: " + subjectKeys);
+            log.info("Canceling incomplete tasks");
+            for(String subjectKey : subjectKeys) {
+                if (null!=user && !EntityUtils.getNameFromSubjectKey(subjectKey).equals(user)) {continue;}
+                log.info("  Canceling tasks for user "+subjectKey);
+                int c = EJBFactory.getLocalComputeBean().cancelIncompleteTasksForUser(subjectKey);
+                if (c>0) {
+                    log.info("  Canceled "+c+" incomplete tasks for "+subjectKey);
+                }
+            }
+            log.info("Completed cancelAllIncompleteUserTasks");
+        }
+        catch (Exception ex) {
+            log.error("Error clearing data set pipeline tasks", ex);
+        }
+    }
+
     // -----------------------------------------------------------------------------------------------------
     // Generic confocal image processing pipelines
     // -----------------------------------------------------------------------------------------------------
@@ -666,6 +692,24 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //                String pbd = tmpScanner.nextLine();
 //                String h5j = tmpScanner.nextLine();
 //                writer.write(h5j+"\n");
+//            }
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//1714165592858034274	1	Sending message to queue/fileTreeLoaderPipelineLauncher queue	2012-02-27 19:28:45	pending	2015-09-06 14:46:46
+
+//    public static void main(String[] args) {
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft.txt";
+//        File tmpFile = new File(filePath);
+//        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
+//            Scanner scanner = new Scanner(tmpFile);
+//            while (scanner.hasNextLine()) {
+//                String tmpLine = scanner.nextLine().trim();
+//                String[] pieces = tmpLine.split("\t");
+//                writer.write("insert into task_event (task_id,event_no,description,event_timestamp,event_type) values ("+
+//                        pieces[0]+","+(Integer.valueOf(pieces[1])+1)+",'canceled','"+pieces[5]+"','canceled');\n");
 //            }
 //        }
 //        catch (IOException e) {
