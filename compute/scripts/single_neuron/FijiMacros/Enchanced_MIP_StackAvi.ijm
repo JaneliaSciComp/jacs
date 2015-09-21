@@ -183,9 +183,9 @@ if (channels == 2) {
 
 if (createMIPS) {
     print("Creating MIPs");
-    titleMIP = prefix + "_MIP";
-    titleSignalMIP = prefix + "-Signal_MIP";
-    titleRefMIP = prefix + "-Ref_MIP";
+    titleMIP = prefix + "_all";
+    titleSignalMIP = prefix + "_signal";
+    titleRefMIP = prefix + "_reference";
     
     selectWindow("RGB");
     run("Z Project...", "projection=[Max Intensity]");
@@ -212,9 +212,9 @@ if (createMIPS) {
 
 if (createMovies) {
     print("Creating movies");
-    titleAvi = prefix + ".avi";
-    titleSignalAvi = prefix + "-Signal.avi";
-    titleRefAvi = prefix + "-Ref.avi";
+    titleAvi = prefix + "_all.avi";
+    titleSignalAvi = prefix + "_signal.avi";
+    titleRefAvi = prefix + "_reference.avi";
     
     selectWindow("RGB");
     run("Duplicate...", "title=SignalMovie duplicate");

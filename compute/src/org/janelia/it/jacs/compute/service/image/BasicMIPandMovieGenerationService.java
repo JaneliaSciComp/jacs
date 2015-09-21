@@ -141,7 +141,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         // Start Xvfb
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT", "1280x1024x24")).append("\n");
 
-        // Create temp dir
+        // Create temp dir so that large temporary avis are not created on the network drive 
         script.append("export TMPDIR=").append(SCRATCH_DIR).append("\n");
         script.append("mkdir -p $TMPDIR\n");
         script.append("TEMP_DIR=`mktemp -d`\n");
@@ -155,17 +155,27 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         script.append("trap exitHandler EXIT\n");
         
         // Run Fiji macro
-        script.append(FIJI_BIN_PATH).append(" -macro ").append(FIJI_MACRO_PATH).append("/").append(MACRO_NAME);
-        script.append(".ijm $OUTPUT_DIR,$OUTPUT_PREFIX,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OUTPUTS &\n");
+        StringBuffer cmd = new StringBuffer();
+        cmd.append(FIJI_BIN_PATH).append(" -macro ").append(FIJI_MACRO_PATH).append("/").append(MACRO_NAME);
+        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OUTPUTS");
+        script.append("echo \"Executing:\"\n");
+        script.append("echo \""+cmd+"\"\n");
+        script.append(cmd).append(" & \n");
+        
+        // Monitor Fiji and take periodic screenshots, killing it eventually
         script.append("fpid=$!\n");
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 3600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 600));
         
         // Encode avi movies as mp4 and delete the input avi's
-        script.append("cd $OUTPUT_DIR\n");
+        script.append("cd $TEMP_DIR\n");
         script.append("for fin in *.avi; do\n");
         script.append("    fout=${fin%.avi}.mp4\n");
         script.append("    "+Vaa3DHelper.getFormattedH264ConvertCommand("$fin", "$fout", false)).append(" && rm $fin\n");
         script.append("done\n");
+        
+        // Move everything to the final output directory
+        script.append("cp $TEMP_DIR/*.png $OUTPUT_DIR\n");
+        script.append("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR\n");
         
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         

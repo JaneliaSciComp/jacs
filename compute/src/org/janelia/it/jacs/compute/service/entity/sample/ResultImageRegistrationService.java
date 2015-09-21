@@ -8,6 +8,7 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -107,7 +108,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	    
     	// Find all the 2d and 3d images in this result tree, and populate all of the lookup maps and lists
     	
-    	findImages(resultEntity);
+    	findArtifacts(resultEntity);
     	logger.info("Found "+images3d.size()+" 3d images");
     	logger.info("Found "+allMipPrefixMap.size()+" all MIPs");
     	logger.info("Found "+signalMipPrefixMap.size()+" signal MIPs");
@@ -120,62 +121,37 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	String defaultImageCanonicalFilename = defaultImageFilename == null ? null : new File(defaultImageFilename).getCanonicalPath();
     	
     	for(Entity image3d : images3d.values()) {
-			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-
-	        populateChildren(image3d);
-	        
+    	    populateChildren(image3d);
 			logger.trace("  Processing "+image3d.getName()+" (id="+image3d.getId()+")");
 			
+			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			if (default3dImage==null && (filepath.equals(defaultImageFilename) || filepath.equals(defaultImageCanonicalFilename))) {
-			    logger.info("  Found default 3d image");
+			    logger.trace("    Found default 3d image");
 				default3dImage = image3d;
 			}
 				
 			if (image3d.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
 			
+			    File file = new File(filepath);
 				Pattern p = Pattern.compile("^(.*?)\\.(\\w+?)$");
-				Matcher m = p.matcher(filepath);
+				Matcher m = p.matcher(file.getName());
 				
 				if (m.matches()) {
 					String prefix = m.group(1);
-	
+
+                    logger.debug("Get artifacts with prefix: '"+prefix+"'");
+                    
 					Entity allMip = allMipPrefixMap.get(prefix);
 					Entity signalMip = signalMipPrefixMap.get(prefix);
 					Entity refMip = refMipPrefixMap.get(prefix);
+                    Entity movie = moviePrefixMap.get(prefix);
 	
-					if (allMip!=null) {
-				    	EntityData currAllMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE);
-				    	if (currAllMip==null || currAllMip.getChildEntity()==null || !currAllMip.getId().equals(allMip.getId())) {
-				    	    logger.info("    Setting all MIP on "+image3d.getName()+" to: "+allMip.getName());
-				    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);
-				    	}
-					}
+					logger.debug("  allMip="+allMip);
+					logger.debug("  signalMip="+signalMip);
+                    logger.debug("  refMip="+refMip);
+                    logger.debug("  movie="+movie);
 					
-					if (signalMip!=null) {
-				    	EntityData currDefault2dImage = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-				    	if (currDefault2dImage==null || currDefault2dImage.getChildEntity()==null || !currDefault2dImage.getId().equals(signalMip.getId())) {
-				    	    logger.info("    Setting default 2d MIP on "+image3d.getName()+" to: "+signalMip.getName());
-				    		entityHelper.setDefault2dImage(image3d, signalMip);
-				    	}
-				    	EntityData currSignalMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-				    	if (currSignalMip==null || currSignalMip.getChildEntity()==null || !currSignalMip.getId().equals(signalMip.getId())) {
-				    	    logger.info("    Setting signal MIP on "+image3d.getName()+" to: "+signalMip.getName());
-				    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
-				    	}
-					}
-					
-					if (refMip!=null) {
-				    	EntityData currRefMip = image3d.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-				    	if (currRefMip==null || currRefMip.getChildEntity()==null || !currRefMip.getId().equals(refMip.getId())) {
-				    	    logger.info("    Setting reference MIP on "+image3d.getName()+" to: "+refMip.getName());
-				    		entityHelper.setImageIfNecessary(image3d, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
-				    	}
-				    	if (signalMip==null) {
-				    	    // No signal MIP, use the reference as the default 
-				    	    logger.info("    Setting default 2d MIP on "+image3d.getName()+" to: "+refMip.getName());
-	                        entityHelper.setDefault2dImage(image3d, refMip);
-				    	}
-					}
+                    setMIPs(image3d, allMip, signalMip, refMip, movie); 
 				}	
 			}
     	}
@@ -257,13 +233,13 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		populateChildren(supportingFiles);
     	
             for(Entity imageTile : EntityUtils.getChildrenOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE)) {
-            	selectAndSetMIPs(imageTile, "(.*?)/(merged|tile)-"+imageTile.getId());
+            	selectAndSetMIPs(imageTile, "(merged|tile)-"+imageTile.getId());
             	
         		populateChildren(imageTile);
                 for(Entity lsmStack : EntityUtils.getChildrenOfType(imageTile, EntityConstants.TYPE_LSM_STACK)) {
                 	String name = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
-                	String imageName = name.substring(0, name.lastIndexOf('.'));
-                	selectAndSetMIPs(lsmStack, "(.*?)/"+imageName);
+                	String imageName = FileUtils.getFilePrefix(name);
+                	selectAndSetMIPs(lsmStack, imageName);
                 }
             	
             }
@@ -301,6 +277,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	}
 	
 	private void setMIPs(Entity entity, Entity allMip, Entity signalMip, Entity refMip, Entity movie) throws ComputeException {
+	    if (allMip==null && signalMip==null && refMip==null && movie==null) return;
         logger.info("Applying MIP and movies on "+entity.getName()+" (id="+entity.getId()+")");
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip==null?refMip:signalMip);
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);
@@ -420,34 +397,36 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         return false;
 	}
 	
-	private void findImages(Entity entity) throws Exception {
+	private void findArtifacts(Entity entity) throws Exception {
 		
 		String entityType = entity.getEntityTypeName();
 		if (entityType.equals(EntityConstants.TYPE_IMAGE_2D) || entityType.equals(EntityConstants.TYPE_MOVIE)) {
 			String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			
+			File file = new File(filepath);
 			Pattern p = Pattern.compile("^(.*)(_.*)\\.(\\w+)$");
-			Matcher m = p.matcher(filepath);
+			Matcher m = p.matcher(file.getName());
 			
 			if (m.matches()) {
 				String prefix = m.group(1);
 				String type = m.group(2);
 				String ext = m.group(3);
 				
-				logger.debug("Found prefix="+prefix+", type="+type+", ext="+ext);
+				logger.debug("Found artifact: prefix="+prefix+", type="+type+", ext="+ext);
 				
 				if ("png".equals(ext)) {
-					if ("_all".equals(type)) {
+					if ("_all".equals(type) || "".equals(type)) {
 						allMipPrefixMap.put(prefix, entity);
 					}
-					else if ("_signal".equals(type)) {
+					else if ("_signal".equals(type) || "_sig".equals(type)) {
 						signalMipPrefixMap.put(prefix, entity);
 					}
-					else if ("_reference".equals(type)) {
+					else if ("_reference".equals(type) || "_ref".equals(type)) {
 						refMipPrefixMap.put(prefix, entity);
 					}
 				}
 				else if ("mp4".equals(ext)) {
-					if ("_movie".equals(type)) {
+					if ("_movie".equals(type) || "_signal".equals(type) || "".equals(type)) {
 						moviePrefixMap.put(prefix, entity);
 					}
 				}
@@ -459,7 +438,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 		else {
 			populateChildren(entity);
 			for(Entity child : entity.getChildren()) {
-				findImages(child);
+				findArtifacts(child);
 			}
 		}
 	}

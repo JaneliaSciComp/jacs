@@ -9,11 +9,11 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
- * Find the latest summary entity in the given sample, and add it to the given pipeline run.
+ * Find the latest post-processing entity in the given sample, and add it to the given pipeline run.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ReuseSummaryResultService extends AbstractEntityService {
+public class ReusePostProcessingResultService extends AbstractEntityService {
 	
     public void execute() throws Exception {
 
@@ -43,7 +43,7 @@ public class ReuseSummaryResultService extends AbstractEntityService {
                 List<Entity> results = pipelineRun.getOrderedChildren();
                 Collections.reverse(results);
                 for(Entity result : results) {
-                    if (result.getEntityTypeName().equals(EntityConstants.TYPE_LSM_SUMMARY_RESULT)) {
+                    if (result.getEntityTypeName().equals(EntityConstants.TYPE_POST_PROCESSING_RESULT)) {
                         latestLsr = result;
                     }
                 }
@@ -57,16 +57,16 @@ public class ReuseSummaryResultService extends AbstractEntityService {
         if (latestLsr!=null) {
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestLsr.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
-                logger.info("Reusing summary result "+latestLsr.getId()+" for "+latestLsr.getName()+" in new pipeline run "+pipelineRunId);
+                logger.info("Reusing post-processing result "+latestLsr.getId()+" for "+latestLsr.getName()+" in new pipeline run "+pipelineRunId);
                 processData.putItem("RESULT_ENTITY", latestLsr);
                 logger.info("Putting '"+latestLsr+"' in RESULT_ENTITY");
                 processData.putItem("RESULT_ENTITY_ID", latestLsr.getId().toString());
                 logger.info("Putting '"+latestLsr.getId()+"' in RESULT_ENTITY_ID");
-                processData.putItem("RUN_SUMMARY", Boolean.FALSE);    
-                logger.info("Putting '"+Boolean.FALSE+"' in RUN_SUMMARY");
+                processData.putItem("RUN_POST", Boolean.FALSE);    
+                logger.info("Putting '"+Boolean.FALSE+"' in RUN_POST");
         }
         else {
-            logger.info("No existing LSM summary available for reuse for sample: "+sampleEntityId);
+            logger.info("No existing post-processing available for reuse for sample: "+sampleEntityId);
         }
     }
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -21,6 +22,7 @@ import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
  * 
  * Input variables if adding files to an existing result:
  *   RESULT_ENTITY or RESULT_ENTITY_ID  
+ *   SAMPLE_ENTITY_ID - the sample entity containing the ROOT_ENTITY_ID
  * 
  * Input variables if discovering new result:
  *   ROOT_ENTITY_ID - the parent of the result
@@ -58,7 +60,7 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
         }
 
         Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(summaryResult);
-        helper.addFilesInDirToFolder(supportingFiles, dir, true);
+        addFilesInDirToFolder(supportingFiles, dir, false);
 
         String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         if (StringUtils.isEmpty(sampleEntityId)) {
@@ -81,7 +83,7 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
 
         entityLoader.populateChildren(sampleEntity);
         Entity sampleSupportingFiles = EntityUtils.getSupportingData(sampleEntity);
-        
+                
         entityLoader.populateChildren(sampleSupportingFiles);
         List<Entity> tileEntities = sampleSupportingFiles.getOrderedChildren();
         for(Entity tileEntity : tileEntities) {
@@ -89,10 +91,8 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
             entityLoader.populateChildren(tileEntity);
             
             for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
-                                    
                 String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
-                
-                logger.info("Processing metadata for LSM: "+lsmFilename);
+                logger.debug("Processing metadata for LSM: "+lsmFilename);
                 
                 Entity jsonEntity = jsonEntityMap.get(lsmFilename);
                 if (jsonEntity==null) {
@@ -118,18 +118,43 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
                     throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
                 }
 
+                boolean dirty = false;
+                
                 if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
-                    logger.info("  Setting LSM colors: "+colors);
-                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors));
+                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors))) {
+                        logger.info("  Setting LSM colors: "+colors);
+                        dirty = true;
+                    }
                 }
                 
                 if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
-                    logger.info("  Setting LSM dyes: "+dyeNames);
-                    lsmStack.setValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames));
+                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames))) {
+                        logger.info("  Setting LSM dyes: "+dyeNames);
+                        dirty = true;
+                    }
                 }
                 
-                entityBean.saveOrUpdateEntity(lsmStack);
+                if (dirty) {
+                    entityBean.saveOrUpdateEntity(lsmStack);
+                }
             }
         }   
+    }
+
+    private List<File> addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {
+        List<File> files = helper.collectFiles(dir, recurse);
+        logger.info("Collected "+files.size()+" files for addition to "+folder.getName());
+        if (!files.isEmpty()) {
+            FileUtils.sortFilesByName(files);
+            addFilesToFolder(folder, files);
+        }
+        return files;
+    }
+
+    private void addFilesToFolder(Entity filesFolder, List<File> files) throws Exception {
+        for (File resultFile : files) {
+            Entity resultEntity = getOrCreateResultItem(resultFile);
+            addToParentIfNecessary(filesFolder, resultEntity, EntityConstants.ATTRIBUTE_ENTITY);
+        }
     }
 }

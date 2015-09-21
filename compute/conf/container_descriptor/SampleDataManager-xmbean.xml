@@ -180,7 +180,17 @@
            <type>java.lang.String</type>
         </parameter>
     </operation>
-     
+
+    <operation>
+        <description>Cancel all incomplete user tasks</description>
+        <name>cancelAllIncompleteUserTasks</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight").  Leave empty to cycle through all users.</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
     <operation>
         <description>Cancel all incomplete tasks for all users with data set pipelines</description>
         <name>cancelAllIncompleteDataSetPipelineTasks</name>

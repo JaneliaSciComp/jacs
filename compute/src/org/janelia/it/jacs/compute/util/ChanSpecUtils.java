@@ -3,6 +3,9 @@ package org.janelia.it.jacs.compute.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import sun.util.logging.resources.logging;
+import jxl.demo.CSV;
+
 /**
  * Common utility methods for dealing with channel specification strings.
  * 
@@ -137,29 +140,63 @@ public class ChanSpecUtils {
      */
     public static FijiColor getColorCode(String hexColor, char channelType) {
         if ("#ff0000".equals(hexColor)) {
-            return new FijiColor('R',channelType=='r' ? '3' : '1'); // Red
+            return new FijiColor('R',channelType=='r' ? 3 : 1); // Red
         }
         else if ("#00ff00".equals(hexColor)) {
-            return new FijiColor('G',channelType=='r' ? '2' : '1'); // Green
+            return new FijiColor('G',channelType=='r' ? 2 : 1); // Green
         }
         else if ("#0000ff".equals(hexColor)) {
-            return new FijiColor('B',channelType=='r' ? '1' : '1'); // Blue
+            return new FijiColor('B',channelType=='r' ? 1 : 1); // Blue
         }
         else if ("#ffffff".equals(hexColor)) {
-            return new FijiColor('1',channelType=='r' ? '2' : '1'); // Grey
+            return new FijiColor('1',channelType=='r' ? 2 : 1); // Grey
         }
         else if ("#0000ff".equals(hexColor)) {
-            return new FijiColor('C',channelType=='r' ? '2' : '1'); // Cyan
+            return new FijiColor('C',channelType=='r' ? 2 : 1); // Cyan
         }
         else if ("#ff00ff".equals(hexColor)) {
-            return new FijiColor('M',channelType=='r' ? '2' : '1'); // Magenta
+            return new FijiColor('M',channelType=='r' ? 2 : 1); // Magenta
         }
         else if ("#ffff00".equals(hexColor)) {
-            return new FijiColor('Y',channelType=='r' ? '2' : '1'); // Yellow
+            return new FijiColor('Y',channelType=='r' ? 2 : 1); // Yellow
         }
         else if ("#7e5200".equals(hexColor)) {
-            return new FijiColor('Y',channelType=='r' ? '3' : '2'); // Brown
+            return new FijiColor('Y',channelType=='r' ? 3 : 2); // Brown
         }
         return new FijiColor('?',1);
+    }
+    
+    /**
+     * Returns the default color spec for the given chanspec. 
+     * By default, we assign RGB to the first 3 signal channels, and white to the reference channel.
+     * If there are more than 3 signal channels, this method assigns the color as '?'. 
+     * @param channelSpec channel specification (e.g. "ssr")
+     * @return color specification (e.g. "RG1")
+     */
+    public static String getDefaultColorSpec(String chanSpec, String signalColors, String referenceColor) {
+
+        List<String> tags = new ArrayList<String>();
+        for(int i=0; i<signalColors.length(); i++) {
+            tags.add(signalColors.substring(i, i+1).toUpperCase());
+        }
+        
+        StringBuilder csb = new StringBuilder();
+        
+        for(int i=0; i<chanSpec.length(); i++) {
+            char type = chanSpec.charAt(i);
+            if (type=='r') {
+                csb.append(referenceColor);
+            }
+            else {
+                if (tags.isEmpty()) {
+                    csb.append("?");
+                }
+                else {
+                    csb.append(tags.remove(0));
+                }
+            }
+        }
+        
+        return csb.toString();
     }
 }

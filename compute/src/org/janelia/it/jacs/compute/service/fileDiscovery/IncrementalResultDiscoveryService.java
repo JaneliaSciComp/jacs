@@ -3,9 +3,11 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -48,6 +50,7 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
         helper.addFileExclusion("tmp.*");
         helper.addFileExclusion("core.*");
         helper.addFileExclusion("*.sh");
+        helper.addFileExclusion("screenshot_*");
 
         Entity resultEntity = (Entity)data.getItem("RESULT_ENTITY");
         if (resultEntity==null) {
@@ -81,17 +84,13 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
         processData.putItem("RESULT_ENTITY", resultEntity);
         processData.putItem("RESULT_ENTITY_ID", resultEntity.getId().toString());
     }
-    
-    protected abstract Entity createNewResultEntity(String resultName) throws Exception;
-
-    protected abstract void discoverResultFiles(Entity resultEntity) throws Exception;
 
     private void findResultItems(Entity entity) throws Exception {
         
-        logger.trace("  findResultItems "+entity.getName()+" ("+entity.getId()+")");
+        logger.debug("  findResultItems "+entity.getName()+" ("+entity.getId()+")");
         String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         if (filepath!=null) {
-            logger.trace("  "+entity.getName()+": "+filepath);
+            logger.trace("    found "+filepath);
             resultItems.put(filepath, entity);
         }
         
@@ -101,14 +100,19 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
         }
     }
     
-    protected Entity getOrCreateResultItem(Entity separation, File resultFile) throws Exception {
-        
-        logger.trace("Get or create "+resultFile.getAbsolutePath());
+    protected abstract Entity createNewResultEntity(String resultName) throws Exception;
+
+    protected abstract void discoverResultFiles(Entity resultEntity) throws Exception;
+
+    protected Entity getOrCreateResultItem(File resultFile) throws Exception {
+
+        logger.debug("  getOrCreateResultItem "+resultFile.getAbsolutePath());
         Entity resultItem = resultItems.get(resultFile.getAbsolutePath());
         if (resultItem==null) {
             resultItem = helper.createResultItemForFile(resultFile);
             resultItems.put(resultFile.getAbsolutePath(), resultItem);
         }
+        
         return resultItem;
     }
 

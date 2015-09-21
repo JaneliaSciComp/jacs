@@ -97,14 +97,23 @@
 	    	        </operation>
 	            </sequence>
 	        
-	    	    <!-- Generate MIP for the stitched file -->
-	            <sequence name="Generate sample MIPs" waitForAsync="true">
-	    	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
-	    	            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
-	    				<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
-	    				<input name="INPUT_IMAGES" value="$V{ALIGNED_IMAGES}"/>
-	    	        </operation>
-	            </sequence>
+                <!-- Get a list of tile images to create summaries for -->
+                <operation name="Get Tile List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetInputImagesService">
+                    <input name="IMAGE_STACKS" value="$V{ALIGNED_IMAGES}"/>
+                    <output name="INPUT_IMAGES"/>
+                </operation>
+                
+                <!-- Create MIPs and movies for all tiles -->
+                <sequence name="Create Tile Summary Artifacts" waitForAsync="true">
+                    <operation name="Create Tile Summary Artifacts" processor="queue/gridSubmitAndWait">
+                        <input name="iservice" value="org.janelia.it.jacs.compute.service.image.BasicMIPandMovieGenerationService"/>
+                        <input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+                        <input name="OUTPUT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
+                        <input name="INPUT_IMAGES"/>
+                        <input name="NORMALIZE_TO_FIRST_IMAGE" value="false"/>
+                        <input name="OUTPUTS" value="mips:movies"/>
+                    </operation>
+                </sequence>
 	            
 	            <!-- Load the alignment results into the database -->
 	            <operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.AlignmentResultsDiscoveryService">

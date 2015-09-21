@@ -19,6 +19,7 @@
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
         <input name="CHANNEL_DYE_SPEC_63X"/>
         <input name="OUTPUT_CHANNEL_ORDER_63X"/>
+        <input name="IMAGE_TYPE"/>
         
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -38,7 +39,6 @@
                 
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
-            <input name="REUSE_PIPELINE_RUNS"/>
             <input name="20X_MERGE_ALGORITHMS"/>
             <input name="20X_ALIGNMENT_ALGORITHMS"/>
             <input name="20X_ALIGNMENT_ALGORITHM_PARAMS"/>
@@ -49,9 +49,7 @@
             <input name="63X_ALIGNMENT_ALGORITHM_PARAMS"/>
             <input name="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
             <input name="63X_ANALYSIS_ALGORITHMS"/>
-
-            <input name="REUSE_ALIGNMENT">
-                <entry key="REUSE_PIPELINE_RUNS"                  value="false"/>
+            <input name="PROCESS_VARIABLE_MAP">
                 <entry key="20X_MERGE_ALGORITHMS"                 value="FLYLIGHT_ORDERED"/>
                 <entry key="20X_ALIGNMENT_ALGORITHMS"             value="CONFIGURED,CONFIGURED_BRAIN_VNC,CONFIGURED_VNC"/>
                 <entry key="20X_ALIGNMENT_ALGORITHM_PARAMS"       value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh,flyalign20xVNC_CMTK.sh"/>
@@ -63,8 +61,6 @@
                 <entry key="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value="Brain 20X/63X Alignment"/>
                 <entry key="63X_ANALYSIS_ALGORITHMS"              value="NEURON_SEPARATOR"/>
             </input>
-            
-            <output name="REUSE_PIPELINE_RUNS"/>
             <output name="20X_MERGE_ALGORITHMS"/>
             <output name="20X_ALIGNMENT_ALGORITHMS"/>
             <output name="20X_ALIGNMENT_ALGORITHM_PARAMS"/>
@@ -102,6 +98,7 @@
                 <input name="ANALYSIS_ALGORITHMS" value="$V{20X_ANALYSIS_ALGORITHMS}"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
+                <input name="IMAGE_TYPE"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>
         
@@ -120,6 +117,7 @@
                 <input name="ANALYSIS_ALGORITHMS" value="$V{63X_ANALYSIS_ALGORITHMS}"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
+                <input name="IMAGE_TYPE"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>
             
