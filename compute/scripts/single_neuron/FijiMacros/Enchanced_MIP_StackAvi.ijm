@@ -88,7 +88,7 @@ var numChannels = channels;
 
 merge_name = getChannelMapping();
 
-if (mode!="none") {
+if (mode=="mcfo" || mode=="polarity") {
     // Z-intensity compensation to ramp signals in neuron channels
     print("Preparing for Z compensation");
     newImage("Ramp", "32-bit ramp", slices, width, height);
@@ -158,7 +158,7 @@ else if (mode=="polarity") {
     }
 }
 
-if (mode!="none") {
+if (mode=="mcfo" || mode=="polarity") {
     selectWindow("ZRamp");
     close();
 }
