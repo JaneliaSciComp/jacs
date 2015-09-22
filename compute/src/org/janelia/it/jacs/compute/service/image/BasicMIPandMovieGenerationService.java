@@ -95,7 +95,6 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         FileWriter fw = new FileWriter(configFile);
         try {
             String inputFile = inputImage.getFilepath();
-            String inputFile2 = inputImage2==null ? null : inputImage2.getFilepath();
             Integer laser = inputImage.getLaser();
             Integer gain = inputImage.getGain();
             String chanSpec = inputImage.getChanspec();
@@ -104,8 +103,9 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
             
             fw.write(outputDir.getAbsolutePath() + "\n");
             fw.write(inputImage.getOutputPrefix() + "\n");
+            fw.write((inputImage2==null?"":inputImage2.getOutputPrefix()) + "\n");
             fw.write((inputFile==null?"":inputFile) + "\n");
-            fw.write((inputFile2==null?"":inputFile2) + "\n");
+            fw.write((inputImage2==null?"":inputImage2.getFilepath()) + "\n");
             fw.write((laser==null?"":laser) + "\n");
             fw.write((gain==null?"":gain) + "\n");
             fw.write((chanSpec==null?"":chanSpec) + "\n");

@@ -215,6 +215,11 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
@@ -266,6 +271,11 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
@@ -297,13 +307,13 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous summary results</description>
-            <name>reuseSummary</name>
+            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
+            <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
-            <name>reuseProcessing</name>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
@@ -342,6 +352,11 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
@@ -374,6 +389,11 @@
         <parameter>
             <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>

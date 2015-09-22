@@ -1,11 +1,12 @@
 // Date released:  2014-10-01
 // FIJI macro for generating intensity-normalized Movies and MIPs
 //
-// Argument should be in this format: "Basedir,Prefix,BrainPath,VNCPath,Laser,Gain,ChanSpec,ColorSpec,DivSpec,Outputs"
+// Argument should be in this format: "Basedir,BrainPrefix,VNCPrefix,BrainPath,VNCPath,Laser,Gain,ChanSpec,ColorSpec,DivSpec,Outputs"
 // 
 // Input parameters:
 //     Basedir: output directory for MIPs and movies
-//     Prefix: output filename prefix 
+//     BrainPrefix: output filename prefix for the brain input
+//     VNCPrefix: output filename prefix for the VNC input
 //     BrainPath: absolute path to the Brain stack 
 //     VNCPath: absolute path to the VNC stack (may be blank if there is no VNC)
 //     Laser: laser power (BC1) for the signal channel (optional annotation)
@@ -37,16 +38,17 @@ setBatchMode(true);
 
 args = split(getArgument(),",");
 basedir = args[0];
-prefix = args[1];
-brainImage = args[2];
-vncImage = args[3];
-laser = args[4];
-gain = args[5];
-chanspec = toLowerCase(args[6]);
-colorspec = toUpperCase(args[7]);
-divspec = args[8];
-if (args.length > 9) {
-    outputs = toLowerCase(args[9]);
+brainPrefix = args[1];
+vncPrefix = args[2];
+brainImage = args[3];
+vncImage = args[4];
+laser = args[5];
+gain = args[6];
+chanspec = toLowerCase(args[7]);
+colorspec = toUpperCase(args[8]);
+divspec = args[9];
+if (args.length > 10) {
+    outputs = toLowerCase(args[10]);
 }
 
 numChannels = lengthOf(chanspec);
@@ -65,7 +67,8 @@ if (divspec == "") {
 }
 
 print("Output dir: "+basedir);
-print("Output prefix: "+prefix);
+print("Output brain prefix: "+brainPrefix);
+print("Output VNC prefix: "+vncPrefix);
 print("Brain image: "+brainImage);
 print("VNC image: "+vncImage);
 print("Laser power: "+laser);
@@ -169,9 +172,9 @@ for (i=0; i<numChannels; i++) {
     }
 }
 
-saveMipsAndMovies("Brain", brainMax, brainChannelMapping);
+saveMipsAndMovies("Brain", brainPrefix, brainMax, brainChannelMapping);
 if (vncImage!="") {
-    saveMipsAndMovies("VNC", brainMax, vncChannelMapping);
+    saveMipsAndMovies("VNC", vncPrefix, brainMax, vncChannelMapping);
 }
 
 print("Done");
@@ -260,7 +263,7 @@ function getChannelMapping(name) {
 
 // Save MIPs and movies for the image with the given name. The max intensity value of the each 
 // channel should be provided as an array in parameter "maxValues".  
-function saveMipsAndMovies(name, maxValues, merge_name) {
+function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
     
     if (displayLegends) {
         si = 0;

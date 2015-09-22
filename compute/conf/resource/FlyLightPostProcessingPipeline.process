@@ -7,6 +7,7 @@
         <input name="PIPELINE_RUN_ENTITY_ID"/>
         <input name="SAMPLE_ENTITY_ID"/>
         <input name="IMAGE_TYPE"/>
+        <input name="OUTPUT_COLOR_SPEC"/>
         <input name="REUSE_POST"/>
     
         <!-- Decide which types of processing will be run -->
@@ -51,7 +52,8 @@
             <operation name="Get unaligned image List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetUnalignedInputImagesService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
-                <input name="IMAGE_TYPE"/>
+                <input name="MODE" value="$V{IMAGE_TYPE}"/>
+                <input name="OUTPUT_COLOR_SPEC"/>
                 <output name="INPUT_IMAGES"/>
                 <output name="RUN_BASIC"/>
                 <output name="NORMALIZE_TO_FIRST_IMAGE"/>
