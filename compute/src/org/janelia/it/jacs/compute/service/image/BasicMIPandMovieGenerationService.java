@@ -126,7 +126,8 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
 
         StringBuffer script = new StringBuffer();
         script.append("read OUTPUT_DIR\n");
-        script.append("read OUTPUT_PREFIX\n");
+        script.append("read OUTPUT_PREFIX_1\n");
+        script.append("read OUTPUT_PREFIX_2\n");
         script.append("read INPUT_FILE1\n");
         script.append("read INPUT_FILE2\n");
         script.append("read LASER\n");
@@ -157,7 +158,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         // Run Fiji macro
         StringBuffer cmd = new StringBuffer();
         cmd.append(FIJI_BIN_PATH).append(" -macro ").append(FIJI_MACRO_PATH).append("/").append(MACRO_NAME);
-        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OUTPUTS");
+        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX_1,$OUTPUT_PREFIX_2,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OUTPUTS");
         script.append("echo \"Executing:\"\n");
         script.append("echo \""+cmd+"\"\n");
         script.append(cmd).append(" & \n");
@@ -205,7 +206,8 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         for(InputImage inputImage : inputImages) {
             int count = 0;
             for(File file : files) {
-                if (file.getName().startsWith(inputImage.getOutputPrefix())) {
+                String filename = file.getName();
+                if (filename.startsWith(inputImage.getOutputPrefix()) && (filename.endsWith(".png") || filename.endsWith(".mp4"))) {
                     count++;
                 }
             }

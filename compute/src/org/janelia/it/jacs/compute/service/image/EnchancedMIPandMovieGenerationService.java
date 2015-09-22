@@ -48,7 +48,7 @@ public class EnchancedMIPandMovieGenerationService extends BasicMIPandMovieGener
             
             fw.write(resultFileNode.getDirectoryPath() + "\n");
             fw.write(inputImage.getOutputPrefix() + "\n");
-            fw.write(mode + "\n");
+            fw.write((mode==null?"none":mode) + "\n");
             fw.write((inputFile==null?"":inputFile) + "\n");
             fw.write((chanSpec==null?"":chanSpec) + "\n");
             fw.write((colorSpec==null?"":colorSpec) + "\n");

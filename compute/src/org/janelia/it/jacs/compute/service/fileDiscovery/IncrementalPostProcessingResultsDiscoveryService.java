@@ -36,21 +36,21 @@ public class IncrementalPostProcessingResultsDiscoveryService extends Incrementa
     }
     
     @Override
-    protected void discoverResultFiles(Entity summaryResult) throws Exception {
+    protected void discoverResultFiles(Entity result) throws Exception {
 
-        if (!summaryResult.getEntityTypeName().equals(EntityConstants.TYPE_POST_PROCESSING_RESULT)) {
+        if (!result.getEntityTypeName().equals(EntityConstants.TYPE_POST_PROCESSING_RESULT)) {
             throw new IllegalStateException("Expected Post Processing Result as input");
         }
         
-        File dir = new File(summaryResult.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        logger.info("Processing "+summaryResult.getName()+" results in "+dir.getAbsolutePath());
+        File dir = new File(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        logger.info("Processing "+result.getName()+" results in "+dir.getAbsolutePath());
         
         if (!dir.canRead()) {
             logger.info("Cannot read from folder "+dir.getAbsolutePath());
             return;
         }
 
-        Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(summaryResult);
+        Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(result);
         addFilesInDirToFolder(supportingFiles, dir, false);
 
         String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");

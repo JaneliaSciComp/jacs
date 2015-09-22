@@ -124,8 +124,8 @@
             <sequence name="Create LSM Montages" waitForAsync="true">
                 <operation name="Create LSM Montages" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.MontageService"/>
-                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
                     <input name="INPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
                 </operation>
             </sequence>
 

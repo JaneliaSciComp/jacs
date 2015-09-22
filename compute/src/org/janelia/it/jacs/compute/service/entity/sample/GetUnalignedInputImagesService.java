@@ -24,6 +24,8 @@ import com.google.common.collect.Ordering;
  */
 public class GetUnalignedInputImagesService extends AbstractEntityService {
 
+    private static final String SERVICE_PACKAGE = "org.janelia.it.jacs.compute.service.image";
+    
     private boolean sampleNaming;
     private String colorSpec;
     private String mode;
@@ -80,12 +82,13 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         }
     
         boolean normalizeToFirst = sb.toString().equals("Brain,VNC");
-        boolean runBasic = "20x".equals(objective);
+        String serviceClassName = "20x".equals(objective) ?  "BasicMIPandMovieGenerationService" : "EnchancedMIPandMovieGenerationService";
+        String serviceClass = SERVICE_PACKAGE+"."+serviceClassName;
         
-        logger.info("Putting "+normalizeToFirst+" images into NORMALIZE_TO_FIRST_IMAGE");
+        logger.info("Putting "+normalizeToFirst+" into NORMALIZE_TO_FIRST_IMAGE");
         processData.putItem("NORMALIZE_TO_FIRST_IMAGE", Boolean.valueOf(normalizeToFirst));
-        logger.info("Putting "+runBasic+" images into RUN_BASIC");
-        processData.putItem("RUN_BASIC", Boolean.valueOf(runBasic));
+        logger.info("Putting "+serviceClass+" into SERVICE_CLASS");
+        processData.putItem("SERVICE_CLASS", serviceClass);
     	logger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
@@ -111,7 +114,7 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         String colorspec = colorSpec;
         
         if (colorspec==null) {
-            logger.warn("No COLOR_SPEC specified, attempting to guess based on objective and MODE...");
+            logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective and MODE...");
             colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
             if ("20x".equals(objective)) {
                 colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "M1R", "G");
