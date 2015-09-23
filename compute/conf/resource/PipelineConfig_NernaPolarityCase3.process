@@ -3,12 +3,12 @@
     
         <include name="Pipeline" process="FlyLightPairedSamplePipeline">
             <input name="PIPELINE_PROCESS" value="YoshiMBPolarityCase3"/>
-            <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547"/>
-            <input name="OUTPUT_CHANNEL_ORDER_20X" value="membrane,reference"/>
-            <input name="OUTPUT_COLOR_SPEC_20X" value="GM"/>
-            <input name="CHANNEL_DYE_SPEC_63X" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547"/>
-            <input name="OUTPUT_CHANNEL_ORDER_63X" value="presynaptic,membrane,reference"/>
-            <input name="OUTPUT_COLOR_SPEC_63X" value="MG1"/>
+            <input name="20X_CHANNEL_DYE_SPEC" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547"/>
+            <input name="20X_OUTPUT_CHANNEL_ORDER" value="membrane,reference"/>
+            <input name="20X_OUTPUT_COLOR_SPEC" value="GM"/>
+            <input name="63X_CHANNEL_DYE_SPEC" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547"/>
+            <input name="63X_OUTPUT_CHANNEL_ORDER" value="presynaptic,membrane,reference"/>
+            <input name="63X_OUTPUT_COLOR_SPEC" value="MG1"/>
             <input name="IMAGE_TYPE" value="polarity"/>
         </include>
         

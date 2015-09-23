@@ -5,23 +5,25 @@
         <input name="SAMPLE_ENTITY_ID"/>
         <input name="REUSE_PIPELINE_RUNS"/>
         <input name="RUN_OBJECTIVES"/>
+        <input name="IMAGE_TYPE"/>
+        
         <input name="20X_MERGE_ALGORITHMS"/>
         <input name="20X_ALIGNMENT_ALGORITHMS"/>
         <input name="20X_ALIGNMENT_ALGORITHM_PARAMS"/>
         <input name="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
         <input name="20X_ANALYSIS_ALGORITHMS"/>
+        <input name="20X_CHANNEL_DYE_SPEC"/>
+        <input name="20X_OUTPUT_CHANNEL_ORDER"/>
+        <input name="20X_OUTPUT_COLOR_SPEC"/>
+        
         <input name="63X_MERGE_ALGORITHMS"/>
         <input name="63X_ALIGNMENT_ALGORITHMS"/>
         <input name="63X_ALIGNMENT_ALGORITHM_PARAMS"/>
         <input name="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES"/>
         <input name="63X_ANALYSIS_ALGORITHMS"/>
-        <input name="CHANNEL_DYE_SPEC_20X"/>
-        <input name="OUTPUT_CHANNEL_ORDER_20X"/>
-        <input name="OUTPUT_COLOR_SPEC_20X"/>
-        <input name="CHANNEL_DYE_SPEC_63X"/>
-        <input name="OUTPUT_CHANNEL_ORDER_63X"/>
-        <input name="OUTPUT_COLOR_SPEC_63X"/>
-        <input name="IMAGE_TYPE"/>
+        <input name="63X_CHANNEL_DYE_SPEC"/>
+        <input name="63X_OUTPUT_CHANNEL_ORDER"/>
+        <input name="63X_OUTPUT_COLOR_SPEC"/>
         
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -53,9 +55,9 @@
             <input name="63X_ANALYSIS_ALGORITHMS"/>
             <input name="PROCESS_VARIABLE_MAP">
                 <entry key="20X_MERGE_ALGORITHMS"                 value="FLYLIGHT_ORDERED"/>
-                <entry key="20X_ALIGNMENT_ALGORITHMS"             value="CONFIGURED,CONFIGURED_BRAIN_VNC,CONFIGURED_VNC"/>
-                <entry key="20X_ALIGNMENT_ALGORITHM_PARAMS"       value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh,flyalign20xVNC_CMTK.sh"/>
-                <entry key="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment,Brain/VNC Alignment,CMTK VNC Alignment"/>
+                <entry key="20X_ALIGNMENT_ALGORITHMS"             value="CONFIGURED,CONFIGURED_BRAIN_VNC"/>
+                <entry key="20X_ALIGNMENT_ALGORITHM_PARAMS"       value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh"/>
+                <entry key="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment,Brain/VNC Alignment"/>
                 <entry key="20X_ANALYSIS_ALGORITHMS"              value="NEURON_SEPARATOR"/>
                 <entry key="63X_MERGE_ALGORITHMS"                 value="FLYLIGHT_ORDERED"/>
                 <entry key="63X_ALIGNMENT_ALGORITHMS"             value="CONFIGURED_PAIR"/>
@@ -98,9 +100,9 @@
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value="$V{20X_ALIGNMENT_ALGORITHM_PARAMS}"/>
                 <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="$V{20X_ALIGNMENT_ALGORITHM_RESULT_NAMES}"/>
                 <input name="ANALYSIS_ALGORITHMS" value="$V{20X_ANALYSIS_ALGORITHMS}"/>
-                <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
-                <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
-                <input name="OUTPUT_COLOR_SPEC" value="$V{OUTPUT_COLOR_SPEC_20X}"/>
+                <input name="CHANNEL_DYE_SPEC" value="$V{20X_CHANNEL_DYE_SPEC}"/>
+                <input name="OUTPUT_CHANNEL_ORDER" value="$V{20X_OUTPUT_CHANNEL_ORDER}"/>
+                <input name="OUTPUT_COLOR_SPEC" value="$V{20X_OUTPUT_COLOR_SPEC}"/>
                 <input name="IMAGE_TYPE"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>
@@ -118,9 +120,9 @@
                 <input name="ALIGNMENT_ALGORITHM_PARAMS" value="$V{63X_ALIGNMENT_ALGORITHM_PARAMS}"/>
                 <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="$V{63X_ALIGNMENT_ALGORITHM_RESULT_NAMES}"/>
                 <input name="ANALYSIS_ALGORITHMS" value="$V{63X_ANALYSIS_ALGORITHMS}"/>
-                <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
-                <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
-                <input name="OUTPUT_COLOR_SPEC" value="$V{OUTPUT_COLOR_SPEC_63X}"/>
+                <input name="CHANNEL_DYE_SPEC" value="$V{63X_CHANNEL_DYE_SPEC}"/>
+                <input name="OUTPUT_CHANNEL_ORDER" value="$V{63X_OUTPUT_CHANNEL_ORDER}"/>
+                <input name="OUTPUT_COLOR_SPEC" value="$V{63X_OUTPUT_COLOR_SPEC}"/>
                 <input name="IMAGE_TYPE"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>
