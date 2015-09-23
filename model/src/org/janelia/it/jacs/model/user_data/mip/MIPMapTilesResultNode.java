@@ -12,20 +12,20 @@ import java.io.Serializable;
 /**
  * User: cgoina
  */
-public class MIP3dMapResultNode extends FileNode implements IsSerializable, Serializable {
+public class MIPMapTilesResultNode extends FileNode implements IsSerializable, Serializable {
 
     /**
      * constructor
      */
-    public MIP3dMapResultNode() {
+    public MIPMapTilesResultNode() {
     }
 
-    public MIP3dMapResultNode(String owner, Task task, String name, String description, String visibility, String relativeSessionPath) {
+    public MIPMapTilesResultNode(String owner, Task task, String name, String description, String visibility, String relativeSessionPath) {
         super(owner, task, name, description, visibility, Node.DIRECTORY_DATA_TYPE, relativeSessionPath);
     }
 
     public String getSubDirectory() {
-        return "3dmap";
+        return "maptiles";
     }
 
     public String getFilePathByTag(String tag) {

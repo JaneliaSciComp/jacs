@@ -1,0 +1,33 @@
+<process name="MIPMapTiles"  startEvent="pending" processor="queue/genericServiceLauncher" updateProcessStatus="on_success">
+    <sequence name="Generate sample MIPs" waitForAsync="true">
+        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MipMapTilesService" />
+            <input name="RESULT_FILE_NODE_ID" />
+
+            <input name="IMAGE_WIDTH" />
+            <input name="IMAGE_HEIGHT" />
+
+            <input name="SOURCE_ROOT_URL" />
+            <input name="SOURCE_STACK_FORMAT" />
+            <input name="SOURCE_MAGNIFICATION_LEVEL" />
+            <input name="SOURCE_TILE_WIDTH" />
+            <input name="SOURCE_TILE_HEIGHT" />
+            <input name="SOURCE_XY_RESOLUTION" />
+            <input name="SOURCE_Z_RESOLUTION" />
+            <input name="SOURCE_MIN_X" />
+            <input name="SOURCE_MIN_Y" />
+            <input name="SOURCE_MIN_Z" />
+            <input name="SOURCE_WIDTH" />
+            <input name="SOURCE_HEIGHT" />
+            <input name="SOURCE_DEPTH" />
+
+            <input name="TARGET_ROOT_URL" />
+            <input name="TARGET_STACK_FORMAT" />
+            <input name="TARGET_TILE_WIDTH" />
+            <input name="TARGET_TILE_HEIGHT" />
+            <input name="TARGET_MIN_ROW" />
+            <input name="TARGET_MIN_COL" />
+            <input name="TARGET_MIN_Z" />
+        </operation>
+    </sequence>
+</process>

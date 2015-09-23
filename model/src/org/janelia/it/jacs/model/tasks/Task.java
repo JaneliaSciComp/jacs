@@ -172,6 +172,33 @@ public abstract class Task implements Serializable, IsSerializable {
             return null;
     }
 
+    public Integer getParameterAsInteger(String key) {
+        String value = getParameter(key);
+        if (value != null && value.trim().length() > 0) {
+            return Integer.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
+    public Long getParameterAsLong(String key) {
+        String value = getParameter(key);
+        if (value != null && value.trim().length() > 0) {
+            return Long.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
+    public Double getParameterAsDouble(String key) {
+        String value = getParameter(key);
+        if (value != null && value.trim().length() > 0) {
+            return Double.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
     public TaskParameter getTaskParameter(String key) {
         TaskParameter resParam = null;
         for (Object aParameterStringMap : taskParameterSet) {
@@ -189,8 +216,7 @@ public abstract class Task implements Serializable, IsSerializable {
         if (existingParam == null) {
             taskParam.setTask(this);
             this.taskParameterSet.add(taskParam); // add the new one
-        }
-        else {
+        } else {
             existingParam.setValue(taskParam.getValue());
         }
     }
@@ -199,9 +225,26 @@ public abstract class Task implements Serializable, IsSerializable {
         TaskParameter existingParam = getTaskParameter(key);
         if (existingParam == null) {
             this.taskParameterSet.add(new TaskParameter(key, value, this)); // add the new one
-        }
-        else {
+        } else {
             existingParam.setValue(value);
+        }
+    }
+
+    public void setParameterAsInteger(String key, Integer value) {
+        if (value != null) {
+            setParameter(key, value.toString());
+        }
+    }
+
+    public void setParameterAsLong(String key, Long value) {
+        if (value != null) {
+            setParameter(key, value.toString());
+        }
+    }
+
+    public void setParameterAsDouble(String key, Double value) {
+        if (value != null) {
+            setParameter(key, value.toString());
         }
     }
 
