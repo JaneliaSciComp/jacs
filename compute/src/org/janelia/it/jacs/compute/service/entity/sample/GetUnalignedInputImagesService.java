@@ -24,12 +24,18 @@ import com.google.common.collect.Ordering;
  */
 public class GetUnalignedInputImagesService extends AbstractEntityService {
 
+    private static final String SERVICE_PACKAGE = "org.janelia.it.jacs.compute.service.image";
+    
+    private boolean sampleNaming;
+    private String colorSpec;
     private String mode;
     
     public void execute() throws Exception {
 
+        this.colorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
         this.mode = data.getItemAsString("MODE");
-
+        this.sampleNaming = data.getItemAsBoolean("SAMPLE_NAMING");
+        
         String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
         if (StringUtils.isEmpty(sampleEntityId)) {
             throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
@@ -56,7 +62,7 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         List<Entity> results = pipelineRun.getOrderedChildren();
         for(Entity result : results) {
             if (result.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
-                inputImages.add(getInputImage(result, objective));    
+                inputImages.add(getInputImage(sampleEntity, result, objective));    
             }
         }
         
@@ -76,43 +82,55 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         }
     
         boolean normalizeToFirst = sb.toString().equals("Brain,VNC");
-        boolean runBasic = "20x".equals(objective);
+        String serviceClassName = "20x".equals(objective) ?  "BasicMIPandMovieGenerationService" : "EnchancedMIPandMovieGenerationService";
+        String serviceClass = SERVICE_PACKAGE+"."+serviceClassName;
         
-        logger.info("Putting "+normalizeToFirst+" images into NORMALIZE_TO_FIRST_IMAGE");
+        logger.info("Putting "+normalizeToFirst+" into NORMALIZE_TO_FIRST_IMAGE");
         processData.putItem("NORMALIZE_TO_FIRST_IMAGE", Boolean.valueOf(normalizeToFirst));
-        logger.info("Putting "+runBasic+" images into RUN_BASIC");
-        processData.putItem("RUN_BASIC", Boolean.valueOf(runBasic));
+        logger.info("Putting "+serviceClass+" into SERVICE_CLASS");
+        processData.putItem("SERVICE_CLASS", serviceClass);
     	logger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
     
-    private InputImage getInputImage(Entity resultEntity, String objective) throws ComputeException {
+    private InputImage getInputImage(Entity sampleEntity, Entity resultEntity, String objective) throws ComputeException {
         
         String area = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
         
         Entity image = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         String chanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+        
         String prefix = FileUtils.getFilePrefix(filepath);
-        String colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
-        
-        
-        // TODO: move color specs to process files
-        
-        if ("20x".equals(objective)) {
-            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "M1R", "G");
+        if (sampleNaming) {
+            String sampleName = sampleEntity.getName();
+            int tilde = sampleName.indexOf('~');
+            if (tilde>0) {
+                sampleName = sampleName.substring(0,tilde);
+            }
+            prefix = sampleName+"-"+area;
         }
-        else if ("63x".equals(objective)) {
-            if ("polarity".equals(mode)) {
-                if (chanSpec.length()==2) {
-                    colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G", "1");
-                }
-                else {
-                    colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "MG", "1");
+        
+        String colorspec = colorSpec;
+        
+        if (colorspec==null) {
+            logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective and MODE...");
+            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
+            if ("20x".equals(objective)) {
+                colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "M1R", "G");
+            }
+            else if ("63x".equals(objective)) {
+                if ("polarity".equals(mode)) {
+                    if (chanSpec.length()==2) {
+                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G", "1");
+                    }
+                    else {
+                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "MG", "1");
+                    }
                 }
             }
         }
-                
+             
         logger.info("Input file: "+filepath);
         logger.info("  Area: "+area);
         logger.info("  Channel specification: "+chanSpec);

@@ -17,8 +17,10 @@
         <input name="63X_ANALYSIS_ALGORITHMS"/>
         <input name="CHANNEL_DYE_SPEC_20X"/>
         <input name="OUTPUT_CHANNEL_ORDER_20X"/>
+        <input name="OUTPUT_COLOR_SPEC_20X"/>
         <input name="CHANNEL_DYE_SPEC_63X"/>
         <input name="OUTPUT_CHANNEL_ORDER_63X"/>
+        <input name="OUTPUT_COLOR_SPEC_63X"/>
         <input name="IMAGE_TYPE"/>
         
         <!-- Import variables from the task -->
@@ -98,6 +100,7 @@
                 <input name="ANALYSIS_ALGORITHMS" value="$V{20X_ANALYSIS_ALGORITHMS}"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
+                <input name="OUTPUT_COLOR_SPEC" value="$V{OUTPUT_COLOR_SPEC_20X}"/>
                 <input name="IMAGE_TYPE"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>
@@ -117,6 +120,7 @@
                 <input name="ANALYSIS_ALGORITHMS" value="$V{63X_ANALYSIS_ALGORITHMS}"/>
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
+                <input name="OUTPUT_COLOR_SPEC" value="$V{OUTPUT_COLOR_SPEC_63X}"/>
                 <input name="IMAGE_TYPE"/>
                 <input name="PIPELINE_PROCESS"/>
             </include>

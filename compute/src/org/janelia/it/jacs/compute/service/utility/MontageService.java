@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
@@ -35,43 +36,56 @@ public class MontageService extends SubmitDrmaaJobService {
     private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
     private static final String CONFIG_PREFIX = "montageConfiguration.";
 
+    private Multimap<String,String> groups = ArrayListMultimap.<String,String>create();
+    private FileNode inputFileNode;
+    private int side;
+    
     @Override
     protected String getGridServicePrefixName() {
         return "montage";
+    }
+
+    @Override
+    protected void init(IProcessData processData) throws Exception {
+        
+        super.init(processData);
+        
+        this.inputFileNode = (FileNode)processData.getItem("INPUT_FILE_NODE");
+        if (inputFileNode==null) {
+            throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
+        }
+
+        File[] images = FileUtil.getFilesWithSuffixes(new File(inputFileNode.getDirectoryPath()), "png");
+        for(File imageFile : images) {
+
+            Pattern p = Pattern.compile("^(.*)(_.*)\\.(\\w+)$");
+            Matcher m = p.matcher(imageFile.getAbsolutePath());
+            
+            if (m.matches()) {
+                String prefix = m.group(1);
+                String type = m.group(2);
+                String ext = m.group(3);
+                groups.put(type, imageFile.getName());
+            }
+        }
+        
+        if (groups.isEmpty()) {
+            cancel();
+            return;
+        }
+
+        int max = 0;
+        for(String group : groups.keySet()) {
+            int size = groups.get(group).size();
+            if (size>max) max = size;
+        }
+        
+        this.side = (int)Math.ceil(Math.sqrt(max));
     }
     
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
-        FileNode inputFileNode = (FileNode)processData.getItem("INPUT_FILE_NODE");
-        if (inputFileNode==null) {
-        	throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
-        }
-
-		Multimap<String,String> groups = ArrayListMultimap.<String,String>create();
-		
-    	File[] images = FileUtil.getFilesWithSuffixes(new File(inputFileNode.getDirectoryPath()), "png");
-    	for(File imageFile : images) {
-
-    		Pattern p = Pattern.compile("^(.*)(_.*)\\.(\\w+)$");
-    		Matcher m = p.matcher(imageFile.getAbsolutePath());
-    		
-    		if (m.matches()) {
-    			String prefix = m.group(1);
-    			String type = m.group(2);
-    			String ext = m.group(3);
-    			groups.put(type, imageFile.getName());
-    		}
-    	}
-
-    	int max = 0;
-    	for(String group : groups.keySet()) {
-    		int size = groups.get(group).size();
-    		if (size>max) max = size;
-    	}
-    	
-    	int side = (int)Math.ceil(Math.sqrt(max));
-    	
         int configIndex = 1;
     	for(String group : groups.keySet()) {
             writeInstanceFiles(group, groups.get(group), configIndex++);
