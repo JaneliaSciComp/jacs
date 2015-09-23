@@ -45,7 +45,7 @@ public class GetLsmInputImagesService extends AbstractEntityService {
             }
         }
         
-    	logger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
+    	contextLogger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
     
@@ -81,12 +81,12 @@ public class GetLsmInputImagesService extends AbstractEntityService {
             logger.warn("LSM "+lsmId+" has illegal color specification "+chanColors+" (interpreted as "+invalidColorspec+"). Defaulting to "+colorspec);
         }
         
-        logger.info("Input file: "+filepath);
-        logger.info("  Area: "+area);
-        logger.info("  Channel specification: "+chanSpec);
-        logger.info("  Color specification: "+colorspec);
-        logger.info("  Divisor specification: "+divspec);
-        logger.info("  Output prefix: "+prefix);
+        contextLogger.info("Input file: "+filepath);
+        contextLogger.info("  Area: "+area);
+        contextLogger.info("  Channel specification: "+chanSpec);
+        contextLogger.info("  Color specification: "+colorspec);
+        contextLogger.info("  Divisor specification: "+divspec);
+        contextLogger.info("  Output prefix: "+prefix);
         
         InputImage inputImage = new InputImage();
         inputImage.setFilepath(filepath);

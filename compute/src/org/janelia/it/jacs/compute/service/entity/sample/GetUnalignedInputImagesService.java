@@ -85,11 +85,11 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         String serviceClassName = "20x".equals(objective) ?  "BasicMIPandMovieGenerationService" : "EnchancedMIPandMovieGenerationService";
         String serviceClass = SERVICE_PACKAGE+"."+serviceClassName;
         
-        logger.info("Putting "+normalizeToFirst+" into NORMALIZE_TO_FIRST_IMAGE");
+        contextLogger.info("Putting "+normalizeToFirst+" into NORMALIZE_TO_FIRST_IMAGE");
         processData.putItem("NORMALIZE_TO_FIRST_IMAGE", Boolean.valueOf(normalizeToFirst));
-        logger.info("Putting "+serviceClass+" into SERVICE_CLASS");
+        contextLogger.info("Putting "+serviceClass+" into SERVICE_CLASS");
         processData.putItem("SERVICE_CLASS", serviceClass);
-    	logger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
+    	contextLogger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
     
@@ -131,11 +131,11 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             }
         }
              
-        logger.info("Input file: "+filepath);
-        logger.info("  Area: "+area);
-        logger.info("  Channel specification: "+chanSpec);
-        logger.info("  Color specification: "+colorspec);
-        logger.info("  Output prefix: "+prefix);
+        contextLogger.info("Input file: "+filepath);
+        contextLogger.info("  Area: "+area);
+        contextLogger.info("  Channel specification: "+chanSpec);
+        contextLogger.info("  Color specification: "+colorspec);
+        contextLogger.info("  Output prefix: "+prefix);
         
         InputImage inputImage = new InputImage();
         inputImage.setFilepath(filepath);

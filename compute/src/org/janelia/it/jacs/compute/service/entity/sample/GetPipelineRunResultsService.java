@@ -34,7 +34,7 @@ public class GetPipelineRunResultsService extends AbstractEntityService {
     		}
     	}
 
-    	logger.info("Putting "+resultIds.size()+" result ids in RESULT_ENTITY_ID");
+    	contextLogger.info("Putting "+resultIds.size()+" result ids in RESULT_ENTITY_ID");
     	processData.putItem("RESULT_ENTITY_ID", resultIds);
     }
 }

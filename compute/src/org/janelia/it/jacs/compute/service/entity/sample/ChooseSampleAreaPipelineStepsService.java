@@ -69,6 +69,6 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService 
             steps.add("analysis");
         }
 
-        logger.info("Processing pipeline for Sample "+sampleEntity.getName()+": "+Task.csvStringFromCollection(steps));
+        contextLogger.info("Processing pipeline for Sample "+sampleEntity.getName()+": "+Task.csvStringFromCollection(steps));
     }
 }

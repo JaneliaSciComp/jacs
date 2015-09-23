@@ -106,22 +106,22 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	        }
 	    }
 	    
-	    logger.info("Registering images for result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
+	    contextLogger.info("Registering images for result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
 	    if (default3dImage!=null) {
-	        logger.info("Using default image: "+default3dImage.getName()+" (id="+default3dImage.getId()+")");
+	        contextLogger.info("Using default image: "+default3dImage.getName()+" (id="+default3dImage.getId()+")");
 	    }
 	    else if (defaultImageFilename!=null) {
-	        logger.info("Will find default image: "+defaultImageFilename);
+	        contextLogger.info("Will find default image: "+defaultImageFilename);
 	    }
 	    
     	// Find all the 2d and 3d images in this result tree, and populate all of the lookup maps and lists
     	
     	findArtifacts(resultEntity);
-    	logger.info("Found "+images3d.size()+" 3d images");
-    	logger.info("Found "+allMipPrefixMap.size()+" all MIPs");
-    	logger.info("Found "+signalMipPrefixMap.size()+" signal MIPs");
-    	logger.info("Found "+refMipPrefixMap.size()+" ref MIPs");
-    	logger.info("Found "+moviePrefixMap.size()+" movies");
+    	contextLogger.info("Found "+images3d.size()+" 3d images");
+    	contextLogger.info("Found "+allMipPrefixMap.size()+" all MIPs");
+    	contextLogger.info("Found "+signalMipPrefixMap.size()+" signal MIPs");
+    	contextLogger.info("Found "+refMipPrefixMap.size()+" ref MIPs");
+    	contextLogger.info("Found "+moviePrefixMap.size()+" movies");
     	
     	// Ensure all 3d images have their shortcut images correctly set. At the same time, find which of these
     	// 3d images is the default image for this result.
@@ -130,7 +130,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	
     	for(Entity image3d : images3d.values()) {
     	    populateChildren(image3d);
-			logger.trace("  Processing "+image3d.getName()+" (id="+image3d.getId()+")");
+    	    logger.trace("  Processing "+image3d.getName()+" (id="+image3d.getId()+")");
 			
 			String filepath = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 			if (default3dImage==null && (filepath.equals(defaultImageFilename) || filepath.equals(defaultImageCanonicalFilename))) {
@@ -147,17 +147,17 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				if (m.matches()) {
 					String prefix = m.group(1);
 
-                    logger.debug("Get artifacts with prefix: '"+prefix+"'");
+					contextLogger.debug("Get artifacts with prefix: '"+prefix+"'");
                     
 					Entity allMip = allMipPrefixMap.get(prefix);
 					Entity signalMip = signalMipPrefixMap.get(prefix);
 					Entity refMip = refMipPrefixMap.get(prefix);
                     Entity movie = moviePrefixMap.get(prefix);
 	
-					logger.debug("  allMip="+allMip);
-					logger.debug("  signalMip="+signalMip);
-                    logger.debug("  refMip="+refMip);
-                    logger.debug("  movie="+movie);
+                    contextLogger.debug("  allMip="+allMip);
+                    contextLogger.debug("  signalMip="+signalMip);
+                    contextLogger.debug("  refMip="+refMip);
+                    contextLogger.debug("  movie="+movie);
 					
                     setMIPs(image3d, allMip, signalMip, refMip, movie); 
 				}	
@@ -181,25 +181,25 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
         if (dataSet!=null) {
             String sampleImageTypeName = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
-            logger.debug("Sample image type is: "+sampleImageTypeName);
+            contextLogger.debug("Sample image type is: "+sampleImageTypeName);
             if (sampleImageTypeName!=null) {
                 sampleImageType = SampleImageType.valueOf(sampleImageTypeName);
             }
         }
         
     	if (default3dImage!=null) {
-            logger.info("Applying default 3d image to the result ("+resultEntity.getId()+")");
+    	    contextLogger.info("Applying default 3d image to the result ("+resultEntity.getId()+")");
         	entityHelper.setDefault3dImage(resultEntity, default3dImage);
-            logger.info("Applying default 3d image to the pipeline run ("+pipelineRunEntity.getId()+")");
+        	contextLogger.info("Applying default 3d image to the pipeline run ("+pipelineRunEntity.getId()+")");
         	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
 
             // Set the image on the sub-sample
-            logger.info("Applying default 3d image to the sub-sample ("+sampleEntity.getName()+")");
+        	contextLogger.info("Applying default 3d image to the sub-sample ("+sampleEntity.getName()+")");
             entityHelper.setDefault3dImage(sampleEntity, default3dImage);
             
             // Set the top level sample, if this image matches the user's preference for the sample's data set
             if (sampleEntity!=topLevelSample && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
-                logger.debug("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
+                contextLogger.debug("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
                 entityHelper.setDefault3dImage(topLevelSample, default3dImage);  
             }
             
@@ -209,7 +209,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             	Entity fast3dImage = findFast3dImage(separation);
             	entityHelper.setDefault3dImage(separation, default3dImage);
             	if (fast3dImage!=null) {
-            		logger.info("Found default fast 3d image in separation "+separation.getId()+", applying to "+default3dImage.getName());
+            	    contextLogger.info("Found default fast 3d image in separation "+separation.getId()+", applying to "+default3dImage.getName());
             		entityHelper.setImageIfNecessary(default3dImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fast3dImage);
         		}
     		}
@@ -223,9 +223,9 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		Entity refMip = getMontage(refMipPrefixMap);
 
     		if (allMip!=null || signalMip!=null || refMip!=null) {
-	            logger.info("Applying 2d montages to the result ("+resultEntity.getId()+")");
+    		    contextLogger.info("Applying 2d montages to the result ("+resultEntity.getId()+")");
 	        	entityHelper.set2dImages(resultEntity, signalMip, allMip, signalMip, refMip);
-	            logger.info("Applying 2d montages to the pipeline run ("+pipelineRunEntity.getId()+")");
+	        	contextLogger.info("Applying 2d montages to the pipeline run ("+pipelineRunEntity.getId()+")");
 	        	entityHelper.set2dImages(pipelineRunEntity, signalMip, allMip, signalMip, refMip);
     		}
     		else {
@@ -241,24 +241,24 @@ public class ResultImageRegistrationService extends AbstractEntityService {
                     refMip = refMipPrefixMap.get(defaultKey);
 
                     if (allMip!=null || signalMip!=null || refMip!=null) {
-                        logger.info("Applying first 2d image to the result ("+resultEntity.getId()+")");
+                        contextLogger.info("Applying first 2d image to the result ("+resultEntity.getId()+")");
                         entityHelper.set2dImages(resultEntity, signalMip, allMip, signalMip, refMip);
-                        logger.info("Applying first 2d image to the pipeline run ("+pipelineRunEntity.getId()+")");
+                        contextLogger.info("Applying first 2d image to the pipeline run ("+pipelineRunEntity.getId()+")");
                         entityHelper.set2dImages(pipelineRunEntity, signalMip, allMip, signalMip, refMip);
                     }
                     
                     // Apply 2d images to sample
                     if (inputImages!=null) {
                         
-                        logger.info("Searching for input image with output prefix of "+defaultKey);
+                        contextLogger.info("Searching for input image with output prefix of "+defaultKey);
                         for(InputImage inputImage : inputImages) {
-                            logger.info("Considering "+inputImage.getOutputPrefix());
+                            contextLogger.info("Considering "+inputImage.getOutputPrefix());
                             if (inputImage.getOutputPrefix().equals(defaultKey)) {
                                 List<Entity> matches = entityBean.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, inputImage.getFilepath());
                                 if (!matches.isEmpty()) {
                                     default3dImage = matches.get(0);
                                 }
-                                logger.info("Found id="+default3dImage.getId());
+                                contextLogger.info("Found id="+default3dImage.getId());
                             }
                         }
 
@@ -266,12 +266,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
                         if (default3dImage!=null && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
 
                             // Set the images on the sub-sample
-                            logger.info("Applying first 2d image to the sub-sample ("+sampleEntity.getId()+")");
+                            contextLogger.info("Applying first 2d image to the sub-sample ("+sampleEntity.getId()+")");
                             entityHelper.set2dImages(sampleEntity, signalMip, allMip, signalMip, refMip);
                             
                             // Set the top level sample, if this image matches the user's preference for the sample's data set
                             if (sampleEntity!=topLevelSample && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
-                                logger.info("Applying first 2d image to the top-level sample ("+topLevelSample.getId()+")");
+                                contextLogger.info("Applying first 2d image to the top-level sample ("+topLevelSample.getId()+")");
                                 entityHelper.set2dImages(topLevelSample, signalMip, allMip, signalMip, refMip);
                             }
                         }
@@ -333,7 +333,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	private void setMIPs(Entity entity, Entity allMip, Entity signalMip, Entity refMip, Entity movie) throws ComputeException {
 	    if (allMip==null && signalMip==null && refMip==null && movie==null) return;
-        logger.info("Applying MIP and movies on "+entity.getName()+" (id="+entity.getId()+")");
+	    contextLogger.info("Applying MIP and movies on "+entity.getName()+" (id="+entity.getId()+")");
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip==null?refMip:signalMip);
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);
         entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
@@ -377,38 +377,38 @@ public class ResultImageRegistrationService extends AbstractEntityService {
             if (StringUtils.isEmpty(filepath))
                 continue;
 
-            logger.debug("    Considering " + filename);
-            logger.debug("      filepath: " + filepath);
+            contextLogger.debug("    Considering " + filename);
+            contextLogger.debug("      filepath: " + filepath);
             if (fileDefault2dImage != null) {
-                logger.debug("      default 2d image: " + fileDefault2dImage);
+                contextLogger.debug("      default 2d image: " + fileDefault2dImage);
             }
 
             if (resultDefault2dImage != null && resultDefault2dImage.equals(fileDefault2dImage) && priority < 20) {
                 defaultImage = file;
                 priority = 20;
-                logger.debug("      Using as default image");
+                contextLogger.debug("      Using as default image");
             }
             if (filename.matches("Aligned.v3d(raw|pbd)") && priority < 10) {
                 defaultImage = file;
                 priority = 10;
-                logger.debug("      Using as default image");
+                contextLogger.debug("      Using as default image");
             } else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
                 defaultImage = file;
                 priority = 9;
-                logger.debug("      Using as default image");
+                contextLogger.debug("      Using as default image");
             } else if (filename.matches("tile-(\\w+?).v3d(raw|pbd)") && priority < 8) {
                 defaultImage = file;
                 priority = 8;
-                logger.debug("      Using as default image");
+                contextLogger.debug("      Using as default image");
             } else if (filename.matches("merged-(\\w+?).v3d(raw|pbd)") && priority < 7) {
                 defaultImage = file;
                 priority = 7;
-                logger.debug("      Using as default image");
+                contextLogger.debug("      Using as default image");
             }
         }
         
         if (defaultImage!=null) {
-            logger.info("  Inferred default image: "+defaultImage.getName());
+            contextLogger.info("  Inferred default image: "+defaultImage.getName());
         }
         return defaultImage;
     }
@@ -421,7 +421,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	 */
 	public boolean sampleShouldUseResultImage(Entity sample, SampleImageType sampleImageType, Entity image3d) {
         
-	    logger.info("sampleShouldUseResultImage? sampleImageType: "+sampleImageType);
+	    contextLogger.info("sampleShouldUseResultImage? sampleImageType: "+sampleImageType);
 	    
 	    if (sampleImageType==null || sampleImageType==SampleImageType.Latest) {
 	        // Use any image, if the user wants the latest
@@ -429,7 +429,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	    }
 
         String objectiveName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-        logger.info("sampleShouldUseResultImage? objectiveName: "+objectiveName);
+        contextLogger.info("sampleShouldUseResultImage? objectiveName: "+objectiveName);
         
 	    if (objectiveName==null) {
 	        // Image has no objective, and user has specified an objective
@@ -437,7 +437,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	    }
 	    
 	    String alignmentSpace = image3d.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE);
-	    logger.info("sampleShouldUseResultImage? alignmentSpace: "+alignmentSpace);
+	    contextLogger.info("sampleShouldUseResultImage? alignmentSpace: "+alignmentSpace);
 	    
         switch (sampleImageType) {
         case Latest: return true;
@@ -467,7 +467,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				String type = m.group(2);
 				String ext = m.group(3);
 				
-				logger.debug("Found artifact: prefix="+prefix+", type="+type+", ext="+ext);
+				contextLogger.debug("Found artifact: prefix="+prefix+", type="+type+", ext="+ext);
 				
 				if ("png".equals(ext)) {
 					if ("_all".equals(type) || "".equals(type)) {

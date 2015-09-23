@@ -27,7 +27,7 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
     
     public void execute() throws Exception {
 
-        logger.info("Finding neuron separations in need of repair, which are owned by "+ownerKey+" and located in "+centralDir+" or "+centralDirArchived);
+        contextLogger.info("Finding neuron separations in need of repair, which are owned by "+ownerKey+" and located in "+centralDir+" or "+centralDirArchived);
         
         List<String> sepsMissingFastLoad = new ArrayList<String>();
         List<String> sepsMissingAllMaskChan = new ArrayList<String>();
@@ -38,7 +38,7 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
 
         	String inputPath = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
             if (!inputPath.startsWith(centralDir) && !inputPath.startsWith(centralDirArchived)) {
-                logger.debug("  Cannot repair artifacts in dir which is not in the FileStore.CentralDir: "+inputPath);
+                contextLogger.debug("  Cannot repair artifacts in dir which is not in the FileStore.CentralDir: "+inputPath);
                 continue;
             }
             
@@ -50,10 +50,10 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         	    }
         	}
             
-        	logger.info("Processing "+separation.getName()+", id="+separation.getId()+", isAligned="+isAligned);
+        	contextLogger.info("Processing "+separation.getName()+", id="+separation.getId()+", isAligned="+isAligned);
         	
         	if (!isAligned) {
-        	    logger.info("  Skipping unaligned separation");
+        	    contextLogger.info("  Skipping unaligned separation");
         	    continue;
         	}
         	
@@ -107,7 +107,7 @@ public class GetIncompleteSeparationsService extends AbstractEntityService {
         		}
             }
         	
-        	logger.info("  missingFastLoad="+missingFastLoad+", missingRefChan="+missingRefChan+", missingNeuronMaskChan="+missingNeuronMaskChan);
+        	contextLogger.info("  missingFastLoad="+missingFastLoad+", missingRefChan="+missingRefChan+", missingNeuronMaskChan="+missingNeuronMaskChan);
             
             if (missingFastLoad) {
             	sepsMissingFastLoad.add(separation.getId().toString());

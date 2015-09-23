@@ -61,8 +61,8 @@ public class InitAlignmentParametersService extends AbstractEntityService {
 			throw new IllegalArgumentException("No such alignment algorithm: "+aa);
 		}
 
-        logger.info("Putting '"+processData.getItem("ALIGNMENT_SERVICE_CLASS")+"' in ALIGNMENT_SERVICE_CLASS");
-        logger.info("Putting '"+processData.getItem("ALIGNMENT_RESULT_NAME")+"' in ALIGNMENT_RESULT_NAME");
-        logger.info("Putting '"+processData.getItem("ALIGNMENT_SCRIPT_NAME")+"' in ALIGNMENT_SCRIPT_NAME");
+        contextLogger.info("Putting '"+processData.getItem("ALIGNMENT_SERVICE_CLASS")+"' in ALIGNMENT_SERVICE_CLASS");
+        contextLogger.info("Putting '"+processData.getItem("ALIGNMENT_RESULT_NAME")+"' in ALIGNMENT_RESULT_NAME");
+        contextLogger.info("Putting '"+processData.getItem("ALIGNMENT_SCRIPT_NAME")+"' in ALIGNMENT_SCRIPT_NAME");
     }
 }

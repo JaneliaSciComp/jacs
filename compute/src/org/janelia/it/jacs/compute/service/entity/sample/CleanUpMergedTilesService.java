@@ -35,11 +35,11 @@ public class CleanUpMergedTilesService extends AbstractEntityService {
     		
     		File symlink = new File(mergedLsmPair.getMergedFilepath().replace("merge", "group"));
     		if (symlink.exists()) {
-	    		logger.info("Cleaning up symlink to merged tile: "+symlink.getAbsolutePath());
+    		    contextLogger.info("Cleaning up symlink to merged tile: "+symlink.getAbsolutePath());
 	    		FileUtils.forceDelete(symlink);
     		}
     		
-    		logger.info("Cleaning up merged tile: "+file.getAbsolutePath());
+    		contextLogger.info("Cleaning up merged tile: "+file.getAbsolutePath());
     		FileUtils.forceDelete(file);
     	}
     }

@@ -30,28 +30,28 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     private boolean isDebug = false;
     
     public void execute() throws Exception {
-        logger.info("Running sample image registration for all "+ownerKey+" samples");
+        contextLogger.info("Running sample image registration for all "+ownerKey+" samples");
         
         if (isDebug) {
-        	logger.info("This is a test run. No entities will be moved or deleted.");
+        	contextLogger.info("This is a test run. No entities will be moved or deleted.");
         }
         else {
-        	logger.info("This is the real thing. Entities will be moved and/or deleted!");
+        	contextLogger.info("This is the real thing. Entities will be moved and/or deleted!");
         }
         
     	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
     	if (StringUtils.isEmpty(sampleEntityId)) {
         	List<Entity> samples = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
         	if (null==samples) {
-				logger.info("User "+ownerKey+" has null returned for samples");
+				contextLogger.info("User "+ownerKey+" has null returned for samples");
 				return;
 			}
-			logger.info("Processing "+samples.size()+" samples");
+			contextLogger.info("Processing "+samples.size()+" samples");
             int counter = 0;
 			for(Entity sample : samples) {
                 try {
                     counter++;
-					logger.info("Processing images for sample "+counter+" of "+samples.size());
+					contextLogger.info("Processing images for sample "+counter+" of "+samples.size());
 					processSample(sample);
                 }
                 catch (Exception e) {
@@ -60,7 +60,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
             }    		
     	}
     	else {
-    		logger.info("Processing single sample: "+sampleEntityId);
+    		contextLogger.info("Processing single sample: "+sampleEntityId);
     		Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
         	if (sampleEntity == null) {
         		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
@@ -68,7 +68,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
             processSample(sampleEntity);
     	}
 
-		logger.info("Processed "+numSamples+" samples.");
+		contextLogger.info("Processed "+numSamples+" samples.");
     }
     
     public void processSample(Entity sample) throws Exception {
@@ -78,7 +78,7 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     	if (visited.contains(sample.getId())) return;
     	visited.add(sample.getId());
     	
-		logger.info("Processing "+sample.getName()+" (id="+sample.getId()+")");
+		contextLogger.info("Processing "+sample.getName()+" (id="+sample.getId()+")");
 		numSamples++;
 		
 		if (deleteSampleIfUnreferencedByOwner(sample)) {
@@ -126,65 +126,12 @@ public class BulkSampleImageRegistrationService extends AbstractEntityService {
     			}
     			Entity result = pred.getChildEntity();
 
-    			logger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
+    			contextLogger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
 
                 if (!isDebug) {
                     resultImageRegService.execute(processData, pipelineRun, result, null);
                 }
     		}
     	}
-    	
-//    	logger.info("Registered Images for Sample:");
-//    	printSample(sample);
     }
-
-//    private void printSample(Entity sample) {
-//
-//    	logger.info(""+sample);
-//    	printImages("  ",sample);
-//    	
-//    	for(Entity pipelineRun : EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN)) {
-//    		
-//    		logger.info("    "+pipelineRun.getName());
-//    		printImages("      ",pipelineRun);
-//    		
-//    		for(EntityData pred : pipelineRun.getOrderedEntityData()) {
-//    			if (!pred.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_RESULT)) {
-//    				continue;
-//    			}
-//    			Entity result = pred.getChildEntity();
-//        		logger.info("        "+result.getName());
-//        		printImages("          ",result);
-//    		}
-//    	}
-//    }
-//
-//    private void printImages(String indent, Entity entity) {
-//
-//    	EntityData default3dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-//    	if (default3dImage!=null) {
-//    		logger.info(indent+"Default3d: "+new File(default3dImage.getValue()).getName());
-//    		
-//        	EntityData fast3dImage = default3dImage.getChildEntity().getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
-//        	if (fast3dImage!=null) {
-//        		logger.info(indent+"Fast3d: "+new File(fast3dImage.getValue()).getName());
-//        	}
-//    	}
-//    	
-//    	EntityData default2dImage = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-//    	if (default2dImage!=null) {
-//    		logger.info(indent+"Default2d: "+new File(default2dImage.getValue()).getName());
-//    	}
-//    	
-//    	EntityData signalMip = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
-//    	if (signalMip!=null) {
-//    		logger.info(indent+"SignalMip: "+new File(signalMip.getValue()).getName());
-//    	}
-//    	
-//    	EntityData refMip = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE);
-//    	if (refMip!=null) {
-//    		logger.info(indent+"ReferenceMip: "+new File(refMip.getValue()).getName());
-//    	}
-//    }
-    
 }

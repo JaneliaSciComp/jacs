@@ -53,7 +53,7 @@ public class GetInputImagesService extends AbstractEntityService {
             }
         }
         
-        logger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
+        contextLogger.info("Putting "+inputImages.size()+" images into INPUT_IMAGES");
         processData.putItem("INPUT_IMAGES", inputImages);
     }
     
@@ -68,10 +68,10 @@ public class GetInputImagesService extends AbstractEntityService {
         String prefix = FileUtils.getFilePrefix(filepath);
         String colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
         
-        logger.info("Input file: "+filepath);
-        logger.info("  Channel specification: "+chanSpec);
-        logger.info("  Color specification: "+colorspec);
-        logger.info("  Output prefix: "+prefix);
+        contextLogger.info("Input file: "+filepath);
+        contextLogger.info("  Channel specification: "+chanSpec);
+        contextLogger.info("  Color specification: "+colorspec);
+        contextLogger.info("  Output prefix: "+prefix);
         
         InputImage inputImage = new InputImage();
         inputImage.setFilepath(filepath);
