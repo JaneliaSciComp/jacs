@@ -830,10 +830,10 @@ public class SampleHelper extends EntityHelper {
                     logger.warn("LSM stack does not support property: "+key);
                 }
                 else {
+                    String previousValue = lsmStack.getValueByAttributeName(key);
                     if (EntityUtils.setAttribute(lsmStack, key, value)) {
-                        if (key.equals(EntityConstants.ATTRIBUTE_TMOG_DATE)) {
-                            // TODO: we can remove this once all LSMs have a TMOG date on them. 
-                            // In the meantime, we don't want to trigger reprocessing on all samples so we use a separate dirty flag to save the LSM silently. 
+                        if (previousValue==null) {
+                            // Don't trigger reprocessing if a new attribute appears, only if an attribute changes 
                             lsmDirty = true;
                         }
                         else {
