@@ -656,61 +656,33 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-//    public static void main(String[] args) {
-//        String targetUser = "leetlab";
-//        try (FileWriter cleanupFile = new FileWriter(new File("/Users/saffordt/Desktop/CleanupVLInputPaths"+targetUser+".txt"));) {
-//            Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/VLInputPaths.txt"));
-//            while (scanner.hasNextLine()) {
-//                String tmpLine = scanner.nextLine().trim();
-//                if (!tmpLine.contains(targetUser)) {continue;}
-//                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
-//                File tmpOriginalPBD = new File(originalPDB);
-//                File tmpOriginalVL = new File(tmpLine);
-//                if (!tmpOriginalVL.exists()) {
-//                    System.out.println("Can't find the original VL file: "+tmpLine);
-//                    continue;
-//                }
-//                if (!tmpOriginalPBD.exists()) {
-//                    System.out.println("Can't find the original PBD file: "+originalPDB);
-//                    continue;
-//                }
-//
-//                long diff = new Date().getTime() - tmpOriginalVL.lastModified();
-//                int daysOlderThan = 3;
-//                if (diff > daysOlderThan * 24 * 60 * 60 * 1000) {
-//                    cleanupFile.append(tmpLine).append("\n");
-//                }
-//            }
-//        }
-//        catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    /**
+     * To cancel stranded jobs do the following:
+     * 1. Get the tasks not in a terminal state
+     *
+         @export on;
+         @export set filename="/Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt" CsvIncludeColumnHeader="false";
+         select task_event.task_id, task_event.event_no, task_event.description, task_event.event_timestamp, task_event.event_type, CURRENT_TIMESTAMP
+         from task join task_event on task.task_id = task_event.task_id
+         where task.task_owner='nerna' and event_no in (
+         select max(event_no) as event_no
+         from task_event task_event1 where  task_event1.task_id=task_event.task_id
+         order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled';
+         @export off;
 
-//    public static void main(String[] args) {
-//        String nernaFilePath = "/groups/jacs/jacsShare/saffordTest/nernaVLConvertHangsGrid.txt";
-//        File nernaFile = new File(nernaFilePath);
-//        try (FileWriter writer = new FileWriter(new File("/groups/jacs/jacsShare/saffordTest/nernaVLFixes.txt"))){
-//            Scanner scanner = new Scanner(nernaFile);
-//            while (scanner.hasNextLine()) {
-//                String tmpLine = scanner.nextLine().trim();
-//                String[] pieces = tmpLine.split("\\s");
-//                String suffix = pieces[6].substring(pieces[6].lastIndexOf(".")+1);
-//                Scanner tmpScanner = new Scanner(
-//                        new File("/nobackup/jacs/jacsData/filestore/system/GenericResults/572/935/2154836344520572935/sge_config/vlCorrectionTestConfiguration."+suffix));
-//                String pbd = tmpScanner.nextLine();
-//                String h5j = tmpScanner.nextLine();
-//                writer.write(h5j+"\n");
-//            }
-//        }
-//        catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//1714165592858034274	1	Sending message to queue/fileTreeLoaderPipelineLauncher queue	2012-02-27 19:28:45	pending	2015-09-06 14:46:46
+      * 2. Run the main method below to create the new cancel events
+      * 3. Run the insert statements and provide a valid output file path
+         @cd /Users/saffordt/Desktop/;
+         @run AllStrandedTasksnernaKonrad.txt.update.sql
 
+         and
+
+         /Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt.update.sql.log
+      *
+      *
+     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);
