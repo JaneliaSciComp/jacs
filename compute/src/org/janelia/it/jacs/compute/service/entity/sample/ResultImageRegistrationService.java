@@ -1,11 +1,21 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.compute.util.FileUtils;
@@ -17,12 +27,6 @@ import org.janelia.it.jacs.model.entity.cv.SampleImageType;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Start at some result entity within a Pipeline run, and look for 2d images corresponding to 3d images. These 
@@ -38,6 +42,8 @@ import java.util.regex.Pattern;
  */
 public class ResultImageRegistrationService extends AbstractEntityService {
 	
+    private List<InputImage> inputImages;
+    
 	private Map<Long,Entity> images3d = new HashMap<Long,Entity>();
 	private Map<String,Entity> allMipPrefixMap = new HashMap<String,Entity>();
 	private Map<String,Entity> signalMipPrefixMap = new HashMap<String,Entity>();
@@ -46,6 +52,8 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	
 	public void execute() throws Exception {
 
+        this.inputImages = (List<InputImage>)data.getItem("INPUT_IMAGES");
+        
         String defaultImageFilename = data.getItemAsString("DEFAULT_IMAGE_FILENAME");
     	
     	Long resultEntityId = data.getRequiredItemAsLong("RESULT_ENTITY_ID");
@@ -81,7 +89,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     }
 	
 	private void registerImages(Entity pipelineRunEntity, Entity resultEntity, String defaultImageFilename) throws Exception {
-
+	    
 	    populateChildren(resultEntity);
 	    
 	    Entity sampleEntity = entityBean.getAncestorWithType(resultEntity, EntityConstants.TYPE_SAMPLE);
@@ -155,47 +163,44 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				}	
 			}
     	}
-    	
+
+        Entity topLevelSample = sampleEntity;
+        if (sampleEntity.getName().contains("~")) {
+            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
+            if (parentSample==null) {
+                // Already at top level sample
+                logger.warn("Sub-sample "+sampleEntity.getName()+" has no ancestor sample");
+            }
+            else {
+                topLevelSample = parentSample;
+            }
+        }
+
+        SampleImageType sampleImageType = SampleImageType.Latest;
+        String dataSetIdentifier = topLevelSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
+        if (dataSet!=null) {
+            String sampleImageTypeName = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
+            logger.debug("Sample image type is: "+sampleImageTypeName);
+            if (sampleImageTypeName!=null) {
+                sampleImageType = SampleImageType.valueOf(sampleImageTypeName);
+            }
+        }
+        
     	if (default3dImage!=null) {
             logger.info("Applying default 3d image to the result ("+resultEntity.getId()+")");
         	entityHelper.setDefault3dImage(resultEntity, default3dImage);
             logger.info("Applying default 3d image to the pipeline run ("+pipelineRunEntity.getId()+")");
         	entityHelper.setDefault3dImage(pipelineRunEntity, default3dImage);
 
-        	Entity topLevelSample = sampleEntity;
-        	if (sampleEntity.getName().contains("~")) {
-	            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-	            if (parentSample==null) {
-	                // Already at top level sample
-	            	logger.warn("Sub-sample "+sampleEntity.getName()+" has no ancestor sample");
-	            }
-	            else {
-	                // Set the image on the sub-sample
-	                logger.info("Applying default 3d image to the sub-sample ("+sampleEntity.getName()+")");
-	                entityHelper.setDefault3dImage(sampleEntity, default3dImage);
-	                topLevelSample = parentSample;
-	            }
-        	}
+            // Set the image on the sub-sample
+            logger.info("Applying default 3d image to the sub-sample ("+sampleEntity.getName()+")");
+            entityHelper.setDefault3dImage(sampleEntity, default3dImage);
             
             // Set the top level sample, if this image matches the user's preference for the sample's data set
-            
-        	String dataSetIdentifier = topLevelSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-            Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
-            if (dataSet!=null) {
-                String sampleImageTypeName = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAMPLE_IMAGE_TYPE);
-                logger.debug("Sample image type is: "+sampleImageTypeName);
-                if (sampleImageTypeName!=null) {
-                    SampleImageType sampleImageType = SampleImageType.valueOf(sampleImageTypeName);
-                    if (sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
-                        logger.debug("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
-                        entityHelper.setDefault3dImage(topLevelSample, default3dImage);  
-                    }
-                }
-                else {
-                    // Default to Latest
-                    logger.info("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
-                    entityHelper.setDefault3dImage(topLevelSample, default3dImage);        
-                }
+            if (sampleEntity!=topLevelSample && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
+                logger.debug("Applying default 3d image to the top-level sample ("+topLevelSample.getName()+")");
+                entityHelper.setDefault3dImage(topLevelSample, default3dImage);  
             }
             
         	// Find and apply fast 3d image, if available
@@ -217,11 +222,62 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		Entity signalMip = getMontage(signalMipPrefixMap);
     		Entity refMip = getMontage(refMipPrefixMap);
 
-    		if (allMip!=null || signalMip!=null ||  refMip!=null) {
+    		if (allMip!=null || signalMip!=null || refMip!=null) {
 	            logger.info("Applying 2d montages to the result ("+resultEntity.getId()+")");
 	        	entityHelper.set2dImages(resultEntity, signalMip, allMip, signalMip, refMip);
 	            logger.info("Applying 2d montages to the pipeline run ("+pipelineRunEntity.getId()+")");
 	        	entityHelper.set2dImages(pipelineRunEntity, signalMip, allMip, signalMip, refMip);
+    		}
+    		else {
+    		    // No montage found, we need to pick an image, so let's pick the first one alphabetically (this works well for Brain/VNC at least)
+
+    		    List<String> keys = new ArrayList<>(allMipPrefixMap.keySet());
+    		    if (!keys.isEmpty()) {
+        	        Collections.sort(keys);
+        		    String defaultKey = keys.get(0);
+
+                    allMip = allMipPrefixMap.get(defaultKey);
+                    signalMip = signalMipPrefixMap.get(defaultKey);
+                    refMip = refMipPrefixMap.get(defaultKey);
+
+                    if (allMip!=null || signalMip!=null || refMip!=null) {
+                        logger.info("Applying first 2d image to the result ("+resultEntity.getId()+")");
+                        entityHelper.set2dImages(resultEntity, signalMip, allMip, signalMip, refMip);
+                        logger.info("Applying first 2d image to the pipeline run ("+pipelineRunEntity.getId()+")");
+                        entityHelper.set2dImages(pipelineRunEntity, signalMip, allMip, signalMip, refMip);
+                    }
+                    
+                    // Apply 2d images to sample
+                    if (inputImages!=null) {
+                        
+                        logger.info("Searching for input image with output prefix of "+defaultKey);
+                        for(InputImage inputImage : inputImages) {
+                            logger.info("Considering "+inputImage.getOutputPrefix());
+                            if (inputImage.getOutputPrefix().equals(defaultKey)) {
+                                List<Entity> matches = entityBean.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, inputImage.getFilepath());
+                                if (!matches.isEmpty()) {
+                                    default3dImage = matches.get(0);
+                                }
+                                logger.info("Found id="+default3dImage.getId());
+                            }
+                        }
+
+                        // Set the top level sample, if this image matches the user's preference for the sample's data set
+                        if (default3dImage!=null && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
+
+                            // Set the images on the sub-sample
+                            logger.info("Applying first 2d image to the sub-sample ("+sampleEntity.getId()+")");
+                            entityHelper.set2dImages(sampleEntity, signalMip, allMip, signalMip, refMip);
+                            
+                            // Set the top level sample, if this image matches the user's preference for the sample's data set
+                            if (sampleEntity!=topLevelSample && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
+                                logger.info("Applying first 2d image to the top-level sample ("+topLevelSample.getId()+")");
+                                entityHelper.set2dImages(topLevelSample, signalMip, allMip, signalMip, refMip);
+                            }
+                        }
+                        
+                    }
+    		    }
     		}
     	}
     	
@@ -241,7 +297,6 @@ public class ResultImageRegistrationService extends AbstractEntityService {
                 	String imageName = FileUtils.getFilePrefix(name);
                 	selectAndSetMIPs(lsmStack, imageName);
                 }
-            	
             }
     	}
 	}
