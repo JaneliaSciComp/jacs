@@ -94,14 +94,16 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
                 InputImage inputImage = getInputImage(sampleEntity, templateImage, mergedPair);
                 if (inputImage.getFilepath().equals(templateImage.getFilepath())) {
-                    if (!"63x".equals(objective)) {
+                    if ("63x".equals(objective)) {
                         // For 63x samples, we want to use the tile name instead of the area name
                         logger.info("Will replace template image: "+templateImage.getFilepath());
                         toDelete.add(templateImage);
                     }
                 }
-                logger.info("Adding tile image: "+inputImage.getFilepath());
-                toAdd.add(inputImage);
+                else {
+                    logger.info("Adding tile image: "+inputImage.getFilepath());
+                    toAdd.add(inputImage);
+                }
             }
         }
         
