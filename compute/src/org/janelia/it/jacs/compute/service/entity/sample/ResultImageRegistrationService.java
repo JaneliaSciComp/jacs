@@ -239,12 +239,13 @@ public class ResultImageRegistrationService extends AbstractEntityService {
                     allMip = allMipPrefixMap.get(defaultKey);
                     signalMip = signalMipPrefixMap.get(defaultKey);
                     refMip = refMipPrefixMap.get(defaultKey);
-
+                    Entity defaultMip = allMip==null?signalMip:allMip;
+                    
                     if (allMip!=null || signalMip!=null || refMip!=null) {
                         contextLogger.info("Applying first 2d image to the result ("+resultEntity.getId()+")");
-                        entityHelper.set2dImages(resultEntity, signalMip, allMip, signalMip, refMip);
+                        entityHelper.set2dImages(resultEntity, defaultMip, allMip, signalMip, refMip);
                         contextLogger.info("Applying first 2d image to the pipeline run ("+pipelineRunEntity.getId()+")");
-                        entityHelper.set2dImages(pipelineRunEntity, signalMip, allMip, signalMip, refMip);
+                        entityHelper.set2dImages(pipelineRunEntity, defaultMip, allMip, signalMip, refMip);
                     }
                     
                     // Apply 2d images to sample
@@ -267,12 +268,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 
                             // Set the images on the sub-sample
                             contextLogger.info("Applying first 2d image to the sub-sample ("+sampleEntity.getId()+")");
-                            entityHelper.set2dImages(sampleEntity, signalMip, allMip, signalMip, refMip);
+                            entityHelper.set2dImages(sampleEntity, defaultMip, allMip, signalMip, refMip);
                             
                             // Set the top level sample, if this image matches the user's preference for the sample's data set
                             if (sampleEntity!=topLevelSample && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
                                 contextLogger.info("Applying first 2d image to the top-level sample ("+topLevelSample.getId()+")");
-                                entityHelper.set2dImages(topLevelSample, signalMip, allMip, signalMip, refMip);
+                                entityHelper.set2dImages(topLevelSample, defaultMip, allMip, signalMip, refMip);
                             }
                         }
                         
