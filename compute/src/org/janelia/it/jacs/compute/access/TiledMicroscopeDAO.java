@@ -415,8 +415,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!valueStringUpdated) {
                 throw new Exception("Could not find temp geo entry to update for value string");
             }
-            TmStructuredTextAnnotation structeredAnnotation = new TmStructuredTextAnnotation(valueString);
-            return structeredAnnotation;
+            TmStructuredTextAnnotation structuredAnnotation = new TmStructuredTextAnnotation(valueString);
+            return structuredAnnotation;
 
         } catch (Exception e) {
             e.printStackTrace();

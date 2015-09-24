@@ -119,7 +119,7 @@ public class TmNeuron implements IsSerializable, Serializable {
                 textAnnotationMap.put(ann.getParentId(), ann);
             }
         }
-        // Second step is to link childen to produce the graph for
+        // Second step is to link children to produce the graph for
         //  the GeoAnnotations
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
             Long parentId = ga.getParentId();
