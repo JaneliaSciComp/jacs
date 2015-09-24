@@ -26,8 +26,11 @@
             <input name="TARGET_TILE_WIDTH" />
             <input name="TARGET_TILE_HEIGHT" />
             <input name="TARGET_MIN_ROW" />
+            <input name="TARGET_MAX_ROW" />
             <input name="TARGET_MIN_COL" />
+            <input name="TARGET_MAX_COL" />
             <input name="TARGET_MIN_Z" />
+            <input name="TARGET_MAX_Z" />
         </operation>
     </sequence>
 </process>

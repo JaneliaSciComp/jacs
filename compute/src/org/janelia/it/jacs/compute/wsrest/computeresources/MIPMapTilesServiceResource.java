@@ -78,8 +78,11 @@ public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPM
         processConfig.put("TARGET_TILE_WIDTH", task.getTargetTileWidth());
         processConfig.put("TARGET_TILE_HEIGHT", task.getTargetTileHeight());
         processConfig.put("TARGET_MIN_ROW", task.getTargetMinRow());
+        processConfig.put("TARGET_MAX_ROW", task.getTargetMaxRow());
         processConfig.put("TARGET_MIN_COL", task.getTargetMinCol());
+        processConfig.put("TARGET_MAX_COL", task.getTargetMaxCol());
         processConfig.put("TARGET_MIN_Z", task.getTargetMinZ());
+        processConfig.put("TARGET_MAX_Z", task.getTargetMaxZ());
         return processConfig;
     }
 

@@ -45,8 +45,11 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_targetTileWidth = "target image tile width";
     transient private static final String PARAM_targetTileHeight = "target image tile height";
     transient private static final String PARAM_targetMinRow = "target min row";
+    transient private static final String PARAM_targetMaxRow = "target ax row";
     transient private static final String PARAM_targetMinCol = "target min col";
+    transient private static final String PARAM_targetMaxCol = "target max col";
     transient private static final String PARAM_targetMinZ = "target min Z";
+    transient private static final String PARAM_targetMaxZ = "target max Z";
 
     public MIPMapTilesTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -111,9 +114,15 @@ public class MIPMapTilesTask extends Task {
                 return new IntegerParameterVO(Integer.valueOf(value));
             case PARAM_targetMinRow:
                 return new IntegerParameterVO(Integer.valueOf(value));
+            case PARAM_targetMaxRow:
+                return new IntegerParameterVO(Integer.valueOf(value));
             case PARAM_targetMinCol:
                 return new IntegerParameterVO(Integer.valueOf(value));
+            case PARAM_targetMaxCol:
+                return new IntegerParameterVO(Integer.valueOf(value));
             case PARAM_targetMinZ:
+                return new LongParameterVO(Long.valueOf(value));
+            case PARAM_targetMaxZ:
                 return new LongParameterVO(Long.valueOf(value));
             default:
                 return null;
@@ -304,6 +313,15 @@ public class MIPMapTilesTask extends Task {
         setParameterAsInteger(PARAM_targetMinRow, targetMinRow);
     }
 
+    @XmlElement(name = "targetMaxRow")
+    public Integer getTargetMaxRow() {
+        return getParameterAsInteger(PARAM_targetMaxRow);
+    }
+
+    public void setTargetMaxRow(Integer targetMinRow) {
+        setParameterAsInteger(PARAM_targetMaxRow, targetMinRow);
+    }
+
     @XmlElement(name = "targetMinCol")
     public Integer getTargetMinCol() {
         return getParameterAsInteger(PARAM_targetMinCol);
@@ -311,6 +329,15 @@ public class MIPMapTilesTask extends Task {
 
     public void setTargetMinCol(Integer targetMinCol) {
         setParameterAsInteger(PARAM_targetMinCol, targetMinCol);
+    }
+
+    @XmlElement(name = "targetMaxCol")
+    public Integer getTargetMaxCol() {
+        return getParameterAsInteger(PARAM_targetMaxCol);
+    }
+
+    public void setTargetMaxCol(Integer targetMaxCol) {
+        setParameterAsInteger(PARAM_targetMaxCol, targetMaxCol);
     }
 
     @XmlElement(name = "targetMinZ")
@@ -322,4 +349,12 @@ public class MIPMapTilesTask extends Task {
         setParameterAsLong(PARAM_targetMinZ, targetMinZ);
     }
 
+    @XmlElement(name = "targetMaxZ")
+    public Long getTargetMaxZ() {
+        return getParameterAsLong(PARAM_targetMaxZ);
+    }
+
+    public void setTargetMaxZ(Long targetMaxZ) {
+        setParameterAsLong(PARAM_targetMaxZ, targetMaxZ);
+    }
 }
