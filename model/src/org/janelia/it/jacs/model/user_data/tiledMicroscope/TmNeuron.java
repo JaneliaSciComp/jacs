@@ -110,9 +110,7 @@ public class TmNeuron implements IsSerializable, Serializable {
                     rootAnnotations.add(ga);
                 }
                 geoAnnotationMap.put(ga.getId(), ga);
-                // these values only set when we do it here, in the context of a neuron
                 ga.setNeuronId(id);
-                ga.setEmptyChildList();
             } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
                 TmAnchoredPath path = new TmAnchoredPath(ed.getValue());
                 anchoredPathMap.put(path.getEndpoints(), path);

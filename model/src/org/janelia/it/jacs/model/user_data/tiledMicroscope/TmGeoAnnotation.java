@@ -30,7 +30,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     //  are performed on other GeoAnns (creation, deletion, update), so the info
     //  would get stale fast
     Long neuronId = null;
-    List<Long> childIds = null;
+    List<Long> childIds = new ArrayList<>();;
 
     // implementation note: at one point we stored the parent and child objects,
     //  but serializing them for calling remote server routines caused the
@@ -138,14 +138,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     }
 
     public void addChild(TmGeoAnnotation child) {
-        if (childIds == null) {
-            setEmptyChildList();
-        }
         childIds.add(child.getId());
-    }
-
-    public void setEmptyChildList() {
-        childIds = new ArrayList<Long>();
     }
 
     public void setParentId(Long parentId) {
