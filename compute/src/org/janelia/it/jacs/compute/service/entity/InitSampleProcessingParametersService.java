@@ -38,8 +38,6 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 
 		AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
 
-		List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
-
 		List<Entity> tileEntities = null;
 		if (sampleArea != null) {
 			contextLogger.info("Processing tiles for area: " + sampleArea.getName());
@@ -55,10 +53,19 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 			tileEntities = EntityUtils.getDescendantsOfType(supportingFiles, EntityConstants.TYPE_IMAGE_TILE, true);
 		}
 
+		List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
 		boolean archived = populateMergedLsmPairs(tileEntities, mergedLsmPairs);
 		contextLogger.info("Putting " + archived + " in COPY_FROM_ARCHIVE");
 		processData.putItem("COPY_FROM_ARCHIVE", archived);
 
+
+        if (sampleArea==null) {
+            // Create dummy area to hold the LSM information
+            sampleArea = new AnatomicalArea("");
+        }
+        
+	    sampleArea.setMergedLsmPairs(mergedLsmPairs);
+		
 		if (mergedLsmPairs.isEmpty()) {
 			throw new Exception("Sample (id=" + sampleEntityId + ") has no tiles");
 		}
@@ -73,9 +80,9 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 				throw new IllegalArgumentException("STITCH_RESULT_FILE_NODE may not be null");
 			}
 			File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-" + sampleEntity.getId() + ".v3draw");
-			contextLogger.info("Putting " + stitchedFile.getAbsolutePath() + " in STITCHED_FILENAME");
-			processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
-			stackFilenames.add(stitchedFile.getAbsolutePath());
+			String stitchedFilepath = stitchedFile.getAbsolutePath();
+			sampleArea.setStitchedFilename(stitchedFilepath);
+			stackFilenames.add(stitchedFilepath);
 		}
 
 		for (MergedLsmPair mergedLsmPair : mergedLsmPairs) {
@@ -83,22 +90,18 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 		}
 
 		String sampleProcessingResultsName = "Sample Processing Results";
-		if (sampleArea != null && !StringUtils.isEmpty(sampleArea.getName())) {
+		if (!StringUtils.isEmpty(sampleArea.getName())) {
 			sampleProcessingResultsName += " (" + sampleArea.getName() + ")";
 		}
-
-		contextLogger.info("Putting " + mergedLsmPairs.size()
-				+ " items in BULK_MERGE_PARAMETERS");
-		processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
-
-		contextLogger.info("Putting " + stackFilenames.size()
-				+ " items in STACK_FILENAMES");
+		
+		contextLogger.info("Putting " + stackFilenames.size()+ " items in STACK_FILENAMES");
 		processData.putItem("STACK_FILENAMES", stackFilenames);
 
-		contextLogger.info("Putting " + sampleProcessingResultsName
-				+ " in SAMPLE_PROCESSING_RESULTS_NAME");
-		processData.putItem("SAMPLE_PROCESSING_RESULTS_NAME",
-				sampleProcessingResultsName);
+		contextLogger.info("Putting " + sampleProcessingResultsName+ " in SAMPLE_PROCESSING_RESULTS_NAME");
+		processData.putItem("SAMPLE_PROCESSING_RESULTS_NAME", sampleProcessingResultsName);
+
+        contextLogger.info("Putting updated " + sampleArea + " back into SAMPLE_AREA");
+        processData.putItem("SAMPLE_AREA", sampleArea);
 	}
 
 	private boolean populateMergedLsmPairs(List<Entity> tileEntities, List<MergedLsmPair> mergedLsmPairs) throws Exception {

@@ -63,7 +63,7 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         }
         
-        String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
+        String stitchedFilename = sampleArea.getStitchedFilename();
 
         // Find consensus optical res
         entityLoader.populateChildren(sampleEntity);    

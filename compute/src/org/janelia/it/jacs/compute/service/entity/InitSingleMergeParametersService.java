@@ -5,39 +5,35 @@ import java.util.List;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 
 /**
- * Given BULK_MERGE_PARAMETER which contain only a single LSM pair, put that LSM pair's merged filename into
- * the STITCHED_FILENAME variable.
+ * Given SAMPLE_AREA which contains only a single LSM pair, 
+ * put that LSM pair's merged filename the SAMPLE_AREA.
  * 
  * Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
+ *   SAMPLE_AREA - the sample area object
  * Output:
- *   STITCHED_FILENAME
+ *   SAMPLE_AREA
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class InitSingleMergeParametersService implements IService {
 
 	public void execute(IProcessData processData) throws ServiceException {
-
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-        if (bulkMergeParamObj==null) {
-        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
+	    
+        AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
+        if (sampleArea==null) {
+        	throw new ServiceException("Input parameter SAMPLE_AREA may not be null");
         }
         
-        if (bulkMergeParamObj instanceof List) {
-        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-        	if (mergedLsmPairs.size() != 1) {
-        		throw new ServiceException("BULK_MERGE_PARAMETERS must contain exactly one merged pair");
-        	}
-        	processData.putItem("STITCHED_FILENAME", mergedLsmPairs.get(0).getMergedFilepath());
-        }
-        else {
-        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be a List");
-        }
-            
+        List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
+    	if (mergedLsmPairs.size() != 1) {
+    		throw new ServiceException("SAMPLE_AREA must contain exactly one merged pair");
+    	}
+    	String stitchedFilename = mergedLsmPairs.get(0).getMergedFilepath();
+    	sampleArea.setStitchedFilename(stitchedFilename);
     }
 }

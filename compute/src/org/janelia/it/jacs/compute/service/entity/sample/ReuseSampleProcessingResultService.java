@@ -60,13 +60,15 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
         if (latestSp!=null) {
             String stitchedFilename = latestSp.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
             if (stitchedFilename!=null) {
+                sampleArea.setStitchedFilename(stitchedFilename);
+                
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestSp.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
                 contextLogger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+pipelineRunId);
+                
                 processData.putItem("RESULT_ENTITY_ID", latestSp.getId().toString());
                 contextLogger.info("Putting '"+latestSp.getId()+"' in RESULT_ENTITY_ID");
-                processData.putItem("STITCHED_FILENAME", stitchedFilename);    
-                contextLogger.info("Putting '"+stitchedFilename+"' in STITCHED_FILENAME");
+                
                 processData.putItem("RUN_PROCESSING", Boolean.FALSE);    
                 contextLogger.info("Putting '"+Boolean.FALSE+"' in RUN_PROCESSING");
             }

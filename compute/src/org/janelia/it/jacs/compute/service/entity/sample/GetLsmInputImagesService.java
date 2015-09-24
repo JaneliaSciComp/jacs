@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
@@ -25,16 +24,8 @@ public class GetLsmInputImagesService extends AbstractEntityService {
 
     public void execute() throws Exception {
 
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-        if (bulkMergeParamObj==null) {
-            throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-        }
-
-        if (!(bulkMergeParamObj instanceof List)) {
-            throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
-        }
-        
-        List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+        AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
+        List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
         
         List<InputImage> inputImages = new ArrayList<>();
         
