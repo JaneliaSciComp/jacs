@@ -9,7 +9,6 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronMappingGridService;
@@ -34,8 +33,6 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
 
     private static final String ANNOTATION_MIGRATION_RESULT = "Migration Result";
     
-	private static final Logger logger = Logger.getLogger(MigrationNeuronAnnotationsService.class);
-    
 	private String resultComment;
 	
     public void execute() throws Exception {
@@ -50,14 +47,14 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
             throw new IllegalArgumentException("Source separation entity not found with id="+sourceSeparationId);
         }
 
-        logger.info("Retrieved source separation: "+sourceSeparation.getName()+" (id="+sourceSeparationId+")");
+        contextLogger.info("Retrieved source separation: "+sourceSeparation.getName()+" (id="+sourceSeparationId+")");
         
         Entity targetSeparation = entityBean.getEntityTree(targetSeparationId);
         if (targetSeparation == null) {
             throw new IllegalArgumentException("Target separation entity not found with id="+targetSeparation);
         }
 
-        logger.info("Retrieved target separation: "+targetSeparation.getName()+" (id="+targetSeparationId+")");
+        contextLogger.info("Retrieved target separation: "+targetSeparation.getName()+" (id="+targetSeparationId+")");
 
         migrateAnnotations(sourceSeparation, targetSeparation, targetIsWarped);
         
@@ -104,19 +101,19 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         List<Entity> targetAnnotations = getAnnotationsForChildren(targetNeuronCollection);
 
         if (!targetAnnotations.isEmpty()) {
-            logger.warn("Target separation ("+targetSeparation.getId()+") already has neuron annotations ("+targetAnnotations.size()+").");
+            contextLogger.warn("Target separation ("+targetSeparation.getId()+") already has neuron annotations ("+targetAnnotations.size()+").");
             // TODO: is this an error condition, or should we just warn and proceed?
-            logger.warn("Cannot proceed with annotation migration to annotated separation");
+            contextLogger.warn("Cannot proceed with annotation migration to annotated separation");
             resultComment = "Target neurons already annotated";
             return;
         }
         
         if (sourceAnnotations.isEmpty()) {
-            logger.info("Source separation ("+sourceSeparation.getId()+") has no neuron annotations to migrate");
+            contextLogger.info("Source separation ("+sourceSeparation.getId()+") has no neuron annotations to migrate");
             return;
         }
 
-        logger.info("Migrating annotations from: "+sourceSeparation.getId()+" to "+targetSeparation.getId());
+        contextLogger.info("Migrating annotations from: "+sourceSeparation.getId()+" to "+targetSeparation.getId());
         
         if (targetIsWarped) {
             int ns = sourceNeuronCollection.getChildren().size();
@@ -131,7 +128,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         else {
             Map<Integer,Integer> mapping = getMapping(targetSeparation, sourceSeparation.getId(), resultWasMapped);
             if (mapping!=null) {
-	            logger.info("Retrieved "+mapping.size()+" neuron mappings");
+                contextLogger.info("Retrieved "+mapping.size()+" neuron mappings");
 	            if (!mapping.isEmpty()) {
 	                
 	            	migrateAnnotations(sourceNeuronCollection, targetNeuronCollection, sourceAnnotations, targetAnnotations, mapping);
@@ -181,25 +178,25 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         for(Long neuronEntityId : sourceAnnotationMap.keySet()) {
             Collection<Entity> annotations = sourceAnnotationMap.get(neuronEntityId);
             if (annotations==null) {
-                logger.warn("Neuron (id="+neuronEntityId+") has null annotation");
+                contextLogger.warn("Neuron (id="+neuronEntityId+") has null annotation");
                 continue;
             }
             Number sourceNumber = sourceNeuronNumByEntityId.get(neuronEntityId);
             if (sourceNumber==null) {
-                logger.warn("Neuron (id="+neuronEntityId+") has null number");
+                contextLogger.warn("Neuron (id="+neuronEntityId+") has null number");
                 continue;
             }
             Integer targetNumber = mapping.get(sourceNumber);
             if (targetNumber==null) {
-                logger.warn("Neuron (number="+sourceNumber+") has no mapping in the target separation");
+                contextLogger.warn("Neuron (number="+sourceNumber+") has no mapping in the target separation");
                 continue;
             }
             Long targetEntityId = (Long)targetEntityIdByNeuronNum.get(targetNumber);
             if (targetEntityId==null) {
-                logger.warn("Neuron (number="+sourceNumber+") has no entity in the target separation");
+                contextLogger.warn("Neuron (number="+sourceNumber+") has no entity in the target separation");
                 continue;
             }
-            logger.info("Neuron "+sourceNumber+"->"+targetNumber+" ("+neuronEntityId+"->"+targetEntityId+") has "+annotations.size()+" annotations");
+            contextLogger.info("Neuron "+sourceNumber+"->"+targetNumber+" ("+neuronEntityId+"->"+targetEntityId+") has "+annotations.size()+" annotations");
         	migrateAnnotations(annotations, targetEntityId);
         	resultComment = "Migrated "+annotations.size()+" annotations";
         }
@@ -210,7 +207,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
      */
     private void migrateAnnotations(Collection<Entity> annotations, Long targetId) throws ComputeException {
         for(Entity annotation : annotations) {
-            logger.info("Migrating annotation "+annotation.getName()+" to "+targetId);
+            contextLogger.info("Migrating annotation "+annotation.getName()+" to "+targetId);
             migrateAnnotation(annotation, targetId);    
         }
     }
@@ -303,7 +300,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
     	
     	if (mappingFile==null) {
         	resultComment = "No neuron mapping file";
-    		logger.error("No mapping file found from source separation "+sourceSeparationId+" to target "+separation.getId());
+        	contextLogger.error("No mapping file found from source separation "+sourceSeparationId+" to target "+separation.getId());
     		return null;
     	}
         
@@ -318,7 +315,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
                 String line = scanner.nextLine().trim();
                 if ("ERROR: Input volumes are not the same size".equals(line)) {
                 	resultComment = "Cannot map different sized volumes";
-                	logger.error("Mapping failed because volumes were not the same size");
+                	contextLogger.error("Mapping failed because volumes were not the same size");
                 	return null;
                 }
                 
@@ -334,11 +331,11 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
                         mapping.put(Integer.parseInt(prevIndex), Integer.parseInt(newIndex));
                     }
                     catch (NumberFormatException e) {
-                        logger.warn("Could not format indexes: "+prevIndex+"->"+newIndex);
+                        contextLogger.warn("Could not format indexes: "+prevIndex+"->"+newIndex);
                     }
                 }
                 else {
-                	logger.warn("Unexpected format: "+line);
+                    contextLogger.warn("Unexpected format: "+line);
                 }
             }
             return mapping;

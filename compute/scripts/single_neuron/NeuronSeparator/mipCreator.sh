@@ -112,11 +112,11 @@ if [ ! -z "$REF_CHAN" ]; then
     createMip "reference" "$REF_CHAN" ""
 fi
 
-if [ ${#ALL_CHAN} -lt 6 ]; then
-    if [ ! -z "$ALL_CHAN" ]; then
-        createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
-    fi
-fi
+#if [ ${#ALL_CHAN} -lt 6 ]; then
+#    if [ ! -z "$ALL_CHAN" ]; then
+#        createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
+#    fi
+#fi
 
 echo "~ Copying final output to: $OUTDIR"
 mkdir -p $OUTDIR

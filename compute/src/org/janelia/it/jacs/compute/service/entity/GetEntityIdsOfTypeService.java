@@ -26,7 +26,7 @@ public class GetEntityIdsOfTypeService extends AbstractEntityService {
     	    entityIds.add(entity.getId().toString());
     	}
     	
-    	logger.info("Putting "+entityIds.size()+" result ids in ENTITY_ID");
+    	contextLogger.info("Putting "+entityIds.size()+" result ids in ENTITY_ID");
     	processData.putItem("ENTITY_ID", entityIds);
     }
 }

@@ -24,13 +24,13 @@ public class ScalityCorrectionService extends AbstractEntityService {
 
     	this.dao = new ScalityDAO();
 
-        logger.info("Starting Scality correction service for "+ownerKey);
+        contextLogger.info("Starting Scality correction service for "+ownerKey);
         
         if (isDebug) {
-            logger.info("This is a test run. No files will be moved.");
+            contextLogger.info("This is a test run. No files will be moved.");
         }
         else {
-            logger.info("This is the real thing. Files will be moved from Scality to the filestore!");
+            contextLogger.info("This is the real thing. Files will be moved from Scality to the filestore!");
         }
 
         fixFiles(EntityConstants.TYPE_IMAGE_3D, "ConsolidatedLabel.v3dpbd");
@@ -59,7 +59,7 @@ public class ScalityCorrectionService extends AbstractEntityService {
         			entityBean.setOrUpdateValue(ownerKey, entity.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, filepath);
         		}
         		
-        		logger.info("Moved "+entity.getId()+" to filestore");
+        		contextLogger.info("Moved "+entity.getId()+" to filestore");
         		
         		numFixed++;
         	}
@@ -67,7 +67,7 @@ public class ScalityCorrectionService extends AbstractEntityService {
         	numProcessed++;
         }
         
-		logger.info("Processed "+numProcessed+" "+name+" entities, fixed "+numFixed+".");
+		contextLogger.info("Processed "+numProcessed+" "+name+" entities, fixed "+numFixed+".");
     }
     
 }

@@ -102,14 +102,14 @@ public class SageArtifactExportService extends AbstractEntityService {
 	        	if (sb.length()>0) sb.append("\n");
 	        	sb.append(name);
 	        }
-	        logger.info("Exported primary image names:\n"+sb);
+	        contextLogger.info("Exported primary image names:\n"+sb);
         }
         
     }
     
     private List<Entity> getSamplesForExport(String annotationTerm) throws Exception {
         
-        logger.info("Finding samples annotated with '"+annotationTerm+"'...");
+        contextLogger.info("Finding samples annotated with '"+annotationTerm+"'...");
         
         List<Entity> samples = new ArrayList<Entity>();
         for(Entity sample : annotationBean.getEntitiesAnnotatedWithTerm(ownerKey, annotationTerm)) {
@@ -123,7 +123,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                     logger.warn("  Entity annotated with '"+annotationTerm+"' does not have a 20x sample: "+sample.getId());
                 }
                 else {
-                    logger.info("  Sample will be synchronized to SAGE: "+os.getName());
+                    contextLogger.info("  Sample will be synchronized to SAGE: "+os.getName());
                     samples.add(os);    
                 }
             }
@@ -133,7 +133,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                     logger.warn("  Entity annotated with '"+annotationTerm+"' does not have a 63x sample: "+sample.getId());
                 }
                 else {
-                    logger.info("  Sample will be synchronized to SAGE: "+os.getName());
+                    contextLogger.info("  Sample will be synchronized to SAGE: "+os.getName());
                     samples.add(os);  
                 }
             }   
@@ -158,7 +158,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         
     private void exportSamples(List<Entity> samples) throws Exception {
         for(Entity sample : samples) {
-            logger.info("Synchronizing "+sample.getName());
+            contextLogger.info("Synchronizing "+sample.getName());
             String objective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
         	if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                 export20xSample(sample);
@@ -404,7 +404,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     }
     
     private void synchronizeSecondaryImages(Entity artifactRun, Image sourceImage, String tileName, String objective) throws Exception {
-    	logger.debug("  Synchronizing secondary images for tile: "+tileName);
+        contextLogger.debug("  Synchronizing secondary images for tile: "+tileName);
     	String tileTag = "-"+tileName;
         for(Entity child : artifactRun.getChildren()) {
             String name = child.getName();
@@ -485,7 +485,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
         
-        logger.info("  Synchronizing "+entity.getName());
+        contextLogger.info("  Synchronizing "+entity.getName());
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         String url = getUrl(path);
         
@@ -498,12 +498,12 @@ public class SageArtifactExportService extends AbstractEntityService {
         	image.setDisplay(true);
         	image.setCreatedBy(CREATED_BY);
             image = sage.saveImage(image);
-            logger.info("    Updated SAGE primary image "+image.getId()+" with name "+image.getName());
+            contextLogger.info("    Updated SAGE primary image "+image.getId()+" with name "+image.getName());
         }
         else {
             image = new Image(consensusFamily, line, source, imageName, url, path, true, true, CREATED_BY, createDate);
             image = sage.saveImage(image);
-            logger.info("    Created SAGE primary image "+image.getId()+" with name "+image.getName());
+            contextLogger.info("    Created SAGE primary image "+image.getId()+" with name "+image.getName());
         }
         
         List<CvTerm> keys = new ArrayList<CvTerm>(consensusValues.keySet());
@@ -536,12 +536,12 @@ public class SageArtifactExportService extends AbstractEntityService {
             secondaryImage.setPath(path);
             secondaryImage.setUrl(url);
             sage.saveSecondaryImage(secondaryImage);
-            logger.info("    Updated SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
+            contextLogger.info("    Updated SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
         }
         else {
             secondaryImage = new SecondaryImage(sourceImage, productType, imageName, path, getUrl(path), createDate);
             sage.saveSecondaryImage(secondaryImage);
-            logger.info("    Created SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
+            contextLogger.info("    Created SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
         }
         
         return secondaryImage;

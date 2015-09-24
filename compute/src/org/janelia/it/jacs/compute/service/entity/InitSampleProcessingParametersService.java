@@ -30,7 +30,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 		mergeResultNode = (FileNode) processData.getItem("MERGE_RESULT_FILE_NODE");
 
 		String sampleEntityId = (String) data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
-		logger.info("Running InitSampleProcessingParametersService for sample " + sampleEntityId);
+		contextLogger.info("Running InitSampleProcessingParametersService for sample " + sampleEntityId);
 		Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
 		if (sampleEntity == null) {
 			throw new IllegalArgumentException("Sample entity not found with id=" + sampleEntityId);
@@ -42,7 +42,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 
 		List<Entity> tileEntities = null;
 		if (sampleArea != null) {
-			logger.info("Processing tiles for area: " + sampleArea.getName());
+			contextLogger.info("Processing tiles for area: " + sampleArea.getName());
 			tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
 		} 
 		else {
@@ -56,7 +56,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 		}
 
 		boolean archived = populateMergedLsmPairs(tileEntities, mergedLsmPairs);
-		logger.info("Putting " + archived + " in COPY_FROM_ARCHIVE");
+		contextLogger.info("Putting " + archived + " in COPY_FROM_ARCHIVE");
 		processData.putItem("COPY_FROM_ARCHIVE", archived);
 
 		if (mergedLsmPairs.isEmpty()) {
@@ -73,7 +73,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 				throw new IllegalArgumentException("STITCH_RESULT_FILE_NODE may not be null");
 			}
 			File stitchedFile = new File(stitchResultNode.getDirectoryPath(), "stitched-" + sampleEntity.getId() + ".v3draw");
-			logger.info("Putting " + stitchedFile.getAbsolutePath() + " in STITCHED_FILENAME");
+			contextLogger.info("Putting " + stitchedFile.getAbsolutePath() + " in STITCHED_FILENAME");
 			processData.putItem("STITCHED_FILENAME", stitchedFile.getAbsolutePath());
 			stackFilenames.add(stitchedFile.getAbsolutePath());
 		}
@@ -87,15 +87,15 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 			sampleProcessingResultsName += " (" + sampleArea.getName() + ")";
 		}
 
-		logger.info("Putting " + mergedLsmPairs.size()
+		contextLogger.info("Putting " + mergedLsmPairs.size()
 				+ " items in BULK_MERGE_PARAMETERS");
 		processData.putItem("BULK_MERGE_PARAMETERS", mergedLsmPairs);
 
-		logger.info("Putting " + stackFilenames.size()
+		contextLogger.info("Putting " + stackFilenames.size()
 				+ " items in STACK_FILENAMES");
 		processData.putItem("STACK_FILENAMES", stackFilenames);
 
-		logger.info("Putting " + sampleProcessingResultsName
+		contextLogger.info("Putting " + sampleProcessingResultsName
 				+ " in SAMPLE_PROCESSING_RESULTS_NAME");
 		processData.putItem("SAMPLE_PROCESSING_RESULTS_NAME",
 				sampleProcessingResultsName);
@@ -127,7 +127,7 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 			}
 
 			if (lsm2 != null && "2".equals(first.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS))) {
-				logger.info("Putting 3 channel image first: " + lsm2.getName());
+				contextLogger.info("Putting 3 channel image first: " + lsm2.getName());
 				// Switch the LSMs so that the 3 channel image always comes first
 				Entity temp = lsm1;
 				lsm1 = lsm2;

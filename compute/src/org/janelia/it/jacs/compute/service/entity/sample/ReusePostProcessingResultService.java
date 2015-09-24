@@ -57,16 +57,16 @@ public class ReusePostProcessingResultService extends AbstractEntityService {
         if (latestLsr!=null) {
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestLsr.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
-                logger.info("Reusing post-processing result "+latestLsr.getId()+" for "+latestLsr.getName()+" in new pipeline run "+pipelineRunId);
+                contextLogger.info("Reusing post-processing result "+latestLsr.getId()+" for "+latestLsr.getName()+" in new pipeline run "+pipelineRunId);
                 processData.putItem("RESULT_ENTITY", latestLsr);
-                logger.info("Putting '"+latestLsr+"' in RESULT_ENTITY");
+                contextLogger.info("Putting '"+latestLsr+"' in RESULT_ENTITY");
                 processData.putItem("RESULT_ENTITY_ID", latestLsr.getId().toString());
-                logger.info("Putting '"+latestLsr.getId()+"' in RESULT_ENTITY_ID");
+                contextLogger.info("Putting '"+latestLsr.getId()+"' in RESULT_ENTITY_ID");
                 processData.putItem("RUN_POST", Boolean.FALSE);    
-                logger.info("Putting '"+Boolean.FALSE+"' in RUN_POST");
+                contextLogger.info("Putting '"+Boolean.FALSE+"' in RUN_POST");
         }
         else {
-            logger.info("No existing post-processing available for reuse for sample: "+sampleEntityId);
+            contextLogger.info("No existing post-processing available for reuse for sample: "+sampleEntityId);
         }
     }
 }

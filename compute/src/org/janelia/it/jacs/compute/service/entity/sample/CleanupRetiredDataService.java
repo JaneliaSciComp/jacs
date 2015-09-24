@@ -63,11 +63,11 @@ public class CleanupRetiredDataService extends AbstractEntityService {
     	List<LongPair> separationIdPairs = new ArrayList<LongPair>();
     	List<LongPair> separationIdPairsNeedingMapping = new ArrayList<LongPair>();
     	
-    	logger.info("Finding all samples...");
+    	contextLogger.info("Finding all samples...");
 		addSamples(sampleMap, entityBean.getUserEntitiesByTypeName(OWNER_KEY, "Sample"));
 		addSamples(sampleMap, entityBean.getUserEntitiesByTypeName(GROUP_KEY, "Sample"));
 		
-		logger.info("Finding retired samples...");
+		contextLogger.info("Finding retired samples...");
 		addRetiredSamples(retiredSampleSet, getRootEntity(OWNER_KEY, "Retired Data"));
 		addRetiredSamples(retiredSampleSet, getRootEntity(GROUP_KEY, "Retired Data"));
 
@@ -109,11 +109,11 @@ public class CleanupRetiredDataService extends AbstractEntityService {
 	            }
 	        }
 	        
-        	logger.info("Processing "+slideCode);
-	        logger.info("  Found "+activeSamples.size()+" active samples");
-	        logger.info("  Found "+retiredSamples.size()+" retired samples");
-	        logger.info("  Mapped "+sampleMapping.size()+" retired samples to active samples");
-        	logger.info("  Processing active samples...");
+        	contextLogger.info("Processing "+slideCode);
+	        contextLogger.info("  Found "+activeSamples.size()+" active samples");
+	        contextLogger.info("  Found "+retiredSamples.size()+" retired samples");
+	        contextLogger.info("  Mapped "+sampleMapping.size()+" retired samples to active samples");
+        	contextLogger.info("  Processing active samples...");
         	
 	        for(Entity sample : samples) {
 
@@ -132,7 +132,7 @@ public class CleanupRetiredDataService extends AbstractEntityService {
 		            Entity targetSeparation = getLatestSeparation(targetSample);
 		            if (targetSeparation!=null) {
 
-		            	logger.info(sample.getName()+" -> "+targetSample.getName()+" ("+separation.getId()+"->"+targetSeparation.getId()+")");
+		            	contextLogger.info(sample.getName()+" -> "+targetSample.getName()+" ("+separation.getId()+"->"+targetSeparation.getId()+")");
 		            	
 		            	LongPair samplePair = new LongPair(sample.getId(), targetSample.getId());
 		            	LongPair separationPair = new LongPair(separation.getId(), targetSeparation.getId());
@@ -143,14 +143,14 @@ public class CleanupRetiredDataService extends AbstractEntityService {
 		                String transferDir = targetSeparation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
 		            	File targetFile = new File(transferDir, NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+"_"+separation.getId()+".txt");
 		            	if (targetFile.exists()) {
-		            		logger.info("Mapping file already exists: "+targetFile.getAbsolutePath());
+		            		contextLogger.info("Mapping file already exists: "+targetFile.getAbsolutePath());
 		            	}
 		            	else {
 		            		separationIdPairsNeedingMapping.add(separationPair);
 		            	}
 		            }
 		            else {
-		            	logger.info("Retired sample has no neuron separation: "+sample.getName());
+		            	contextLogger.info("Retired sample has no neuron separation: "+sample.getName());
 		            }
 	            }
 				
@@ -180,7 +180,7 @@ public class CleanupRetiredDataService extends AbstractEntityService {
 	    	}
     	}
     	catch (Exception e) {
-    		logger.info("Error getting latest separation",e);
+    		logger.warn("Error getting latest separation",e);
     	}
     	
     	return null;
