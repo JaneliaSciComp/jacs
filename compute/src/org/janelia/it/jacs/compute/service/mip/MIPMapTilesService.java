@@ -4,6 +4,8 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -16,9 +18,11 @@ import java.io.IOException;
  */
 public class MIPMapTilesService extends SubmitDrmaaJobService {
 
-    private static final int DESIRED_PROCESSED_X_TILES = 50; // 50 horizontal tiles
-    private static final int DESIRED_PROCESSED_Y_TILES = 50; // 50 vertical tiles
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 100; // 100 layers
+    private static final Logger LOG = LoggerFactory.getLogger(MIPMapTilesService.class);
+
+    private static final int DESIRED_PROCESSED_X_TILES = 100; // 100 horizontal tiles
+    private static final int DESIRED_PROCESSED_Y_TILES = 100; // 100 vertical tiles
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 200; // 200 layers
 
     private Long imageWidth;
     private Long imageHeight;
@@ -139,6 +143,8 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         File configFile = new File(
                 getSGEConfigurationDirectory(),
                 getGridServicePrefixName() + "Configuration." + configIndex);
+        LOG.debug("Write configFile: {} for region ({}, {}, {}) ({}, {}, {}) ", configFile,
+                startX, startY, startZ, width, height, depth);
         try(FileWriter fw = new FileWriter(configFile)) {
             fw.write(sourceRootUrl + "\n");
             fw.write(sourceStackFormat + "\n");
