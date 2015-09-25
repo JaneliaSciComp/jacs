@@ -121,9 +121,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
                     long startX = sourceMinX + x * processedWidth;
                     long startY = sourceMinY + y * processedHeight;
                     long startZ = sourceMinZ + z * processedDepth;
-                    long width = Math.min(processedWidth, sourceWidth - startX);
-                    long height = Math.min(processedHeight, sourceHeight - startY);
-                    long depth = Math.min(processedDepth, sourceDepth - startZ);
+                    long width = Math.min(processedWidth, sourceMinX + sourceWidth - startX);
+                    long height = Math.min(processedHeight, sourceMinY + sourceHeight - startY);
+                    long depth = Math.min(processedDepth, sourceMinZ + sourceDepth - startZ);
                     createConfigurationFile(++nJobs,
                             startX, startY, startZ,
                             width, height, depth);
@@ -164,7 +164,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             fw.write((startX / targetTileWidth) + "\n");
             fw.write(((startX + width) / targetTileWidth) + "\n");
             fw.write(startZ + "\n");
-            fw.write((startZ + depth -1) + "\n");
+            fw.write((startZ + depth - 1) + "\n");
         } catch (IOException e) {
             throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e);
         }
@@ -180,6 +180,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
      */
     private void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
+        // read the vars from stdin
         script.append("read SOURCE_URL_ROOT\n");
         script.append("read SOURCE_STACK_FORMAT\n");
         script.append("read TARGET_ROOT_URL\n");
@@ -205,7 +206,34 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read TARGET_MAX_COL\n");
         script.append("read TARGET_MIN_Z\n");
         script.append("read TARGET_MAX_Z\n");
-        script.append(MIPMapTilesHelper.getMipMapTilesCommands()).append('\n');
+        // pass them to the script as environment variables
+        script
+            .append("SOURCE_URL_ROOT=$SOURCE_URL_ROOT ")
+            .append("SOURCE_STACK_FORMAT=$SOURCE_STACK_FORMAT ")
+            .append("TARGET_ROOT_URL=$TARGET_ROOT_URL ")
+            .append("TARGET_STACK_FORMAT=$TARGET_STACK_FORMAT ")
+            .append("IMAGE_WIDTH=$IMAGE_WIDTH ")
+            .append("IMAGE_HEIGHT=$IMAGE_HEIGHT ")
+            .append("SOURCE_MAGNIFICATION_LEVEL=$SOURCE_MAGNIFICATION_LEVEL ")
+            .append("SOURCE_TILE_WIDTH=$SOURCE_TILE_WIDTH ")
+            .append("SOURCE_TILE_HEIGHT=$SOURCE_TILE_HEIGHT ")
+            .append("SOURCE_XY_RESOLUTION=$SOURCE_XY_RESOLUTION ")
+            .append("SOURCE_Z_RESOLUTION=$SOURCE_Z_RESOLUTION ")
+            .append("SOURCE_MIN_X=$SOURCE_MIN_X ")
+            .append("SOURCE_MIN_Y=$SOURCE_MIN_Y ")
+            .append("SOURCE_MIN_Z=$SOURCE_MIN_Z ")
+            .append("SOURCE_WIDTH=$SOURCE_WIDTH ")
+            .append("SOURCE_HEIGHT=$SOURCE_HEIGHT ")
+            .append("SOURCE_DEPTH=$SOURCE_DEPTH ")
+            .append("TARGET_TILE_WIDTH=$TARGET_TILE_WIDTH ")
+            .append("TARGET_TILE_HEIGHT=$TARGET_TILE_HEIGHT ")
+            .append("TARGET_MIN_ROW=$TARGET_MIN_ROW ")
+            .append("TARGET_MAX_ROW=$TARGET_MAX_ROW ")
+            .append("TARGET_MIN_COL=$TARGET_MIN_COL ")
+            .append("TARGET_MAX_COL=$TARGET_MAX_COL ")
+            .append("TARGET_MIN_Z=$TARGET_MIN_Z ")
+            .append("TARGET_MAX_Z=$TARGET_MAX_Z ")
+            .append(MIPMapTilesHelper.getMipMapTilesCommands()).append('\n');
         writer.write(script.toString());
     }
 

@@ -13,9 +13,7 @@ class MIPMapTilesHelper {
     static String getMipMapTilesCommands() {
         StringBuilder script = new StringBuilder();
         script.append("sh ")
-                .append(MIPMAP_TILER_SCRIPT).append(' ')
-                .append("$"
-                + " $OUTPUT_DIR png $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\"");
+                .append(MIPMAP_TILER_SCRIPT);
         return script.toString();
     }
 

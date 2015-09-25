@@ -135,4 +135,4 @@ if [ "$TARGET_TILE_HEIGHT" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -DtileHeight=$TARGET_TILE_HEIGHT"
 fi									
 
-echo java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${JAR_FILE}
+echo java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}
