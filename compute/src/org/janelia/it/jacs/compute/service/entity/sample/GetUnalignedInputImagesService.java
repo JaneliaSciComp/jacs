@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
@@ -22,6 +23,7 @@ import com.google.common.collect.Ordering;
 
 /**
  * Gets all the unaligned images for the given sample as InputImages which can be used as parameters to other services. 
+ * This generally includes all the (merged or unmerged) tile images, and the stitched image.  
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -93,11 +95,12 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             InputImage templateImage = areaToImage.get(sampleArea.getName());
             for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
                 InputImage inputImage = getInputImage(sampleEntity, templateImage, mergedPair);
-                if (inputImage.getFilepath().equals(templateImage.getFilepath())) {
+                if (templateImage!=null && inputImage.getFilepath().equals(templateImage.getFilepath())) {
                     if ("63x".equals(objective)) {
                         // For 63x samples, we want to use the tile name instead of the area name
                         logger.info("Will replace template image: "+templateImage.getFilepath());
                         toDelete.add(templateImage);
+                        toAdd.add(inputImage);
                     }
                 }
                 else {
@@ -109,6 +112,10 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         
         inputImages.removeAll(toDelete);
         inputImages.addAll(toAdd);
+
+        if (inputImages.isEmpty()) {
+            throw new ServiceException("Could not find any unaligned images to process");
+        }
         
         StringBuilder sb = new StringBuilder();
         for(InputImage inputImage : inputImages) {
@@ -191,7 +198,7 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
     private InputImage getInputImage(Entity sampleEntity, InputImage templateImage, MergedLsmPair mergedPair) throws ComputeException {
         
         String filepath = mergedPair.getMergedFilepath();
-
+        
         String prefix = FileUtils.getFilePrefix(filepath);
         if (sampleNaming) {
             String sampleName = sampleEntity.getName();
@@ -200,6 +207,11 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
                 sampleName = sampleName.substring(0,tilde);
             }
             prefix = sampleName+"-"+mergedPair.getTag();
+            // Append effector if available
+            String effector = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+            if (!StringUtils.isEmpty(effector)) {
+                prefix += "-"+effector;
+            }
         }
              
         contextLogger.info("Tile input file: "+filepath);

@@ -58,6 +58,11 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
             this.outputs = "mips:movies:legends";
         }
         
+        if (inputImages.isEmpty()) {
+            cancel();
+            return;
+        }
+        
         logger.info("Running Fiji macro for "+inputImages.size()+" images");
     }
     
