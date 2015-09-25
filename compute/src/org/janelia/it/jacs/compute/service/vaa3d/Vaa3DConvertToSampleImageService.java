@@ -46,11 +46,10 @@ import com.google.common.collect.Multimap;
 /**
  * Convert a single tile to a sample image. Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair (may only contain MergedLsmPairs with a single image each)
  *   METADATA_RESULT_FILE_NODE - the directory in which we can find json-format LSM metadata files
- *   RUN_MERGE - was merge actually run on the pairs in BULK_MERGE_PARAMETERS?
+ *   RUN_MERGE - was merge actually run on the pairs?
  *   SAMPLE_ENTITY_ID - the sample entity, with channel specifications
- *   SAMPLE_AREA - the anatomical area we are interested in
+ *   SAMPLE_AREA - the anatomical area we are interested in (merged LSM pairs may only contain a single image each)
  *   CHANNEL_DYE_SPEC (optional) - the dye specification
  *   OUTPUT_CHANNEL_ORDER (optional) - the requested channel ordering 
  * 
@@ -111,14 +110,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 
             merged = data.getItemAsBoolean("RUN_MERGE");
             sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
-
-            final Object bulkMergeParamObj = data.getRequiredItem("BULK_MERGE_PARAMETERS");
-            if (bulkMergeParamObj instanceof List) {
-                mergedLsmPairs = (List<MergedLsmPair>) bulkMergeParamObj;
-            } else {
-                throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
-            }
-
+            mergedLsmPairs = sampleArea.getMergedLsmPairs();
+            
             Object mergeAlgoObj = data.getItem("MERGE_ALGORITHM");
             if (mergeAlgoObj instanceof String) {
             	mergeAlgorithm = (String)mergeAlgoObj;

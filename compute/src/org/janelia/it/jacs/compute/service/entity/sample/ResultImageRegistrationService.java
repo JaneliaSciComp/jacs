@@ -223,10 +223,11 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     		Entity refMip = getMontage(refMipPrefixMap);
 
     		if (allMip!=null || signalMip!=null || refMip!=null) {
+                Entity defaultMip = allMip==null?signalMip:allMip;
     		    contextLogger.info("Applying 2d montages to the result ("+resultEntity.getId()+")");
-	        	entityHelper.set2dImages(resultEntity, signalMip, allMip, signalMip, refMip);
+	        	entityHelper.set2dImages(resultEntity, defaultMip, allMip, signalMip, refMip);
 	        	contextLogger.info("Applying 2d montages to the pipeline run ("+pipelineRunEntity.getId()+")");
-	        	entityHelper.set2dImages(pipelineRunEntity, signalMip, allMip, signalMip, refMip);
+	        	entityHelper.set2dImages(pipelineRunEntity, defaultMip, allMip, signalMip, refMip);
     		}
     		else {
     		    // No montage found, we need to pick an image, so let's pick the first one alphabetically (this works well for Brain/VNC at least)

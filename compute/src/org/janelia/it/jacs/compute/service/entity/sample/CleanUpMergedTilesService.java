@@ -15,32 +15,27 @@ import org.janelia.it.jacs.compute.util.FileUtils;
 public class CleanUpMergedTilesService extends AbstractEntityService {
 
     public void execute() throws Exception {
-
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-        if (bulkMergeParamObj==null) {
-        	throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS may not be null");
+        List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) processData.getItem("SAMPLE_AREAS");
+        for(AnatomicalArea sampleArea : sampleAreas) {
+            cleanup(sampleArea.getMergedLsmPairs(), sampleArea.getStitchedFilename());
         }
-        
-        if (!(bulkMergeParamObj instanceof List)) {
-        	throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
-        }
-    	
-        String stitchedFile = (String)processData.getItem("STITCHED_FILENAME");
-    	
-    	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-    	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+    }
+    
+    public void cleanup(List<MergedLsmPair> mergedLsmPairs, String stitchedFile) throws Exception {
 
-    		File file = new File(mergedLsmPair.getMergedFilepath());
-    		if (file.getAbsolutePath().equals(stitchedFile)) continue; // never delete the "stitched" file
-    		
-    		File symlink = new File(mergedLsmPair.getMergedFilepath().replace("merge", "group"));
-    		if (symlink.exists()) {
-    		    contextLogger.info("Cleaning up symlink to merged tile: "+symlink.getAbsolutePath());
-	    		FileUtils.forceDelete(symlink);
-    		}
-    		
-    		contextLogger.info("Cleaning up merged tile: "+file.getAbsolutePath());
-    		FileUtils.forceDelete(file);
-    	}
+        for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+
+            File file = new File(mergedLsmPair.getMergedFilepath());
+            if (file.getAbsolutePath().equals(stitchedFile)) continue; // never delete the "stitched" file
+            
+            File symlink = new File(mergedLsmPair.getMergedFilepath().replace("merge", "group"));
+            if (symlink.exists()) {
+                contextLogger.info("Cleaning up symlink to merged tile: "+symlink.getAbsolutePath());
+                FileUtils.forceDelete(symlink);
+            }
+            
+            contextLogger.info("Cleaning up merged tile: "+file.getAbsolutePath());
+            FileUtils.forceDelete(file);
+        }
     }
 }

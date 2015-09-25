@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -22,7 +23,7 @@ import java.util.List;
  * Takes the bulk merge parameters and creates metadata files for each one. 
  * The parameters should be included in the ProcessData:
  *   SAMPLE_ENTITY_ID
- *   BULK_MERGE_PARAMETERS 
+ *   SAMPLE_AREA 
  *   RESULT_FILE_NODE
  *   OUTPUT_FILE_NODE
  * 
@@ -54,17 +55,9 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	if (sampleEntityId == null) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
-
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-        if (bulkMergeParamObj==null) {
-            throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-        }
-
-        if (!(bulkMergeParamObj instanceof List)) {
-            throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
-        }
-        
-        List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+    	
+        AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
+        List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
 
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
             inputFiles.add(new File(mergedLsmPair.getLsmFilepath1()));

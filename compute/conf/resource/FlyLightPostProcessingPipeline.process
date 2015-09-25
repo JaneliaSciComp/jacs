@@ -4,6 +4,7 @@
  <process name="FlyLight Post-Processing Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
+        <input name="SAMPLE_AREAS"/>
         <input name="PIPELINE_RUN_ENTITY_ID"/>
         <input name="SAMPLE_ENTITY_ID"/>
         <input name="IMAGE_TYPE"/>
@@ -50,6 +51,7 @@
             
             <!-- Get a list of unaligned images to create summaries for -->
             <operation name="Get unaligned image List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetUnalignedInputImagesService">
+                <input name="SAMPLE_AREAS"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="OUTPUT_COLOR_SPEC"/>
