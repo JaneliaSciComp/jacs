@@ -28,7 +28,7 @@ public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPM
     }
 
     @POST
-    @Path("/{owner}/images/mip-map-tiles")
+    @Path("/{owner}/images/mipmaps")
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML

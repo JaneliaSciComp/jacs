@@ -487,6 +487,7 @@
         <!-- read in properties -->
         <property file="${temp.dir}/jacs.properties" prefix="FromPropFile"/>
         <property name="jboss.home" value="${FromPropFile.ServerRoot.Dir}/jboss-4.2.3.GA" />
+	<property name="startjbossscript" value="${FromPropFile.ServerStartScript}" />
 
         <echo message="computeserver.ejb.service = ${FromPropFile.computeserver.ejb.service}" />
 
@@ -549,9 +550,9 @@
 
          <!--restart JBoss -->
         <echo message="Starting JBoss" />
-        <exec executable="${ssh}" description="Starting Jboss (/groups/jacs/jacsHosts/bin/startjboss.sh ${jboss.home} default)"
+        <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} default)"
               outputproperty="exec.output" errorproperty="exec.error">
-            <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/startjboss.sh ${jboss.home} default"/>
+            <arg line="${ssh.common.params} ${startjbossscript} ${jboss.home} default"/>
         </exec>
         <echo message="Done : ${exec.output}"  />
         <echo message="Done : ${exec.error}"  />

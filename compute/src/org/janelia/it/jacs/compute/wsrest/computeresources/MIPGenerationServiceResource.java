@@ -36,7 +36,7 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
      * @throws ProcessingException
      */
     @POST
-    @Path("/{owner}/images/mip")
+    @Path("/{owner}/images/mips")
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML

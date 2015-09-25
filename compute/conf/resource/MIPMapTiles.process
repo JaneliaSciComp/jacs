@@ -1,7 +1,7 @@
 <process name="MIPMapTiles"  startEvent="pending" processor="queue/genericServiceLauncher" updateProcessStatus="on_success">
-    <sequence name="Generate sample MIPs" waitForAsync="true">
+    <sequence name="Generate mip maps" waitForAsync="true">
         <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
-            <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MipMapTilesService" />
+            <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapTilesService" />
             <input name="RESULT_FILE_NODE_ID" />
 
             <input name="IMAGE_WIDTH" />
