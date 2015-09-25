@@ -25,6 +25,7 @@ public class MIPMapTilesTask extends Task {
     // Parameter Keys
     transient private static final String PARAM_imageWidth = "complete image width";
     transient private static final String PARAM_imageHeight = "source image height";
+    transient private static final String PARAM_imageDepth = "source image depth";
 
     transient private static final String PARAM_sourceRootUrl = "root url containing the input stack";
     transient private static final String PARAM_sourceStackFormat = "format of the input stack relative to the root";
@@ -77,6 +78,8 @@ public class MIPMapTilesTask extends Task {
             case PARAM_imageWidth:
                 return new LongParameterVO(Long.valueOf(value));
             case PARAM_imageHeight:
+                return new LongParameterVO(Long.valueOf(value));
+            case PARAM_imageDepth:
                 return new LongParameterVO(Long.valueOf(value));
             case PARAM_sourceRootUrl:
                 return new TextParameterVO(value, 400);
@@ -149,6 +152,15 @@ public class MIPMapTilesTask extends Task {
 
     public void setImageHeight(Long imageHeight) {
         setParameterAsLong(PARAM_imageHeight, imageHeight);
+    }
+
+    @XmlElement(name = "imageDepth")
+    public Long getImageDepth() {
+        return getParameterAsLong(PARAM_imageDepth);
+    }
+
+    public void setImageDepth(Long imageDepth) {
+        setParameterAsLong(PARAM_imageDepth, imageDepth);
     }
 
     @XmlElement(name = "sourceRootUrl")

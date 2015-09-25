@@ -7,6 +7,14 @@ TILER_JAR_FILE="$SCRIPT_DIR/TileCATMAID-jar-with-dependencies.jar"
 
 PARAMS="-DsourceUrlFormat=${SOURCE_URL_ROOT}/${SOURCE_STACK_FORMAT}"
 
+if [ "$TARGET_ROOT_URL" != "" ]; then
+    PARAMS="${PARAMS} -DexportBasePath=$TARGET_ROOT_URL"
+fi							    
+
+if [ "$TARGET_STACK_FORMAT" != "" ]; then
+    PARAMS="${PARAMS} -DtilePattern=$TARGET_STACK_FORMAT"
+fi								
+
 if [ "$IMAGE_WIDTH" != "" ]; then
     PARAMS="${PARAMS} -DsourceWidth=${IMAGE_WIDTH}"
 fi
@@ -58,14 +66,6 @@ fi
 if [ "$SOURCE_DEPTH" != "" ]; then
     PARAMS="${PARAMS} -DsourceDepth=$SOURCE_DEPTH"
 fi							
-
-if [ "$TARGET_ROOT_URL" != "" ]; then
-    PARAMS="${PARAMS} -DexportBasePath=$TARGET_ROOT_URL"
-fi							    
-
-if [ "$TARGET_STACK_FORMAT" != "" ]; then
-    PARAMS="${PARAMS} -DtilePattern=$TARGET_STACK_FORMAT"
-fi								
 
 if [ "$TARGET_TILE_WIDTH" != "" ]; then
     PARAMS="${PARAMS} -DtileWidth=$TARGET_TILE_WIDTH"

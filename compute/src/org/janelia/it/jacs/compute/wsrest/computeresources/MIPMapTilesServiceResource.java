@@ -60,6 +60,7 @@ public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPM
         Map<String, Object> processConfig = super.prepareProcessConfiguration(task);
         processConfig.put("IMAGE_WIDTH", task.getImageWidth());
         processConfig.put("IMAGE_HEIGHT", task.getImageHeight());
+        processConfig.put("IMAGE_DEPTH", task.getImageDepth());
         processConfig.put("SOURCE_ROOT_URL", task.getSourceRootUrl());
         processConfig.put("SOURCE_STACK_FORMAT", task.getSourceStackFormat());
         processConfig.put("SOURCE_MAGNIFICATION_LEVEL", task.getSourceMagnificationLevel());
