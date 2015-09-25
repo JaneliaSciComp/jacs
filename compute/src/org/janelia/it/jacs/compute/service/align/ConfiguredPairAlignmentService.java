@@ -49,6 +49,10 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
                 contextLogger.info("Found 63x sub-sample: "+objectiveSample.getName());
                 Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
+                if (result==null) {
+                    // In some cases there is no "Brain" area, and the 63x LSMs have been incorrectly annotated with the tile name as the area.
+                    result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
+                }
                 input1 = buildInputFromResult("first input (63x stack)", result);
             }
         }
