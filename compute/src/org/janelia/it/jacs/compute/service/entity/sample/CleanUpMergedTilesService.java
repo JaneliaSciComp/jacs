@@ -16,15 +16,21 @@ public class CleanUpMergedTilesService extends AbstractEntityService {
 
     public void execute() throws Exception {
         List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) processData.getItem("SAMPLE_AREAS");
-        for(AnatomicalArea sampleArea : sampleAreas) {
-            cleanup(sampleArea.getMergedLsmPairs(), sampleArea.getStitchedFilename());
+        if (sampleAreas != null) {
+            for(AnatomicalArea sampleArea : sampleAreas) {
+                cleanup(sampleArea.getMergedLsmPairs(), sampleArea.getStitchedFilename());
+            }
         }
     }
     
     public void cleanup(List<MergedLsmPair> mergedLsmPairs, String stitchedFile) throws Exception {
 
+        if (mergedLsmPairs==null) return;
+        
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
 
+            if (mergedLsmPair==null) continue;
+            
             File file = new File(mergedLsmPair.getMergedFilepath());
             if (file.getAbsolutePath().equals(stitchedFile)) continue; // never delete the "stitched" file
             
