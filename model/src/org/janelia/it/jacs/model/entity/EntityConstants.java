@@ -64,6 +64,7 @@ public class EntityConstants {
     public static final String TYPE_WORKSPACE                        = "Workspace";
     public static final String TYPE_ERROR                            = "Error";
     public static final String TYPE_DATA_SET                         = "Data Set";
+    public static final String TYPE_FLY_LINE_RELEASE                 = "Fly Line Release";
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
     public static final String TYPE_LSM_STACK                        = "LSM Stack";

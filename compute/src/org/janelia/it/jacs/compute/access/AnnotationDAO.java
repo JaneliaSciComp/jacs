@@ -3568,6 +3568,23 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     /******************************************************************************************************************/
+    /** FLY LINE RELEASES */
+    /******************************************************************************************************************/
+    
+    public Entity createFlyLineRelease(String subjectKey, String releaseName) throws ComputeException {
+
+        if (log.isTraceEnabled()) {
+            log.trace("createFlyLineRelease(subjectKey="+subjectKey+", releaseName="+releaseName+")");
+        }
+                
+        Entity newRelease = newEntity(EntityConstants.TYPE_FLY_LINE_RELEASE, releaseName, subjectKey);
+        saveOrUpdate(newRelease);
+
+        return newRelease;
+    }
+    
+    
+    /******************************************************************************************************************/
     /** ALIGNMENT BOARD */
     /******************************************************************************************************************/
     
