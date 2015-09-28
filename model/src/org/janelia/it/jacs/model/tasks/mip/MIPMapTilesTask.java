@@ -51,6 +51,9 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_targetMaxCol = "target max col";
     transient private static final String PARAM_targetMinZ = "target min Z";
     transient private static final String PARAM_targetMaxZ = "target max Z";
+    transient private static final String PARAM_targetQuality = "target quality";
+    transient private static final String PARAM_targetType = "target type";
+    transient private static final String PARAM_targetMediaFormat = "target media format (jpg, png)";
 
     public MIPMapTilesTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -127,6 +130,12 @@ public class MIPMapTilesTask extends Task {
                 return new LongParameterVO(Long.valueOf(value));
             case PARAM_targetMaxZ:
                 return new LongParameterVO(Long.valueOf(value));
+            case PARAM_targetQuality:
+                return new DoubleParameterVO(Double.valueOf(value));
+            case PARAM_targetType:
+                return new TextParameterVO(value, 400);
+            case PARAM_targetMediaFormat:
+                return new TextParameterVO(value, 400);
             default:
                 return null;
         }
@@ -369,4 +378,33 @@ public class MIPMapTilesTask extends Task {
     public void setTargetMaxZ(Long targetMaxZ) {
         setParameterAsLong(PARAM_targetMaxZ, targetMaxZ);
     }
+
+    @XmlElement(name = "targetQuality")
+    public Double getTargetQuality() {
+        return getParameterAsDouble(PARAM_targetQuality);
+    }
+
+    public void setTargetQuality(Double targetQuality) {
+        setParameterAsDouble(PARAM_targetQuality, targetQuality);
+    }
+
+    @XmlElement(name = "targetType")
+    public String getTargetType() {
+        return getParameter(PARAM_targetType);
+    }
+
+    public void setTargetType(String targetType) {
+        setParameter(PARAM_targetType, targetType);
+    }
+
+
+    @XmlElement(name = "targetMediaFormat")
+    public String getTargetMediaFormat() {
+        return getParameter(PARAM_targetMediaFormat);
+    }
+
+    public void setTargetMediaFormat(String targetMediaFormat) {
+        setParameter(PARAM_targetMediaFormat, targetMediaFormat);
+    }
+
 }

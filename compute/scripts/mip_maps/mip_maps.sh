@@ -100,8 +100,20 @@ if [ "$TARGET_MAX_Z" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DexportMaxZ=$TARGET_MAX_Z"
 fi										    
 
+if [ "$TARGET_QUALITY" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -Dquality=$TARGET_QUALITY"
+fi										    
+
+if [ "$TARGET_TYPE" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -Dtype=$TARGET_TYPE"
+fi										    
+
+if [ "$TARGET_MEDIA_FORMAT" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -Dformat=$TARGET_MEDIA_FORMAT"
+fi										    
+
 # Invoke the tiler
-echo java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${TILER_PARAMS} -jar ${TILER_JAR_FILE}
+java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${TILER_PARAMS} -jar ${TILER_JAR_FILE}
 
 
 # Prepare the scaler parameters
@@ -109,8 +121,8 @@ SCALER_JAR_FILE="$SCRIPT_DIR/ScaleCATMAID-jar-with-dependencies.jar"
 
 TARGET_TILES_FORMAT=""
 
-if [ "$TARGET_TILES_FORMAT_URL" != "" ]; then
-    TARGET_TILES_FORMAT="${TARGET_TILES_FORMAT_URL}"
+if [ "$TARGET_ROOT_URL" != "" ]; then
+    TARGET_TILES_FORMAT="${TARGET_ROOT_URL}"
 fi							    
 
 if [ "$TARGET_STACK_FORMAT" != "" ]; then
@@ -135,4 +147,16 @@ if [ "$TARGET_TILE_HEIGHT" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -DtileHeight=$TARGET_TILE_HEIGHT"
 fi									
 
-echo java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}
+if [ "$TARGET_QUALITY" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -Dquality=$TARGET_QUALITY"
+fi										    
+
+if [ "$TARGET_TYPE" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -Dtype=$TARGET_TYPE"
+fi										    
+
+if [ "$TARGET_MEDIA_FORMAT" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -Dformat=$TARGET_MEDIA_FORMAT"
+fi										    
+
+java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}

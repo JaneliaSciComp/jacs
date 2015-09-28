@@ -45,6 +45,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private Integer sourceScaleLevel;
     private Double sourceXYResolution;
     private Double sourceZResolution;
+    private Double targetQuality;
+    private String targetType;
+    private String targetMediaFormat;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -64,6 +67,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             targetRootUrl = resultFileNode.getDirectoryPath();
         }
         extractImageParameters(processData);
+        targetQuality = processData.getDouble("TARGET_QUALITY");
+        targetType = processData.getString("TARGET_TYPE");
+        targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
     }
 
     private void extractImageParameters(IProcessData processData) throws MissingDataException {
@@ -77,7 +83,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
         sourceMinX = getDimensionWithDefault(processData,"SOURCE_MIN_X", 0L).longValue();
         sourceMinY = getDimensionWithDefault(processData, "SOURCE_MIN_Y", 0L).longValue();
-        sourceMinZ = getDimensionWithDefault(processData, "SOURCE_MIN_Y", 0L).longValue();
+        sourceMinZ = getDimensionWithDefault(processData, "SOURCE_MIN_Z", 0L).longValue();
 
         sourceWidth = getDimensionWithDefault(processData, "SOURCE_WIDTH", imageWidth).longValue();
         sourceHeight = getDimensionWithDefault(processData, "SOURCE_HEIGHT", imageHeight).longValue();
@@ -155,8 +161,8 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             fw.write(sourceScaleLevel + "\n");
             fw.write(sourceTileWidth + "\n");
             fw.write(sourceTileHeight + "\n");
-            fw.write(sourceXYResolution + "\n");
-            fw.write(sourceZResolution + "\n");
+            writeValueOrNone(sourceXYResolution, fw);
+            writeValueOrNone(sourceZResolution, fw);
             fw.write(startX + "\n");
             fw.write(startY + "\n");
             fw.write(startZ + "\n");
@@ -171,8 +177,19 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             fw.write(((startX + width) / targetTileWidth) + "\n");
             fw.write(startZ + "\n");
             fw.write((startZ + depth - 1) + "\n");
+            writeValueOrNone(targetQuality, fw);
+            writeValueOrNone(targetType, fw);
+            writeValueOrNone(targetMediaFormat, fw);
         } catch (IOException e) {
             throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e);
+        }
+    }
+
+    private void writeValueOrNone(Object val, FileWriter fw) throws IOException {
+        if (val != null) {
+            fw.write(val.toString() + "\n");
+        } else {
+            fw.write('\n');
         }
     }
 
@@ -212,6 +229,10 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read TARGET_MAX_COL\n");
         script.append("read TARGET_MIN_Z\n");
         script.append("read TARGET_MAX_Z\n");
+        script.append("read TARGET_QUALITY\n");
+        script.append("read TARGET_TYPE\n");
+        script.append("read TARGET_MEDIA_FORMAT\n");
+
         // pass them to the script as environment variables
         script
             .append("SOURCE_URL_ROOT=$SOURCE_URL_ROOT ")
@@ -239,6 +260,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("TARGET_MAX_COL=$TARGET_MAX_COL ")
             .append("TARGET_MIN_Z=$TARGET_MIN_Z ")
             .append("TARGET_MAX_Z=$TARGET_MAX_Z ")
+            .append("TARGET_QUALITY=$TARGET_QUALITY ")
+            .append("TARGET_TYPE=$TARGET_TYPE ")
+            .append("TARGET_MEDIA_FORMAT=$TARGET_MEDIA_FORMAT ")
             .append(MIPMapTilesHelper.getMipMapTilesCommands()).append('\n');
         writer.write(script.toString());
     }
