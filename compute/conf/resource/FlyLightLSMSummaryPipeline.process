@@ -7,6 +7,7 @@
         <input name="PIPELINE_RUN_ENTITY_ID"/>
         <input name="SAMPLE_ENTITY_ID"/>
         <input name="REUSE_SUMMARY"/>
+        <input name="CHANNEL_DYE_SPEC"/>
     
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Summary Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSummaryPipelineStepsService">
@@ -100,6 +101,12 @@
                 <input name="RESULT_ENTITY_NAME" value="LSM Summary Result"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <output name="RESULT_ENTITY_ID"/>
+            </operation>
+            
+            <!-- Populate chanspec if necessary -->
+            <operation name="Infer Channel Spec" processor="org.janelia.it.jacs.compute.service.entity.sample.InferChannelSpecificationService">
+                <input name="SAMPLE_AREA"/>
+                <input name="CHANNEL_DYE_SPEC"/>
             </operation>
             
             <!-- Get a list of LSM images to create summaries for -->

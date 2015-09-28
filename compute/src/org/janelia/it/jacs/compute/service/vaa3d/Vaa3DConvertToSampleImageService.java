@@ -85,6 +85,12 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     
     // State for processing
     protected String referenceDye;
+    private Map<MergedLsmPair, String> mappings = new HashMap<>();
+
+    @Override
+    protected String getGridServicePrefixName() {
+        return "convert";
+    }
     
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -128,6 +134,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
             
             populateMaps();
+            determineMappings();
 
         } catch (ServiceException se) {
             throw se;
@@ -136,18 +143,10 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         }
     }
     
-    @Override
-    protected String getGridServicePrefixName() {
-        return "convert";
-    }
-    
-    @Override
-    protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+    protected void determineMappings() throws Exception {
 
         String channelDyeSpec = data.getItemAsString("CHANNEL_DYE_SPEC");
         String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
-
-        int configIndex = 1;
 
         String consensusChannelMapping = null;
         String consensusSignalChannels = null;
@@ -437,20 +436,32 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
             
             String mapping = generateChannelMapping(inputChannelList, outputChannelList);
-            // TODO: Make sure we're actually doing something. If the file is merged and the channel mapping is 1-to-1, then there's no point in running.
-            // Right now this doesn't work because the SubmitDrmaaJobService doesn't support aborted runs.  
-            //if (!merged || !mapping.replaceAll("([0-9]),\\1,?", "").equals("")) { 
-            	writeInstanceFiles(mergedLsmPair, mapping, configIndex++);
-            //}
+            if (!merged || !mapping.replaceAll("([0-9]),\\1,?", "").equals("")) { 
+                mappings.put(mergedLsmPair, mapping);
+            }
         }
         
-        createShellScript(writer);
-        setJobIncrementStop(configIndex-1);
+        if (mappings.isEmpty()) {
+            cancel();
+        }
         
         data.putItem("LSM_CHANNEL_MAPPING", consensusChannelMapping);
         data.putItem("CHANNEL_SPEC", consensusChanSpec);
         data.putItem("SIGNAL_CHANNELS", consensusSignalChannels);
         data.putItem("REFERENCE_CHANNEL", consensusReferenceChannels);
+    }
+    
+    @Override
+    protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+
+        int configIndex = 1;
+        for(MergedLsmPair mergedLsmPair : mappings.keySet()) {
+            String mapping = mappings.get(mergedLsmPair);
+            writeInstanceFiles(mergedLsmPair, mapping, configIndex++);
+        }
+        
+        createShellScript(writer);
+        setJobIncrementStop(configIndex-1);
     }
 
     private void writeInstanceFiles(MergedLsmPair mergedLsmPair, String mapping, int configIndex) throws Exception {
