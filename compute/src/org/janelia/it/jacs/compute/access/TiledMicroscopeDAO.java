@@ -266,7 +266,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.start();
             // Retrieve neuron
-            System.out.println("getting neuron entity: " + stopwatch);
             Entity neuron=annotationDAO.getEntityById(neuronId);
             if (!neuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
                 throw new Exception("Id is not valid TmNeuron type="+neuronId);
@@ -277,7 +276,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 isRoot=true;
             } else {
                 // Validate
-                System.out.println("finding parent: " + stopwatch);
                 boolean foundParent=false;
                 for (EntityData ed : neuron.getEntityData()) {
                     if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
@@ -296,7 +294,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     throw new Exception("Could not find parent matching parentId="+parentAnnotationId);
                 }
             }
-            System.out.println("creating, populating new EntityData: " + stopwatch);
             EntityData geoEd=new EntityData();
             geoEd.setOwnerKey(neuron.getOwnerKey());
             geoEd.setCreationDate(new Date());
@@ -312,13 +309,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             geoEd.setOrderIndex(0);
             geoEd.setParentEntity(neuron);
             geoEd.setValue(TMP_GEO_VALUE);
-            System.out.println("saving EntityData: " + stopwatch);
             annotationDAO.saveOrUpdate(geoEd);
             neuron.getEntityData().add(geoEd);
-            System.out.println("saving neuron: " + stopwatch);
             annotationDAO.saveOrUpdate(neuron);
             // Find and update value string
-            System.out.println("finding new ED again: " + stopwatch);
             boolean valueStringUpdated=false;
             String valueString=null;
             for (EntityData ed : neuron.getEntityData()) {
@@ -327,7 +321,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         if (ed.getValue().equals(TMP_GEO_VALUE)) {
                             valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
                             ed.setValue(valueString);
-                            System.out.println("saving EntityData, part 2: " + stopwatch);
                             annotationDAO.saveOrUpdate(ed);
                             valueStringUpdated=true;
                         }
@@ -337,7 +330,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         if (ed.getValue().equals(TMP_GEO_VALUE)) {
                             valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
                             ed.setValue(valueString);
-                            System.out.println("saving EntityData, part 2: " + stopwatch);
                             annotationDAO.saveOrUpdate(ed);
                             valueStringUpdated=true;
                         }
@@ -347,13 +339,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!valueStringUpdated) {
                 throw new Exception("Could not find geo entry to update for value string");
             }
-            System.out.println("creating new GeoAnn object: " + stopwatch);
             TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(geoEd);
             // normally this is filled in automatically when the annotation is part of
             //  a neuron, but here it's not (explicitly); however, we know the value
             //  to put in:
             geoAnnotation.setNeuronId(neuronId);
-            System.out.println("returning new annotation: " + stopwatch);
             return geoAnnotation;
         } catch (Exception e) {
             e.printStackTrace();
