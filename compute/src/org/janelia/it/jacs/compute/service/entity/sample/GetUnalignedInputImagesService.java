@@ -141,7 +141,12 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
                 sampleName = sampleName.substring(0,tilde);
             }
             if (resultImage.getName().startsWith("stitched")) {
-                prefix = sampleName+"-stitched";
+                if (StringUtils.isEmpty(area)) {
+                    prefix = sampleName+"-stitched";
+                }
+                else {
+                    prefix = sampleName+"-"+area;
+                }
             }
             else {
                 prefix = sampleName+"-"+sanitize(tileName);    
@@ -155,23 +160,29 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         String colorspec = colorSpec;
         
         if (colorspec==null) {
-            logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective and MODE...");
-            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
-            if ("polarity".equals(mode)) {
-                if ("20x".equals(objective)) {
-                    if (chanSpec.length()==2) {
-                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G", "M");
-                    }
-                    else {
-                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G1R", "M");
-                    }   
+            logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective="+objective+" and MODE="+mode+"...");
+            if ("mcfo".equals(mode)) {
+                // MCFO is always RGB on grey reference
+                colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
+            }
+            else {
+                if (!"polarity".equals(mode) & chanSpec.length()==4) {
+                    // 4 channel image with unknown mode, let's assume its MCFO
+                    colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
                 }
-                else if ("63x".equals(objective)) {
-                    if (chanSpec.length()==2) {
-                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G", "1");
+                else {
+                    // Polarity and other image types (e.g. screen?) get the Yoshi treatment, 
+                    // with green signal on top of magenta reference for 20x and green signal on top of grey reference for 63x.
+                    if ("20x".equals(objective)) {
+                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "GYC", "M");
                     }
-                    else {
-                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "MGR", "1");
+                    else if ("63x".equals(objective)) {
+                        if (chanSpec.length()==2) {
+                            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G", "1");
+                        }
+                        else {
+                            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "MGR", "1");
+                        }
                     }
                 }
             }
