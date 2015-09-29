@@ -192,8 +192,13 @@ function openChannels(image,name) {
     }
     print(width + "x" + height + "  Slices: " + slices + "  Channels: " + channels);
     print("Splitting and renaming channels");
-    rename(name);
-    run("Split Channels");
+    if (channels==1) {
+        rename("C1-"+name);
+    }
+    else {
+        rename(name);
+        run("Split Channels");
+    }
 }
 
 // Create a channel mapping string for the image with the given name. 
@@ -288,36 +293,46 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
         titleRefMIP = prefix + "_reference";
         
         run("Z Project...", "projection=[Max Intensity]");
-        
         run("Duplicate...", "title=mip duplicate");
-        Stack.setActiveChannels(refChannels);
-        saveAs(mipFormat, basedir+'/'+titleRefMIP);
-        Stack.setActiveChannels(signalChannels);
-        saveAs(mipFormat, basedir+'/'+titleSignalMIP);
-        close();
         
-        Stack.setActiveChannels(allChannels);
-        
-        // Divide channels and re-merge 
-        run("Split Channels");
-        merge_name = "";
-        for (j=0; j<numOutputChannels; j++) {
-            c = j+1;
-            wname = "C" + c + "-MAX_"+name;
-            i = reverseMapping[j];
-            divisor = 1;
-            if (i < lengthOf(divspec)) {
-                divisor =  substring(divspec,i,i+1);
-            }
-            if (divisor != '1') {
-                print("Applying divisor "+divisor+" to channel "+c);
-                selectWindow(wname);
-                run("Divide...", "value="+parseInt(divisor));
-            }
-            merge_name += "c" + c + "=" + wname + " ";
+        if (refChannels=='1') {
+            // Just save the single reference channel
+            saveAs(mipFormat, basedir+'/'+titleRefMIP);
+            run("Divide...", "value="+parseInt(divspec));
+            saveAs(mipFormat, basedir+'/'+titleMIP);
         }
-        run("Merge Channels...", merge_name+" create");
-        saveAs(mipFormat, basedir+'/'+titleMIP);
+        else {
+            // Must process multiple channels
+            Stack.setActiveChannels(refChannels);
+            saveAs(mipFormat, basedir+'/'+titleRefMIP);
+            Stack.setActiveChannels(signalChannels);
+            saveAs(mipFormat, basedir+'/'+titleSignalMIP);
+            close();
+            Stack.setActiveChannels(allChannels);
+
+            // Divide channels and re-merge 
+            run("Split Channels");
+        
+            merge_name = "";
+            for (j=0; j<numOutputChannels; j++) {
+                c = j+1;
+                wname = "C" + c + "-MAX_"+name;
+                i = reverseMapping[j];
+                divisor = 1;
+                if (i < lengthOf(divspec)) {
+                    divisor =  substring(divspec,i,i+1);
+                }
+                if (divisor != '1') {
+                    print("Applying divisor "+divisor+" to channel "+c);
+                    selectWindow(wname);
+                    run("Divide...", "value="+parseInt(divisor));
+                }
+                merge_name += "c" + c + "=" + wname + " ";
+            }
+            run("Merge Channels...", merge_name+" create");
+            saveAs(mipFormat, basedir+'/'+titleMIP);
+        }
+        
         close();
     }
     
@@ -329,11 +344,17 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
         
         padImageDimensions(name);
         
-        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
-        Stack.setActiveChannels(signalChannels);
-        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleSignalAvi);
-        Stack.setActiveChannels(refChannels);
-        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
+        if (refChannels=='1') {
+            run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
+            run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
+        }
+        else {
+            run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
+            Stack.setActiveChannels(signalChannels);
+            run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleSignalAvi);
+            Stack.setActiveChannels(refChannels);
+            run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
+        }
     }
         
     close();

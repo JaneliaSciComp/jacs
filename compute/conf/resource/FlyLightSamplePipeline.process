@@ -100,6 +100,7 @@
             <input name="PIPELINE_RUN_ENTITY_ID"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="REUSE_SUMMARY"/>
+            <input name="CHANNEL_DYE_SPEC"/>
             <output name="SUMMARY_RESULT_FILE_NODE"/>
         </include>
         
@@ -425,6 +426,7 @@
         </sequence>
          
         <!-- Run post processing service -->
+        <!-- TODO: Right now, post-processing only works if processing is run. We need to populate SAMPLE_AREAS and other variables when processing is reused. -->
         <include name="Post-processing" process="FlyLightPostProcessingPipeline" startEvent="running">
             <input name="SAMPLE_AREAS"/>
             <input name="PIPELINE_RUN_ENTITY_ID"/>
