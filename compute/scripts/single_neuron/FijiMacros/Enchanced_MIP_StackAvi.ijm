@@ -146,7 +146,7 @@ else if (mode=="polarity") {
       selectWindow("signal2");
       run("Subtract...", "value="+mean+" stack");
     }
-    else {
+    else if (numChannels > 1) {
       // Process signal channel NeuronC1 (membrane)
       print("Processing membrane channel");
       processChannel("signal1");
@@ -172,13 +172,15 @@ run("Divide...", "value=2 stack");
 run("8-bit");
 rename(title);
 
-run("Merge Channels...", merge_name+" ignore");
-
-// Sometimes the merge creates a composite image, this will fix it
-getDimensions(width, height, channels, slices, frames);
-if (channels == 2) {
-    run("RGB Color", "slices");
-    rename("RGB");
+if (merge_name!="") {
+    print("Merging channels: "+merge_name);
+    run("Merge Channels...", merge_name+" ignore");
+    // Sometimes the merge creates a composite image, this will fix it
+    getDimensions(width, height, channels, slices, frames);
+    if (channels == 2) {
+        run("RGB Color", "slices");
+        rename("RGB");
+    }
 }
 
 if (createMIPS) {
@@ -187,27 +189,38 @@ if (createMIPS) {
     titleSignalMIP = prefix + "_signal";
     titleRefMIP = prefix + "_reference";
     
-    selectWindow("RGB");
-    run("Z Project...", "projection=[Max Intensity]");
-    selectWindow("reference");
-    run("Z Project...", "projection=[Standard Deviation]");
-    run("8-bit");
-    run("Divide...", "value=3");
-    run("RGB Color");
-    saveAs(mipFormat, basedir+'/'+titleRefMIP);
-    rename("STD_reference");
-    
-    selectWindow("MAX_RGB");
-    saveAs(mipFormat, basedir+'/'+titleSignalMIP);
-    rename("MAX_RGB");
-    
-    imageCalculator("Add", "MAX_RGB", "STD_reference");
-    selectWindow("MAX_RGB");
-    saveAs(mipFormat, basedir+'/'+titleMIP);
-    close();
-    
-    selectWindow("STD_reference");
-    close();
+    if (numChannels==1) {
+        selectWindow("reference");
+        run("Z Project...", "projection=[Standard Deviation]");
+        run("8-bit");
+        run("Divide...", "value=3");
+        run("RGB Color");
+        saveAs(mipFormat, basedir+'/'+titleRefMIP);
+        saveAs(mipFormat, basedir+'/'+titleMIP);
+    }
+    else {
+        selectWindow("RGB");
+        run("Z Project...", "projection=[Max Intensity]");
+        selectWindow("reference");
+        run("Z Project...", "projection=[Standard Deviation]");
+        run("8-bit");
+        run("Divide...", "value=3");
+        run("RGB Color");
+        saveAs(mipFormat, basedir+'/'+titleRefMIP);
+        rename("STD_reference");
+        
+        selectWindow("MAX_RGB");
+        saveAs(mipFormat, basedir+'/'+titleSignalMIP);
+        rename("MAX_RGB");
+        
+        imageCalculator("Add", "MAX_RGB", "STD_reference");
+        selectWindow("MAX_RGB");
+        saveAs(mipFormat, basedir+'/'+titleMIP);
+        close();
+        
+        selectWindow("STD_reference");
+        close();
+    }
 }
 
 if (createMovies) {
@@ -216,30 +229,43 @@ if (createMovies) {
     titleSignalAvi = prefix + "_signal.avi";
     titleRefAvi = prefix + "_reference.avi";
     
-    selectWindow("RGB");
-    run("Duplicate...", "title=SignalMovie duplicate");
-    padImageDimensions("SignalMovie");
-    print("Saving Signal AVI");
-    run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleSignalAvi);
-    close();
-    
-    selectWindow("reference");
-    run("RGB Color");
-    run("Duplicate...", "title=RefMovie duplicate");
-    padImageDimensions("RefMovie");
-    print("Saving Reference AVI");
-    run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
-    close();
-    
-    imageCalculator("Add create stack", "RGB", "reference");
-    rename("FinalMovie");
-    selectWindow("RGB");
-    close();
-    selectWindow("reference");
-    close();
-    padImageDimensions("FinalMovie");
-    print("Saving AVI");
-    run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
+    if (numChannels==1) {
+        selectWindow("reference");
+        run("RGB Color");
+        rename("RefMovie");
+        padImageDimensions("RefMovie");
+        print("Saving Reference AVI");
+        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
+        print("Saving AVI");
+        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
+        close();
+    }
+    else {
+        selectWindow("RGB");
+        run("Duplicate...", "title=SignalMovie duplicate");
+        padImageDimensions("SignalMovie");
+        print("Saving Signal AVI");
+        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleSignalAvi);
+        close();
+        
+        selectWindow("reference");
+        run("RGB Color");
+        run("Duplicate...", "title=RefMovie duplicate");
+        padImageDimensions("RefMovie");
+        print("Saving Reference AVI");
+        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleRefAvi);
+        close();
+        
+        imageCalculator("Add create stack", "RGB", "reference");
+        rename("FinalMovie");
+        selectWindow("RGB");
+        close();
+        selectWindow("reference");
+        close();
+        padImageDimensions("FinalMovie");
+        print("Saving AVI");
+        run("AVI... ", "compression=Uncompressed frame=20 save="+basedir+'/'+titleAvi);
+    }
 }
 
 print("Done");
@@ -253,8 +279,13 @@ function openChannels() {
     getDimensions(width, height, channels, slices, frames);
     print(width + "x" + height + "  Slices: " + slices + "  Channels: " + channels);
     print("Splitting and renaming channels");
-    rename("original");
-    run("Split Channels");    
+    if (channels>1) {
+        rename("original");
+        run("Split Channels");
+    }
+    else {
+        rename("C1-original");
+    }
 }
 
 function getChannelMapping() {
