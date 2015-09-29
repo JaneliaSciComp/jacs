@@ -22,11 +22,6 @@ public class SetSampleProcessingAreaService extends AbstractEntityService {
         }
         
         sampleArea.setSampleProcessingResultId(resultEntity.getId());
-
-        String filename = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        if (filename!=null)  {
-            sampleArea.setSampleProcessingResultFilename(filename);
-        }
         
         String currValue = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
         if (currValue==null) {

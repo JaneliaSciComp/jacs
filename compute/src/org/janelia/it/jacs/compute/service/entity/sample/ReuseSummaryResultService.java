@@ -57,16 +57,16 @@ public class ReuseSummaryResultService extends AbstractEntityService {
         if (latestLsr!=null) {
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestLsr.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
-                logger.info("Reusing alignment result "+latestLsr.getId()+" for "+latestLsr.getName()+" in new pipeline run "+pipelineRunId);
+                contextLogger.info("Reusing summary result "+latestLsr.getId()+" for "+latestLsr.getName()+" in new pipeline run "+pipelineRunId);
                 processData.putItem("RESULT_ENTITY", latestLsr);
-                logger.info("Putting '"+latestLsr+"' in RESULT_ENTITY");
+                contextLogger.info("Putting '"+latestLsr+"' in RESULT_ENTITY");
                 processData.putItem("RESULT_ENTITY_ID", latestLsr.getId().toString());
-                logger.info("Putting '"+latestLsr.getId()+"' in RESULT_ENTITY_ID");
+                contextLogger.info("Putting '"+latestLsr.getId()+"' in RESULT_ENTITY_ID");
                 processData.putItem("RUN_SUMMARY", Boolean.FALSE);    
-                logger.info("Putting '"+Boolean.FALSE+"' in RUN_SUMMARY");
+                contextLogger.info("Putting '"+Boolean.FALSE+"' in RUN_SUMMARY");
         }
         else {
-            logger.info("No existing LSM summary available for reuse for sample: "+sampleEntityId);
+            contextLogger.info("No existing LSM summary available for reuse for sample: "+sampleEntityId);
         }
     }
 }

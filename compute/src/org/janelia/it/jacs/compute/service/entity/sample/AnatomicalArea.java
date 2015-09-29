@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
+
 /**
  * An anatomical area within a sample.
  * 
@@ -14,7 +16,8 @@ public class AnatomicalArea implements Serializable {
     private String name;
     private List<Long> tileIds = new ArrayList<Long>();
     private Long sampleProcessingResultId;
-    private String sampleProcessingResultFilename;
+    private List<MergedLsmPair> mergedLsmPairs;
+    private String stitchedFilename;
 
     public AnatomicalArea(String name) {
         this.name = name;
@@ -40,8 +43,20 @@ public class AnatomicalArea implements Serializable {
         this.sampleProcessingResultId = sampleProcessingResultId;
     }
 
-    public void setSampleProcessingResultFilename(String sampleProcessingResultFilename) {
-        this.sampleProcessingResultFilename = sampleProcessingResultFilename;
+    public List<MergedLsmPair> getMergedLsmPairs() {
+        return mergedLsmPairs;
+    }
+
+    public void setMergedLsmPairs(List<MergedLsmPair> mergedLsmPairs) {
+        this.mergedLsmPairs = mergedLsmPairs;
+    }
+
+    public String getStitchedFilename() {
+        return stitchedFilename;
+    }
+
+    public void setStitchedFilename(String stitchedFilename) {
+        this.stitchedFilename = stitchedFilename;
     }
 
     @Override
@@ -50,7 +65,6 @@ public class AnatomicalArea implements Serializable {
                 "name='" + name + '\'' +
                 ", tileIds=" + tileIds +
                 ", sampleProcessingResultId=" + sampleProcessingResultId +
-                ", sampleProcessingResultFilename='" + sampleProcessingResultFilename + '\'' +
                 '}';
     }
 }

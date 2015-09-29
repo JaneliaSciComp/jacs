@@ -57,19 +57,19 @@ public class ReuseAlignmentResultService extends AbstractEntityService {
         if (latestAr!=null) {
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestAr.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
-                logger.info("Reusing alignment result "+latestAr.getId()+" for "+latestAr.getName()+" in new pipeline run "+pipelineRunId);
+                contextLogger.info("Reusing alignment result "+latestAr.getId()+" for "+latestAr.getName()+" in new pipeline run "+pipelineRunId);
                 processData.putItem("RESULT_ENTITY", latestAr);
-                logger.info("Putting '"+latestAr+"' in RESULT_ENTITY");
+                contextLogger.info("Putting '"+latestAr+"' in RESULT_ENTITY");
                 processData.putItem("RESULT_ENTITY_ID", latestAr.getId().toString());
-                logger.info("Putting '"+latestAr.getId()+"' in RESULT_ENTITY_ID");
+                contextLogger.info("Putting '"+latestAr.getId()+"' in RESULT_ENTITY_ID");
                 String alignedFilename = latestAr.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                 processData.putItem("ALIGNED_FILENAME", alignedFilename);    
-                logger.info("Putting '"+alignedFilename+"' in ALIGNED_FILENAME");
+                contextLogger.info("Putting '"+alignedFilename+"' in ALIGNED_FILENAME");
                 processData.putItem("RUN_ALIGNMENT", Boolean.FALSE);    
-                logger.info("Putting '"+Boolean.FALSE+"' in RUN_ALIGNMENT");
+                contextLogger.info("Putting '"+Boolean.FALSE+"' in RUN_ALIGNMENT");
         }
         else {
-            logger.info("No existing alignment with name '"+paa.getResultName()+"' available for reuse for sample: "+sampleEntityId);
+            contextLogger.info("No existing alignment with name '"+paa.getResultName()+"' available for reuse for sample: "+sampleEntityId);
         }
     }
 }

@@ -1001,7 +1001,7 @@
                           unique="false"/>
             </subclass>
 
-             <subclass name="org.janelia.it.jacs.model.user_data.sift.SiftProteinSubstitutionResultNode"
+            <subclass name="org.janelia.it.jacs.model.user_data.sift.SiftProteinSubstitutionResultNode"
                       discriminator-value="SiftProteinSubstitutionResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"
@@ -1302,6 +1302,13 @@
                           optimistic-lock="false"
                           unique="false"/>
             </subclass>
+
+            <subclass name="org.janelia.it.jacs.model.user_data.mip.MIPGenerationResultNode" discriminator-value="MIPGenerationResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
         </subclass>
 
         <!--Want to end file node here-->
@@ -1337,7 +1344,6 @@
                               column="blastdb_filenode_id"/>
             </set>
         </subclass>
-
 
     </class>
 

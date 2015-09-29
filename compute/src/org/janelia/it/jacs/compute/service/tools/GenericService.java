@@ -42,7 +42,7 @@ public class GenericService extends SubmitDrmaaJobService {
 
     SystemCall sc;
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
 
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());

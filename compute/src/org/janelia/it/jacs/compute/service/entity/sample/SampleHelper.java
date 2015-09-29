@@ -526,20 +526,20 @@ public class SampleHelper extends EntityHelper {
             }
             String value = sampleProperties.get(key);
             if (attrs.contains(key) && value!=null && !NO_CONSENSUS_VALUE.equals(value)) {
-                if (setAttribute(sample, key, value)) {
+                if (EntityUtils.setAttribute(sample, key, value)) {
                     dirty = true;
                 }
             }
         }
 
         // Some attributes are known explicitly. These should all be listed in explicitSampleAttrs, so they're not set above.
-        if (setAttribute(sample, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier)) {
+        if (EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier)) {
             dirty = true;
         }   
-        if (setAttribute(sample, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec)) {
+        if (EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec)) {
             dirty = true;
         }  
-        if (setAttribute(sample, EntityConstants.ATTRIBUTE_OBJECTIVE, objective)) {
+        if (EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_OBJECTIVE, objective)) {
             dirty = true;
         }
         
@@ -767,7 +767,7 @@ public class SampleHelper extends EntityHelper {
             tileDirty = true;
         }
 
-        if (setAttribute(imageTile, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, tileGroup.getAnatomicalArea())) {
+        if (EntityUtils.setAttribute(imageTile, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, tileGroup.getAnatomicalArea())) {
             tileDirty = true;
         }
         
@@ -830,10 +830,10 @@ public class SampleHelper extends EntityHelper {
                     logger.warn("LSM stack does not support property: "+key);
                 }
                 else {
-                    if (setAttribute(lsmStack, key, value)) {
-                        if (key.equals(EntityConstants.ATTRIBUTE_TMOG_DATE)) {
-                            // TODO: we can remove this once all LSMs have a TMOG date on them. 
-                            // In the meantime, we don't want to trigger reprocessing on all samples so we use a separate dirty flag to save the LSM silently. 
+                    String previousValue = lsmStack.getValueByAttributeName(key);
+                    if (EntityUtils.setAttribute(lsmStack, key, value)) {
+                        if (previousValue==null) {
+                            // Don't trigger reprocessing if a new attribute appears, only if an attribute changes 
                             lsmDirty = true;
                         }
                         else {
@@ -852,28 +852,6 @@ public class SampleHelper extends EntityHelper {
         return dirty;
     }
     
-    /**
-     * Set the given attribute if the provided value is not null and not already set. 
-     * @param entity
-     * @param key
-     * @param value
-     * @return true if the value was changed, false otherwise
-     */
-    public boolean setAttribute(Entity entity, String key, String value) {
-        String currValue = entity.getValueByAttributeName(key);
-        if (value!=null && !value.equals(currValue)) {
-            String label = entity.getId()==null?entity.getName():entity.getEntityTypeName()+"#"+entity.getId();
-            if (currValue!=null) {
-                logger.info("    Updating "+key+"="+value+" on "+label);
-            }
-            else {
-                logger.debug("    Setting "+key+"="+value+" on "+label);
-            }
-            entity.setValueByAttributeName(key, value);
-            return true;
-        }
-        return false;
-    }
     
     private void markForReprocessing(Entity sample) {
         String sampleStatus = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
@@ -884,7 +862,7 @@ public class SampleHelper extends EntityHelper {
             }
         }
         logger.info("  Sample tiles changed, marking for reprocessing: "+sample.getName());
-        setAttribute(sample, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
+        EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
         numSamplesReprocessed++;
     }
     

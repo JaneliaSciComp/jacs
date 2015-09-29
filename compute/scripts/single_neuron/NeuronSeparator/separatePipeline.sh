@@ -107,7 +107,7 @@ RESULT='SeparationResult.nsp'
 
 if [ -s SeparationResultUnmapped.nsp ]; then
 
-    if [ "$PREVFILE" ]; then
+    if [ "$PREVFILE" ] && [ -s "$PREVFILE" ] ; then
         echo "~ Mapping neurons to previous fragment indexes found in $PREVFILE"
         $NSDIR/map_neurons SeparationResultUnmapped.nsp $PREVFILE >SeparationResult.nsp 2>mapping_issues.txt
         if [ ! -s "SeparationResult.nsp" ]; then

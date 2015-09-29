@@ -10,7 +10,7 @@ ensureRawFile()
     local _FILE="$3"
     local _RESULTVAR="$4"
     local _EXT=${_FILE#*.}
-    if [ "$_EXT" == "v3dpbd" ]; then
+    if [ "$_EXT" != "v3draw" ] && [ "$_EXT" != "raw" ] ; then
         local _PBD_FILE=$_FILE
         local _FILE_STUB=`basename $_PBD_FILE`
         _FILE="$_WORKING_DIR/${_FILE_STUB%.*}.v3draw"

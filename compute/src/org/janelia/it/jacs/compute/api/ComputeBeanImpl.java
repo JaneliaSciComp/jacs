@@ -396,7 +396,16 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             throw new ServiceException(e);
         }
     }
-    
+
+    public int cancelIncompleteTasksForUser(String subjectKey) throws ComputeException{
+        try {
+            return computeDAO.cancelIncompleteTasksForUser(subjectKey);
+        }
+        catch (DaoException e) {
+            throw new ServiceException(e);
+        }
+    }
+
     private boolean areEqual(Set<TaskParameter> taskParameters1, Set<TaskParameter> taskParameters2) {
     	if (taskParameters1.size()!=taskParameters2.size()) return false;
     	Map<String, String> taskParameterMap1 = asMap(taskParameters1);

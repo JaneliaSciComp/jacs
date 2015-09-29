@@ -187,7 +187,7 @@ public class JaccardService extends SubmitDrmaaJobService {
 
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         jaccardTask = getJaccardTask(processData);
         task = jaccardTask;

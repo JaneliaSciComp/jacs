@@ -93,7 +93,7 @@ public class TrnaScanService extends SubmitDrmaaJobService {
         return new TrnaScanTask();
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         trnaScanTask = getTrnaScanTask(processData);
         task = trnaScanTask;
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);

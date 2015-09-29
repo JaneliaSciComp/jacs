@@ -30,16 +30,16 @@ public class SetSampleStatusService extends AbstractEntityService {
         this.firstCompletion = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE)==null;
         
     	if (parentSample==null) {
-            logger.info("Setting status to "+status+" on parent-less sample "+sample.getName()+" (id="+entityId+")");
+    	    contextLogger.info("Setting status to "+status+" on parent-less sample "+sample.getName()+" (id="+entityId+")");
             setStatus(sample, status, true);
     	}
     	else {
-            logger.info("Setting status to "+status+" on sample "+sample.getName()+" (id="+entityId+")");
+    	    contextLogger.info("Setting status to "+status+" on sample "+sample.getName()+" (id="+entityId+")");
             setStatus(sample, status, true);
             
             // We update the parent sample status with any status except Complete, unless all child samples are completed
             if (!status.equals(EntityConstants.VALUE_COMPLETE) || allChildSamplesComplete(parentSample)) {
-                logger.info("Setting status to "+status+" on parent sample "+parentSample.getName()+" (id="+parentSample.getId()+")");
+                contextLogger.info("Setting status to "+status+" on parent sample "+parentSample.getName()+" (id="+parentSample.getId()+")");
                 setStatus(parentSample, status, false);
             }       
     	}
@@ -53,7 +53,7 @@ public class SetSampleStatusService extends AbstractEntityService {
         if (status.equals(EntityConstants.VALUE_COMPLETE) && firstCompletion) {
                     
             String completionDate = sampleHelper.format(new Date());
-            logger.info("Setting completion date on sample "+sample.getName()+" (id="+sample.getId()+")");
+            contextLogger.info("Setting completion date on sample "+sample.getName()+" (id="+sample.getId()+")");
                         
             // Set completion date for sample
             entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_COMPLETION_DATE, completionDate);

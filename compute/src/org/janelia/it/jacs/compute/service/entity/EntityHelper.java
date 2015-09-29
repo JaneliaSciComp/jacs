@@ -170,7 +170,7 @@ public class EntityHelper {
         	// TODO: this shouldn't be necessary in the future
         	EntityData oldEd = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
         	if (oldEd!=null) {
-        		setDefault2dImage(entity, oldEd.getValue());	
+                setDefault2dImage(entity, create2dImage(oldEd.getValue()));	
         		removeDefaultImageFilePath(default3dImage);
         	}
     	}
@@ -189,7 +189,6 @@ public class EntityHelper {
     	if (refMip!=null) {
     		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);	
     	}
-		
     }
 
 	public void set2dImages(Entity entity, Entity default2dImage, Entity allMip, Entity signalMip, Entity refMip) throws ComputeException {
@@ -217,21 +216,8 @@ public class EntityHelper {
 	 * @param default2dImage
 	 * @throws ComputeException
 	 */
-	public void setDefault2dImage(Entity entity, Entity default2dImage) throws ComputeException {
-        setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
-    }
-
-	/**
-	 * Sets the default 2d image for the given entity. This creates a new entity with the given filename as the name.
-	 * @param entity
-	 * @param defaultImageFilepath
-	 * @throws ComputeException
-	 */
-	public Entity setDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
-        logger.debug("Adding Default 2D Image to "+entity.getName()+" (id="+entity.getId()+")");
-        Entity default2dImage = create2dImage(defaultImageFilepath);
-        setDefault2dImage(entity, default2dImage);
-        return default2dImage;
+	public boolean setDefault2dImage(Entity entity, Entity default2dImage) throws ComputeException {
+        return setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
     }
 
 	/**
@@ -239,14 +225,17 @@ public class EntityHelper {
 	 * @param entity
 	 * @param image
 	 * @param attributeName
+	 * @return true if the image was necessary
 	 * @throws ComputeException
 	 */
-	public void setImageIfNecessary(Entity entity, String attributeName, Entity image) throws ComputeException {
-		if (image==null || entity==null) return;
+	public boolean setImageIfNecessary(Entity entity, String attributeName, Entity image) throws ComputeException {
+		if (image==null || entity==null) return false;
     	EntityData currImage = entity.getEntityDataByAttributeName(attributeName);
     	if (currImage==null || currImage.getChildEntity()==null || !currImage.getId().equals(image.getId())) {
     		setImage(entity, attributeName, image);	
+    		return true;
     	}
+    	return false;
 	}
 	
 	/**

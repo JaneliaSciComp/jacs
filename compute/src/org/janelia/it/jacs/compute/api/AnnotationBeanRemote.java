@@ -77,6 +77,9 @@ public interface AnnotationBeanRemote {
     public Entity getUserDataSetByName(String subjectKey, String dataSetName) throws ComputeException;
     public Entity getUserDataSetByIdentifier(String dataSetIdentifier) throws ComputeException;
     
+    public Entity createFlyLineRelease(String subjectKey, String dataSetName) throws ComputeException;
+    public List<Entity> getUserFlyLineReleases(List<String> subjectKeyList) throws ComputeException;
+    
     public Entity createAlignmentBoard(String subjectKey, String alignmentBoardName, String alignmentSpace, String opticalRes, String pixelRes) throws ComputeException;
     public EntityData addAlignedItem(Entity parentEntity, Entity child, String alignedItemName, boolean visible) throws ComputeException;
 

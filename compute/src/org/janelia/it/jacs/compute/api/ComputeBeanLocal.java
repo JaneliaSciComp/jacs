@@ -1,19 +1,14 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.ejb.Local;
-
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
+
+import javax.ejb.Local;
+import java.util.*;
 
 /**
  * Local interface to ComputeBeanImpl
@@ -58,4 +53,6 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
     public Task getMostRecentTaskWithNameAndParameters(String owner, String taskName, HashSet<TaskParameter> taskParameters);
 
     public int cancelIncompleteTasksWithName(String owner, String name) throws ComputeException;
+
+	public int cancelIncompleteTasksForUser(String subjectKey) throws ComputeException;
 }

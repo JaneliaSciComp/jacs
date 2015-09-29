@@ -1,6 +1,9 @@
 
 package org.janelia.it.jacs.model.tasks;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
 /**
@@ -9,6 +12,7 @@ import java.io.Serializable;
  * Date: May 22, 2007
  * Time: 11:30:18 AM
  */
+@XmlAccessorType(XmlAccessType.NONE)
 public class TaskMessage implements Serializable {
 
     private Long messageId;

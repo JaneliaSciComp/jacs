@@ -180,7 +180,17 @@
            <type>java.lang.String</type>
         </parameter>
     </operation>
-     
+
+    <operation>
+        <description>Cancel all incomplete user tasks</description>
+        <name>cancelAllIncompleteUserTasks</name>
+        <parameter>
+            <description>User to run as (e.g. "flylight").  Leave empty to cycle through all users.</description>
+            <name>user</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
     <operation>
         <description>Cancel all incomplete tasks for all users with data set pipelines</description>
         <name>cancelAllIncompleteDataSetPipelineTasks</name>
@@ -195,8 +205,18 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
@@ -241,8 +261,18 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
@@ -272,8 +302,18 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
@@ -302,8 +342,18 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
@@ -332,8 +382,18 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
+            <description>Reuse previous summary results</description>
+            <name>reuseSummary</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
             <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
+        <parameter>
+            <description>Reuse previous post-processing results</description>
+            <name>reusePost</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>

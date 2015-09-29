@@ -40,6 +40,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     private static final String CONFIG_PREFIX = "scalityConfiguration.";
     private static final String TIMING_PREFIX="Timing: ";
 
+    protected static final boolean SCALITY_ALLOW_WRITES =
+            SystemConfigurationProperties.getBoolean("Scality.AllowWrites");
+
     protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
 
@@ -64,6 +67,12 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
     protected void init() throws Exception {
 
+        if (!SCALITY_ALLOW_WRITES) {
+            contextLogger.info("Scality writes are disallowed by configuration. Scality.AllowWrites is set to false in jacs.properties.");
+            cancel();
+            return;
+        }
+        
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
         if (!StringUtils.isEmpty(excludeFiles)) {
             for(String filePattern : excludeFiles.split("\\s*,\\s*")) {
@@ -94,6 +103,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         if (entitiesToMove.isEmpty()) {
             contextLogger.info("No entities to process, aborting.");
             cancel();
+            return;
         }
     }
 	

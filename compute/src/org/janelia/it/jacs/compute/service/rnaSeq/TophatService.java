@@ -53,7 +53,7 @@ public class TophatService extends SubmitDrmaaJobService {
         return new TophatTask();
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         tophatTask = getTophatTask(processData);
         task = tophatTask;
         sessionName = ProcessDataHelper.getSessionRelativePath(processData);

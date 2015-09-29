@@ -529,6 +529,34 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
         }
     }
     
+
+    public Entity createFlyLineRelease(String subjectKey, String releaseName) throws ComputeException {
+        try {
+            Entity dataSet = _annotationDAO.createFlyLineRelease(subjectKey, releaseName);
+            _logger.info("Created fly line release "+releaseName+" (id="+dataSet.getId()+") for subject "+subjectKey);
+            return dataSet;
+        }
+        catch (Exception e) {
+            _logger.error("Error creating new data set ("+releaseName+") for subject "+subjectKey,e);
+            throw new ComputeException("Error creating new data set ("+releaseName+") for subject "+subjectKey,e);
+        }
+    }
+    
+    public List<Entity> getUserFlyLineReleases(List<String> subjectKeyList) throws ComputeException {
+        try {
+            Set<Entity> dataSets = new LinkedHashSet<Entity>();
+            for(String userLogin : subjectKeyList)  {
+                dataSets.addAll(_annotationDAO.getUserEntitiesByTypeName(userLogin, EntityConstants.TYPE_FLY_LINE_RELEASE));
+            }
+            return new ArrayList<Entity>(dataSets);
+        }
+        catch (DaoException e) {
+            final String msg = "Error getting fly lines releases for " + subjectKeyList;
+            _logger.error(msg, e);
+            throw new ComputeException(msg, e);
+        }
+    }
+    
     public void deleteAttribute(String ownerKey, String attributeName) throws ComputeException {
         try {
             _annotationDAO.deleteAttribute(ownerKey, attributeName);

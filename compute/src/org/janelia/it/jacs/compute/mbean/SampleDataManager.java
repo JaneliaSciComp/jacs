@@ -16,6 +16,7 @@ import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.io.File;
@@ -65,7 +66,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
-            log.info("Found users with samples: "+subjectKeys);
+            log.info("Found users with samples: " + subjectKeys);
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
@@ -120,7 +121,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
-            log.info("Found users with data sets: "+subjectKeys);
+            log.info("Found users with data sets: " + subjectKeys);
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing sample data compression for "+subjectKey);
                 runSampleDataCompression(subjectKey, null, compressionType);
@@ -254,7 +255,32 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.error("Error running pipeline", ex);
         }
     }
-    
+
+    // todo Proved to be too slow.  Used the commented out main method below to generate insert statements adding canceled event (insanely faster)
+    public void cancelAllIncompleteUserTasks(String user){
+        try {
+            log.info("Building list of users with data sets...");
+            Set<String> subjectKeys = new TreeSet<>();
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+                subjectKeys.add(dataSet.getOwnerKey());
+            }
+            log.info("Found users with data sets: " + subjectKeys);
+            log.info("Canceling incomplete tasks");
+            for(String subjectKey : subjectKeys) {
+                if (null!=user && !EntityUtils.getNameFromSubjectKey(subjectKey).equals(user)) {continue;}
+                log.info("  Canceling tasks for user "+subjectKey);
+                int c = EJBFactory.getLocalComputeBean().cancelIncompleteTasksForUser(subjectKey);
+                if (c>0) {
+                    log.info("  Canceled "+c+" incomplete tasks for "+subjectKey);
+                }
+            }
+            log.info("Completed cancelAllIncompleteUserTasks");
+        }
+        catch (Exception ex) {
+            log.error("Error clearing data set pipeline tasks", ex);
+        }
+    }
+
     // -----------------------------------------------------------------------------------------------------
     // Generic confocal image processing pipelines
     // -----------------------------------------------------------------------------------------------------
@@ -282,7 +308,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
+    public String runAllDataSetPipelines(String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
         try {
             log.info("Building list of users with data sets...");
             Set<String> subjectKeys = new TreeSet<>();
@@ -293,7 +319,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing data set pipelines for "+subjectKey);
-                String ret = runUserDataSetPipelines(subjectKey, null, true, runMode, reuseProcessing, reuseAlignment, true, force);
+                String ret = runUserDataSetPipelines(subjectKey, null, true, runMode, reuseSummary, reuseProcessing, reusePost, reuseAlignment, true, force);
                 if (sb.length()>0) sb.append(",\n");
                 sb.append(subjectKey).append(": ").append(ret);
             }
@@ -305,7 +331,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force) {
+    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
         try {
             String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
@@ -317,9 +343,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (reusePipelineRuns!=null) {
             	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
             }
-            taskParameters.add(new TaskParameter("reuse summary", "true", null));
+            if (reuseSummary!=null) {
+                taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
+            }
             if (reuseProcessing!=null) {
             	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            }
+            if (reusePost!=null) {
+                taskParameters.add(new TaskParameter("reuse post", reusePost.toString(), null));
             }
             if (reuseAlignment!=null) {
             	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
@@ -358,7 +389,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams) {
+    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
@@ -366,11 +397,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    runSampleFolder(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment, extraParams);
+                    runSampleFolder(child.getId().toString(), reusePipelineRuns, reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reusePipelineRuns, reuseProcessing, reuseAlignment, extraParams);  
+                    runSamplePipelines(child.getId().toString(), reusePipelineRuns, reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
                 else {
@@ -382,7 +413,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams) {
+    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
@@ -392,9 +423,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
             if (reusePipelineRuns!=null) {
             	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
             }
-            taskParameters.add(new TaskParameter("reuse summary", "true", null));
+            if (reuseSummary!=null) {
+                taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
+            }
             if (reuseProcessing!=null) {
             	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            }
+            if (reusePost!=null) {
+                taskParameters.add(new TaskParameter("reuse post", reusePost.toString(), null));
             }
             if (reuseAlignment!=null) {
             	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
@@ -407,16 +443,21 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment) {
+    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment) {
         try {
             String processName = "PipelineConfig_"+configurationName;
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
-            taskParameters.add(new TaskParameter("reuse summary", "true", null));
+            if (reuseSummary!=null) {
+                taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
+            }
             if (reuseProcessing!=null) {
             	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+            }
+            if (reusePost!=null) {
+                taskParameters.add(new TaskParameter("reuse post", reusePost.toString(), null));
             }
             if (reuseAlignment!=null) {
             	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
@@ -615,51 +656,41 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-//    public static void main(String[] args) {
-//        String targetUser = "leetlab";
-//        try (FileWriter cleanupFile = new FileWriter(new File("/Users/saffordt/Desktop/CleanupVLInputPaths"+targetUser+".txt"));) {
-//            Scanner scanner = new Scanner(new File("/Users/saffordt/Desktop/VLInputPaths.txt"));
-//            while (scanner.hasNextLine()) {
-//                String tmpLine = scanner.nextLine().trim();
-//                if (!tmpLine.contains(targetUser)) {continue;}
-//                String originalPDB = tmpLine.substring(0,tmpLine.lastIndexOf(".h5j"))+".v3dpbd";
-//                File tmpOriginalPBD = new File(originalPDB);
-//                File tmpOriginalVL = new File(tmpLine);
-//                if (!tmpOriginalVL.exists()) {
-//                    System.out.println("Can't find the original VL file: "+tmpLine);
-//                    continue;
-//                }
-//                if (!tmpOriginalPBD.exists()) {
-//                    System.out.println("Can't find the original PBD file: "+originalPDB);
-//                    continue;
-//                }
-//
-//                long diff = new Date().getTime() - tmpOriginalVL.lastModified();
-//                int daysOlderThan = 3;
-//                if (diff > daysOlderThan * 24 * 60 * 60 * 1000) {
-//                    cleanupFile.append(tmpLine).append("\n");
-//                }
-//            }
-//        }
-//        catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    /**
+     * To cancel stranded jobs do the following:
+     * 1. Get the tasks not in a terminal state
+     *
+         @export on;
+         @export set filename="/Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt" CsvIncludeColumnHeader="false";
+         select task_event.task_id, task_event.event_no, task_event.description, task_event.event_timestamp, task_event.event_type, CURRENT_TIMESTAMP
+         from task join task_event on task.task_id = task_event.task_id
+         where task.task_owner='nerna' and event_no in (
+         select max(event_no) as event_no
+         from task_event task_event1 where  task_event1.task_id=task_event.task_id
+         order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled';
+         @export off;
 
+      * 2. Run the main method below to create the new cancel events
+      * 3. Run the insert statements and provide a valid output file path
+         @cd /Users/saffordt/Desktop/;
+         @run AllStrandedTasksnernaKonrad.txt.update.sql
+
+         and
+
+         /Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt.update.sql.log
+      *
+      *
+     */
 //    public static void main(String[] args) {
-//        String nernaFilePath = "/groups/jacs/jacsShare/saffordTest/nernaVLConvertHangsGrid.txt";
-//        File nernaFile = new File(nernaFilePath);
-//        try (FileWriter writer = new FileWriter(new File("/groups/jacs/jacsShare/saffordTest/nernaVLFixes.txt"))){
-//            Scanner scanner = new Scanner(nernaFile);
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt";
+//        File tmpFile = new File(filePath);
+//        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
+//            Scanner scanner = new Scanner(tmpFile);
 //            while (scanner.hasNextLine()) {
 //                String tmpLine = scanner.nextLine().trim();
-//                String[] pieces = tmpLine.split("\\s");
-//                String suffix = pieces[6].substring(pieces[6].lastIndexOf(".")+1);
-//                Scanner tmpScanner = new Scanner(
-//                        new File("/nobackup/jacs/jacsData/filestore/system/GenericResults/572/935/2154836344520572935/sge_config/vlCorrectionTestConfiguration."+suffix));
-//                String pbd = tmpScanner.nextLine();
-//                String h5j = tmpScanner.nextLine();
-//                writer.write(h5j+"\n");
+//                String[] pieces = tmpLine.split("\t");
+//                writer.write("insert into task_event (task_id,event_no,description,event_timestamp,event_type) values ("+
+//                        pieces[0]+","+(Integer.valueOf(pieces[1])+1)+",'canceled','"+pieces[5]+"','canceled');\n");
 //            }
 //        }
 //        catch (IOException e) {
