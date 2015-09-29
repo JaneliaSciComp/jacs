@@ -424,18 +424,22 @@
             </sequence>
                 
         </sequence>
-         
-        <!-- Run post processing service -->
-        <!-- TODO: Right now, post-processing only works if processing is run. We need to populate SAMPLE_AREAS and other variables when processing is reused. -->
-        <include name="Post-processing" process="FlyLightPostProcessingPipeline" startEvent="running">
-            <input name="SAMPLE_AREAS"/>
-            <input name="PIPELINE_RUN_ENTITY_ID"/>
-            <input name="SAMPLE_ENTITY_ID"/>
-            <input name="REUSE_POST"/>
-            <input name="OUTPUT_COLOR_SPEC"/>
-            <input name="IMAGE_TYPE"/>
-        </include>
+        
+        <!-- TODO: Right now, post-processing only works if processing is run. To fix this, we need to populate SAMPLE_AREAS and other variables when processing is reused. -->
+        <sequence if="RUN_PROCESSING=true" name="Sample post-processing" startEvent="running">
+        
+            <!-- Run post processing service -->        
+            <include name="Post-processing" process="FlyLightPostProcessingPipeline" startEvent="running">
+                <input name="SAMPLE_AREAS"/>
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="REUSE_POST"/>
+                <input name="OUTPUT_COLOR_SPEC"/>
+                <input name="IMAGE_TYPE"/>
+            </include>
     
+        </sequence>
+        
         <!-- Clean up merged files for all sample areas -->
         <operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedTilesService">
             <input name="SAMPLE_AREAS"/>
