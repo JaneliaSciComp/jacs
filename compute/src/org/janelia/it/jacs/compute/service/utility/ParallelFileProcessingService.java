@@ -395,7 +395,7 @@ public abstract class ParallelFileProcessingService extends SubmitDrmaaJobServic
                 }
             }
             if (missingFiles.size()>0) {
-                logger.info("Warning: could not find these files during try="+outputFileCheckTries+" out of "+maxOutputFileCheckTries);
+                logger.info("Warning: could not find these files during try="+(outputFileCheckTries+1)+" out of "+maxOutputFileCheckTries);
                 for (String mf : missingFiles) {
                     logger.info("Missing file: "+mf);
                 }
