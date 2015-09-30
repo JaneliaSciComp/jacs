@@ -1,8 +1,8 @@
 
 package org.janelia.it.jacs.server.access;
 
-import org.janelia.it.jacs.model.metadata.Library;
-import org.janelia.it.jacs.model.metadata.Sample;
+import org.janelia.it.jacs.model.genomics.Sample;
+import org.janelia.it.jacs.model.genomics.Library;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 
 import java.util.List;

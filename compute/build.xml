@@ -182,15 +182,15 @@
             <fileset dir="${jacs.properties.dir}">
                 <include name="jacs.properties"/>
             </fileset>
-            <fileset dir="${basedir}/jsp">
-                <include name="index.jsp"/>
-                <include name="css/*"/>
-                <include name="images/*"/>
-                <include name="includes/*"/>
-                <include name="js/*"/>
-                <include name="*.jsp"/>
-                <include name="*.css"/>
-            </fileset>
+            <!--<fileset dir="${basedir}/jsp">-->
+                <!--<include name="index.jsp"/>-->
+                <!--<include name="css/*"/>-->
+                <!--<include name="images/*"/>-->
+                <!--<include name="includes/*"/>-->
+                <!--<include name="js/*"/>-->
+                <!--<include name="*.jsp"/>-->
+                <!--<include name="*.css"/>-->
+            <!--</fileset>-->
             <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
@@ -289,7 +289,7 @@
             	<include name="org/janelia/it/jacs/compute/api/EntityBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/SearchBeanRemote.class"/>
             	<include name="org/janelia/it/jacs/compute/api/SolrBeanRemote.class"/>
-                <include name="org/janelia/it/jacs/compute/api/GenomeContextBeanRemote.class"/>
+                <!--<include name="org/janelia/it/jacs/compute/api/GenomeContextBeanRemote.class"/>-->
                 <include name="org/janelia/it/jacs/compute/api/GeometricSearchBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/ComputeException.class"/>
                 <include name="org/janelia/it/jacs/compute/access/DaoException.class"/>
@@ -298,7 +298,7 @@
                 <include name="org/janelia/it/jacs/compute/api/JobControlBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/TiledMicroscopeBeanRemote.class"/>
             	<include name="org/janelia/it/jacs/compute/api/support/*.class"/>
-                <include name="org/janelia/it/jacs/compute/gcdml/**/*.class"/>
+                <!--<include name="org/janelia/it/jacs/compute/gcdml/**/*.class"/>-->
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
@@ -315,44 +315,44 @@
         </antcall>
 
         <!-- copy required perl script -->
-        <copy file="${basedir}/scripts/camera_html_blast.pl" todir="${basedir}/build/jars" overwrite="true"/>
+        <!--<copy file="${basedir}/scripts/camera_html_blast.pl" todir="${basedir}/build/jars" overwrite="true"/>-->
     </target>
 
-    <target name="commandline-gcdml-tar" depends="local-jar">
-        <delete file="${build.jars.dir}/commandline-gcdml.tar" />
-        <mkdir dir="${build.jars.dir}/gcdml-dir/jar" />
+    <!--<target name="commandline-gcdml-tar" depends="local-jar">-->
+        <!--<delete file="${build.jars.dir}/commandline-gcdml.tar" />-->
+        <!--<mkdir dir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${common.dir}/Spring/log4j-1.2.14.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/GWT/gwt-user.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/hibernate3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/dom4j-1.6.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/commons-collections-2.1.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/cglib.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <!--These jars below were removed as the ant target is defunct.  Still keeping the target around, for now. -->
-        <!--<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/jbossall-client.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/commons-logging.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <copy file="${common.dir}/JBoss-Server-4.2.3.GA/javassist.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/JBoss-Server-4.2.3.GA/antlr.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--<copy file="${common.dir}/Spring/log4j-1.2.14.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/GWT/gwt-user.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/hibernate3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/dom4j-1.6.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/commons-collections-2.1.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/cglib.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--&lt;!&ndash;These jars below were removed as the ant target is defunct.  Still keeping the target around, for now. &ndash;&gt;-->
+        <!--&lt;!&ndash;<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/jbossall-client.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
+        <!--&lt;!&ndash;<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/commons-logging.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
+        <!--<copy file="${common.dir}/JBoss-Server-4.2.3.GA/javassist.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/JBoss-Server-4.2.3.GA/antlr.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${common.module}/JAXB-2.1.5/jaxb-api.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.module}/JAXB-2.1.5/jaxb-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.module}/JAXB-2.1.5/jaxb1-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb-api.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb1-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${basedir}/../model/build/jars/jacs-model.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${basedir}/../jacs/conf/container_descriptor/hibernate.cfg.xml" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--<copy file="${basedir}/../model/build/jars/jacs-model.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${basedir}/../jacs/conf/container_descriptor/hibernate.cfg.xml" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <!--<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--&lt;!&ndash;<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
+        <!--<copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${build.jars.dir}/compute.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="/conf/jacs.properties" todir="${build.jars.dir}/gcdml-dir" />
-        <copy file="${basedir}/../shared/build/jars/gcdml-shared.jar" todir="${build.jars.dir}/gcdml-dir" />
+        <!--<copy file="${build.jars.dir}/compute.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="/conf/jacs.properties" todir="${build.jars.dir}/gcdml-dir" />-->
+        <!--<copy file="${basedir}/../shared/build/jars/gcdml-shared.jar" todir="${build.jars.dir}/gcdml-dir" />-->
 
-        <tar destfile="${build.jars.dir}/commandline-gcdml.tar" basedir="${build.jars.dir}/gcdml-dir" />
+        <!--<tar destfile="${build.jars.dir}/commandline-gcdml.tar" basedir="${build.jars.dir}/gcdml-dir" />-->
 
-        <delete dir="${build.jars.dir}/gcdml-dir" />
+        <!--<delete dir="${build.jars.dir}/gcdml-dir" />-->
 
-    </target>
+    <!--</target>-->
     
     <!-- Set some generic properties.  Doing it in this target gives us access to all  -->
 	<!-- props in the generic set-common-properties -->

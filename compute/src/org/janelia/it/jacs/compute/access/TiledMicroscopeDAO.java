@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.access;
 
+import com.google.common.base.Stopwatch;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
@@ -262,6 +263,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws DaoException {
         try {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.start();
             // Retrieve neuron
             Entity neuron=annotationDAO.getEntityById(neuronId);
             if (!neuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
@@ -283,6 +286,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         Long pId=new Long(vArr[0]);
                         if (pId.equals(parentAnnotationId)) {
                             foundParent=true;
+                            break;
                         }
                     }
                 }
@@ -401,8 +405,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!valueStringUpdated) {
                 throw new Exception("Could not find temp geo entry to update for value string");
             }
-            TmStructuredTextAnnotation structeredAnnotation = new TmStructuredTextAnnotation(valueString);
-            return structeredAnnotation;
+            TmStructuredTextAnnotation structuredAnnotation = new TmStructuredTextAnnotation(valueString);
+            return structuredAnnotation;
 
         } catch (Exception e) {
             e.printStackTrace();

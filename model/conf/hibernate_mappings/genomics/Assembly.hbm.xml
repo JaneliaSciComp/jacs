@@ -58,11 +58,11 @@
        <property name="sampleAcc" type="java.lang.String" column="sample_acc" />
        <property name="organism" type="java.lang.String" column="organism" />
        <property name="projectSymbol" type="java.lang.String" column="project" />
-       <many-to-one class="org.janelia.it.jacs.model.metadata.Sample" name="sample" lazy="proxy"
+       <many-to-one class="org.janelia.it.jacs.model.genomics.Sample" name="sample" lazy="proxy"
                     column="sample_acc" property-ref="sampleAcc" insert="false" update="false"/>
        <set name="librarySet" table="assembly_library">
            <key column="assembly_id"/>
-           <many-to-many class="org.janelia.it.jacs.model.metadata.Library" column="library_id"/>
+           <many-to-many class="org.janelia.it.jacs.model.genomics.Library" column="library_id"/>
        </set>
 
    </class>

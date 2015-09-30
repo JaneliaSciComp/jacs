@@ -27,7 +27,7 @@
     <inherits name="org.janelia.it.jacs.Model"/>
     <inherits name="org.janelia.it.jacs.web.gwt.common.Common"/>
     <inherits name="com.google.gwt.maps.GoogleMaps"/>
-    <inherits name="org.janelia.it.jacs.web.gwt.map.Map"/>
-    <inherits name="org.janelia.it.jacs.web.gwt.detail.DetailComponent"/>
+    <!--<inherits name="org.janelia.it.jacs.web.gwt.map.Map"/>-->
+    <!--<inherits name="org.janelia.it.jacs.web.gwt.detail.DetailComponent"/>-->
     <stylesheet src="/jacs/css/status.css"/>
 </module>

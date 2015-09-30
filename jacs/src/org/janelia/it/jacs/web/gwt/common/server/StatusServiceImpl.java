@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerFilterDataTask;
+//import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerFilterDataTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.server.access.FileNodeDAO;
 import org.janelia.it.jacs.server.access.NodeDAO;
@@ -134,39 +134,39 @@ public class StatusServiceImpl extends JcviGWTSpringController implements Status
         }
     }
 
-    public RnaSeqJobInfo[] getPagedRnaSeqPipelineTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs)
-            throws GWTServiceException {
-
-        if (logger.isInfoEnabled()) {
-            logger.info("getPagedRnaSeqPipelineTaskResultsForUser: task class=" + classname + ", startIndex=" + startIndex + ", numRows=" + numRows);
-            for (SortArgument s : sortArgs) {
-                logger.info("sortArgument=" + s.getSortArgumentName() + " dir=" + s.getSortDirection());
-            }
-        }
-
-        try {
-            // TODO: figure out why this is getting called w/startIndex==-1
-            if (startIndex == -1) {
-                logger.info("startIndex is -1, returning null");
-                return null;
-            }
-
-            // Get the jobs in the specified range
-            List<RnaSeqJobInfo> jobs = taskDAO.getPagedRnaSeqJobsForUserLogin(classname, getSessionUser().getUserLogin(),
-                    null, startIndex, numRows, sortArgs);
-            logger.info("taskDAO.getPagedRnaSeqJobsForUserLogin returned job count=" + jobs.size());
-            return jobs.toArray(new RnaSeqJobInfo[jobs.size()]);
-        }
-        catch (DaoException e) {
-            logger.error("Exception during acquisition of the job information, returning empty status array.", e);
-            throw new GWTServiceException("Exception during acquisition of the job information", e);
-        }
-        catch (Throwable t) {
-            logger.error("Caught Throwable during acquisition of the job information", t);
-            throw new GWTServiceException("Unexpected exception during acquisition of the job information", t);
-        }
-    }
-
+//    public RnaSeqJobInfo[] getPagedRnaSeqPipelineTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs)
+//            throws GWTServiceException {
+//
+//        if (logger.isInfoEnabled()) {
+//            logger.info("getPagedRnaSeqPipelineTaskResultsForUser: task class=" + classname + ", startIndex=" + startIndex + ", numRows=" + numRows);
+//            for (SortArgument s : sortArgs) {
+//                logger.info("sortArgument=" + s.getSortArgumentName() + " dir=" + s.getSortDirection());
+//            }
+//        }
+//
+//        try {
+//            // TODO: figure out why this is getting called w/startIndex==-1
+//            if (startIndex == -1) {
+//                logger.info("startIndex is -1, returning null");
+//                return null;
+//            }
+//
+//            // Get the jobs in the specified range
+//            List<RnaSeqJobInfo> jobs = taskDAO.getPagedRnaSeqJobsForUserLogin(classname, getSessionUser().getUserLogin(),
+//                    null, startIndex, numRows, sortArgs);
+//            logger.info("taskDAO.getPagedRnaSeqJobsForUserLogin returned job count=" + jobs.size());
+//            return jobs.toArray(new RnaSeqJobInfo[jobs.size()]);
+//        }
+//        catch (DaoException e) {
+//            logger.error("Exception during acquisition of the job information, returning empty status array.", e);
+//            throw new GWTServiceException("Exception during acquisition of the job information", e);
+//        }
+//        catch (Throwable t) {
+//            logger.error("Caught Throwable during acquisition of the job information", t);
+//            throw new GWTServiceException("Unexpected exception during acquisition of the job information", t);
+//        }
+//    }
+//
     public BlastJobInfo[] getPagedBlastTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs)
             throws GWTServiceException {
 
@@ -220,60 +220,60 @@ public class StatusServiceImpl extends JcviGWTSpringController implements Status
         }
     }
 
-    // These methods are used to retrieve Recruitment Viewer data ----------------------------------------------------
-    public Integer getNumRVUserTaskResults(String likeString) throws GWTServiceException {
-        return getNumRVTaskResultsBase(getSessionUser().getUserLogin(), likeString);
-    }
-
-    public Integer getNumRVSystemTaskResults(String likeString) throws GWTServiceException {
-        return getNumRVTaskResultsBase(User.SYSTEM_USER_LOGIN, likeString);
-    }
-
-    private Integer getNumRVTaskResultsBase(String username, String likeString) throws GWTServiceException {
-        try {
-            // count only the tasks owned by system
-            return taskDAO.getNumTasksForUserLoginByClass(username,
-                    likeString,
-                    RecruitmentViewerFilterDataTask.class.getName(), false);
-        }
-        catch (DaoException e) {
-            logger.error("Error getting the number of recruitment tasks.\n" + e.getMessage());
-            throw new GWTServiceException("Get number of system task results failed");
-        }
-    }
-
-    public RecruitableJobInfo[] getPagedRVUserTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException {
-        return getPagedRVTaskResultsBase(getSessionUser().getUserLogin(), likeString, startIndex, numRows, sortArgs);
-    }
-
-    public RecruitableJobInfo[] getPagedRVSystemTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException {
-        return getPagedRVTaskResultsBase(User.SYSTEM_USER_LOGIN, likeString, startIndex, numRows, sortArgs);
-    }
-
-    private RecruitableJobInfo[] getPagedRVTaskResultsBase(String username, String likeString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException {
-        RecruitableJobInfo[] jobs;
-        try {
-            // select only the tasks that have results and are owned by system
-            List<Task> tmpTasks = taskDAO.getPagedTasksForUserLoginByClass(username,
-                    likeString,
-                    RecruitmentViewerFilterDataTask.class.getName(),
-                    startIndex,
-                    numRows,
-                    sortArgs,
-                    false);
-            jobs = new RecruitableJobInfo[tmpTasks.size()];
-            for (int i = 0; i < tmpTasks.size(); i++) {
-                jobs[i] = RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
-                        (RecruitmentViewerFilterDataTask) tmpTasks.get(i));
-            }
-            return jobs;
-        }
-        catch (Exception e) {
-            logger.error("\n\n\nCaught error in SSI \n\n\n", e);
-            throw new GWTServiceException("Get System Task Results failed.");
-        }
-    }
-
+//    // These methods are used to retrieve Recruitment Viewer data ----------------------------------------------------
+//    public Integer getNumRVUserTaskResults(String likeString) throws GWTServiceException {
+//        return getNumRVTaskResultsBase(getSessionUser().getUserLogin(), likeString);
+//    }
+//
+//    public Integer getNumRVSystemTaskResults(String likeString) throws GWTServiceException {
+//        return getNumRVTaskResultsBase(User.SYSTEM_USER_LOGIN, likeString);
+//    }
+//
+//    private Integer getNumRVTaskResultsBase(String username, String likeString) throws GWTServiceException {
+//        try {
+//            // count only the tasks owned by system
+//            return taskDAO.getNumTasksForUserLoginByClass(username,
+//                    likeString,
+//                    RecruitmentViewerFilterDataTask.class.getName(), false);
+//        }
+//        catch (DaoException e) {
+//            logger.error("Error getting the number of recruitment tasks.\n" + e.getMessage());
+//            throw new GWTServiceException("Get number of system task results failed");
+//        }
+//    }
+//
+//    public RecruitableJobInfo[] getPagedRVUserTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException {
+//        return getPagedRVTaskResultsBase(getSessionUser().getUserLogin(), likeString, startIndex, numRows, sortArgs);
+//    }
+//
+//    public RecruitableJobInfo[] getPagedRVSystemTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException {
+//        return getPagedRVTaskResultsBase(User.SYSTEM_USER_LOGIN, likeString, startIndex, numRows, sortArgs);
+//    }
+//
+//    private RecruitableJobInfo[] getPagedRVTaskResultsBase(String username, String likeString, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException {
+//        RecruitableJobInfo[] jobs;
+//        try {
+//            // select only the tasks that have results and are owned by system
+//            List<Task> tmpTasks = taskDAO.getPagedTasksForUserLoginByClass(username,
+//                    likeString,
+//                    RecruitmentViewerFilterDataTask.class.getName(),
+//                    startIndex,
+//                    numRows,
+//                    sortArgs,
+//                    false);
+//            jobs = new RecruitableJobInfo[tmpTasks.size()];
+//            for (int i = 0; i < tmpTasks.size(); i++) {
+//                jobs[i] = RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
+//                        (RecruitmentViewerFilterDataTask) tmpTasks.get(i));
+//            }
+//            return jobs;
+//        }
+//        catch (Exception e) {
+//            logger.error("\n\n\nCaught error in SSI \n\n\n", e);
+//            throw new GWTServiceException("Get System Task Results failed.");
+//        }
+//    }
+//
     public List<String> getUserTaskQueryNames() throws GWTServiceException {
         return getTaskQueryNamesBase(getSessionUser().getUserLogin());
     }
@@ -312,36 +312,36 @@ public class StatusServiceImpl extends JcviGWTSpringController implements Status
         return searches;
     }
 
-    public RecruitableJobInfo getRecruitmentTaskById(String taskId) throws GWTServiceException {
-        try {
-            Task task = taskDAO.getTaskById(new Long(taskId));
-            if (task instanceof RecruitmentViewerFilterDataTask)
-                return RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
-                        (RecruitmentViewerFilterDataTask) task);
-            else
-                return null;
-        }
-        catch (Exception e) {
-            throw new GWTServiceException("getSystemTaskById(" + taskId + ")" + " failed: " + e.getMessage());
-        }
-    }
-
-    public RecruitableJobInfo getRecruitmentFilterTaskByUserPipelineId(String parentTaskId) throws GWTServiceException {
-        try {
-            Task task = taskDAO.getRecruitmentFilterTaskByUserPipelineId(new Long(parentTaskId));
-            if (task instanceof RecruitmentViewerFilterDataTask) {
-                return RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
-                        (RecruitmentViewerFilterDataTask) task);
-            }
-            else {
-                return null;
-            }
-        }
-        catch (Exception e) {
-            throw new GWTServiceException("getRecruitmentFilterTaskByUserPipelineId(" + parentTaskId + ")" + " failed: " + e.getMessage());
-        }
-    }
-
+//    public RecruitableJobInfo getRecruitmentTaskById(String taskId) throws GWTServiceException {
+//        try {
+//            Task task = taskDAO.getTaskById(new Long(taskId));
+//            if (task instanceof RecruitmentViewerFilterDataTask)
+//                return RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
+//                        (RecruitmentViewerFilterDataTask) task);
+//            else
+//                return null;
+//        }
+//        catch (Exception e) {
+//            throw new GWTServiceException("getSystemTaskById(" + taskId + ")" + " failed: " + e.getMessage());
+//        }
+//    }
+//
+//    public RecruitableJobInfo getRecruitmentFilterTaskByUserPipelineId(String parentTaskId) throws GWTServiceException {
+//        try {
+//            Task task = taskDAO.getRecruitmentFilterTaskByUserPipelineId(new Long(parentTaskId));
+//            if (task instanceof RecruitmentViewerFilterDataTask) {
+//                return RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
+//                        (RecruitmentViewerFilterDataTask) task);
+//            }
+//            else {
+//                return null;
+//            }
+//        }
+//        catch (Exception e) {
+//            throw new GWTServiceException("getRecruitmentFilterTaskByUserPipelineId(" + parentTaskId + ")" + " failed: " + e.getMessage());
+//        }
+//    }
+//
     // GenericService Task Monitoring Methods
     public Integer getNumTaskResultsForUser(String taskClassName) throws GWTServiceException {
         try {

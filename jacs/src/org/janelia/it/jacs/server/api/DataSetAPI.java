@@ -4,31 +4,15 @@ package org.janelia.it.jacs.server.api;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
-import org.janelia.it.jacs.model.common.BlastableNodeVO;
 import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.common.UserDataNodeVO;
-import org.janelia.it.jacs.model.metadata.BioMaterial;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.ap16s.AnalysisPipeline16sTask;
-import org.janelia.it.jacs.model.tasks.barcodeDesigner.BarcodeDesignerTask;
 import org.janelia.it.jacs.model.tasks.blast.CreateBlastDatabaseTask;
 import org.janelia.it.jacs.model.tasks.blast.CreateRecruitmentBlastDatabaseTask;
-import org.janelia.it.jacs.model.tasks.geci.NeuronalAssayAnalysisTask;
-import org.janelia.it.jacs.model.tasks.inspect.InspectTask;
-import org.janelia.it.jacs.model.tasks.metageno.MetaGenoAnnotationTask;
-import org.janelia.it.jacs.model.tasks.metageno.MetaGenoOrfCallerTask;
-import org.janelia.it.jacs.model.tasks.neuronSeparator.NeuronSeparatorPipelineTask;
-import org.janelia.it.jacs.model.tasks.profileComparison.ProfileComparisonTask;
-import org.janelia.it.jacs.model.tasks.prokAnnotation.*;
-import org.janelia.it.jacs.model.tasks.recruitment.GenomeProjectRecruitmentSamplingTask;
-import org.janelia.it.jacs.model.tasks.rnaSeq.RnaSeqPipelineTask;
-import org.janelia.it.jacs.model.tasks.rnaSeq.UploadRnaSeqReferenceGenomeTask;
-import org.janelia.it.jacs.model.tasks.tic.BatchTicTask;
 import org.janelia.it.jacs.model.tasks.utility.FtpFileTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
-import org.janelia.it.jacs.model.tasks.utility.UploadFastqDirectoryTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
@@ -37,11 +21,13 @@ import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.server.access.hibernate.NodeDAOImpl;
 import org.janelia.it.jacs.server.utils.SystemException;
 import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHit;
-import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 
 import java.rmi.RemoteException;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -124,28 +110,28 @@ public class DataSetAPI {
     }
 
 
-    /**
-     * @param taskId task in question
-     * @return Map<Site, Integer>
-     */
-    public Map<Site, Integer> getSitesForBlastResult(String taskId) {
-        Map<BioMaterial, Integer> modelSites;
-        try {
-            logger.debug("DataSetAPI.getSitesForBlastResult()");
-            modelSites = dataDao.getSitesForBlastResultNode(new Long(taskId));
-            logger.debug("got sites from DAO");
-            return DataSetAPIRemarshaller.remapSites(modelSites);
-        }
-        catch (DaoException e) {
-            logger.error("DaoException retrieving BLAST node:" + e.getMessage());
-            return null;
-        }
-        catch (Exception e) {
-            logger.error("Exception remarshalling BLAST result:" + e.getMessage());
-            return null;
-        }
-    }
-
+//    /**
+//     * @param taskId task in question
+//     * @return Map<Site, Integer>
+//     */
+//    public Map<Site, Integer> getSitesForBlastResult(String taskId) {
+//        Map<BioMaterial, Integer> modelSites;
+//        try {
+//            logger.debug("DataSetAPI.getSitesForBlastResult()");
+//            modelSites = dataDao.getSitesForBlastResultNode(new Long(taskId));
+//            logger.debug("got sites from DAO");
+//            return DataSetAPIRemarshaller.remapSites(modelSites);
+//        }
+//        catch (DaoException e) {
+//            logger.error("DaoException retrieving BLAST node:" + e.getMessage());
+//            return null;
+//        }
+//        catch (Exception e) {
+//            logger.error("Exception remarshalling BLAST result:" + e.getMessage());
+//            return null;
+//        }
+//    }
+//
     public String replaceNodeName(String nodeId, String nodeName)
             throws SystemException {
         try {
@@ -271,16 +257,16 @@ public class DataSetAPI {
         }
     }
 
-    public BlastableNodeVO[] getReversePsiBlastDatasets() {
-        try {
-            return dataDao.getReversePsiBlastDatasets();
-        }
-        catch (DaoException daoe) {
-            logger.error(daoe);
-            throw new RuntimeException(daoe);
-        }
-    }
-
+//    public BlastableNodeVO[] getReversePsiBlastDatasets() {
+//        try {
+//            return dataDao.getReversePsiBlastDatasets();
+//        }
+//        catch (DaoException daoe) {
+//            logger.error(daoe);
+//            throw new RuntimeException(daoe);
+//        }
+//    }
+//
     public String submitJob(User sessionUser, Task newTask) throws SystemException {
         String jobId = "Not available";
         try {
@@ -298,38 +284,38 @@ public class DataSetAPI {
             logger.info(newTask.getTaskName());
             String processName = "";
             // todo Tasks should know their own default processes
-            if (newTask instanceof AnalysisPipeline16sTask) {
-                processName = "AnalysisPipeline16S";
-            }
-            else if (newTask instanceof FtpFileTask) {
+//            if (newTask instanceof AnalysisPipeline16sTask) {
+//                processName = "AnalysisPipeline16S";
+//            }
+            if (newTask instanceof FtpFileTask) {
                 processName = "NCBIFtpFile";
             }
-            else if (newTask instanceof ProkAnnotationDirectoryUpdateTask) {
-                processName = "ProkAnnotationDirectoryUpdate";
-            }
-            else if (newTask instanceof ProkaryoticAnnotationLoadGenomeDataTask) {
-                processName = "ProkAnnotationLoadGenomeData";
-            }
-            else if (newTask instanceof ProkaryoticAnnotationBulkLoadGenomeDataTask) {
-                processName = "ProkAnnotationBulkLoadGenomeData";
-            }
-            // Note: The ordering of the below check is important and must happen before ProkaryoticAnnotationTask below.
-            // If this becomes a problem, refine the check to be based on task name.
-            else if (newTask instanceof ProkaryoticAnnotationBulkTask) {
-                processName = "ProkAnnotationBulk";
-            }
-            else if (newTask instanceof ProkaryoticAnnotationServiceLoadGenomeDataTask) {
-                processName = "ProkAnnotationServiceLoadGenomeData";
-            }
-            else if (newTask instanceof ProkaryoticAnnotationTask) {
-                processName = "ProkAnnotationPipeline";
-            }
-            else if (newTask instanceof MetaGenoOrfCallerTask) {
-                processName = "MetaGenoORFCaller";
-            }
-            else if (newTask instanceof MetaGenoAnnotationTask) {
-                processName = "MetaGenoAnnotation";
-            }
+//            else if (newTask instanceof ProkAnnotationDirectoryUpdateTask) {
+//                processName = "ProkAnnotationDirectoryUpdate";
+//            }
+//            else if (newTask instanceof ProkaryoticAnnotationLoadGenomeDataTask) {
+//                processName = "ProkAnnotationLoadGenomeData";
+//            }
+//            else if (newTask instanceof ProkaryoticAnnotationBulkLoadGenomeDataTask) {
+//                processName = "ProkAnnotationBulkLoadGenomeData";
+//            }
+//            // Note: The ordering of the below check is important and must happen before ProkaryoticAnnotationTask below.
+//            // If this becomes a problem, refine the check to be based on task name.
+//            else if (newTask instanceof ProkaryoticAnnotationBulkTask) {
+//                processName = "ProkAnnotationBulk";
+//            }
+//            else if (newTask instanceof ProkaryoticAnnotationServiceLoadGenomeDataTask) {
+//                processName = "ProkAnnotationServiceLoadGenomeData";
+//            }
+//            else if (newTask instanceof ProkaryoticAnnotationTask) {
+//                processName = "ProkAnnotationPipeline";
+//            }
+//            else if (newTask instanceof MetaGenoOrfCallerTask) {
+//                processName = "MetaGenoORFCaller";
+//            }
+//            else if (newTask instanceof MetaGenoAnnotationTask) {
+//                processName = "MetaGenoAnnotation";
+//            }
             else if (newTask instanceof CreateBlastDatabaseTask) {
                 if (newTask instanceof CreateRecruitmentBlastDatabaseTask) {
                     processName = "CreateRecruitmentBlastDB";
@@ -338,36 +324,36 @@ public class DataSetAPI {
                     processName = "CreateBlastDB";
                 }
             }
-            else if (newTask instanceof ProfileComparisonTask) {
-                processName = "ProfileComparison";
-            }
-            else if (newTask instanceof BarcodeDesignerTask) {
-                processName = "DesignBarcode";
-            }
-            else if (newTask instanceof NeuronSeparatorPipelineTask) {
-                processName = "NeuronSeparatorPipeline";
-            }
-            else if (newTask instanceof GenomeProjectRecruitmentSamplingTask) {
-                processName = "GenomeProjectRecruitmentSampling";
-            }
-            else if (newTask instanceof UploadFastqDirectoryTask) {
-                processName = "UploadFastqDirectory";
-            }
-            else if (newTask instanceof UploadRnaSeqReferenceGenomeTask) {
-                processName = "UploadRnaSeqReferenceGenome";
-            }
-            else if (newTask instanceof RnaSeqPipelineTask) {
-                processName = "RnaSeqPipeline";
-            }
-            else if (newTask instanceof NeuronalAssayAnalysisTask) {
-                processName = "NeuronalAssayAnalysis";
-            }
-            else if (newTask instanceof BatchTicTask) {
-                processName = "TranscriptionImagingConsortiumBatch";
-            }
-            else if (newTask instanceof InspectTask){
-                processName = "Inspect";
-            }
+//            else if (newTask instanceof ProfileComparisonTask) {
+//                processName = "ProfileComparison";
+//            }
+//            else if (newTask instanceof BarcodeDesignerTask) {
+//                processName = "DesignBarcode";
+//            }
+//            else if (newTask instanceof NeuronSeparatorPipelineTask) {
+//                processName = "NeuronSeparatorPipeline";
+//            }
+//            else if (newTask instanceof GenomeProjectRecruitmentSamplingTask) {
+//                processName = "GenomeProjectRecruitmentSampling";
+//            }
+//            else if (newTask instanceof UploadFastqDirectoryTask) {
+//                processName = "UploadFastqDirectory";
+//            }
+//            else if (newTask instanceof UploadRnaSeqReferenceGenomeTask) {
+//                processName = "UploadRnaSeqReferenceGenome";
+//            }
+//            else if (newTask instanceof RnaSeqPipelineTask) {
+//                processName = "RnaSeqPipeline";
+//            }
+//            else if (newTask instanceof NeuronalAssayAnalysisTask) {
+//                processName = "NeuronalAssayAnalysis";
+//            }
+//            else if (newTask instanceof BatchTicTask) {
+//                processName = "TranscriptionImagingConsortiumBatch";
+//            }
+//            else if (newTask instanceof InspectTask){
+//                processName = "Inspect";
+//            }
             else if (newTask instanceof GenericTask){
                 if ("sampleSync".equals(newTask.getTaskName())) {
                     processName = "SampleFileNodeSync";

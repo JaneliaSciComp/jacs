@@ -16,6 +16,7 @@ import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import com.google.common.collect.ComparisonChain;
@@ -34,6 +35,8 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
     private boolean sampleNaming;
     private String colorSpec;
     private String mode;
+    
+    private Map<String,String> tileNames = new HashMap<>();
     
     public void execute() throws Exception {
 
@@ -65,16 +68,24 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         
         String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
 
+        // For each merged file, find the tile name and save it in a map for later lookup
+        for(AnatomicalArea sampleArea : sampleAreas) {
+            for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
+                tileNames.put(mergedPair.getMergedFilepath(), mergedPair.getTag());
+            }
+        }
+
+        // Create an input image for each sample processing result
         List<InputImage> inputImages = new ArrayList<InputImage>();
-        Map<String,InputImage> areaToImage = new HashMap<>();
-        
-        List<Entity> results = pipelineRun.getOrderedChildren();
-        for(Entity resultEntity : results) {
+        for(Entity resultEntity : EntityUtils.getChildrenOfType(pipelineRun, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
+            
             String area = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-            if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
-                InputImage inputImage = getInputImage(sampleEntity, resultEntity, objective);
-                areaToImage.put(area, inputImage);    
-                inputImages.add(inputImage);
+            Entity defaultImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+            String chanSpec = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+            
+            Entity supportingData = EntityUtils.getSupportingData(resultEntity);
+            for(Entity resultImage : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_3D)) {
+                inputImages.add(getInputImage(sampleEntity, resultImage, objective, area, chanSpec));
             }
         }
         
@@ -83,36 +94,10 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             public int compare(InputImage o1, InputImage o2) {
                 return ComparisonChain.start()
                         .compare(o1.getArea(), o2.getArea(), Ordering.natural()) // Brain before VNC
-                        .compare(o1.getFilepath(), o2.getFilepath(), Ordering.natural().nullsLast()).result();
+                        .compare(o1.getFilepath(), o2.getFilepath(), Ordering.natural().nullsLast()).result(); // Order by filename
             }
         });
         
-        // Add tile images
-        List<InputImage> toAdd = new ArrayList<InputImage>();
-        List<InputImage> toDelete = new ArrayList<InputImage>();
-        
-        for(AnatomicalArea sampleArea : sampleAreas) {
-            InputImage templateImage = areaToImage.get(sampleArea.getName());
-            for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
-                InputImage inputImage = getInputImage(sampleEntity, templateImage, mergedPair);
-                if (templateImage!=null && inputImage.getFilepath().equals(templateImage.getFilepath())) {
-                    if ("63x".equals(objective)) {
-                        // For 63x samples, we want to use the tile name instead of the area name
-                        logger.info("Will replace template image: "+templateImage.getFilepath());
-                        toDelete.add(templateImage);
-                        toAdd.add(inputImage);
-                    }
-                }
-                else {
-                    logger.info("Adding tile image: "+inputImage.getFilepath());
-                    toAdd.add(inputImage);
-                }
-            }
-        }
-        
-        inputImages.removeAll(toDelete);
-        inputImages.addAll(toAdd);
-
         if (inputImages.isEmpty()) {
             throw new ServiceException("Could not find any unaligned images to process");
         }
@@ -122,8 +107,15 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             if (sb.length()>0) sb.append(",");
             sb.append(inputImage.getArea());
         }
+        
+        boolean normalizeToFirst = false;
+        
+        if ("20x".equals(objective) && inputImages.size()==2 && sb.toString().equals("Brain,VNC")) {
+            // Special case of 20x Brain/VNC which need to be normalized
+            // TODO: in the future, we should be able to normalize any number of images to a Brain
+            normalizeToFirst = true;
+        }
     
-        boolean normalizeToFirst = sb.toString().equals("Brain,VNC");
         String serviceClassName = "20x".equals(objective) ?  "BasicMIPandMovieGenerationService" : "EnchancedMIPandMovieGenerationService";
         String serviceClass = SERVICE_PACKAGE+"."+serviceClassName;
         
@@ -135,44 +127,62 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
     
-    private InputImage getInputImage(Entity sampleEntity, Entity resultEntity, String objective) throws ComputeException {
-        
-        String area = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-        Entity image = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        String chanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+    private InputImage getInputImage(Entity sampleEntity, Entity resultImage, String objective, String area, String chanSpec) throws ComputeException {
+
+        String effector = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
+        String filepath = resultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        String tileName = tileNames.get(filepath);
         
         String prefix = FileUtils.getFilePrefix(filepath);
         if (sampleNaming) {
-            String sampleName = sampleEntity.getName();
+            String sampleName = sanitize(sampleEntity.getName());
             int tilde = sampleName.indexOf('~');
             if (tilde>0) {
                 sampleName = sampleName.substring(0,tilde);
             }
-            if (resultEntity.getName().startsWith("stitched")) {
-                prefix = sampleName+"-stitched";
+            if (resultImage.getName().startsWith("stitched")) {
+                if (StringUtils.isEmpty(area)) {
+                    prefix = sampleName+"-stitched";
+                }
+                else {
+                    prefix = sampleName+"-"+area;
+                }
             }
             else {
-                prefix = sampleName+"-"+area;    
+                prefix = sampleName+"-"+sanitize(tileName);    
             }
-            
+            // Append effector if available
+            if (!StringUtils.isEmpty(effector)) {
+                prefix += "-"+sanitize(effector);
+            }
         }
         
         String colorspec = colorSpec;
         
         if (colorspec==null) {
-            logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective and MODE...");
-            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
-            if ("20x".equals(objective)) {
-                colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "M1R", "G");
+            logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective="+objective+" and MODE="+mode+"...");
+            if ("mcfo".equals(mode)) {
+                // MCFO is always RGB on grey reference
+                colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
             }
-            else if ("63x".equals(objective)) {
-                if ("polarity".equals(mode)) {
-                    if (chanSpec.length()==2) {
-                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G", "1");
+            else {
+                if (!"polarity".equals(mode) & chanSpec.length()==4) {
+                    // 4 channel image with unknown mode, let's assume its MCFO
+                    colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
+                }
+                else {
+                    // Polarity and other image types (e.g. screen?) get the Yoshi treatment, 
+                    // with green signal on top of magenta reference for 20x and green signal on top of grey reference for 63x.
+                    if ("20x".equals(objective)) {
+                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "GYC", "M");
                     }
-                    else {
-                        colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "MG", "1");
+                    else if ("63x".equals(objective)) {
+                        if (chanSpec.length()==2) {
+                            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "G", "1");
+                        }
+                        else {
+                            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "MGR", "1");
+                        }
                     }
                 }
             }
@@ -194,40 +204,9 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         
         return inputImage;
     }
-
-    private InputImage getInputImage(Entity sampleEntity, InputImage templateImage, MergedLsmPair mergedPair) throws ComputeException {
-        
-        String filepath = mergedPair.getMergedFilepath();
-        
-        String prefix = FileUtils.getFilePrefix(filepath);
-        if (sampleNaming) {
-            String sampleName = sampleEntity.getName();
-            int tilde = sampleName.indexOf('~');
-            if (tilde>0) {
-                sampleName = sampleName.substring(0,tilde);
-            }
-            prefix = sampleName+"-"+mergedPair.getTag();
-            // Append effector if available
-            String effector = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
-            if (!StringUtils.isEmpty(effector)) {
-                prefix += "-"+effector;
-            }
-        }
-             
-        contextLogger.info("Tile input file: "+filepath);
-        contextLogger.info("  Area: "+templateImage.getArea());
-        contextLogger.info("  Channel specification: "+templateImage.getChanspec());
-        contextLogger.info("  Color specification: "+templateImage.getColorspec());
-        contextLogger.info("  Output prefix: "+prefix);
-        
-        InputImage inputImage = new InputImage();
-        inputImage.setFilepath(filepath);
-        inputImage.setArea(templateImage.getArea());
-        inputImage.setChanspec(templateImage.getChanspec());
-        inputImage.setColorspec(templateImage.getColorspec());
-        inputImage.setDivspec("");
-        inputImage.setOutputPrefix(prefix);
-        
-        return inputImage;
+    
+    private String sanitize(String s) {
+        if (s==null) return null;
+        return s.replaceAll("\\s+", "_").replaceAll("-", "_");
     }
 }

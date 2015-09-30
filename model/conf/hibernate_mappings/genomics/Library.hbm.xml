@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) 2010-2011, J. Craig Venter Institute, Inc.
+  ~
+  ~ This file is part of JCVI VICS.
+  ~
+  ~ JCVI VICS is free software; you can redistribute it and/or modify it
+  ~ under the terms and conditions of the Artistic License 2.0.  For
+  ~ details, see the full text of the license in the file LICENSE.txt.  No
+  ~ other rights are granted.  Any and all third party software rights to
+  ~ remain with the original developer.
+  ~
+  ~ JCVI VICS is distributed in the hope that it will be useful in
+  ~ bioinformatics applications, but it is provided "AS IS" and WITHOUT
+  ~ ANY EXPRESS OR IMPLIED WARRANTIES including but not limited to
+  ~ implied warranties of merchantability or fitness for any particular
+  ~ purpose.  For details, see the full text of the license in the file
+  ~ LICENSE.txt.
+  ~
+  ~ You should have received a copy of the Artistic License 2.0 along with
+  ~ JCVI VICS.  If not, the license can be obtained from
+  ~ "http://www.perlfoundation.org/artistic_license_2_0."
+  -->
+
+<!DOCTYPE hibernate-mapping PUBLIC
+    "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping package="org.janelia.it.jacs.model.genomics"
+                   default-access="property"
+                   default-lazy="false"
+                   auto-import="true"
+                   default-cascade="all"
+                  >
+
+    <class name="Library" lazy="false" table="library" >
+        <id name="libraryId" type="java.lang.Long" column="library_id" >
+            <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
+        </id>
+        <property name="libraryAcc" type="java.lang.String" column="library_acc" unique="true" />
+        <property name="maxInsertSize" type="java.lang.Integer" column="max_insert_size" />
+        <property name="minInsertSize" type="java.lang.Integer" column="min_insert_size" />
+        <property name="numberOfReads" type="java.lang.Integer" column="number_of_reads" not-null="true" />
+        <property name="sequencingTechnology" type="java.lang.String" column="sequencing_technology" />
+        <set name="reads" inverse="true" lazy="true">
+            <key column="library_id"/>
+            <one-to-many class="org.janelia.it.jacs.model.genomics.Read"/>
+        </set>
+        <property type="string" name="sampleAcc" column="sample_acc" />
+        <many-to-one class="org.janelia.it.jacs.model.genomics.Sample" name="sample" lazy="proxy"
+                     column="sample_acc" property-ref="sampleAcc" insert="false" update="false"/>
+    </class>
+
+</hibernate-mapping>

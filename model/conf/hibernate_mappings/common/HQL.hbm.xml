@@ -43,19 +43,19 @@
     <return-scalar column="parameters" type="string"/>
 </resultset>
 
-    <query name="findBioSequenceByAccession"><![CDATA[
-        select bse.bioSequence
-        from BaseSequenceEntity bse
-        inner join bse.bioSequence seq
-        where bse.accession = :accesion
-    ]]></query>
+    <!--<query name="findBioSequenceByAccession"><![CDATA[-->
+        <!--select bse.bioSequence-->
+        <!--from BaseSequenceEntity bse-->
+        <!--inner join bse.bioSequence seq-->
+        <!--where bse.accession = :accesion-->
+    <!--]]></query>-->
 
-    <query name="findBioSequenceByBseEntityId"><![CDATA[
-        select bse.bioSequence
-        from BaseSequenceEntity bse
-        inner join bse.bioSequence seq
-        where bse.entityId = :entityId
-    ]]></query>
+    <!--<query name="findBioSequenceByBseEntityId"><![CDATA[-->
+        <!--select bse.bioSequence-->
+        <!--from BaseSequenceEntity bse-->
+        <!--inner join bse.bioSequence seq-->
+        <!--where bse.entityId = :entityId-->
+    <!--]]></query>-->
 
     <query name="findBlastResultNodeByTaskId"><![CDATA[
         select brn
@@ -81,29 +81,29 @@
         where bh.blastHitId = :blastHitId
     ]]></query>
 
-    <query name="findDeflinesByAccessionSet"><![CDATA[
-        select bse.accession, bse.defline as description
-        from BaseSequenceEntity bse
-        where bse.accession = :accession
-    ]]></query>
+    <!--<query name="findDeflinesByAccessionSet"><![CDATA[-->
+        <!--select bse.accession, bse.defline as description-->
+        <!--from BaseSequenceEntity bse-->
+        <!--where bse.accession = :accession-->
+    <!--]]></query>-->
 
-    <query name="findDistinctQueryEntitiesByResultNode"><![CDATA[
-        select distinct al, qry
-        from BlastHit al left outer join al.queryEntity qry
-        where al.resultNode.objectId = :resultNodeId
-    ]]></query>
+    <!--<query name="findDistinctQueryEntitiesByResultNode"><![CDATA[-->
+        <!--select distinct al, qry-->
+        <!--from BlastHit al left outer join al.queryEntity qry-->
+        <!--where al.resultNode.objectId = :resultNodeId-->
+    <!--]]></query>-->
 
-    <query name="findDistinctSubjectEntitiesByResultNode"><![CDATA[
-        select distinct subject
-        from BlastHit al inner join al.subjectEntity subject
-        where al.resultNode.objectId = :resultNodeId
-    ]]></query>
+    <!--<query name="findDistinctSubjectEntitiesByResultNode"><![CDATA[-->
+        <!--select distinct subject-->
+        <!--from BlastHit al inner join al.subjectEntity subject-->
+        <!--where al.resultNode.objectId = :resultNodeId-->
+    <!--]]></query>-->
 
-    <query name="findEntityIdsByAccessionSet"><![CDATA[
-        select bse.accession, bse
-        from BaseSequenceEntity bse
-        where bse.accession in (:accession)
-    ]]></query>
+    <!--<query name="findEntityIdsByAccessionSet"><![CDATA[-->
+        <!--select bse.accession, bse-->
+        <!--from BaseSequenceEntity bse-->
+        <!--where bse.accession in (:accession)-->
+    <!--]]></query>-->
 
     <query name="findLibraryByBseEntityId"><![CDATA[
         select lib
@@ -129,35 +129,35 @@
         where al.blastHitId = :alignment_id
     ]]></query>
 
-    <query name="findReadByAccesion"><![CDATA[
-        from Read read
-        where read.accession = :accesion
-    ]]></query>
+    <!--<query name="findReadByAccesion"><![CDATA[-->
+        <!--from Read read-->
+        <!--where read.accession = :accesion-->
+    <!--]]></query>-->
 
-    <query name="findPairedReadsByAccession"><![CDATA[
-        select matedRead
-        from Read read, Read matedRead
-        where read.accession = :accesion
-         and read.templateAcc = matedRead.templateAcc
-         and read.libraryAcc = matedRead.libraryAcc
-         and matedRead.entityId != read.entityId
-    ]]></query>
+    <!--<query name="findPairedReadsByAccession"><![CDATA[-->
+        <!--select matedRead-->
+        <!--from Read read, Read matedRead-->
+        <!--where read.accession = :accesion-->
+         <!--and read.templateAcc = matedRead.templateAcc-->
+         <!--and read.libraryAcc = matedRead.libraryAcc-->
+         <!--and matedRead.entityId != read.entityId-->
+    <!--]]></query>-->
 
-    <query name="findPairedReadsByEntityId"><![CDATA[
-        select matedRead
-        from Read read, Read matedRead
-        where read.entityId = :entityId
-         and read.templateAcc = matedRead.templateAcc
-         and read.libraryAcc = matedRead.libraryAcc
-         and matedRead.entityId != read.entityId
-    ]]></query>
+    <!--<query name="findPairedReadsByEntityId"><![CDATA[-->
+        <!--select matedRead-->
+        <!--from Read read, Read matedRead-->
+        <!--where read.entityId = :entityId-->
+         <!--and read.templateAcc = matedRead.templateAcc-->
+         <!--and read.libraryAcc = matedRead.libraryAcc-->
+         <!--and matedRead.entityId != read.entityId-->
+    <!--]]></query>-->
 
-    <query name="findReadByBlastHitId"><![CDATA[
-        select rd.entityId, rd
-        from BlastHit al, Read rd
-        where al.blastHitId = :blastHitId
-            and rd.accession = al.subjectAcc
-    ]]></query>
+    <!--<query name="findReadByBlastHitId"><![CDATA[-->
+        <!--select rd.entityId, rd-->
+        <!--from BlastHit al, Read rd-->
+        <!--where al.blastHitId = :blastHitId-->
+            <!--and rd.accession = al.subjectAcc-->
+    <!--]]></query>-->
 
     <query name="findReadByBseEntityId"><![CDATA[
         from Read read
@@ -171,102 +171,102 @@
             and rd.accession = al.subjectAcc
     ]]></query>
 
-    <query name="findReadWithLibraryByAccesion"><![CDATA[
-        select read
-        from Read read
-        inner join fetch read.library
-        where read.accession = :accesion
-    ]]></query>
+    <!--<query name="findReadWithLibraryByAccesion"><![CDATA[-->
+        <!--select read-->
+        <!--from Read read-->
+        <!--inner join fetch read.library-->
+        <!--where read.accession = :accesion-->
+    <!--]]></query>-->
 
-    <query name="findReadWithLibraryByBseEntityId"><![CDATA[
-        select read
-        from Read read
-        inner join fetch read.library
-        where read.entityId = :entityId
-    ]]></query>
+    <!--<query name="findReadWithLibraryByBseEntityId"><![CDATA[-->
+        <!--select read-->
+        <!--from Read read-->
+        <!--inner join fetch read.library-->
+        <!--where read.entityId = :entityId-->
+    <!--]]></query>-->
 
-    <query name="findReadWithSequenceByBseEntityId"><![CDATA[
-        select read
-        from Read read
-        inner join fetch read.bioSequence
-        where read.entityId = :entityId
-    ]]></query>
+    <!--<query name="findReadWithSequenceByBseEntityId"><![CDATA[-->
+        <!--select read-->
+        <!--from Read read-->
+        <!--inner join fetch read.bioSequence-->
+        <!--where read.entityId = :entityId-->
+    <!--]]></query>-->
 
-    <query name="findResultNodeIdByBlastHitId"><![CDATA[
-        select al.resultNode.objectId
-        from BlastHit al
-        where al.blastHitId = :alignment_id
-    ]]></query>
+    <!--<query name="findResultNodeIdByBlastHitId"><![CDATA[-->
+        <!--select al.resultNode.objectId-->
+        <!--from BlastHit al-->
+        <!--where al.blastHitId = :alignment_id-->
+    <!--]]></query>-->
 
-    <query name="findSamplesByLibraryId"><![CDATA[
-        select sample
-        from Library lib
-        inner join lib.sample sample
-        where lib.libraryId = :libraryId
-    ]]></query>
+    <!--<query name="findSamplesByLibraryId"><![CDATA[-->
+        <!--select sample-->
+        <!--from Library lib-->
+        <!--inner join lib.sample sample-->
+        <!--where lib.libraryId = :libraryId-->
+    <!--]]></query>-->
 
-    <query name="findSamplesWithSitesByLibraryId"><![CDATA[
-        select sample
-        from Library lib
-        inner join lib.sample sample
-        left join fetch sample.bioMaterials
-        where lib.libraryId = :libraryId
-    ]]></query>
+    <!--<query name="findSamplesWithSitesByLibraryId"><![CDATA[-->
+        <!--select sample-->
+        <!--from Library lib-->
+        <!--inner join lib.sample sample-->
+        <!--left join fetch sample.bioMaterials-->
+        <!--where lib.libraryId = :libraryId-->
+    <!--]]></query>-->
 
-    <query name="findSamplesWithSitesBySampleName"><![CDATA[
-        select sample
-        from Sample sample
-        where sample.sampleName = :sampleName
-    ]]></query>
+    <!--<query name="findSamplesWithSitesBySampleName"><![CDATA[-->
+        <!--select sample-->
+        <!--from Sample sample-->
+        <!--where sample.sampleName = :sampleName-->
+    <!--]]></query>-->
 
-    <query name="findSamplesWithSitesBySampleAcc"><![CDATA[
-        select sample
-        from Sample sample
-        where sample.sampleAcc = :sampleAcc
-    ]]></query>
+    <!--<query name="findSamplesWithSitesBySampleAcc"><![CDATA[-->
+        <!--select sample-->
+        <!--from Sample sample-->
+        <!--where sample.sampleAcc = :sampleAcc-->
+    <!--]]></query>-->
 
-    <query name="findSamplesWithSitesByAcc"><![CDATA[
-        select sample
-        from BaseSequenceEntity bse
-        inner join bse.sample sample
-        left outer join fetch sample.bioMaterials
-        where bse.accession=:entityAcc
-    ]]></query>
+    <!--<query name="findSamplesWithSitesByAcc"><![CDATA[-->
+        <!--select sample-->
+        <!--from BaseSequenceEntity bse-->
+        <!--inner join bse.sample sample-->
+        <!--left outer join fetch sample.bioMaterials-->
+        <!--where bse.accession=:entityAcc-->
+    <!--]]></query>-->
 
-    <query name="findSequenceTextByBseEntityId"><![CDATA[
-        select seq.sequence
-        from BaseSequenceEntity bse
-        inner join bse.bioSequence seq
-        where bse.entityId = :entityId
-    ]]></query>
+    <!--<query name="findSequenceTextByBseEntityId"><![CDATA[-->
+        <!--select seq.sequence-->
+        <!--from BaseSequenceEntity bse-->
+        <!--inner join bse.bioSequence seq-->
+        <!--where bse.entityId = :entityId-->
+    <!--]]></query>-->
 
 
      <!--select distinct subject.entityId, subject-->
         <!--from BlastHit al inner join al.subjectEntity subject-->
         <!--where al.blastHitId = :blastHitId-->
-    <query name="findSubjectBseByBlastHitId"><![CDATA[
-        select bse.entityId, bse
-        from BaseSequenceEntity bse
-        where bse.accession in
-            (select al.subjectAcc
-                from BlastHit al
-                where al.blastHitId = :blastHitId)
-    ]]></query>
+    <!--<query name="findSubjectBseByBlastHitId"><![CDATA[-->
+        <!--select bse.entityId, bse-->
+        <!--from BaseSequenceEntity bse-->
+        <!--where bse.accession in-->
+            <!--(select al.subjectAcc-->
+                <!--from BlastHit al-->
+                <!--where al.blastHitId = :blastHitId)-->
+    <!--]]></query>-->
 
-    <query name="findSubjectBseByResultNode"><![CDATA[
-        select bse.entityId, bse
-        from BaseSequenceEntity bse
-        where bse.accession in
-            (select al.subjectAcc
-                from BlastHit al
-                where al.resultNode.objectId = :resultNodeId)
-    ]]></query>
+    <!--<query name="findSubjectBseByResultNode"><![CDATA[-->
+        <!--select bse.entityId, bse-->
+        <!--from BaseSequenceEntity bse-->
+        <!--where bse.accession in-->
+            <!--(select al.subjectAcc-->
+                <!--from BlastHit al-->
+                <!--where al.resultNode.objectId = :resultNodeId)-->
+    <!--]]></query>-->
 
-    <query name="findSubjectEntityByBlastHitId"><![CDATA[
-        select subject
-        from BlastHit al inner join al.subjectEntity subject
-        where al.blastHitId = :alignment_id
-    ]]></query>
+    <!--<query name="findSubjectEntityByBlastHitId"><![CDATA[-->
+        <!--select subject-->
+        <!--from BlastHit al inner join al.subjectEntity subject-->
+        <!--where al.blastHitId = :alignment_id-->
+    <!--]]></query>-->
 
     <query name="findTasksByIdRange"><![CDATA[
         select task

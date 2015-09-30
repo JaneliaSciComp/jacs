@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
+import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -55,11 +56,12 @@ public class InferChannelSpecificationService extends AbstractEntityService {
         String channelDyeNames = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
         
         if (chanSpec==null) {
+            StringBuilder chanSpecSb = new StringBuilder();
             if (referenceDyes.isEmpty() || channelDyeNames==null) {
-                throw new IllegalStateException("No channel spec or dye spec defined for LSM with id="+lsmId);
+                // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
+                chanSpecSb.append(ChanSpecUtils.createChanSpec(channelDyeNames.length(), 0));
             }
             else {
-                StringBuilder chanSpecSb = new StringBuilder();
                 for(String dye : channelDyeNames.split(",")) {
                     if (referenceDyes.contains(dye)) {
                         chanSpecSb.append("r");
@@ -68,9 +70,9 @@ public class InferChannelSpecificationService extends AbstractEntityService {
                         chanSpecSb.append("s");
                     }
                 }
-                contextLogger.info("Chanspec was inferred as "+chanSpecSb+" for LSM id="+lsmId);
-                entityHelper.setChannelSpec(lsm, chanSpecSb.toString());
             }
+            contextLogger.info("Chanspec was inferred as "+chanSpecSb+" for LSM id="+lsmId);
+            entityHelper.setChannelSpec(lsm, chanSpecSb.toString());
         }
         else {
             contextLogger.info("Chanspec was provided as "+chanSpec+" for LSM id="+lsmId);
