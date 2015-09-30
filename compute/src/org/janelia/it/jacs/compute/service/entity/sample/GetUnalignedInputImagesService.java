@@ -116,7 +116,7 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             normalizeToFirst = true;
         }
     
-        String serviceClassName = "20x".equals(objective) ?  "BasicMIPandMovieGenerationService" : "EnchancedMIPandMovieGenerationService";
+        String serviceClassName = (mode!=null) ?  "BasicMIPandMovieGenerationService" : "EnchancedMIPandMovieGenerationService";
         String serviceClass = SERVICE_PACKAGE+"."+serviceClassName;
         
         contextLogger.info("Putting "+normalizeToFirst+" into NORMALIZE_TO_FIRST_IMAGE");
@@ -151,8 +151,8 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             else {
                 prefix = sampleName+"-"+sanitize(tileName);    
             }
-            // Append effector if available
-            if (!StringUtils.isEmpty(effector)) {
+            // Append effector if available and not already in the prefix by way of the sample name
+            if (!StringUtils.isEmpty(effector) && !prefix.contains(effector)) {
                 prefix += "-"+sanitize(effector);
             }
         }
@@ -160,10 +160,13 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         String colorspec = colorSpec;
         
         if (colorspec==null) {
-            logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective="+objective+" and MODE="+mode+"...");
+            contextLogger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective="+objective+" and MODE="+mode+"...");
+            
+            // Default to RGB
+            colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
+            
             if ("mcfo".equals(mode)) {
-                // MCFO is always RGB on grey reference
-                colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
+                // MCFO is always RGB
             }
             else {
                 if (!"polarity".equals(mode) & chanSpec.length()==4) {

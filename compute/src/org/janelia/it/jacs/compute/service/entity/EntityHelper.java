@@ -413,7 +413,7 @@ public class EntityHelper {
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
         if (entity==null || StringUtils.isEmpty(value)) return;
         EntityData currEd = entity.getEntityDataByAttributeName(attributeName);
-        if (currEd==null || !currEd.getValue().equals(value)) {
+        if (currEd==null || currEd.getValue()==null || !currEd.getValue().equals(value)) {
             entity.setValueByAttributeName(attributeName, value);
             entityBean.saveOrUpdateEntity(entity);
         }

@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
@@ -57,9 +58,13 @@ public class InferChannelSpecificationService extends AbstractEntityService {
         
         if (chanSpec==null) {
             StringBuilder chanSpecSb = new StringBuilder();
-            if (referenceDyes.isEmpty() || channelDyeNames==null) {
+            if (referenceDyes.isEmpty() || channelDyeSpec==null) {
                 // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
-                chanSpecSb.append(ChanSpecUtils.createChanSpec(channelDyeNames.length(), 0));
+                if (channelDyeNames==null) {
+                    throw new ComputeException("Channel dye names attribute is null for LSM id="+lsmId);
+                }
+                int numChannels = channelDyeNames.split(",").length;
+                chanSpecSb.append(ChanSpecUtils.createChanSpec(numChannels, 1));
             }
             else {
                 for(String dye : channelDyeNames.split(",")) {

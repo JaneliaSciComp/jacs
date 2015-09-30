@@ -49,6 +49,10 @@ public class GetLsmInputImagesService extends AbstractEntityService {
         String chanColors = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
         String area = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
         
+        if (chanSpec==null) {
+            throw new ComputeException("Channel specification attribute is null for LSM id="+lsmId);
+        }
+        
         // Attempt to use the colors stored in the LSM
         String colorspec = "";
         String divspec = "";
