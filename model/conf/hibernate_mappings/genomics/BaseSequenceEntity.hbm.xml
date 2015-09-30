@@ -69,16 +69,16 @@
         <property name="assemblyAcc" type="string" column="assembly_acc"/>
         <many-to-one class="Assembly" name="assembly" lazy="proxy" column="assembly_id" />
         <property type="string" name="sampleAcc" column="sample_acc" />
-        <many-to-one class="org.janelia.it.jacs.model.metadata.Sample" name="sample" lazy="proxy" column="sample_id"/>
+        <many-to-one class="org.janelia.it.jacs.model.genomics.Sample" name="sample" lazy="proxy" column="sample_id"/>
         <property name="libraryAcc" type="string" column="library_acc"/>
-        <many-to-one name="library" class="org.janelia.it.jacs.model.metadata.Library" lazy="proxy" column="library_id"/>
+        <many-to-one name="library" class="org.janelia.it.jacs.model.genomics.Library" lazy="proxy" column="library_id"/>
 <!--
         detailed subclasses
 -->
         <subclass name="Nucleotide" discriminator-value="0" lazy="true">
-            <subclass name="Chromosome" discriminator-value="1" lazy="true">
-                <property name="type" type="string" column="type"/>
-            </subclass>
+            <!--<subclass name="Chromosome" discriminator-value="1" lazy="true">-->
+                <!--<property name="type" type="string" column="type"/>-->
+            <!--</subclass>-->
             <subclass name="Scaffold" discriminator-value="2" lazy="true">
             </subclass>
             <subclass name="Read" discriminator-value="3" lazy="true">
@@ -104,14 +104,14 @@
                 <property type="string" name="stop5Prime" column="stop_5_prime"/>
                 <property type="string" name="stop3Prime" column="stop_3_prime"/>
             </subclass>
-            <subclass name="NonCodingRNA" discriminator-value="8" lazy="true">
-                <property name="type" type="string" column="type"/>
-                <property type="string" name="dnaAcc" column="dna_acc" />
-                <many-to-one class="Nucleotide" name="dnaEntity" lazy="proxy" column="dna_id"/>
-                <property type="java.lang.Integer" name="dnaBegin" column="dna_begin"/>
-                <property type="java.lang.Integer" name="dnaEnd" column="dna_end"/>
-                <property type="java.lang.Integer" name="dnaOrientation" column="dna_orientation"/>
-            </subclass>
+            <!--<subclass name="NonCodingRNA" discriminator-value="8" lazy="true">-->
+                <!--<property name="type" type="string" column="type"/>-->
+                <!--<property type="string" name="dnaAcc" column="dna_acc" />-->
+                <!--<many-to-one class="Nucleotide" name="dnaEntity" lazy="proxy" column="dna_id"/>-->
+                <!--<property type="java.lang.Integer" name="dnaBegin" column="dna_begin"/>-->
+                <!--<property type="java.lang.Integer" name="dnaEnd" column="dna_end"/>-->
+                <!--<property type="java.lang.Integer" name="dnaOrientation" column="dna_orientation"/>-->
+            <!--</subclass>-->
         </subclass>
 
         <subclass name="Peptide" discriminator-value="7" lazy="true">

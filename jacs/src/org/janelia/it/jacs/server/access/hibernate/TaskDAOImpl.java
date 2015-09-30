@@ -12,9 +12,9 @@ import org.janelia.it.jacs.model.genomics.BaseSequenceEntity;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
-import org.janelia.it.jacs.model.tasks.psiBlast.ReversePsiBlastTask;
-import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerFilterDataTask;
-import org.janelia.it.jacs.model.tasks.rnaSeq.RnaSeqPipelineTask;
+//import org.janelia.it.jacs.model.tasks.psiBlast.ReversePsiBlastTask;
+//import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerFilterDataTask;
+//import org.janelia.it.jacs.model.tasks.rnaSeq.RnaSeqPipelineTask;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.server.access.TaskDAO;
@@ -25,7 +25,7 @@ import org.janelia.it.jacs.shared.tasks.JobInfo;
 import org.janelia.it.jacs.shared.tasks.RecruitableJobInfo;
 import org.janelia.it.jacs.shared.tasks.RnaSeqJobInfo;
 import org.janelia.it.jacs.shared.tasks.SearchJobInfo;
-import org.janelia.it.jacs.web.gwt.common.server.RecruitmentTaskToInfoTranslator;
+//import org.janelia.it.jacs.web.gwt.common.server.RecruitmentTaskToInfoTranslator;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 
@@ -113,50 +113,50 @@ public class TaskDAOImpl extends DaoBaseImpl implements TaskDAO {
         }
     }
 
-    public List<RnaSeqJobInfo> getPagedRnaSeqJobsForUserLogin(String classname,
-                                                              String userLogin,
-                                                              String likeString,
-                                                              int startIndex,
-                                                              int numRows,
-                                                              SortArgument[] sortArgs) throws DaoException {
-        try {
-            List<RnaSeqJobInfo> rnaSeqJobInfoList = new ArrayList<RnaSeqJobInfo>();
-            List<Task> tmpResults = getPagedTasksForUserLoginByClass(userLogin, likeString, classname, startIndex,
-                    numRows, sortArgs, true);
-            for (Task task : tmpResults) {
-                RnaSeqJobInfo jobInfo = new RnaSeqJobInfo();
-                RnaSeqPipelineTask rnaSeqPipelineTask = (RnaSeqPipelineTask) task;
-                List<Event> eventList = rnaSeqPipelineTask.getEvents();
-                FileNode resultFileNode = getFileNodeForTask(rnaSeqPipelineTask);
-                jobInfo.setJobId(task.getObjectId().toString());
-                jobInfo.setJobname(task.getJobName());
-                if (resultFileNode != null) {
-                    jobInfo.setJobResultsDirectoryPath(resultFileNode.getDirectoryPath());
-                }
-                Map<String, String> paramMap = new HashMap<String, String>();
-                for (String key : task.getParameterKeySet()) {
-                    String parameter = task.getParameter(key);
-                    paramMap.put(key, parameter);
-                }
-                jobInfo.setParamMap(paramMap);
-                jobInfo.setUsername(task.getOwner());
-                if (eventList.size() > 0) {
-                    Date submittedDate = eventList.get(0).getTimestamp();
-                    jobInfo.setSubmitted(submittedDate);
-                    jobInfo.setStatus(eventList.get(eventList.size() - 1).getEventType());
-                }
-                rnaSeqJobInfoList.add(jobInfo);
-            }
-            return rnaSeqJobInfoList;
-        }
-        catch (Exception e) {
-            _logger.error("Error in getPagedTasksForUserLoginByClass", e);
-            DaoException daoExc = new DaoException("TaskDAOImpl.getPagedTasksForUserLoginByClass");
-            daoExc.initCause(e);
-            throw daoExc;
-        }
-    }
-
+//    public List<RnaSeqJobInfo> getPagedRnaSeqJobsForUserLogin(String classname,
+//                                                              String userLogin,
+//                                                              String likeString,
+//                                                              int startIndex,
+//                                                              int numRows,
+//                                                              SortArgument[] sortArgs) throws DaoException {
+//        try {
+//            List<RnaSeqJobInfo> rnaSeqJobInfoList = new ArrayList<RnaSeqJobInfo>();
+//            List<Task> tmpResults = getPagedTasksForUserLoginByClass(userLogin, likeString, classname, startIndex,
+//                    numRows, sortArgs, true);
+//            for (Task task : tmpResults) {
+//                RnaSeqJobInfo jobInfo = new RnaSeqJobInfo();
+//                RnaSeqPipelineTask rnaSeqPipelineTask = (RnaSeqPipelineTask) task;
+//                List<Event> eventList = rnaSeqPipelineTask.getEvents();
+//                FileNode resultFileNode = getFileNodeForTask(rnaSeqPipelineTask);
+//                jobInfo.setJobId(task.getObjectId().toString());
+//                jobInfo.setJobname(task.getJobName());
+//                if (resultFileNode != null) {
+//                    jobInfo.setJobResultsDirectoryPath(resultFileNode.getDirectoryPath());
+//                }
+//                Map<String, String> paramMap = new HashMap<String, String>();
+//                for (String key : task.getParameterKeySet()) {
+//                    String parameter = task.getParameter(key);
+//                    paramMap.put(key, parameter);
+//                }
+//                jobInfo.setParamMap(paramMap);
+//                jobInfo.setUsername(task.getOwner());
+//                if (eventList.size() > 0) {
+//                    Date submittedDate = eventList.get(0).getTimestamp();
+//                    jobInfo.setSubmitted(submittedDate);
+//                    jobInfo.setStatus(eventList.get(eventList.size() - 1).getEventType());
+//                }
+//                rnaSeqJobInfoList.add(jobInfo);
+//            }
+//            return rnaSeqJobInfoList;
+//        }
+//        catch (Exception e) {
+//            _logger.error("Error in getPagedTasksForUserLoginByClass", e);
+//            DaoException daoExc = new DaoException("TaskDAOImpl.getPagedTasksForUserLoginByClass");
+//            daoExc.initCause(e);
+//            throw daoExc;
+//        }
+//    }
+//
     public List<SearchJobInfo> getPagedSearchInfoForUserLogin(String userLogin,
                                                               int startIndex,
                                                               int numRows,
@@ -283,15 +283,15 @@ public class TaskDAOImpl extends DaoBaseImpl implements TaskDAO {
                         BlastJobInfoGeneratorFactory.getInstance(this, "BlastTask");
                 return jobInfoGenerator.getBlastJobInfo(task);
             }
-            else if (task instanceof ReversePsiBlastTask) {
-                BlastJobInfoGenerator jobInfoGenerator =
-                        BlastJobInfoGeneratorFactory.getInstance(this, "ReversePsiBlastTask");
-                return jobInfoGenerator.getBlastJobInfo(task);
-            }
-            else if (task instanceof RecruitmentViewerFilterDataTask) {
-                return RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
-                        (RecruitmentViewerFilterDataTask) task);
-            }
+//            else if (task instanceof ReversePsiBlastTask) {
+//                BlastJobInfoGenerator jobInfoGenerator =
+//                        BlastJobInfoGeneratorFactory.getInstance(this, "ReversePsiBlastTask");
+//                return jobInfoGenerator.getBlastJobInfo(task);
+//            }
+//            else if (task instanceof RecruitmentViewerFilterDataTask) {
+//                return RecruitmentTaskToInfoTranslator.getInfoForRecruitmentResultTask(
+//                        (RecruitmentViewerFilterDataTask) task);
+//            }
             else /* ExportTask */ {
                 return createJobInfo(task);
             }

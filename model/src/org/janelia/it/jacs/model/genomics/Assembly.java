@@ -2,8 +2,6 @@
 package org.janelia.it.jacs.model.genomics;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
-import org.janelia.it.jacs.model.metadata.Library;
-import org.janelia.it.jacs.model.metadata.Sample;
 
 import java.io.Serializable;
 import java.util.Set;

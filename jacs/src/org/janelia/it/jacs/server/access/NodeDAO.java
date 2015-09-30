@@ -3,7 +3,6 @@ package org.janelia.it.jacs.server.access;
 
 import org.janelia.it.jacs.model.common.BlastableNodeVO;
 import org.janelia.it.jacs.model.common.SortArgument;
-import org.janelia.it.jacs.model.metadata.BioMaterial;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -12,7 +11,6 @@ import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.springframework.dao.DataAccessException;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -64,9 +62,9 @@ public interface NodeDAO extends DAO {
     FastaFileNode getFastaFileNode(Long nodeId)
             throws DataAccessException, DaoException;
 
-    Map<BioMaterial, Integer> getSitesForBlastResultNode(Long taskId)
-            throws DataAccessException, DaoException;
-
+//    Map<BioMaterial, Integer> getSitesForBlastResultNode(Long taskId)
+//            throws DataAccessException, DaoException;
+//
     String replaceNodeName(String nodeId, String nodeName)
             throws DataAccessException, DaoException;
 
@@ -93,7 +91,7 @@ public interface NodeDAO extends DAO {
     Long getNumBlastHitsForNode(Node node)
             throws DataAccessException, DaoException;
 
-    BlastableNodeVO[] getReversePsiBlastDatasets() throws DaoException;
+//    BlastableNodeVO[] getReversePsiBlastDatasets() throws DaoException;
 
     List<Event> getAllEventsRelatedToData(Node targetNode, String commonParameterKey, String commonParameterValue,
                                           String taskSubclassLikeString);

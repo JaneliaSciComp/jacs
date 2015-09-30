@@ -36,11 +36,6 @@ public interface FileNodeManagerMBean {
     public void createBlastDatabaseFileNodeMovePartitionFiles(String name, String description, String sourcePath,
                                                               boolean isNucleotide, Integer partitionCount, Long length);
 
-    public void createHmmerPfamDatabaseNode(String name, String description, String path);
-    public void createHmmer3DatabaseNode(String name, String description, String sourcePath);
-
-    public void createReversePsiBlastDatabaseNode(String name, String description, String sourcePath);
-
     public void findDeprecatedBlastDBDirs();
 
 }

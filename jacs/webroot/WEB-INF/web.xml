@@ -100,14 +100,14 @@
         <servlet-name>org.janelia.it.jacs.web.gwt.common.Common DataService</servlet-name>
         <servlet-class>org.janelia.it.jacs.web.gwt.common.server.DataServiceImpl</servlet-class>
     </servlet>
-    <servlet>
-        <servlet-name>org.janelia.it.jacs.web.gwt.admin.editproject.EditProject ProjectService</servlet-name>
-        <servlet-class>org.janelia.it.jacs.web.gwt.admin.editproject.server.ProjectServiceImpl</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>org.janelia.it.jacs.web.gwt.frv.Frv RecruitmentService</servlet-name>
-        <servlet-class>org.janelia.it.jacs.web.gwt.frv.server.RecruitmentServiceImpl</servlet-class>
-    </servlet>
+    <!--<servlet>-->
+        <!--<servlet-name>org.janelia.it.jacs.web.gwt.admin.editproject.EditProject ProjectService</servlet-name>-->
+        <!--<servlet-class>org.janelia.it.jacs.web.gwt.admin.editproject.server.ProjectServiceImpl</servlet-class>-->
+    <!--</servlet>-->
+    <!--<servlet>-->
+        <!--<servlet-name>org.janelia.it.jacs.web.gwt.frv.Frv RecruitmentService</servlet-name>-->
+        <!--<servlet-class>org.janelia.it.jacs.web.gwt.frv.server.RecruitmentServiceImpl</servlet-class>-->
+    <!--</servlet>-->
 
     <!--
        - Maps the jacs dispatcher to *.htm. All handler mappings in
@@ -157,14 +157,14 @@
         <servlet-name>org.janelia.it.jacs.web.gwt.common.Common DataService</servlet-name>
         <url-pattern>/org.janelia.it.jacs.web.gwt.common.Common/DataService</url-pattern>
     </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>org.janelia.it.jacs.web.gwt.admin.editproject.EditProject ProjectService</servlet-name>
-        <url-pattern>/org.janelia.it.jacs.web.gwt.admin.editproject.EditProject/ProjectService</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>org.janelia.it.jacs.web.gwt.frv.Frv RecruitmentService</servlet-name>
-        <url-pattern>/org.janelia.it.jacs.web.gwt.frv.Frv/org.janelia.it.jacs.web.gwt.frv.Frv/RecruitmentService</url-pattern>
-    </servlet-mapping>
+    <!--<servlet-mapping>-->
+        <!--<servlet-name>org.janelia.it.jacs.web.gwt.admin.editproject.EditProject ProjectService</servlet-name>-->
+        <!--<url-pattern>/org.janelia.it.jacs.web.gwt.admin.editproject.EditProject/ProjectService</url-pattern>-->
+    <!--</servlet-mapping>-->
+    <!--<servlet-mapping>-->
+        <!--<servlet-name>org.janelia.it.jacs.web.gwt.frv.Frv RecruitmentService</servlet-name>-->
+        <!--<url-pattern>/org.janelia.it.jacs.web.gwt.frv.Frv/org.janelia.it.jacs.web.gwt.frv.Frv/RecruitmentService</url-pattern>-->
+    <!--</servlet-mapping>-->
 
     <!-- timeout is set for 24 hours -->
     <session-config>

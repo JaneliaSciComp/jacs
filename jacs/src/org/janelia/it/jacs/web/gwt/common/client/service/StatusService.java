@@ -37,19 +37,19 @@ public interface StatusService extends RemoteService {
 
     public BlastJobInfo[] getPagedBlastTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException;
 
-    public RnaSeqJobInfo[] getPagedRnaSeqPipelineTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException;
-
-    // Recruitment Viewer Methods
-    public Integer getNumRVUserTaskResults(String likeString) throws GWTServiceException;
-
-    public Integer getNumRVSystemTaskResults(String likeString) throws GWTServiceException;
-
-    public RecruitableJobInfo[] getPagedRVSystemTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs)
-            throws GWTServiceException;
-
-    public RecruitableJobInfo[] getPagedRVUserTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs)
-            throws GWTServiceException;
-
+//    public RnaSeqJobInfo[] getPagedRnaSeqPipelineTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs) throws GWTServiceException;
+//
+//    // Recruitment Viewer Methods
+//    public Integer getNumRVUserTaskResults(String likeString) throws GWTServiceException;
+//
+//    public Integer getNumRVSystemTaskResults(String likeString) throws GWTServiceException;
+//
+//    public RecruitableJobInfo[] getPagedRVSystemTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs)
+//            throws GWTServiceException;
+//
+//    public RecruitableJobInfo[] getPagedRVUserTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs)
+//            throws GWTServiceException;
+//
     public List<String> getUserTaskQueryNames() throws GWTServiceException;
 
     public List<String> getSystemTaskQueryNames() throws GWTServiceException;
@@ -63,9 +63,9 @@ public interface StatusService extends RemoteService {
 
     public void purgeTask(String taskId) throws GWTServiceException;
 
-    public RecruitableJobInfo getRecruitmentTaskById(String taskId) throws GWTServiceException;
-
-    public RecruitableJobInfo getRecruitmentFilterTaskByUserPipelineId(String parentTaskId) throws GWTServiceException;
+//    public RecruitableJobInfo getRecruitmentTaskById(String taskId) throws GWTServiceException;
+//
+//    public RecruitableJobInfo getRecruitmentFilterTaskByUserPipelineId(String parentTaskId) throws GWTServiceException;
 
 //    public Integer getTaskOrder (String taskId) throws GWTServiceException;
 //    public Integer getPercentCompleteOfTask (String taskId) throws GWTServiceException;

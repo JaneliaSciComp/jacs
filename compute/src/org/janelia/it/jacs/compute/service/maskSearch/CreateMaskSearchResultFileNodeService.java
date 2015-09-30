@@ -7,7 +7,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentFileNodeException;
+import org.janelia.it.jacs.compute.service.exceptions.CreateFileNodeException;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
@@ -29,7 +29,7 @@ public class CreateMaskSearchResultFileNodeService implements IService {
     private String visibility;
     private String sessionName;
 
-    public void execute(IProcessData processData) throws CreateRecruitmentFileNodeException {
+    public void execute(IProcessData processData) throws CreateFileNodeException {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             this.task = ProcessDataHelper.getTask(processData);
@@ -44,7 +44,7 @@ public class CreateMaskSearchResultFileNodeService implements IService {
             logger.info("Created mask search result node: "+resultFileNode.getDirectoryPath());
         }
         catch (Exception e) {
-            throw new CreateRecruitmentFileNodeException(e);
+            throw new CreateFileNodeException(e);
         }
     }
 

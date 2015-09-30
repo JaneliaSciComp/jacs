@@ -12,7 +12,6 @@ import org.janelia.it.jacs.server.api.ChartTool;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ChartData;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ImageModel;
-import org.janelia.it.jacs.web.gwt.search.client.model.CategoryResult;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -59,11 +58,11 @@ abstract public class SearchDAOImpl extends DaoBaseImpl implements SearchDAO {
                                            SortArgument[] sortArgs)
             throws DaoException;
 
-    abstract public List<? extends CategoryResult> getPagedCategoryResultsByNodeId(Long nodeId,
-                                                                                   int startIndex,
-                                                                                   int numRows,
-                                                                                   SortArgument[] sortArgs)
-            throws DaoException;
+//    abstract public List<? extends CategoryResult> getPagedCategoryResultsByNodeId(Long nodeId,
+//                                                                                   int startIndex,
+//                                                                                   int numRows,
+//                                                                                   SortArgument[] sortArgs)
+//            throws DaoException;
 
     abstract public int getNumCategoryResultsByNodeId(Long nodeId) throws DaoException;
 

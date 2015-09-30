@@ -100,15 +100,15 @@
     </target>
 
     <!-- Defines the set of targets that should be run to completely build this module. -->
-	<target name="build" depends="setup, jaxb-code-generate, war" description="compiles and packages this module"/>
+	<target name="build" depends="setup, war" description="compiles and packages this module"/>
 
 
-    <target name="jaxb-code-generate" depends="setup">
-        <xjc schema="${schema.home}/project.xsd" destdir="${jaxb.src.dir}" package="org.janelia.it.jacs.server.ie.jaxb"
-             classpath="${shared.module}/build/jars/jacs-shared.jar">
-              <produces dir="${jaxb.src.dir}/org/janelia/it/jacs/server/ie/jaxb" />
-        </xjc>
-    </target>
+    <!--<target name="jaxb-code-generate" depends="setup">-->
+        <!--<xjc schema="${schema.home}/project.xsd" destdir="${jaxb.src.dir}" package="org.janelia.it.jacs.server.ie.jaxb"-->
+             <!--classpath="${shared.module}/build/jars/jacs-shared.jar">-->
+              <!--<produces dir="${jaxb.src.dir}/org/janelia/it/jacs/server/ie/jaxb" />-->
+        <!--</xjc>-->
+    <!--</target>-->
 
     <target name="build-no-GWT" description="compiles and packages this module">
         <antcall target="build">
@@ -155,10 +155,10 @@
               <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />
               <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />
             </antcall>
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.test.CleanGWTEntities" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/test/CleanGWTEntities.gwt.xml" />
-            </antcall>
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.test.CleanGWTEntities" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/test/CleanGWTEntities.gwt.xml" />-->
+            <!--</antcall>-->
 
             <!--<antcall target="gwt-compile-module">-->
             <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis" />-->
@@ -814,17 +814,16 @@
 
         <echo message="Overlay properties file: ${deployment-specific.properties.file.name}" />
         <antcall target="deploy-tomcat-app">
-            <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
+            <param name="ssh.common.params" value="${user.server.login}@${server.address}"/>
+            <param name="scp.common.params" value=""/>
             <param name="server.username" value="${user.server.login}" />
-            <param name="server.address" value="${server.address}" />
+            <param name="deployment-specific.properties.dir" value="${jacs.properties.dir}"/>
+            <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
         </antcall>
     </target>
 
-    <target name="deploy-tomcat-app" depends="setup, get-user-input-for-deployment">
+    <target name="deploy-tomcat-app" depends="setup">
         <!-- set connection params, and check connection -->
-        <property name="ssh.common.params" value="${server.username}@${server.address}"/>
-        <property name="scp.common.params" value=""/>
-
         <echo message="Testing connection" />
         <exec executable="${ssh}" description="Testing connection"
               outputproperty="exec.output" failonerror="true">

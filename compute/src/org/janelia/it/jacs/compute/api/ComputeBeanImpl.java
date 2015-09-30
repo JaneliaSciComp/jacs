@@ -24,9 +24,6 @@ import org.janelia.it.jacs.model.user_data.*;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
-import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
-import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
-import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -624,16 +621,6 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
 
-    public void setRVHitsForNode(Long recruitmentNodeId, String numRecruited) {
-        try {
-            computeDAO.setRVHitsForNode(recruitmentNodeId, numRecruited);
-        }
-        catch (Exception e) {
-            logger.error("Caught exception updating the number of rv hits\n" + e.getMessage());
-        }
-    }
-
-
     public void setBlastHitsForNode(Long nodeId, Long numHits) throws DaoException {
         BlastResultFileNode node = (BlastResultFileNode) computeDAO.getNodeById(nodeId);
         node.setBlastHitCount(numHits);
@@ -664,10 +651,6 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             return null;
         }
         return task.getInputNodes().iterator().next();
-    }
-
-    public RecruitmentResultFileNode getSystemRecruitmentResultNodeByRecruitmentFileNodeId(String giNumber) throws DaoException {
-        return computeDAO.getSystemRecruitmentResultNodeByRecruitmentFileNodeId(giNumber);
     }
 
     public List getSampleInfo() throws DaoException {
@@ -907,14 +890,6 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 
     public List<BlastDatabaseFileNode> getBlastDatabasesOfAUser(String username) {
         return (List<BlastDatabaseFileNode>) computeDAO.getBlastDatabasesOfAUser(BlastDatabaseFileNode.class.getSimpleName(), username);
-    }
-
-    public List<HmmerPfamDatabaseNode> getHmmerPfamDatabases() {
-        return (List<HmmerPfamDatabaseNode>) computeDAO.getBlastDatabases(HmmerPfamDatabaseNode.class.getSimpleName());
-    }
-
-    public List<ReversePsiBlastDatabaseNode> getReversePsiBlastDatabases() {
-        return (List<ReversePsiBlastDatabaseNode>) computeDAO.getBlastDatabases(ReversePsiBlastDatabaseNode.class.getSimpleName());
     }
 
     /**

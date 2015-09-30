@@ -16,7 +16,6 @@ import org.janelia.it.jacs.server.access.TaskDAO;
 import org.janelia.it.jacs.server.utils.SystemException;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ImageModel;
-import org.janelia.it.jacs.web.gwt.search.client.model.CategoryResult;
 
 import java.util.*;
 
@@ -355,43 +354,43 @@ public class SearchAPI {
         return searchHits;
     }
 
-    public List<? extends CategoryResult> getPagedCategoryResults(User requestingUser,
-                                                                  Long searchTaskId,
-                                                                  String category,
-                                                                  int startIndex,
-                                                                  int numRows,
-                                                                  SortArgument[] sortArgs)
-            throws SystemException {
-        try {
-            Task t = taskDAO.getTaskById(searchTaskId);
-            if (t == null) {
-                throw new IllegalArgumentException("No such task found for " + searchTaskId);
-            }
-            if (!(t instanceof SearchTask)) {
-                // the specified task is not a search task
-                throw new SystemException("Invalid task ID " + searchTaskId);
-            }
-            if (t.getOwner() != null && !t.getOwner().equals(requestingUser.getUserLogin())) {
-                throw new IllegalAccessException("User " + requestingUser.getUserLogin() +
-                        " doesn't have access to task " + searchTaskId);
-            }
-            SearchDAO searchDAO = searchDAOFactory.getSearchDAO(category);
-            Long nodeId = ((SearchTask) t).getSearchResultNode().getObjectId();
-            return searchDAO.getPagedCategoryResultsByNodeId(nodeId, startIndex, numRows, sortArgs);
-        }
-        catch (IllegalArgumentException e) {
-            throw e;
-        }
-        catch (SystemException e) {
-            throw e;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            logger.error(e.getMessage());
-            throw new SystemException(e);
-        }
-    }
-
+//    public List<? extends CategoryResult> getPagedCategoryResults(User requestingUser,
+//                                                                  Long searchTaskId,
+//                                                                  String category,
+//                                                                  int startIndex,
+//                                                                  int numRows,
+//                                                                  SortArgument[] sortArgs)
+//            throws SystemException {
+//        try {
+//            Task t = taskDAO.getTaskById(searchTaskId);
+//            if (t == null) {
+//                throw new IllegalArgumentException("No such task found for " + searchTaskId);
+//            }
+//            if (!(t instanceof SearchTask)) {
+//                // the specified task is not a search task
+//                throw new SystemException("Invalid task ID " + searchTaskId);
+//            }
+//            if (t.getOwner() != null && !t.getOwner().equals(requestingUser.getUserLogin())) {
+//                throw new IllegalAccessException("User " + requestingUser.getUserLogin() +
+//                        " doesn't have access to task " + searchTaskId);
+//            }
+//            SearchDAO searchDAO = searchDAOFactory.getSearchDAO(category);
+//            Long nodeId = ((SearchTask) t).getSearchResultNode().getObjectId();
+//            return searchDAO.getPagedCategoryResultsByNodeId(nodeId, startIndex, numRows, sortArgs);
+//        }
+//        catch (IllegalArgumentException e) {
+//            throw e;
+//        }
+//        catch (SystemException e) {
+//            throw e;
+//        }
+//        catch (Exception e) {
+//            e.printStackTrace();
+//            logger.error(e.getMessage());
+//            throw new SystemException(e);
+//        }
+//    }
+//
     public Integer getNumCategoryResults(User requestingUser,
                                          Long searchTaskId,
                                          String category)
