@@ -3,9 +3,6 @@ package org.janelia.it.jacs.compute.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import sun.util.logging.resources.logging;
-import jxl.demo.CSV;
-
 /**
  * Common utility methods for dealing with channel specification strings.
  * 
