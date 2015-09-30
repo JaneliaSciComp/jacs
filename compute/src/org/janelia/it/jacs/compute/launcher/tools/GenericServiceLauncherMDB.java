@@ -1,5 +1,5 @@
 
-package org.janelia.it.jacs.compute.launcher.tools.tools;
+package org.janelia.it.jacs.compute.launcher.tools;
 
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SeriesLauncherMDB;
 import org.jboss.annotation.ejb.PoolClass;
