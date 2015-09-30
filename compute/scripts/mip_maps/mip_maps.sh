@@ -136,6 +136,22 @@ fi
 
 SCALER_PARAMS="-DtileFormat=${TARGET_TILES_FORMAT}"
 
+if [ "$TARGET_MIN_ROW" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -DminR=$TARGET_MIN_ROW"
+fi
+
+if [ "$TARGET_MAX_ROW" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -DmaxR=$TARGET_MAX_ROW"
+fi
+
+if [ "$TARGET_MIN_COL" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -DminC=$TARGET_MIN_COL"
+fi
+
+if [ "$TARGET_MAX_COL" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -DmaxC=$TARGET_MAX_COL"
+fi						
+
 if [ "$TARGET_MIN_Z" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -DminZ=$TARGET_MIN_Z"
 fi										    
