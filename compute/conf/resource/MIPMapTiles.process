@@ -6,6 +6,7 @@
 
             <input name="IMAGE_WIDTH" />
             <input name="IMAGE_HEIGHT" />
+            <input name="IMAGE_DEPTH" />
 
             <input name="SOURCE_ROOT_URL" />
             <input name="SOURCE_STACK_FORMAT" />

@@ -24,6 +24,10 @@ if [ "$IMAGE_HEIGHT" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$IMAGE_HEIGHT"
 fi    
 
+if [ "$IMAGE_DEPTH" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$IMAGE_DEPTH"
+fi    
+
 if [ "$SOURCE_MAGNIFICATION_LEVEL" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceScaleLevel=$SOURCE_MAGNIFICATION_LEVEL"
 fi		
@@ -57,15 +61,15 @@ if [ "$SOURCE_MIN_Z" != "" ]; then
 fi					    
 
 if [ "$SOURCE_WIDTH" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DsourceWidth=$SOURCE_WIDTH"
+    TILER_PARAMS="${TILER_PARAMS} -Dwidth=$SOURCE_WIDTH"
 fi						
 
 if [ "$SOURCE_HEIGHT" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$SOURCE_HEIGHT"
+    TILER_PARAMS="${TILER_PARAMS} -Dheight=$SOURCE_HEIGHT"
 fi						    
 
 if [ "$SOURCE_DEPTH" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DsourceDepth=$SOURCE_DEPTH"
+    TILER_PARAMS="${TILER_PARAMS} -Ddepth=$SOURCE_DEPTH"
 fi							
 
 if [ "$TARGET_TILE_WIDTH" != "" ]; then
@@ -113,8 +117,9 @@ if [ "$TARGET_MEDIA_FORMAT" != "" ]; then
 fi										    
 
 # Invoke the tiler
-java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${TILER_PARAMS} -jar ${TILER_JAR_FILE}
-
+tiler_cmd="java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${TILER_PARAMS} -jar ${TILER_JAR_FILE}"
+echo "Execute $tiler_cmd"
+`$tiler_cmd`
 
 # Prepare the scaler parameters
 SCALER_JAR_FILE="$SCRIPT_DIR/ScaleCATMAID-jar-with-dependencies.jar"
@@ -159,4 +164,6 @@ if [ "$TARGET_MEDIA_FORMAT" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -Dformat=$TARGET_MEDIA_FORMAT"
 fi										    
 
-java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}
+scaler_cmd="java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}"
+echo "Executing $scaler_cmd"
+`$scaler_cmd`

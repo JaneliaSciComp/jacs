@@ -158,6 +158,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             fw.write(targetStackFormat + "\n");
             fw.write(imageWidth + "\n");
             fw.write(imageHeight + "\n");
+            fw.write(imageDepth + "\n");
             fw.write(sourceScaleLevel + "\n");
             fw.write(sourceTileWidth + "\n");
             fw.write(sourceTileHeight + "\n");
@@ -210,6 +211,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read TARGET_STACK_FORMAT\n");
         script.append("read IMAGE_WIDTH\n");
         script.append("read IMAGE_HEIGHT\n");
+        script.append("read IMAGE_DEPTH\n");
         script.append("read SOURCE_MAGNIFICATION_LEVEL\n");
         script.append("read SOURCE_TILE_WIDTH\n");
         script.append("read SOURCE_TILE_HEIGHT\n");
@@ -241,6 +243,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("TARGET_STACK_FORMAT=$TARGET_STACK_FORMAT ")
             .append("IMAGE_WIDTH=$IMAGE_WIDTH ")
             .append("IMAGE_HEIGHT=$IMAGE_HEIGHT ")
+            .append("IMAGE_DEPTH=$IMAGE_DEPTH ")
             .append("SOURCE_MAGNIFICATION_LEVEL=$SOURCE_MAGNIFICATION_LEVEL ")
             .append("SOURCE_TILE_WIDTH=$SOURCE_TILE_WIDTH ")
             .append("SOURCE_TILE_HEIGHT=$SOURCE_TILE_HEIGHT ")
