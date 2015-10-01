@@ -36,6 +36,7 @@
             <input name="TARGET_QUALITY" />
             <input name="TARGET_TYPE" />
             <input name="TARGET_MEDIA_FORMAT" />
+            <input name="TARGET_SKIP_EMPTY_TILES" />
 
         </operation>
     </sequence>

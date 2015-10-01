@@ -54,6 +54,7 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_targetQuality = "target quality";
     transient private static final String PARAM_targetType = "target type";
     transient private static final String PARAM_targetMediaFormat = "target media format (jpg, png)";
+    transient private static final String PARAM_targetSkipEmptyTiles = "target skip empty tiles";
 
     public MIPMapTilesTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -136,6 +137,8 @@ public class MIPMapTilesTask extends Task {
                 return new TextParameterVO(value, 400);
             case PARAM_targetMediaFormat:
                 return new TextParameterVO(value, 400);
+            case PARAM_targetSkipEmptyTiles:
+                return new BooleanParameterVO(Boolean.valueOf(value));
             default:
                 return null;
         }
@@ -405,6 +408,15 @@ public class MIPMapTilesTask extends Task {
 
     public void setTargetMediaFormat(String targetMediaFormat) {
         setParameter(PARAM_targetMediaFormat, targetMediaFormat);
+    }
+
+    @XmlElement(name = "skipEmptyTiles")
+    public Boolean getSkipEmptyTiles() {
+        return getParameterAsBoolean(PARAM_targetSkipEmptyTiles);
+    }
+
+    public void setSkipEmptyTiles(Boolean skipEmptyTiles) {
+        setParameterAsBoolean(PARAM_targetSkipEmptyTiles, skipEmptyTiles);
     }
 
 }

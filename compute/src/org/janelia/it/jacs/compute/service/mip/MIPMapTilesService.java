@@ -48,6 +48,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private Double targetQuality;
     private String targetType;
     private String targetMediaFormat;
+    private Boolean targetSkipEmptyTiles;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -64,12 +65,13 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         targetStackFormat = processData.getString("TARGET_STACK_FORMAT");
 
         if (targetRootUrl == null) {
-            targetRootUrl = resultFileNode.getDirectoryPath();
+            targetRootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
         }
         extractImageParameters(processData);
         targetQuality = processData.getDouble("TARGET_QUALITY");
         targetType = processData.getString("TARGET_TYPE");
         targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
+        targetSkipEmptyTiles = processData.getBoolean("TARGET_SKIP_EMPTY_TILES");
     }
 
     private void extractImageParameters(IProcessData processData) throws MissingDataException {
@@ -234,6 +236,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read TARGET_QUALITY\n");
         script.append("read TARGET_TYPE\n");
         script.append("read TARGET_MEDIA_FORMAT\n");
+        script.append("read TARGET_SKIP_EMPTY_TILES\n");
 
         // pass them to the script as environment variables
         script
@@ -266,6 +269,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("TARGET_QUALITY=$TARGET_QUALITY ")
             .append("TARGET_TYPE=$TARGET_TYPE ")
             .append("TARGET_MEDIA_FORMAT=$TARGET_MEDIA_FORMAT ")
+            .append("TARGET_SKIP_EMPTY_TILES=$TARGET_SKIP_EMPTY_TILES ")
             .append(MIPMapTilesHelper.getMipMapTilesCommands()).append('\n');
         writer.write(script.toString());
     }

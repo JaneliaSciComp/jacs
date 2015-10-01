@@ -172,6 +172,15 @@ public abstract class Task implements Serializable, IsSerializable {
             return null;
     }
 
+    public Boolean getParameterAsBoolean(String key) {
+        String value = getParameter(key);
+        if (value != null) {
+            return Boolean.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
     public Integer getParameterAsInteger(String key) {
         String value = getParameter(key);
         if (value != null && value.trim().length() > 0) {
@@ -227,6 +236,12 @@ public abstract class Task implements Serializable, IsSerializable {
             this.taskParameterSet.add(new TaskParameter(key, value, this)); // add the new one
         } else {
             existingParam.setValue(value);
+        }
+    }
+
+    public void setParameterAsBoolean(String key, Boolean value) {
+        if (value != null) {
+            setParameter(key, value.toString());
         }
     }
 

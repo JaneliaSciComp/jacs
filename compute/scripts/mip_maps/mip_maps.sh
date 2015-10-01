@@ -18,11 +18,15 @@ fi
 
 if [ "$IMAGE_WIDTH" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceWidth=${IMAGE_WIDTH}"
+    TILER_PARAMS="${TILER_PARAMS} -DminX=0"
+    TILER_PARAMS="${TILER_PARAMS} -Dwidth=$IMAGE_WIDTH"
 fi
 
 if [ "$IMAGE_HEIGHT" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$IMAGE_HEIGHT"
-fi    
+    TILER_PARAMS="${TILER_PARAMS} -DminY=0"
+    TILER_PARAMS="${TILER_PARAMS} -Dheight=$IMAGE_HEIGHT"
+fi
 
 if [ "$IMAGE_DEPTH" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$IMAGE_DEPTH"
@@ -48,25 +52,9 @@ if [ "$SOURCE_Z_RESOLUTION" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceResZ=$SOURCE_Z_RESOLUTION"
 fi				
 
-if [ "$SOURCE_MIN_X" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DminX=$SOURCE_MIN_X"
-fi				    
-
-if [ "$SOURCE_MIN_Y" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DminY=$SOURCE_MIN_Y"
-fi					
-
 if [ "$SOURCE_MIN_Z" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DminZ=$SOURCE_MIN_Z"
 fi					    
-
-if [ "$SOURCE_WIDTH" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -Dwidth=$SOURCE_WIDTH"
-fi						
-
-if [ "$SOURCE_HEIGHT" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -Dheight=$SOURCE_HEIGHT"
-fi						    
 
 if [ "$SOURCE_DEPTH" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -Ddepth=$SOURCE_DEPTH"
@@ -124,17 +112,15 @@ echo "Execute $tiler_cmd"
 # Prepare the scaler parameters
 SCALER_JAR_FILE="$SCRIPT_DIR/ScaleCATMAID-jar-with-dependencies.jar"
 
-TARGET_TILES_FORMAT=""
+SCALER_PARAMS=""
 
 if [ "$TARGET_ROOT_URL" != "" ]; then
-    TARGET_TILES_FORMAT="${TARGET_ROOT_URL}"
+    SCALER_PARAMS="$SCALER_PARAMS -DbasePath=${TARGET_ROOT_URL}"
 fi							    
 
 if [ "$TARGET_STACK_FORMAT" != "" ]; then
-    TARGET_TILES_FORMAT="$TARGET_TILES_FORMAT/$TARGET_STACK_FORMAT"
+    SCALER_PARAMS="$SCALER_PARAMS -DtileFormat=$TARGET_STACK_FORMAT"
 fi								
-
-SCALER_PARAMS="-DtileFormat=${TARGET_TILES_FORMAT}"
 
 if [ "$TARGET_MIN_ROW" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -DminR=$TARGET_MIN_ROW"
@@ -179,6 +165,10 @@ fi
 if [ "$TARGET_MEDIA_FORMAT" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -Dformat=$TARGET_MEDIA_FORMAT"
 fi										    
+
+if [ "$TARGET_SKIP_EMPTY_TILES" != "" ]; then
+    SCALER_PARAMS="${SCALER_PARAMS} -DignoreEmptyTiles=$TARGET_SKIP_EMPTY_TILES"
+fi				    
 
 scaler_cmd="java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}"
 echo "Executing $scaler_cmd"
