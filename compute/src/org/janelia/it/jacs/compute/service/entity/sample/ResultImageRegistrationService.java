@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,9 @@ import org.janelia.it.jacs.model.entity.cv.SampleImageType;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 
 /**
  * Start at some result entity within a Pipeline run, and look for 2d images corresponding to 3d images. These 
@@ -234,7 +238,17 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 
     		    List<String> keys = new ArrayList<>(allMipPrefixMap.keySet());
     		    if (!keys.isEmpty()) {
-        	        Collections.sort(keys);
+    		        Collections.sort(keys, new Comparator<String>() {
+    		            @Override
+    		            public int compare(String o1, String o2) {
+    		                return ComparisonChain.start()
+    		                        .compare(!o1.contains("stitched"), !o2.contains("stitched"), Ordering.natural()) // stitched first
+    		                        .compare(!o1.contains("brain"), !o2.contains("brain"), Ordering.natural()) // Brain before VNC
+    		                        .compare(!o1.contains("ventral_nerve_cord"), !o2.contains("ventral_nerve_cord"), Ordering.natural()) // Brain before VNC
+    		                        .compare(o1, o2, Ordering.natural().nullsLast()).result(); // Order by filename
+    		            }
+    		        });
+        	        
         		    String defaultKey = keys.get(0);
 
                     allMip = allMipPrefixMap.get(defaultKey);
