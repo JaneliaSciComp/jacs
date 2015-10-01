@@ -183,16 +183,15 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             writeValueOrNone(targetQuality, fw);
             writeValueOrNone(targetType, fw);
             writeValueOrNone(targetMediaFormat, fw);
+            writeValueOrNone(targetSkipEmptyTiles, fw);
         } catch (IOException e) {
             throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e);
         }
     }
 
-    private void writeValueOrNone(Object val, FileWriter fw) throws IOException {
+    private void writeValueOrNone(Object val, FileWriter configFileWriter) throws IOException {
         if (val != null) {
-            fw.write(val.toString() + "\n");
-        } else {
-            fw.write('\n');
+            configFileWriter.write(val.toString() + "\n");
         }
     }
 
@@ -217,8 +216,8 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read SOURCE_MAGNIFICATION_LEVEL\n");
         script.append("read SOURCE_TILE_WIDTH\n");
         script.append("read SOURCE_TILE_HEIGHT\n");
-        script.append("read SOURCE_XY_RESOLUTION\n");
-        script.append("read SOURCE_Z_RESOLUTION\n");
+        if (sourceXYResolution != null) script.append("read SOURCE_XY_RESOLUTION\n");
+        if (sourceZResolution != null) script.append("read SOURCE_Z_RESOLUTION\n");
         script.append("read SOURCE_MIN_X\n");
         script.append("read SOURCE_MIN_Y\n");
         script.append("read SOURCE_MIN_Z\n");
@@ -233,10 +232,10 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read TARGET_MAX_COL\n");
         script.append("read TARGET_MIN_Z\n");
         script.append("read TARGET_MAX_Z\n");
-        script.append("read TARGET_QUALITY\n");
-        script.append("read TARGET_TYPE\n");
-        script.append("read TARGET_MEDIA_FORMAT\n");
-        script.append("read TARGET_SKIP_EMPTY_TILES\n");
+        if (targetQuality != null) script.append("read TARGET_QUALITY\n");
+        if (targetType != null) script.append("read TARGET_TYPE\n");
+        if (targetMediaFormat != null) script.append("read TARGET_MEDIA_FORMAT\n");
+        if (targetSkipEmptyTiles != null) script.append("read TARGET_SKIP_EMPTY_TILES\n");
 
         // pass them to the script as environment variables
         script

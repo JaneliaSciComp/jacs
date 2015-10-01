@@ -6,7 +6,7 @@ JAVA_MEMORY="6G"
 # Prepare the tiler parameters
 TILER_JAR_FILE="$SCRIPT_DIR/TileCATMAID-jar-with-dependencies.jar"
 
-TILER_PARAMS="-DsourceUrlFormat=${SOURCE_URL_ROOT}/${SOURCE_STACK_FORMAT}"
+TILER_PARAMS="-DsourceUrlFormat=${SOURCE_URL_ROOT}/${SOURCE_STACK_FORMAT} -Dinterpolation=NN"
 
 if [ "$TARGET_ROOT_URL" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DexportBasePath=$TARGET_ROOT_URL"
@@ -18,18 +18,16 @@ fi
 
 if [ "$IMAGE_WIDTH" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceWidth=${IMAGE_WIDTH}"
-    TILER_PARAMS="${TILER_PARAMS} -DminX=0"
     TILER_PARAMS="${TILER_PARAMS} -Dwidth=$IMAGE_WIDTH"
 fi
 
 if [ "$IMAGE_HEIGHT" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$IMAGE_HEIGHT"
-    TILER_PARAMS="${TILER_PARAMS} -DminY=0"
     TILER_PARAMS="${TILER_PARAMS} -Dheight=$IMAGE_HEIGHT"
 fi
 
 if [ "$IMAGE_DEPTH" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$IMAGE_DEPTH"
+    TILER_PARAMS="${TILER_PARAMS} -DsourceDepth=$IMAGE_DEPTH"
 fi    
 
 if [ "$SOURCE_MAGNIFICATION_LEVEL" != "" ]; then
@@ -51,10 +49,6 @@ fi
 if [ "$SOURCE_Z_RESOLUTION" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceResZ=$SOURCE_Z_RESOLUTION"
 fi				
-
-if [ "$SOURCE_MIN_Z" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DminZ=$SOURCE_MIN_Z"
-fi					    
 
 if [ "$SOURCE_DEPTH" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -Ddepth=$SOURCE_DEPTH"
