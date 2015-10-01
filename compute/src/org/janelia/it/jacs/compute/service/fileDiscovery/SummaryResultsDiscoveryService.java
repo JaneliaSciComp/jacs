@@ -94,6 +94,9 @@ public class SummaryResultsDiscoveryService extends SupportingFilesDiscoveryServ
                         if (detection!=null) {
                             dyeNames.add(detection.getDyeName());
                         }
+                        else {
+                            dyeNames.add("Unknown");
+                        }
                     }
                 }
                 catch (Exception e) {
