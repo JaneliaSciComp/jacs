@@ -59,11 +59,18 @@ public class InferChannelSpecificationService extends AbstractEntityService {
         if (chanSpec==null) {
             StringBuilder chanSpecSb = new StringBuilder();
             if (referenceDyes.isEmpty() || channelDyeSpec==null) {
-                // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
-                if (channelDyeNames==null) {
-                    throw new ComputeException("Channel dye names attribute is null for LSM id="+lsmId);
+                Integer numChannels = null;
+                if (channelDyeNames!=null) {
+                    numChannels = channelDyeNames.split(",").length;
                 }
-                int numChannels = channelDyeNames.split(",").length;
+                else {
+                    String numChannelsStr = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);    
+                    if (numChannelsStr==null) {
+                        throw new ComputeException("Both Num Channels and Channel Dye Names are null for LSM id="+lsmId);
+                    }
+                    numChannels = new Integer(numChannelsStr);
+                }
+                // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
                 chanSpecSb.append(ChanSpecUtils.createChanSpec(numChannels, 1));
             }
             else {
