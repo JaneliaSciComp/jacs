@@ -66,39 +66,39 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
         
         Entity separation = helper.createFileEntity(resultFileNode.getDirectoryPath(), resultName, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
         
-        logger.info("Created new separation result: "+separation.getName()+" (id="+separation.getId()+")");
+        contextLogger.info("Created new separation result: "+separation.getName()+" (id="+separation.getId()+")");
         
         if (opticalRes!=null) {
             entityHelper.setOpticalResolution(separation, opticalRes);
-            logger.info("Set optical resolution to "+opticalRes+" on "+separation.getId());
+            contextLogger.info("Set optical resolution to "+opticalRes+" on "+separation.getId());
         }
         else {
-            logger.info("No optical resolution defined for separation "+separation.getId());
+            contextLogger.info("No optical resolution defined for separation "+separation.getId());
         }
         
         if (pixelRes!=null) {
             entityHelper.setPixelResolution(separation, pixelRes);
-            logger.info("Set pixel resolution to "+pixelRes+" on "+separation.getId());
+            contextLogger.info("Set pixel resolution to "+pixelRes+" on "+separation.getId());
         }
         else {
-            logger.info("No pixel resolution defined for separation "+separation.getId());
+            contextLogger.info("No pixel resolution defined for separation "+separation.getId());
         }
 
         if (objective!=null) {
             entityHelper.setObjective(separation, objective);
-            logger.info("Set objective to "+objective+" on "+separation.getId());
+            contextLogger.info("Set objective to "+objective+" on "+separation.getId());
         }
         else {
-            logger.info("No objective defined for separation "+separation.getId());
+            contextLogger.info("No objective defined for separation "+separation.getId());
         }
         
         if (sourceSeparation!=null) {
             helper.addToParent(separation, sourceSeparation, null, EntityConstants.ATTRIBUTE_SOURCE_SEPARATION);
-            logger.info("Set source separation to "+sourceSeparation.getId()+" on "+separation.getId());
+            contextLogger.info("Set source separation to "+sourceSeparation.getId()+" on "+separation.getId());
         }
         else {
-            logger.info("No source defined for separation "+separation.getId());
-            logger.info("Marking "+separation.getId()+" as a warped separation");
+            contextLogger.info("No source defined for separation "+separation.getId());
+            contextLogger.info("Marking "+separation.getId()+" as a warped separation");
         }
         
         if (isWarped) {
@@ -143,7 +143,7 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
         Map<Integer,Entity> chanEntities = new HashMap<Integer,Entity>();
 
         List<File> files = helper.collectFiles(dir, true);
-        logger.info("Collected "+files.size()+" files in "+dir);
+        contextLogger.info("Collected "+files.size()+" files in "+dir);
         FileUtils.sortFilesByName(files);
         
         List<Entity> resultFiles = new ArrayList<Entity>();
@@ -225,11 +225,11 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
 
         Entity inputImage = separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_INPUT_IMAGE);
         if (inputImage!=null) {
-        	logger.info("Setting fast 3d image on the separation's input image: "+inputImage.getName());
+            contextLogger.info("Setting fast 3d image on the separation's input image: "+inputImage.getName());
         	helper.setImageIfNecessary(inputImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
         }
         else {
-        	logger.warn("Could not find input image for separation: "+separation.getId());
+            contextLogger.warn("Could not find input image for separation: "+separation.getId());
         }
         
         // Process Neurons
@@ -288,7 +288,7 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
         	return Integer.parseInt(index);
         }
         catch (Exception e) {
-            logger.warn("Could not parse mask/chan file name: "+filename+", "+e.getMessage());
+            contextLogger.warn("Could not parse mask/chan file name: "+filename+", "+e.getMessage());
         }
     	return null;
     }
@@ -310,7 +310,7 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
         fragmentsEntity.setUpdatedDate(createDate);
         fragmentsEntity.setName("Neuron Fragments");
         fragmentsEntity = entityBean.saveOrUpdateEntity(fragmentsEntity);
-        logger.info("Saved fragment collection as "+fragmentsEntity.getId());
+        contextLogger.info("Saved fragment collection as "+fragmentsEntity.getId());
         return fragmentsEntity;
     }
 
@@ -335,7 +335,7 @@ public class IncrementalSeparationDiscoveryService extends IncrementalResultDisc
         fragmentEntity.setName("Neuron Fragment "+index);
         fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
         fragmentEntity = entityBean.saveOrUpdateEntity(fragmentEntity);
-        logger.info("Saved fragment entity as "+fragmentEntity.getId());
+        contextLogger.info("Saved fragment entity as "+fragmentEntity.getId());
         return fragmentEntity;
     }
 }

@@ -61,6 +61,10 @@ public class GetLsmInputImagesService extends AbstractEntityService {
             
             int i = 0;
             for(String hexColor : colors) {
+                if (i>=chanSpec.length()) {
+                    logger.warn("More colors ('"+chanColors+"') than channels ('"+chanSpec+"') in LSM id="+lsmId);
+                    break;
+                }
                 char type = chanSpec.charAt(i);
                 FijiColor fc = ChanSpecUtils.getColorCode(hexColor, type);
                 colorspec += fc.getCode();

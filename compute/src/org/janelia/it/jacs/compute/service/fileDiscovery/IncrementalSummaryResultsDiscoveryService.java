@@ -40,7 +40,7 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
             resultName = "LSM Summary Result";
         }
         Entity resultEntity = helper.createFileEntity(resultFileNode.getDirectoryPath(), resultName, EntityConstants.TYPE_LSM_SUMMARY_RESULT);
-        logger.info("Created new summary result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
+        contextLogger.info("Created new summary result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
         return resultEntity;
     }
     
@@ -52,10 +52,10 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
         }
         
         File dir = new File(summaryResult.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        logger.info("Processing "+summaryResult.getName()+" results in "+dir.getAbsolutePath());
+        contextLogger.info("Processing "+summaryResult.getName()+" results in "+dir.getAbsolutePath());
         
         if (!dir.canRead()) {
-            logger.info("Cannot read from folder "+dir.getAbsolutePath());
+            contextLogger.info("Cannot read from folder "+dir.getAbsolutePath());
             return;
         }
 
@@ -77,7 +77,7 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
             if (resultItem.getName().endsWith(".json")) {
                 String stub = resultItem.getName().replaceFirst("\\.json", "");
                 jsonEntityMap.put(stub, resultItem);
-                logger.info("Found JSON metadata file: "+resultItem.getName());
+                contextLogger.info("Found JSON metadata file: "+resultItem.getName());
             }
         }
 
@@ -92,11 +92,11 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
             
             for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
                 String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
-                logger.debug("Processing metadata for LSM: "+lsmFilename);
+                contextLogger.debug("Processing metadata for LSM: "+lsmFilename);
                 
                 Entity jsonEntity = jsonEntityMap.get(lsmFilename);
                 if (jsonEntity==null) {
-                    logger.warn("  No JSON metadata file found for LSM: "+lsmFilename);
+                    contextLogger.warn("  No JSON metadata file found for LSM: "+lsmFilename);
                     continue;
                 }
 
@@ -112,6 +112,9 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
                         if (detection!=null) {
                             dyeNames.add(detection.getDyeName());
                         }
+                        else {
+                            dyeNames.add("Unknown");
+                        }
                     }
                 }
                 catch (Exception e) {
@@ -122,14 +125,14 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
                 
                 if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
                     if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors))) {
-                        logger.info("  Setting LSM colors: "+colors);
+                        contextLogger.info("  Setting LSM colors: "+colors);
                         dirty = true;
                     }
                 }
                 
                 if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
                     if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames))) {
-                        logger.info("  Setting LSM dyes: "+dyeNames);
+                        contextLogger.info("  Setting LSM dyes: "+dyeNames);
                         dirty = true;
                     }
                 }
@@ -143,7 +146,7 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
 
     private List<File> addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {
         List<File> files = helper.collectFiles(dir, recurse);
-        logger.info("Collected "+files.size()+" files for addition to "+folder.getName());
+        contextLogger.info("Collected "+files.size()+" files for addition to "+folder.getName());
         if (!files.isEmpty()) {
             FileUtils.sortFilesByName(files);
             addFilesToFolder(folder, files);

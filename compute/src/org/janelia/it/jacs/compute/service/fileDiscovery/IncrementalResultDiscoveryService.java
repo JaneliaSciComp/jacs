@@ -3,11 +3,9 @@ package org.janelia.it.jacs.compute.service.fileDiscovery;
 import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -58,7 +56,7 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
             if (resultEntityId!=null) {
                 resultEntity = entityBean.getEntityTree(resultEntityId);
                 if (resultEntity==null) {
-                    logger.error("Result entity "+resultEntityId+" no longer exists. There is nothing to do.");
+                    contextLogger.error("Result entity "+resultEntityId+" no longer exists. There is nothing to do.");
                     return;
                 }
             }
@@ -74,7 +72,7 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
         }
         else {
             // Find existing result items in the neuron separation
-            logger.info("Finding existing result items...");
+            contextLogger.info("Finding existing result items...");
             findResultItems(resultEntity);
         }
         
@@ -87,7 +85,7 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
 
     private void findResultItems(Entity entity) throws Exception {
         
-        logger.debug("  findResultItems "+entity.getName()+" ("+entity.getId()+")");
+        contextLogger.debug("  findResultItems "+entity.getName()+" ("+entity.getId()+")");
         String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         if (filepath!=null) {
             logger.trace("    found "+filepath);
@@ -106,7 +104,7 @@ public abstract class IncrementalResultDiscoveryService extends AbstractEntitySe
 
     protected Entity getOrCreateResultItem(File resultFile) throws Exception {
 
-        logger.debug("  getOrCreateResultItem "+resultFile.getAbsolutePath());
+        contextLogger.debug("  getOrCreateResultItem "+resultFile.getAbsolutePath());
         Entity resultItem = resultItems.get(resultFile.getAbsolutePath());
         if (resultItem==null) {
             resultItem = helper.createResultItemForFile(resultFile);

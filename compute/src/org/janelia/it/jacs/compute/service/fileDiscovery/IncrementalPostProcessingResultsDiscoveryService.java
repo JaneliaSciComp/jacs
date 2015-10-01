@@ -31,7 +31,7 @@ public class IncrementalPostProcessingResultsDiscoveryService extends Incrementa
             resultName = "Sample Post-Processing Result";
         }
         Entity resultEntity = helper.createFileEntity(resultFileNode.getDirectoryPath(), resultName, EntityConstants.TYPE_POST_PROCESSING_RESULT);
-        logger.info("Created new post-processing result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
+        contextLogger.info("Created new post-processing result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
         return resultEntity;
     }
     
@@ -43,10 +43,10 @@ public class IncrementalPostProcessingResultsDiscoveryService extends Incrementa
         }
         
         File dir = new File(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        logger.info("Processing "+result.getName()+" results in "+dir.getAbsolutePath());
+        contextLogger.info("Processing "+result.getName()+" results in "+dir.getAbsolutePath());
         
         if (!dir.canRead()) {
-            logger.info("Cannot read from folder "+dir.getAbsolutePath());
+            contextLogger.info("Cannot read from folder "+dir.getAbsolutePath());
             return;
         }
 
@@ -66,7 +66,7 @@ public class IncrementalPostProcessingResultsDiscoveryService extends Incrementa
 
     private List<File> addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {
         List<File> files = helper.collectFiles(dir, recurse);
-        logger.info("Collected "+files.size()+" files for addition to "+folder.getName());
+        contextLogger.info("Collected "+files.size()+" files for addition to "+folder.getName());
         if (!files.isEmpty()) {
             FileUtils.sortFilesByName(files);
             addFilesToFolder(folder, files);
