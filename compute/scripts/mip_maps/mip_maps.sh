@@ -10,7 +10,7 @@ TILER_PARAMS="-DsourceUrlFormat=${SOURCE_URL_ROOT}/${SOURCE_STACK_FORMAT}"
 
 if [ "$TARGET_ROOT_URL" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DexportBasePath=$TARGET_ROOT_URL"
-fi							    
+fi
 
 if [ "$TARGET_STACK_FORMAT" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DtilePattern=$TARGET_STACK_FORMAT"
