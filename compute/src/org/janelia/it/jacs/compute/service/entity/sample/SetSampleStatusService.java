@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 
 /**
  * Sets the Status attribute of the Sample and updates the Completion Date if necessary. 
@@ -14,12 +15,9 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class SetSampleStatusService extends AbstractEntityService {
 
-    private SampleHelper sampleHelper;
     private boolean firstCompletion = false;
     
     public void execute() throws Exception {
-        
-        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
         String status = data.getRequiredItemAsString("STATUS");
     	Long entityId = data.getRequiredItemAsLong("ENTITY_ID");
@@ -52,7 +50,7 @@ public class SetSampleStatusService extends AbstractEntityService {
         
         if (status.equals(EntityConstants.VALUE_COMPLETE) && firstCompletion) {
                     
-            String completionDate = sampleHelper.format(new Date());
+            String completionDate = ISO8601Utils.format(new Date());
             contextLogger.info("Setting completion date on sample "+sample.getName()+" (id="+sample.getId()+")");
                         
             // Set completion date for sample

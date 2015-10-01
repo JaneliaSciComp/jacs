@@ -19,6 +19,7 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
+import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
@@ -146,7 +147,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
         Date createDate = (Date) row.get("image_query_create_date");
         if (createDate!=null) {
-            String tmogDate = sampleHelper.format(createDate);
+            String tmogDate = ISO8601Utils.format(createDate);
             if (tmogDate!=null) {
                 slideImage.setTmogDate(tmogDate);
             }
