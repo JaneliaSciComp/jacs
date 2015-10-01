@@ -181,7 +181,13 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SCALITY_BPID                        = "Scality BPID";
     public static final String ATTRIBUTE_TMOG_DATE                           = "TMOG Date"; // Timestamp indicating when the LSM or Sample was TMOG'd. For Samples, this is the max TMOG date of all the LSMs. 
     public static final String ATTRIBUTE_COMPLETION_DATE                     = "Completion Date"; // Timestamp indicating when the LSM or Sample was first completed.
-        
+    
+    // Fly Line Release
+    public static final String ATTRIBUTE_RELEASE_DATE                        = "Release Date"; // Timestamp indicating when the release will take place
+    public static final String ATTRIBUTE_DATA_SETS                           = "Data Sets"; // Comma delimited list of data set identifiers involved in a release
+    public static final String ATTRIBUTE_ANNOTATORS                          = "Annotators"; // Comma delimited list of subject keys that can annotate a release
+    public static final String ATTRIBUTE_SUBSCRIBERS                         = "Subscribers"; // Comma delimited list of subject keys that are subscribed to a release
+    
     // Geometric Tree
     //
     //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"
