@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.tasks;
 // Generated Aug 17, 2006 3:17:24 PM by Hibernate Tools 3.2.0.beta6a
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
@@ -46,7 +47,9 @@ public abstract class Task implements Serializable, IsSerializable {
 	@XmlTransient
     private Set<Node> inputNodes = new HashSet<Node>();
 
-	@XmlTransient
+    @XmlElements(
+        @XmlElement(name = "fileNode", type = FileNode.class)
+    )
     private Set<Node> outputNodes = new HashSet<Node>();
 
 	@XmlAttribute
@@ -55,16 +58,16 @@ public abstract class Task implements Serializable, IsSerializable {
 	@XmlTransient
     private List<Event> events = new ArrayList<Event>();
 
-	@XmlTransient
+    @XmlTransient
     private Set<TaskParameter> taskParameterSet = new HashSet<TaskParameter>();
 
 	@XmlTransient
     private Set<TaskMessage> messages = new HashSet<TaskMessage>();
-	
-	@XmlElement
+
+    @XmlElement
     private String taskNote;
 
-	@XmlTransient
+    @XmlTransient
     private Date expirationDate;
 
     // Constructors

@@ -5,6 +5,8 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.Serializable;
@@ -12,6 +14,7 @@ import java.io.Serializable;
 /**
  * User: cgoina
  */
+@XmlType
 public class MIPMapTilesResultNode extends FileNode implements IsSerializable, Serializable {
 
     /**
@@ -24,6 +27,7 @@ public class MIPMapTilesResultNode extends FileNode implements IsSerializable, S
         super(owner, task, name, description, visibility, Node.DIRECTORY_DATA_TYPE, relativeSessionPath);
     }
 
+    @XmlElement
     public String getSubDirectory() {
         return "maptiles";
     }

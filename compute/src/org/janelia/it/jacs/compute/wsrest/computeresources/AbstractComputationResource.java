@@ -87,11 +87,14 @@ abstract public class AbstractComputationResource<T extends Task, R extends File
         try {
             R resultNode = createResultNode(task, getVisibility(task));
             resultNode = persistObject(resultNode);
+            task.addOutputNode(resultNode);
             FileUtil.ensureDirExists(resultNode.getDirectoryPath());
             FileUtil.cleanDirectory(resultNode.getDirectoryPath());
             Map<String, Object> processConfiguration = new HashMap<>();
             processConfiguration.put(ProcessDataConstants.PROCESS_ID, task.getObjectId());
             processConfiguration.put(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
+            processConfiguration.put(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
+            processConfiguration.put(ProcessDataConstants.RESULT_FILE_NODE_DIR, resultNode.getDirectoryPath());
             return processConfiguration;
         } catch (Exception e) {
             LOG.error("Error while creating the result node", e);

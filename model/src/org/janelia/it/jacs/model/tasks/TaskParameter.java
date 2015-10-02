@@ -4,10 +4,7 @@ package org.janelia.it.jacs.model.tasks;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.NONE)
@@ -15,8 +12,11 @@ import java.io.Serializable;
 public class TaskParameter implements Serializable, IsSerializable {
 
     // Fields
+    @XmlTransient
     private Task task;
+    @XmlElement
     private String name;
+    @XmlElement
     private String value;
 
     // Constructors
