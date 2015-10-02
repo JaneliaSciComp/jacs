@@ -80,21 +80,21 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     	    for(Entity sample : entityBean.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, identifier)) {
                 logger.debug("  Processing sample "+sample.getName());
     	        if (sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
-    	            String line = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
-    	            if (line==null) {
-    	                logger.warn("    Cannot process sample without line: "+sample.getId());
-    	                continue;
-    	            }
     	            String completionDateStr = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
     	            if (completionDateStr!=null) {
     	                String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
     	                if (EntityConstants.VALUE_BLOCKED.equals(status)) {
-    	                    logger.debug("    Sample is blocked");
+    	                    logger.trace("    Sample is blocked");
     	                }
     	                else if (EntityConstants.VALUE_RETIRED.equals(status)) {
-    	                    logger.debug("    Sample is retired");
+    	                    logger.trace("    Sample is retired");
     	                }
     	                else {
+    	                    String line = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
+    	                    if (line==null) {
+    	                        logger.warn("    Cannot process sample without line: "+sample.getId());
+    	                        continue;
+    	                    }
         	                DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
         	                if (cutoffDate.isAfter(completionDate)) {
         	                    samplesByLine.put(line, sample);
@@ -115,11 +115,12 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
 
         logger.info("Considering "+samplesByLine.keySet().size()+" fly lines, with "+samplesAdded+" samples");
     	
+        int numAdded = 0;
     	List<String> lines = new ArrayList<>(samplesByLine.keySet());
     	Collections.sort(lines);
     	for(String line : lines) {
 
-            logger.info("Processing line "+line);
+            logger.debug("Processing line "+line);
             List<Entity> samples = new ArrayList<>(samplesByLine.get(line));
             
             // Ensure there is at least one 63x polarity sample
@@ -133,7 +134,7 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
             }
     	    
             if (!has63xPolaritySample) {
-                logger.info("  Ignoring line which has no 63x polarity samples");
+                logger.debug("  Ignoring line which has no 63x polarity samples");
                 continue;
             }
             
@@ -159,8 +160,9 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     	        logger.debug("  Processing sample "+sample.getName());
     	        EntityData ed = EntityUtils.findChildEntityDataWithChildId(lineFolder, sample.getId());
     	        if (ed==null) {
-    	            logger.info("    Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");   
+    	            logger.debug("    Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");   
     	            sampleHelper.addToParent(lineFolder, sample, lineFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+    	            numAdded++;
     	        }
     	    }
     	    
@@ -172,7 +174,9 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
         // Re-sort release folder
         List<EntityData> eds = EntityUtils.getOrderedEntityDataWithChildren(releaseFolder);
         sortByChildName(eds);
-    	
+
+        logger.info("Added "+numAdded+" samples to line folders");
+        
         processData.putItem("RELEASE_FOLDER_ID", releaseFolder.getId().toString());
         contextLogger.info("Putting '"+releaseFolder.getId()+"' in RELEASE_FOLDER_ID");
     }
