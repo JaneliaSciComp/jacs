@@ -533,9 +533,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
 
     public Entity createFlyLineRelease(String subjectKey, String releaseName, Date releaseDate, List<String> dataSetList) throws ComputeException {
         try {
-            Entity dataSet = _annotationDAO.createFlyLineRelease(subjectKey, releaseName, releaseDate, dataSetList);
-            _logger.info("Created fly line release "+releaseName+" (id="+dataSet.getId()+") for subject "+subjectKey);
-            return dataSet;
+            Entity releaseEntity = _annotationDAO.createFlyLineRelease(subjectKey, releaseName, releaseDate, dataSetList);
+            _logger.info("Created fly line release "+releaseName+" (id="+releaseEntity.getId()+") for subject "+subjectKey);
+            return releaseEntity;
         }
         catch (Exception e) {
             _logger.error("Error creating new data set ("+releaseName+") for subject "+subjectKey,e);
