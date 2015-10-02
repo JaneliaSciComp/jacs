@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,7 +52,7 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
         DateTime cutoffDate = releaseDate.minus(new Period(1, 0, 0, 0));
         
         logger.info("Release date: "+releaseDate);
-        logger.info("Cutoff date: "+releaseDate);
+        logger.info("Cutoff date: "+cutoffDate);
         
     	loadTopLevelFolder();
     	this.releaseFolder = sampleHelper.verifyOrCreateChildFolder(topLevelFolder, releaseEntity.getName());
@@ -72,6 +73,7 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     	    }
     	}
     	
+    	int samplesAdded = 0;
     	for(Entity dataSetEntity : dataSets) {
     	    String identifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
     	    logger.debug("Processing data set "+identifier);
@@ -79,33 +81,45 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
                 logger.debug("  Processing sample "+sample.getName());
     	        if (sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
     	            String line = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
-    	            if (line == null) {
+    	            if (line==null) {
     	                logger.warn("    Cannot process sample without line: "+sample.getId());
-    	                return;
+    	                continue;
     	            }
     	            String completionDateStr = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
     	            if (completionDateStr!=null) {
-    	                DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
-    	                if (cutoffDate.isAfter(completionDate)) {
-    	                    samplesByLine.put(line, sample);
-    	                    logger.info("    Adding sample to line: "+line);
+    	                String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+    	                if (EntityConstants.VALUE_BLOCKED.equals(status)) {
+    	                    logger.debug("    Sample is blocked");
+    	                }
+    	                else if (EntityConstants.VALUE_RETIRED.equals(status)) {
+    	                    logger.debug("    Sample is retired");
     	                }
     	                else {
-    	                    logger.info("    Sample completed after cutoff date: "+completionDate);
+        	                DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
+        	                if (cutoffDate.isAfter(completionDate)) {
+        	                    samplesByLine.put(line, sample);
+        	                    logger.debug("    Adding sample to line: "+line);
+        	                    samplesAdded++;
+        	                }
+        	                else {
+        	                    logger.debug("    Sample completed after cutoff date: "+completionDate);
+        	                }
     	                }
     	            }
     	            else {
-    	                logger.info("    Sample has no completion date");
+    	                logger.debug("    Sample has no completion date");
     	            }
     	        }
     	    }
     	}
+
+        logger.info("Considering "+samplesByLine.keySet().size()+" fly lines, with "+samplesAdded+" samples");
     	
     	List<String> lines = new ArrayList<>(samplesByLine.keySet());
     	Collections.sort(lines);
     	for(String line : lines) {
 
-            logger.debug("Processing line "+line);
+            logger.info("Processing line "+line);
             List<Entity> samples = new ArrayList<>(samplesByLine.get(line));
             
             // Ensure there is at least one 63x polarity sample
@@ -126,7 +140,7 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     	    Entity lineFolder = null;
     	    EntityData lineFolderEd = EntityUtils.findChildEntityDataWithName(releaseFolder, line);
     	    if (lineFolderEd==null) {
-    	        lineFolder = sampleHelper.verifyOrCreateChildFolder(releaseFolder, line);
+    	        lineFolder = verifyOrCreateChildFolder(releaseFolder, line);
     	    }
     	    else {
     	        lineFolder = lineFolderEd.getChildEntity();
@@ -207,6 +221,38 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
             }
             index++;
         }
+    }
+
+    public Entity verifyOrCreateChildFolder(Entity parentFolder, String childName) throws Exception {
+
+        entityLoader.populateChildren(parentFolder);
+        
+        Entity folder = null;
+        for (Entity child : EntityUtils.getChildrenOfType(parentFolder, EntityConstants.TYPE_FOLDER)) {
+            if (child.getName().equals(childName)) {
+                if (folder != null) {
+                    logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
+                }
+                else {
+                    folder = child;
+                }
+            }
+        }
+        
+        if (folder == null) {
+            // We need to create a new folder
+            Date createDate = new Date();
+            folder = new Entity();
+            folder.setCreationDate(createDate);
+            folder.setUpdatedDate(createDate);
+            folder.setOwnerKey(ownerKey);
+            folder.setName(childName);
+            folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
+            folder = entityBean.saveOrUpdateEntity(folder);
+            entityHelper.addToParent(parentFolder, folder, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+        }
+        
+        return folder;
     }
     
     private void loadTopLevelFolder() throws Exception {
