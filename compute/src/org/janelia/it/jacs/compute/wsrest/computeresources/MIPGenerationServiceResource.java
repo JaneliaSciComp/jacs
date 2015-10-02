@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.wsrest.computeresources;
 
-
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.mip.MIPGenerationTask;
 import org.janelia.it.jacs.model.user_data.mip.MIPGenerationResultNode;
@@ -13,12 +12,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import java.util.Map;
 
+
 /**
  * This is implements a RESTful service for MIP Generation.
  *
  * Created by goinac on 9/2/15.
  */
-@Path("/images")
+@Path("/data")
 public class MIPGenerationServiceResource extends AbstractComputationResource<MIPGenerationTask, MIPGenerationResultNode> {
     private static final String RESOURCE_NAME = "MIPGeneration";
     private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationServiceResource.class);
@@ -27,8 +27,16 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
         super(RESOURCE_NAME);
     }
 
+    /**
+     * Post request to trigger the Maximum Intensity Projection process.
+     * @param owner
+     * @param mipGenerationTask
+     * @param req
+     * @return
+     * @throws ProcessingException
+     */
     @POST
-    @Path("/{owner}/mips")
+    @Path("/{owner}/images/mips")
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
@@ -38,7 +46,7 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
             MediaType.APPLICATION_XML
     })
     public Task post(@PathParam("owner") String owner, MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
-        LOG.info("MIP generation request from {} ffor {}", owner, mipGenerationTask.getClass());
+        LOG.info("MIP generation requested by {} with {}", owner, mipGenerationTask);
         mipGenerationTask.setOwner(owner);
         MIPGenerationTask persistedTask = init(mipGenerationTask);
         submitJob(persistedTask);

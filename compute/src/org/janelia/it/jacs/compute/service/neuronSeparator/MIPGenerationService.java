@@ -74,18 +74,16 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
-
         int configIndex = 1;
         
-        if (inputFilenames!=null) {
-            for(String inputFilename : inputFilenames) {    
+        if (inputFilenames != null) {
+            for (String inputFilename : inputFilenames) {
                 File inputFile = new File(inputFilename);
                 File outputDir = inputFile.getParentFile();
                 writeInstanceFiles(inputFile, outputDir, signalChannels, referenceChannel, configIndex++);
             }
-        }
-        else if (inputImages!=null) {
-            for(ImageStack inputImage : inputImages) {    
+        } else if (inputImages != null) {
+            for (ImageStack inputImage : inputImages) {
                 File inputFile = new File(inputImage.getFilepath());
                 File outputDir = inputFile.getParentFile();
                 String chanSpec = inputImage.getChannelSpec();
@@ -100,7 +98,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
         setJobIncrementStop(configIndex-1);
     }
 
-    protected void writeInstanceFiles(File inputFile, File outputDir, String signalChannels, String referenceChannel, int configIndex) throws Exception {
+    private void writeInstanceFiles(File inputFile, File outputDir, String signalChannels, String referenceChannel, int configIndex) throws Exception {
         File configFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Configuration."+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
@@ -123,7 +121,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
      * @param configIndex
      * @throws IOException
      */
-    protected void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, String signalChannels, String referenceChannel, int configIndex) throws IOException {
+    private void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, String signalChannels, String referenceChannel, int configIndex) throws IOException {
         int randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
         fw.write(outputFile.getAbsolutePath() + "\n");
         fw.write(inputFile.getAbsolutePath() + "\n");
@@ -136,7 +134,7 @@ public class MIPGenerationService extends SubmitDrmaaJobService {
      * Write the shell script used for all instances in the job array. The default implementation read INPUT_FILENAME
      * and OUTPUT_FILENAME.
      */
-    protected void writeShellScript(FileWriter writer) throws Exception {
+    private void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read OUTPUT_DIR\n");
         script.append("read INPUT_FILE\n");

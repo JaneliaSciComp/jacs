@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.tasks;
 // Generated Aug 17, 2006 3:17:24 PM by Hibernate Tools 3.2.0.beta6a
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
@@ -46,25 +47,28 @@ public abstract class Task implements Serializable, IsSerializable {
 	@XmlTransient
     private Set<Node> inputNodes = new HashSet<Node>();
 
-	@XmlTransient
+    @XmlElementWrapper(name = "outNodes")
+    @XmlElements(
+        @XmlElement(name = "outputFileNode", type = FileNode.class)
+    )
     private Set<Node> outputNodes = new HashSet<Node>();
-	
+
 	@XmlAttribute
     private String owner = "";
 
 	@XmlTransient
     private List<Event> events = new ArrayList<Event>();
 
-	@XmlTransient
+    @XmlTransient
     private Set<TaskParameter> taskParameterSet = new HashSet<TaskParameter>();
 
 	@XmlTransient
     private Set<TaskMessage> messages = new HashSet<TaskMessage>();
-	
-	@XmlTransient
+
+    @XmlElement
     private String taskNote;
 
-	@XmlTransient
+    @XmlTransient
     private Date expirationDate;
 
     // Constructors
@@ -172,6 +176,42 @@ public abstract class Task implements Serializable, IsSerializable {
             return null;
     }
 
+    public Boolean getParameterAsBoolean(String key) {
+        String value = getParameter(key);
+        if (value != null) {
+            return Boolean.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
+    public Integer getParameterAsInteger(String key) {
+        String value = getParameter(key);
+        if (value != null && value.trim().length() > 0) {
+            return Integer.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
+    public Long getParameterAsLong(String key) {
+        String value = getParameter(key);
+        if (value != null && value.trim().length() > 0) {
+            return Long.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
+    public Double getParameterAsDouble(String key) {
+        String value = getParameter(key);
+        if (value != null && value.trim().length() > 0) {
+            return Double.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
     public TaskParameter getTaskParameter(String key) {
         TaskParameter resParam = null;
         for (Object aParameterStringMap : taskParameterSet) {
@@ -189,8 +229,7 @@ public abstract class Task implements Serializable, IsSerializable {
         if (existingParam == null) {
             taskParam.setTask(this);
             this.taskParameterSet.add(taskParam); // add the new one
-        }
-        else {
+        } else {
             existingParam.setValue(taskParam.getValue());
         }
     }
@@ -199,9 +238,32 @@ public abstract class Task implements Serializable, IsSerializable {
         TaskParameter existingParam = getTaskParameter(key);
         if (existingParam == null) {
             this.taskParameterSet.add(new TaskParameter(key, value, this)); // add the new one
-        }
-        else {
+        } else {
             existingParam.setValue(value);
+        }
+    }
+
+    public void setParameterAsBoolean(String key, Boolean value) {
+        if (value != null) {
+            setParameter(key, value.toString());
+        }
+    }
+
+    public void setParameterAsInteger(String key, Integer value) {
+        if (value != null) {
+            setParameter(key, value.toString());
+        }
+    }
+
+    public void setParameterAsLong(String key, Long value) {
+        if (value != null) {
+            setParameter(key, value.toString());
+        }
+    }
+
+    public void setParameterAsDouble(String key, Double value) {
+        if (value != null) {
+            setParameter(key, value.toString());
         }
     }
 

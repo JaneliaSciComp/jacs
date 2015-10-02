@@ -116,6 +116,22 @@ public class ParameterVOMapUserType implements UserType {
                     throw new Exception("Could not parse dArr for " + className + ":\n" + sb.toString());
                 }
             }
+            else if (className.equals(IntegerParameterVO.class.getName())) {
+                if (dArr.length == 1 && dArr[0].trim().length() == 0) {
+                    pvo = new IntegerParameterVO();
+                }
+                else if (dArr.length == 3 && dArr[0].trim().length() > 0 && dArr[1].trim().length() > 0
+                        && dArr[2].trim().length() > 0) {
+                    pvo = new IntegerParameterVO(new Integer(dArr[0]), new Integer(dArr[1]), new Integer(dArr[2]));
+                }
+                else {
+                    StringBuilder sb = new StringBuilder();
+                    for (int d = 0; d < dArr.length; d++) {
+                        sb.append("dArr ").append(d).append(":").append(dArr[d]).append("\n");
+                    }
+                    throw new Exception("Could not parse dArr for " + className + ":\n" + sb.toString());
+                }
+            }
             else if (className.equals(LongParameterVO.class.getName())) {
                 if (dArr.length == 1 && dArr[0].trim().length() == 0) {
                     pvo = new LongParameterVO();
@@ -240,6 +256,18 @@ public class ParameterVOMapUserType implements UserType {
                 sb.append(dPvo.getMaxValue().toString());
                 sb.append(VSEP);
                 sb.append(dPvo.getActualValue().toString());
+            }
+            else if (o instanceof IntegerParameterVO) {
+                sb.append(LongParameterVO.class.getName());
+                sb.append(DSEP);
+                IntegerParameterVO lPvo = (IntegerParameterVO) o;
+                sb.append(key);
+                sb.append(DSEP);
+                sb.append(lPvo.getMinValue().toString());
+                sb.append(VSEP);
+                sb.append(lPvo.getMaxValue().toString());
+                sb.append(VSEP);
+                sb.append(lPvo.getActualValue().toString());
             }
             else if (o instanceof LongParameterVO) {
                 sb.append(LongParameterVO.class.getName());

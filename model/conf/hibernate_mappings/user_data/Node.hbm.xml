@@ -31,8 +31,7 @@
                    default-access="property"
                    default-lazy="false"
                    auto-import="true"
-                   default-cascade="none"
-        >
+                   default-cascade="none">
 
     <class name="Node" table="node"
            mutable="true"
@@ -1304,6 +1303,12 @@
             <!--</subclass>-->
 
             <subclass name="org.janelia.it.jacs.model.user_data.mip.MIPGenerationResultNode" discriminator-value="MIPGenerationResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
+            <subclass name="org.janelia.it.jacs.model.user_data.mip.MIPMapTilesResultNode" discriminator-value="MIPMapTilesResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"
                       select-before-update="false">

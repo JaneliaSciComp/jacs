@@ -6,6 +6,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.io.File;
 import java.io.Serializable;
 
@@ -22,6 +23,8 @@ public abstract class FileNode extends Node implements Serializable, IsSerializa
     // It should always end with the file.separator
     private String pathOverride;
     private Boolean isReplicated = Boolean.FALSE;
+    @XmlElement
+    private String directoryPath;
 
     // Constructors
 
@@ -52,7 +55,6 @@ public abstract class FileNode extends Node implements Serializable, IsSerializa
         return SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);
     }
 
-
     /**
      * This method resolves where things live.  Logic follows this order:
      * 1) Is there an explicit path? (pathOverride)
@@ -61,6 +63,13 @@ public abstract class FileNode extends Node implements Serializable, IsSerializa
      * @return returns the path to the directory
      */
     public String getDirectoryPath() {
+        if (directoryPath == null) {
+            directoryPath = instantiateDirectoryPath();
+        }
+        return directoryPath;
+    }
+
+    private String instantiateDirectoryPath() {
         // Check for the path override
         if (null != getPathOverride() && !"".equals(getPathOverride())) {
             return getPathOverride();
