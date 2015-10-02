@@ -1,0 +1,22 @@
+<!-- 
+	Synchronize the folder hierarchy for a Fly Line Release. 
+-->
+<process name="Sync Release Folders" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence name="Sync Release Folders" waitForAsync="true">
+        
+        <input name="RELEASE_ENTITY_ID"/>
+    
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="RELEASE_ENTITY_ID"/>
+            <input name="TASK_PARAMETER_1" value="release entity id"/>
+            <input name="PROCESS_VARIABLE_1" value="RELEASE_ENTITY_ID"/>
+            <output name="RELEASE_ENTITY_ID"/>
+        </operation>
+    	    
+        <operation name="Synchronize Release Folders" processor="org.janelia.it.jacs.compute.service.entity.sample.SyncReleaseFoldersService">
+            <input name="RELEASE_ENTITY_ID"/>
+            <output name="RELEASE_FOLDER_ID"/>
+        </operation>
+        
+    </sequence>
+</process>

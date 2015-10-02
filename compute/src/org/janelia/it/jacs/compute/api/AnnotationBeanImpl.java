@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.api;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -530,9 +531,9 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     }
     
 
-    public Entity createFlyLineRelease(String subjectKey, String releaseName) throws ComputeException {
+    public Entity createFlyLineRelease(String subjectKey, String releaseName, Date releaseDate, List<String> dataSetList) throws ComputeException {
         try {
-            Entity dataSet = _annotationDAO.createFlyLineRelease(subjectKey, releaseName);
+            Entity dataSet = _annotationDAO.createFlyLineRelease(subjectKey, releaseName, releaseDate, dataSetList);
             _logger.info("Created fly line release "+releaseName+" (id="+dataSet.getId()+") for subject "+subjectKey);
             return dataSet;
         }

@@ -35,6 +35,7 @@ public class EntityConstants {
     public static final String NAME_SHARED_DATA                      = "Shared Data";
     public static final String NAME_SPLIT_PICKING                    = "Split Picking";
     public static final String NAME_DATA_SETS                        = "Data Sets";
+    public static final String NAME_FLY_LINE_RELEASES                = "Fly Line Releases";
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
