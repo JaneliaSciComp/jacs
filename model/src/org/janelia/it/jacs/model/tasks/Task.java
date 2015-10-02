@@ -47,8 +47,9 @@ public abstract class Task implements Serializable, IsSerializable {
 	@XmlTransient
     private Set<Node> inputNodes = new HashSet<Node>();
 
+    @XmlElementWrapper(name = "outNodes")
     @XmlElements(
-        @XmlElement(name = "fileNode", type = FileNode.class)
+        @XmlElement(name = "outputFileNode", type = FileNode.class)
     )
     private Set<Node> outputNodes = new HashSet<Node>();
 
