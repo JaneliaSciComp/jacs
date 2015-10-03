@@ -20,6 +20,9 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
 	
     @Override
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
+        
+        if (true) throw new UnsupportedOperationException("Pair alignment is currently unsupported. Check back soon!");
+        
     	alignedAreas.addAll(sampleAreas);
 
     	// Ignore sample areas, and get the sample pair (20x/63x)
