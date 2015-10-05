@@ -104,6 +104,8 @@
                         <input name="DISPLAY_NAME" value="Input Sample Regeneration"/>
                         <input name="PARAMETER_1_KEY" value="sample entity id"/>
                         <input name="PARAMETER_1_VALUE" value="$V{REGENERATE_SAMPLE_ID}"/>
+                        <input name="PARAMETER_2_KEY" value="persist"/>
+                        <input name="PARAMETER_2_VALUE" value="false"/>
                         <input name="WAIT_FOR_COMPLETION" value="true"/>
                         <output name="SUBTASK_ID"/>
                     </operation>
