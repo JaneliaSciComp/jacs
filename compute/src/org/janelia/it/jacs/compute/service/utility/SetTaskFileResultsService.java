@@ -15,8 +15,10 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  * Sets the result filepaths as a message on the current Task object.
  * 
  * Input variables:
- *   RESULT_FILE_NODE - The result node containing the result tif files
- *   OUTPUT_EXTENSION - The extension to match 
+ *   FILE_PATH - The filepath to use.
+ *   or
+ *   RESULT_FILE_NODE - The result node containing the result files.
+ *   OUTPUT_EXTENSION - The extension to match. If null then the root path will be set. 
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -26,14 +28,18 @@ public class SetTaskFileResultsService extends AbstractEntityService {
 	
     public void execute() throws Exception {
         
-        FileNode finalOutputNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
-        if (finalOutputNode==null) {
-            throw new IllegalArgumentException("RESULT_FILE_NODE cannot be null");
+        String filepath = data.getItemAsString("FILE_PATH");
+        if (filepath!=null) {
+            setResultMessage(filepath);
+            return;
         }
         
-        final String extension = (String)processData.getItem("OUTPUT_EXTENSION");
+        FileNode finalOutputNode = (FileNode)data.getRequiredItem("RESULT_FILE_NODE");
+        
+        final String extension = data.getItemAsString("OUTPUT_EXTENSION");
         if (extension==null) {
-            throw new IllegalArgumentException("OUTPUT_EXTENSION cannot be null");
+            setResultMessage(finalOutputNode.getDirectoryPath());
+            return;
         }
         
         File outputDir = new File(finalOutputNode.getDirectoryPath());
@@ -53,13 +59,18 @@ public class SetTaskFileResultsService extends AbstractEntityService {
                 if (i++>0) message.append(",");
                 message.append(file.getName());
             }
-        
-            Set<TaskMessage> messages = new HashSet<TaskMessage>();
-            messages.add(new TaskMessage(null, message.toString()));
-            computeBean.saveTaskMessages(task.getObjectId(), messages);
+            
+            setResultMessage(message.toString());
         }
         else {
             throw new MissingDataException("Output files not found");
         }
     }
+    
+    private void setResultMessage(String message) throws Exception {
+        Set<TaskMessage> messages = new HashSet<TaskMessage>();
+        messages.add(new TaskMessage(null, message));
+        computeBean.saveTaskMessages(task.getObjectId(), messages);
+    }
+    
 }

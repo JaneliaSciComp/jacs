@@ -62,6 +62,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected List<String> archivedFiles = new ArrayList<>();
     protected List<String> targetFiles = new ArrayList<>();
     protected boolean runAligner = true;
+    protected List<AlignmentInputFile> regenerateInputs = new ArrayList<>();
     
     // ****************************************************************************************************************
     // When this service is run with the Aligner interface method, it determines and outputs the alignment inputs
@@ -97,13 +98,13 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
             if (input1!=null) {
                 logInputFound("input stack 1", input1); 
-                checkForArchival(input1);
+                checkInput(input1);
                 alignmentInputFiles.add(input1);    
             }
             
             if (input2!=null) {
                 logInputFound("input stack 2", input2); 
-                checkForArchival(input2);
+                checkInput(input2);
                 alignmentInputFiles.add(input2);
             }
             
@@ -140,6 +141,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                         alignedAreas.add(anatomicalArea);
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
+                        input1.setSampleId(sampleEntity.getId());
+                        input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
                         if (warpNeurons) {
                             input1.setInputSeparationFilename(getConsolidatedLabel(result));
                         }
@@ -166,6 +169,14 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected void setLegacyConsensusValues(AlignmentInputFile input) throws Exception {
 
     	if (input==null) return;
+
+        if (input.getObjective()==null) {
+            contextLogger.warn("No objective on the input file. Trying to find a consensus among the LSMs...");
+            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_OBJECTIVE));
+            if (input.getObjective()!=null) {
+                contextLogger.info("Found objective consensus: "+input.getObjective());
+            }
+        }
         
         if (input.getChannelColors()==null) {
             contextLogger.warn("No channel colors on the input file. Trying to find a consensus among the LSMs...");
@@ -220,6 +231,9 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         
         data.putItem("ALIGNED_AREAS", alignedAreas);
         data.putItem("RUN_ALIGNER", runAligner);
+        if (regenerateInputs!=null) {
+            data.putItem("REGENERATE_INPUT", regenerateInputs);
+        }
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {
@@ -242,7 +256,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         return null;
     }
 
-    protected void checkForArchival(AlignmentInputFile input) throws Exception {
+    protected void checkInput(AlignmentInputFile input) throws Exception {
 
         if (pathIsArchived(input.getFilepath())) {
             archivedFiles.add(input.getFilepath());
@@ -258,6 +272,16 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                 targetFiles.add(newInputSeperation);
                 input.setInputSeparationFilename(newInputSeperation);
             }
+        }
+        
+        if (input.getFilepath().endsWith(".h5j")) {
+            contextLogger.info("Need to regenerate H5J input: "+input);
+            
+//            if (input.getObjective().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
+//                throw new IllegalStateException("Cannot regenerate current sample. Run with reuseProcessing=false instead.");
+//            }
+            
+            regenerateInputs.add(input);
         }
     }
     

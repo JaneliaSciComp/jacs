@@ -93,6 +93,9 @@ public class SubTaskExecutionService implements IService {
                     }
 	            }
             }
+            
+            logger.info("Putting "+task.getObjectId()+" in SUBTASK_ID");
+            processData.putItem("SUBTASK_ID", task.getObjectId().toString());
         } 
         catch (Exception e) {
             throw new ServiceException(e);

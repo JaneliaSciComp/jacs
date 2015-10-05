@@ -69,6 +69,7 @@
                 <output name="TARGET_FILE_PATHS"/>
                 <output name="ALIGNED_AREAS"/>
                 <output name="RUN_ALIGNER"/>
+                <output name="REGENERATE_INPUT"/>
             </operation>
             
             <sequence if="RUN_ALIGNER=true">
@@ -83,6 +84,37 @@
 	                    
 	            </sequence>
 	                    
+                <sequence forEach="REGENERATE_INPUT">
+        
+                    <operation name="Get Input Properties" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
+                        <input name="BEAN" value="$V{REGENERATE_INPUT}"/>
+                        <input name="BEAN_PROPERTY_1" value="sampleId"/>
+                        <input name="PROCESS_VARIABLE_1" value="REGENERATE_SAMPLE_ID"/>
+                        <output name="REGENERATE_SAMPLE_ID"/>
+                    </operation>
+                
+                    <operation name="Get Pipeline Process Name" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelineForSampleService">
+                        <input name="SAMPLE_ENTITY_ID" value="$V{REGENERATE_SAMPLE_ID}"/>
+                        <output name="PROCESS_DEF_NAME"/>
+                    </operation>
+                    
+                    <!-- Spawn a new task to process the Sample -->
+                    <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                        <input name="PROCESS_DEF_NAME"/>
+                        <input name="DISPLAY_NAME" value="Input Sample Regeneration"/>
+                        <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                        <input name="PARAMETER_1_VALUE" value="$V{REGENERATE_SAMPLE_ID}"/>
+                        <input name="WAIT_FOR_COMPLETION" value="true"/>
+                        <output name="SUBTASK_ID"/>
+                    </operation>
+                    
+                    <operation name="Update aligned input to use the regenerated file" processor="org.janelia.it.jacs.compute.service.entity.sample.InjectRegeneratedFileService">
+                        <input name="TASK_ID" value="$V{SUBTASK_ID}"/>
+                        <input name="ALIGNMENT_INPUT" value="$V{REGENERATE_INPUT}"/>
+                    </operation>
+                
+                </sequence>
+                    
 	       	    <!-- Align the sample -->
 	            <sequence name="Align" waitForAsync="true">
 	    	        <operation name="Align" processor="queue/gridSubmitAndWait">
@@ -97,6 +129,14 @@
 	    	        </operation>
 	            </sequence>
 	        
+                <sequence forEach="REGENERATE_INPUT">
+                
+                    <operation name="Remove regenerate input" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpRegeneratedService">
+                        <input name="ALIGNMENT_INPUT" value="$V{REGENERATE_INPUT}"/>
+                    </operation>
+                    
+                </sequence>
+                
                 <!-- Alternative MIP generation methods are disabled for the time being. 
                      See FlyLightSamplePipeline for details.
                 
