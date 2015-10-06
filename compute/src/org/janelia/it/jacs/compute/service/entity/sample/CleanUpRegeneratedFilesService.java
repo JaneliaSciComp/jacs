@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.janelia.it.jacs.compute.service.align.AlignmentInputFile;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.util.FileUtils;
 
 /**
  * Cleans up the temporary regenerated files. 
@@ -13,12 +14,11 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 public class CleanUpRegeneratedFilesService extends AbstractEntityService {
 
     public void execute() throws Exception {
-
         AlignmentInputFile alignmentInputFile = (AlignmentInputFile)data.getRequiredItem("ALIGNMENT_INPUT");
         String filepath = alignmentInputFile.getFilepath();
         File file = new File(filepath);
         File sampleDir = file.getParentFile().getParentFile().getAbsoluteFile();
         contextLogger.info("Deleting regenerated temporary files at: "+sampleDir.getAbsolutePath());
-        //FileUtils.deleteDirectory(sampleDir);
+        FileUtils.deleteDirectory(sampleDir);
     }
 }
