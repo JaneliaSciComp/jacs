@@ -425,8 +425,7 @@ public class EntityHelper {
                 ") as child of "+parent.getName()+" ("+parent.getEntityTypeName()+"#"+parent.getId()+")");
     }
 
-    public Entity getRequiredSampleEntity(String key,
-                                          String sampleEntityId) throws Exception {
+    private Entity getRequiredSampleEntity(String key, Long sampleEntityId) throws Exception {
         final Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Entity not found for " + key + " " + sampleEntityId);
@@ -449,8 +448,16 @@ public class EntityHelper {
 
     public Entity getRequiredSampleEntity(ProcessDataAccessor data) throws Exception {
         final String defaultKey = "SAMPLE_ENTITY_ID";
-        final String sampleEntityId = data.getRequiredItemAsString(defaultKey);
-        return getRequiredSampleEntity(defaultKey, sampleEntityId);
+        final Object sampleEntityId = data.getRequiredItem(defaultKey);
+        if (sampleEntityId instanceof Long) {
+            return getRequiredSampleEntity(defaultKey, (Long)sampleEntityId);
+        }
+        else if (sampleEntityId instanceof String) {
+            return getRequiredSampleEntity(defaultKey, new Long((String)sampleEntityId));
+        }
+        else {
+            throw new IllegalArgumentException("Illegal type for SAMPLE_ENTITY_ID (must be Long or String)");
+        }
     }
 
 }
