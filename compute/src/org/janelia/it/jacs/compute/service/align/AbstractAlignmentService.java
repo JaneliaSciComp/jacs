@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
@@ -26,6 +28,9 @@ import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -233,6 +238,15 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         data.putItem("RUN_ALIGNER", runAligner);
         if (regenerateInputs!=null) {
             contextLogger.info("Will regenerate "+regenerateInputs.size()+" H5J inputs");
+            // Try to order by objective, since the smaller files will process faster
+            Collections.sort(regenerateInputs, new Comparator<AlignmentInputFile>() {
+                @Override
+                public int compare(AlignmentInputFile o1, AlignmentInputFile o2) {
+                    return ComparisonChain.start()
+                            .compare(o1.getObjective(), o2.getObjective(), Ordering.natural())
+                            .compare(o1.getFilepath(), o2.getFilepath(), Ordering.natural()).result();
+                }
+            });
             data.putItem("REGENERATE_INPUT", regenerateInputs);
         }
     }
