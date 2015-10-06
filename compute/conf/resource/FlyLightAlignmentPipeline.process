@@ -109,9 +109,14 @@
                             <entry key="alignment algorithm parameters" value=""/>
                             <entry key="alignment algorithm result names" value=""/>
                             <entry key="analysis algorithms" value=""/>
+                            <entry key="reuse summary" value="false"/>
+                            <entry key="reuse processing" value="false"/>
+                            <entry key="reuse post" value="false"/>
+                            <entry key="reuse alignment" value="false"/>
                             <entry key="persist" value="false"/>
                         </input>
                         <input name="WAIT_FOR_COMPLETION" value="true"/>
+                        <input name="EXCEPTION_ON_ERROR" value="true"/>
                         <output name="SUBTASK_ID"/>
                     </operation>
                     

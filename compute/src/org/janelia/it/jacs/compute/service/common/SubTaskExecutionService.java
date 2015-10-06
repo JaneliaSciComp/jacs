@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -56,6 +57,12 @@ public class SubTaskExecutionService implements IService {
         	if (waitForCompletionStr != null) {
         		waitForCompletion = Boolean.valueOf(waitForCompletionStr);
         	}
+
+            boolean throwExceptionOnError = false;
+            String throwExceptionOnErrorStr = (String)processData.getItem("EXCEPTION_ON_ERROR");
+            if (throwExceptionOnErrorStr != null) {
+                throwExceptionOnError = Boolean.valueOf(throwExceptionOnErrorStr);
+            }
         	
         	String processDefName = (String)processData.getItem("PROCESS_DEF_NAME");
         	if (processDefName == null) {
@@ -107,8 +114,14 @@ public class SubTaskExecutionService implements IService {
                 logger.info("Waiting for completion of subtask "+processDefName+" (id="+subtask.getObjectId()+")");
             	boolean complete = false;
 	            while (!complete) {
+	                
                     String[] statusTypeAndValue = EJBFactory.getLocalComputeBean().getTaskStatus(subtask.getObjectId());
-                    if (statusTypeAndValue[0]!=null && Task.isDone(statusTypeAndValue[0])) {
+                    String statusType = statusTypeAndValue[ComputeDAO.STATUS_TYPE];
+                    
+                    if (statusType!=null && Task.isDone(statusType)) {
+                        if (throwExceptionOnError && statusType.equals(Event.ERROR_EVENT)) {
+                            throw new ServiceException("Sub task "+subtask.getObjectId()+" ended in error state");
+                        }
                     	complete = true;
                     }
                     else {
@@ -117,9 +130,12 @@ public class SubTaskExecutionService implements IService {
 	            }
             }
             
-            logger.info("Putting "+task.getObjectId()+" in SUBTASK_ID");
-            processData.putItem("SUBTASK_ID", task.getObjectId().toString());
+            logger.info("Putting "+subtask.getObjectId()+" in SUBTASK_ID");
+            processData.putItem("SUBTASK_ID", subtask.getObjectId().toString());
         } 
+        catch (ServiceException e) {
+            throw e;
+        }
         catch (Exception e) {
             throw new ServiceException(e);
         }

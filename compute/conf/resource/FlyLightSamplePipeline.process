@@ -25,12 +25,26 @@
         <input name="REUSE_ALIGNMENT"/>                  <!-- If true, reuse alignment results from previous pipeline run when available --> 
         <input name="PERSIST"/>                          <!-- Persist the results in the database? Set to false if the results will be used by another pipeline and then discarded --> 
         
-        <!-- Import variables from the task to override any of the above parameters -->
+        <!-- Import variables from the task which do not override the above parameters -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="OVERRIDE" value="true"/>
+            <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="PIPELINE_NAME"/>
             <input name="PIPELINE_PROCESS"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="pipeline name" value="PIPELINE_NAME"/>
+                <entry key="pipeline process" value="PIPELINE_PROCESS"/>
+            </input>
+            <output name="SAMPLE_ENTITY_ID"/>
+            <output name="PIPELINE_NAME"/>
+            <output name="PIPELINE_PROCESS"/>
+        </operation>
+            
+        <!-- Import variables from the task to override any of the above parameters 
+             Yes, this can be confusing, but it's necessary for now. It should definitely be refactored later so that all inputs come from the same place. -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="true"/>
             <input name="MERGE_ALGORITHMS"/>
             <input name="STITCH_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
@@ -43,9 +57,6 @@
             <input name="REUSE_ALIGNMENT"/>
             <input name="PERSIST"/>
             <input name="TASK_PARAMETER_MAP">
-                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
-                <entry key="pipeline name" value="PIPELINE_NAME"/>
-                <entry key="pipeline process" value="PIPELINE_PROCESS"/>
                 <entry key="merge algorithms" value="MERGE_ALGORITHMS"/>
                 <entry key="stitch algorithms" value="STITCH_ALGORITHMS"/>
                 <entry key="alignment algorithms" value="ALIGNMENT_ALGORITHMS"/>
@@ -58,9 +69,6 @@
                 <entry key="reuse alignment" value="REUSE_ALIGNMENT"/>
                 <entry key="persist" value="PERSIST"/>
             </input>
-            <output name="SAMPLE_ENTITY_ID"/>
-            <output name="PIPELINE_NAME"/>
-            <output name="PIPELINE_PROCESS"/>
             <output name="MERGE_ALGORITHMS"/>
             <output name="STITCH_ALGORITHMS"/>
             <output name="ALIGNMENT_ALGORITHMS"/>
@@ -229,7 +237,7 @@
     					<output name="SAMPLE_PROCESSING_RESULTS_NAME"/>
     				</operation>
         	    </sequence>
-        	    
+                
     		    <!-- Create a result node for this group -->
     		    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
     			    <input name="NAME" value="Temp"/>
@@ -344,7 +352,23 @@
         		        <output name="SAMPLE_AREA"/>
         			</operation>
         				
+                    <!-- Extract default image filepath --> 
+                    <operation name="Get Default Image" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
+                        <input name="BEAN" value="$V{SAMPLE_AREA}"/>
+                        <input name="BEAN_PROPERTY_1" value="stitchedFilename"/>
+                        <input name="PROCESS_VARIABLE_1" value="DEFAULT_IMAGE_FILENAME"/>
+                        <output name="DEFAULT_IMAGE_FILENAME"/>
+                    </operation>
+                    
                 </sequence>
+            
+                <!-- Extract default image filepath --> 
+                <operation name="Get Default Image" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
+                    <input name="BEAN" value="$V{SAMPLE_AREA}"/>
+                    <input name="BEAN_PROPERTY_1" value="stitchedFilename"/>
+                    <input name="PROCESS_VARIABLE_1" value="DEFAULT_IMAGE_FILENAME"/>
+                    <output name="DEFAULT_IMAGE_FILENAME"/>
+                </operation>
                 
                 <!-- Generate and register MIPs only if we're persisting results -->
                 <sequence if="PERSIST=true">
@@ -398,14 +422,6 @@
             			<output name="RESULT_ENTITY_ID"/>
             	    </operation>
                 	                    
-                    <!-- Extract default image filepath --> 
-                    <operation name="Get Default Image" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
-                        <input name="BEAN" value="$V{SAMPLE_AREA}"/>
-                        <input name="BEAN_PROPERTY_1" value="stitchedFilename"/>
-                        <input name="PROCESS_VARIABLE_1" value="DEFAULT_IMAGE_FILENAME"/>
-                        <output name="DEFAULT_IMAGE_FILENAME"/>
-                    </operation>
-                    
             	    <!-- Register MIP images -->
             		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
             			<input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -414,7 +430,7 @@
             			<output name="DEFAULT_IMAGE_ID"/>
             	    </operation>
         		
-                    <!-- Set the result for this sample area -->
+                    <!-- Set the result for this sample area. This is used later by alignment services. -->
                     <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
                         <input name="SAMPLE_AREA"/>
                         <input name="RESULT_ENTITY_ID"/>

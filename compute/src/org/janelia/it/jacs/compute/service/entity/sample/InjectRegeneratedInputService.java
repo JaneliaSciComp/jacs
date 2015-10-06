@@ -16,7 +16,7 @@ public class InjectRegeneratedInputService extends AbstractEntityService {
 
         AlignmentInputFile alignmentInputFile = (AlignmentInputFile)data.getRequiredItem("ALIGNMENT_INPUT");
         Long taskId = data.getRequiredItemAsLong("TASK_ID");
-        Task task = computeBean.getTaskById(taskId);
+        Task task = computeBean.getTaskWithMessages(taskId);
         
         if (task.getMessages().isEmpty()) {
             throw new IllegalStateException("No output message found for task: "+taskId);
@@ -24,8 +24,12 @@ public class InjectRegeneratedInputService extends AbstractEntityService {
         
         for(TaskMessage message : task.getMessages()) {
             String filepath = message.getMessage();
-            alignmentInputFile.setFilepath(filepath);
-            break;
+            // TODO: This is real hack-y. We should have a better way of communicating the task output. 
+            if (filepath.startsWith("/")) {
+                alignmentInputFile.setFilepath(filepath);
+                contextLogger.info("Updated input filepath for: "+alignmentInputFile);
+                break;
+            }
         }
     }
 }
