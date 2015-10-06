@@ -116,7 +116,7 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
             normalizeToFirst = true;
         }
     
-        String serviceClassName = ("20x".equals(objective) || mode==null) ? "BasicMIPandMovieGenerationService" : "EnchancedMIPandMovieGenerationService";
+        String serviceClassName = ("20x".equals(objective) || mode==null) ? "BasicMIPandMovieGenerationService" : "EnhancedMIPandMovieGenerationService";
         String serviceClass = SERVICE_PACKAGE+"."+serviceClassName;
         
         contextLogger.info("Putting "+normalizeToFirst+" into NORMALIZE_TO_FIRST_IMAGE");
