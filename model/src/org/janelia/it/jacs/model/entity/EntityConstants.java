@@ -185,6 +185,7 @@ public class EntityConstants {
     
     // Fly Line Release
     public static final String ATTRIBUTE_RELEASE_DATE                        = "Release Date"; // Timestamp indicating when the release will take place
+    public static final String ATTRIBUTE_LAG_TIME_MONTHS                     = "Lag Time Months"; // Number of months of lag time between the release date and the samples in it
     public static final String ATTRIBUTE_DATA_SETS                           = "Data Sets"; // Comma delimited list of data set identifiers involved in a release
     public static final String ATTRIBUTE_ANNOTATORS                          = "Annotators"; // Comma delimited list of subject keys that can annotate a release
     public static final String ATTRIBUTE_SUBSCRIBERS                         = "Subscribers"; // Comma delimited list of subject keys that are subscribed to a release
