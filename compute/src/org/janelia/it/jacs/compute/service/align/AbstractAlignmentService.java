@@ -232,6 +232,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         data.putItem("ALIGNED_AREAS", alignedAreas);
         data.putItem("RUN_ALIGNER", runAligner);
         if (regenerateInputs!=null) {
+            contextLogger.info("Will regenerate "+regenerateInputs.size()+" H5J inputs");
             data.putItem("REGENERATE_INPUT", regenerateInputs);
         }
     }
@@ -275,12 +276,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
         
         if (input.getFilepath().endsWith(".h5j")) {
-            contextLogger.info("Need to regenerate H5J input: "+input);
-            
-//            if (input.getObjective().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
-//                throw new IllegalStateException("Cannot regenerate current sample. Run with reuseProcessing=false instead.");
-//            }
-            
             regenerateInputs.add(input);
         }
     }

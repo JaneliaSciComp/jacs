@@ -25,9 +25,9 @@
         <input name="REUSE_ALIGNMENT"/>                  <!-- If true, reuse alignment results from previous pipeline run when available --> 
         <input name="PERSIST"/>                          <!-- Persist the results in the database? Set to false if the results will be used by another pipeline and then discarded --> 
         
-        <!-- Import variables from the task if any were not passed in as input parameters above -->
+        <!-- Import variables from the task to override any of the above parameters -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="OVERRIDE" value="false"/>
+            <input name="OVERRIDE" value="true"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="PIPELINE_NAME"/>
             <input name="PIPELINE_PROCESS"/>

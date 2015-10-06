@@ -104,13 +104,18 @@
                         <input name="DISPLAY_NAME" value="Input Sample Regeneration"/>
                         <input name="PARAMETER_1_KEY" value="sample entity id"/>
                         <input name="PARAMETER_1_VALUE" value="$V{REGENERATE_SAMPLE_ID}"/>
-                        <input name="PARAMETER_2_KEY" value="persist"/>
-                        <input name="PARAMETER_2_VALUE" value="false"/>
+                        <input name="TASK_PARAMETER_MAP">
+                            <entry key="alignment algorithms" value=""/>
+                            <entry key="alignment algorithm parameters" value=""/>
+                            <entry key="alignment algorithm result names" value=""/>
+                            <entry key="analysis algorithms" value=""/>
+                            <entry key="persist" value="false"/>
+                        </input>
                         <input name="WAIT_FOR_COMPLETION" value="true"/>
                         <output name="SUBTASK_ID"/>
                     </operation>
                     
-                    <operation name="Update aligned input to use the regenerated file" processor="org.janelia.it.jacs.compute.service.entity.sample.InjectRegeneratedFileService">
+                    <operation name="Update aligned input to use the regenerated file" processor="org.janelia.it.jacs.compute.service.entity.sample.InjectRegeneratedInputService">
                         <input name="TASK_ID" value="$V{SUBTASK_ID}"/>
                         <input name="ALIGNMENT_INPUT" value="$V{REGENERATE_INPUT}"/>
                     </operation>
