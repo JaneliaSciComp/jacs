@@ -1,11 +1,10 @@
 package org.janelia.it.jacs.compute.service.align;
 
+import java.util.List;
+
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.compute.service.exceptions.SAGEMetadataException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-
-import java.util.List;
 
 /**
  * A configured aligner which aligns a VNC on its own.
@@ -30,6 +29,8 @@ public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
                         alignedAreas.add(anatomicalArea);
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
+                        input1.setSampleId(sampleEntity.getId());
+                        input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
                         if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
                     }
                 }
