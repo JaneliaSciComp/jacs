@@ -1,12 +1,7 @@
 package org.janelia.it.jacs.compute.service.utility;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -17,8 +12,12 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Create a square montage from all the PNGs in a given directory.
@@ -124,7 +123,7 @@ public class MontageService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         script.append("read TYPE\n");
         script.append("read INPUT_FILES\n");
-        script.append("export LD_LIBRARY_PATH="+CONVERT_LIB_DIR+"\n");
+        script.append("export LD_LIBRARY_PATH=").append(CONVERT_LIB_DIR).append("\n");
         script.append("cd ").append(dir).append("\n");
         script.append(MONTAGE_CMD).append(" -background '#000000' -geometry '300x300>' -tile ");
         script.append(side).append("x").append(side);
@@ -139,7 +138,7 @@ public class MontageService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected boolean isShortJob() {
+    protected boolean isShortPipelineJob() {
     	return true;
     }
 

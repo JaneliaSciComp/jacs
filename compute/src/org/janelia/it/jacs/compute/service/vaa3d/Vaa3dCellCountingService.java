@@ -100,7 +100,7 @@ public class Vaa3dCellCountingService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected boolean isShortJob() {
+    protected boolean isShortPipelineJob() {
     	return true;
     }
 
