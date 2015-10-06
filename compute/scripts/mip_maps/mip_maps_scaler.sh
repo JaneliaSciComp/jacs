@@ -6,7 +6,7 @@ JAVA_MEMORY="6G"
 # Prepare the scaler parameters
 SCALER_JAR_FILE="$SCRIPT_DIR/ScaleCATMAID-jar-with-dependencies.jar"
 
-SCALER_PARAMS="-DtilePattern=${ROOT_URL}/${TILE_STACK_FORMAT}"
+SCALER_PARAMS="-DtileFormat=${ROOT_URL}/${TILE_STACK_FORMAT}"
 
 if [ "$IMAGE_WIDTH" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -DsourceWidth=${IMAGE_WIDTH}"
