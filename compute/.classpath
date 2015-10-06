@@ -16,7 +16,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Spring"/>
 	<classpathentry kind="lib" path="lib/JGoogleAnalytics_0.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Guava"/>
-	<classpathentry kind="lib" path="lib/slf4j-api-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.6.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/GWT Serializable"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JBoss Minimal"/>
@@ -45,5 +44,6 @@
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/resteasy-jettison-provider-2.3.4.Final.jar"/>
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/scannotation-1.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/stax-api-1.0-2.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Logging"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>
