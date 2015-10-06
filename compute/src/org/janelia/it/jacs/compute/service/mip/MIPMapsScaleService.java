@@ -25,10 +25,8 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
     private Long imageWidth;
     private Long imageHeight;
     private Long imageDepth;
-    private String sourceRootUrl;
-    private String sourceStackFormat;
-    private String targetRootUrl;
-    private String targetStackFormat;
+    private String rootUrl;
+    private String tileStackFormat;
 
     private Long sourceMinX;
     private Long sourceMinY;
@@ -45,20 +43,18 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     @Override
     protected String getGridServicePrefixName() {
-        return "mipmaptiles";
+        return "mipmaps-scaler";
     }
     
     @Override
     @SuppressWarnings("unchecked")
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
-        sourceRootUrl = processData.getString("SOURCE_ROOT_URL");
-        sourceStackFormat = processData.getString("SOURCE_STACK_FORMAT");
-        targetRootUrl = processData.getString("TARGET_ROOT_URL");
-        targetStackFormat = processData.getString("TARGET_STACK_FORMAT");
+        rootUrl = processData.getString("ROOT_URL");
+        tileStackFormat = processData.getString("TILE_STACK_FORMAT");
 
-        if (targetRootUrl == null) {
-            targetRootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaps-scaler";
+        if (rootUrl == null) {
+            rootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
         }
         extractImageParameters(processData);
         targetQuality = processData.getDouble("TARGET_QUALITY");
@@ -123,10 +119,8 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
                 getGridServicePrefixName() + "Configuration." + configIndex);
         LOG.debug("Write configFile: {} for region ({}, {}) ", configFile, startZ, depth);
         try(FileWriter fw = new FileWriter(configFile)) {
-            fw.write(sourceRootUrl + "\n");
-            fw.write(sourceStackFormat + "\n");
-            fw.write(targetRootUrl + "\n");
-            fw.write(targetStackFormat + "\n");
+            fw.write(rootUrl + "\n");
+            fw.write(tileStackFormat + "\n");
             fw.write(imageWidth + "\n");
             fw.write(imageHeight + "\n");
             fw.write(imageDepth + "\n");
@@ -164,10 +158,8 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
     private void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         // read the vars from stdin
-        script.append("read SOURCE_URL_ROOT\n");
-        script.append("read SOURCE_STACK_FORMAT\n");
-        script.append("read TARGET_ROOT_URL\n");
-        script.append("read TARGET_STACK_FORMAT\n");
+        script.append("read ROOT_URL\n");
+        script.append("read TILE_STACK_FORMAT\n");
         script.append("read IMAGE_WIDTH\n");
         script.append("read IMAGE_HEIGHT\n");
         script.append("read IMAGE_DEPTH\n");
@@ -186,10 +178,8 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
         // pass them to the script as environment variables
         script
-            .append("SOURCE_URL_ROOT=$SOURCE_URL_ROOT ")
-            .append("SOURCE_STACK_FORMAT=$SOURCE_STACK_FORMAT ")
-            .append("TARGET_ROOT_URL=$TARGET_ROOT_URL ")
-            .append("TARGET_STACK_FORMAT=$TARGET_STACK_FORMAT ")
+            .append("ROOT_URL=$ROOT_URL ")
+            .append("TILE_STACK_FORMAT=$TILE_STACK_FORMAT ")
             .append("IMAGE_WIDTH=$IMAGE_WIDTH ")
             .append("IMAGE_HEIGHT=$IMAGE_HEIGHT ")
             .append("IMAGE_DEPTH=$IMAGE_DEPTH ")

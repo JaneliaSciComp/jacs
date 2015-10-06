@@ -6,15 +6,7 @@ JAVA_MEMORY="6G"
 # Prepare the scaler parameters
 SCALER_JAR_FILE="$SCRIPT_DIR/ScaleCATMAID-jar-with-dependencies.jar"
 
-SCALER_PARAMS="-DsourceUrlFormat=${SOURCE_URL_ROOT}/${SOURCE_STACK_FORMAT}"
-
-if [ "$TARGET_ROOT_URL" != "" ]; then
-    SCALER_PARAMS="${SCALER_PARAMS} -DexportBasePath=$TARGET_ROOT_URL"
-fi
-
-if [ "$TARGET_STACK_FORMAT" != "" ]; then
-    SCALER_PARAMS="${SCALER_PARAMS} -DtilePattern=$TARGET_STACK_FORMAT"
-fi								
+SCALER_PARAMS="-DtilePattern=${ROOT_URL}/${TILE_STACK_FORMAT}"
 
 if [ "$IMAGE_WIDTH" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -DsourceWidth=${IMAGE_WIDTH}"
@@ -76,6 +68,8 @@ if [ "$TARGET_SKIP_EMPTY_TILES" != "" ]; then
     SCALER_PARAMS="${SCALER_PARAMS} -DignoreEmptyTiles=$TARGET_SKIP_EMPTY_TILES"
 fi				    
 
+
 scaler_cmd="java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}"
 echo "Executing $scaler_cmd"
-`$scaler_cmd`
+
+java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${SCALER_PARAMS} -jar ${SCALER_JAR_FILE}
