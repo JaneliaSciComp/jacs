@@ -93,7 +93,7 @@ abstract public class AbstractComputationResource<T extends Task, R extends File
             Map<String, Object> processConfiguration = new HashMap<>();
             processConfiguration.put(ProcessDataConstants.PROCESS_ID, task.getObjectId());
             processConfiguration.put(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
-            processConfiguration.put(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
+            processConfiguration.put(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
             processConfiguration.put(ProcessDataConstants.RESULT_FILE_NODE_DIR, resultNode.getDirectoryPath());
             return processConfiguration;
         } catch (Exception e) {

@@ -1,7 +1,12 @@
 package org.janelia.it.jacs.compute.wsrest.computeresources;
 
+import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
+import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.mip.MIPGenerationTask;
+import org.janelia.it.jacs.model.tasks.mip.MIPInputImageData;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.user_data.GenericFileNode;
 import org.janelia.it.jacs.model.user_data.mip.MIPGenerationResultNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +15,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -66,10 +73,31 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
     @Override
     protected Map<String, Object> prepareProcessConfiguration(MIPGenerationTask task) throws ProcessingException {
         Map<String, Object> processConfig = super.prepareProcessConfiguration(task);
-        processConfig.put("INPUT_FILENAMES", task.getInputFileList());
-        processConfig.put("SIGNAL_CHANNELS", task.getSignalChannels());
-        processConfig.put("REFERENCE_CHANNEL", task.getReferenceChannel());
+        processConfig.put("INPUT_IMAGES", extractInputImagesFromTask(task));
+        processConfig.put("OUTPUT_FILE_NODE", processConfig.get(ProcessDataConstants.RESULT_FILE_NODE));
+        processConfig.put("OUTPUTS", task.getOutputs());
+
         return processConfig;
     }
 
+    private List<InputImage> extractInputImagesFromTask(MIPGenerationTask task) {
+        List<InputImage> processInputImages = new ArrayList<>();
+        if (task.getInputImages() != null) {
+            for (MIPInputImageData mipInputImage : task.getInputImages()) {
+                InputImage processInputImage = new InputImage();
+                processInputImage.setArea(mipInputImage.area);
+                processInputImage.setFilepath(mipInputImage.filepath);
+                processInputImage.setOutputPrefix(mipInputImage.outputPrefix);
+                processInputImage.setChanspec(mipInputImage.chanspec);
+                processInputImage.setColorspec(mipInputImage.colorspec);
+                processInputImage.setDivspec(mipInputImage.divspec);
+                processInputImage.setLaser(mipInputImage.laser);
+                processInputImage.setGain(mipInputImage.gain);
+                processInputImage.setArea(mipInputImage.area);
+
+                processInputImages.add(processInputImage);
+            }
+        }
+        return processInputImages;
+    }
 }
