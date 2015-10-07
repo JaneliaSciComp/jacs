@@ -950,7 +950,7 @@ public class SampleHelper extends EntityHelper {
 		        	logger.trace("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
 	                String value = image.getValueByAttributeName(attrName);
 	                if (consensus!=null && !consensus.equals(value)) {
-	                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample processing result "+sampleArea.getSampleProcessingResultId());
+	                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
 	                    return null;
 	                }
 	                else {

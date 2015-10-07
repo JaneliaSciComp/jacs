@@ -70,8 +70,8 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected boolean isShortJob() {
-    	return true;
+    protected boolean isImmediateProcessingJob() {
+        return true;
     }
 
     @Override
@@ -82,7 +82,7 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
     @Override
     public void postProcess() throws MissingDataException {
         super.postProcess();
-        ArrayList<String> archiveList = new ArrayList<String>();
+        ArrayList<String> archiveList = new ArrayList<>();
         archiveList.add(resultFileNode.getDirectoryPath());
         processData.putItem("ARCHIVE_FILE_PATHS", archiveList);
 
@@ -90,11 +90,11 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
         String outputPath=resultFileNode.getDirectoryPath()+File.separator+"mipArtifact_"+
                 tmpFile.getName().substring(0, tmpFile.getName().lastIndexOf("."))+".tif";
 
-        ArrayList<String> mipInputList = new ArrayList<String>();
+        ArrayList<String> mipInputList = new ArrayList<>();
         mipInputList.add(tmpFile.getAbsolutePath());
         processData.putItem("MIP_INPUT_LIST", mipInputList);
 
-        ArrayList<String> mipOutputList = new ArrayList<String>();
+        ArrayList<String> mipOutputList = new ArrayList<>();
         mipOutputList.add(outputPath);
         processData.putItem("MIP_OUTPUT_LIST", mipOutputList);
     }

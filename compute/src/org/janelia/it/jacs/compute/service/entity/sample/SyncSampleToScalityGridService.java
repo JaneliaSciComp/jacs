@@ -1,18 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -29,6 +16,11 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
+
+import java.io.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Moves the given Sample's files to the Scality object store via the Sproxyd REST API and updates the object model to add a Scality BPID attribute to each file entity.
@@ -255,7 +247,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     }
 
     @Override
-    protected boolean isShortJob() {
+    protected boolean isShortPipelineJob() {
         return true;
     }
 

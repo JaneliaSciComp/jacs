@@ -656,33 +656,33 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    /**
-     * To cancel stranded jobs do the following:
-     * 1. Get the tasks not in a terminal state
-     *
-         @export on;
-         @export set filename="/Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt" CsvIncludeColumnHeader="false";
-         select task_event.task_id, task_event.event_no, task_event.description, task_event.event_timestamp, task_event.event_type, CURRENT_TIMESTAMP
-         from task join task_event on task.task_id = task_event.task_id
-         where task.task_owner='nerna' and event_no in (
-         select max(event_no) as event_no
-         from task_event task_event1 where  task_event1.task_id=task_event.task_id
-         order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled';
-         @export off;
-
-      * 2. Run the main method below to create the new cancel events
-      * 3. Run the insert statements and provide a valid output file path
-         @cd /Users/saffordt/Desktop/;
-         @run AllStrandedTasksnernaKonrad.txt.update.sql
-
-         and
-
-         /Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt.update.sql.log
-      *
-      *
-     */
+//    /**
+//     * To cancel stranded jobs do the following:
+//     * 1. Get the tasks not in a terminal state
+//     *
+//         @export on;
+//         @export set filename="/Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt" CsvIncludeColumnHeader="false";
+//         select task_event.task_id, task_event.event_no, task_event.description, task_event.event_timestamp, task_event.event_type, CURRENT_TIMESTAMP
+//         from task join task_event on task.task_id = task_event.task_id
+//         where task.task_owner='nerna' and event_no in (
+//         select max(event_no) as event_no
+//         from task_event task_event1 where  task_event1.task_id=task_event.task_id
+//         order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled';
+//         @export off;
+//
+//      * 2. Run the main method below to create the new cancel events
+//      * 3. Run the insert statements and provide a valid output file path
+//         @cd /Users/saffordt/Desktop/;
+//         @run AllStrandedTasksnernaKonrad.txt.update.sql
+//
+//         and
+//
+//         /Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt.update.sql.log
+//      *
+//      *
+//     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksnernaKonrad.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab10022015b.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);

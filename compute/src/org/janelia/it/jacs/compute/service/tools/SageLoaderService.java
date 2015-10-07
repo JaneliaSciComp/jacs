@@ -263,4 +263,12 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     }
 
     private static final Pattern IMAGES_FOUND = Pattern.compile("Images found:(?:\\W)*([\\d])*");
+
+    /**
+     * This service must run immediately on the dedicated nodes
+     */
+    @Override
+    protected boolean isImmediateProcessingJob() {
+        return true;
+    }
 }

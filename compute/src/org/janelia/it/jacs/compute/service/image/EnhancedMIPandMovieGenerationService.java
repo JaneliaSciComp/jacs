@@ -19,7 +19,7 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class EnchancedMIPandMovieGenerationService extends BasicMIPandMovieGenerationService {
+public class EnhancedMIPandMovieGenerationService extends BasicMIPandMovieGenerationService {
 
     protected static final String MACRO_NAME = "Enchanced_MIP_StackAvi.ijm";
     
@@ -119,5 +119,10 @@ public class EnchancedMIPandMovieGenerationService extends BasicMIPandMovieGener
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         
         writer.write(script.toString());
+    }
+
+    @Override
+    protected int getRequiredMemoryInGB() {
+        return 40;
     }
 }

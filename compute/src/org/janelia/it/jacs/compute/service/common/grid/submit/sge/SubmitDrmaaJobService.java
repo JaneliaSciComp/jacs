@@ -237,13 +237,23 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     }
 
     /**
-     * Override this to return true if the job is going to finish quickly. This isn't guaranteed to do anything, but on
-     * some grid it may queue to a specific "short job" queue or resource.
+     * Override this to return true if the job is going to finish quickly but is part of large pipeline runs. This isn't
+     * guaranteed to do anything, but on some grid it may queue to a specific "short job" queue or resource.
      *
      * @return true if the job is going to finish quickly.
      */
-    protected boolean isShortJob() {
+    protected boolean isShortPipelineJob() {
     	return false;
+    }
+
+    /**
+     * Override this to return true if the job needs to finish immediately. This will direct the job to the dedicated
+     * jacs queue  and is reserved for user-interactive actions; Channel splitting, Sage Loading, Blast
+     *
+     * @return true if the job needs to finish immediately.
+     */
+    protected boolean isImmediateProcessingJob() {
+        return false;
     }
 
     /**
@@ -263,7 +273,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     
     /**
      * Override this method to specify a complete override to the native specification. This method returns null
-     * by default. If it is overridden to return a non-null value, then isShortJob, getRequiredSlots,  
+     * by default. If it is overridden to return a non-null value, then isShortPipelineJob, getRequiredSlots,
      * getRequiredMemoryInGB, and getAdditionalNativeSpecification will be ignored.
      * 
      * @return null or the overriden native specification.
@@ -289,10 +299,13 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	int mem = getRequiredMemoryInGB();
         	int slots = getRequiredSlots();
         	this.gridResourceSpec = new GridResourceSpec(mem, slots, isExclusive());
-        	String ns = gridResourceSpec.getNativeSpec();
-        	if (isShortJob()) {
-        		ns += " -l short=true -now n";
+        	String ns = "";
+        	if (isShortPipelineJob()) {
+        		ns = gridResourceSpec.getNativeSpec()+" -l short=true -now n";
         	}
+            if (isImmediateProcessingJob()) {
+                ns = gridResourceSpec.getNativeSpec()+" -l jacs=true -now n";
+            }
         	String ans = getAdditionalNativeSpecification();
         	if (!Strings.isNullOrEmpty(ans)) {
         	    ns += " "+ans;

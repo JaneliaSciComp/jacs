@@ -3572,7 +3572,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     /** FLY LINE RELEASES */
     /******************************************************************************************************************/
     
-    public Entity createFlyLineRelease(String subjectKey, String releaseName, Date releaseDate, List<String> dataSetList) throws ComputeException {
+    public Entity createFlyLineRelease(String subjectKey, String releaseName, Date releaseDate, Integer lagTimeMonths, List<String> dataSetList) throws ComputeException {
 
         if (log.isTraceEnabled()) {
             log.trace("createFlyLineRelease(subjectKey="+subjectKey+", releaseName="+releaseName+")");
@@ -3589,6 +3589,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         Entity newRelease = newEntity(EntityConstants.TYPE_FLY_LINE_RELEASE, releaseName, subjectKey);
         newRelease.setValueByAttributeName(EntityConstants.ATTRIBUTE_RELEASE_DATE, ISO8601Utils.format(releaseDate));
         newRelease.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SETS, dataSetsSb.toString());
+        if (lagTimeMonths!=null) {
+            newRelease.setValueByAttributeName(EntityConstants.ATTRIBUTE_LAG_TIME_MONTHS, lagTimeMonths.toString());
+        }
         saveOrUpdate(newRelease);        
         
         return newRelease;

@@ -49,10 +49,15 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
         }
         
         DateTime releaseDate = new DateTime(ISO8601Utils.parse(releaseDateStr));
-        DateTime cutoffDate = releaseDate.minus(new Period(1, 0, 0, 0));
-        
         logger.info("Release date: "+releaseDate);
-        logger.info("Cutoff date: "+cutoffDate);
+        
+        DateTime cutoffDate = null;
+        String lagTimeStr = releaseEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LAG_TIME_MONTHS);
+        if (lagTimeStr != null) {
+            int lagTime = Integer.parseInt(lagTimeStr);
+            cutoffDate = releaseDate.minus(Period.months(lagTime));
+            logger.info("Cutoff date: "+cutoffDate);
+        }
         
     	loadTopLevelFolder();
     	this.releaseFolder = sampleHelper.verifyOrCreateChildFolder(topLevelFolder, releaseEntity.getName());
@@ -96,7 +101,7 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     	                        continue;
     	                    }
         	                DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
-        	                if (cutoffDate.isAfter(completionDate)) {
+        	                if (cutoffDate==null || cutoffDate.isAfter(completionDate)) {
         	                    samplesByLine.put(line, sample);
         	                    logger.debug("    Adding sample to line: "+line);
         	                    samplesAdded++;

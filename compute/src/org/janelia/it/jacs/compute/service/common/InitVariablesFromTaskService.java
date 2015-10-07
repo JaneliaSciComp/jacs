@@ -33,8 +33,8 @@ public class InitVariablesFromTaskService implements IService {
             this.task = ProcessDataHelper.getTask(processData);
             this.contextLogger = new ContextLogger(logger);
             contextLogger.appendToLogContext(task);
-            
-            boolean override = true;
+
+            this.override = true;
             String overrideStr = (String)processData.getItem("OVERRIDE");
             if (!StringUtils.isEmpty(overrideStr)) {
                 override = Boolean.parseBoolean(overrideStr);
