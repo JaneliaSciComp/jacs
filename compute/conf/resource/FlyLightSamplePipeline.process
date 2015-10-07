@@ -351,14 +351,6 @@
         		        <input name="SAMPLE_AREA"/>
         		        <output name="SAMPLE_AREA"/>
         			</operation>
-        				
-                    <!-- Extract default image filepath --> 
-                    <operation name="Get Default Image" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
-                        <input name="BEAN" value="$V{SAMPLE_AREA}"/>
-                        <input name="BEAN_PROPERTY_1" value="stitchedFilename"/>
-                        <input name="PROCESS_VARIABLE_1" value="DEFAULT_IMAGE_FILENAME"/>
-                        <output name="DEFAULT_IMAGE_FILENAME"/>
-                    </operation>
                     
                 </sequence>
             
