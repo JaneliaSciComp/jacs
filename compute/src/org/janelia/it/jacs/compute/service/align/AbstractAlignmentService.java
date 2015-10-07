@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
@@ -17,7 +19,6 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.compute.service.exceptions.SAGEMetadataException;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -27,6 +28,9 @@ import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 
 /**
  * Base class for all alignment algorithms. Parameters:
@@ -63,6 +67,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected List<String> archivedFiles = new ArrayList<>();
     protected List<String> targetFiles = new ArrayList<>();
     protected boolean runAligner = true;
+    protected List<AlignmentInputFile> regenerateInputs = new ArrayList<>();
     
     // ****************************************************************************************************************
     // When this service is run with the Aligner interface method, it determines and outputs the alignment inputs
@@ -98,13 +103,13 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
             if (input1!=null) {
                 logInputFound("input stack 1", input1); 
-                checkForArchival(input1);
+                checkInput(input1);
                 alignmentInputFiles.add(input1);    
             }
             
             if (input2!=null) {
                 logInputFound("input stack 2", input2); 
-                checkForArchival(input2);
+                checkInput(input2);
                 alignmentInputFiles.add(input2);
             }
             
@@ -141,6 +146,8 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
                         alignedAreas.add(anatomicalArea);
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
+                        input1.setSampleId(sampleEntity.getId());
+                        input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
                         if (warpNeurons) {
                             input1.setInputSeparationFilename(getConsolidatedLabel(result));
                         }
@@ -167,6 +174,14 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     protected void setLegacyConsensusValues(AlignmentInputFile input) throws Exception {
 
     	if (input==null) return;
+
+        if (input.getObjective()==null) {
+            contextLogger.warn("No objective on the input file. Trying to find a consensus among the LSMs...");
+            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_OBJECTIVE));
+            if (input.getObjective()!=null) {
+                contextLogger.info("Found objective consensus: "+input.getObjective());
+            }
+        }
         
         if (input.getChannelColors()==null) {
             contextLogger.warn("No channel colors on the input file. Trying to find a consensus among the LSMs...");
@@ -221,6 +236,19 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         
         data.putItem("ALIGNED_AREAS", alignedAreas);
         data.putItem("RUN_ALIGNER", runAligner);
+        if (regenerateInputs!=null) {
+            contextLogger.info("Will regenerate "+regenerateInputs.size()+" H5J inputs");
+            // Try to order by objective, since the smaller files will process faster
+            Collections.sort(regenerateInputs, new Comparator<AlignmentInputFile>() {
+                @Override
+                public int compare(AlignmentInputFile o1, AlignmentInputFile o2) {
+                    return ComparisonChain.start()
+                            .compare(o1.getObjective(), o2.getObjective(), Ordering.natural())
+                            .compare(o1.getFilepath(), o2.getFilepath(), Ordering.natural()).result();
+                }
+            });
+            data.putItem("REGENERATE_INPUT", regenerateInputs);
+        }
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {
@@ -243,9 +271,9 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         return null;
     }
 
-    protected void checkForArchival(AlignmentInputFile input) throws Exception {
+    protected void checkInput(AlignmentInputFile input) throws Exception {
 
-        if (input.getFilepath().startsWith(ARCHIVE_PREFIX)) {
+        if (pathIsArchived(input.getFilepath())) {
             archivedFiles.add(input.getFilepath());
             String newInput = new File(resultFileNode.getDirectoryPath(), new File(input.getFilepath()).getName()).getAbsolutePath();
             targetFiles.add(newInput);
@@ -253,13 +281,21 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
         
         if (input.getInputSeparationFilename()!=null) {
-            if (input.getInputSeparationFilename().startsWith(ARCHIVE_PREFIX)) {
+            if (pathIsArchived(input.getInputSeparationFilename())) {
                 archivedFiles.add(input.getInputSeparationFilename());
                 String newInputSeperation = new File(resultFileNode.getDirectoryPath(), new File(input.getInputSeparationFilename()).getName()).getAbsolutePath();
                 targetFiles.add(newInputSeperation);
                 input.setInputSeparationFilename(newInputSeperation);
             }
         }
+        
+        if (input.getFilepath().endsWith(".h5j")) {
+            regenerateInputs.add(input);
+        }
+    }
+    
+    private boolean pathIsArchived(String filepath) {
+    	return filepath.startsWith(ARCHIVE_PREFIX) || filepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX);
     }
     
     // ****************************************************************************************************************
@@ -277,7 +313,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
     }
     
     @Override
-    protected void init(IProcessData processData) throws Exception {        
+    protected void init(IProcessData processData) throws Exception {
 
         try {
             super.init(processData);

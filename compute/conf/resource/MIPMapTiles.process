@@ -1,0 +1,76 @@
+<process name="MIPMapTiles"  startEvent="pending" processor="queue/mipServiceLauncher" updateProcessStatus="on_success">
+    <sequence name="Generate MIPMaps">
+        <sequence name="Retiling" waitForAsync="true">
+            <operation name="Retile the stack" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapTilesService" />
+                <input name="RESULT_FILE_NODE_ID" />
+
+                <input name="IMAGE_WIDTH" />
+                <input name="IMAGE_HEIGHT" />
+                <input name="IMAGE_DEPTH" />
+
+                <input name="SOURCE_ROOT_URL" />
+                <input name="SOURCE_STACK_FORMAT" />
+                <input name="SOURCE_MAGNIFICATION_LEVEL" />
+                <input name="SOURCE_TILE_WIDTH" />
+                <input name="SOURCE_TILE_HEIGHT" />
+                <input name="SOURCE_XY_RESOLUTION" />
+                <input name="SOURCE_Z_RESOLUTION" />
+                <input name="SOURCE_MIN_X" />
+                <input name="SOURCE_MIN_Y" />
+                <input name="SOURCE_MIN_Z" />
+                <input name="SOURCE_WIDTH" />
+                <input name="SOURCE_HEIGHT" />
+                <input name="SOURCE_DEPTH" />
+
+                <input name="TARGET_ROOT_URL" />
+                <input name="TARGET_STACK_FORMAT" />
+                <input name="TARGET_TILE_WIDTH" />
+                <input name="TARGET_TILE_HEIGHT" />
+                <input name="TARGET_MIN_ROW" />
+                <input name="TARGET_MAX_ROW" />
+                <input name="TARGET_MIN_COL" />
+                <input name="TARGET_MAX_COL" />
+                <input name="TARGET_MIN_Z" />
+                <input name="TARGET_MAX_Z" />
+
+                <input name="TARGET_QUALITY" />
+                <input name="TARGET_TYPE" />
+                <input name="TARGET_MEDIA_FORMAT" />
+                <input name="TARGET_SKIP_EMPTY_TILES" />
+                <output name="TARGET_ROOT_URL" />
+                <output name="TARGET_STACK_FORMAT" />
+            </operation>
+        </sequence>
+
+        <sequence name="Scaling" waitForAsync="true">
+            <operation name="Scale the stack" processor="queue/gridSubmitAndWait">
+                <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapsScaleService" />
+                <input name="RESULT_FILE_NODE_ID" />
+
+                <input name="IMAGE_WIDTH" />
+                <input name="IMAGE_HEIGHT" />
+                <input name="IMAGE_DEPTH" />
+
+                <input name="ROOT_URL" value="$V{TARGET_ROOT_URL}" />
+                <input name="TILE_STACK_FORMAT" value="$V{TARGET_STACK_FORMAT}" />
+
+                <input name="SOURCE_MIN_X" />
+                <input name="SOURCE_MIN_Y" />
+                <input name="SOURCE_MIN_Z" />
+                <input name="SOURCE_WIDTH" />
+                <input name="SOURCE_HEIGHT" />
+                <input name="SOURCE_DEPTH" />
+
+                <input name="TARGET_TILE_WIDTH" />
+                <input name="TARGET_TILE_HEIGHT" />
+
+                <input name="TARGET_QUALITY" />
+                <input name="TARGET_TYPE" />
+                <input name="TARGET_MEDIA_FORMAT" />
+                <input name="TARGET_SKIP_EMPTY_TILES" />
+
+            </operation>
+        </sequence>
+    </sequence>
+</process>

@@ -21,7 +21,7 @@ public interface DataServiceAsync {
 
     public void getPagedBlastHitsByTaskId(String taskId, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback callback);
 
-    public void getSitesForBlastResult(String taskId, AsyncCallback callback);
+//    public void getSitesForBlastResult(String taskId, AsyncCallback callback);
 
     public void replaceNodeName(String nodeId, String nodeName, AsyncCallback renameNodeCallback);
 
@@ -42,7 +42,7 @@ public interface DataServiceAsync {
     public void getNumUsers(String searchString, AsyncCallback asyncCallback);
     public void getPagedUsers(String searchString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback asyncCallback);
 
-    public void getReversePsiBlastDatasets(AsyncCallback asyncCallback);
+//    public void getReversePsiBlastDatasets(AsyncCallback asyncCallback);
 
     public void submitJob(Task newTask, AsyncCallback<String> asyncCallback);
 
@@ -50,7 +50,7 @@ public interface DataServiceAsync {
 
     public void getProjectCodes(AsyncCallback asyncCallback);
 
-    public void getProkGenomeVO(String targetGenome, AsyncCallback asyncCallback);
+//    public void getProkGenomeVO(String targetGenome, AsyncCallback asyncCallback);
 
     public void validateFilePath(String filePath, AsyncCallback asyncCallback);
 
@@ -60,7 +60,7 @@ public interface DataServiceAsync {
     public void getEntityTypeNames(AsyncCallback asyncCallback);
     public void getNumEntityTypes(String searchString, AsyncCallback asyncCallback);
     public void getPagedEntityTypes(String searchString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback asyncCallback);
-    public void findPotentialResultNodes(String filePath, AsyncCallback asyncCallback);
+//    public void findPotentialResultNodes(String filePath, AsyncCallback asyncCallback);
 
     public void getNodeNamesForUserByName(String nodeClassName, AsyncCallback asyncCallback);
 

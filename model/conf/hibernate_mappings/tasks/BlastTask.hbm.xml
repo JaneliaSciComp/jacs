@@ -50,8 +50,8 @@
             <subclass name="TBlastXTask" discriminator-value="tblastx" lazy="false" >
                 <subclass name="TeraTBlastXTask" discriminator-value="tera-tblastx" lazy="false"/>
             </subclass>
-            <subclass name="org.janelia.it.jacs.model.tasks.psiBlast.PsiBlastTask"
-                  discriminator-value="blastpgp" lazy="false"/>
-            <subclass name="TeragridSimpleBlastTask" discriminator-value="tgsimpleblast" lazy="false" />
+            <!--<subclass name="org.janelia.it.jacs.model.tasks.psiBlast.PsiBlastTask"-->
+                  <!--discriminator-value="blastpgp" lazy="false"/>-->
+            <!--<subclass name="TeragridSimpleBlastTask" discriminator-value="tgsimpleblast" lazy="false" />-->
         </subclass>
 </hibernate-mapping>

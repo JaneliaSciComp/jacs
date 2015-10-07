@@ -57,7 +57,60 @@ import java.util.List;
 @Path("/")
 public class RestfulWebService {
 
-    private Logger logger = Logger.getLogger(this.getClass());
+    private final Logger logger = Logger.getLogger(this.getClass());
+
+    /**
+     * Retrieve LSM summary imagery that match specified LSM's.
+     * @param lsms comma separated list of LSM names
+     *
+     * @return list of data sets that match the specified filter criteria.
+     *
+     * @throws NotFoundException
+     *   if no matching data sets can be found.
+     */
+//    @GET
+//    @Path("lsm")
+//    @Produces(MediaType.APPLICATION_XML)
+//    @Formatted
+//    public Response getSummaryFilesForLSMs(@QueryParam("lsms")String lsms) {
+//        final String context = "getSummaryFilesForLSMs: ";
+//
+//        logger.info(context +"lsms=" + lsms);
+//
+//        Response response;
+//        StringBuilder paths = new StringBuilder();
+//        try {
+//            final EntityBeanLocal localEntityBean = EJBFactory.getLocalEntityBean();
+//            if (null==lsms || lsms.length()==0) {
+//                throw new IllegalArgumentException("LSM list cannot be empty");
+//            }
+//
+//            String[] lsmFileNames = lsms.split(",");
+//            List<String> lsmNames = new ArrayList<>();
+//            for (String lsmFileName : lsmFileNames) {
+//                lsmNames.add(lsmFileName.trim());
+//            }
+//
+//            List<String> summaryFiles = localEntityBean.getSummaryFilesForLSMs(lsmNames);
+//            for (String summaryFile : summaryFiles) {
+//                paths.append(summaryFile).append("\n");
+//            }
+//            response = Response.status(Response.Status.ACCEPTED).entity(paths.toString()).build();
+//        }
+//        catch (IllegalArgumentException e) {
+//            response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
+//        }
+//        catch (Exception e) {
+//            response = getErrorResponse(context,
+//                    Response.Status.INTERNAL_SERVER_ERROR,
+//                    "failed to run getSummaryFilesForLSMs for " + lsms,
+//                    e);
+//        }
+//
+//        logger.info(context + "exit, returning " + getResponseString(response));
+//
+//        return response;
+//    }
 
     /**
      * Retrieve data sets that match specified filter criteria.

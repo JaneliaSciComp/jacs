@@ -2,16 +2,12 @@
 #
 # Create Maximum Intensity Pojections
 #
-# Usage:
-# sh mipCreator.sh <output dir> <input file> <signal channels> <ref channel>
-
 DIR=$(cd "$(dirname "$0")"; pwd)
 
 NETPBM_PATH="$DIR/../../../netpbm-redhat/"
 NETPBM_BIN="$NETPBM_PATH/bin"
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
 NSDIR="$DIR/../../../neusep-redhat"
-
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$NETPBM_PATH/lib"
 
 ##################
@@ -36,6 +32,13 @@ INPUT_FILE=$3
 SIGNAL_CHAN=$4
 REF_CHAN=$5
 
+ALL_CHAN=""
+if [ "$REF_CHAN" == "0" ]; then
+    ALL_CHAN="$REF_CHAN $SIGNAL_CHAN"
+else 
+    ALL_CHAN="$SIGNAL_CHAN $REF_CHAN"
+fi
+
 export TMPDIR="$OUTDIR"
 WORKING_DIR=`mktemp -d`
 cd $WORKING_DIR
@@ -59,6 +62,7 @@ echo "Input file: $INPUT_FILE"
 echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
+echo "All channels: $ALL_CHAN"
 echo "Output format: $FORMAT"
 echo "Output extension: $OUTEXT"
 
@@ -107,6 +111,12 @@ fi
 if [ ! -z "$REF_CHAN" ]; then
     createMip "reference" "$REF_CHAN" ""
 fi
+
+#if [ ${#ALL_CHAN} -lt 6 ]; then
+#    if [ ! -z "$ALL_CHAN" ]; then
+#        createMip "all" "$ALL_CHAN" "-p \"#m 5.0\""
+#    fi
+#fi
 
 echo "~ Copying final output to: $OUTDIR"
 mkdir -p $OUTDIR

@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 public class ImageStack implements Serializable {
 
     protected String filepath;
+    protected String objective;
     protected String opticalResolution;
     protected String pixelResolution;
     protected String channelSpec;
@@ -24,6 +25,7 @@ public class ImageStack implements Serializable {
 
     public void setPropertiesFromEntity(Entity image) {
         setFilepath(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        setObjective(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
         setChannelColors(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
         setChannelSpec(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
         setOpticalResolution(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION));
@@ -35,6 +37,12 @@ public class ImageStack implements Serializable {
     }
     public void setFilepath(String inputFilename) {
         this.filepath = inputFilename;
+    }
+    public String getObjective() {
+        return objective;
+    }
+    public void setObjective(String objective) {
+        this.objective = objective;
     }
     public String getOpticalResolution() {
         return opticalResolution;
@@ -91,13 +99,11 @@ public class ImageStack implements Serializable {
     public String toString() {
         return "ImageStack{" +
                 "filepath=" + filepath +
+                ", objective=" + objective +
                 ", opticalResolution=" + opticalResolution +
                 ", pixelResolution=" + pixelResolution + 
                 ", channelSpec=" + channelSpec +
-                ", channelColors=" + channelColors + 
-                ", refChannel=" + refChannel +
-                ", refChannelOneIndexed=" + refChannelOneIndexed +
-                ", numChannels=" + numChannels +
+                ", channelColors=" + channelColors +
                 '}';
     }
 }

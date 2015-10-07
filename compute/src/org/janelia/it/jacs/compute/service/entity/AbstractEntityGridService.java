@@ -34,7 +34,8 @@ public abstract class AbstractEntityGridService extends SubmitDrmaaJobService {
     protected String ownerKey;
     protected EntityHelper entityHelper;
     protected EntityBeanEntityLoader entityLoader;
-    
+
+    @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
         try {

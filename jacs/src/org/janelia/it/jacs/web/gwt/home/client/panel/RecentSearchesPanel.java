@@ -8,6 +8,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.*;
+import org.hibernate.search.Search;
 import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.shared.tasks.SearchCategoryInfo;
@@ -22,13 +23,14 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.link.Link;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.FormattedDateTime;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
 import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
-import org.janelia.it.jacs.web.gwt.search.client.Search;
-import org.janelia.it.jacs.web.gwt.search.client.panel.iconpanel.SearchIconMouseManager;
-import org.janelia.it.jacs.web.gwt.search.client.panel.iconpanel.SearchIconPanel;
-import org.janelia.it.jacs.web.gwt.search.client.panel.iconpanel.SearchTinyIconPanelFactory;
 
 import java.util.List;
 import java.util.Map;
+
+//import org.janelia.it.jacs.web.gwt.search.client.Search;
+//import org.janelia.it.jacs.web.gwt.search.client.panel.iconpanel.SearchIconMouseManager;
+//import org.janelia.it.jacs.web.gwt.search.client.panel.iconpanel.SearchIconPanel;
+//import org.janelia.it.jacs.web.gwt.search.client.panel.iconpanel.SearchTinyIconPanelFactory;
 
 /**
  * @author Cristian Goina
@@ -134,64 +136,64 @@ public class RecentSearchesPanel extends TitledBox {
 
     private Panel getIcon(final SearchJobInfo search, Map<String, SearchCategoryInfo> categories, final String category) {
         final SearchCategoryInfo categoryInfo = categories.get(category);
-        SearchIconPanel iconPanel = new SearchTinyIconPanelFactory().createSearchIconPanel(category);
-
-        if (categoryInfo == null) { // category not selected for this search
-            iconPanel.setNoMatches();
-            iconPanel.setEnabled(false);
-        }
-        else {
-            // If hits, enable the icon as a link to the search results category
-            final Integer numHits = (categoryInfo.getNumHits() >= 0) ? categoryInfo.getNumHits() : 0;
-            if (numHits > 0) {
-                iconPanel.addClickListener(new ClickListener() {
-                    public void onClick(Widget sender) {
-                        if (category.equals(SearchTask.TOPIC_ACCESSION))
-                            gotoSearchAccessionEntity(search);
-                        else
-                            gotoSearchCategory(search, categoryInfo.getName(), numHits);
-                    }
-                });
-                iconPanel.addIconStyleName("SearchTinyIconImageClickable");
-                iconPanel.addMouseListener(new SearchIconMouseManager(iconPanel));
-            }
-
-            iconPanel.setNumMatches(numHits);
-        }
+//        SearchIconPanel iconPanel = new SearchTinyIconPanelFactory().createSearchIconPanel(category);
+//
+//        if (categoryInfo == null) { // category not selected for this search
+//            iconPanel.setNoMatches();
+//            iconPanel.setEnabled(false);
+//        }
+//        else {
+//            // If hits, enable the icon as a link to the search results category
+//            final Integer numHits = (categoryInfo.getNumHits() >= 0) ? categoryInfo.getNumHits() : 0;
+//            if (numHits > 0) {
+//                iconPanel.addClickListener(new ClickListener() {
+//                    public void onClick(Widget sender) {
+//                        if (category.equals(SearchTask.TOPIC_ACCESSION))
+//                            gotoSearchAccessionEntity(search);
+//                        else
+//                            gotoSearchCategory(search, categoryInfo.getName(), numHits);
+//                    }
+//                });
+//                iconPanel.addIconStyleName("SearchTinyIconImageClickable");
+//                iconPanel.addMouseListener(new SearchIconMouseManager(iconPanel));
+//            }
+//
+//            iconPanel.setNumMatches(numHits);
+//        }
 
         VerticalPanel panel = new VerticalPanel();
-        panel.add(iconPanel);
+//        panel.add(iconPanel);
         return panel;
     }
 
     // Load the search page with prior search results */
     private void gotoSearch(SearchJobInfo search) {
-        gotoSearchImpl(search, "#SearchMainPageToken", null, null);
+//        gotoSearchImpl(search, "#SearchMainPageToken", null, null);
     }
 
-    // Load the search page with prior search results */
-    private void gotoSearchCategory(SearchJobInfo search, String category, Integer numHits) {
-        gotoSearchImpl(search, "#SearchDetailPageToken", category, numHits);
-    }
-
-    private void gotoSearchAccessionEntity(SearchJobInfo search) {
-        gotoSearchImpl(search, "#SearchEntityDetailsPage", SearchTask.TOPIC_ACCESSION, 1);
-    }
-
+//    // Load the search page with prior search results */
+//    private void gotoSearchCategory(SearchJobInfo search, String category, Integer numHits) {
+//        gotoSearchImpl(search, "#SearchDetailPageToken", category, numHits);
+//    }
+//
+//    private void gotoSearchAccessionEntity(SearchJobInfo search) {
+//        gotoSearchImpl(search, "#SearchEntityDetailsPage", SearchTask.TOPIC_ACCESSION, 1);
+//    }
+//
     // Load the search detail page with prior category results */
-    private void gotoSearchImpl(SearchJobInfo search, String pageToken, String category, Integer numHits) {
-        StringBuffer url = new StringBuffer(UrlBuilder.getSearchUrl());
-        url.append("?keyword=").append(search.getQueryName());
-        url.append("&").append(Search.SEARCH_PRIOR_ID_PARAM).append("=").append(search.getJobId());
-        if (category != null)
-            url.append("&").append(Search.SEARCH_CATEGORY_PARAM).append("=").append(category);
-        if (numHits != null)
-            url.append("&").append(Search.SEARCH_PRIOR_CATEGORY_HITS_PARAM).append("=").append(String.valueOf(numHits));
-        url.append(pageToken);
-
-        Window.open(url.toString(), "_self", "");
-    }
-
+//    private void gotoSearchImpl(SearchJobInfo search, String pageToken, String category, Integer numHits) {
+//        StringBuffer url = new StringBuffer(UrlBuilder.getSearchUrl());
+//        url.append("?keyword=").append(search.getQueryName());
+//        url.append("&").append(Search.SEARCH_PRIOR_ID_PARAM).append("=").append(search.getJobId());
+//        if (category != null)
+//            url.append("&").append(Search.SEARCH_CATEGORY_PARAM).append("=").append(category);
+//        if (numHits != null)
+//            url.append("&").append(Search.SEARCH_PRIOR_CATEGORY_HITS_PARAM).append("=").append(String.valueOf(numHits));
+//        url.append(pageToken);
+//
+//        Window.open(url.toString(), "_self", "");
+//    }
+//
     //private Widget getNumHitsWidget(SearchJobInfo searchInfo)
     //{
     //    if(searchInfo.getNumHits() == null || searchInfo.getNumHits().intValue() <= 0)

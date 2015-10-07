@@ -14,14 +14,14 @@ public class GetAlignmentInputsService extends AbstractEntityService {
 	@Override 
     public void execute() throws Exception {
 	    Aligner aligner = getAlignerService();
-	    logger.info("Using aligner to populate input variables: "+aligner.getClass().getName());
+	    contextLogger.info("Using aligner to populate input variables: "+aligner.getClass().getName());
 	    aligner.populateInputVariables(processData);
     }
 	
     private Aligner getAlignerService() throws Exception {
 
         String iServiceName = processData.getString("iservice");
-        logger.debug("Instantiating the class " + iServiceName);
+        contextLogger.debug("Instantiating the class " + iServiceName);
 
         Class[] paramTypes = {};
         Constructor constructor = Class.forName(iServiceName).getConstructor(paramTypes);

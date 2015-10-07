@@ -60,7 +60,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
         	isDebug = Boolean.parseBoolean(testRun);	
         }            
 
-        logger.info("Running Qi Score Synchronization (isDebug="+isDebug+")");
+        contextLogger.info("Running Qi Score Synchronization (isDebug="+isDebug+")");
 
         Long alignmentId = data.getItemAsLong("ALIGNMENT_ID");
         
@@ -79,24 +79,24 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     		logger.warn("Problem synchronizing Qi/Qm scores to SAGE. The pipeline will continue.",e);
     	}
 
-        logger.info("Processed "+numAlignments+" JBA Alignments");
+        contextLogger.info("Processed "+numAlignments+" JBA Alignments");
         
         if (numUpdated.isEmpty()) {
-            logger.info("No Qi Scores updated in SAGE"+(alignmentId==null?"":" for "+alignmentId));
+            contextLogger.info("No Qi Scores updated in SAGE"+(alignmentId==null?"":" for "+alignmentId));
         }
         else {
-            logger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
+            contextLogger.info("Completed Qi Score Synchronization"+(alignmentId==null?"":" for "+alignmentId));
             for(String term : Ordering.natural().sortedCopy(numUpdated.keySet())) {
-            	logger.info("  Property "+term);
-    	        logger.info("    Num updated: "+numUpdated.get(term));
-    	        logger.info("    Num inserted: "+numInserted.get(term));
+            	contextLogger.info("  Property "+term);
+    	        contextLogger.info("    Num updated: "+numUpdated.get(term));
+    	        contextLogger.info("    Num inserted: "+numInserted.get(term));
             }
         }
     }
     
     private void processAllAlignments() throws Exception {
 
-		logger.info("Synchronizing all JBA Alignments to SAGE by loading their Qi/Qm scores");
+		contextLogger.info("Synchronizing all JBA Alignments to SAGE by loading their Qi/Qm scores");
 		
         for(Entity jbaAlignment : entityBean.getEntitiesByName("JBA Alignment")) {
         	
@@ -205,7 +205,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
 
     	if (qiScoreBatch.isEmpty()) return;
 
-		logger.info("Processing "+qiScoreBatch.size()+" Qi/Qm scores");
+		contextLogger.info("Processing "+qiScoreBatch.size()+" Qi/Qm scores");
 		
     	Map<Long,Long> lsmToAlignment = getLsmToAlignmentMap(qiScoreBatch.keySet());
     	Map<Long,Integer> lsmIdToSageId = getLsmToSageMap(lsmToAlignment.keySet());
@@ -231,7 +231,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     			if (sageImage!=null) {
     				setImageProperty(sageImage, qiScoreTerm, qiScore);
     			}
-    			logger.info("Updating LSM "+lsmId+" with Qi score "+qiScore);
+    			contextLogger.info("Updating LSM "+lsmId+" with Qi score "+qiScore);
     			if (!isDebug) {
 	    			// FW-2763: Also denormalize the scores directly onto the LSM entity, for ease of searching/browsing
 	        		entityBean.setOrUpdateValue(null, lsmId, EntityConstants.ATTRIBUTE_ALIGNMENT_QI_SCORE, qiScore);
@@ -312,7 +312,7 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     			}
     			if (!property.getValue().equals(value)) {
 	    			// Update existing property value
-	    			logger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId());
+	    			contextLogger.info("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId());
 	    			property.setValue(value);
 	    			
 	    			Integer numUpdatedCount = numUpdated.get(type.getName());
@@ -334,13 +334,13 @@ public class SageQiScoreSyncService extends AbstractEntityService {
     	
     	image.getImageProperties().removeAll(toDelete);
     	for(ImageProperty imageProperty : toDelete) {
-    		logger.info("Deleting redundant image property "+imageProperty.getType().getName()+" for image "+image.getId());
+    		contextLogger.info("Deleting redundant image property "+imageProperty.getType().getName()+" for image "+image.getId());
     		sage.deleteImageProperty(imageProperty);
     	}
     	
     	if (!found) {
 	    	// Set new property
-			logger.info("Setting new "+type.getName()+" value ("+value+") for image "+image.getId()+")");
+			contextLogger.info("Setting new "+type.getName()+" value ("+value+") for image "+image.getId()+")");
 	        ImageProperty prop = new ImageProperty(type, image, value, new Date());
 	        image.getImageProperties().add(prop);
 	        if (!isDebug) sage.saveImageProperty(prop);

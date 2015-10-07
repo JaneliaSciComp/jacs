@@ -722,6 +722,28 @@ public class EntityUtils {
         return true;
     }
 
+    /**
+     * Set the given attribute if the provided value is not null and not already set. 
+     * @param entity
+     * @param key
+     * @param value
+     * @return true if the value was changed, false otherwise
+     */
+    public static boolean setAttribute(Entity entity, String key, String value) {
+        String currValue = entity.getValueByAttributeName(key);
+        if (value!=null && !value.equals(currValue)) {
+            String label = entity.getId()==null?entity.getName():entity.getEntityTypeName()+"#"+entity.getId();
+            if (currValue!=null) {
+                log.info("    Updating "+key+"="+value+" on "+label);
+            }
+            else {
+                log.debug("    Setting "+key+"="+value+" on "+label);
+            }
+            entity.setValueByAttributeName(key, value);
+            return true;
+        }
+        return false;
+    }
     
     public static void replaceAllAttributeTypesInEntityTree(Entity topEntity, String previousEa, String newEa, SaveUnit su) throws Exception {
         log.debug("replaceAllAttributeTypesInEntityTree id="+topEntity.getId());
@@ -753,6 +775,7 @@ public class EntityUtils {
 		if (EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_INPUT_IMAGE.equals(attrName)
@@ -775,6 +798,7 @@ public class EntityUtils {
 	public static boolean hasImageRole(EntityData entityData) {
 		String attrName = entityData.getEntityAttrName();
 		return (attrName.equals(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE) || 
+				attrName.equals(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE) || 
 				attrName.equals(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE) || 
 				attrName.equals(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
 	}

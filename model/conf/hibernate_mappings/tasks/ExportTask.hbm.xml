@@ -40,15 +40,15 @@
             <subclass name="org.janelia.it.jacs.model.tasks.export.ClusterProteinAnnotationExportTask"
                       discriminator-value="clusterProteinAnnotationExportTask" lazy="false" >
             </subclass>
-            <subclass name="org.janelia.it.jacs.model.tasks.export.ClusterSearchExportTask"
-                      discriminator-value="clusterSearchExportTask" lazy="false" >
-            </subclass>
-            <subclass name="org.janelia.it.jacs.model.tasks.export.FrvReadExportTask"
-                      discriminator-value="frvReadExportTask" lazy="false" >
-            </subclass>
-            <subclass name="org.janelia.it.jacs.model.tasks.export.ProteinSearchExportTask"
-                      discriminator-value="proteinSearchExportTask" lazy="false" >
-            </subclass>
+            <!--<subclass name="org.janelia.it.jacs.model.tasks.export.ClusterSearchExportTask"-->
+                      <!--discriminator-value="clusterSearchExportTask" lazy="false" >-->
+            <!--</subclass>-->
+            <!--<subclass name="org.janelia.it.jacs.model.tasks.export.FrvReadExportTask"-->
+                      <!--discriminator-value="frvReadExportTask" lazy="false" >-->
+            <!--</subclass>-->
+            <!--<subclass name="org.janelia.it.jacs.model.tasks.export.ProteinSearchExportTask"-->
+                      <!--discriminator-value="proteinSearchExportTask" lazy="false" >-->
+            <!--</subclass>-->
             <subclass name="org.janelia.it.jacs.model.tasks.export.SampleExportTask"
                       discriminator-value="sampleExportTask" lazy="false" >
             </subclass>

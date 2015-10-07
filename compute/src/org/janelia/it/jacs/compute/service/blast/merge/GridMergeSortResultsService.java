@@ -160,4 +160,8 @@ public class GridMergeSortResultsService extends SubmitDrmaaJobService {
         return mergeSortHitsPerQuery;
     }
 
+    @Override
+    protected boolean isImmediateProcessingJob() {
+        return true;
+    }
 }

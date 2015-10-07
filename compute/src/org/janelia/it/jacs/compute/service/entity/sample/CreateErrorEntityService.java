@@ -73,14 +73,14 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);
         this.error = new ClassifiedError(exception);
-        logger.info("Classified error as "+error.getType()+" with description '"+error.getDescription()+"'");
+        contextLogger.info("Classified error as "+error.getType()+" with description '"+error.getDescription()+"'");
         
     	Entity errorEntity = entityBean.createEntity(rootEntity.getOwnerKey(), EntityConstants.TYPE_ERROR, "Error");
-    	logger.info("Saved error entity as id="+errorEntity.getId());
+    	contextLogger.info("Saved error entity as id="+errorEntity.getId());
     	
         File errorFile = new File(outputDir, errorEntity.getId().toString()+".txt");
         FileUtils.writeStringToFile(errorFile, error.getStackTrace());
-        logger.info("Wrote error message to "+errorFile);
+        contextLogger.info("Wrote error message to "+errorFile);
         
         entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, errorFile.getAbsolutePath());
         entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_DESCRIPTION, error.getDescription());
@@ -125,7 +125,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             }
             
             if (numConsecutiveErrors>=MAX_CONSECUTIVE_ERRORS) {
-            	logger.info("Sample has experienced "+numConsecutiveErrors+" consecutive errors. Will not mark for reprocessing.");
+            	contextLogger.info("Sample has experienced "+numConsecutiveErrors+" consecutive errors. Will not mark for reprocessing.");
             	return;
             }
             
@@ -136,7 +136,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
                 throw new EntityException("Could not find containing Sample for "+rootEntity.getId());
             }
             entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
-            logger.info("Marked sample for reprocessing: "+sample.getId());
+            contextLogger.info("Marked sample for reprocessing: "+sample.getId());
         }
         catch (Exception e) {
             logger.error("Error trying to mark sample for reprocessing",e);
@@ -196,7 +196,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             // Start with the inner-most exception and find one that we know how to process
             Collections.reverse(trace);
             for(Throwable t : trace) {
-            	logger.info("Attempting to classify "+t.getClass().getName());
+            	contextLogger.info("Attempting to classify "+t.getClass().getName());
                 if (t instanceof MissingGridResultException) {
                     classify((MissingGridResultException)t);
                     return;
@@ -248,7 +248,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             files.add(new File(dir, "DrmaaSubmitter.log"));
             
             for(File file : files) {
-            	logger.info("  Parsing file "+file.getAbsolutePath());
+            	contextLogger.info("  Parsing file "+file.getAbsolutePath());
                 try(BufferedReader br = new BufferedReader(new FileReader(file))) {
                     String line = br.readLine();
                     while (line != null) {

@@ -57,6 +57,7 @@ import org.janelia.it.jacs.shared.utils.entity.AbstractEntityLoader;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
+import com.fasterxml.jackson.databind.util.ISO8601Utils;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -3566,6 +3567,36 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
         return newDataSet;
     }
+    
+    /******************************************************************************************************************/
+    /** FLY LINE RELEASES */
+    /******************************************************************************************************************/
+    
+    public Entity createFlyLineRelease(String subjectKey, String releaseName, Date releaseDate, Integer lagTimeMonths, List<String> dataSetList) throws ComputeException {
+
+        if (log.isTraceEnabled()) {
+            log.trace("createFlyLineRelease(subjectKey="+subjectKey+", releaseName="+releaseName+")");
+        }
+
+        final StringBuilder dataSetsSb = new StringBuilder();
+        for (String identifier : dataSetList) {
+            if (dataSetsSb.length() > 0) {
+                dataSetsSb.append(",");
+            }
+            dataSetsSb.append(identifier);
+        }
+        
+        Entity newRelease = newEntity(EntityConstants.TYPE_FLY_LINE_RELEASE, releaseName, subjectKey);
+        newRelease.setValueByAttributeName(EntityConstants.ATTRIBUTE_RELEASE_DATE, ISO8601Utils.format(releaseDate));
+        newRelease.setValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SETS, dataSetsSb.toString());
+        if (lagTimeMonths!=null) {
+            newRelease.setValueByAttributeName(EntityConstants.ATTRIBUTE_LAG_TIME_MONTHS, lagTimeMonths.toString());
+        }
+        saveOrUpdate(newRelease);        
+        
+        return newRelease;
+    }
+    
     
     /******************************************************************************************************************/
     /** ALIGNMENT BOARD */

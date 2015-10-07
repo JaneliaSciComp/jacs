@@ -8,7 +8,6 @@ import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.shared.tasks.BlastJobInfo;
 import org.janelia.it.jacs.shared.tasks.JobInfo;
-import org.janelia.it.jacs.shared.tasks.RnaSeqJobInfo;
 import org.janelia.it.jacs.shared.tasks.SearchJobInfo;
 import org.springframework.dao.DataAccessException;
 
@@ -50,12 +49,12 @@ public interface TaskDAO extends DAO {
                                                             int numRows,
                                                             SortArgument[] sortArgs) throws DaoException;
 
-    public List<RnaSeqJobInfo> getPagedRnaSeqJobsForUserLogin(String classname,
-                                                              String userLogin,
-                                                              String likeString,
-                                                              int startIndex,
-                                                              int numRows,
-                                                              SortArgument[] sortArgs) throws DaoException;
+//    public List<RnaSeqJobInfo> getPagedRnaSeqJobsForUserLogin(String classname,
+//                                                              String userLogin,
+//                                                              String likeString,
+//                                                              int startIndex,
+//                                                              int numRows,
+//                                                              SortArgument[] sortArgs) throws DaoException;
 
     List<SearchJobInfo> getPagedSearchInfoForUserLogin(String userLogin,
                                                        int startIndex,

@@ -31,8 +31,8 @@ public class EJBFactory {
     private static final String REMOTE_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/remote";
     private static final String LOCAL_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/local";
     private static final String REMOTE_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/remote";
-    private static final String LOCAL_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/local";
-    private static final String REMOTE_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/remote";
+//    private static final String LOCAL_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/local";
+//    private static final String REMOTE_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/remote";
     private static final String LOCAL_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/local";
     private static final String REMOTE_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/remote";
     private static final String LOCAL_TILED_MICROSCOPE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("TiledMicroscopeEJB.Name") + "/local";
@@ -101,10 +101,6 @@ public class EJBFactory {
         return (SolrBeanLocal) getLocalInterface(LOCAL_SOLR_JNDI_NAME);
     }
     
-    public static GenomeContextBeanLocal getLocalGenomeContextBean() {
-        return (GenomeContextBeanLocal) getLocalInterface(LOCAL_GENOME_CONTEXT_JNDI_NAME);
-    }
-
     public static JobControlBeanLocal getLocalJobControlBean() {
         return (JobControlBeanLocal) getLocalInterface(LOCAL_JOB_CONTROL_JNDI_NAME);
     }
@@ -191,10 +187,6 @@ public class EJBFactory {
 
     public static SolrBeanRemote getRemoteSolrBean() {
         return (SolrBeanRemote) getRemoteInterface(REMOTE_SOLR_JNDI_NAME);
-    }
-
-    public static GenomeContextBeanRemote getRemoteGenomeContextBean() {
-        return (GenomeContextBeanRemote) getRemoteInterface(REMOTE_GENOME_CONTEXT_JNDI_NAME);
     }
 
     public static JobControlBeanRemote getRemoteJobControlBean() {

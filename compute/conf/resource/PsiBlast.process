@@ -46,7 +46,7 @@
                 <input name="SKIP_LOCAL_MERGE_SORT" value="true"/>
             </operation>
         </sequence>
-        <!--<operation name="Merge Results" startEvent="postprocess" processor="org.janelia.it.jacs.compute.service.psiBlast.PsiBlastMergeService">-->
+        <!--<operation name="Merge Results" startEvent="postprocess" processor="PsiBlastMergeService">-->
             <!--<input name="POST_SPLIT_INPUT_FILE_LIST"/>-->
             <!--<input name="INPUT_OUTPUT_FILE_LIST_MAP"/>-->
             <!--<input name="RESULT_FILE_NODE"/>-->

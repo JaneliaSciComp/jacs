@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -17,7 +18,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 /**
  * Merge paired LSMs into v3draw files. Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
+ *   SAMPLE_AREA - object containing a list of MergedLsmPair
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -29,10 +30,12 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     
     private int randomPort;
     private String multiscanblendVersion = "";
+    private AnatomicalArea sampleArea;
 
     @Override
     protected void init(IProcessData processData) throws Exception {
     	super.init(processData);
+        this.sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
     }
 
     @Override
@@ -53,27 +56,14 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
         
         logger.info("Using multiscanblendVersion: "+multiscanblendVersion);
         
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
+        int configIndex = 1;
+        randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
+        for(MergedLsmPair mergedLsmPair : sampleArea.getMergedLsmPairs()) {
+        	writeInstanceFiles(mergedLsmPair, configIndex++);
+        }
         
-        if (bulkMergeParamObj==null) {
-        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-        }
-
-        if (bulkMergeParamObj instanceof List) {
-        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-
-            int configIndex = 1;
-            randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
-            for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
-            	writeInstanceFiles(mergedLsmPair, configIndex++);
-            }
-            
-        	createShellScript(writer);
-            setJobIncrementStop(configIndex-1);
-        }
-        else {
-        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
-        }
+    	createShellScript(writer);
+        setJobIncrementStop(configIndex-1);
     }
 
     private void writeInstanceFiles(MergedLsmPair mergedLsmPair, int configIndex) throws Exception {
@@ -129,9 +119,7 @@ public class Vaa3DBulkMergeService extends SubmitDrmaaJobService {
     		throw new MissingGridResultException(file.getAbsolutePath(), "Bulk merge core dumped");
     	}
 
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-    	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-        for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+        for(MergedLsmPair mergedLsmPair : sampleArea.getMergedLsmPairs()) {
         	File outputFile = new File(mergedLsmPair.getMergedFilepath());
         	if (!outputFile.exists()) {
         		throw new MissingGridResultException(file.getAbsolutePath(), "Missing merge output "+outputFile.getAbsolutePath());

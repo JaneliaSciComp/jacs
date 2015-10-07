@@ -20,6 +20,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
 	
     @Override
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
+        
     	alignedAreas.addAll(sampleAreas);
 
     	// Ignore sample areas, and get the sample pair (20x/63x)
@@ -44,12 +45,20 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
                 contextLogger.info("Found 20x sub-sample: "+objectiveSample.getName());
                 Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
-                input2 = buildInputFromResult("second input (20x stack)", result);
+                if (result==null) {
+                    // In some cases there is no "Brain" area, let's try to find anything we can use
+                    result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
+                }
+                input2 = buildInputFromResult("second input (20x stack)", result, objectiveSample, objective);
             }
             else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
                 contextLogger.info("Found 63x sub-sample: "+objectiveSample.getName());
                 Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
-                input1 = buildInputFromResult("first input (63x stack)", result);
+                if (result==null) {
+                    // In some cases there is no "Brain" area, let's try to find anything we can use
+                    result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
+                }
+                input1 = buildInputFromResult("first input (63x stack)", result, objectiveSample, objective);
             }
         }
 
@@ -96,7 +105,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         return null;
     }
 
-    private AlignmentInputFile buildInputFromResult(String inputType, Entity sampleProcessingResult) throws Exception {
+    private AlignmentInputFile buildInputFromResult(String inputType, Entity sampleProcessingResult, Entity objectiveSample, String objective) throws Exception {
 
         if (sampleProcessingResult==null) return null;
         AlignmentInputFile inputFile = null;
@@ -105,6 +114,15 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         if (image != null) {
             inputFile = new AlignmentInputFile();
             inputFile.setPropertiesFromEntity(image);
+            inputFile.setSampleId(objectiveSample.getId());
+            inputFile.setObjective(objective);
+            entityLoader.populateChildren(image);
+        	String losslessPath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
+        	if (losslessPath!=null) {
+        	    // Use lossless path, if available
+        	    inputFile.setFilepath(losslessPath);
+        	}
+            
             if (warpNeurons) {
                 inputFile.setInputSeparationFilename(getConsolidatedLabel(sampleProcessingResult));
             }

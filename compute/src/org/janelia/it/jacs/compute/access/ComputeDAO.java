@@ -22,15 +22,10 @@ import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
-import org.janelia.it.jacs.model.genomics.BioSequence;
 import org.janelia.it.jacs.model.genomics.Read;
-import org.janelia.it.jacs.model.metadata.BioMaterial;
-import org.janelia.it.jacs.model.metadata.Library;
-import org.janelia.it.jacs.model.metadata.Sample;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.recruitment.RecruitmentViewerFilterDataTask;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.UserToolEvent;
@@ -38,7 +33,6 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
-import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
@@ -123,73 +117,6 @@ public class ComputeDAO extends ComputeBaseDAO {
         return r;
     }
 
-    public Read getReadByAccession(String accession) {
-        if (log.isTraceEnabled()) {
-            log.trace("getReadByAccession(accession="+accession+")");    
-        }
-        
-        Read r = null;
-        Query query = sessionFactory.getCurrentSession().getNamedQuery("findReadByAccesion"); // Accesion is sic
-        query.setParameter("accesion", accession); // accesion is sic
-        List list = query.list();
-        if (list.size() > 0)
-            r = (Read) list.get(0);
-        if (r != null) {
-            r.getBioSequence().getSequence();
-            log.info("Sequence text for read " + r.getAccession() + " is non-null");
-            Library l = r.getLibrary();
-            if (l != null) {
-                log.info("Retrieved read with accession " + accession + " and library id " + l.getLibraryId());
-                Set samples = l.getSamples();
-                if (samples != null) {
-                    for (Object sample : samples) {
-                        Sample s = (Sample) sample;
-                        log.info("Retrieving sample acc " + s.getSampleAcc());
-                        if (s.getBioMaterials() != null) {
-                            Iterator siteIter = s.getBioMaterials().iterator();
-                            if (siteIter.hasNext()) {
-                                BioMaterial site = (BioMaterial) siteIter.next();
-                                log.info("Retrieved BioMaterial " + site.getMaterialId());
-                            }
-                        }
-                        else {
-                            log.info("BioMaterial info for sample " + s.getSampleAcc() + " was null or empty");
-                        }
-                    }
-                }
-                else {
-                    log.info("Sample set is null");
-                }
-            }
-            else {
-                log.info("Retrieved read with accession " + accession + " but library was null");
-            }
-        }
-        return r;
-    }
-
-    public BioSequence getBioSequenceByBseEntityId(Long bseEntityId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getBioSequenceByBseEntityId(bseEntityId="+bseEntityId+")");    
-        }
-        throw new HibernateException("someone needs to re-add the definition of findSequenceByBseEntityId");
-        //Query query = getSessionFactory().getCurrentSession().getNamedQuery("findSequenceByBseEntityId");
-//        query.setParameter("entityId", bseEntityId);
-//        List list = query.list();
-//        if (list.size() > 0)
-//            b = (BioSequence) list.get(0);
-//        return b;
-    }
-
-    public BlastResultNode getBlastHitResultDataNodeById(Long dataNodeId) {
-        if (log.isTraceEnabled()) {
-            log.trace("getBlastHitResultDataNodeById(dataNodeId="+dataNodeId+")");    
-        }
-        
-        Session session = sessionFactory.getCurrentSession();
-        return (BlastResultNode) session.get(BlastResultNode.class, dataNodeId);
-    }
-
     public BlastResultNode getBlastHitResultDataNodeByTaskId(Long taskId) {
         if (log.isTraceEnabled()) {
             log.trace("getBlastHitResultDataNodeByTaskId(taskId="+taskId+")");    
@@ -265,58 +192,6 @@ public class ComputeDAO extends ComputeBaseDAO {
         return map;
     }
 
-    /**
-     * This method is used by the RecruitmentNodeManager and updates num hits in the task.
-     *
-     * @param recruitmentNodeId - node whose task needs the new num hits value
-     * @param numRecruited      - number of recruited (filtered)
-     */
-    public void setRVHitsForNode(Long recruitmentNodeId, String numRecruited) {
-        if (log.isTraceEnabled()) {
-            log.trace("setRVHitsForNode(recruitmentNodeId="+numRecruited+")");    
-        }
-        
-        try {
-            RecruitmentResultFileNode tmpNode = (RecruitmentResultFileNode) getCurrentSession().load(RecruitmentResultFileNode.class, recruitmentNodeId);
-            RecruitmentViewerFilterDataTask tmpTask = (RecruitmentViewerFilterDataTask) tmpNode.getTask();
-            if (null != tmpTask && tmpTask.getNumHits() != Long.valueOf(numRecruited)) {
-                log.debug("Saving change of " + tmpTask.getQuery() + " to " + numRecruited);
-                tmpTask.setNumHits(new Long(numRecruited));
-                getCurrentSession().saveOrUpdate(tmpTask);
-            }
-        }
-        catch (HibernateException e) {
-            log.error("Error in saveOrUpdateNode\n" + e.getMessage(), e);
-        }
-        catch (ParameterException e) {
-            log.error("Error in saveOrUpdateNode\n" + e.getMessage(), e);
-        }
-    }
-
-    public List<Object[]> getReadsByAccessions(HashSet<String> accSet) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getReadsByAccessions(accSet.size="+accSet.size()+")");    
-        }
-        
-        try {
-            StringBuffer sql = new StringBuffer("select se.defline, bs.sequence from sequence_entity se, " +
-                    "bio_sequence bs where se.sequence_id=bs.sequence_id and se.accession in (");
-            for (String s : accSet) {
-                sql.append("'").append(s).append("',");
-            }
-            sql.deleteCharAt(sql.length() - 1);
-            sql.append(")");
-
-            if (log.isDebugEnabled()) log.debug("accSet length=" + accSet.size()/*+"\nhql=" + hql*/);
-            SQLQuery query = getCurrentSession().createSQLQuery(sql.toString());
-            return query.list();
-        }
-        catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, this.getClass().getName() + " - getReadsByAccessions");
-        }
-    }
-
     public List<Node> getNodesByClassAndUser(String className, String username) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("getNodesByClassAndUser(className="+className+", username="+username+")");    
@@ -335,27 +210,6 @@ public class ComputeDAO extends ComputeBaseDAO {
             // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
             throw handleException(e, "getNodesByClassAndUser");
         }
-    }
-
-    public RecruitmentResultFileNode getSystemRecruitmentResultNodeByRecruitmentFileNodeId(String giNumber) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("getSystemRecruitmentResultNodeByRecruitmentFileNodeId(giNumber="+giNumber+")");    
-        }
-        
-        try {
-            String queryString = "select node_id from node where task_id=(select tp.task_id from task_parameter tp, task t where tp.parameter_name='giNumber' and tp.parameter_value='" + giNumber + "' and t.task_id=tp.task_id and t.subclass='recruitmentViewerFilterDataTask' )";
-            SQLQuery query = getCurrentSession().createSQLQuery(queryString);
-            List returnList = query.list();
-            if (null != returnList && returnList.size() >= 1) {
-                BigInteger bigint = (BigInteger) returnList.iterator().next();
-                return (RecruitmentResultFileNode) getNodeById(bigint.longValue());
-            }
-        }
-        catch (Exception e) {
-            // No need to be granular with exception handling since we're going to wrap 'em all in DaoException
-            throw handleException(e, "getSystemRecruitmentResultNodeByRecruitmentFileNodeId");
-        }
-        return null;
     }
 
     public List getSampleInfo() throws DaoException {

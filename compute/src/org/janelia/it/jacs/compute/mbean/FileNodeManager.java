@@ -3,16 +3,12 @@ package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.util.SubjectDBUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.user_data.DataSource;
 import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
-import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
-import org.janelia.it.jacs.model.user_data.hmmer3.Hmmer3DatabaseNode;
-import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.shared.blast.CreateBlastDatabaseFromFastaTool;
 import org.janelia.it.jacs.shared.blast.FormatDBTool;
 import org.janelia.it.jacs.shared.node.FastaUtil;
@@ -316,119 +312,6 @@ public class FileNodeManager implements FileNodeManagerMBean {
         return connection;
     }
 
-    public void createHmmerPfamDatabaseNode(String name, String description, String sourcePath) {
-        logger.info("Starting createHmmerPfamDatabaseNode with source path: " + sourcePath);
-        try {
-            File sourceFile = new File(sourcePath);
-            if (!sourceFile.exists())
-                throw new Exception("Source file " + sourceFile.getAbsolutePath() + " does not exist");
-            int hmmCount = getHmmCountFromHmmerDatabaseNode(sourceFile);
-            if (hmmCount == 0) {
-                throw new Exception("There must be non-zero hmms in the source file=" + sourcePath);
-            }
-            HmmerPfamDatabaseNode hmmerNode = new HmmerPfamDatabaseNode();
-            hmmerNode.setName(name);
-            hmmerNode.setDescription(description);
-            hmmerNode.setVisibility(Node.VISIBILITY_PUBLIC);
-            hmmerNode.setOwner(User.SYSTEM_USER_LOGIN);
-            hmmerNode.setNumberOfHmms(hmmCount);
-            hmmerNode = (HmmerPfamDatabaseNode) EJBFactory.getRemoteComputeBean().createNode(hmmerNode);
-            File hmmerDir = new File(hmmerNode.getDirectoryPath());
-            File hmmerParent = hmmerDir.getParentFile();
-            if (!hmmerParent.exists()) {
-                logger.info("Making directory=" + hmmerParent.getAbsolutePath());
-                hmmerParent.mkdirs();
-            }
-            hmmerDir.mkdirs();
-            String copyCmd = "cp " + sourcePath + " " + hmmerNode.getFilePathByTag(HmmerPfamDatabaseNode.TAG_PFAM);
-            if (logger.isInfoEnabled()) logger.info("Executing: " + copyCmd);
-            SystemCall call = new SystemCall(logger);
-            int exitVal = call.emulateCommandLine(copyCmd, true);
-            if (logger.isInfoEnabled()) logger.info("Exit value: " + exitVal);
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-            logger.error(ex, ex);
-        }
-    }
-
-    public void createHmmer3DatabaseNode(String name, String description, String sourcePath) {
-        logger.info("Starting createHmmer3DatabaseNode with source path: " + sourcePath);
-        try {
-            File sourceFile = new File(sourcePath);
-            if (!sourceFile.exists())
-                throw new Exception("Source file " + sourceFile.getAbsolutePath() + " does not exist");
-            int hmmCount = getHmmCountFromHmmerDatabaseNode(sourceFile);
-            if (hmmCount == 0) {
-                throw new Exception("There must be non-zero hmms in the source file=" + sourcePath);
-            }
-            Hmmer3DatabaseNode hmmerNode = new Hmmer3DatabaseNode();
-            hmmerNode.setName(name);
-            hmmerNode.setDescription(description);
-            hmmerNode.setVisibility(Node.VISIBILITY_PUBLIC);
-            hmmerNode.setOwner(User.SYSTEM_USER_LOGIN);
-            hmmerNode.setNumberOfHmms(hmmCount);
-            hmmerNode = (Hmmer3DatabaseNode) EJBFactory.getRemoteComputeBean().createNode(hmmerNode);
-            File hmmerDir = new File(hmmerNode.getDirectoryPath());
-            File hmmerParent = hmmerDir.getParentFile();
-            if (!hmmerParent.exists()) {
-                logger.info("Making directory=" + hmmerParent.getAbsolutePath());
-                hmmerParent.mkdirs();
-            }
-            hmmerDir.mkdirs();
-            String copyCmd = "cp " + sourcePath + " " + hmmerNode.getFilePathByTag(Hmmer3DatabaseNode.TAG_ALL);
-            if (logger.isInfoEnabled()) logger.info("Executing: " + copyCmd);
-            SystemCall call = new SystemCall(logger);
-            int exitVal = call.emulateCommandLine(copyCmd, true);
-            if (logger.isInfoEnabled()) logger.info("Exit value: " + exitVal);
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-            logger.error(ex, ex);
-        }
-    }
-
-    public void createReversePsiBlastDatabaseNode(String name, String description, String sourcePath) {
-        logger.info("Starting createReversePsiBlastDatabaseNode with source path: " + sourcePath);
-        try {
-            File sourceDir = new File(sourcePath);
-            if (!sourceDir.exists())
-                throw new Exception("Source directory " + sourceDir.getAbsolutePath() + " does not exist");
-            /*
-            int profileCount=1;//getReversePsiBlastProfileCount(sourceFile);
-            if (profileCount==0) {
-                throw new Exception("There must be non-zero items in the source file="+sourcePath);
-            }
-            */
-            Long sequenceCount = getReversePsiBlastDBSequenceCount(sourceDir);
-            Long sequenceLength = getReversePsiBlastDBSequenceLength(sourceDir);
-            ReversePsiBlastDatabaseNode rpsblastNode = new ReversePsiBlastDatabaseNode();
-            rpsblastNode.setName(name);
-            rpsblastNode.setDescription(description);
-            rpsblastNode.setVisibility(Node.VISIBILITY_PUBLIC);
-            rpsblastNode.setOwner(User.SYSTEM_USER_LOGIN);
-            rpsblastNode.setSequenceCount(sequenceCount.intValue());
-            rpsblastNode.setLength(sequenceLength);
-//            rpsblastNode.setNumberOfItems(profileCount);
-            rpsblastNode = (ReversePsiBlastDatabaseNode) EJBFactory.getRemoteComputeBean().createNode(rpsblastNode);
-            File rpsBlastDBDir = new File(rpsblastNode.getDirectoryPath());
-            File rpsBlastDBParent = rpsBlastDBDir.getParentFile();
-            if (!rpsBlastDBParent.exists()) {
-                logger.info("Making directory=" + rpsBlastDBParent.getAbsolutePath());
-                rpsBlastDBParent.mkdirs();
-            }
-            rpsBlastDBDir.mkdirs();
-            for (File file : sourceDir.listFiles()) {
-                logger.debug("Copying file " + file.getAbsolutePath() + " to dir " + rpsBlastDBDir.getAbsolutePath());
-                FileUtil.copyFile(file.getAbsolutePath(), rpsBlastDBDir.getAbsolutePath() + File.separator + file.getName());
-            }
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-            logger.error(ex, ex);
-        }
-    }
-
     /*
         We can derive the number of sequences and the sequence length in a RPS DB as follows:
 
@@ -436,16 +319,16 @@ public class FileNodeManager implements FileNodeManagerMBean {
         minus number of sequences
         minus 1    
      */
-    public Long getReversePsiBlastDBSequenceLength(File reversePsiBlastDBDir) throws Exception {
-        // get sequence count
-        long sequenceCount = getReversePsiBlastDBSequenceCount(reversePsiBlastDBDir);
-
-        // get sequence file byte size
-        File targetDBFile = SubjectDBUtils.getSubjectDBFile(reversePsiBlastDBDir, ".psq");
-        long wordCount = getReversePsiBlastDBCount(targetDBFile, "wc -c");
-
-        return wordCount - sequenceCount - 1;
-    }
+//    public Long getReversePsiBlastDBSequenceLength(File reversePsiBlastDBDir) throws Exception {
+//        // get sequence count
+//        long sequenceCount = getReversePsiBlastDBSequenceCount(reversePsiBlastDBDir);
+//
+//        // get sequence file byte size
+//        File targetDBFile = SubjectDBUtils.getSubjectDBFile(reversePsiBlastDBDir, ".psq");
+//        long wordCount = getReversePsiBlastDBCount(targetDBFile, "wc -c");
+//
+//        return wordCount - sequenceCount - 1;
+//    }
 
     /* db sequence count derivation option #1 using database .psd file
 
@@ -465,64 +348,64 @@ public class FileNodeManager implements FileNodeManagerMBean {
 
      */
 
-    public Long getReversePsiBlastDBSequenceCount(File reversePsiBlastDBDir) throws Exception {
+//    public Long getReversePsiBlastDBSequenceCount(File reversePsiBlastDBDir) throws Exception {
+//
+//        File targetDBFile = SubjectDBUtils.getSubjectDBFile(reversePsiBlastDBDir, ".aux");
+//        Long fileCount = getReversePsiBlastDBCount(targetDBFile, "wc -l");
+//        return (fileCount - 8) / 2;
+//    }
+//
+//    private long getReversePsiBlastDBCount(File dbFile, String wordCountCommand) throws Exception {
+//        String systemShell = SystemConfigurationProperties.getString(SystemCall.SHELL_PATH_PROP);
+//        String[] cmd = {systemShell, "-c", "cat " + dbFile.getAbsolutePath() + " | " + wordCountCommand};
+//        String fullCmd = cmd[0] + " " + cmd[1] + " " + cmd[2];
+//        logger.debug("getReversePsiBlastDBCount using cmd=" + fullCmd);
+//        Process process = Runtime.getRuntime().exec(cmd);
+//        process.waitFor();
+//        if (process.exitValue() != 0) {
+//            throw new Exception("Error from cmd=" + fullCmd + " : " + getStringFromStream(process.getErrorStream()));
+//        }
+//        String valueString = getStringFromStream(process.getInputStream());
+//        if (valueString == null || valueString.length() == 0) {
+//            throw new Exception("Expected number rather than empty string from cmd=" + fullCmd);
+//        }
+//        return new Long(valueString);
+//    }
+//
+//    public int getHmmCountFromHmmerDatabaseNode(File hmmDbFile) throws Exception {
+//        if (!hmmDbFile.exists()) {
+//            throw new Exception("Could not locate file=" + hmmDbFile);
+//        }
+//        String systemShell = SystemConfigurationProperties.getString(SystemCall.SHELL_PATH_PROP);
+//        String[] cmd = {systemShell, "-c", "cat " + hmmDbFile.getAbsolutePath() + " | grep \"^NAME\" | wc -l"};
+//        String fullCmd = cmd[0] + " " + cmd[1] + " " + cmd[2];
+//        logger.debug("getHmmCountFromHmmerDatabaseNode using cmd=" + fullCmd);
+//        Process process = Runtime.getRuntime().exec(cmd);
+//        process.waitFor();
+//        if (process.exitValue() != 0) {
+//            throw new Exception("Error from cmd=" + fullCmd + " : " + getStringFromStream(process.getErrorStream()));
+//        }
+//        String valueString = getStringFromStream(process.getInputStream());
+//        if (valueString == null || valueString.length() == 0) {
+//            throw new Exception("Expected number rather than empty string from cmd=" + fullCmd);
+//        }
+//        return new Integer(valueString);
+//    }
 
-        File targetDBFile = SubjectDBUtils.getSubjectDBFile(reversePsiBlastDBDir, ".aux");
-        Long fileCount = getReversePsiBlastDBCount(targetDBFile, "wc -l");
-        return (fileCount - 8) / 2;
-    }
-
-    private long getReversePsiBlastDBCount(File dbFile, String wordCountCommand) throws Exception {
-        String systemShell = SystemConfigurationProperties.getString(SystemCall.SHELL_PATH_PROP);
-        String[] cmd = {systemShell, "-c", "cat " + dbFile.getAbsolutePath() + " | " + wordCountCommand};
-        String fullCmd = cmd[0] + " " + cmd[1] + " " + cmd[2];
-        logger.debug("getReversePsiBlastDBCount using cmd=" + fullCmd);
-        Process process = Runtime.getRuntime().exec(cmd);
-        process.waitFor();
-        if (process.exitValue() != 0) {
-            throw new Exception("Error from cmd=" + fullCmd + " : " + getStringFromStream(process.getErrorStream()));
-        }
-        String valueString = getStringFromStream(process.getInputStream());
-        if (valueString == null || valueString.length() == 0) {
-            throw new Exception("Expected number rather than empty string from cmd=" + fullCmd);
-        }
-        return new Long(valueString);
-    }
-
-    public int getHmmCountFromHmmerDatabaseNode(File hmmDbFile) throws Exception {
-        if (!hmmDbFile.exists()) {
-            throw new Exception("Could not locate file=" + hmmDbFile);
-        }
-        String systemShell = SystemConfigurationProperties.getString(SystemCall.SHELL_PATH_PROP);
-        String[] cmd = {systemShell, "-c", "cat " + hmmDbFile.getAbsolutePath() + " | grep \"^NAME\" | wc -l"};
-        String fullCmd = cmd[0] + " " + cmd[1] + " " + cmd[2];
-        logger.debug("getHmmCountFromHmmerDatabaseNode using cmd=" + fullCmd);
-        Process process = Runtime.getRuntime().exec(cmd);
-        process.waitFor();
-        if (process.exitValue() != 0) {
-            throw new Exception("Error from cmd=" + fullCmd + " : " + getStringFromStream(process.getErrorStream()));
-        }
-        String valueString = getStringFromStream(process.getInputStream());
-        if (valueString == null || valueString.length() == 0) {
-            throw new Exception("Expected number rather than empty string from cmd=" + fullCmd);
-        }
-        return new Integer(valueString);
-    }
-
-    private static String getStringFromStream(InputStream inputStream) throws IOException {
-        StringBuilder strBuilder = new StringBuilder();
-        int ch;
-        if (inputStream != null) {
-            while ((ch = inputStream.read()) != -1) {
-                if (!Character.isWhitespace(ch)) {
-                    strBuilder.append((char) ch);
-                }
-            }
-            inputStream.close();
-        }
-        return strBuilder.toString();
-    }
-
+//    private static String getStringFromStream(InputStream inputStream) throws IOException {
+//        StringBuilder strBuilder = new StringBuilder();
+//        int ch;
+//        if (inputStream != null) {
+//            while ((ch = inputStream.read()) != -1) {
+//                if (!Character.isWhitespace(ch)) {
+//                    strBuilder.append((char) ch);
+//                }
+//            }
+//            inputStream.close();
+//        }
+//        return strBuilder.toString();
+//    }
+//
     /**
      * This method was populated with data from the node table and then I looked in the filestore to see if the
      * blast database dirs still existed.  The dir att below was the node id (dir name) and the user told us where

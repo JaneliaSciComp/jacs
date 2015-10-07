@@ -17,16 +17,16 @@ public class SampleDebuggerService extends AbstractEntityService {
 
 	public void execute() throws Exception {
 		
-		logger.info("----------------------------------------------------------");
-		logger.info("Task Id: "+task.getObjectId());
-		logger.info("Task Name: "+task.getDisplayName());
-		logger.info("Task Parameters: ");
+		contextLogger.info("----------------------------------------------------------");
+		contextLogger.info("Task Id: "+task.getObjectId());
+		contextLogger.info("Task Name: "+task.getDisplayName());
+		contextLogger.info("Task Parameters: ");
 		for (TaskParameter parameter : task.getTaskParameterSet()) {
-			logger.info("    "+parameter.getName()+": "+parameter.getValue());
+			contextLogger.info("    "+parameter.getName()+": "+parameter.getValue());
 		}
         
     	String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
-		logger.info("Sample Id: "+sampleEntityId);
+		contextLogger.info("Sample Id: "+sampleEntityId);
 		Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
     	if (sampleEntity == null) {
     		logger.warn("Sample entity not found with id="+sampleEntityId);
@@ -35,12 +35,12 @@ public class SampleDebuggerService extends AbstractEntityService {
     		String dataSetIdentifier = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
     		String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
     		
-    		logger.info("    Name: "+sampleEntity.getName());
+    		contextLogger.info("    Name: "+sampleEntity.getName());
     		if (dataSetIdentifier!=null) {
-    			logger.info("    Data Set: "+dataSetIdentifier);
+    			contextLogger.info("    Data Set: "+dataSetIdentifier);
     		}
     		if (objective!=null) {
-    			logger.info("    Objective: "+objective);
+    			contextLogger.info("    Objective: "+objective);
     		}
     	}
         

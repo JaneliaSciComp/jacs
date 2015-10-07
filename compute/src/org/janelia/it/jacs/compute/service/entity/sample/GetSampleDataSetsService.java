@@ -31,7 +31,7 @@ public class GetSampleDataSetsService extends AbstractEntityService {
     		throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
     	}
     	
-    	logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+    	contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         String dataSetStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         
@@ -44,7 +44,7 @@ public class GetSampleDataSetsService extends AbstractEntityService {
                 dataSetList.add(dataSetIdentifier);
             }
             
-            logger.info("Putting ("+Task.csvStringFromCollection(dataSetList)+") in DATA_SET_IDENTIFIER");
+            contextLogger.info("Putting ("+Task.csvStringFromCollection(dataSetList)+") in DATA_SET_IDENTIFIER");
             processData.putItem("DATA_SET_IDENTIFIER", dataSetList);
         }
     }

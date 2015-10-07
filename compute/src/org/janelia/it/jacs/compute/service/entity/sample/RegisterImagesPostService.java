@@ -38,7 +38,7 @@ public class RegisterImagesPostService extends AbstractEntityService {
             throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
         }
         
-        logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+        contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         rerunRegistrationsForSample(sampleEntity);
     }
@@ -74,7 +74,7 @@ public class RegisterImagesPostService extends AbstractEntityService {
     			}
     			Entity result = pred.getChildEntity();
 
-    			logger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
+    			contextLogger.info("  Processing result: "+result.getName()+" (id="+result.getId()+")");
                 resultImageRegService.execute(processData, pipelineRun, result, null);
     		}
     	}

@@ -25,44 +25,44 @@ public class InitAlignedImagePropertiesService extends AbstractEntityService {
     	
     	String filename = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	if (filename!=null) {
-            logger.info("Putting '"+filename+"' in FILENAME");
+            contextLogger.info("Putting '"+filename+"' in FILENAME");
             processData.putItem("FILENAME", filename);
     	}
         
     	String opticalRes = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
     	if (opticalRes!=null) {
-            logger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
+            contextLogger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
             processData.putItem("OPTICAL_RESOLUTION", opticalRes);
     	}
     	
     	String pixelRes = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
         if (pixelRes!=null) {
-            logger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");
+            contextLogger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");
             processData.putItem("PIXEL_RESOLUTION", pixelRes);
         }        
         
         String objective = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
         if (objective!=null) {
-            logger.info("Putting '"+objective+"' in OBJECTIVE");
+            contextLogger.info("Putting '"+objective+"' in OBJECTIVE");
             processData.putItem("OBJECTIVE", objective);
         }        
 
         String chanSpec = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
         final String signalChannels = ChanSpecUtils.getSignalChannelIndexes(chanSpec);
         if (signalChannels!=null) {
-            logger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
+            contextLogger.info("Putting '"+signalChannels+"' in SIGNAL_CHANNELS");
             processData.putItem("SIGNAL_CHANNELS", signalChannels);
         }        
         final String referenceChannels = ChanSpecUtils.getReferenceChannelIndexes(chanSpec);
         if (referenceChannels!=null) {
-            logger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
+            contextLogger.info("Putting '"+referenceChannels+"' in REFERENCE_CHANNEL");
             processData.putItem("REFERENCE_CHANNEL", referenceChannels);
         }        
         
         Entity alignedLabel = image.getChildByAttributeName(EntityConstants.ATTRIBUTE_ALIGNED_CONSOLIDATED_LABEL);
         if (alignedLabel!=null) {
             String filepath = alignedLabel.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            logger.info("Putting '"+filepath+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
+            contextLogger.info("Putting '"+filepath+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
             processData.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", filepath);
         }        
     }

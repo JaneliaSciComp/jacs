@@ -209,7 +209,8 @@ public class SecureRestfulWebService {
     }
     
     private String getSubjectKey() {
-    	if (securityContext==null) throw new UnauthorizedException("User has no security context");
+        if (securityContext==null || securityContext.getUserPrincipal() == null)
+            throw new UnauthorizedException("User has no security context");
         return securityContext.getUserPrincipal().getName();
     }
 }

@@ -33,10 +33,10 @@
         <property name="location" value="/WEB-INF/classes/jacs.properties"/>
     </bean>
 
-    <bean id="publicationHelper" class="org.janelia.it.jacs.web.gwt.download.server.DbPublicationHelper">
-        <property name="downloadDAO" ref="downloadDAO" />
-        <property name="projectBaseLocation" value="${download_delivery_controller.base_file_location}" />
-    </bean>
+    <!--<bean id="publicationHelper" class="org.janelia.it.jacs.web.gwt.download.server.DbPublicationHelper">-->
+        <!--<property name="downloadDAO" ref="downloadDAO" />-->
+        <!--<property name="projectBaseLocation" value="${download_delivery_controller.base_file_location}" />-->
+    <!--</bean>-->
 
     <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/>
 
@@ -90,7 +90,7 @@
                 <entry key="/gwt/**/fileUpload.htm" value-ref="fileUploadController" />
                 <entry key="/fileDelivery.htm" value-ref="fileDeliveryController"/>
                 <entry key="/downloadEcho.htm" value-ref="downloadEchoController" />
-                <entry key="/detailPage.htm" value-ref="detailPageForwardingController" />
+                <!--<entry key="/detailPage.htm" value-ref="detailPageForwardingController" />-->
                 <entry key="/search.htm" value-ref="searchForwardingController"/>
                 <entry key="/project.htm" value-ref="projectForwardingController"/>
                 <entry key="/disclaimer.htm" value-ref="entryPointsController"/>
@@ -100,18 +100,18 @@
                 <entry key="/admin/taskReport.htm" value-ref="taskReportController"/>
 
                 <entry key="/logout.htm" value-ref="logoutController"/>
-                <entry key="/**/tiledImage.srv" value-ref="tiledImageService" />
-                <entry key="/**/admin.srv" value-ref="adminService"/>
+                <!--<entry key="/**/tiledImage.srv" value-ref="tiledImageService" />-->
+                <!--<entry key="/**/admin.srv" value-ref="adminService"/>-->
                 <entry key="/**/data.srv" value-ref="dataService"/>
                 <entry key="/**/blast.srv" value-ref="blastService"/>
-                <entry key="/**/recruitment.srv" value-ref="recruitmentService"/>
-                <entry key="/**/cref.srv" value-ref="crossReferencingService"/>
+                <!--<entry key="/**/recruitment.srv" value-ref="recruitmentService"/>-->
+                <!--<entry key="/**/cref.srv" value-ref="crossReferencingService"/>-->
                 <entry key="/**/status.srv" value-ref="statusService"/>
-                <entry key="/**/bsDetail.srv" value-ref="bsDetailService"/>
-                <entry key="/**/clDetail.srv" value-ref="clDetailService"/>
+                <!--<entry key="/**/bsDetail.srv" value-ref="bsDetailService"/>-->
+                <!--<entry key="/**/clDetail.srv" value-ref="clDetailService"/>-->
                 <entry key="/**/preference.srv" value-ref="preferenceService"/>
-                <entry key="/**/project.srv" value-ref="projectService"/>
-                <entry key="/**/proteinDetail.srv" value-ref="proteinDetailService"/>
+                <!--<entry key="/**/project.srv" value-ref="projectService"/>-->
+                <!--<entry key="/**/proteinDetail.srv" value-ref="proteinDetailService"/>-->
                 <entry key="/**/export.srv" value-ref="exportService"/>
             </map>
         </property>
@@ -201,9 +201,9 @@
         <property name="filestoreFtpLinkTargetLocation" value="${blast_result_download_delivery_controller.ftp_link_target_location}" />
     </bean>
 
-    <bean name="detailPageForwardingController" class="org.janelia.it.jacs.web.control.DetailPageForwardingController">
-        <property name="downloadDAO" ref="downloadDAO"/>
-    </bean>
+    <!--<bean name="detailPageForwardingController" class="org.janelia.it.jacs.web.control.DetailPageForwardingController">-->
+        <!--<property name="downloadDAO" ref="downloadDAO"/>-->
+    <!--</bean>-->
 
     <bean name="searchForwardingController" class="org.janelia.it.jacs.web.control.search.SearchForwardingController">
         <property name="nodeDAO" ref="nodeDAO"/>
@@ -218,18 +218,18 @@
         <property name="taskDao" ref="taskDAO"/>
     </bean>
 
-    <bean name="downloadService"
-          class="org.janelia.it.jacs.web.gwt.download.server.DownloadMetaDataServiceImpl"
-          parent="baseServiceController">
-        <property name="publicationHelper" ref="publicationHelper"/>
-    </bean>
+    <!--<bean name="downloadService"-->
+          <!--class="org.janelia.it.jacs.web.gwt.download.server.DownloadMetaDataServiceImpl"-->
+          <!--parent="baseServiceController">-->
+        <!--<property name="publicationHelper" ref="publicationHelper"/>-->
+    <!--</bean>-->
     <bean name="downloadEchoService"
           class="org.janelia.it.jacs.web.gwt.common.server.DownloadEchoServiceImpl"
           parent="baseServiceController">
     </bean>
-    <bean name="tiledImageService"
-          class="org.janelia.it.jacs.web.control.image.TiledImageRetriever">
-    </bean>
+    <!--<bean name="tiledImageService"-->
+          <!--class="org.janelia.it.jacs.web.control.image.TiledImageRetriever">-->
+    <!--</bean>-->
     <bean name="dataService"
           class="org.janelia.it.jacs.web.gwt.common.server.DataServiceImpl"
           parent="baseServiceController">
@@ -246,11 +246,11 @@
           parent="baseServiceController">
         <property name="exportAPI" ref="exportAPI"/>
     </bean>
-    <bean name="recruitmentService"
-          class="org.janelia.it.jacs.web.gwt.frv.server.RecruitmentServiceImpl"
-          parent="baseServiceController">
-        <property name="recruitmentAPI" ref="recruitmentAPI"/>
-    </bean>
+    <!--<bean name="recruitmentService"-->
+          <!--class="org.janelia.it.jacs.web.gwt.frv.server.RecruitmentServiceImpl"-->
+          <!--parent="baseServiceController">-->
+        <!--<property name="recruitmentAPI" ref="recruitmentAPI"/>-->
+    <!--</bean>-->
     <bean name="viewService"
           class="org.janelia.it.jacs.web.gwt.common.server.view.ViewServiceImpl"
           parent="baseServiceController">
@@ -259,25 +259,25 @@
           class="org.janelia.it.jacs.web.gwt.common.server.LoggingServiceImpl"
           parent="baseServiceController">
     </bean>
-    <bean name="adminService"
-          class="org.janelia.it.jacs.web.gwt.admin.server.AdminServiceImpl"
-          parent="baseServiceController">
-        <property name="userAPI" ref="userAPI"/>
-        <property name="featureAPI" ref="featureAPI"/>
-        <property name="dataSetAPI" ref="dataSetAPI"/>
-        <property name="userDAO"  ref="userDAO" />
-    </bean>
+    <!--<bean name="adminService"-->
+          <!--class="org.janelia.it.jacs.web.gwt.admin.server.AdminServiceImpl"-->
+          <!--parent="baseServiceController">-->
+        <!--<property name="userAPI" ref="userAPI"/>-->
+        <!--<property name="featureAPI" ref="featureAPI"/>-->
+        <!--<property name="dataSetAPI" ref="dataSetAPI"/>-->
+        <!--<property name="userDAO"  ref="userDAO" />-->
+    <!--</bean>-->
     <bean name="blastService"
           class="org.janelia.it.jacs.web.gwt.blast.server.BlastServiceImpl"
           parent="baseServiceController">
         <property name="blastAPI" ref="blastAPI"/>
         <property name="blastDAO"  ref="blastDAO" />
     </bean>
-    <bean name="crossReferencingService"
-        class="org.janelia.it.jacs.web.gwt.detail.server.bse.xlink.CRefEntityServiceImpl"
-        parent="baseServiceController">
-        <property name="featureDAO" ref="featureDAO"/>
-    </bean>
+    <!--<bean name="crossReferencingService"-->
+        <!--class="org.janelia.it.jacs.web.gwt.detail.server.bse.xlink.CRefEntityServiceImpl"-->
+        <!--parent="baseServiceController">-->
+        <!--<property name="featureDAO" ref="featureDAO"/>-->
+    <!--</bean>-->
     <bean name="statusService"
           class="org.janelia.it.jacs.web.gwt.common.server.StatusServiceImpl"
           parent="baseServiceController">
@@ -287,42 +287,42 @@
         <property name="searchAPI" ref="searchAPI"/>
         <property name="jobControlAPI" ref="jobControlAPI"/>
     </bean>
-    <bean name="searchService"
-        class="org.janelia.it.jacs.web.gwt.search.server.SearchServiceImpl"
-        parent="baseServiceController">
-        <property name="searchAPI" ref="searchAPI"/>
-    </bean>
-    <bean name="sampleDetailService"
-        class="org.janelia.it.jacs.web.gwt.detail.server.sample.SampleServiceImpl"
-        parent="baseServiceController">
-        <property name="featureDAO" ref="featureDAO"/>
-    </bean>
-    <bean name="bsDetailService"
-          class="org.janelia.it.jacs.web.gwt.detail.server.bse.BSEntityServiceImpl"
-          parent="baseServiceController">
-        <property name="metadataDAO" ref="metadataDAO" />
-        <property name="featureDAO" ref="featureDAO" />
-    </bean>
-    <bean name="clDetailService"
-          class="org.janelia.it.jacs.web.gwt.detail.server.cluster.ClusterDetailServiceImpl"
-          parent="baseServiceController">
-        <property name="featureAPI" ref="featureAPI" />
-    </bean>
-    <bean name="proteinDetailService"
-          class="org.janelia.it.jacs.web.gwt.detail.server.bse.peptide.ProteinDetailServiceImpl"
-          parent="baseServiceController">
-        <property name="featureDAO" ref="featureDAO" />
-    </bean>
+    <!--<bean name="searchService"-->
+        <!--class="org.janelia.it.jacs.web.gwt.search.server.SearchServiceImpl"-->
+        <!--parent="baseServiceController">-->
+        <!--<property name="searchAPI" ref="searchAPI"/>-->
+    <!--</bean>-->
+    <!--<bean name="sampleDetailService"-->
+        <!--class="org.janelia.it.jacs.web.gwt.detail.server.sample.SampleServiceImpl"-->
+        <!--parent="baseServiceController">-->
+        <!--<property name="featureDAO" ref="featureDAO"/>-->
+    <!--</bean>-->
+    <!--<bean name="bsDetailService"-->
+          <!--class="org.janelia.it.jacs.web.gwt.detail.server.bse.BSEntityServiceImpl"-->
+          <!--parent="baseServiceController">-->
+        <!--<property name="metadataDAO" ref="metadataDAO" />-->
+        <!--<property name="featureDAO" ref="featureDAO" />-->
+    <!--</bean>-->
+    <!--<bean name="clDetailService"-->
+          <!--class="org.janelia.it.jacs.web.gwt.detail.server.cluster.ClusterDetailServiceImpl"-->
+          <!--parent="baseServiceController">-->
+        <!--<property name="featureAPI" ref="featureAPI" />-->
+    <!--</bean>-->
+    <!--<bean name="proteinDetailService"-->
+          <!--class="org.janelia.it.jacs.web.gwt.detail.server.bse.peptide.ProteinDetailServiceImpl"-->
+          <!--parent="baseServiceController">-->
+        <!--<property name="featureDAO" ref="featureDAO" />-->
+    <!--</bean>-->
     <bean name="preferenceService"
           class="org.janelia.it.jacs.web.gwt.common.server.prefs.PreferenceServiceImpl"
           parent="baseServiceController">
         <property name="preferenceDAO"  ref="preferenceDAO" />
     </bean>
-    <bean name="projectService"
-          class="org.janelia.it.jacs.web.gwt.admin.editproject.server.ProjectServiceImpl"
-          parent="baseServiceController" >
-        <property name="downloadDAO"  ref="downloadDAO" />
-    </bean>
+    <!--<bean name="projectService"-->
+          <!--class="org.janelia.it.jacs.web.gwt.admin.editproject.server.ProjectServiceImpl"-->
+          <!--parent="baseServiceController" >-->
+        <!--<property name="downloadDAO"  ref="downloadDAO" />-->
+    <!--</bean>-->
 
 
     <!-- ========================= SPECIFIC VIEW DEFINITIONS FOR  ========================= -->
@@ -343,7 +343,7 @@
         <property name="urlMap">
             <map>
                 <entry key="/healthMonitor.chk" value-ref="healthMonitorController" />
-                <entry key="/id" value-ref="detailPageForwardingController"/>
+                <!--<entry key="/id" value-ref="detailPageForwardingController"/>-->
                 <entry key="/search.oa" value-ref="searchForwardingController"/>
                 <entry key="/gwt/**/Search.oa" value-ref="entryPointsController"/>
                 <entry key="/gwt/**/BrowseProjectsPage.oa" value-ref="entryPointsController"/>
@@ -351,10 +351,10 @@
                 <entry key="/gwt/**/ProjectSamplesPage.oa" value-ref="entryPointsController"/>
                 <entry key="/gwt/**/Test.oa" value-ref="entryPointsController"/>
 
-                <entry key="/**/download.oas" value-ref="downloadService"/>
+                <!--<entry key="/**/download.oas" value-ref="downloadService"/>-->
                 <entry key="/**/downloadEcho.oas" value-ref="downloadEchoService" />
-                <entry key="/**/search.oas" value-ref="searchService"/>
-                <entry key="/**/sampledetail.oas" value-ref="sampleDetailService"/>
+                <!--<entry key="/**/search.oas" value-ref="searchService"/>-->
+                <!--<entry key="/**/sampledetail.oas" value-ref="sampleDetailService"/>-->
                 <entry key="/**/log.oas" value-ref="logService"/>
             </map>
         </property>

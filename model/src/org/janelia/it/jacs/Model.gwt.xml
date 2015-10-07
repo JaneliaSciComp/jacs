@@ -28,16 +28,23 @@
         <exclude name="SystemConfigurationProperties.java"/>
         <exclude name="ParameterVOMapUserType.java"/>
     </source>
-    <source path="model/download"/>
-    <source path="model/entity"/>
+    <!--<source path="model/download"/>-->
+    <source path="model/entity">
+        <include name="EntityType.java"/>
+        <include name="EntityData.java"/>
+        <include name="EntityAttribute.java"/>
+        <include name="EntityConstants.java"/>
+        <include name="ForbiddenEntity.java"/>
+        <include name="EntityStatus.java"/>
+    </source>
     <source path="model/genomics"/>
-    <source path="model/metadata"/>
-    <source path="model/prokPipeline"/>
+    <!--<source path="model/metadata"/>-->
+    <!--<source path="model/prokPipeline"/>-->
     <source path="model/tasks">
         <exclude name="tools/AugustusTask.java"/>
     </source>
     <source path="model/user_data">
-        <include name="DataNode.java"/>
+        <!--<include name="DataNode.java"/>-->
         <exclude name="FileNode.java"/>
         <exclude name="DownloadableFileNode.java"/>
         <include name="Node.java"/>
@@ -48,7 +55,7 @@
         <include name="DataSource.java"/>
     </source>
     <source path="model/user_data/prefs"/>
-    <source path="model/user_data/geci"/>
+    <!--<source path="model/user_data/geci"/>-->
 
     <source path="model/user_data/blast">
         <exclude name="BlastDatabaseFileNode.java"/>
@@ -58,16 +65,16 @@
         <exclude name="MpiBlastDatabaseFileNode.java"/>
     </source>
 
-    <source path="model/user_data/metageno">
-        <exclude name="MetageneResultNode.java"/>
-        <exclude name="MetaGenoAnnotationResultNode.java"/>
-        <exclude name="MetaGenoOrfCallerResultNode.java"/>
-        <exclude name="PriamResultNode.java"/>
-        <exclude name="RrnaScanResultNode.java"/>
-        <!--<exclude name="MetaGenoOrfCallerResultNode.java" />-->
-        <exclude name="SimpleOrfCallerResultNode.java"/>
-        <exclude name="TrnaScanResultNode.java"/>
-    </source>
+    <!--<source path="model/user_data/metageno">-->
+        <!--<exclude name="MetageneResultNode.java"/>-->
+        <!--<exclude name="MetaGenoAnnotationResultNode.java"/>-->
+        <!--<exclude name="MetaGenoOrfCallerResultNode.java"/>-->
+        <!--<exclude name="PriamResultNode.java"/>-->
+        <!--<exclude name="RrnaScanResultNode.java"/>-->
+        <!--&lt;!&ndash;<exclude name="MetaGenoOrfCallerResultNode.java" />&ndash;&gt;-->
+        <!--<exclude name="SimpleOrfCallerResultNode.java"/>-->
+        <!--<exclude name="TrnaScanResultNode.java"/>-->
+    <!--</source>-->
 
     <source path="model/user_data/search"/>
     <source path="model/vo"/>

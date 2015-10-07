@@ -1,16 +1,16 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
@@ -60,23 +60,24 @@ public class SampleTraversalService extends AbstractEntityService {
             parentOrChildren = "parent";
         }
 
-        if (parentOrChildren.equals("parent")) {
-            includeChildSamples = false;
-            includeParentSamples = true;
-        }
-        else if (parentOrChildren.equals("children")) {
-            includeChildSamples = true;
-            includeParentSamples = false;
-        }
-        else if (parentOrChildren.equals("both")) {
-            includeChildSamples = true;
-            includeParentSamples = true;
-        }
-        else {
-            throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:"+parentOrChildren);
+        switch (parentOrChildren) {
+            case "parent":
+                includeChildSamples = false;
+                includeParentSamples = true;
+                break;
+            case "children":
+                includeChildSamples = true;
+                includeParentSamples = false;
+                break;
+            case "both":
+                includeChildSamples = true;
+                includeParentSamples = true;
+                break;
+            default:
+                throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:" + parentOrChildren);
         }
 
-        List<Object> outObjects = new ArrayList<Object>();
+        List<Object> outObjects = new ArrayList<>();
         
         String dataSetName = (String) processData.getItem("DATA_SET_NAME");
         logger.info("    dataSetName="+dataSetName);
@@ -149,7 +150,7 @@ public class SampleTraversalService extends AbstractEntityService {
     
     private List<Entity> getIncludedSamples(Entity sample) throws Exception {
 
-        List<Entity> included = new ArrayList<Entity>();
+        List<Entity> included = new ArrayList<>();
         String dataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         if (StringUtils.isEmpty(dataSetIdentifier)) {
         	// Don't include anything without a data set (these are most likely child samples that will be inspected as part of their parents' inspection)
@@ -188,8 +189,8 @@ public class SampleTraversalService extends AbstractEntityService {
         } 
         else {
             // This is a parent sample because it has child samples. Check if any of the children are to be included.
-            Set<Entity> childrenIncluded = new HashSet<Entity>();
-            Set<Entity> childrenExcluded = new HashSet<Entity>();
+            Set<Entity> childrenIncluded = new HashSet<>();
+            Set<Entity> childrenExcluded = new HashSet<>();
             for(Entity childSample : childSamples) {
                 populateChildren(childSample);
                 if (includeSample(childSample)) {

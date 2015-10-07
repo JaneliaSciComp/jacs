@@ -1,8 +1,6 @@
 
 package org.janelia.it.jacs.compute.service.blast.submit;
 
-import org.ggf.drmaa.DrmaaException;
-import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.service.blast.BlastProcessDataConstants;
@@ -41,9 +39,9 @@ public class BlastSubmitJobService extends SubmitDrmaaJobService {
     private static final String mergeSortMinMemory = SystemConfigurationProperties.getString("BlastServer.GridMergeSortMinimumMemoryMB");
     private static final String mergeSortMaxMemory = SystemConfigurationProperties.getString("BlastServer.GridMergeSortMaximumMemoryMB");
     private static final String blastResultFileName = SystemConfigurationProperties.getString("BlastServer.ResultFilename");
-    private static final String blastNormalQueue = SystemConfigurationProperties.getString("Grid.NormalQueue");
-    private static final String blastLowQueue = SystemConfigurationProperties.getString("Grid.LowQueue");
-    private static final Float lowThreshold = SystemConfigurationProperties.getFloat("BlastServer.LowThreshold");
+//    private static final String blastNormalQueue = SystemConfigurationProperties.getString("Grid.NormalQueue");
+//    private static final String blastLowQueue = SystemConfigurationProperties.getString("Grid.LowQueue");
+//    private static final Float lowThreshold = SystemConfigurationProperties.getFloat("BlastServer.LowThreshold");
     private static final Float fileSizeThresholdInkB = SystemConfigurationProperties.getFloat("Grid.FileSizeThresholdInkB");
     public static final String BLAST_RESULT_PREFIX = "r";
     private static final String BLAST_CONFIG_PREFIX = "blastConfiguration.";
@@ -141,61 +139,67 @@ public class BlastSubmitJobService extends SubmitDrmaaJobService {
         queueScore = blastConfigFileCount * programScore;
     }
 
-    protected void setQueue(SerializableJobTemplate jt) throws DrmaaException {
+//      Choosing to use the override method below for immediate processing.
+//    protected void setQueue(SerializableJobTemplate jt) throws DrmaaException {
+//
+//        String queueName;
+//        String queueNameBasedOnScore;
+//        String queueNameBasedOnPriority;
+//
+//        // Determine the queue baded on the queue score
+//        if (queueScore >= lowThreshold) {
+//            //queueName=blastLowQueue;
+//            queueNameBasedOnScore = blastLowQueue;
+//        }
+//        else {
+//            //queueName=blastNormalQueue;
+//            queueNameBasedOnScore = blastNormalQueue;
+//        }
+//
+//        logger.info("Drmaa job=" + jt.getJobName() + " has queueScore=" + queueScore + " assigned queue=" + queueNameBasedOnScore);
+//
+//        // Now, determine the queue based on the assigned job's priority. Get job's priority from the process file.
+//        // If the priority is low then assign lower Queue else normal queue
+//        String priority = (String) processData.getItem("JobPriority");
+//        logger.info("Drmaa job=" + jt.getJobName() + " has priority=" + priority);
+//
+//
+//        // If priority is not null, identify the queue name based on priority.
+//        // Set the queue name to the lower queue between the queue based on priority
+//        // and queue name based on the queue score.
+//        if (priority != null) {
+//
+//            if (priority.equalsIgnoreCase("High")) {
+//                queueNameBasedOnPriority = blastNormalQueue;
+//            }
+//            else {
+//                queueNameBasedOnPriority = blastLowQueue;
+//            }
+//
+//            logger.info("Drmaa job=" + jt.getJobName() + " has priority=" + priority + " assigned queue=" + queueNameBasedOnPriority);
+//
+//            // Now, assign the lower queue between queueNameBasedOnScore and queueNameBasedOnPriority to the
+//            // job's specification.
+//            if (queueNameBasedOnScore.equals(queueNameBasedOnPriority)) {
+//                queueName = queueNameBasedOnScore;
+//            }
+//            else {
+//                queueName = queueNameBasedOnPriority;
+//            }
+//        }
+//        else {
+//            // If priority is null, set the queuename to the queue name obtained
+//            // based on the queue score
+//            queueName = queueNameBasedOnScore;
+//        }
+//
+//        logger.info("Blast Drmaa job=" + jt.getJobName() + " assigned nativeSpec=" + queueName);
+//        jt.setNativeSpecification(queueName);
+//    }
 
-        String queueName;
-        String queueNameBasedOnScore;
-        String queueNameBasedOnPriority;
-
-        // Determine the queue baded on the queue score
-        if (queueScore >= lowThreshold) {
-            //queueName=blastLowQueue;
-            queueNameBasedOnScore = blastLowQueue;
-        }
-        else {
-            //queueName=blastNormalQueue;
-            queueNameBasedOnScore = blastNormalQueue;
-        }
-
-        logger.info("Drmaa job=" + jt.getJobName() + " has queueScore=" + queueScore + " assigned queue=" + queueNameBasedOnScore);
-
-        // Now, determine the queue based on the assigned job's priority. Get job's priority from the process file.
-        // If the priority is low then assign lower Queue else normal queue
-        String priority = (String) processData.getItem("JobPriority");
-        logger.info("Drmaa job=" + jt.getJobName() + " has priority=" + priority);
-
-
-        // If priority is not null, identify the queue name based on priority.
-        // Set the queue name to the lower queue between the queue based on priority
-        // and queue name based on the queue score.
-        if (priority != null) {
-
-            if (priority.equalsIgnoreCase("High")) {
-                queueNameBasedOnPriority = blastNormalQueue;
-            }
-            else {
-                queueNameBasedOnPriority = blastLowQueue;
-            }
-
-            logger.info("Drmaa job=" + jt.getJobName() + " has priority=" + priority + " assigned queue=" + queueNameBasedOnPriority);
-
-            // Now, assign the lower queue between queueNameBasedOnScore and queueNameBasedOnPriority to the
-            // job's specification.
-            if (queueNameBasedOnScore.equals(queueNameBasedOnPriority)) {
-                queueName = queueNameBasedOnScore;
-            }
-            else {
-                queueName = queueNameBasedOnPriority;
-            }
-        }
-        else {
-            // If priority is null, set the queuename to the queue name obtained
-            // based on the queue score
-            queueName = queueNameBasedOnScore;
-        }
-
-        logger.info("Blast Drmaa job=" + jt.getJobName() + " assigned nativeSpec=" + queueName);
-        jt.setNativeSpecification(queueName);
+    @Override
+    protected boolean isImmediateProcessingJob() {
+        return true;
     }
 
     private File getDummySubjectDBFile() {
@@ -232,7 +236,7 @@ public class BlastSubmitJobService extends SubmitDrmaaJobService {
         String[] blastCommandArr = blastCommandString.split("\\s+");
         if (blastCommandArr == null || blastCommandArr.length < 2)
             throw new IllegalArgumentException("Could not parse blast command: " + blastCommandString);
-        StringBuffer genericBlastBuffer = new StringBuffer();
+        StringBuilder genericBlastBuffer = new StringBuilder();
         for (int j = 0; j < blastCommandArr.length; j++) {
             if (j > 0 && blastCommandArr[j - 1].equals("-o")) {
                 genericBlastBuffer.append(" ").append(tempBlastOutputFileName);
@@ -264,7 +268,7 @@ public class BlastSubmitJobService extends SubmitDrmaaJobService {
 
         // Format the executable script
         // Note - the persist which runs blast will only parse its own xml output, which is why -f and -l are the same index, below
-        StringBuffer script = new StringBuffer();
+        StringBuilder script = new StringBuilder();
         script.append("read BLASTQUERY_FILE\n");
         script.append("read BLASTDB\n");
         script.append("read BLASTOUTPUT\n");

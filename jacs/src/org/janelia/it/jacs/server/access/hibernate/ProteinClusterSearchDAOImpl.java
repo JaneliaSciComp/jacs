@@ -5,17 +5,16 @@ import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.hibernate.SQLQuery;
 import org.janelia.it.jacs.model.common.SortArgument;
-import org.janelia.it.jacs.model.genomics.AnnotationDescription;
 import org.janelia.it.jacs.model.search.SearchHit;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
-import org.janelia.it.jacs.server.utils.AnnotationUtil;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ChartData;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ChartDataEntry;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ImageModel;
-import org.janelia.it.jacs.web.gwt.search.client.model.ClusterResult;
 
 import java.util.ArrayList;
 import java.util.List;
+
+//import org.janelia.it.jacs.web.gwt.search.client.model.ClusterResult;
 
 /**
  * User: cgoina
@@ -47,44 +46,44 @@ public class ProteinClusterSearchDAOImpl extends SearchDAOImpl {
         return performGenericSearch(searchString, SearchTask.TOPIC_CLUSTER, matchFlags, startIndex, numRows, sortArgs);
     }
 
-    public List<ClusterResult> getPagedCategoryResultsByNodeId(Long nodeId,
-                                                               int startIndex,
-                                                               int numRows,
-                                                               SortArgument[] sortArgs) throws DaoException {
-        String sql = "select ts.rank, fd.final_cluster_acc, fd.num_core_cluster, fd.num_protein, fd.num_nonredundant, fd.gn_symbols, fd.protein_functions, fd.ec_List, fd.go_list " +
-                "from (select hit_id, rank from final_cluster_ts_result where node_id=" + nodeId + " order by rank desc) ts " +
-                "inner join final_cluster_detail fd on fd.final_cluster_id=ts.hit_id";
-        sql = addOrderClauseToSql(sql, sortArgs);
-        _logger.info("Executing cluster search sql=" + sql);
-        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
-        if (startIndex >= 0) {
-            sqlQuery.setFirstResult(startIndex);
-        }
-        if (numRows > 0) {
-            sqlQuery.setMaxResults(numRows);
-        }
-        List<Object[]> results = sqlQuery.list();
-        _logger.info("Cluster search yielded result count=" + results.size());
-        List<ClusterResult> clusters = new ArrayList<ClusterResult>();
-        for (Object[] res : results) {
-            ClusterResult clusterResult = new ClusterResult();
-            clusterResult.setRank((Float) res[0]);
-            clusterResult.setFinalAccession((String) res[1]);
-            clusterResult.setNumCoreClusters((Integer) res[2]);
-            clusterResult.setNumProteins((Integer) res[3]);
-            clusterResult.setNumNRProteins((Integer) res[4]);
-            clusterResult.setGeneSymbols((String) res[5]);
-            clusterResult.setProteinFunctions((String) res[6]);
-            List<AnnotationDescription> annoList = AnnotationUtil.createAnnotationListFromString((String) res[7]);
-            clusterResult.setEcAnnotationDescription(annoList);
-            annoList = AnnotationUtil.createAnnotationListFromString((String) res[8]);
-            clusterResult.setGoAnnotationDescription(annoList);
-            clusters.add(clusterResult);
-        }
-        _logger.info("Returning cluster result of size=" + clusters.size());
-        return clusters;
-    }
-
+//    public List<ClusterResult> getPagedCategoryResultsByNodeId(Long nodeId,
+//                                                               int startIndex,
+//                                                               int numRows,
+//                                                               SortArgument[] sortArgs) throws DaoException {
+//        String sql = "select ts.rank, fd.final_cluster_acc, fd.num_core_cluster, fd.num_protein, fd.num_nonredundant, fd.gn_symbols, fd.protein_functions, fd.ec_List, fd.go_list " +
+//                "from (select hit_id, rank from final_cluster_ts_result where node_id=" + nodeId + " order by rank desc) ts " +
+//                "inner join final_cluster_detail fd on fd.final_cluster_id=ts.hit_id";
+//        sql = addOrderClauseToSql(sql, sortArgs);
+//        _logger.info("Executing cluster search sql=" + sql);
+//        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+//        if (startIndex >= 0) {
+//            sqlQuery.setFirstResult(startIndex);
+//        }
+//        if (numRows > 0) {
+//            sqlQuery.setMaxResults(numRows);
+//        }
+//        List<Object[]> results = sqlQuery.list();
+//        _logger.info("Cluster search yielded result count=" + results.size());
+//        List<ClusterResult> clusters = new ArrayList<ClusterResult>();
+//        for (Object[] res : results) {
+//            ClusterResult clusterResult = new ClusterResult();
+//            clusterResult.setRank((Float) res[0]);
+//            clusterResult.setFinalAccession((String) res[1]);
+//            clusterResult.setNumCoreClusters((Integer) res[2]);
+//            clusterResult.setNumProteins((Integer) res[3]);
+//            clusterResult.setNumNRProteins((Integer) res[4]);
+//            clusterResult.setGeneSymbols((String) res[5]);
+//            clusterResult.setProteinFunctions((String) res[6]);
+//            List<AnnotationDescription> annoList = AnnotationUtil.createAnnotationListFromString((String) res[7]);
+//            clusterResult.setEcAnnotationDescription(annoList);
+//            annoList = AnnotationUtil.createAnnotationListFromString((String) res[8]);
+//            clusterResult.setGoAnnotationDescription(annoList);
+//            clusters.add(clusterResult);
+//        }
+//        _logger.info("Returning cluster result of size=" + clusters.size());
+//        return clusters;
+//    }
+//
     public int getNumCategoryResultsByNodeId(Long nodeId) throws DaoException {
         String sql =
                 "select cast(count(distinct hit_id) as Integer)" +

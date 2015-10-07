@@ -59,6 +59,7 @@ public class FileDiscoveryService implements IService {
             helper.addFileExclusion("temp");
             helper.addFileExclusion("tmp.*");
             helper.addFileExclusion("core.*");
+            helper.addFileExclusion("screenshot_*");
             helper.addFileExclusion("sampleEntityId.txt");
             
             // What database entity do we load into?

@@ -124,6 +124,15 @@
     </orderEntry>
     <orderEntry type="library" name="SnakeYaml-11" level="project" />
     <orderEntry type="library" name="Jama-1.0.3" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../common/JodaTime/joda-time-2.8.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
@@ -316,4 +325,3 @@
     </option>
   </component>
 </module>
-

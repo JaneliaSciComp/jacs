@@ -26,7 +26,9 @@ public interface TiledMicroscopeBeanRemote {
 
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException;
-
+    
+    public void addLinkedGeometricAnnotations (Map<Integer, Integer> nodeParentLinkage, Map<Integer, TmGeoAnnotation> annotations) throws ComputeException;
+    
     public void reparentGeometricAnnotation(TmGeoAnnotation annotation,
                                             Long newParentAnnotationID, TmNeuron neuron) throws ComputeException;
 

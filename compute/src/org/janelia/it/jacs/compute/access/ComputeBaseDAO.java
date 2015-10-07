@@ -199,7 +199,7 @@ public class ComputeBaseDAO {
         StringBuffer hql = new StringBuffer("select t from Task t ");
         hql.append("inner join fetch t.events ");
         hql.append("where t.owner = :owner ");
-        hql.append("and t.taskName = :name ");
+        if (null!=taskName) {hql.append("and t.taskName = :name ");}
         hql.append("order by t.objectId desc");
         Query query = session.createQuery(hql.toString());
         query.setString("owner", ownerName);
@@ -220,7 +220,41 @@ public class ComputeBaseDAO {
         
         return c;
     }
-    
+
+    public int cancelIncompleteTasksForUser(String owner) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("cancelIncompleteTasks(owner="+owner+")");
+        }
+
+        String ownerName = owner.contains(":") ? owner.split(":")[1] : owner;
+        Session session = getCurrentSession();
+        StringBuilder search = new StringBuilder("select task.task_id ");
+        search.append("from task join task_event on task.task_id = task_event.task_id ");
+        search.append("where task.task_owner= :ownerName and event_no in ( ");
+        search.append("select max(event_no) as event_no ");
+        search.append("from task_event task_event1 where  task_event1.task_id=task_event.task_id ");
+        search.append("order by task.task_id asc ) and event_type != 'completed' and task_event.event_type!='error' and task_event.event_type!='canceled'");
+        SQLQuery query = session.createSQLQuery(search.toString());
+        query.setString("ownerName", ownerName);
+
+        int c = 0;
+        for(Object taskId : query.list()) {
+            Task task = getTaskById(((BigInteger)taskId).longValue());
+            if (!task.isDone()) {
+                c++;
+                cancelTaskById(task);
+            }
+//            for(Task subtask : getChildTasksByParentTaskId(task.getObjectId())) {
+//                if (!subtask.isDone()) {
+//                    c++;
+//                    cancelTaskById(task);
+//                }
+//            }
+        }
+
+        return c;
+    }
+
     public void cancelTaskById(Task task) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("cancelTaskById(task.objectId="+task.getObjectId()+")");    
