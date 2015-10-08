@@ -26,4 +26,17 @@ public class MIPInputImageData implements Serializable {
     public Integer gain;
     @XmlElement
     public String area;
+
+    public boolean hasFilepath() {
+        return filepath != null && filepath.trim().length() > 0;
+    }
+
+    public boolean hasChanSpec() {
+        return chanspec != null && chanspec.trim().length() > 0;
+    }
+
+    public boolean hasColorSpec() {
+        return colorspec != null && colorspec.trim().length() > 0;
+    }
+
 }
