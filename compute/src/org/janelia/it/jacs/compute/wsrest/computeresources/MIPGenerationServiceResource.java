@@ -70,12 +70,13 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
         for (MIPInputImageData inputImage : inputImages) {
             if (!inputImage.hasFilepath()) {
                 validationMessages.add("Input image entry has not filepath.\n");
-            }
-            if (!inputImage.hasColorSpec()) {
-                validationMessages.add(String.format("Entry for %s must have a color spec.\n", inputImage.filepath));
-            }
-            if (!inputImage.hasChanSpec()) {
-                validationMessages.add(String.format("Entry for %s must have a channel spec.\n", inputImage.filepath));
+            } else {
+                if (!inputImage.hasColorSpec()) {
+                    validationMessages.add(String.format("Entry for %s must have a color spec.\n", inputImage.filepath));
+                }
+                if (!inputImage.hasChanSpec()) {
+                    validationMessages.add(String.format("Entry for %s must have a channel spec.\n", inputImage.filepath));
+                }
             }
         }
         if (!validationMessages.isEmpty()) {
