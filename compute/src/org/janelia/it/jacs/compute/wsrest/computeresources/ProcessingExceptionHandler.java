@@ -12,7 +12,7 @@ public class ProcessingExceptionHandler implements ExceptionMapper<ProcessingExc
 
    @Override
    public Response toResponse(ProcessingException e) {
-      return Response.status(e.getHttpStatus()).entity(e.getMessage()).build();
+      return Response.status(e.getHttpStatus()).entity(new ServiceMessage(e.getMessage())).build();
    }
 
 }
