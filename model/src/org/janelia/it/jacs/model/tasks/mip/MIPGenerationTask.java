@@ -1,17 +1,17 @@
 package org.janelia.it.jacs.model.tasks.mip;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.vo.BooleanParameterVO;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 import org.janelia.it.jacs.model.vo.TextParameterVO;
 
 import javax.xml.bind.annotation.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by goinac on 9/9/15.
@@ -23,10 +23,11 @@ public class MIPGenerationTask extends Task {
     transient public static final String DISPLAY_NAME = "MIP Generator";
 
     // Parameter Keys
-    transient public static final String PARAM_inputFileList = "input file list";
-    transient public static final String PARAM_signalChannels = "signal channels";
-    transient public static final String PARAM_referenceChannel = "reference channel";
-    transient public static final String PARAM_colorDepth = "color depth";
+    transient public static final String PARAM_inputImages = "input images";
+    transient public static final String PARAM_normalizeToFirst = "normalize to first";
+    transient public static final String PARAM_outputs = "outputs";
+
+    private List<MIPInputImageData> inputImages;
 
     public MIPGenerationTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -38,10 +39,7 @@ public class MIPGenerationTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_inputFileList, "");
-        setParameter(PARAM_signalChannels, "");
-        setParameter(PARAM_referenceChannel, "");
-        setParameter(PARAM_colorDepth, "");
+        setParameterAsBoolean(PARAM_normalizeToFirst, false);
         setTaskName(TASK_NAME);
     }
 
@@ -52,63 +50,50 @@ public class MIPGenerationTask extends Task {
         String value = getParameter(key);
         if (value == null)
             return null;
-        if (key.equals(PARAM_inputFileList)) {
-            return new TextParameterVO(value, 400);
+        switch (key) {
+            case PARAM_normalizeToFirst:
+                new BooleanParameterVO(Boolean.valueOf(value));
+            case PARAM_outputs:
+                new TextParameterVO(value);
+            default:
+                // No match
+                return null;
         }
-        if (key.equals(PARAM_signalChannels)) {
-            return new TextParameterVO(value, 400);
-        }
-        if (key.equals(PARAM_referenceChannel)) {
-            return new TextParameterVO(value, 400);
-        }
-        if (key.equals(PARAM_colorDepth)) {
-            return new TextParameterVO(value, 400);
-        }
-        // No match
-        return null;
     }
 
     public String getDisplayName() {
         return DISPLAY_NAME;
     }
 
-    @XmlElement(name = "csInputFiles")
-    public String getCsInputFiles() {
-        return getParameter(PARAM_inputFileList);
-    }
-
-    public void setCsInputFiles(String csInputFiles) {
-        setParameter(PARAM_inputFileList, csInputFiles);
-    }
-
-    public List<String> getInputFileList() {
-        return Task.listOfStringsFromCsvString(getParameter(PARAM_inputFileList));
-    }
-
     @XmlElement
-    public String getSignalChannels() {
-        return getParameter(PARAM_signalChannels);
+    public List<MIPInputImageData> getInputImages() {
+        return inputImages;
     }
 
-    public void setSignalChannels(String signalChannels) {
-        setParameter(PARAM_signalChannels, signalChannels);
+    public void setInputImages(List<MIPInputImageData> inputImages) throws Exception {
+        this.inputImages = inputImages;
+        if (inputImages != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            setParameter(PARAM_inputImages, mapper.writeValueAsString(inputImages));
+        }
     }
 
-    @XmlElement
-    public String getReferenceChannel() {
-        return getParameter(PARAM_referenceChannel);
+    @XmlElement(name = "normalizeToFirst")
+    public Boolean getNormalizeToFirst() {
+        return getParameterAsBoolean(PARAM_normalizeToFirst);
     }
 
-    public void setReferenceChannel(String referenceChannel) {
-        setParameter(PARAM_referenceChannel, referenceChannel);
+    public void setNormalizeToFirst(Boolean normalizeToFirst) {
+        setParameterAsBoolean(PARAM_normalizeToFirst, normalizeToFirst);
     }
 
-    @XmlElement
-    public String getColorDepth() {
-        return getParameter(PARAM_colorDepth);
+    @XmlElement(name = "outputs")
+    public String getOutputs() {
+        return getParameter(PARAM_outputs);
     }
 
-    public void setColorDepth(String colorDepth) {
-        setParameter(PARAM_colorDepth, colorDepth);
+    public void setOutputs(String outputs) {
+        setParameter(PARAM_outputs, outputs);
     }
+
 }
