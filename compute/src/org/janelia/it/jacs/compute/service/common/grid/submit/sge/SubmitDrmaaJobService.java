@@ -301,13 +301,13 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	this.gridResourceSpec = new GridResourceSpec(mem, slots, isExclusive());
         	String ns = gridResourceSpec.getNativeSpec();
         	if (isShortPipelineJob()) {
-        		ns += gridResourceSpec.getNativeSpec()+" -l short=true -now n";
+        		ns += " -l short=true -now n";
         	}
             if (isImmediateProcessingJob()) {
                 if (isShortPipelineJob()) {
                     throw new IllegalStateException("Job cannot be both a shortPipeline and an immediateProcessing job: "+task.getObjectId());
                 }
-                ns += gridResourceSpec.getNativeSpec()+" -l jacs=true -now n";
+                ns += " -l jacs=true -now n";
             }
         	String ans = getAdditionalNativeSpecification();
         	if (!Strings.isNullOrEmpty(ans)) {
