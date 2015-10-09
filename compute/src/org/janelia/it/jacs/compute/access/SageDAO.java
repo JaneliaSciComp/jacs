@@ -37,6 +37,7 @@ import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
+import org.janelia.it.jacs.model.sage.Observation;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -447,6 +448,45 @@ public class SageDAO {
         }
         return secondaryImage;
     }
+
+    public org.janelia.it.jacs.model.sage.Session getSession(String sessionName, CvTerm type) {
+        if (log.isTraceEnabled()) {
+            log.trace("getSession(sessionName="+sessionName+")");    
+        }
+        Session session = getCurrentSession();
+        Query query = session.createQuery("select session from Session session where session.name = :name and type = :type ");
+        query.setString("name", sessionName);
+        query.setEntity("type", type);
+        return (org.janelia.it.jacs.model.sage.Session)query.uniqueResult();
+    }
+    
+    public org.janelia.it.jacs.model.sage.Session saveSession(org.janelia.it.jacs.model.sage.Session session) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveSession(session.name="+session.getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(session);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error saving session in SAGE", e);
+        }
+        return session;
+    }
+
+    public Observation saveObservation(Observation observation) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveObservation(observation.type.name="+observation.getType().getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(observation);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error saving observation in SAGE", e);
+        }
+        return observation;
+    }
     
     /**
      * @return map of static terms which are not part of any vocabulary.
@@ -454,7 +494,7 @@ public class SageDAO {
     private Map<String,SageTerm> getStaticTerms() {
 
         final String[][] terms = {
-                //name           displayName        dataType     definition                               vocabulary
+                //name           displayName        dataType     definition                                 vocabulary
                 {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database",   "image_query"},
                 {"name",         "Image Path",      "text",      "Relative path to the image",              "image_query"},
                 {"path",         "Full Image Path", "text",      "Absolute path to the image",              "image_query"},

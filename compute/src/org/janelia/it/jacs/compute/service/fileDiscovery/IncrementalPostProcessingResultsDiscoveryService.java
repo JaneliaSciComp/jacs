@@ -19,7 +19,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   ROOT_ENTITY_ID - the parent of the result
  *   ROOT_FILE_NODE - the file node containing the separation files to be discovered
  *   RESULT_ENTITY_NAME - the name of the new result entity
- *   SAMPLE_ENTITY_ID - the sample entity containing the ROOT_ENTITY_ID
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -52,16 +51,6 @@ public class IncrementalPostProcessingResultsDiscoveryService extends Incrementa
 
         Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(result);
         addFilesInDirToFolder(supportingFiles, dir, false);
-
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (StringUtils.isEmpty(sampleEntityId)) {
-            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-        }
-        
-        Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-        if (sampleEntity == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-        }
     }
 
     private List<File> addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {

@@ -80,7 +80,6 @@
                 <input name="ROOT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
                 <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
                 <input name="RESULT_ENTITY_NAME" value="Post-Processing Result"/>
-                <input name="SAMPLE_ENTITY_ID"/>
                 <output name="RESULT_ENTITY_ID"/>
             </operation>
                 
