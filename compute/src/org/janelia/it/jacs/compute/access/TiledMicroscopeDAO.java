@@ -294,6 +294,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     throw new Exception("Could not find parent matching parentId="+parentAnnotationId);
                 }
             }
+            // Todd wants to see signs of LVV activity in the server logs; add annotation is the
+            //  only common operation that makes sense
+            log.info("LVV: adding annotation to neuron " + neuronId + " at " + x + ", " + y + ", " + z);
             return createGeometricAnnotation(neuron, isRoot, parentAnnotationId, index, x, y, z, comment, neuronId);
             /* This code is verbatim included in the method called above. LLF
             
