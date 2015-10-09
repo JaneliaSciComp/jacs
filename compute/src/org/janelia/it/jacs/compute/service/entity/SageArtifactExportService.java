@@ -310,7 +310,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     private void synchronizeArtifacts(Entity sample, Entity artifactFiles, Line line, String publishingUser) throws Exception {
 
         // Convert entity model to domain model
-        logger.info("  Converting sample "+sample.getName());
+        logger.trace("  Converting sample "+sample.getName());
         
         List<Entity> tiles = EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                 .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
@@ -319,7 +319,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         // Tiles 
         Map<String,ImageArea> imageAreaMap = new HashMap<>();
         for(Entity tile : tiles) {
-            logger.info("    Converting tile "+tile.getName());
+            logger.trace("    Converting tile "+tile.getName());
             
             String area = tile.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
             ImageArea imageArea = imageAreaMap.get(area);
@@ -335,7 +335,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             entityLoader.populateChildren(tile);
 
             for(Entity lsmStack : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
-                logger.info("      Converting LSM "+lsmStack.getName());
+                logger.trace("      Converting LSM "+lsmStack.getName());
                 String imageName = lsmStack.getName().substring(0, lsmStack.getName().lastIndexOf('.'));
                 ImageStack imageStack = new ImageStack();
                 imageStack.name = lsmStack.getId()+"-"+imageName;
@@ -397,17 +397,17 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
 
-        logger.info("  Synchronizing sample "+sample.getName());
+        logger.debug("  Synchronizing sample "+sample.getName());
         String objective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
 
         for (ImageArea imageArea : imageAreaMap.values()) {
             
-            logger.info("    Synchronizing area '"+imageArea.areaName+"'");
+            logger.debug("    Synchronizing area '"+imageArea.areaName+"'");
             List<Integer> areaSageImageIds = new ArrayList<>();
             
             for(ImageTile imageTile : imageArea.tiles) {
             
-                logger.info("      Synchronizing tile '"+imageTile.tileName+"'");
+                logger.debug("      Synchronizing tile '"+imageTile.tileName+"'");
                 Image tileSourceImage = null;
                                 
                 List<Integer> tileSageImageIds = new ArrayList<>();
