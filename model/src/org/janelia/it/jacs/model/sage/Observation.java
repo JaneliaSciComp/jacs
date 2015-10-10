@@ -11,7 +11,7 @@ public class Observation implements java.io.Serializable {
 
     private Integer id;
     private CvTerm type;
-    private Session session;
+    private SageSession session;
     private CvTerm term;
     private Integer experimentId;
     private String value;
@@ -27,7 +27,7 @@ public class Observation implements java.io.Serializable {
         this.createDate = createDate;
     }
 
-    public Observation(CvTerm type, Session session, CvTerm term, Integer experimentId, String value, Date createDate) {
+    public Observation(CvTerm type, SageSession session, CvTerm term, Integer experimentId, String value, Date createDate) {
         this.type = type;
         this.session = session;
         this.term = term;
@@ -52,11 +52,11 @@ public class Observation implements java.io.Serializable {
         this.type = type;
     }
 
-    public Session getSession() {
+    public SageSession getSession() {
         return this.session;
     }
 
-    public void setSession(Session session) {
+    public void setSession(SageSession session) {
         this.session = session;
     }
 

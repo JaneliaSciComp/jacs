@@ -17,11 +17,17 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
+import org.janelia.it.jacs.model.ontology.types.Interval;
+import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
+import org.janelia.it.jacs.model.ontology.types.Tag;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
+import org.janelia.it.jacs.model.sage.Observation;
+import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
@@ -60,6 +66,8 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm propertyToPublish;
     private CvTerm propertyPublishingUser;
     private CvTerm propertyRelease;
+    private CvTerm sessionType;
+    private CvTerm observationTerm;
     private CvTerm source;
     private CvTerm chanSpec;
     private CvTerm dimensionX;
@@ -119,6 +127,8 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.propertyToPublish = getCvTermByName("light_imagery","to_publish");
         this.propertyPublishingUser = getCvTermByName("light_imagery","publishing_user");
         this.propertyRelease = getCvTermByName("light_imagery","release");
+        this.sessionType = getCvTermByName("flylight_public_annotation","splitgal4_public_annotation");
+        this.observationTerm = getCvTermByName("flylight_public_annotation","intensity");
         this.source = getCvTermByName("lab","JFRC");
         this.chanSpec = getCvTermByName("light_imagery","channel_spec");
         this.dimensionX = getCvTermByName("light_imagery","dimension_x");
@@ -258,18 +268,14 @@ public class SageArtifactExportService extends AbstractEntityService {
         
         return export ? 1 : 0;
     }
-        
+    
     private void exportSample(Entity sample, String publishingUser) throws Exception {
 
         logger.info("    Exporting "+sample.getName());
         
         // Find fly line
         String lineName = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
-        Line line = lines.get(lineName);
-        if (line==null) {
-            line = sage.getLineByName(lineName); 
-            lines.put(lineName, line);
-        }
+        Line line = getLineByName(lineName);
                 
         // Collect artifacts for export
         Entity postResult = getLatestPostProcessingResult(sample);
@@ -594,18 +600,64 @@ public class SageArtifactExportService extends AbstractEntityService {
         return secondaryImage;
     }
 
-    private void exportLineAnnotations(String lineName) {
+    private void exportLineAnnotations(String lineName) throws Exception {
         
-        for(Entity annotation : currLineAnnotationSet) {
+        SageSession session = sage.getSession(releaseEntity.getName(), sessionType);
+        
+        Line line = getLineByName(lineName);
+        CvTerm lab = null; // TODO: get lab
+        
+        if (session==null) {
+            session = new SageSession(sessionType, lab, line, lineName, null, createDate);
+        }
+        else {
+            session.setLine(line);
+            session.setLab(lab);
+        }
+        
+        Set<String> annotators = new HashSet<>();
+        Set<Observation> observations = new HashSet<>(0);
+        
+        for(Entity annotationEntity : currLineAnnotationSet) {
 
-            if (!annotatorKeys.contains(annotation.getOwnerKey())) {
+            if (!annotatorKeys.contains(annotationEntity.getOwnerKey())) {
                 continue;
             }
             
-            // TODO: determine if line annotation, if so, export
-            logger.info("  Potential line annotation: "+annotation.getName());
+            logger.info("  Potential line annotation: "+annotationEntity.getName());
+            // TODO: determine if this is a line annotation
             
+            annotators.add(annotationEntity.getOwnerKey());
+            
+            String keyEntityId = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            Entity keyEntity = entityBean.getEntityById(keyEntityId);
+            
+            String typeName = keyEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
+            OntologyElementType type = OntologyElementType.createTypeByName(typeName);
+            type.init(keyEntity);
+            
+            String value = null;
+            if (type instanceof Interval) {
+                value = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
+            }
+            else if (type instanceof Tag) {
+                value = "1";
+            }
+            else {
+                logger.warn("Unsupported annotation type: "+typeName);
+            }
+            
+            if (value==null) continue;
+            
+            String annotationName = keyEntity.getName(); // TODO: translate workstation ontology terms to sage CV terms
+            CvTerm observationType = getCvTermByName("flylight_public_annotation",annotationName);
+            observations.add(new Observation(observationType, session, observationTerm, null, value, createDate));
         }
+        
+        // TODO: synchronize observations
+        
+        session.setAnnotator(Task.csvStringFromCollection(annotators));
+        sage.saveSession(session);
     }
     
 	/**
@@ -640,6 +692,15 @@ public class SageArtifactExportService extends AbstractEntityService {
             throw new IllegalStateException("No such term: "+termName+" in CV "+cvName);
         }
         return term;
+    }
+        
+    private Line getLineByName(String lineName) throws DaoException {
+        Line line = lines.get(lineName);
+        if (line==null) {
+            line = sage.getLineByName(lineName); 
+            lines.put(lineName, line);
+        }
+        return line;
     }
     
     private class ImageArea {

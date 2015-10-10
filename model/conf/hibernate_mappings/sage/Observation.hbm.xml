@@ -11,7 +11,7 @@
         <many-to-one name="type" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">
             <column name="type_id" not-null="true" />
         </many-to-one>
-        <many-to-one name="session" class="org.janelia.it.jacs.model.sage.Session" fetch="select">
+        <many-to-one name="session" class="org.janelia.it.jacs.model.sage.SageSession" fetch="select">
             <column name="session_id" />
         </many-to-one>
         <many-to-one name="term" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">

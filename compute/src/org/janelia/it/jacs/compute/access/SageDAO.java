@@ -38,6 +38,7 @@ import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
 import org.janelia.it.jacs.model.sage.Observation;
+import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -449,7 +450,7 @@ public class SageDAO {
         return secondaryImage;
     }
 
-    public org.janelia.it.jacs.model.sage.Session getSession(String sessionName, CvTerm type) {
+    public SageSession getSession(String sessionName, CvTerm type) {
         if (log.isTraceEnabled()) {
             log.trace("getSession(sessionName="+sessionName+")");    
         }
@@ -457,10 +458,10 @@ public class SageDAO {
         Query query = session.createQuery("select session from Session session where session.name = :name and type = :type ");
         query.setString("name", sessionName);
         query.setEntity("type", type);
-        return (org.janelia.it.jacs.model.sage.Session)query.uniqueResult();
+        return (SageSession)query.uniqueResult();
     }
     
-    public org.janelia.it.jacs.model.sage.Session saveSession(org.janelia.it.jacs.model.sage.Session session) throws DaoException {
+    public SageSession saveSession(SageSession session) throws DaoException {
         if (log.isTraceEnabled()) {
             log.trace("saveSession(session.name="+session.getName()+")");    
         }
