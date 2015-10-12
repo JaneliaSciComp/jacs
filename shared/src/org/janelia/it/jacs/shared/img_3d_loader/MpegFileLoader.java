@@ -11,6 +11,8 @@ import com.xuggle.xuggler.IStream;
 import com.xuggle.xuggler.IStreamCoder;
 
 import java.awt.image.BufferedImage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +23,8 @@ import java.awt.image.BufferedImage;
  * Pull MPEG / MP4 file contents inot memory.
  */
 public class MpegFileLoader extends LociFileLoader {
+    private int imagesRead = 0;
+    
     @Override
     public void loadVolumeFile( String fileName ) {
         setUnCachedFileName(fileName);
@@ -36,6 +40,18 @@ public class MpegFileLoader extends LociFileLoader {
         return true;
     }
 
+    @Override
+    public int getSz() {
+        if (imagesRead < super.getSz()) {
+            Logger log = LoggerFactory.getLogger( MpegFileLoader.class );
+            log.warn(
+                "Encountered MPEG file {}, which has 'dead planes' in Z.  Expected Z was {}.  Number of planes read {}.",
+                getUnCachedFileName(), super.getSz(), imagesRead
+            );
+        }
+        return super.getSz();
+    }
+    
     private class VolumeFrameListener extends MediaListenerAdapter {
         // mpeg loading state variables
         private int mVideoStreamIndex = -1;
@@ -78,6 +94,7 @@ public class MpegFileLoader extends LociFileLoader {
             }
             storeFramePixels(frameIndex, event.getImage());
             ++frameIndex;
+            imagesRead ++;
         }
     }
 
