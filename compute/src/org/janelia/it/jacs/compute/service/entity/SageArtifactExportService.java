@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,8 +74,9 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm dimensionX;
     private CvTerm dimensionY;
     private CvTerm dimensionZ;
+    private CvTerm lab;
     
-    private Set<Entity> currLineAnnotationSet = new HashSet<>();
+    private Map<Long,Entity> currLineAnnotationMap = new HashMap<>();
     private List<String> exportedNames = new ArrayList<String>();
     
     public void execute() throws Exception {
@@ -134,6 +136,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.dimensionX = getCvTermByName("light_imagery","dimension_x");
         this.dimensionY = getCvTermByName("light_imagery","dimension_y");
         this.dimensionZ = getCvTermByName("light_imagery","dimension_z");
+        this.lab = getCvTermByName("lab", "rubin");
         
         Entity releasesFolder = null;
         for(Entity entity : entityBean.getEntitiesByNameAndTypeName(releaseEntity.getOwnerKey(), EntityConstants.NAME_FLY_LINE_RELEASES, EntityConstants.TYPE_FOLDER)) {
@@ -152,8 +155,10 @@ public class SageArtifactExportService extends AbstractEntityService {
         
         for(Entity flyLineFolder : EntityUtils.getChildrenOfType(releaseFolder, EntityConstants.TYPE_FOLDER)) {
             
-            currLineAnnotationSet.clear();
-            currLineAnnotationSet.addAll(annotationBean.getAnnotationsForEntity(null, flyLineFolder.getId()));
+            currLineAnnotationMap.clear();
+            for(Entity annotation : annotationBean.getAnnotationsForEntity(null, flyLineFolder.getId())) {
+                currLineAnnotationMap.put(annotation.getId(), annotation);    
+            }
             
             logger.info("Processing line "+flyLineFolder.getName());
             
@@ -251,7 +256,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                 }
             }
             else {
-                currLineAnnotationSet.add(annotation);
+                currLineAnnotationMap.put(annotation.getId(), annotation);
             }
         }
         
@@ -602,30 +607,31 @@ public class SageArtifactExportService extends AbstractEntityService {
 
     private void exportLineAnnotations(String lineName) throws Exception {
         
-        SageSession session = sage.getSession(releaseEntity.getName(), sessionType);
-        
         Line line = getLineByName(lineName);
-        CvTerm lab = null; // TODO: get lab
-        
+        SageSession session = sage.getSageSession(lineName, sessionType);
         if (session==null) {
+            logger.info("  Creating new session for line "+lineName);
             session = new SageSession(sessionType, lab, line, lineName, null, createDate);
         }
         else {
+            logger.info("  Updating existing session for line "+lineName+" (id="+session.getId()+")");
             session.setLine(line);
             session.setLab(lab);
         }
         
         Set<String> annotators = new HashSet<>();
-        Set<Observation> observations = new HashSet<>(0);
+        Map<String,Observation> observationMap = new HashMap<>();
+        for(Observation observation : session.getObservations()) {
+            observationMap.put(observation.getType().getName(), observation);
+        }
         
-        for(Entity annotationEntity : currLineAnnotationSet) {
+        for(Entity annotationEntity : currLineAnnotationMap.values()) {
 
             if (!annotatorKeys.contains(annotationEntity.getOwnerKey())) {
                 continue;
             }
             
-            logger.info("  Potential line annotation: "+annotationEntity.getName());
-            // TODO: determine if this is a line annotation
+            logger.info("  Processing line annotation: "+annotationEntity.getName());
             
             annotators.add(annotationEntity.getOwnerKey());
             
@@ -644,20 +650,40 @@ public class SageArtifactExportService extends AbstractEntityService {
                 value = "1";
             }
             else {
-                logger.warn("Unsupported annotation type: "+typeName);
+                logger.warn("    Unsupported annotation type: "+typeName);
+                continue;
             }
             
-            if (value==null) continue;
-            
-            String annotationName = keyEntity.getName(); // TODO: translate workstation ontology terms to sage CV terms
+            String annotationName = keyEntity.getName();
             CvTerm observationType = getCvTermByName("flylight_public_annotation",annotationName);
-            observations.add(new Observation(observationType, session, observationTerm, null, value, createDate));
+            if (observationType==null) {
+                logger.warn("    Cannot find corresponding SAGE term for ontology term '"+annotationName+"'");
+                continue;
+            }
+
+            Observation observation = observationMap.get(annotationName);
+            if (observation==null) {
+                observation = new Observation(observationType, session, observationTerm, null, value, createDate);
+            }
+            else if (observation.getId()==null) {
+                logger.warn("    Multiple annotations for the same term: "+annotationName+". Only one will be exported.");
+            }
+            
+            observationMap.put(annotationName, observation);
         }
         
-        // TODO: synchronize observations
+        // Everything remaining in the set is no longer needed and can be deleted
+        session.getObservations().clear();
+        session.getObservations().addAll(observationMap.values());
+        
+        logger.info("  Observations: ");
+        for(Observation observation : session.getObservations()) {
+            logger.info("    "+observation.getType().getName()+"="+observation.getValue()+" (id="+observation.getId()+")");
+        }
         
         session.setAnnotator(Task.csvStringFromCollection(annotators));
-        sage.saveSession(session);
+        logger.info("Saved session '"+session.getName()+"' with "+session.getObservations().size()+" observation");
+        sage.saveSageSession(session);
     }
     
 	/**

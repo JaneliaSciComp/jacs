@@ -573,7 +573,7 @@
         </parameter>
         <parameter>
             <description>Name of the release to export (e.g. "2016.1")</description>
-            <name>releaseEntityId</name>
+            <name>releaseName</name>
             <type>java.lang.String</type>
         </parameter>
     </operation>

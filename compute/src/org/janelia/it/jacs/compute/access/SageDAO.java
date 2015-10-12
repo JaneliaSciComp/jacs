@@ -310,10 +310,14 @@ public class SageDAO {
         Query query = session.createQuery("select term from CvTerm term " +
                                           "join term.cv cv " +
                                           "where cv.name = :cvName " +
-                                          "and term.name = :termName ");
+                                          "and (term.name = :termName or term.displayName = :displayName) " + 
+                                          "order by term.id ");
         query.setString("cvName", cvName);
         query.setString("termName", termName);
-        return (CvTerm)query.uniqueResult();
+        query.setString("displayName", termName);
+        List<CvTerm> list = query.list();
+        // Because of a lack of constraints, SAGE could contain duplicate CV terms, so we assume the first one is best.
+        return list.get(0);
     }
 
     public Line getLineByName(String name) throws DaoException {
@@ -450,20 +454,24 @@ public class SageDAO {
         return secondaryImage;
     }
 
-    public SageSession getSession(String sessionName, CvTerm type) {
+    public SageSession getSageSession(String sessionName, CvTerm type) {
         if (log.isTraceEnabled()) {
             log.trace("getSession(sessionName="+sessionName+")");    
         }
+        log.info("sessionName:"+sessionName);
+        log.info("type.id:"+type.getId());
         Session session = getCurrentSession();
-        Query query = session.createQuery("select session from Session session where session.name = :name and type = :type ");
+        Query query = session.createQuery("select session from SageSession session where session.name = :name and session.type = :type order by session.id ");
         query.setString("name", sessionName);
         query.setEntity("type", type);
-        return (SageSession)query.uniqueResult();
+        List<SageSession> sessions = query.list();
+        if (sessions.isEmpty()) return null;
+        return sessions.get(0);
     }
     
-    public SageSession saveSession(SageSession session) throws DaoException {
+    public SageSession saveSageSession(SageSession session) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("saveSession(session.name="+session.getName()+")");    
+            log.trace("saveSession(sessionName="+session.getName()+")");    
         }
         
         try {
