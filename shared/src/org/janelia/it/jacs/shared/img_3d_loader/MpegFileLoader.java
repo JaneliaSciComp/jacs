@@ -3,6 +3,7 @@ package org.janelia.it.jacs.shared.img_3d_loader;
 import com.xuggle.mediatool.IMediaReader;
 import com.xuggle.mediatool.MediaListenerAdapter;
 import com.xuggle.mediatool.ToolFactory;
+import com.xuggle.mediatool.event.ICloseCoderEvent;
 import com.xuggle.mediatool.event.IOpenCoderEvent;
 import com.xuggle.mediatool.event.IVideoPictureEvent;
 import com.xuggle.xuggler.ICodec;
@@ -11,6 +12,8 @@ import com.xuggle.xuggler.IStream;
 import com.xuggle.xuggler.IStreamCoder;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MpegFileLoader extends LociFileLoader {
     private int imagesRead = 0;
+    private List<int[]> pages = new ArrayList<>();
     
     @Override
     public void loadVolumeFile( String fileName ) {
@@ -56,28 +60,32 @@ public class MpegFileLoader extends LociFileLoader {
         // mpeg loading state variables
         private int mVideoStreamIndex = -1;
         private int frameIndex = 0;
-
+        
         @Override
         public void onOpenCoder(IOpenCoderEvent event) {
-            IContainer container = ((IMediaReader) event.getSource()).getContainer();
-            // Duration might be useful for computing number of frames
-            long duration = container.getDuration(); // microseconds
-            int numStreams = container.getNumStreams();
-            for (int i = 0; i < numStreams; ++i) {
-                IStream stream = container.getStream(i);
-                IStreamCoder coder = stream.getStreamCoder();
-                ICodec.Type type = coder.getCodecType();
-                if (type != ICodec.Type.CODEC_TYPE_VIDEO)
-                    continue;
-                double frameRate = coder.getFrameRate().getDouble();
-                frameIndex = 0;
-                setSx(coder.getWidth());
-                setSy(coder.getHeight());
-                setSz((int)(frameRate * duration / 1e6 + 0.5));
-                initArgbTextureIntArray();
-                setChannelCount(3);
-                setPixelBytes(4);
-                return;
+            try {
+                IContainer container = ((IMediaReader) event.getSource()).getContainer();
+                // Duration might be useful for computing number of frames
+                long duration = container.getDuration(); // microseconds
+                int numStreams = container.getNumStreams();
+                for (int i = 0; i < numStreams; ++i) {
+                    IStream stream = container.getStream(i);
+                    IStreamCoder coder = stream.getStreamCoder();
+                    ICodec.Type type = coder.getCodecType();
+                    if (type != ICodec.Type.CODEC_TYPE_VIDEO) {
+                        continue;
+                    }
+                    double frameRate = coder.getFrameRate().getDouble();
+                    frameIndex = 0;
+                    setSx(coder.getWidth());
+                    setSy(coder.getHeight());
+                    setSz((int)(frameRate * duration / 1e6 + 0.5)); //Temporary
+                    setChannelCount(3);
+                    setPixelBytes(4);
+                    return;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
 
@@ -96,16 +104,30 @@ public class MpegFileLoader extends LociFileLoader {
             ++frameIndex;
             imagesRead ++;
         }
+        
+        @Override
+        public void onCloseCoder(ICloseCoderEvent event) {
+            setSz(imagesRead);
+            initArgbTextureIntArray();
+            final int[] argbTextureIntArray = getArgbTextureIntArray();
+            int offset = 0;
+            for (int[] nextArr: pages) {                
+                System.arraycopy(nextArr, 0, argbTextureIntArray, offset, nextArr.length);
+                offset += nextArr.length;
+            }
+            
+            pages.clear();
+        }
     }
 
     private void storeFramePixels(int frameIndex, BufferedImage image) {
-        // System.out.println("Reading frame " + frameIndex);
         int sx = getSx();
         int sy = getSy();
-        int offset = frameIndex * sx * sy;
+        int[] pageArr = new int[sx * sy];
         image.getRGB(0, 0, sx, sy,
-                getArgbTextureIntArray(),
-                offset, sx);        
+                pageArr,
+                0, sx);   
+        pages.add(pageArr);
     }
 
     private void zeroColors() {
