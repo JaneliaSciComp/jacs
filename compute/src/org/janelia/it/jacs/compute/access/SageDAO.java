@@ -458,8 +458,6 @@ public class SageDAO {
         if (log.isTraceEnabled()) {
             log.trace("getSession(sessionName="+sessionName+")");    
         }
-        log.info("sessionName:"+sessionName);
-        log.info("type.id:"+type.getId());
         Session session = getCurrentSession();
         Query query = session.createQuery("select session from SageSession session where session.name = :name and session.type = :type order by session.id ");
         query.setString("name", sessionName);
