@@ -26,8 +26,7 @@ import org.slf4j.LoggerFactory;
  * Pull MPEG / MP4 file contents inot memory.
  */
 public class MpegFileLoader extends LociFileLoader {
-    private int imagesRead = 0;
-    private List<int[]> pages = new ArrayList<>();
+    private List<BufferedImage> images = new ArrayList<>();
     
     @Override
     public void loadVolumeFile( String fileName ) {
@@ -46,11 +45,11 @@ public class MpegFileLoader extends LociFileLoader {
 
     @Override
     public int getSz() {
-        if (imagesRead < super.getSz()) {
+        if (images.size() < super.getSz()) {
             Logger log = LoggerFactory.getLogger( MpegFileLoader.class );
             log.warn(
                 "Encountered MPEG file {}, which has 'dead planes' in Z.  Expected Z was {}.  Number of planes read {}.",
-                getUnCachedFileName(), super.getSz(), imagesRead
+                getUnCachedFileName(), super.getSz(), images.size()
             );
         }
         return super.getSz();
@@ -59,7 +58,6 @@ public class MpegFileLoader extends LociFileLoader {
     private class VolumeFrameListener extends MediaListenerAdapter {
         // mpeg loading state variables
         private int mVideoStreamIndex = -1;
-        private int frameIndex = 0;
         
         @Override
         public void onOpenCoder(IOpenCoderEvent event) {
@@ -76,7 +74,6 @@ public class MpegFileLoader extends LociFileLoader {
                         continue;
                     }
                     double frameRate = coder.getFrameRate().getDouble();
-                    frameIndex = 0;
                     setSx(coder.getWidth());
                     setSy(coder.getHeight());
                     setSz((int)(frameRate * duration / 1e6 + 0.5)); //Temporary
@@ -100,34 +97,30 @@ public class MpegFileLoader extends LociFileLoader {
                 else
                     return;
             }
-            storeFramePixels(frameIndex, event.getImage());
-            ++frameIndex;
-            imagesRead ++;
+            images.add( event.getImage() );
         }
         
         @Override
         public void onCloseCoder(ICloseCoderEvent event) {
-            setSz(imagesRead);
+            setSz(images.size());
             initArgbTextureIntArray();
-            final int[] argbTextureIntArray = getArgbTextureIntArray();
-            int offset = 0;
-            for (int[] nextArr: pages) {                
-                System.arraycopy(nextArr, 0, argbTextureIntArray, offset, nextArr.length);
-                offset += nextArr.length;
+            int frameIndex = 0;
+            for (BufferedImage nextImage: images) {
+                storeFramePixels(frameIndex, nextImage);
+                frameIndex ++;
             }
             
-            pages.clear();
+            images.clear();
         }
     }
 
     private void storeFramePixels(int frameIndex, BufferedImage image) {
         int sx = getSx();
         int sy = getSy();
-        int[] pageArr = new int[sx * sy];
+        int offset = frameIndex * sx * sy;
         image.getRGB(0, 0, sx, sy,
-                pageArr,
-                0, sx);   
-        pages.add(pageArr);
+                getArgbTextureIntArray(),
+                offset, sx);   
     }
 
     private void zeroColors() {
