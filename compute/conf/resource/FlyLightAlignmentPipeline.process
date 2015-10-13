@@ -143,7 +143,7 @@
 	        
                 <sequence forEach="REGENERATE_INPUT">
                 
-                    <operation name="Remove regenerate input" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpRegeneratedService">
+                    <operation name="Remove regenerate input" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpRegeneratedFilesService">
                         <input name="ALIGNMENT_INPUT" value="$V{REGENERATE_INPUT}"/>
                     </operation>
                     

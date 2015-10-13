@@ -37,6 +37,8 @@ import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
+import org.janelia.it.jacs.model.sage.Observation;
+import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -308,10 +310,14 @@ public class SageDAO {
         Query query = session.createQuery("select term from CvTerm term " +
                                           "join term.cv cv " +
                                           "where cv.name = :cvName " +
-                                          "and term.name = :termName ");
+                                          "and (term.name = :termName or term.displayName = :displayName) " + 
+                                          "order by term.id ");
         query.setString("cvName", cvName);
         query.setString("termName", termName);
-        return (CvTerm)query.uniqueResult();
+        query.setString("displayName", termName);
+        List<CvTerm> list = query.list();
+        // Because of a lack of constraints, SAGE could contain duplicate CV terms, so we assume the first one is best.
+        return list.get(0);
     }
 
     public Line getLineByName(String name) throws DaoException {
@@ -447,6 +453,49 @@ public class SageDAO {
         }
         return secondaryImage;
     }
+
+    public SageSession getSageSession(String sessionName, CvTerm type) {
+        if (log.isTraceEnabled()) {
+            log.trace("getSession(sessionName="+sessionName+")");    
+        }
+        log.info("sessionName:"+sessionName);
+        log.info("type.id:"+type.getId());
+        Session session = getCurrentSession();
+        Query query = session.createQuery("select session from SageSession session where session.name = :name and session.type = :type order by session.id ");
+        query.setString("name", sessionName);
+        query.setEntity("type", type);
+        List<SageSession> sessions = query.list();
+        if (sessions.isEmpty()) return null;
+        return sessions.get(0);
+    }
+    
+    public SageSession saveSageSession(SageSession session) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveSession(sessionName="+session.getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(session);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error saving session in SAGE", e);
+        }
+        return session;
+    }
+
+    public Observation saveObservation(Observation observation) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveObservation(observation.type.name="+observation.getType().getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(observation);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error saving observation in SAGE", e);
+        }
+        return observation;
+    }
     
     /**
      * @return map of static terms which are not part of any vocabulary.
@@ -454,7 +503,7 @@ public class SageDAO {
     private Map<String,SageTerm> getStaticTerms() {
 
         final String[][] terms = {
-                //name           displayName        dataType     definition                               vocabulary
+                //name           displayName        dataType     definition                                 vocabulary
                 {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database",   "image_query"},
                 {"name",         "Image Path",      "text",      "Relative path to the image",              "image_query"},
                 {"path",         "Full Image Path", "text",      "Absolute path to the image",              "image_query"},

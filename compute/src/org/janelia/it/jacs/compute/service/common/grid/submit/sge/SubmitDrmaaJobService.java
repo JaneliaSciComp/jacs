@@ -299,12 +299,15 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	int mem = getRequiredMemoryInGB();
         	int slots = getRequiredSlots();
         	this.gridResourceSpec = new GridResourceSpec(mem, slots, isExclusive());
-        	String ns = "";
+        	String ns = gridResourceSpec.getNativeSpec();
         	if (isShortPipelineJob()) {
-        		ns = gridResourceSpec.getNativeSpec()+" -l short=true -now n";
+        		ns += " -l short=true -now n";
         	}
             if (isImmediateProcessingJob()) {
-                ns = gridResourceSpec.getNativeSpec()+" -l jacs=true -now n";
+                if (isShortPipelineJob()) {
+                    throw new IllegalStateException("Job cannot be both a shortPipeline and an immediateProcessing job: "+task.getObjectId());
+                }
+                ns += " -l jacs=true -now n";
             }
         	String ans = getAdditionalNativeSpecification();
         	if (!Strings.isNullOrEmpty(ans)) {

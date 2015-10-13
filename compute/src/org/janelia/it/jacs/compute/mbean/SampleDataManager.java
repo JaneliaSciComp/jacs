@@ -722,11 +722,19 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSageArtifactExport(String user) {
+    public void runSageArtifactExport(String owner, String releaseName) {
         try {
+            Subject subject = EJBFactory.getLocalComputeBean().getSubjectByNameOrKey(owner);
+            if (subject==null) throw new IllegalArgumentException("User with name "+owner+" does not exist");
+            List<Entity> releases = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(subject.getKey(), releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE);
+            if (releases.isEmpty()) throw new IllegalArgumentException("Release with name "+releaseName+" does not exist");
+            if (releases.size()>1) throw new IllegalArgumentException("More than one release with name "+releaseName);
+            Entity release = releases.get(0);
             String processName = "SageArtifactExport";
             String displayName = "Sage Artifact Export";
-            saveAndRunTask(user, processName, displayName);
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
+            taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null)); 
+            saveAndRunTask(subject.getKey(), processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running SAGE Artifact Export", ex);

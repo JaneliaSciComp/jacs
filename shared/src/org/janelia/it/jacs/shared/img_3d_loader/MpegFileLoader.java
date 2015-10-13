@@ -3,6 +3,7 @@ package org.janelia.it.jacs.shared.img_3d_loader;
 import com.xuggle.mediatool.IMediaReader;
 import com.xuggle.mediatool.MediaListenerAdapter;
 import com.xuggle.mediatool.ToolFactory;
+import com.xuggle.mediatool.event.ICloseCoderEvent;
 import com.xuggle.mediatool.event.IOpenCoderEvent;
 import com.xuggle.mediatool.event.IVideoPictureEvent;
 import com.xuggle.xuggler.ICodec;
@@ -11,6 +12,10 @@ import com.xuggle.xuggler.IStream;
 import com.xuggle.xuggler.IStreamCoder;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +26,8 @@ import java.awt.image.BufferedImage;
  * Pull MPEG / MP4 file contents inot memory.
  */
 public class MpegFileLoader extends LociFileLoader {
+    private List<BufferedImage> images = new ArrayList<>();
+    
     @Override
     public void loadVolumeFile( String fileName ) {
         setUnCachedFileName(fileName);
@@ -36,32 +43,46 @@ public class MpegFileLoader extends LociFileLoader {
         return true;
     }
 
+    @Override
+    public int getSz() {
+        if (images.size() < super.getSz()) {
+            Logger log = LoggerFactory.getLogger( MpegFileLoader.class );
+            log.warn(
+                "Encountered MPEG file {}, which has 'dead planes' in Z.  Expected Z was {}.  Number of planes read {}.",
+                getUnCachedFileName(), super.getSz(), images.size()
+            );
+        }
+        return super.getSz();
+    }
+    
     private class VolumeFrameListener extends MediaListenerAdapter {
         // mpeg loading state variables
         private int mVideoStreamIndex = -1;
-        private int frameIndex = 0;
-
+        
         @Override
         public void onOpenCoder(IOpenCoderEvent event) {
-            IContainer container = ((IMediaReader) event.getSource()).getContainer();
-            // Duration might be useful for computing number of frames
-            long duration = container.getDuration(); // microseconds
-            int numStreams = container.getNumStreams();
-            for (int i = 0; i < numStreams; ++i) {
-                IStream stream = container.getStream(i);
-                IStreamCoder coder = stream.getStreamCoder();
-                ICodec.Type type = coder.getCodecType();
-                if (type != ICodec.Type.CODEC_TYPE_VIDEO)
-                    continue;
-                double frameRate = coder.getFrameRate().getDouble();
-                frameIndex = 0;
-                setSx(coder.getWidth());
-                setSy(coder.getHeight());
-                setSz((int)(frameRate * duration / 1e6 + 0.5));
-                initArgbTextureIntArray();
-                setChannelCount(3);
-                setPixelBytes(4);
-                return;
+            try {
+                IContainer container = ((IMediaReader) event.getSource()).getContainer();
+                // Duration might be useful for computing number of frames
+                long duration = container.getDuration(); // microseconds
+                int numStreams = container.getNumStreams();
+                for (int i = 0; i < numStreams; ++i) {
+                    IStream stream = container.getStream(i);
+                    IStreamCoder coder = stream.getStreamCoder();
+                    ICodec.Type type = coder.getCodecType();
+                    if (type != ICodec.Type.CODEC_TYPE_VIDEO) {
+                        continue;
+                    }
+                    double frameRate = coder.getFrameRate().getDouble();
+                    setSx(coder.getWidth());
+                    setSy(coder.getHeight());
+                    setSz((int)(frameRate * duration / 1e6 + 0.5)); //Temporary
+                    setChannelCount(3);
+                    setPixelBytes(4);
+                    return;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
 
@@ -76,19 +97,30 @@ public class MpegFileLoader extends LociFileLoader {
                 else
                     return;
             }
-            storeFramePixels(frameIndex, event.getImage());
-            ++frameIndex;
+            images.add( event.getImage() );
+        }
+        
+        @Override
+        public void onCloseCoder(ICloseCoderEvent event) {
+            setSz(images.size());
+            initArgbTextureIntArray();
+            int frameIndex = 0;
+            for (BufferedImage nextImage: images) {
+                storeFramePixels(frameIndex, nextImage);
+                frameIndex ++;
+            }
+            
+            images.clear();
         }
     }
 
     private void storeFramePixels(int frameIndex, BufferedImage image) {
-        // System.out.println("Reading frame " + frameIndex);
         int sx = getSx();
         int sy = getSy();
         int offset = frameIndex * sx * sy;
         image.getRGB(0, 0, sx, sy,
                 getArgbTextureIntArray(),
-                offset, sx);        
+                offset, sx);   
     }
 
     private void zeroColors() {

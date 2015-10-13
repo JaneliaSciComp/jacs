@@ -6,6 +6,8 @@ import java.util.List;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.FileUtils;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
  * Cleans up the merged tiles to save on disk space.
@@ -42,6 +44,10 @@ public class CleanUpMergedTilesService extends AbstractEntityService {
             
             contextLogger.info("Cleaning up merged tile: "+file.getAbsolutePath());
             FileUtils.forceDelete(file);
+            
+            for(Entity imageEntity : entityBean.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, file.getAbsolutePath())) {
+                entityBean.deleteEntityTreeById(ownerKey, imageEntity.getId());
+            }
         }
     }
 }
