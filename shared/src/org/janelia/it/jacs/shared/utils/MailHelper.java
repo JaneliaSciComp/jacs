@@ -40,7 +40,7 @@ public class MailHelper {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(from));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
-            message.setSubject("[FW] " + subject);
+            message.setSubject("[JW] " + subject);
             message.setText(bodyText);
 
             //

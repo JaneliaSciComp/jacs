@@ -32,6 +32,9 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 /**
  * Synchronizes workstation artifacts into the SAGE database for all annotated samples. 
  * If everything is successful, it then annotates the samples as having been exported.
@@ -395,7 +398,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                         Entity default3dImage = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
                         imageStack.name = default3dImage.getId()+"-stitched-"+area;
                         imageStack.tag = area;
-                        imageStack.filepath = result.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                        imageStack.filepath = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                         imageStack.sageId = null;
                         imageStack.chanSpec = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
                         imageStack.pixelRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
@@ -624,18 +627,32 @@ public class SageArtifactExportService extends AbstractEntityService {
         for(Observation observation : session.getObservations()) {
             observationMap.put(observation.getType().getName(), observation);
         }
-        
-        for(Entity annotationEntity : currLineAnnotationMap.values()) {
 
+        Multimap<String,Entity> annotationDeduper = HashMultimap.<String,Entity>create();
+        for(Entity annotationEntity : currLineAnnotationMap.values()) {
             if (!annotatorKeys.contains(annotationEntity.getOwnerKey())) {
                 continue;
             }
+            String keyEntityId = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
+            annotationDeduper.put(keyEntityId, annotationEntity);
+        }
+        
+        for (String keyEntityId : annotationDeduper.keySet()) {
+
+            // Get latest annotation for this key 
+            List<Entity> annotations = new ArrayList<>(annotationDeduper.get(keyEntityId));
+            Collections.sort(annotations, new Comparator<Entity>() {
+                @Override
+                public int compare(Entity o1, Entity o2) {
+                    return o2.getCreationDate().compareTo(o1.getCreationDate());
+                }
+            });
+            Entity annotationEntity = annotations.get(0);
             
             logger.info("  Processing line annotation: "+annotationEntity.getName());
             
             annotators.add(annotationEntity.getOwnerKey());
             
-            String keyEntityId = annotationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
             Entity keyEntity = entityBean.getEntityById(keyEntityId);
             
             String typeName = keyEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
@@ -661,19 +678,36 @@ public class SageArtifactExportService extends AbstractEntityService {
                 continue;
             }
 
-            Observation observation = observationMap.get(annotationName);
+            String obsName = observationType.getName();
+            Observation observation = observationMap.get(obsName);
             if (observation==null) {
                 observation = new Observation(observationType, session, observationTerm, null, value, createDate);
             }
-            else if (observation.getId()==null) {
-                logger.warn("    Multiple annotations for the same term: "+annotationName+". Only one will be exported.");
+            else {
+                if (observation.getId()==null) {
+                    logger.warn("    Multiple annotations for the same term: "+obsName+". Only one will be exported.");
+                }
+                // Update observation value
+                observation.setValue(value);
             }
             
-            observationMap.put(annotationName, observation);
+            observationMap.put(obsName, observation);
+
+            for (int i=1; i<annotations.size(); i++) {
+                Entity dupAnnotation = annotations.get(i);
+                logger.warn("  Ignoring duplicate line annotation: "+dupAnnotation.getName());
+            }
         }
-        
-        // Everything remaining in the set is no longer needed and can be deleted
-        session.getObservations().clear();
+
+        // Everything not in the map is no longer needed and can be deleted
+        for (Iterator<Observation> it = session.getObservations().iterator(); it.hasNext(); ) {
+            Observation entry = it.next();
+            Observation obs = observationMap.get(entry.getType().getName());
+            if (obs==null || !obs.getId().equals(entry.getId())) {
+                it.remove();    
+            }
+        }
+    
         session.getObservations().addAll(observationMap.values());
         
         logger.info("  Observations: ");
