@@ -1,27 +1,7 @@
 package org.janelia.it.jacs.compute.wsrest;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.api.EntityBeanRemote;
-import org.janelia.it.jacs.model.entity.DataSet;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.status.CurrentTaskStatus;
-import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
-import org.janelia.it.jacs.model.tasks.Event;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
-import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.model.user_data.User;
-import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
-import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
-import org.jboss.resteasy.spi.Failure;
-import org.jboss.resteasy.spi.NotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -35,8 +15,31 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.janelia.it.jacs.model.entity.DataSet;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.json.JsonRelease;
+import org.janelia.it.jacs.model.status.CurrentTaskStatus;
+import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
+import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.model.user_data.User;
+import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
+import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
+import org.jboss.resteasy.spi.Failure;
+import org.jboss.resteasy.spi.NotFoundException;
 
 /**
  * Defines RESTful web service entry points.
@@ -525,6 +528,59 @@ public class RestfulWebService {
         return list;
     }
 
+    /**
+     * Get release information. 
+     */
+    @GET
+    @Path("release")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Formatted
+    public Response getReleaseInfo() {
+
+        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
+        List<JsonRelease> releaseList = new ArrayList<>();
+        
+        try {
+            for(Entity releaseEntity : entityBean.getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+                logger.info("adding "+releaseEntity.getId());
+                releaseList.add(new JsonRelease(releaseEntity));
+            }
+        }
+        catch (ComputeException e) {
+            logger.error("Problem getting releases",e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        
+        return Response.status(Response.Status.OK).entity(releaseList).build();
+    }
+    
+    /**
+     * Get release information. 
+     */
+    @GET
+    @Path("release/{releaseName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Formatted
+    public Response getReleaseInfo(
+            @PathParam("releaseName")String releaseName) {
+
+        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
+        List<JsonRelease> releaseList = new ArrayList<>();
+        
+        try {
+            for(Entity releaseEntity : entityBean.getEntitiesByNameAndTypeName(null, releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+                logger.info("adding "+releaseEntity.getId());
+                releaseList.add(new JsonRelease(releaseEntity));
+            }
+        }
+        catch (ComputeException e) {
+            logger.error("Problem getting releases",e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        
+        return Response.status(Response.Status.OK).entity(releaseList).build();
+    }
+    
     /**
      * Wraps {@link Entity} objects in the specified list as {@link DataSet}
      * objects so that JAXB can marshall the resulting list more clearly.
