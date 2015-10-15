@@ -44,14 +44,13 @@ import com.google.common.collect.Multimap;
 public class SageArtifactExportService extends AbstractEntityService {
 
 	public static final String CREATED_BY = "Janelia Workstation";
-	
-    private static final String WEBDAV_PREFIX = "http://jacs-webdav.int.janelia.org:8080/Webdav";
-    private static final String NO_CONSENSUS = "No Consensus";
-    private static final String PUBLISHED_TO = "Split GAL4";
-    private static final String ANNOTATION_EXPORT_20X = "Publish20xToWeb";
-    private static final String ANNOTATION_EXPORT_63X = "Publish63xToWeb";
-    private static final String ANNOTATION_EXPORTED = "PublishedToWeb";
-    private static final String PUBLICATION_OWNER = "group:workstation_users";
+    public static final String ANNOTATION_EXPORT_20X = "Publish20xToWeb";
+    public static final String ANNOTATION_EXPORT_63X = "Publish63xToWeb";
+    public static final String ANNOTATION_EXPORTED = "PublishedToWeb";
+    public static final String WEBDAV_PREFIX = "http://jacs-webdav.int.janelia.org:8080/Webdav";
+    public static final String NO_CONSENSUS = "No Consensus";
+    public static final String PUBLISHED_TO = "Split GAL4";
+    public static final String PUBLICATION_OWNER = "group:workstation_users";
     
     private SageDAO sage;
     
