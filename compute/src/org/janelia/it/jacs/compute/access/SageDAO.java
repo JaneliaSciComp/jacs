@@ -373,6 +373,26 @@ public class SageDAO {
         return (List<Image>) query.list();
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Image> getImagesByPropertyValue(CvTerm propertyType, String value) throws DaoException {
+        try {
+            if (log.isTraceEnabled()) {
+                log.trace("getImagesByPropertyValue(propertyType.name="+propertyType.getName()+", value="+value+")");    
+            }
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select imageProperty.image from ImageProperty ip ");
+            hql.append("join ip.image ");
+            hql.append("where ip.type=:type and ed.value like :value ");
+            Query query = session.createQuery(hql.toString());
+            query.setEntity("type", propertyType);
+            query.setString("value", value);
+            return query.list();
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error deleting image property in SAGE", e);
+        }
+    }
+    
     public void deleteImageProperty(ImageProperty imageProperty) throws DaoException {
         try {
         	Image image = imageProperty.getImage();
