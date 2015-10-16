@@ -682,7 +682,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab10022015b.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft1015c.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);

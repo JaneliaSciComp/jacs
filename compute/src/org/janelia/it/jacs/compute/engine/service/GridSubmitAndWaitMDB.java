@@ -1,15 +1,5 @@
 package org.janelia.it.jacs.compute.engine.service;
 
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.ObjectMessage;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.drmaa.JobStatusLogger;
@@ -27,6 +17,15 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.ejb3.StrictMaxPool;
 
+import javax.ejb.ActivationConfigProperty;
+import javax.ejb.MessageDriven;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.ObjectMessage;
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by IntelliJ IDEA.
  * User: sreenath
@@ -37,7 +36,7 @@ import org.jboss.ejb3.StrictMaxPool;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/gridSubmitAndWait"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "200"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "300"),
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="5"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
@@ -47,7 +46,7 @@ import org.jboss.ejb3.StrictMaxPool;
 //        @ActivationConfigProperty(propertyName="RedeliveryDelay", propertyValue="30"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 300, timeout = 10000)
 public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
     //public static QueueMessage originalMessage = null;
