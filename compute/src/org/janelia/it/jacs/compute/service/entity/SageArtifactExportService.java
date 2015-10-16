@@ -668,7 +668,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
             
             String annotationName = keyEntity.getName();
-            CvTerm observationType = getCvTermByName("flylight_public_annotation",annotationName);
+            CvTerm observationType = sage.getCvTermByName("flylight_public_annotation",annotationName);
             if (observationType==null) {
                 logger.warn("      Cannot find corresponding SAGE term for ontology term '"+annotationName+"'");
                 continue;
