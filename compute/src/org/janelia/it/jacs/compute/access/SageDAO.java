@@ -316,6 +316,7 @@ public class SageDAO {
         query.setString("termName", termName);
         query.setString("displayName", termName);
         List<CvTerm> list = query.list();
+        if (list.isEmpty()) return null;
         // Because of a lack of constraints, SAGE could contain duplicate CV terms, so we assume the first one is best.
         return list.get(0);
     }
