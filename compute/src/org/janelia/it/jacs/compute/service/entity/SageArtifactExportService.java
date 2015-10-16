@@ -169,6 +169,11 @@ public class SageArtifactExportService extends AbstractEntityService {
             entityLoader.populateChildren(flyLineFolder);
             int reps = 0;
             for(Entity sample : EntityUtils.getChildrenOfType(flyLineFolder, EntityConstants.TYPE_SAMPLE)) {
+                String line = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
+                if (!line.equals(flyLineFolder.getName())) {
+                    logger.warn("Ignoring sample "+sample.getName()+" that is categorized in folder "+flyLineFolder.getName()+" but should be "+line+".");
+                    continue;
+                }
                 if (processSamples(sample)>0) {
                     reps++;
                 }
@@ -231,7 +236,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     private int processSample(Entity parentSample, Entity sample) throws Exception {
 
         logger.info("  Processing sample "+sample.getName());
-        Set<String> publishingUsers = new HashSet<>();
+        Set<String> publishingSubjectKeys = new HashSet<>();
         
         String objective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
         boolean export = false;
@@ -245,24 +250,26 @@ public class SageArtifactExportService extends AbstractEntityService {
         
         Map<Long,Entity> annotationMap = new HashMap<>();
         for(Entity annotation : annotations) {
+            
+            if (annotation.getName().equals(ANNOTATION_EXPORTED)) {
+                exported = true;
+            }
+            
             if (!annotatorKeys.contains(annotation.getOwnerKey())) {
                 continue;
             }
             
             if (annotation.getName().equals(ANNOTATION_EXPORT_20X)) {
                 if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
-                    publishingUsers.add(annotation.getOwnerKey());
+                    publishingSubjectKeys.add(annotation.getOwnerKey());
                     export = true;
                 }
             }
             else if (annotation.getName().equals(ANNOTATION_EXPORT_63X)) {
                 if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
-                    publishingUsers.add(annotation.getOwnerKey());
+                    publishingSubjectKeys.add(annotation.getOwnerKey());
                     export = true;
                 }
-            }
-            else if (annotation.getName().equals(ANNOTATION_EXPORTED)) {
-                exported = true;
             }
             else {
                 annotationMap.put(annotation.getId(), annotation);
@@ -271,8 +278,8 @@ public class SageArtifactExportService extends AbstractEntityService {
         
         if (export) {
             currLineAnnotationMap.putAll(annotationMap);
-            String publishingUser = publishingUsers.iterator().next();
-            if (publishingUsers.size()>1) {
+            String publishingUser = EntityUtils.getNameFromSubjectKey(publishingSubjectKeys.iterator().next());
+            if (publishingSubjectKeys.size()>1) {
                 logger.warn("    More than one user marked "+sample.getName()+" for publication. Using: "+publishingUser);
             }
             syncSample(sample, publishingUser);
@@ -602,11 +609,11 @@ public class SageArtifactExportService extends AbstractEntityService {
         Line line = getLineByName(lineName);
         SageSession session = sage.getSageSession(lineName, sessionType);
         if (session==null) {
-            logger.info("  Creating new session for line "+lineName);
+            logger.info("    Creating new session for line "+lineName);
             session = new SageSession(sessionType, lab, line, lineName, null, createDate);
         }
         else {
-            logger.info("  Updating existing session for line "+lineName+" (id="+session.getId()+")");
+            logger.info("    Updating existing session for line "+lineName+" (id="+session.getId()+")");
             session.setLine(line);
             session.setLab(lab);
         }
@@ -638,9 +645,9 @@ public class SageArtifactExportService extends AbstractEntityService {
             });
             Entity annotationEntity = annotations.get(0);
             
-            logger.info("  Processing line annotation: "+annotationEntity.getName());
+            logger.info("    Processing line annotation: "+annotationEntity.getName());
             
-            annotators.add(annotationEntity.getOwnerKey());
+            annotators.add(EntityUtils.getNameFromSubjectKey(annotationEntity.getOwnerKey()));
             
             Entity keyEntity = entityBean.getEntityById(keyEntityId);
             
@@ -656,14 +663,14 @@ public class SageArtifactExportService extends AbstractEntityService {
                 value = "1";
             }
             else {
-                logger.warn("    Unsupported annotation type: "+typeName);
+                logger.warn("      Unsupported annotation type: "+typeName);
                 continue;
             }
             
             String annotationName = keyEntity.getName();
             CvTerm observationType = getCvTermByName("flylight_public_annotation",annotationName);
             if (observationType==null) {
-                logger.warn("    Cannot find corresponding SAGE term for ontology term '"+annotationName+"'");
+                logger.warn("      Cannot find corresponding SAGE term for ontology term '"+annotationName+"'");
                 continue;
             }
 
@@ -674,7 +681,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
             else {
                 if (observation.getId()==null) {
-                    logger.warn("    Multiple annotations for the same term: "+obsName+". Only one will be exported.");
+                    logger.warn("      Multiple annotations for the same term: "+obsName+". Only one will be exported.");
                 }
                 // Update observation value
                 observation.setValue(value);
@@ -684,7 +691,7 @@ public class SageArtifactExportService extends AbstractEntityService {
 
             for (int i=1; i<annotations.size(); i++) {
                 Entity dupAnnotation = annotations.get(i);
-                logger.warn("  Ignoring duplicate line annotation: "+dupAnnotation.getName());
+                logger.warn("    Ignoring duplicate line annotation: "+dupAnnotation.getName());
             }
         }
 
@@ -699,13 +706,13 @@ public class SageArtifactExportService extends AbstractEntityService {
     
         session.getObservations().addAll(observationMap.values());
         
-        logger.info("  Observations: ");
+        logger.info("    Observations: ");
         for(Observation observation : session.getObservations()) {
-            logger.info("    "+observation.getType().getName()+"="+observation.getValue()+" (id="+observation.getId()+")");
+            logger.info("      "+observation.getType().getName()+"="+observation.getValue()+" (id="+observation.getId()+")");
         }
         
         session.setAnnotator(Task.csvStringFromCollection(annotators));
-        logger.info("Saved session '"+session.getName()+"' with "+session.getObservations().size()+" observation");
+        logger.info("    Saved session '"+session.getName()+"' with "+session.getObservations().size()+" observations");
         sage.saveSageSession(session);
     }
     
@@ -738,14 +745,13 @@ public class SageArtifactExportService extends AbstractEntityService {
     private void unpublishSample(Entity sample) throws Exception {
 
         for(Image image : sage.getImagesByPropertyValue(propertyWorkstationSampleId, sample.getId().toString())) {
-            logger.info("  Unpublishing primary image "+image.getName());
+            logger.info("    Unpublishing primary image "+image.getName()+" (id="+image.getId()+")");
             sage.setImageProperty(image, propertyToPublish, "N", createDate);
         }
         
         for(Entity annotation : annotationBean.getAnnotationsForEntity(PUBLICATION_OWNER, sample.getId())) {
             String keyEntityId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_KEY_ENTITY_ID);
             if (keyEntityId!=null && keyEntityId.equals(publishedTerm.getId().toString())) {
-                logger.info("  Removing published annotation "+annotation.getId());
                 annotationBean.removeOntologyAnnotation(PUBLICATION_OWNER, annotation.getId());
             }
         }
