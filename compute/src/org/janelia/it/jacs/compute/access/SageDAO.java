@@ -380,9 +380,9 @@ public class SageDAO {
                 log.trace("getImagesByPropertyValue(propertyType.name="+propertyType.getName()+", value="+value+")");    
             }
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select imageProperty.image from ImageProperty ip ");
+            StringBuffer hql = new StringBuffer("select distinct ip.image from ImageProperty ip ");
             hql.append("join ip.image ");
-            hql.append("where ip.type=:type and ed.value like :value ");
+            hql.append("where ip.type=:type and ip.value=:value ");
             Query query = session.createQuery(hql.toString());
             query.setEntity("type", propertyType);
             query.setString("value", value);
