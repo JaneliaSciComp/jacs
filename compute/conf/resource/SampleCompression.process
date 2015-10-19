@@ -45,7 +45,7 @@
             <operation name="Sample Compression Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
                 <input name="PROCESS_DEF_NAME" value="PostPipeline_SampleCompression"/>
                 <input name="DISPLAY_NAME" value="Sample Compression"/>
-                <input name="PARAMETER_1_KEY" value="root entity id"/>
+                <input name="PARAMETER_1_KEY" value="sample entity id"/>
                 <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
                 <input name="PARAMETER_2_KEY" value="compression type"/>
                 <input name="PARAMETER_2_VALUE" value="$V{COMPRESSION_TYPE}"/>

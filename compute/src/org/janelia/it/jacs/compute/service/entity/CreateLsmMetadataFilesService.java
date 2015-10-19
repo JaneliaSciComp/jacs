@@ -6,6 +6,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -22,7 +23,7 @@ import java.util.List;
  * Takes the bulk merge parameters and creates metadata files for each one. 
  * The parameters should be included in the ProcessData:
  *   SAMPLE_ENTITY_ID
- *   BULK_MERGE_PARAMETERS 
+ *   SAMPLE_AREA 
  *   RESULT_FILE_NODE
  *   OUTPUT_FILE_NODE
  * 
@@ -37,7 +38,6 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     private List<File> inputFiles = new ArrayList<File>();
 
     private String sampleEntityId;
-    private File lsmDataFile;
     private File jsonDataFile;
     
     protected void init(IProcessData processData) throws Exception {
@@ -55,17 +55,9 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	if (sampleEntityId == null) {
     		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
     	}
-
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-        if (bulkMergeParamObj==null) {
-            throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-        }
-
-        if (!(bulkMergeParamObj instanceof List)) {
-            throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
-        }
-        
-        List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+    	
+        AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
+        List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
 
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
             inputFiles.add(new File(mergedLsmPair.getLsmFilepath1()));
@@ -96,10 +88,8 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
         FileWriter fw = new FileWriter(configFile);
         try {
             String metadataStub = createLsmMetadataFilename(inputFile);
-            this.lsmDataFile = new File(outputDir, metadataStub+".metadata");
             this.jsonDataFile = new File(outputDir, metadataStub+".json");
             fw.write(inputFile.getAbsolutePath() + "\n");
-            fw.write(lsmDataFile.getAbsolutePath() + "\n");
             fw.write(jsonDataFile.getAbsolutePath() + "\n");
         }
         catch (IOException e) {
@@ -113,23 +103,14 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     private void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read INPUT_FILENAME\n");
-        script.append("read METADATA_FILENAME\n");
         script.append("read JSON_FILENAME\n");
         script.append("cd "+outputDir.getAbsolutePath()).append("\n");
         script.append("echo \"Generating metadata for LSM files in sample "+sampleEntityId+"\" \n");
-        script.append(getScriptToCreateLsmMetadataFile("$INPUT_FILENAME", "$METADATA_FILENAME")).append("\n");
         script.append(getScriptToCreateLsmJsonFile("$INPUT_FILENAME", "$JSON_FILENAME")).append("\n");
         
         writer.write(script.toString());
     }
     
-    private String getScriptToCreateLsmMetadataFile(String inputFile, String outputFile) throws ServiceException {
-        return "perl " +
-                SystemConfigurationProperties.getString("Executables.ModuleBase") + 
-                SystemConfigurationProperties.getString("LSMMetadataDump.CMD")+ " " +
-                addQuotes(inputFile) + " " + addQuotes(outputFile);
-    }
-
     private String getScriptToCreateLsmJsonFile(String inputFile, String outputFile) throws ServiceException {
         return "perl " +
                 SystemConfigurationProperties.getString("Executables.ModuleBase") + 

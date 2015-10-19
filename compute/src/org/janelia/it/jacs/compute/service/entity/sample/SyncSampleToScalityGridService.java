@@ -1,18 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -30,6 +17,11 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 
+import java.io.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Moves the given Sample's files to the Scality object store via the Sproxyd REST API and updates the object model to add a Scality BPID attribute to each file entity.
  * 
@@ -40,13 +32,16 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     private static final String CONFIG_PREFIX = "scalityConfiguration.";
     private static final String TIMING_PREFIX="Timing: ";
 
+    protected static final boolean SCALITY_ALLOW_WRITES =
+            SystemConfigurationProperties.getBoolean("Scality.AllowWrites");
+
     protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
 
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
-    private static final String ARCHIVE_SYNC_CMD = 
+    private static final String SCALITY_SYNC_CMD = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
         
@@ -64,6 +59,12 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
     protected void init() throws Exception {
 
+        if (!SCALITY_ALLOW_WRITES) {
+            contextLogger.info("Scality writes are disallowed by configuration. Scality.AllowWrites is set to false in jacs.properties.");
+            cancel();
+            return;
+        }
+        
         String excludeFiles = data.getItemAsString("EXCLUDE_FILES");
         if (!StringUtils.isEmpty(excludeFiles)) {
             for(String filePattern : excludeFiles.split("\\s*,\\s*")) {
@@ -94,6 +95,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         if (entitiesToMove.isEmpty()) {
             contextLogger.info("No entities to process, aborting.");
             cancel();
+            return;
         }
     }
 	
@@ -229,7 +231,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append(Vaa3DHelper.getHostnameEcho());
         script.append("echo \"Copy source: $FILE_PATH\"\n");
         script.append("echo \"Copy target: $SCALITY_URL\"\n");
-        script.append("timing=`"+ARCHIVE_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
+        script.append("timing=`"+SCALITY_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
         script.append("echo \"$timing\"\n");
         writer.write(script.toString());
     }
@@ -245,7 +247,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     }
 
     @Override
-    protected boolean isShortJob() {
+    protected boolean isShortPipelineJob() {
         return true;
     }
 

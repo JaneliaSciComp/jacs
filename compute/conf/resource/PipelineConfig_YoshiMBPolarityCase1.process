@@ -1,12 +1,15 @@
 <process name="Yoshi Mushroom Body Polarity Case 1 Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
     
-        <include name="Pipeline" process="FlyLightPolarityPipeline">
+        <include name="Pipeline" process="FlyLightPairedSamplePipeline">
             <input name="PIPELINE_PROCESS" value="YoshiMBPolarityCase1"/>
-            <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594"/>
-            <input name="OUTPUT_CHANNEL_ORDER_20X" value="membrane,reference"/>
-            <input name="CHANNEL_DYE_SPEC_63X" value="presynaptic=Alexa Fluor 633,Alexa Fluor 647,Cy5;ignore=DY-547,Alexa Fluor 568;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"/>
-            <input name="OUTPUT_CHANNEL_ORDER_63X" value="presynaptic,membrane,reference"/>
+            <input name="20X_CHANNEL_DYE_SPEC" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594"/>
+            <input name="20X_OUTPUT_CHANNEL_ORDER" value="membrane,reference"/>
+            <input name="20X_OUTPUT_COLOR_SPEC" value="GM"/>
+            <input name="63X_CHANNEL_DYE_SPEC" value="presynaptic=Alexa Fluor 633,Alexa Fluor 647,Cy5;ignore=DY-547,Alexa Fluor 568;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"/>
+            <input name="63X_OUTPUT_CHANNEL_ORDER" value="presynaptic,membrane,reference"/>
+            <input name="63X_OUTPUT_COLOR_SPEC" value="MG1"/>
+            <input name="IMAGE_TYPE" value="polarity"/>
         </include>
         
     </sequence>

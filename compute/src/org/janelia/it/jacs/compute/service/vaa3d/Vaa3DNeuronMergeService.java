@@ -104,8 +104,8 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
     }
 
     @Override
-    protected boolean isShortJob() {
-    	return true;
+    protected boolean isImmediateProcessingJob() {
+        return true;
     }
 
     @Override

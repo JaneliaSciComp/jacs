@@ -25,16 +25,16 @@ public interface StatusServiceAsync {
 
     void getPagedBlastTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback async);
 
-    void getPagedRnaSeqPipelineTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback async);
+//    void getPagedRnaSeqPipelineTaskResultsForUser(String classname, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback async);
 
     // Recruitment Viewer Methods
-    void getNumRVUserTaskResults(String likeString, AsyncCallback async);
-
-    void getNumRVSystemTaskResults(String likeString, AsyncCallback async);
-
-    void getPagedRVSystemTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback async);
-
-    void getPagedRVUserTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback async);
+//    void getNumRVUserTaskResults(String likeString, AsyncCallback async);
+//
+//    void getNumRVSystemTaskResults(String likeString, AsyncCallback async);
+//
+//    void getPagedRVSystemTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback async);
+//
+//    void getPagedRVUserTaskResults(String likeString, int startIndex, int numRows, SortArgument[] sortArgs, AsyncCallback async);
 
     void getUserTaskQueryNames(AsyncCallback async);
 
@@ -47,11 +47,11 @@ public interface StatusServiceAsync {
 
     void purgeTask(String taskId, AsyncCallback async);
 
-    void getRecruitmentTaskById(String taskId, AsyncCallback async);
+//    void getRecruitmentTaskById(String taskId, AsyncCallback async);
 
     void replaceTaskJobName(String taskId, String jobName, AsyncCallback async);
 
-    void getRecruitmentFilterTaskByUserPipelineId(String userPipelineTaskId, AsyncCallback asyncCallback);
+//    void getRecruitmentFilterTaskByUserPipelineId(String userPipelineTaskId, AsyncCallback asyncCallback);
 
 //     void getTaskOrder (String taskId, AsyncCallback callback);
 //     void getPercentCompleteOfTask (String taskId, AsyncCallback callback);

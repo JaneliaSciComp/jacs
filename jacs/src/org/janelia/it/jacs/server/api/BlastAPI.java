@@ -9,8 +9,6 @@ import org.janelia.it.jacs.model.genomics.SequenceType;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.*;
-import org.janelia.it.jacs.model.tasks.psiBlast.PsiBlastTask;
-import org.janelia.it.jacs.model.tasks.psiBlast.ReversePsiBlastTask;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.vo.MultiSelectVO;
@@ -163,13 +161,13 @@ public class BlastAPI {
             // Check the location of the blast db.  May be remote.
             try {
                 List<String> dbs = subjSeqParam.getActualUserChoices();
-                if (newBlastTask instanceof ReversePsiBlastTask) {
-                    blastProcessName = "ReversePsiBlast";
-                }
-                else if (newBlastTask instanceof PsiBlastTask) {
-                    blastProcessName = "PsiBlast";
-                }
-                else if (null != dbs && null != dbs.get(0)) {
+//                if (newBlastTask instanceof ReversePsiBlastTask) {
+//                    blastProcessName = "ReversePsiBlast";
+//                }
+//                else if (newBlastTask instanceof PsiBlastTask) {
+//                    blastProcessName = "PsiBlast";
+//                }
+                if (null != dbs && null != dbs.get(0)) {
                     BlastDatabaseFileNode tmpNode = (BlastDatabaseFileNode) computeBean.getNodeById(Long.valueOf(dbs.get(0)));
                     // Is replicated means the blast db can be executed offsite
                     if (null != tmpNode && tmpNode.getIsReplicated()) {

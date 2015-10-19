@@ -1,31 +1,21 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityActorPermission;
-import org.janelia.it.jacs.model.entity.EntityAttribute;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.*;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
+
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import java.util.*;
 
 /**
  * Implementation of queries against the entity model. 
@@ -49,8 +39,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public EntityType createNewEntityType(String entityTypeName) throws ComputeException {
     	try {
-    		EntityType entityType = _annotationDAO.createNewEntityType(entityTypeName);	
-    		return entityType;
+            return _annotationDAO.createNewEntityType(entityTypeName);
     	}
     	catch (DaoException e) {
             _logger.error("Could not create entity type "+entityTypeName,e);
@@ -135,7 +124,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 _annotationDAO.getCurrentSession().evict(currEntity);
     	    }
             saveOrUpdateEntity(entity);
-            _logger.info(subjectKey+" "+(isNew?"created":"saved")+" entity "+entity.getId());
+            _logger.info(subjectKey + " " + (isNew ? "created" : "saved") + " entity " + entity.getId());
             return entity;
         } 
         catch (DaoException e) {
@@ -154,7 +143,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 _annotationDAO.saveOrUpdateEntityData(ed);
                 n++;
             }
-            _logger.info(subjectKey+" updated "+n+" entity datas on entity "+entity.getId());
+            _logger.info(subjectKey + " updated " + n + " entity datas on entity " + entity.getId());
             updateIndex(entity);
             return entity;
         } 
@@ -175,7 +164,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 _annotationDAO.getCurrentSession().evict(currEntity);
             }
             saveOrUpdateEntityData(ed);
-        	_logger.info(subjectKey+" "+(isNew?"created":"saved")+" entity data "+ed.getId());
+        	_logger.info(subjectKey + " " + (isNew ? "created" : "saved") + " entity data " + ed.getId());
             return ed;
         } 
         catch (DaoException e) {
@@ -260,7 +249,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             
             EntityData ed = _annotationDAO.addEntityToParent(parent, entity, index, attrName, value, true);
             
-            _logger.info(subjectKey+" added entity data "+ed.getId()+" (parent="+parent.getId()+",child="+entity.getId()+")");
+            _logger.info(subjectKey + " added entity data " + ed.getId() + " (parent=" + parent.getId() + ",child=" + entity.getId() + ")");
             
             IndexingHelper.updateIndexAddAncestor(entityId, parentId);
             
@@ -285,7 +274,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             _annotationDAO.checkEntityTypeSupportsAttribute(parent.getEntityTypeName(), attrName);
             
         	_annotationDAO.addChildren(subjectKey, parentId, childrenIds, attrName);
-        	_logger.info("Subject "+subjectKey+" added "+childrenIds.size()+" children to parent "+parentId);
+        	_logger.info("Subject " + subjectKey + " added " + childrenIds.size() + " children to parent " + parentId);
         	
         	for(Long childId : childrenIds) {
         		IndexingHelper.updateIndexAddAncestor(childId, parentId);
@@ -352,7 +341,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public Collection<EntityData> setOrUpdateValues(String subjectKey, Collection<Long> entityIds, String attributeName, String value) throws ComputeException {
         // This will cut out a lot of round-tripping between the client and
         // middleware.  It will not cut down on middleware-to-database traffic.
-        Collection<EntityData> returnList = new ArrayList<EntityData>();
+        Collection<EntityData> returnList = new ArrayList<>();
         for ( Long entityId: entityIds ) {
             returnList.add( setOrUpdateValue( subjectKey, entityId, attributeName, value ) );
         }
@@ -445,7 +434,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
                 }
             }
             deleteEntityData(toDelete);
-            _logger.info(subjectKey+" deleted entity data "+entityDataId);
+            _logger.info(subjectKey + " deleted entity data " + entityDataId);
         }
         catch (Exception e) {
             _logger.error("Unexpected error while trying to delete entity data "+entityDataId, e);
@@ -518,7 +507,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
 
     public Set<Entity> getEntitiesByName(String subjectKey, String name) throws ComputeException {
         try {
-            return new HashSet<Entity>(_annotationDAO.getEntitiesByName(subjectKey, name));
+            return new HashSet<>(_annotationDAO.getEntitiesByName(subjectKey, name));
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities with name "+name+" for user "+subjectKey, e);
@@ -568,7 +557,7 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     
     public Set<Entity> getUserEntitiesByName(String subjectKey, String name) throws ComputeException {
         try {
-            return new HashSet<Entity>(_annotationDAO.getUserEntitiesByName(subjectKey, name));
+            return new HashSet<>(_annotationDAO.getUserEntitiesByName(subjectKey, name));
         }
         catch (DaoException e) {
             _logger.error("Error trying to get the entities with name "+name+" owned by "+subjectKey, e);
@@ -651,10 +640,6 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         return getUserEntitiesWithAttributeValue(null, attrName, attrValue);
     }
     
-    public long getCountEntitiesWithAttributeValue(String attrName, String attrValue) throws ComputeException {
-        return getCountUserEntitiesWithAttributeValue(null, attrName, attrValue);
-    }
-
     public Entity getEntityTree(Long entityId) throws ComputeException {
         return getEntityTree(null, entityId);
     }
@@ -943,4 +928,15 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
             throw new ComputeException("Error cloning entity tree "+sourceRootId,e);
         }
 	}
+
+//    @Override
+//    public List<String> getSummaryFilesForLSMs(List<String> lsmNames) throws ComputeException {
+//        try {
+//            return _annotationDAO;
+//        }
+//        catch (DaoException e) {
+//            _logger.error("Error gettingSummaryFilesForLSMs "+lsmNames.toString(), e);
+//            throw new ComputeException("Error gettingSummaryFilesForLSMs: "+lsmNames.toString(),e);
+//        }
+//    }
 }

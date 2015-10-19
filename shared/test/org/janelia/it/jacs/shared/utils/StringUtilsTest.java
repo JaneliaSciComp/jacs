@@ -47,4 +47,9 @@ public class StringUtilsTest extends TestCase {
         result = StringUtils.isEmpty( "" );
         assertTrue( "Empty string not empty", result );
     }
+    
+    public void testJustName() {
+        String justName = StringUtils.getIteratedName("myfile.swc", 1);
+        assertEquals( "New name invalid.", "myfile_1.swc", justName );
+    }
 }

@@ -35,6 +35,7 @@ public class EntityConstants {
     public static final String NAME_SHARED_DATA                      = "Shared Data";
     public static final String NAME_SPLIT_PICKING                    = "Split Picking";
     public static final String NAME_DATA_SETS                        = "Data Sets";
+    public static final String NAME_FLY_LINE_RELEASES                = "Fly Line Releases";
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
@@ -64,12 +65,15 @@ public class EntityConstants {
     public static final String TYPE_WORKSPACE                        = "Workspace";
     public static final String TYPE_ERROR                            = "Error";
     public static final String TYPE_DATA_SET                         = "Data Set";
+    public static final String TYPE_FLY_LINE_RELEASE                 = "Fly Line Release";
     public static final String TYPE_SAMPLE                           = "Sample";
     public static final String TYPE_SUPPORTING_DATA                  = "Supporting Data";
     public static final String TYPE_LSM_STACK                        = "LSM Stack";
     public static final String TYPE_IMAGE_TILE                       = "Image Tile";
     public static final String TYPE_PIPELINE_RUN                     = "Pipeline Run";
+    public static final String TYPE_LSM_SUMMARY_RESULT               = "LSM Summary Result";
     public static final String TYPE_SAMPLE_PROCESSING_RESULT         = "Sample Processing Result";
+    public static final String TYPE_POST_PROCESSING_RESULT           = "Sample Post Processing Result";
     public static final String TYPE_ALIGNMENT_RESULT                 = "Alignment Result";
     public static final String TYPE_NEURON_SEPARATOR_PIPELINE_RESULT = "Neuron Separator Pipeline Result";
     public static final String TYPE_MYERS_NEURON_SEPARATION_FILE     = "Myers Neuron Separation File";
@@ -114,6 +118,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_DEFAULT_FAST_3D_IMAGE               = "Default Fast 3D Image";
     public static final String ATTRIBUTE_REFERENCE_MIP_IMAGE                 = "Reference MIP Image";
     public static final String ATTRIBUTE_SIGNAL_MIP_IMAGE                    = "Signal MIP Image";
+    public static final String ATTRIBUTE_ALL_MIP_IMAGE                       = "All MIP Image";
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
     public static final String ATTRIBUTE_IMAGE_FORMAT                        = "Image Format";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";
@@ -177,7 +182,14 @@ public class EntityConstants {
     public static final String ATTRIBUTE_SCALITY_BPID                        = "Scality BPID";
     public static final String ATTRIBUTE_TMOG_DATE                           = "TMOG Date"; // Timestamp indicating when the LSM or Sample was TMOG'd. For Samples, this is the max TMOG date of all the LSMs. 
     public static final String ATTRIBUTE_COMPLETION_DATE                     = "Completion Date"; // Timestamp indicating when the LSM or Sample was first completed.
-        
+    
+    // Fly Line Release
+    public static final String ATTRIBUTE_RELEASE_DATE                        = "Release Date"; // Timestamp indicating when the release will take place
+    public static final String ATTRIBUTE_LAG_TIME_MONTHS                     = "Lag Time Months"; // Number of months of lag time between the release date and the samples in it
+    public static final String ATTRIBUTE_DATA_SETS                           = "Data Sets"; // Comma delimited list of data set identifiers involved in a release
+    public static final String ATTRIBUTE_ANNOTATORS                          = "Annotators"; // Comma delimited list of subject keys that can annotate a release
+    public static final String ATTRIBUTE_SUBSCRIBERS                         = "Subscribers"; // Comma delimited list of subject keys that are subscribed to a release
+    
     // Geometric Tree
     //
     //  "<id>:<parentId>:<index>:<x,y,z>:<comment>"

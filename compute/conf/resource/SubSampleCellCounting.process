@@ -1,6 +1,9 @@
 <!--
      Fully process a Sample in the database. Potentially this can include merging LSMs, stitching and blending them,
      aligning, and running analysis algorithms such as neuron separation.
+     
+     TODO: This pipeline is completely broken, due to many changes in the services supporting FlyLightSamplePipeline, which this was copy and pasted from. 
+     This needs to be rewritten as an analysis step for the normal pipeline. 
 -->
 <process name="Cell Counting Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
     <sequence name="Main">

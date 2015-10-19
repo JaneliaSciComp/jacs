@@ -6,7 +6,7 @@ import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.common.*;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.genomics.SequenceType;
-import org.janelia.it.jacs.model.prokPipeline.ProkGenomeVO;
+//import org.janelia.it.jacs.model.prokPipeline.ProkGenomeVO;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
@@ -14,9 +14,9 @@ import org.janelia.it.jacs.model.user_data.FastaFileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.blast.Blastable;
-import org.janelia.it.jacs.model.user_data.geci.GeciImageDirectoryVO;
-import org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode;
-import org.janelia.it.jacs.model.user_data.prokAnnotation.ProkAnnotationResultFileNode;
+//import org.janelia.it.jacs.model.user_data.geci.GeciImageDirectoryVO;
+//import org.janelia.it.jacs.model.user_data.geci.NeuronalAssayAnalysisResultNode;
+//import org.janelia.it.jacs.model.user_data.prokAnnotation.ProkAnnotationResultFileNode;
 import org.janelia.it.jacs.server.access.*;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.server.api.BlastAPI;
@@ -294,17 +294,17 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         }
     }
 
-    public Map<Site, Integer> getSitesForBlastResult(String taskId) {
-        try {
-            validateUserByTaskId(taskId);
-            return (dataSetAPI.getSitesForBlastResult(taskId));
-        }
-        catch (Exception e) {
-            logger.error("Error retrieving sites for blast result : " + e.getMessage(), e);
-            return null;
-        }
-    }
-
+//    public Map<Site, Integer> getSitesForBlastResult(String taskId) {
+//        try {
+//            validateUserByTaskId(taskId);
+//            return (dataSetAPI.getSitesForBlastResult(taskId));
+//        }
+//        catch (Exception e) {
+//            logger.error("Error retrieving sites for blast result : " + e.getMessage(), e);
+//            return null;
+//        }
+//    }
+//
     public String replaceNodeName(String nodeId, String nodeName) {
         try {
             return dataSetAPI.replaceNodeName(nodeId, nodeName);
@@ -414,16 +414,16 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         }
     }
 
-    public BlastableNodeVO[] getReversePsiBlastDatasets() {
-        try {
-            return dataSetAPI.getReversePsiBlastDatasets();
-        }
-        catch (Exception e) {
-            logger.error("Error: ", e);
-            return null;
-        }
-    }
-
+//    public BlastableNodeVO[] getReversePsiBlastDatasets() {
+//        try {
+//            return dataSetAPI.getReversePsiBlastDatasets();
+//        }
+//        catch (Exception e) {
+//            logger.error("Error: ", e);
+//            return null;
+//        }
+//    }
+//
     public String submitJob(Task newTask) throws GWTServiceException {
         logger.info("org.janelia.it.jacs.web.gwt.common.server.DataServiceImpl.submitJob()");
         String jobId;
@@ -457,20 +457,20 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         }
     }
 
-    public ProkGenomeVO getProkGenomeVO(String targetGenome) throws GWTServiceException {
-        try {
-            ProkGenomeVO tmpGenomeVO = new ProkGenomeVO(targetGenome);
-            ProkAnnotationResultFileNode tmpNode = (ProkAnnotationResultFileNode) nodeDAO.getNodeByName(targetGenome);
-            tmpGenomeVO.setTargetOutputDirectory(tmpNode.getDirectoryPath());
-
-            tmpGenomeVO.setEvents(nodeDAO.getAllEventsRelatedToData(tmpNode, "targetDirectory", targetGenome, "prok"));
-            return tmpGenomeVO;
-        }
-        catch (Exception e) {
-            throw new GWTServiceException("Unable to obtain genome information for " + targetGenome);
-        }
-    }
-
+//    public ProkGenomeVO getProkGenomeVO(String targetGenome) throws GWTServiceException {
+//        try {
+//            ProkGenomeVO tmpGenomeVO = new ProkGenomeVO(targetGenome);
+//            ProkAnnotationResultFileNode tmpNode = (ProkAnnotationResultFileNode) nodeDAO.getNodeByName(targetGenome);
+//            tmpGenomeVO.setTargetOutputDirectory(tmpNode.getDirectoryPath());
+//
+//            tmpGenomeVO.setEvents(nodeDAO.getAllEventsRelatedToData(tmpNode, "targetDirectory", targetGenome, "prok"));
+//            return tmpGenomeVO;
+//        }
+//        catch (Exception e) {
+//            throw new GWTServiceException("Unable to obtain genome information for " + targetGenome);
+//        }
+//    }
+//
     @Override
     public void validateFilePath(String filePath) throws GWTServiceException {
         try {
@@ -542,52 +542,52 @@ public class DataServiceImpl extends JcviGWTSpringController implements DataServ
         }
     }
 
-    // NOTE: This method assumes the fileshare is the same for web server and compute server.  A little risky.  Find a better way to abstract this.
-    public List<GeciImageDirectoryVO> findPotentialResultNodes(String filePath) throws GWTServiceException {
-        List<GeciImageDirectoryVO> returnList = new ArrayList<GeciImageDirectoryVO>();
-        File rootDir = new File(filePath);
-        if (!rootDir.exists()||!rootDir.canRead()) {
-            throw new GWTServiceException("Cannot access "+filePath+" or the directory does not exist.");
-        }
-        File[] plateFolders = rootDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File file, String s) {
-                return new File(file,s).isDirectory() && s.startsWith("P");
-            }
-        });
-        for (File plateFolder : plateFolders) {
-            // Check in the database for a path to this node
-            try {
-                Node plateNode = nodeDAO.getNodeByName(plateFolder.getName());
-                // If we don't know this plate then create the node
-                if (null==plateNode || !(plateNode instanceof NeuronalAssayAnalysisResultNode)) {
-                    NeuronalAssayAnalysisResultNode tmpNode = new NeuronalAssayAnalysisResultNode(getSessionUser().getUserLogin(), null,
-                            plateFolder.getName(), plateFolder.getName(), Node.VISIBILITY_PRIVATE, null);
-                    tmpNode.setPathOverride(plateFolder.getAbsolutePath());
-                    plateNode = dataSetAPI.saveOrUpdateNode(getSessionUser().getUserLogin(), tmpNode);
-                }
-                GeciImageDirectoryVO tmpVO = new GeciImageDirectoryVO();
-                tmpVO.setLocalDirName(plateNode.getName());
-                tmpVO.setTargetDirectoryPath(((NeuronalAssayAnalysisResultNode)plateNode).getDirectoryPath());
-                tmpVO.setNodeId(plateNode.getObjectId());
-                File[] imagesDir = plateFolder.listFiles(new FilenameFilter() {
-                    @Override
-                    public boolean accept(File file, String s) {
-                        return s.equalsIgnoreCase("imaging") && new File(file,s).isDirectory();
-                    }
-                });
-                if (null!=imagesDir && imagesDir.length>=1) {
-                    tmpVO.setProcessed(true);
-                }
-                returnList.add(tmpVO);
-            } catch (Exception e) {
-                logger.error("Error checking for node with name "+plateFolder.getName());
-                throw new GWTServiceException("Error looking for NAA Nodes", e);
-            }
-        }
-        return returnList;
-    }
-
+//    // NOTE: This method assumes the fileshare is the same for web server and compute server.  A little risky.  Find a better way to abstract this.
+//    public List<GeciImageDirectoryVO> findPotentialResultNodes(String filePath) throws GWTServiceException {
+//        List<GeciImageDirectoryVO> returnList = new ArrayList<GeciImageDirectoryVO>();
+//        File rootDir = new File(filePath);
+//        if (!rootDir.exists()||!rootDir.canRead()) {
+//            throw new GWTServiceException("Cannot access "+filePath+" or the directory does not exist.");
+//        }
+//        File[] plateFolders = rootDir.listFiles(new FilenameFilter() {
+//            @Override
+//            public boolean accept(File file, String s) {
+//                return new File(file,s).isDirectory() && s.startsWith("P");
+//            }
+//        });
+//        for (File plateFolder : plateFolders) {
+//            // Check in the database for a path to this node
+//            try {
+//                Node plateNode = nodeDAO.getNodeByName(plateFolder.getName());
+//                // If we don't know this plate then create the node
+//                if (null==plateNode || !(plateNode instanceof NeuronalAssayAnalysisResultNode)) {
+//                    NeuronalAssayAnalysisResultNode tmpNode = new NeuronalAssayAnalysisResultNode(getSessionUser().getUserLogin(), null,
+//                            plateFolder.getName(), plateFolder.getName(), Node.VISIBILITY_PRIVATE, null);
+//                    tmpNode.setPathOverride(plateFolder.getAbsolutePath());
+//                    plateNode = dataSetAPI.saveOrUpdateNode(getSessionUser().getUserLogin(), tmpNode);
+//                }
+//                GeciImageDirectoryVO tmpVO = new GeciImageDirectoryVO();
+//                tmpVO.setLocalDirName(plateNode.getName());
+//                tmpVO.setTargetDirectoryPath(((NeuronalAssayAnalysisResultNode)plateNode).getDirectoryPath());
+//                tmpVO.setNodeId(plateNode.getObjectId());
+//                File[] imagesDir = plateFolder.listFiles(new FilenameFilter() {
+//                    @Override
+//                    public boolean accept(File file, String s) {
+//                        return s.equalsIgnoreCase("imaging") && new File(file,s).isDirectory();
+//                    }
+//                });
+//                if (null!=imagesDir && imagesDir.length>=1) {
+//                    tmpVO.setProcessed(true);
+//                }
+//                returnList.add(tmpVO);
+//            } catch (Exception e) {
+//                logger.error("Error checking for node with name "+plateFolder.getName());
+//                throw new GWTServiceException("Error looking for NAA Nodes", e);
+//            }
+//        }
+//        return returnList;
+//    }
+//
     @Override
     public List<String> getNodeNamesForUserByName(String nodeClassName) throws GWTServiceException {
         try {

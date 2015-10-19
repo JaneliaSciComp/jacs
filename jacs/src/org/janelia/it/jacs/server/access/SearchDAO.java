@@ -7,7 +7,7 @@ import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.server.access.hibernate.DaoException;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ImageModel;
-import org.janelia.it.jacs.web.gwt.search.client.model.CategoryResult;
+//import org.janelia.it.jacs.web.gwt.search.client.model.CategoryResult;
 
 import java.util.List;
 import java.util.Set;
@@ -35,12 +35,12 @@ public interface SearchDAO extends DAO {
                            SortArgument[] sortArgs)
             throws DaoException;
 
-    List<? extends CategoryResult> getPagedCategoryResultsByNodeId(Long nodeId,
-                                                                   int startIndex,
-                                                                   int numRows,
-                                                                   SortArgument[] sortArgs)
-            throws DaoException;
-
+//    List<? extends CategoryResult> getPagedCategoryResultsByNodeId(Long nodeId,
+//                                                                   int startIndex,
+//                                                                   int numRows,
+//                                                                   SortArgument[] sortArgs)
+//            throws DaoException;
+//
     int getNumCategoryResultsByNodeId(Long nodeId) throws DaoException;
 
     List<ImageModel> getSearchResultCharts(Long searchId, String resultBaseDirectory)

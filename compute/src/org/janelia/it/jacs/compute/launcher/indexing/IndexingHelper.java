@@ -1,12 +1,12 @@
 package org.janelia.it.jacs.compute.launcher.indexing;
 
-import javax.jms.ObjectMessage;
-
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
+
+import javax.jms.ObjectMessage;
 
 /**
  * Helper class for asynchronous indexing. 
@@ -23,7 +23,7 @@ public class IndexingHelper {
 	
 	public static void sendReindexingMessage(Long entityId) throws Exception {
 		AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-		messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+		messageInterface.startMessageSession(queueName);
 		ObjectMessage message = messageInterface.createObjectMessage();
 		message.setLongProperty("ENTITY_ID", entityId);
 		messageInterface.sendMessageWithinTransaction(message);
@@ -33,7 +33,7 @@ public class IndexingHelper {
 
 	public static void sendAddAncestorMessage(Long entityId, Long newAncestorId) throws Exception {
 		AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-		messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+		messageInterface.startMessageSession(queueName);
 		ObjectMessage message = messageInterface.createObjectMessage();
 		message.setObjectProperty("ENTITY_ID", entityId);
 		message.setLongProperty("NEW_ANCESTOR_ID", newAncestorId);

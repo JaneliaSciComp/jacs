@@ -25,10 +25,8 @@ import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -42,7 +40,6 @@ public class SampleHelper extends EntityHelper {
     
     private static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
     private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
-    private static final DateTimeFormatter parser = ISODateTimeFormat.dateTimeNoMillis();
     private static final Set<String> explicitSampleAttrs = new HashSet<>();
     
     static {
@@ -80,21 +77,6 @@ public class SampleHelper extends EntityHelper {
                         ContextLogger contextLogger) {
         super(entityBean, computeBean, ownerKey, logger, contextLogger);
         this.annotationBean = annotationBean;
-    }
-    
-    public Date parse(String dateTimeStr) {
-        try {
-            return parser.parseDateTime(dateTimeStr).toDate();
-        }
-        catch (Exception e) {
-            logger.error("Cannot parse ISO8601 date: "+dateTimeStr,e);
-            return null;
-        }
-    }
-
-    public String format(Date date) {
-        DateTime dt = date==null?null:new DateTime(date);
-        return parser.print(dt);
     }
     
     /**
@@ -241,7 +223,7 @@ public class SampleHelper extends EntityHelper {
                     String value = imageProps.get(key);
                     // Special consideration is given to the TMOG Date, so that the latest LSM TMOG date is recorded as the Sample TMOG date. 
                     if (key.equals(EntityConstants.ATTRIBUTE_TMOG_DATE)) {
-                        Date date = parse(value);
+                        Date date = ISO8601Utils.parse(value);
                         if (maxTmogDate==null || date.after(maxTmogDate)) {
                             maxTmogDate = date;
                         }
@@ -260,7 +242,7 @@ public class SampleHelper extends EntityHelper {
         }
         
         if (maxTmogDate!=null) {
-        	sampleProperties.put(EntityConstants.ATTRIBUTE_TMOG_DATE, format(maxTmogDate));
+        	sampleProperties.put(EntityConstants.ATTRIBUTE_TMOG_DATE, ISO8601Utils.format(maxTmogDate));
         }
         
         if (!slideCode.equals(sampleProperties.get(EntityConstants.ATTRIBUTE_SLIDE_CODE))) {
@@ -526,20 +508,20 @@ public class SampleHelper extends EntityHelper {
             }
             String value = sampleProperties.get(key);
             if (attrs.contains(key) && value!=null && !NO_CONSENSUS_VALUE.equals(value)) {
-                if (setAttribute(sample, key, value)) {
+                if (EntityUtils.setAttribute(sample, key, value)) {
                     dirty = true;
                 }
             }
         }
 
         // Some attributes are known explicitly. These should all be listed in explicitSampleAttrs, so they're not set above.
-        if (setAttribute(sample, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier)) {
+        if (EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier)) {
             dirty = true;
         }   
-        if (setAttribute(sample, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec)) {
+        if (EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION, channelSpec)) {
             dirty = true;
         }  
-        if (setAttribute(sample, EntityConstants.ATTRIBUTE_OBJECTIVE, objective)) {
+        if (EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_OBJECTIVE, objective)) {
             dirty = true;
         }
         
@@ -767,7 +749,7 @@ public class SampleHelper extends EntityHelper {
             tileDirty = true;
         }
 
-        if (setAttribute(imageTile, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, tileGroup.getAnatomicalArea())) {
+        if (EntityUtils.setAttribute(imageTile, EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, tileGroup.getAnatomicalArea())) {
             tileDirty = true;
         }
         
@@ -830,10 +812,10 @@ public class SampleHelper extends EntityHelper {
                     logger.warn("LSM stack does not support property: "+key);
                 }
                 else {
-                    if (setAttribute(lsmStack, key, value)) {
-                        if (key.equals(EntityConstants.ATTRIBUTE_TMOG_DATE)) {
-                            // TODO: we can remove this once all LSMs have a TMOG date on them. 
-                            // In the meantime, we don't want to trigger reprocessing on all samples so we use a separate dirty flag to save the LSM silently. 
+                    String previousValue = lsmStack.getValueByAttributeName(key);
+                    if (EntityUtils.setAttribute(lsmStack, key, value)) {
+                        if (previousValue==null) {
+                            // Don't trigger reprocessing if a new attribute appears, only if an attribute changes 
                             lsmDirty = true;
                         }
                         else {
@@ -852,28 +834,6 @@ public class SampleHelper extends EntityHelper {
         return dirty;
     }
     
-    /**
-     * Set the given attribute if the provided value is not null and not already set. 
-     * @param entity
-     * @param key
-     * @param value
-     * @return true if the value was changed, false otherwise
-     */
-    public boolean setAttribute(Entity entity, String key, String value) {
-        String currValue = entity.getValueByAttributeName(key);
-        if (value!=null && !value.equals(currValue)) {
-            String label = entity.getId()==null?entity.getName():entity.getEntityTypeName()+"#"+entity.getId();
-            if (currValue!=null) {
-                logger.info("    Updating "+key+"="+value+" on "+label);
-            }
-            else {
-                logger.debug("    Setting "+key+"="+value+" on "+label);
-            }
-            entity.setValueByAttributeName(key, value);
-            return true;
-        }
-        return false;
-    }
     
     private void markForReprocessing(Entity sample) {
         String sampleStatus = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
@@ -884,7 +844,7 @@ public class SampleHelper extends EntityHelper {
             }
         }
         logger.info("  Sample tiles changed, marking for reprocessing: "+sample.getName());
-        setAttribute(sample, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
+        EntityUtils.setAttribute(sample, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
         numSamplesReprocessed++;
     }
     
@@ -990,7 +950,7 @@ public class SampleHelper extends EntityHelper {
 		        	logger.trace("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
 	                String value = image.getValueByAttributeName(attrName);
 	                if (consensus!=null && !consensus.equals(value)) {
-	                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample processing result "+sampleArea.getSampleProcessingResultId());
+	                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
 	                    return null;
 	                }
 	                else {

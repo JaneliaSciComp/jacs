@@ -27,12 +27,16 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
                     	alignedAreas.add(anatomicalArea);
                         input2 = new AlignmentInputFile();
                         input2.setPropertiesFromEntity(image);
+                        input2.setSampleId(sampleEntity.getId());
+                        input2.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
                         if (warpNeurons) input2.setInputSeparationFilename(getConsolidatedLabel(result));
                     }
                     else if ("Brain".equalsIgnoreCase(areaName)) {
                     	alignedAreas.add(anatomicalArea);
                         input1 = new AlignmentInputFile();
                         input1.setPropertiesFromEntity(image);
+                        input1.setSampleId(sampleEntity.getId());
+                        input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
                         if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
                     }
                     else {

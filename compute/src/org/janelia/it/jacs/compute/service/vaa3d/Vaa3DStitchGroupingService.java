@@ -28,10 +28,9 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  * Group a bunch of merged files into stitchable groups. Put the largest group back into play. 
  * Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
+ *   SAMPLE_AREA - sample tile images
  *   REFERENCE_CHANNEL_INDEX (optional; defaults to 4) - the index of the reference channel in each image
  * Output:
- *   BULK_MERGE_PARAMETERS - modified to only include largest group
  *   SAMPLE_AREA - modified to only include largest group
  *   RUN_STITCH - set to false if there is only one tile in the largest group
  *   
@@ -106,6 +105,8 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
     @Override
 	public void postProcess() throws MissingDataException {
 
+        AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
+        
     	FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
     	File file = new File(parentNode.getDirectoryPath());
     	
@@ -161,56 +162,44 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
         
         List<String> maxGroup = groups.get(maxSizeIndex);
     	List<MergedLsmPair> newMergedLsmPairs = new ArrayList<MergedLsmPair>();
-        
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-        if (bulkMergeParamObj!=null && bulkMergeParamObj instanceof List) {
-        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-            	
-        	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
-        		for(String filename : maxGroup) {
-        			if (mergedLsmPair.getMergedFilepath().equals(filename)) {
-        				// We want this pair, since its part of the max group
-        				newMergedLsmPairs.add(mergedLsmPair);
-        			}
-        		}
-        	}
 
-            try {
-	        	for(MergedLsmPair mergedLsmPair : newMergedLsmPairs) {
-	        		File mergedFile = new File(mergedLsmPair.getMergedFilepath());
-	        		File mergedFileLink = new File(resultFileNode.getDirectoryPath(), mergedFile.getName());
-	                logger.info("Largest group contains: "+mergedFile);
-                    logger.info("    LSM1: "+mergedLsmPair.getLsmFilepath1());
-                    if (mergedLsmPair.getLsmFilepath2()!=null) {
-                    	logger.info("    LSM2: "+mergedLsmPair.getLsmFilepath2());
-                    }
-                    
-                    String cmd = "ln -s "+mergedFile.getAbsolutePath()+" "+mergedFileLink.getAbsolutePath();
-            		String[] args = cmd.split("\\s+");
-                    StringBuffer stdout = new StringBuffer();
-                    StringBuffer stderr = new StringBuffer();
-                    SystemCall call = new SystemCall(stdout, stderr);
-                	int exitCode = call.emulateCommandLine(args, null, null, 3600);	
-                	if (exitCode!=0) throw new Exception("Could not create symlink to merged file");
-	        	}
-            }
-            catch (Exception e) {
-            	throw new MissingGridResultException(file.getAbsolutePath(), "Error creating merged file symlinks");
-            }
-            
+        List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
         	
-            // Replace the pairs with only the pairs in the largest group
-            processData.putItem("BULK_MERGE_PARAMETERS", newMergedLsmPairs);
+    	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
+    		for(String filename : maxGroup) {
+    			if (mergedLsmPair.getMergedFilepath().equals(filename)) {
+    				// We want this pair, since its part of the max group
+    				newMergedLsmPairs.add(mergedLsmPair);
+    			}
+    		}
+    	}
+
+        try {
+        	for(MergedLsmPair mergedLsmPair : newMergedLsmPairs) {
+        		File mergedFile = new File(mergedLsmPair.getMergedFilepath());
+        		File mergedFileLink = new File(resultFileNode.getDirectoryPath(), mergedFile.getName());
+                logger.info("Largest group contains: "+mergedFile);
+                logger.info("    LSM1: "+mergedLsmPair.getLsmFilepath1());
+                if (mergedLsmPair.getLsmFilepath2()!=null) {
+                	logger.info("    LSM2: "+mergedLsmPair.getLsmFilepath2());
+                }
+                
+                String cmd = "ln -s "+mergedFile.getAbsolutePath()+" "+mergedFileLink.getAbsolutePath();
+        		String[] args = cmd.split("\\s+");
+                StringBuffer stdout = new StringBuffer();
+                StringBuffer stderr = new StringBuffer();
+                SystemCall call = new SystemCall(stdout, stderr);
+            	int exitCode = call.emulateCommandLine(args, null, null, 3600);	
+            	if (exitCode!=0) throw new Exception("Could not create symlink to merged file");
+        	}
         }
-        else {
-        	throw new MissingDataException("Missing BULK_MERGE_PARAMETERS in process data");
+        catch (Exception e) {
+        	throw new MissingGridResultException(file.getAbsolutePath(), "Error creating merged file symlinks");
         }
         
-        AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
-        if (sampleArea==null) {
-            throw new IllegalArgumentException("SAMPLE_AREA may not be null");
-        }
-        
+        // Replace the pairs with only the pairs in the largest group
+        sampleArea.setMergedLsmPairs(mergedLsmPairs);
+
         logger.debug("Validating sample area tiles");
 
         outerLoop: for(Iterator<Long> iterator = sampleArea.getTileIds().iterator(); iterator.hasNext(); ) {
@@ -247,7 +236,6 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
         }
         
         processData.putItem("SAMPLE_AREA", sampleArea);
-        
 
     	if (newMergedLsmPairs.size()==1) {
     		// No stitching to run

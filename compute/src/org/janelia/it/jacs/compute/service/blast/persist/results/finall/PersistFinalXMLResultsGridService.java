@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.blast.BlastTask;
+import org.janelia.it.jacs.model.tasks.blast.IBlastOutputFormatTask;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.shared.blast.BlastGridContinuousMergeSort;
 import org.janelia.it.jacs.shared.blast.BlastResultCollectionConverter;
@@ -23,7 +24,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.janelia.it.jacs.model.tasks.blast.IBlastOutputFormatTask;
 
 /**
  * Created by IntelliJ IDEA.
@@ -209,4 +209,8 @@ public class PersistFinalXMLResultsGridService extends SubmitDrmaaJobService {
         }
     }
 
+    @Override
+    protected boolean isImmediateProcessingJob() {
+        return true;
+    }
 }

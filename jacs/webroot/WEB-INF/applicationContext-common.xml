@@ -65,17 +65,17 @@
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
-    <bean id="featureDAO" class="org.janelia.it.jacs.server.access.hibernate.FeatureDAOImpl">
-        <property name="sessionFactory" ref="sessionFactory"/>
-    </bean>
+    <!--<bean id="featureDAO" class="org.janelia.it.jacs.server.access.hibernate.FeatureDAOImpl">-->
+        <!--<property name="sessionFactory" ref="sessionFactory"/>-->
+    <!--</bean>-->
 
     <bean id="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.SearchDAOImpl" abstract="true">
         <property name="sessionFactory" ref="sessionFactory"/>
         <property name="chartTool" ref="jFreeChartTool"/>
     </bean>
 
-    <bean id="proteinSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.ProteinSearchDAOImpl">
-    </bean>
+    <!--<bean id="proteinSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.ProteinSearchDAOImpl">-->
+    <!--</bean>-->
 
     <bean id="proteinClusterSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.ProteinClusterSearchDAOImpl">
     </bean>
@@ -86,14 +86,14 @@
     <bean id="projectSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.ProjectSearchDAOImpl">
     </bean>
 
-    <bean id="sampleSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.SampleSearchDAOImpl">
-    </bean>
+    <!--<bean id="sampleSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.SampleSearchDAOImpl">-->
+    <!--</bean>-->
 
     <bean id="websiteSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.WebsiteSearchDAOImpl">
     </bean>
 
-    <bean id="accessionSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.AccessionSearchDAOImpl">
-    </bean>
+    <!--<bean id="accessionSearchDAO" parent="abstractSearchDAO" class="org.janelia.it.jacs.server.access.hibernate.AccessionSearchDAOImpl">-->
+    <!--</bean>-->
 
     <bean id="searchResultDAO" class="org.janelia.it.jacs.server.access.hibernate.SearchResultDAOImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
@@ -111,17 +111,17 @@
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
-    <bean id="downloadDAO" class="org.janelia.it.jacs.server.access.hibernate.DownloadDAOImpl">
-        <property name="sessionFactory" ref="sessionFactory"/>
-    </bean>
+    <!--<bean id="downloadDAO" class="org.janelia.it.jacs.server.access.hibernate.DownloadDAOImpl">-->
+        <!--<property name="sessionFactory" ref="sessionFactory"/>-->
+    <!--</bean>-->
 
     <bean id="blastDAO" class="org.janelia.it.jacs.server.access.hibernate.BlastDAOImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
-    <bean id="metadataDAO" class="org.janelia.it.jacs.server.access.hibernate.MetadataDAOImpl">
-        <property name="sessionFactory" ref="sessionFactory"/>
-    </bean>
+    <!--<bean id="metadataDAO" class="org.janelia.it.jacs.server.access.hibernate.MetadataDAOImpl">-->
+        <!--<property name="sessionFactory" ref="sessionFactory"/>-->
+    <!--</bean>-->
 
     <bean id="preferenceDAO" class="org.janelia.it.jacs.server.access.hibernate.PreferenceDAOImpl">
         <property name="sessionFactory" ref="sessionFactory"/>
@@ -188,9 +188,9 @@
         <property name="userDAO" ref="userDAO"/>
         <property name="computeBean" ref="remoteComputeOrderService"/>
     </bean>
-    <bean name="featureAPI" class="org.janelia.it.jacs.server.api.FeatureAPI">
-        <property name="featureDAO" ref="featureDAO"/>
-    </bean>
+    <!--<bean name="featureAPI" class="org.janelia.it.jacs.server.api.FeatureAPI">-->
+        <!--<property name="featureDAO" ref="featureDAO"/>-->
+    <!--</bean>-->
     <bean name="exportAPI" class="org.janelia.it.jacs.server.api.ExportAPI">
         <property name="taskDAO" ref="taskDAO"/>
         <property name="computeBean" ref="remoteComputeOrderService"/>
@@ -201,11 +201,11 @@
         <property name="computeBean" ref="remoteComputeOrderService"/>
         <property name="pipelineBean" ref="remotePipelineService"/>
     </bean>
-    <bean name="recruitmentAPI" class="org.janelia.it.jacs.server.api.RecruitmentAPI">
-        <property name="taskDao" ref="taskDAO"/>
-        <property name="dataDao" ref="nodeDAO"/>
-        <property name="computeBean" ref="remoteComputeOrderService"/>
-    </bean>
+    <!--<bean name="recruitmentAPI" class="org.janelia.it.jacs.server.api.RecruitmentAPI">-->
+        <!--<property name="taskDao" ref="taskDAO"/>-->
+        <!--<property name="dataDao" ref="nodeDAO"/>-->
+        <!--<property name="computeBean" ref="remoteComputeOrderService"/>-->
+    <!--</bean>-->
     <bean name="searchAPI" class="org.janelia.it.jacs.server.api.SearchAPI">
         <property name="taskDAO" ref="taskDAO"/>
         <property name="searchDAOFactory" ref="searchDAOFactory"/>
@@ -224,13 +224,13 @@
     <bean name="searchDAOFactory" class="org.janelia.it.jacs.server.api.SearchDAOFactory">
         <property name="searchDAOs">
             <map>
-                <entry key="protein" value-ref="proteinSearchDAO"/>
+                <!--<entry key="protein" value-ref="proteinSearchDAO"/>-->
                 <entry key="final_cluster" value-ref="proteinClusterSearchDAO"/>
                 <entry key="publication" value-ref="publicationSearchDAO"/>
                 <entry key="project" value-ref="projectSearchDAO"/>
-                <entry key="sample" value-ref="sampleSearchDAO"/>
+                <!--<entry key="sample" value-ref="sampleSearchDAO"/>-->
                 <entry key="website" value-ref="websiteSearchDAO"/>
-                <entry key="accession" value-ref="accessionSearchDAO"/>
+                <!--<entry key="accession" value-ref="accessionSearchDAO"/>-->
             </map>
         </property>
     </bean>

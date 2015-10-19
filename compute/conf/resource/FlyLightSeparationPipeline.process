@@ -76,7 +76,7 @@
             <input name="INPUT_IMAGE_ID"/>
             <input name="SOURCE_SEPARATION_ID" value="$V{PREVIOUS_SEPARATION_ID}"/>
             <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
-            <output name="SEPARATION_ID"/>
+            <output name="RESULT_ENTITY_ID"/>
 	    </operation>
 	    
         <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is empty">
@@ -85,7 +85,7 @@
                 <!-- Migrate existing annotations if this is not a aligned separation -->
                 <operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.entity.sample.MigrationNeuronAnnotationsService">
                     <input name="SOURCE_SEPARATION_ID" value="$V{PREVIOUS_SEPARATION_ID}"/>
-                    <input name="TARGET_SEPARATION_ID" value="$V{SEPARATION_ID}"/>
+                    <input name="TARGET_SEPARATION_ID" value="$V{RESULT_ENTITY_ID}"/>
                 </operation>
                 
             </sequence>

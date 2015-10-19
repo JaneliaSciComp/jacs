@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
+import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -16,8 +17,7 @@ import java.util.List;
 /**
  * Stitch a bunch of merged files together and blend them. Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair
- *   STITCHED_FILENAME - the output file to create
+ *   SAMPLE_AREA - the sample tiles 
  *   REFERENCE_CHANNEL_INDEX (optional; defaults to 4) - the index of the reference channel in each image
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -28,6 +28,8 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     private static final String CONFIG_PREFIX = "stitchConfiguration.";
     
     private int referenceChannelIndex = 4;
+    private AnatomicalArea sampleArea;
+    private String stitchedFilename;
     
     @Override
     protected String getGridServicePrefixName() {
@@ -46,11 +48,8 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         	throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
         }
 
-        String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
-        if (stitchedFilename==null) {
-        	throw new ServiceException("Input parameter STITCHED_FILENAME may not be null");
-        }
-
+        this.sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
+        
         String referenceChannelIndexStr = (String)processData.getItem("REFERENCE_CHANNEL");
         if (referenceChannelIndexStr!=null) {
         	referenceChannelIndex = Integer.parseInt(referenceChannelIndexStr)+1;	
@@ -58,25 +57,16 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         
         writeInstanceFiles();
         setJobIncrementStop(1);
-        
-        Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-        if (bulkMergeParamObj==null) {
-        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-        }
 
-        if (bulkMergeParamObj instanceof List) {
-        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
-        	if (mergedLsmPairs.size()==1) {
-        		logger.warn("Creating stitching bypass script. This is an old code path that should not longer be exercised!");
-        		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
-        	}            
-        	else {
-            	createShellScript(writer, inputFileNode.getDirectoryPath(), stitchedFilename);
-        	}
-        }
-        else {
-        	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
-        }
+        this.stitchedFilename = sampleArea.getStitchedFilename();
+    	List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
+    	if (mergedLsmPairs.size()==1) {
+    		logger.warn("Creating stitching bypass script. This is an old code path that should not longer be exercised!");
+    		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
+    	}            
+    	else {
+        	createShellScript(writer, inputFileNode.getDirectoryPath(), stitchedFilename);
+    	}
     }
 
     private void writeInstanceFiles() throws Exception {
@@ -150,9 +140,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     		throw new MissingGridResultException(file.getAbsolutePath(), "Stitch/blend core dumped for "+resultFileNode.getDirectoryPath());
     	}
 
-        String stitchedFilename = (String)processData.getItem("STITCHED_FILENAME");
-        File stitchedFile = new File(stitchedFilename);
-        
+        File stitchedFile = new File(stitchedFilename);        
     	if (!stitchedFile.exists()) {
     		throw new MissingGridResultException(file.getAbsolutePath(), "Stitched output file not found for "+resultFileNode.getDirectoryPath());
     	}

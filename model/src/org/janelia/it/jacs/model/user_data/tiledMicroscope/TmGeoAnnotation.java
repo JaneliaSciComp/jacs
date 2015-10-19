@@ -1,9 +1,11 @@
     package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -19,6 +21,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     String comment;
     Integer index;
     Double x, y, z;
+    Date creationDate;
 
     // child and neuron ID fields only filled in when the annotation is in a neuron!
     //  they are null otherwise
@@ -27,28 +30,30 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     //  are performed on other GeoAnns (creation, deletion, update), so the info
     //  would get stale fast
     Long neuronId = null;
-    List<Long> childIds = null;
+    List<Long> childIds = new ArrayList<>();;
 
     // implementation note: at one point we stored the parent and child objects,
     //  but serializing them for calling remote server routines caused the
     //  whole tree to get walked recursively, overflowing the stack; so
     //  now we just use the IDs (FW-2728)
 
-    public TmGeoAnnotation(Long id, String comment, Double x, Double y, Double z, Long parentId) {
+    public TmGeoAnnotation(Long id, String comment, Double x, Double y, Double z, Long parentId, Date creationDate) {
         this.id=id;
         this.comment=comment;
         this.x=x;
         this.y=y;
         this.z=z;
         this.parentId=parentId;
+        this.creationDate = creationDate;
     }
 
     public static String toStringFromArguments(Long id, Long parentId, int index, Double x, Double y, Double z, String comment) {
         return id + ":" + parentId + ":" + index + ":" + x.toString() + "," + y.toString() + "," + z.toString() + ":" + comment;
     }
 
-    // format expected: <id>:<parentId>:<index>:<x,y,z>:<comment>
-    public TmGeoAnnotation(String geoString) throws Exception {
+    public TmGeoAnnotation(EntityData data) throws Exception {
+        // format expected: <id>:<parentId>:<index>:<x,y,z>:<comment>
+        String geoString = data.getValue();
         String[] fields=geoString.split(":", -1);
         if (fields.length < 5) {
             throw new Exception("Could not parse geoString="+geoString);
@@ -75,6 +80,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         } else {
             comment=fields[4];
         }
+        creationDate = data.getCreationDate();
     }
 
     public String toString() {
@@ -132,14 +138,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     }
 
     public void addChild(TmGeoAnnotation child) {
-        if (childIds == null) {
-            setEmptyChildList();
-        }
         childIds.add(child.getId());
-    }
-
-    public void setEmptyChildList() {
-        childIds = new ArrayList<Long>();
     }
 
     public void setParentId(Long parentId) {
@@ -160,6 +159,14 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public void setNeuronId(Long neuronId) {
         this.neuronId = neuronId;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 
     public boolean isRoot() {

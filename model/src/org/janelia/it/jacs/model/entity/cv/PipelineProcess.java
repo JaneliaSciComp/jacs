@@ -22,6 +22,8 @@ public enum PipelineProcess implements NamedEnum {
     LeetWholeBrain40x("Lee Whole Brain 40x Pipeline"),
     LeetWholeBrain40x512pxINT("Lee Whole Brain 40x 512px INTensity Pipeline"),
     LeetWholeBrain40xImproved("Lee Whole Brain 40x Improved Pipeline"),
+    LeetUnaligned("Lee Unaligned Pipeline"),
+    LeetUnalignedNoSeparation("Lee Unaligned/No Separation Pipeline"),
 
     NernaLeftOpticLobe("Aljoscha Left Optic Lobe 63x Pipeline"),
     NernaMCFOCase1("Aljoscha MCFO Case 1 Pipeline"),
@@ -38,7 +40,9 @@ public enum PipelineProcess implements NamedEnum {
     PTR40NeuronSeparation("PTR 40 Neuron Separation Pipeline"),
 
     SimpsonDescending("Simpson Lab Sensory Descending Alignment Pipeline"),
-
+    
+    TerraIncognita40x("Terra Incognita 40x Whole Brain Pipeline"),
+    
     WolfftMCFOCase1("Tanya Central Brain MCFO Case 1 Pipeline"),
     WolfftMCFOCase1Unaligned("Tanya MCFO Case 1 Unaligned Pipeline"),
 

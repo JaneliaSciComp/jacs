@@ -13,7 +13,7 @@
             <input name="ROOT_ENTITY_ID"/>
             <input name="COMPRESSION_TYPE"/>
             <input name="TASK_PARAMETER_MAP">
-                <entry key="root entity id" value="ROOT_ENTITY_ID"/>
+                <entry key="sample entity id" value="ROOT_ENTITY_ID"/>
                 <entry key="compression type" value="COMPRESSION_TYPE"/>
             </input>
 	        <output name="ROOT_ENTITY_ID"/>
@@ -33,7 +33,7 @@
             <!-- Import variables from the entity -->
             <operation name="Get Compression Type" processor="org.janelia.it.jacs.compute.service.entity.InitVariablesFromEntityService">
                 <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
-                <input name="OVERRIDE" value="false"/>
+                <input name="OVERRIDE" value="true"/>
                 <input name="COMPRESSION_TYPE"/>
                 <input name="ENTITY_ATTRIBUTE_1" value="Compression Type"/>
                 <input name="PROCESS_VARIABLE_1" value="COMPRESSION_TYPE"/>
@@ -49,23 +49,36 @@
             <input name="COMPRESSION_TYPE"/>
             <input name="PROCESS_VARIABLE_MAP">
                 <entry key="SEPARATION_EXCLUDE" value="Consolidated*,Reference*,NeuronAligned*"/>
-                <entry key="COMPRESSION_TYPE" value="Lossless and H5J"/>
+                <entry key="COMPRESSION_TYPE" value="Visually Lossless and PBD"/>
             </input>
             <output name="SEPARATION_EXCLUDE"/>
             <output name="COMPRESSION_TYPE"/>
         </operation>
         
-        <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
-        <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
-            <input name="ROOT_ENTITY_ID"/>
-            <input name="INPUT_TYPE" value="v3draw"/>
-            <input name="OUTPUT_TYPE" value="v3dpbd"/>
-            <input name="DELETE_INPUTS" value="true"/>
-            <input name="RECORD_MODE" value="UPDATE"/>
-        </include>
+        <sequence if="COMPRESSION_TYPE=Lossless">
+        
+            <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
+            <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3draw"/>
+                <input name="OUTPUT_TYPE" value="v3dpbd"/>
+                <input name="DELETE_INPUTS" value="true"/>
+                <input name="RECORD_MODE" value="UPDATE"/>
+            </include>
+            
+        </sequence>
         
         <sequence if="COMPRESSION_TYPE=Lossless and H5J">
         
+            <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
+            <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3draw"/>
+                <input name="OUTPUT_TYPE" value="v3dpbd"/>
+                <input name="DELETE_INPUTS" value="true"/>
+                <input name="RECORD_MODE" value="UPDATE"/>
+            </include>
+            
             <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
             <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
                 <input name="ROOT_ENTITY_ID"/>
@@ -79,7 +92,16 @@
         </sequence>
                 
         <sequence if="COMPRESSION_TYPE=Visually Lossless and PBD">
-                    
+            
+            <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
+            <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3draw"/>
+                <input name="OUTPUT_TYPE" value="v3dpbd"/>
+                <input name="DELETE_INPUTS" value="true"/>
+                <input name="RECORD_MODE" value="UPDATE"/>
+            </include>
+            
             <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
             <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
                 <input name="ROOT_ENTITY_ID"/>
@@ -103,6 +125,15 @@
                 
         <sequence if="COMPRESSION_TYPE=Visually Lossless">
                     
+            <!-- First, compress all the v3draw files to v3dpbd, replace the v3draw entities, and delete the original v3draw files -->
+            <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+                <input name="ROOT_ENTITY_ID"/>
+                <input name="INPUT_TYPE" value="v3draw"/>
+                <input name="OUTPUT_TYPE" value="v3dpbd"/>
+                <input name="DELETE_INPUTS" value="true"/>
+                <input name="RECORD_MODE" value="UPDATE"/>
+            </include>
+            
             <!-- Create h5j files from v3dpbd files, replace the v3dpbd entities, and delete the v3dpbd files -->
             <include name="Compress v3dpbd files to h5j" process="SampleDataCompression">
                 <input name="ROOT_ENTITY_ID"/>

@@ -3,7 +3,7 @@ package org.janelia.it.jacs.shared.blast;
 
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.*;
-import org.janelia.it.jacs.model.tasks.psiBlast.ReversePsiBlastTask;
+//import org.janelia.it.jacs.model.tasks.psiBlast.ReversePsiBlastTask;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 
 import java.io.*;
@@ -51,9 +51,9 @@ public class BlastGridContinuousMergeSort {
             throws IOException, ClassNotFoundException {
         FileInputStream fis = null;
         ObjectInputStream ois = null;
-        Map<String, ArrayList<ParsedBlastResult>> queryToHitsMap = new HashMap<String, ArrayList<ParsedBlastResult>>();
-        Map<String, ParsedBlastResult> worstHitPerQueryMap = new HashMap<String, ParsedBlastResult>();
-        Map<String, String> deflineMap = new HashMap<String, String>();
+        Map<String, ArrayList<ParsedBlastResult>> queryToHitsMap = new HashMap<>();
+        Map<String, ParsedBlastResult> worstHitPerQueryMap = new HashMap<>();
+        Map<String, String> deflineMap = new HashMap<>();
         ParsedBlastResultCollection referencePBRC = new ParsedBlastResultCollection();
 
         if (blastTask != null && blastTask.getMessages().size() > 0) {
@@ -61,7 +61,7 @@ public class BlastGridContinuousMergeSort {
         }
 
         // Begin loop waiting for result files
-        HashSet<File> partitionsProcessed = new HashSet<File>();
+        HashSet<File> partitionsProcessed = new HashSet<>();
         try {
             while (partitionsProcessed.size() < numberOfPartitions) {
                 long currentTime = new Date().getTime();
@@ -69,7 +69,7 @@ public class BlastGridContinuousMergeSort {
                     throw new IOException("Max new file wait time exceeded");
                 }
                 File[] objectFileArr = blastResultDir.listFiles(new BlastParsedObjectStreamFilenameFilter());
-                ArrayList<File> objectFileList = new ArrayList<File>();
+                ArrayList<File> objectFileList = new ArrayList<>();
                 for (File f : objectFileArr)
                     if (!partitionsProcessed.contains(f))
                         objectFileList.add(f);
@@ -138,7 +138,7 @@ public class BlastGridContinuousMergeSort {
                             ArrayList<ParsedBlastResult> tmpResultsList = queryToHitsMap.get(tmpQueryId);
                             Collections.sort(tmpResultsList);
                             int tmpSize = (tmpResultsList.size() <= numberOfTopHitsPerQuerySaved) ? tmpResultsList.size() : numberOfTopHitsPerQuerySaved;
-                            tmpResultsList = new ArrayList<ParsedBlastResult>(tmpResultsList.subList(0, tmpSize));
+                            tmpResultsList = new ArrayList<>(tmpResultsList.subList(0, tmpSize));
                             queryToHitsMap.put(tmpQueryId, tmpResultsList);
                             worstHitPerQueryMap.put(tmpQueryId, tmpResultsList.get(tmpResultsList.size() - 1));
                         }
@@ -157,7 +157,7 @@ public class BlastGridContinuousMergeSort {
             }
 
             // Now create one uber list of hits
-            ArrayList<ParsedBlastResult> finalPBRList = new ArrayList<ParsedBlastResult>();
+            ArrayList<ParsedBlastResult> finalPBRList = new ArrayList<>();
             for (String tmpQueryId : queryToHitsMap.keySet()) {
                 finalPBRList.addAll(queryToHitsMap.get(tmpQueryId));
             }
@@ -167,8 +167,8 @@ public class BlastGridContinuousMergeSort {
             // Loop through and only grab the deflines which matter
             // NOTE: If we need to decrease the memory footprint further, we can remove deflines from deflineMap and not
             // create finalDeflineMap
-            Map<String, String> finalDeflineMap = new HashMap<String, String>();
-            Set<String> queriesWithHits = new HashSet<String>();
+            Map<String, String> finalDeflineMap = new HashMap<>();
+            Set<String> queriesWithHits = new HashSet<>();
             for (ParsedBlastResult parsedBlastResult : finalPBRList) {
                 if (!queriesWithHits.contains(parsedBlastResult.queryId))
                     queriesWithHits.add(parsedBlastResult.queryId);
@@ -273,25 +273,25 @@ public class BlastGridContinuousMergeSort {
     private static IBlastOutputFormatTask createParameterBlastTask(IBlastOutputFormatTask blastTask) {
         IBlastOutputFormatTask pt;
         if (blastTask instanceof BlastPTask) {
-            pt = (IBlastOutputFormatTask)new BlastPTask();
+            pt = new BlastPTask();
         }
         else if (blastTask instanceof BlastXTask) {
-            pt = (IBlastOutputFormatTask)new BlastXTask();
+            pt = new BlastXTask();
         }
         else if (blastTask instanceof MegablastTask) {
-            pt = (IBlastOutputFormatTask)new MegablastTask();
+            pt = new MegablastTask();
         }
         else if (blastTask instanceof TBlastNTask) {
-            pt = (IBlastOutputFormatTask)new TBlastNTask();
+            pt = new TBlastNTask();
         }
         else if (blastTask instanceof TBlastXTask) {
-            pt = (IBlastOutputFormatTask)new TBlastXTask();
+            pt = new TBlastXTask();
         }
-        else if (blastTask instanceof ReversePsiBlastTask) {
-            pt = (IBlastOutputFormatTask)new ReversePsiBlastTask();
-        }
+//        else if (blastTask instanceof ReversePsiBlastTask) {
+//            pt = (IBlastOutputFormatTask)new ReversePsiBlastTask();
+//        }
         else {
-            pt = (IBlastOutputFormatTask)new BlastNTask();
+            pt = new BlastNTask();
         }
         Set<String> parameterKeySet = blastTask.getParameterKeySet();
         for (String k : parameterKeySet) {

@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.access;
 
+import com.google.common.base.Stopwatch;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
@@ -24,7 +25,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     AnnotationDAO annotationDAO;
     ComputeDAO computeDAO;
 
-    public final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
+    private final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
 
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
@@ -230,7 +231,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             pathData.setOrderIndex(0);
             pathData.setParentEntity(neuronEntity);
             // perhaps not entirely kosher to use this temp value, but it works
-            pathData.setValue(TMP_GEO_VALUE);
+            pathData.setValue(threadSafeTempGeoValue());
             annotationDAO.saveOrUpdate(pathData);
             neuronEntity.getEntityData().add(pathData);
             annotationDAO.saveOrUpdate(neuronEntity);
@@ -240,7 +241,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             String valueString=null;
             for (EntityData ed: neuronEntity.getEntityData()) {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
-                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
                         valueString=TmAnchoredPath.toStringFromArguments(ed.getId(), annotationID1, annotationID2, pointlist);
                         ed.setValue(valueString);
                         annotationDAO.saveOrUpdate(ed);
@@ -262,6 +263,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws DaoException {
         try {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.start();
             // Retrieve neuron
             Entity neuron=annotationDAO.getEntityById(neuronId);
             if (!neuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
@@ -283,6 +286,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         Long pId=new Long(vArr[0]);
                         if (pId.equals(parentAnnotationId)) {
                             foundParent=true;
+                            break;
                         }
                     }
                 }
@@ -290,6 +294,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     throw new Exception("Could not find parent matching parentId="+parentAnnotationId);
                 }
             }
+            // Todd wants to see signs of LVV activity in the server logs; add annotation is the
+            //  only common operation that makes sense
+            log.info("LVV: adding annotation to neuron " + neuronId + " at " + x + ", " + y + ", " + z);
+            return createGeometricAnnotation(neuron, isRoot, parentAnnotationId, index, x, y, z, comment, neuronId);
+            /* This code is verbatim included in the method called above. LLF
+            
             EntityData geoEd=new EntityData();
             geoEd.setOwnerKey(neuron.getOwnerKey());
             geoEd.setCreationDate(new Date());
@@ -335,16 +345,92 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!valueStringUpdated) {
                 throw new Exception("Could not find geo entry to update for value string");
             }
-            TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(valueString);
+            TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(geoEd);
             // normally this is filled in automatically when the annotation is part of
             //  a neuron, but here it's not (explicitly); however, we know the value
             //  to put in:
             geoAnnotation.setNeuronId(neuronId);
             return geoAnnotation;
+            */
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
         }
+    }
+
+    /**
+     * Given a collection of annotations, under a common neuron, make
+     * annotations for each in the database, preserving the linkages implied in
+     * the "value" target of the map provided.
+     *
+     * @param annotations map of node offset id vs "unserialized" annotation.
+     * @param nodeParentLinkage map of node offset id vs parent node offset id.
+     * @throws DaoException
+     */
+    public void addLinkedGeometricAnnotations(
+            Map<Integer, Integer> nodeParentLinkage,
+            Map<Integer, TmGeoAnnotation> annotations
+            ) throws DaoException {
+
+        Entity neuron = null;
+        Long neuronId = null;
+        try {
+            int putativeRootCount = 0;
+            Map<Integer, Long> nodeIdToAnnotationId = new HashMap<>();
+            // Ensure the order of progression through nodes matches node IDs.
+            Set<Integer> sortedKeys = new TreeSet<>(annotations.keySet());
+            for (Integer nodeId : sortedKeys) {
+                boolean isRoot = false;
+                TmGeoAnnotation unserializedAnnotation = annotations.get(nodeId);
+                // Deal with the neuron-parent.
+                Long nextNeuronId = unserializedAnnotation.getNeuronId();
+                if (neuron == null) {
+                    neuronId = nextNeuronId;
+                    neuron = annotationDAO.getEntityById(neuronId);
+                    if (neuron == null) {
+                        throw new Exception("Failed to find neuron for id " + neuronId);
+                    }
+                    if (!neuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+                        throw new Exception("Id is not valid TmNeuron. Type=" + neuronId);
+                    }
+                }
+                if (neuronId != nextNeuronId) {
+                    throw new Exception("Do not mix neuron-parents in a batch of annotations.  Found these two mixed: " + neuronId + "," + nextNeuronId);
+                }
+
+                // Establish node linkage.
+                Integer parentIndex = nodeParentLinkage.get(nodeId);
+                Long parentAnnotationId = null;
+                if (parentIndex != null && parentIndex != -1) {
+                    // NOTE: unless the annotation has been processed as
+                    // below, prior to now, the parent ID will be null.                    
+                    parentAnnotationId = nodeIdToAnnotationId.get(parentIndex);
+                    if (parentAnnotationId == null) {
+                        parentAnnotationId = neuronId;
+                    }
+                } else {
+                    putativeRootCount++;
+                    parentAnnotationId = neuronId;
+                    isRoot = true;
+                }
+
+                // Make the actual, DB-based annotation, and save its linkage
+                // through its original node id.
+                TmGeoAnnotation serializedAnnotation = createGeometricAnnotation(neuron, isRoot, parentAnnotationId, unserializedAnnotation);
+                nodeIdToAnnotationId.put(nodeId, serializedAnnotation.getId());
+
+                log.trace("Node " + nodeId + " at " + serializedAnnotation.toString() + ", has id " + serializedAnnotation.getId()
+                        + ", has parent " + serializedAnnotation.getParentId() + ", under neuron " + serializedAnnotation.getNeuronId());
+            }
+
+            if (putativeRootCount > 1) {
+                log.warn("Number of nodes with neuron as parent is " + putativeRootCount);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
+
     }
 
     /**
@@ -379,7 +465,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             entityData.setOrderIndex(0);
             entityData.setParentEntity(neuron);
             // this is kind of bogus, but it works:
-            entityData.setValue(TMP_GEO_VALUE);
+            entityData.setValue(threadSafeTempGeoValue());
             annotationDAO.saveOrUpdate(entityData);
             neuron.getEntityData().add(entityData);
             annotationDAO.saveOrUpdate(neuron);
@@ -389,7 +475,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             String valueString=null;
             for (EntityData ed : neuron.getEntityData()) {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
-                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
                         valueString = TmStructuredTextAnnotation.toStringFromArguments(ed.getId(), parentID,
                                 parentType, formatVersion, data);
                         ed.setValue(valueString);
@@ -401,8 +487,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!valueStringUpdated) {
                 throw new Exception("Could not find temp geo entry to update for value string");
             }
-            TmStructuredTextAnnotation structeredAnnotation = new TmStructuredTextAnnotation(valueString);
-            return structeredAnnotation;
+            TmStructuredTextAnnotation structuredAnnotation = new TmStructuredTextAnnotation(valueString);
+            return structuredAnnotation;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -987,7 +1073,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             //  that seems to be the pattern:
             TmGeoAnnotation annotation;
             try {
-                annotation = new TmGeoAnnotation(ed.getValue());
+                annotation = new TmGeoAnnotation(ed);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new DaoException(e);
@@ -1072,6 +1158,78 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             e.printStackTrace();
             throw new DaoException(e);
         }
+    }
+
+    /**
+     * Create an annotation. Uses an 'unserialized' or 'unmanaged' object.
+     *
+     * @param neuron to which annotation belongs.
+     * @param isRoot T -> no parent but the neuron
+     * @param parentAnnotationId whatever parent. Neuron or otherwise.
+     * @param unserializedAnno to pull all info for managed object.
+     * @return the managed object, complete with its DB-based ID.
+     * @throws Exception from any called methods.
+     */
+    private TmGeoAnnotation createGeometricAnnotation(Entity neuron, boolean isRoot, Long parentAnnotationId, TmGeoAnnotation unserializedAnno) throws Exception {
+        return createGeometricAnnotation(neuron, isRoot, parentAnnotationId, 0, unserializedAnno.getX(), unserializedAnno.getY(), unserializedAnno.getZ(), unserializedAnno.getComment(), neuron.getId());
+    }
+
+    private TmGeoAnnotation createGeometricAnnotation(Entity neuron, boolean isRoot, Long parentAnnotationId, int index, double x, double y, double z, String comment, Long neuronId) throws DaoException, Exception {
+        EntityData geoEd = new EntityData();
+        geoEd.setOwnerKey(neuron.getOwnerKey());
+        geoEd.setCreationDate(new Date());
+        geoEd.setUpdatedDate(new Date());
+        Long parentId = 0L;
+        if (isRoot) {
+            parentId = neuron.getId();
+            geoEd.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
+        } else {
+            parentId = parentAnnotationId;
+            geoEd.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
+        }
+        geoEd.setOrderIndex(0);
+        geoEd.setParentEntity(neuron);
+        geoEd.setValue(threadSafeTempGeoValue());
+        annotationDAO.saveOrUpdate(geoEd);
+        neuron.getEntityData().add(geoEd);
+        annotationDAO.saveOrUpdate(neuron);
+        // Find and update value string
+        boolean valueStringUpdated = false;
+        String valueString = null;
+        for (EntityData ed : neuron.getEntityData()) {
+            if (isRoot) {
+                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
+                        valueString = TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
+                        ed.setValue(valueString);
+                        annotationDAO.saveOrUpdate(ed);
+                        valueStringUpdated = true;
+                    }
+                }
+            } else {
+                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
+                        valueString = TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
+                        ed.setValue(valueString);
+                        annotationDAO.saveOrUpdate(ed);
+                        valueStringUpdated = true;
+                    }
+                }
+            }
+        }
+        if (!valueStringUpdated) {
+            throw new Exception("Could not find geo entry to update for value string");
+        }
+        TmGeoAnnotation geoAnnotation = new TmGeoAnnotation(geoEd);
+            // normally this is filled in automatically when the annotation is part of
+        //  a neuron, but here it's not (explicitly); however, we know the value
+        //  to put in:
+        geoAnnotation.setNeuronId(neuronId);
+        return geoAnnotation;
+    }
+
+    private String threadSafeTempGeoValue() {
+        return TMP_GEO_VALUE + Thread.currentThread().getName();
     }
 
 }

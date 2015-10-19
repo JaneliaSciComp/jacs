@@ -19,7 +19,7 @@ import java.util.Set;
  */
 public interface FeatureDAO extends DAO {
 
-    List<Chromosome> getAllMicrobialChromosomes() throws DataAccessException, DaoException;
+//    List<Chromosome> getAllMicrobialChromosomes() throws DataAccessException, DaoException;
 
     List<BaseSequenceEntity> findAllBse() throws DataAccessException, DaoException;
 
@@ -180,7 +180,7 @@ public interface FeatureDAO extends DAO {
     // Support for Read Detail
     int getNumScaffoldsForReadByAccNo(String readAccNo) throws DaoException;
 
-    List<ScaffoldReadAlignment> getScaffoldsForReadByAccNo(String readAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException;
+//    List<ScaffoldReadAlignment> getScaffoldsForReadByAccNo(String readAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException;
 
     int getNumRelatedNCRNAs(String entityAccNo) throws DaoException;
 
@@ -190,7 +190,7 @@ public interface FeatureDAO extends DAO {
 
     List<BaseSequenceEntity> getRelatedORFs(String entityAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException;
 
-    List<BseEntityDetail> getRelatedORFsAndRNAs(String entityAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException;
+//    List<BseEntityDetail> getRelatedORFsAndRNAs(String entityAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException;
 
     int getNumReadFeaturesBySubclassName(String[] name, String entityAccNo) throws DaoException;
 
@@ -202,89 +202,89 @@ public interface FeatureDAO extends DAO {
             throws DaoException;
 
     // Support for Protein Detail
-    ProteinClusterMember getProteinClusterMemberInfo(String proteinAcc) throws DaoException;
+//    ProteinClusterMember getProteinClusterMemberInfo(String proteinAcc) throws DaoException;
+//
+//    List<ProteinAnnotation> getProteinAnnotations(String proteinAcc, SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    // Support for Scaffold Detail
+//    int getNumOfReadsForScaffoldByAccNo(String scaffoldAccNo) throws DaoException;
+//
+//    List<ScaffoldReadAlignment> getReadsForScaffoldByAccNo(String scaffoldAccNo, int startIndex, int numRecords, SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    // Support for Cluster Detail
+//    ProteinCluster getProteinCoreCluster(String clusterAcc) throws DaoException;
+//
+//    ProteinCluster getProteinFinalCluster(String clusterAcc) throws DaoException;
+//
+//    List<ClusterAnnotation> getCoreClusterAnnotations(String clusterAcc, SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    List<ClusterAnnotation> getFinalClusterAnnotations(String clusterAcc, SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    List<ProteinCluster> getPagedCoreClustersFromFinalCluster(String finalClusterAcc,
+//                                                              Set<String> clusterMemberAccs,
+//                                                              int startIndex,
+//                                                              int numRows,
+//                                                              SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    List<ProteinClusterMember> getPagedNRSeqMembersFromCoreCluster(String coreClusterAcc,
+//                                                                   Set<String> clusterMemberAccs,
+//                                                                   int startIndex,
+//                                                                   int numRows,
+//                                                                   SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    List<ProteinClusterMember> getPagedSeqMembersFromCoreCluster(String coreClusterAcc,
+//                                                                 Set<String> clusterMemberAccs,
+//                                                                 int startIndex,
+//                                                                 int numRows,
+//                                                                 SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    List<ProteinClusterMember> getPagedNRSeqMembersFromFinalCluster(String finalClusterAcc,
+//                                                                    Set<String> clusterMemberAccs,
+//                                                                    int startIndex,
+//                                                                    int numRows,
+//                                                                    SortArgument[] sortArgs)
+//            throws DaoException;
+//
+//    List<ProteinClusterMember> getPagedSeqMembersFromFinalCluster(String finalClusterAcc,
+//                                                                  Set<String> clusterMemberAccs,
+//                                                                  int startIndex,
+//                                                                  int numRows,
+//                                                                  SortArgument[] sortArgs)
+//            throws DaoException;
 
-    List<ProteinAnnotation> getProteinAnnotations(String proteinAcc, SortArgument[] sortArgs)
-            throws DaoException;
+//    int getNumMatchingRepsFromCoreClusterWithAnnotation(String coreClusterAcc, String annotationId)
+//            throws DaoException;
 
-    // Support for Scaffold Detail
-    int getNumOfReadsForScaffoldByAccNo(String scaffoldAccNo) throws DaoException;
+//    List<ProteinClusterAnnotationMember> getPagedMatchingRepsFromCoreClusterWithAnnotation(String coreClusterAcc,
+//                                                                                           String annotationId,
+//                                                                                           Set<String> clusterMemberAccs,
+//                                                                                           int startIndex,
+//                                                                                           int numRows,
+//                                                                                           SortArgument[] sortArgs)
+//            throws DaoException;
 
-    List<ScaffoldReadAlignment> getReadsForScaffoldByAccNo(String scaffoldAccNo, int startIndex, int numRecords, SortArgument[] sortArgs)
-            throws DaoException;
+//    int getNumMatchingRepsFromFinalClusterWithAnnotation(String finalClusterAcc, String annotationId)
+//            throws DaoException;
 
-    // Support for Cluster Detail
-    ProteinCluster getProteinCoreCluster(String clusterAcc) throws DaoException;
-
-    ProteinCluster getProteinFinalCluster(String clusterAcc) throws DaoException;
-
-    List<ClusterAnnotation> getCoreClusterAnnotations(String clusterAcc, SortArgument[] sortArgs)
-            throws DaoException;
-
-    List<ClusterAnnotation> getFinalClusterAnnotations(String clusterAcc, SortArgument[] sortArgs)
-            throws DaoException;
-
-    List<ProteinCluster> getPagedCoreClustersFromFinalCluster(String finalClusterAcc,
-                                                              Set<String> clusterMemberAccs,
-                                                              int startIndex,
-                                                              int numRows,
-                                                              SortArgument[] sortArgs)
-            throws DaoException;
-
-    List<ProteinClusterMember> getPagedNRSeqMembersFromCoreCluster(String coreClusterAcc,
-                                                                   Set<String> clusterMemberAccs,
-                                                                   int startIndex,
-                                                                   int numRows,
-                                                                   SortArgument[] sortArgs)
-            throws DaoException;
-
-    List<ProteinClusterMember> getPagedSeqMembersFromCoreCluster(String coreClusterAcc,
-                                                                 Set<String> clusterMemberAccs,
-                                                                 int startIndex,
-                                                                 int numRows,
-                                                                 SortArgument[] sortArgs)
-            throws DaoException;
-
-    List<ProteinClusterMember> getPagedNRSeqMembersFromFinalCluster(String finalClusterAcc,
-                                                                    Set<String> clusterMemberAccs,
-                                                                    int startIndex,
-                                                                    int numRows,
-                                                                    SortArgument[] sortArgs)
-            throws DaoException;
-
-    List<ProteinClusterMember> getPagedSeqMembersFromFinalCluster(String finalClusterAcc,
-                                                                  Set<String> clusterMemberAccs,
-                                                                  int startIndex,
-                                                                  int numRows,
-                                                                  SortArgument[] sortArgs)
-            throws DaoException;
-
-    int getNumMatchingRepsFromCoreClusterWithAnnotation(String coreClusterAcc, String annotationId)
-            throws DaoException;
-
-    List<ProteinClusterAnnotationMember> getPagedMatchingRepsFromCoreClusterWithAnnotation(String coreClusterAcc,
-                                                                                           String annotationId,
-                                                                                           Set<String> clusterMemberAccs,
-                                                                                           int startIndex,
-                                                                                           int numRows,
-                                                                                           SortArgument[] sortArgs)
-            throws DaoException;
-
-    int getNumMatchingRepsFromFinalClusterWithAnnotation(String finalClusterAcc, String annotationId)
-            throws DaoException;
-
-    List<ProteinClusterAnnotationMember> getPagedMatchingRepsFromFinalClusterWithAnnotation(String finalClusterAcc,
-                                                                                            String annotationId,
-                                                                                            Set<String> clusterMemberAccs,
-                                                                                            int startIndex,
-                                                                                            int numRows,
-                                                                                            SortArgument[] sortArgs)
-            throws DaoException;
+//    List<ProteinClusterAnnotationMember> getPagedMatchingRepsFromFinalClusterWithAnnotation(String finalClusterAcc,
+//                                                                                            String annotationId,
+//                                                                                            Set<String> clusterMemberAccs,
+//                                                                                            int startIndex,
+//                                                                                            int numRows,
+//                                                                                            SortArgument[] sortArgs)
+//            throws DaoException;
 
 
-    int getNumOfPeptidesForScaffoldByAccNo(String scaffoldAccNo) throws DaoException;
+//    int getNumOfPeptidesForScaffoldByAccNo(String scaffoldAccNo) throws DaoException;
 
-    List<PeptideDetail> getPeptidesForScaffoldByAccNo(String scaffoldAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException;
+//    List<PeptideDetail> getPeptidesForScaffoldByAccNo(String scaffoldAccNo, int startIndex, int numRecords, SortArgument[] sortArgs) throws DaoException;
 
     List<String> getTaxonSynonyms(Integer taxonId) throws DaoException;
 

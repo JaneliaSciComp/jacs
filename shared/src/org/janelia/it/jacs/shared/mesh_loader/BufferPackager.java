@@ -5,6 +5,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -85,6 +86,7 @@ public class BufferPackager {
                 vertexAttributeOrderList = new ArrayList<>();
                 vertexAttributeOrderList.addAll( attributes.keySet() );
             }
+            Collections.sort(vertexAttributeOrderList);
             for ( String attName: vertexAttributeOrderList ) {
                 vertexAttribBuffer.put( bean.getAttribute( attName ) );
             }

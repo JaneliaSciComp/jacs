@@ -91,6 +91,18 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
 
     @Override
+    public void addLinkedGeometricAnnotations(Map<Integer, Integer> nodeParentLinkage, Map<Integer, TmGeoAnnotation> annotations) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.addLinkedGeometricAnnotations(nodeParentLinkage, annotations);
+        } catch (Exception e) {
+            String errorString = "Error calling addGeometricLinkedAnnotations in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+        
+    }
+
+    @Override
     public void reparentGeometricAnnotation(TmGeoAnnotation annotation, Long newParentAnnotationID,
                                             TmNeuron neuron) throws ComputeException {
         try {

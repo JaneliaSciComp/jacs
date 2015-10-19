@@ -11,14 +11,12 @@ import org.janelia.it.jacs.compute.engine.def.OperationDef;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.LauncherException;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 import javax.ejb.EJBException;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
-
 import java.util.Map;
 
 /**
@@ -42,12 +40,12 @@ public class JmsUtil {
             AsyncMessageInterface messageInterface = createAsyncMessageInterface();
             // Cannot start a session with temporary queue: javax.naming.NameNotFoundException: JMS_TQ2 not bound
             // Have to use original message and have to clear the body of the original message before calling replyMessage.setObjectMessage
-            // messageInterface.startMessageSession(replyToQueue.getQueueName(),messageInterface.localConnectionType);            
+            // messageInterface.startMessageSession(replyToQueue.getQueueName(),AsyncMessageInterface.LOCAL_CONNECTION_FACTORY);
             QueueMessage replyMessage = new QueueMessage((ObjectMessage) originalQueueMessage.getMessage(), true);
             prepareReplyMessage(originalQueueMessage, actionToProcess, replyMessage, e);
             originalQueueMessage.clearBody();
             replyMessage.setObjectMessage();
-            messageInterface.sendMessage(replyMessage.getMessage(), replyToQueue, messageInterface.localConnectionType);
+            messageInterface.sendMessage(replyMessage.getMessage(), replyToQueue);
             return true;
         }
         catch (Throwable ee) {
@@ -59,7 +57,7 @@ public class JmsUtil {
         try {
             logActionStatus(originalQueueMessage, null);
             AsyncMessageInterface messageInterface = createAsyncMessageInterface();
-            messageInterface.startMessageSession(actionToProcess.getQueueToLinkTo(), messageInterface.localConnectionType);
+            messageInterface.startMessageSession(actionToProcess.getQueueToLinkTo());
             ObjectMessage jmsMessage = messageInterface.createObjectMessage();
             jmsMessage.setJMSReplyTo(originalQueueMessage.getMessage().getJMSReplyTo());
             QueueMessage replyMessage = new QueueMessage(jmsMessage, true);
@@ -87,13 +85,7 @@ public class JmsUtil {
     }
 
     public static AsyncMessageInterface createAsyncMessageInterface() {
-        AsyncMessageInterface messageInterface = new AsyncMessageInterface(
-                "AsyncMessageInterface.LocalConnectionFactory",
-                "AsyncMessageInterface.RemoteConnectionFactory",
-                "AsyncMessageInterface.ProviderURL",
-                "AsyncMessageInterface.DeadLetterQueue");
-        messageInterface.setProviderUrl(SystemConfigurationProperties.getString("AsyncMessageInterface.ProviderURL"));
-        return messageInterface;
+        return new AsyncMessageInterface();
     }
 
     /**
@@ -170,7 +162,7 @@ public class JmsUtil {
     public static QueueMessage sendMessageToQueue(AsyncMessageInterface messageInterface, IProcessData processData, Queue replyToQueue) throws LauncherException {
         try {
             ActionDef actionToProcess = processData.getActionToProcess();
-            messageInterface.startMessageSession(getQueueName(actionToProcess), messageInterface.localConnectionType);
+            messageInterface.startMessageSession(getQueueName(actionToProcess));
             ObjectMessage jmsMessage = messageInterface.createObjectMessage();
             if (replyToQueue != null) {
                 jmsMessage.setJMSReplyTo(replyToQueue);
@@ -194,7 +186,7 @@ public class JmsUtil {
 
     public static void sendMessageToQueue(AsyncMessageInterface messageInterface, Map<String,String> parameters, String queueName) throws LauncherException {
         try {
-            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+            messageInterface.startMessageSession(queueName);
             MapMessage mapMessage = messageInterface.createMapMessage();
             for ( String paramName: parameters.keySet() ) {
                 mapMessage.setString( paramName, parameters.get( paramName ) );

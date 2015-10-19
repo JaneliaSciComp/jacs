@@ -9,7 +9,7 @@ import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.web.gwt.common.client.Constants;
 import org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site;
 import org.janelia.it.jacs.web.gwt.common.shared.data.ImageModel;
-import org.janelia.it.jacs.web.gwt.search.client.model.WebsiteResult;
+//import org.janelia.it.jacs.web.gwt.search.client.model.WebsiteResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,41 +48,41 @@ public class WebsiteSearchDAOImpl extends SearchDAOImpl {
         return new ArrayList<SearchHit>();
     }
 
-    public List<WebsiteResult> getPagedCategoryResultsByNodeId(Long nodeId,
-                                                               int startIndex,
-                                                               int numRows,
-                                                               SortArgument[] sortArgs) throws DaoException {
-        if (Constants.USE_GOOGLE_API_FOR_WEBSITE_SEARCH) {
-            return null;
-        }
-        String sql = "select " +
-//                "docid," +
-                "accession," +
-                "docname," +
-                "headline " +
-                "from website_ts_result nt " +
-                "where nt.node_id = :nodeId";
-        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
-        sqlQuery.setLong("nodeId", nodeId);
-        if (startIndex >= 0) {
-            sqlQuery.setFirstResult(startIndex);
-        }
-        if (numRows > 0) {
-            sqlQuery.setMaxResults(numRows);
-        }
-        List<Object[]> results = sqlQuery.list();
-        List<WebsiteResult> webSearchResults = new ArrayList<WebsiteResult>();
-        for (Object[] res : results) {
-            WebsiteResult webSearchRes = new WebsiteResult();
-            String title = (String) res[1];
-            webSearchRes.setTitle(title);
-            webSearchRes.setTitleURL(extractHREF(title));
-            webSearchRes.setBlurb((String) res[2]);
-            webSearchResults.add(webSearchRes);
-        }
-        return webSearchResults;
-    }
-
+//    public List<WebsiteResult> getPagedCategoryResultsByNodeId(Long nodeId,
+//                                                               int startIndex,
+//                                                               int numRows,
+//                                                               SortArgument[] sortArgs) throws DaoException {
+//        if (Constants.USE_GOOGLE_API_FOR_WEBSITE_SEARCH) {
+//            return null;
+//        }
+//        String sql = "select " +
+////                "docid," +
+//                "accession," +
+//                "docname," +
+//                "headline " +
+//                "from website_ts_result nt " +
+//                "where nt.node_id = :nodeId";
+//        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+//        sqlQuery.setLong("nodeId", nodeId);
+//        if (startIndex >= 0) {
+//            sqlQuery.setFirstResult(startIndex);
+//        }
+//        if (numRows > 0) {
+//            sqlQuery.setMaxResults(numRows);
+//        }
+//        List<Object[]> results = sqlQuery.list();
+//        List<WebsiteResult> webSearchResults = new ArrayList<WebsiteResult>();
+//        for (Object[] res : results) {
+//            WebsiteResult webSearchRes = new WebsiteResult();
+//            String title = (String) res[1];
+//            webSearchRes.setTitle(title);
+//            webSearchRes.setTitleURL(extractHREF(title));
+//            webSearchRes.setBlurb((String) res[2]);
+//            webSearchResults.add(webSearchRes);
+//        }
+//        return webSearchResults;
+//    }
+//
     public int getNumCategoryResultsByNodeId(Long nodeId) throws DaoException {
         if (Constants.USE_GOOGLE_API_FOR_WEBSITE_SEARCH) {
             return -3;

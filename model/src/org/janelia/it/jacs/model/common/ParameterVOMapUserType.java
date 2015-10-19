@@ -19,12 +19,12 @@ import java.util.*;
  * Time: 2:28:47 PM
  */
 
-public class ParameterVOMapUserType extends HashMap<String, ParameterVO> implements UserType {
+public class ParameterVOMapUserType implements UserType {
     private static final String LSEP = "<PVOMUT.L>"; // top-level list of ParameterVO separator
     private static final String DSEP = "<PVOMUT.D>"; // separator for data
     private static final String VSEP = "<PVOMUT.V>"; // separator for arguments for VO constructors
     private static final String CSEP = "<PVOMUT.C>"; // separator for collections
-
+    private static final Map<String, ParameterVO> parameters = new HashMap<>();
     public ParameterVOMapUserType() {
     }
 
@@ -75,7 +75,7 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
 
     private ParameterVOMapUserType(String value) throws HibernateException {
         try {
-            populateMapWithPVOs(this, value);
+            populateMapWithPVOs(parameters, value);
         }
         catch (Throwable t) {
             t.printStackTrace();
@@ -109,7 +109,23 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
                     pvo = new DoubleParameterVO(new Double(dArr[0]), new Double(dArr[1]), new Double(dArr[2]));
                 }
                 else {
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
+                    for (int d = 0; d < dArr.length; d++) {
+                        sb.append("dArr ").append(d).append(":").append(dArr[d]).append("\n");
+                    }
+                    throw new Exception("Could not parse dArr for " + className + ":\n" + sb.toString());
+                }
+            }
+            else if (className.equals(IntegerParameterVO.class.getName())) {
+                if (dArr.length == 1 && dArr[0].trim().length() == 0) {
+                    pvo = new IntegerParameterVO();
+                }
+                else if (dArr.length == 3 && dArr[0].trim().length() > 0 && dArr[1].trim().length() > 0
+                        && dArr[2].trim().length() > 0) {
+                    pvo = new IntegerParameterVO(new Integer(dArr[0]), new Integer(dArr[1]), new Integer(dArr[2]));
+                }
+                else {
+                    StringBuilder sb = new StringBuilder();
                     for (int d = 0; d < dArr.length; d++) {
                         sb.append("dArr ").append(d).append(":").append(dArr[d]).append("\n");
                     }
@@ -125,7 +141,7 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
                     pvo = new LongParameterVO(new Long(dArr[0]), new Long(dArr[1]), new Long(dArr[2]));
                 }
                 else {
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     for (int d = 0; d < dArr.length; d++) {
                         sb.append("dArr ").append(d).append(":").append(dArr[d]).append("\n");
                     }
@@ -137,31 +153,31 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
                     pvo = new MultiSelectVO();
                 }
                 else if (dArr.length == 1) {
-                    ArrayList<String> choicesList = new ArrayList<String>();
+                    ArrayList<String> choicesList = new ArrayList<>();
                     if (dArr[0].trim().length() > 0) {
                         String[] choicesArr = dArr[0].split(CSEP);
-                        choicesList = new ArrayList<String>(choicesArr.length);
+                        choicesList = new ArrayList<>(choicesArr.length);
                         for (int j = 0; j < choicesArr.length; j++) choicesList.add(j, choicesArr[j]);
                     }
                     pvo = new MultiSelectVO(new ArrayList<String>(), choicesList);
                 }
                 else if (dArr.length == 2) {
-                    ArrayList<String> valuesList = new ArrayList<String>();
+                    ArrayList<String> valuesList = new ArrayList<>();
                     if (dArr[0].trim().length() > 0) {
                         String[] valuesArr = dArr[0].split(CSEP);
-                        valuesList = new ArrayList<String>(valuesArr.length);
+                        valuesList = new ArrayList<>(valuesArr.length);
                         for (int j = 0; j < valuesArr.length; j++) valuesList.add(j, valuesArr[j]);
                     }
-                    ArrayList<String> choicesList = new ArrayList<String>();
+                    ArrayList<String> choicesList = new ArrayList<>();
                     if (dArr[1].trim().length() > 0) {
                         String[] choicesArr = dArr[1].split(CSEP);
-                        choicesList = new ArrayList<String>(choicesArr.length);
+                        choicesList = new ArrayList<>(choicesArr.length);
                         for (int j = 0; j < choicesArr.length; j++) choicesList.add(j, choicesArr[j]);
                     }
                     pvo = new MultiSelectVO(valuesList, choicesList);
                 }
                 else {
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     for (int d = 0; d < dArr.length; d++) {
                         sb.append("dArr ").append(d).append(":").append(dArr[d]).append("\n");
                     }
@@ -176,16 +192,16 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
                     pvo = new SingleSelectVO(new ArrayList<String>(), dArr[0]);
                 }
                 else if (dArr.length == 2) {
-                    ArrayList<String> valuesList = new ArrayList<String>();
+                    ArrayList<String> valuesList = new ArrayList<>();
                     if (dArr[0].trim().length() > 0) {
                         String[] valuesArr = dArr[0].split(CSEP);
-                        valuesList = new ArrayList<String>(valuesArr.length);
+                        valuesList = new ArrayList<>(valuesArr.length);
                         for (int j = 0; j < valuesArr.length; j++) valuesList.add(j, valuesArr[j]);
                     }
                     pvo = new SingleSelectVO(valuesList, dArr[1]);
                 }
                 else {
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     for (int d = 0; d < dArr.length; d++) {
                         sb.append("dArr ").append(d).append(":").append(dArr[d]).append("\n");
                     }
@@ -200,7 +216,7 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
                     pvo = new TextParameterVO(dArr[0], Integer.parseInt(dArr[1]));
                 }
                 else {
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     for (int d = 0; d < dArr.length; d++) {
                         sb.append("dArr ").append(d).append(":").append(dArr[d]).append("\n");
                     }
@@ -215,7 +231,7 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
     }
 
     private String getStringValue(Map map) throws HibernateException {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Set keySet = map.keySet();
         Iterator iter = keySet.iterator();
         while (iter.hasNext()) {
@@ -240,6 +256,18 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
                 sb.append(dPvo.getMaxValue().toString());
                 sb.append(VSEP);
                 sb.append(dPvo.getActualValue().toString());
+            }
+            else if (o instanceof IntegerParameterVO) {
+                sb.append(LongParameterVO.class.getName());
+                sb.append(DSEP);
+                IntegerParameterVO lPvo = (IntegerParameterVO) o;
+                sb.append(key);
+                sb.append(DSEP);
+                sb.append(lPvo.getMinValue().toString());
+                sb.append(VSEP);
+                sb.append(lPvo.getMaxValue().toString());
+                sb.append(VSEP);
+                sb.append(lPvo.getActualValue().toString());
             }
             else if (o instanceof LongParameterVO) {
                 sb.append(LongParameterVO.class.getName());
@@ -315,8 +343,9 @@ public class ParameterVOMapUserType extends HashMap<String, ParameterVO> impleme
         return serializable;
     }
 
-    public Object replace(Object object, Object object1, Object object2) throws HibernateException {
-        return object;
+    @Override
+    public Object replace(Object o, Object o1, Object o2) throws HibernateException {
+        return o;
     }
 
 }

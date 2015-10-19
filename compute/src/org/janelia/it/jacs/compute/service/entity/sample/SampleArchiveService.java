@@ -55,34 +55,34 @@ public class SampleArchiveService extends AbstractEntityService {
     }
     
     private void doCreateArchiveList() throws Exception {
-        logger.info("Finding files to archive under root "+sampleEntityId);
+        contextLogger.info("Finding files to archive under root "+sampleEntityId);
         // Short-circuit the case where the FileStore and Archive are one and the same location
         if (!SystemConfigurationProperties.getString("FileStore.CentralDir").
                 equals(SystemConfigurationProperties.getString("FileStore.CentralDir.Archived"))) {
             addSampleFiles(sampleEntityId);
-            logger.info("Putting "+originalPaths.size()+" paths in ORIGINAL_FILE_PATHS");
+            contextLogger.info("Putting "+originalPaths.size()+" paths in ORIGINAL_FILE_PATHS");
         }
         else {
-            logger.info("Processing and storage locations are the same.  Nothing to archive.");
+            contextLogger.info("Processing and storage locations are the same.  Nothing to archive.");
         }
         processData.putItem("ORIGINAL_FILE_PATHS", new ArrayList<String>(originalPaths));
         processData.putItem("RUN_ARCHIVAL", new Boolean(!originalPaths.isEmpty()));
     }
 
     private void sendArchivalMessage() throws Exception {
-        logger.info("Finding files to archive...");
+        contextLogger.info("Finding files to archive...");
         addSampleFiles(sampleEntityId);
         if (!originalPaths.isEmpty()) {
-            logger.info("Sending messages to archive "+originalPaths.size()+" paths");
+            contextLogger.info("Sending messages to archive "+originalPaths.size()+" paths");
             ArchiveAccessHelper.sendMoveToArchiveMessage(originalPaths, null);
         }
         else {
-            logger.info("No files found");
+            contextLogger.info("No files found");
         }
     }
     
 	private void addSampleFiles(Long sampleEntityId) throws Exception {
-	    logger.info("Finding file nodes under sample id="+sampleEntityId);
+	    contextLogger.info("Finding file nodes under sample id="+sampleEntityId);
         
         Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
         if (sampleEntity == null) {
@@ -110,7 +110,7 @@ public class SampleArchiveService extends AbstractEntityService {
     
     private void processResult(Entity result) throws ComputeException {
 
-        logger.debug("  Process result "+result.getName()+" (id="+result.getId()+")");
+        contextLogger.debug("  Process result "+result.getName()+" (id="+result.getId()+")");
         
     	if (!result.getOwnerKey().equals(ownerKey)) return;
     	
@@ -125,7 +125,7 @@ public class SampleArchiveService extends AbstractEntityService {
             return;
         }
     	
-        logger.info("  Will archive "+filepath);
+        contextLogger.info("  Will archive "+filepath);
     	originalPaths.add(filepath);
     }
     

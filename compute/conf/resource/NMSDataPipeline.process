@@ -39,8 +39,6 @@
     				
             <include name="Process sample" process="GSPS_CompleteSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID"/>
-                <input name="REUSE_PROCESSING"/>
-                <input name="REUSE_ALIGNMENT"/>
             </include>
 	        
 	    </sequence>

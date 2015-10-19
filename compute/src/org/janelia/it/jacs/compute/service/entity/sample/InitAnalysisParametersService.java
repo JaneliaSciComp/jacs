@@ -21,7 +21,7 @@ public class InitAnalysisParametersService extends AbstractEntityService {
             if (sampleEntity!=null) {
                 String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
                 if (objective!=null) {
-                    logger.info("Putting '"+objective+"' in OBJECTIVE");
+                    contextLogger.info("Putting '"+objective+"' in OBJECTIVE");
                     processData.putItem("OBJECTIVE", objective);
                 }
             }
@@ -35,7 +35,7 @@ public class InitAnalysisParametersService extends AbstractEntityService {
 		AnalysisAlgorithm aa = AnalysisAlgorithm.valueOf(analysisAlgorithm);
 		if (AnalysisAlgorithm.NEURON_SEPARATOR == aa) {
 			String pipelineName = "FlyLightNeuronSeparation";
-			logger.info("Putting '"+pipelineName+"' in ANALYSIS_PIPELINE_NAME");
+			contextLogger.info("Putting '"+pipelineName+"' in ANALYSIS_PIPELINE_NAME");
         	processData.putItem("ANALYSIS_PIPELINE_NAME", pipelineName);
 		}
     	
@@ -54,23 +54,23 @@ public class InitAnalysisParametersService extends AbstractEntityService {
     	
     	String filename = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
     	if (filename!=null) {
-            logger.info("Putting '"+filename+"' in OUTPUT_FILENAME");
+    	    contextLogger.info("Putting '"+filename+"' in OUTPUT_FILENAME");
             processData.putItem("OUTPUT_FILENAME", filename);
     	}
         
     	String opticalRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
     	if (opticalRes!=null) {
-            logger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
+    	    contextLogger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
             processData.putItem("OPTICAL_RESOLUTION", opticalRes);
     	}
     	
     	String pixelRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
         if (pixelRes!=null) {
-            logger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");
+            contextLogger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");
             processData.putItem("PIXEL_RESOLUTION", pixelRes);
         }
         
-        logger.info("Putting '' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
+        contextLogger.info("Putting '' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
         processData.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", "");
     }
 }
