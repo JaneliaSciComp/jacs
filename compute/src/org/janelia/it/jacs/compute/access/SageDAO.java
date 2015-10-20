@@ -316,6 +316,7 @@ public class SageDAO {
         query.setString("termName", termName);
         query.setString("displayName", termName);
         List<CvTerm> list = query.list();
+        if (list.isEmpty()) return null;
         // Because of a lack of constraints, SAGE could contain duplicate CV terms, so we assume the first one is best.
         return list.get(0);
     }
@@ -380,9 +381,9 @@ public class SageDAO {
                 log.trace("getImagesByPropertyValue(propertyType.name="+propertyType.getName()+", value="+value+")");    
             }
             Session session = getCurrentSession();
-            StringBuffer hql = new StringBuffer("select imageProperty.image from ImageProperty ip ");
+            StringBuffer hql = new StringBuffer("select distinct ip.image from ImageProperty ip ");
             hql.append("join ip.image ");
-            hql.append("where ip.type=:type and ed.value like :value ");
+            hql.append("where ip.type=:type and ip.value=:value ");
             Query query = session.createQuery(hql.toString());
             query.setEntity("type", propertyType);
             query.setString("value", value);

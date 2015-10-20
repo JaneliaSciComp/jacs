@@ -33,7 +33,7 @@ import com.google.common.collect.Ordering;
  */
 public class EntityUtils {
 	
-	private static final Logger log = LoggerFactory.getLogger(EntityUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(EntityUtils.class);
 		
     public interface SaveUnit {
         public void saveUnit(Object o) throws Exception;
@@ -496,7 +496,7 @@ public class EntityUtils {
             EntityData ed = entity.getEntityDataByAttributeName(imageRole);
             if (ed != null) {
                 Entity childEntity = ed.getChildEntity();
-                if (isInitialized(childEntity)) {
+                if (childEntity!=null && isInitialized(childEntity)) {
                     path = getFilePath(childEntity);
                     log.debug("  Returning file path for child {}: {}", childEntity.getId(), path);
                 }

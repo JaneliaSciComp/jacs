@@ -99,7 +99,7 @@ public class GridSubmitAndWaitMonitorMDB implements Job {
         try {
             String queueName = SystemConfigurationProperties.getString("ComputeServer.GridSubmitter.ReturnQueue");
             AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+            messageInterface.startMessageSession(queueName);
             ObjectMessage msg = messageInterface.createObjectMessage();
             msg.setObject(gpr);
             messageInterface.sendMessageWithinTransaction(msg);
