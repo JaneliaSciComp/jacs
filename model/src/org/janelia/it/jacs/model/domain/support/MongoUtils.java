@@ -9,9 +9,6 @@ import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.reflections.Reflections;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.FilterBuilder;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
@@ -34,21 +31,8 @@ public class MongoUtils {
     private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.<Class<? extends DomainObject>, Class<? extends DomainObject>>create();
 
     static {
-        ConfigurationBuilder config = new ConfigurationBuilder();
-        config.addClassLoaders(ClasspathHelper.contextClassLoader());
-        config.addClassLoaders(ClasspathHelper.staticClassLoader());
-        config.filterInputsBy(new FilterBuilder().include(DOMAIN_OBJECT_PACKAGE_NAME));
-
-        reflections = new Reflections(config);
-        //reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
+        reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
         registerAnnotatedClasses();
-        typeClasses.put("sample", org.janelia.it.jacs.model.domain.sample.Sample.class);
-        typeClasses.put("fragment", org.janelia.it.jacs.model.domain.sample.NeuronFragment.class);
-        typeClasses.put("treeNode", org.janelia.it.jacs.model.domain.workspace.TreeNode.class);
-        typeClasses.put("workspace", org.janelia.it.jacs.model.domain.workspace.Workspace.class);
-        typeClasses.put("objectSet", org.janelia.it.jacs.model.domain.workspace.ObjectSet.class);
-        typeClasses.put("patternMask", org.janelia.it.jacs.model.domain.screen.PatternMask.class);
-        typeClasses.put("filter", org.janelia.it.jacs.model.domain.gui.search.Filter.class);
     }
 
     private static void registerAnnotatedClasses() {
