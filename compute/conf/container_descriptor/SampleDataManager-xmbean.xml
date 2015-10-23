@@ -549,6 +549,16 @@
     </operation>
 
     <operation>
+        <description>Scality migration from one ring to another</description>
+        <name>scalityMigrationService</name>
+        <parameter>
+            <description>Path to the file with object id's</description>
+            <name>filePath</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
         <description>Fixing h5j's to have padding</description>
         <name>visuallyLosslessCorrectionService</name>
         <parameter>

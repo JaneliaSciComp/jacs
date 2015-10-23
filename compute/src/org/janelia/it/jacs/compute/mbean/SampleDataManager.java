@@ -10,10 +10,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
-import org.janelia.it.jacs.model.tasks.utility.GenericTask;
-import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
-import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
+import org.janelia.it.jacs.model.tasks.utility.*;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -614,6 +611,22 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 bzipTask = (BZipTestTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(bzipTask);
                 EJBFactory.getLocalComputeBean().submitJob("BzipTestService", bzipTask.getObjectId());
             }
+        }
+        catch (DaoException | RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Method to point to a file of object id's and move them from one ring into another.  (Probably should parameterize the rings)
+     * Example file exists in /groups/jacs/jacsShare/saffordTest/scalityMigration.txt
+     *
+     */
+    public void scalityMigrationService(String filePath) {
+        try {
+            ScalityMigrationTask migrationTask = new ScalityMigrationTask("system", new ArrayList<Event>(), filePath);
+            migrationTask = (ScalityMigrationTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(migrationTask);
+            EJBFactory.getLocalComputeBean().submitJob("ScalityMigration", migrationTask.getObjectId());
         }
         catch (DaoException | RemoteException e) {
             e.printStackTrace();

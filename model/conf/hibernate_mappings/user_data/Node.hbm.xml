@@ -401,6 +401,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.tools.ScalityMigrationResultNode" discriminator-value="ScalityMigrationResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.tools.SageLoaderResultNode" discriminator-value="SageLoaderResultNode"
                       dynamic-update="true"
                       dynamic-insert="true"

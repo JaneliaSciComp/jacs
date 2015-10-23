@@ -46,6 +46,7 @@ public interface SampleDataManagerMBean {
     public void runRepairSeparationResultsPipeline(String user);
     public void runScalityCorrectionService(String user);
 
+    public void scalityMigrationService(String filePath);
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode);
     public void visuallyLosslessCorrectionService(String filePath, String debug);
     
