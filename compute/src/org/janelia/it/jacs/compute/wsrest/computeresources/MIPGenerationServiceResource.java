@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import org.apache.commons.httpclient.HttpStatus;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.image.InputImage;
+import org.janelia.it.jacs.compute.wsrest.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.mip.MIPGenerationTask;
 import org.janelia.it.jacs.model.tasks.mip.MIPInputImageData;
@@ -15,6 +16,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,13 +54,16 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Task post(@PathParam("owner") String owner, MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
+    public Response post(@PathParam("owner") String owner, MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
         LOG.info("MIP generation requested by {} with {}", owner, mipGenerationTask);
         mipGenerationTask.setOwner(owner);
         validateRequest(mipGenerationTask);
         MIPGenerationTask persistedTask = init(mipGenerationTask);
         submitJob(persistedTask);
-        return persistedTask;
+        return Response
+                .status(Response.Status.CREATED)
+                .entity(new JsonTask(persistedTask))
+                .build();
     }
 
     private void validateRequest(MIPGenerationTask mipGenerationTask) throws ProcessingException {

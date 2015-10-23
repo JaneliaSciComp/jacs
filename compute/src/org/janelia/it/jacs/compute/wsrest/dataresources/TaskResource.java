@@ -1,9 +1,10 @@
 package org.janelia.it.jacs.compute.wsrest.dataresources;
 
-import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
+import org.janelia.it.jacs.compute.wsrest.json.JsonTaskEvent;
+import org.janelia.it.jacs.compute.wsrest.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.slf4j.Logger;
@@ -11,9 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -30,9 +29,9 @@ public class TaskResource {
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public List<Task> getAllTasks(@PathParam("owner") String owner,
-                                  @QueryParam("offset") int offset,
-                                  @QueryParam("length") int length) {
+    public List<JsonTask> getAllTasks(@PathParam("owner") String owner,
+                                      @QueryParam("offset") int offset,
+                                      @QueryParam("length") int length) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -48,7 +47,12 @@ public class TaskResource {
             } else {
                 q.setMaxResults(DEFAULT_MAX_LENGTH);
             }
-            return q.list();
+            List<Task> taskResults = q.list();
+            List<JsonTask> jsonTasks = new ArrayList<>();
+            for (Task t : taskResults) {
+                jsonTasks.add(new JsonTask(t));
+            }
+            return jsonTasks;
         } finally {
             HibernateSessionUtils.closeSession(dbSession);
         }
@@ -60,7 +64,7 @@ public class TaskResource {
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Task getTask(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
+    public JsonTask getTask(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -71,8 +75,7 @@ public class TaskResource {
             q.setParameter("id", taskId);
             Task t = (Task) q.uniqueResult();
             if (t != null) {
-                Hibernate.initialize(t);
-                return t;
+                return new JsonTask(t);
             } else {
                 throw new IllegalArgumentException("Record not found");
             }
@@ -87,20 +90,20 @@ public class TaskResource {
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public List<Event> getTaskEvents(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
+    public List<JsonTaskEvent> getTaskEvents(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
-            Query q = dbSession.createQuery("select t from Task t " +
+            Query q = dbSession.createQuery("select t from org.janelia.it.jacs.model.tasks.Task t " +
                     "where t.owner = :task_owner " +
                     "and t.objectId = :id");
             q.setParameter("task_owner", owner);
             q.setParameter("id", taskId);
             Task t = (Task) q.uniqueResult();
             if (t != null) {
-                List<Event> taskEvents = new ArrayList<>();
-                for (Event e : t.getEvents()) {
-                    taskEvents.add(e);
+                List<JsonTaskEvent> taskEvents = new ArrayList<>();
+                for (Event evt : t.getEvents()) {
+                    taskEvents.add(new JsonTaskEvent(evt));
                 }
                 return taskEvents;
             } else {
