@@ -11,7 +11,7 @@ import org.apache.log4j.Logger;
 public class CoordinateToRawTransform implements Serializable {
     private enum TransformParseType { origin, scale, numlevels, all }
 
-    private static final String TRANSFORM_FILE = "transform.txt";
+    public static final String TRANSFORM_FILE = "transform.txt";
     private static final int MAX_DIGIT_HIERARCHY_LEVEL = 6;
 
     private int[] origin = new int[3];
