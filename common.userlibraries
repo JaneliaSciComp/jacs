@@ -471,9 +471,8 @@
         <archive path="/common/MongoDB/jackson-core-2.4.1.jar"/>
         <archive path="/common/MongoDB/jackson-databind-2.4.1.jar"/>
         <archive path="/common/MongoDB/jongo-1.1.jar"/>
-        <archive path="/common/MongoDB/mongo-java-driver-2.12.4-sources.jar"/>
-        <archive path="/common/MongoDB/mongo-java-driver-2.12.4.jar"/>
         <archive path="/common/MongoDB/jsr305-1.3.9.jar"/>
+        <archive path="/common/MongoDB/mongo-java-driver-2.12.4.jar"/>
     </library>
     <library name="MySQL" systemlibrary="false">
         <archive path="/common/MySQL/mysql-connector-java-5.1.35-bin.jar"/>
