@@ -193,7 +193,7 @@ public abstract class SeriesLauncher implements ILauncher {
             messageInterface = JmsUtil.createAsyncMessageInterface();
             if (seriesDef.joinOnAsyncActions()) {
                 try {
-                    tempWaitQueue = messageInterface.getQueueForReceivingMessages(messageInterface.localConnectionType);
+                    tempWaitQueue = messageInterface.getQueueForReceivingMessages();
                     tempQueueName = tempWaitQueue.getQueueName();
                 }
                 catch (NamingException e) {

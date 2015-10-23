@@ -121,4 +121,46 @@ public class StringUtils {
         }
         return count;
     }   
+    
+    /** Given some string starting with an integer, find next pos after. */
+    public static int findFirstNonDigitPosition(String inline) {
+        int afterDigits = 0;
+        while (Character.isDigit(inline.charAt(afterDigits))) {
+            afterDigits++;
+        }
+        return afterDigits;
+    }
+
+    /** Given some string ending with an integer, find where the int begins. */
+    public static int lastDigitPosition(String inline) {
+        int beforeDigits = inline.length() - 1;
+        while (Character.isDigit(inline.charAt(beforeDigits))) {
+            beforeDigits--;
+        }
+        beforeDigits ++; // Move back to a convenient position.
+        return beforeDigits;
+    }
+
+    /**
+     * Given some filename, return an 'iterated' version, containing a counter
+     * offset.  In this fashion, 'sub names' iterated over a count can be 
+     * generated from a 'parent name'.
+     * 
+     * Example: mytext.txt -> mytext_1.txt   OR   mytext_2.txt
+     * 
+     * @param baseFileName make a variant of this
+     * @param offset use this offset in the new variant
+     * @return the iterated filename.
+     */
+    public static String getIteratedName(final String baseFileName, int offset) {
+        String newName = baseFileName;
+        int periodPos = newName.indexOf('.');
+        if (periodPos > -1) {
+            newName = newName.substring(0, periodPos)
+                    + '_' + offset + newName.substring(periodPos);
+        }
+        return newName;
+    }
+
+    
 }

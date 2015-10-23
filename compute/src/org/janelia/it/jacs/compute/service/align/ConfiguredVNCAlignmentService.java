@@ -13,14 +13,11 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  */
 public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
 
-    private static final String VNC_AREA = "VNC";
-    
     @Override
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
         for(AnatomicalArea anatomicalArea : sampleAreas) {
             String areaName = anatomicalArea.getName();
-            logger.info("Sample area "+areaName+" has processing result "+anatomicalArea.getSampleProcessingResultId());
-            Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
+            Entity result = getLatestResultOfType(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, areaName);
             if (result!=null) {
                 entityLoader.populateChildren(result);
                 Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);

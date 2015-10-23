@@ -316,6 +316,7 @@ public class SageDAO {
         query.setString("termName", termName);
         query.setString("displayName", termName);
         List<CvTerm> list = query.list();
+        if (list.isEmpty()) return null;
         // Because of a lack of constraints, SAGE could contain duplicate CV terms, so we assume the first one is best.
         return list.get(0);
     }
@@ -373,6 +374,26 @@ public class SageDAO {
         return (List<Image>) query.list();
     }
 
+    @SuppressWarnings("unchecked")
+    public List<Image> getImagesByPropertyValue(CvTerm propertyType, String value) throws DaoException {
+        try {
+            if (log.isTraceEnabled()) {
+                log.trace("getImagesByPropertyValue(propertyType.name="+propertyType.getName()+", value="+value+")");    
+            }
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select distinct ip.image from ImageProperty ip ");
+            hql.append("join ip.image ");
+            hql.append("where ip.type=:type and ip.value=:value ");
+            Query query = session.createQuery(hql.toString());
+            query.setEntity("type", propertyType);
+            query.setString("value", value);
+            return query.list();
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error deleting image property in SAGE", e);
+        }
+    }
+    
     public void deleteImageProperty(ImageProperty imageProperty) throws DaoException {
         try {
         	Image image = imageProperty.getImage();
@@ -458,8 +479,6 @@ public class SageDAO {
         if (log.isTraceEnabled()) {
             log.trace("getSession(sessionName="+sessionName+")");    
         }
-        log.info("sessionName:"+sessionName);
-        log.info("type.id:"+type.getId());
         Session session = getCurrentSession();
         Query query = session.createQuery("select session from SageSession session where session.name = :name and session.type = :type order by session.id ");
         query.setString("name", sessionName);
