@@ -1,10 +1,12 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.jongo.marshall.jackson.oid.Id;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
@@ -15,6 +17,37 @@ public abstract class OntologyTerm implements HasIdentifier {
     private String name;
     private List<OntologyTerm> terms;
 
+    @JsonIgnore
+    public boolean hasChildren() {
+        return terms!=null && !terms.isEmpty();
+    }
+
+    @JsonIgnore
+    public int getNumChildren() {
+        return terms==null ? 0 : terms.size();
+    }
+
+    public void addChild(OntologyTerm term) {
+        if (terms==null) {
+            this.terms = new ArrayList<>();
+        }
+        terms.add(term);
+    }
+
+    public void insertChild(int index, OntologyTerm term) {
+        if (terms==null) {
+            this.terms = new ArrayList<>();
+        }
+        terms.add(index, term);
+    }
+
+    public void removeChild(OntologyTerm ref) {
+        if (terms==null) {
+            return;
+        }
+        terms.remove(ref);
+    }
+    
     public abstract boolean allowsChildren();
 
     public abstract String getTypeName();

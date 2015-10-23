@@ -16,6 +16,7 @@ public class TreeNode extends AbstractDomainObject {
 
     private List<Reference> children;
 
+    @JsonIgnore
     public boolean hasChildren() {
     	return children!=null && !children.isEmpty();
     }
