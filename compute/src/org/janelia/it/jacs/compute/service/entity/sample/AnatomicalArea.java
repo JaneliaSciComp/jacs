@@ -15,7 +15,6 @@ public class AnatomicalArea implements Serializable {
 
     private String name;
     private List<Long> tileIds = new ArrayList<Long>();
-    private Long sampleProcessingResultId;
     private List<MergedLsmPair> mergedLsmPairs;
     private String stitchedFilename;
 
@@ -33,14 +32,6 @@ public class AnatomicalArea implements Serializable {
 
     public List<Long> getTileIds() {
         return tileIds;
-    }
-
-    public Long getSampleProcessingResultId() {
-        return sampleProcessingResultId;
-    }
-
-    public void setSampleProcessingResultId(Long sampleProcessingResultId) {
-        this.sampleProcessingResultId = sampleProcessingResultId;
     }
 
     public List<MergedLsmPair> getMergedLsmPairs() {
@@ -64,7 +55,6 @@ public class AnatomicalArea implements Serializable {
         return "AnatomicalArea{" +
                 "name='" + name + '\'' +
                 ", tileIds=" + tileIds +
-                ", sampleProcessingResultId=" + sampleProcessingResultId +
                 '}';
     }
 }
