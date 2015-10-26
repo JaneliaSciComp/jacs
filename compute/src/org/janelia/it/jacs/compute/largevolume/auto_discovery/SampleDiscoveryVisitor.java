@@ -9,6 +9,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.EnumSet;
+import org.apache.log4j.Logger;
 
 /**
  * A NIO file visitor to help discover likely directories.
@@ -16,20 +18,24 @@ import java.util.Set;
  */
 public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
     private Path basePath;
+    private Logger logger;
 
     private static final String TIF0 = "default.0.tif";
+    private static final int MAX_DESCENT_DEPTH = 4;
 
     private Set<File> validatedFolders = new HashSet<>();
 
     private boolean visitationComplete = false;
 
     public SampleDiscoveryVisitor(String basePathStr) {
+        logger = Logger.getLogger(SampleDiscoveryVisitor.class);
         basePath = Paths.get(basePathStr);
+        logger.info("Examining " + basePath.toString());
     }
 
     /** Launches the visit process. */
     public void exec() throws IOException {
-        Files.walkFileTree(basePath, this);
+        Files.walkFileTree(basePath, EnumSet.noneOf(FileVisitOption.class), MAX_DESCENT_DEPTH, this);
     }
 
     /** After completion, can get the full set of stuff that was found. */
@@ -42,18 +48,38 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
 
     /** Avoid diving into things that cannot possibly be samples.  Samples are not recursive. */
     @Override
-    public FileVisitResult preVisitDirectory(Path file, BasicFileAttributes attributes) {
+    public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) {
         FileVisitResult result = FileVisitResult.CONTINUE;
-        if (validatedFolders.contains(file.getParent().toString())) {
+        if (validatedFolders.contains(directory.getParent().toString())) {
+            logger.debug("Skipping " + directory + " because parent is already marked.");
             result = FileVisitResult.SKIP_SUBTREE;
         }
-
+        else if (isDigitDirectory(directory, directory.getFileName().toString())) {
+            result = FileVisitResult.SKIP_SUBTREE;
+        }
+        else {
+            result = checkDirectoryContents(directory, attributes);
+        }
         return result;
     }
 
-    /** Descend the base path, looking for the stuff of interest. */
+    /** Avoid file exceptions' killing the process. */
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+    public FileVisitResult visitFileFailed(Path file, IOException io) {
+        logger.warn("Error in " + file + " due to " + io);
+        return FileVisitResult.SKIP_SUBTREE;
+    }
+
+    @Override
+    public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+            throws IOException {
+        if (dir.equals(basePath)) {
+            visitationComplete = true;
+        }
+        return FileVisitResult.CONTINUE;
+    }
+
+    private FileVisitResult checkDirectoryContents(Path file, BasicFileAttributes attributes) {
         FileVisitResult result = FileVisitResult.CONTINUE;
         // Do not look directly at files, at this level.
         if (attributes.isDirectory()) {
@@ -74,9 +100,7 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
                     if (subPathFileName.equals(CoordinateToRawTransform.TRANSFORM_FILE)) {
                         hasTransformTxt = true;
                     }
-                    else if (Files.isDirectory(subPath)  &&
-                             subPathFileName.length() == 1  &&
-                             Character.isDigit(subPathFileName.getBytes()[0])) {
+                    else if (isDigitDirectory(subPath, subPathFileName)) {
                         digitSubDirCount ++;
                     }
                 }
@@ -84,7 +108,10 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
                 if ( hasTileBaseYml  &&  hasTransformTxt  &&  hasTif0  &&  digitSubDirCount > 0 ) {
                     // Candidate directory has passed.
                     validatedFolders.add(file.toFile());
-                    result = FileVisitResult.CONTINUE;
+                    logger.info("Adding folder " + file.toString());
+                }
+                else if (logger.isDebugEnabled()  &&  (hasTileBaseYml || hasTransformTxt || hasTif0)) {
+                    logger.debug("Rejecting folder " + file.toString() + " " + hasTileBaseYml + " " + hasTransformTxt + " " + hasTif0 + " "  + digitSubDirCount);
                 }
             } catch (IOException ioe) {
                 ioe.printStackTrace();
@@ -94,12 +121,9 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
         return result;
     }
 
-    @Override
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc)
-            throws IOException {
-        if (dir.equals(basePath)) {
-            visitationComplete = true;
-        }
-        return FileVisitResult.CONTINUE;
+    private  boolean isDigitDirectory(Path subPath, String subPathFileName) {
+        return Files.isDirectory(subPath)  &&
+                subPathFileName.length() == 1  &&
+                Character.isDigit(subPathFileName.getBytes()[0]);
     }
 }
