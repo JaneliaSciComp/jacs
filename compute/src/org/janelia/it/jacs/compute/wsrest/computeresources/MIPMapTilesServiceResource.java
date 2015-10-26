@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.compute.wsrest.computeresources;
 
 
-import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.mip.MIPMapTilesTask;
 import org.janelia.it.jacs.model.user_data.mip.MIPMapTilesResultNode;
 import org.slf4j.Logger;
@@ -11,6 +11,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import java.util.Map;
 
 /**
@@ -37,12 +38,15 @@ public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPM
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Task post(@PathParam("owner") String owner, MIPMapTilesTask mipMapTilesTask, @Context Request req) throws ProcessingException {
+    public Response post(@PathParam("owner") String owner, MIPMapTilesTask mipMapTilesTask, @Context Request req) throws ProcessingException {
         LOG.info("3d mapping requested by {} with {}", owner, mipMapTilesTask);
         mipMapTilesTask.setOwner(owner);
         MIPMapTilesTask persistedTask = init(mipMapTilesTask);
         submitJob(persistedTask);
-        return persistedTask;
+        return Response
+                .status(Response.Status.CREATED)
+                .entity(new JsonTask(persistedTask))
+                .build();
     }
 
     @Override
