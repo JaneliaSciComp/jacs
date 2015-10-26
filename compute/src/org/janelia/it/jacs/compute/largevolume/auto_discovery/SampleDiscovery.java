@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.largevolume.auto_discovery;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,20 +22,15 @@ public class SampleDiscovery {
             "/tier2/mousebrainmicro-nb/"
     };
 
-    // Credentials for running server operations.
-    private String username;
-    private String password;
-
-    public SampleDiscovery(String username, String password) {
-
+    public SampleDiscovery() {
     }
 
     /**
      * Iterate over all base directories.
      * @throws Exception
      */
-    public Set<String> discover() throws Exception {
-        Set<String> rtnVal = new HashSet<>();
+    public Set<File> discover() throws Exception {
+        Set<File> rtnVal = new HashSet<>();
         for (String prefix: MOUSE_BRAIN_MICRO_PREFIXES) {
             SampleDiscoveryVisitor visitor = new SampleDiscoveryVisitor(prefix);
             visitor.exec();

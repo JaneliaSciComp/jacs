@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.largevolume.auto_discovery;
 import org.janelia.it.jacs.compute.largevolume.TileBaseReader;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -18,7 +19,7 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
 
     private static final String TIF0 = "default.0.tif";
 
-    private Set<String> validatedFolders = new HashSet<>();
+    private Set<File> validatedFolders = new HashSet<>();
 
     private boolean visitationComplete = false;
 
@@ -32,7 +33,7 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
     }
 
     /** After completion, can get the full set of stuff that was found. */
-    public Set<String> getValidatedFolders() {
+    public Set<File> getValidatedFolders() {
         if (! visitationComplete) {
             throw new IllegalStateException("Process incomplete: please await termination of visitation.");
         }
@@ -82,7 +83,7 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
 
                 if ( hasTileBaseYml  &&  hasTransformTxt  &&  hasTif0  &&  digitSubDirCount > 0 ) {
                     // Candidate directory has passed.
-                    validatedFolders.add(file.toString());
+                    validatedFolders.add(file.toFile());
                     result = FileVisitResult.CONTINUE;
                 }
             } catch (IOException ioe) {
