@@ -23,5 +23,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/javacpp"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/HDF5"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JodaTime"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Reflections"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>

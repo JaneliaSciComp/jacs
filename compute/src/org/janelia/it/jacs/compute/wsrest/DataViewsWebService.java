@@ -2,27 +2,24 @@ package org.janelia.it.jacs.compute.wsrest;
 
 import java.util.List;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.DELETE;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.Consumes;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.SecurityContext;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
-import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
-import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAO;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 @Path("/")
 public class DataViewsWebService extends ResourceConfig {

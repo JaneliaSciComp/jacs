@@ -1,45 +1,33 @@
 package org.janelia.it.jacs.compute.wsrest;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import java.io.StringWriter;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.POST;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.Consumes;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.SecurityContext;
 
-import javax.ws.rs.container.ContainerRequestContext;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.server.model.Resource;
+import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.domain.workspace.Workspace;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-
-import org.janelia.it.jacs.model.domain.workspace.*;
-import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAO;
-import org.janelia.it.jacs.model.domain.support.MongoMapped;
-
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Path("/")
 public class UserWorkstationWebService extends ResourceConfig {
@@ -191,7 +179,11 @@ public class UserWorkstationWebService extends ResourceConfig {
         Reference objectSetRef = new Reference("objectSet",objectSetId);
         try {
             ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
-            ObjectSet updatedNode = dao.addMembers(subjectKey, objectSet, members);
+            List<Reference> refs = new ArrayList<>();
+            for(Long id : members) {
+                refs.add(new Reference(objectSet.getTargetType(), id));
+            }
+            ObjectSet updatedNode = dao.addMembers(subjectKey, objectSet, refs);
             return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
             e.printStackTrace();
@@ -210,7 +202,11 @@ public class UserWorkstationWebService extends ResourceConfig {
         Reference objectSetRef = new Reference("objectSet",objectSetId);
         try {
             ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
-            ObjectSet updatedNode = dao.removeMembers(subjectKey, objectSet, members);
+            List<Reference> refs = new ArrayList<>();
+            for(Long id : members) {
+                refs.add(new Reference(objectSet.getTargetType(), id));
+            }
+            ObjectSet updatedNode = dao.removeMembers(subjectKey, objectSet, refs);
             return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
             e.printStackTrace();

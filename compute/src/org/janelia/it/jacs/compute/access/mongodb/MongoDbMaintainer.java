@@ -8,7 +8,8 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.support.MongoUtils;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.jongo.MongoCollection;
 
 import com.google.common.collect.HashMultimap;
@@ -52,12 +53,12 @@ public class MongoDbMaintainer {
             }
         }
 
-        Set<String> collectionNames = MongoUtils.getCollectionNames();
+        Set<String> collectionNames = DomainUtils.getCollectionNames();
         for (String collectionName : collectionNames) {
             log.info("Refreshing denormalized permissions for " + collectionName);
 
             MongoCollection collection = dao.getCollectionByName(collectionName);
-            Class<?> domainClass = MongoUtils.getObjectClass(collectionName);
+            Class<?> domainClass = DomainUtils.getObjectClass(collectionName);
             if (!DomainObject.class.isAssignableFrom(domainClass))
                 continue;
             Iterable<?> iterable = collection.find().as(domainClass);

@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.janelia.it.jacs.model.domain.support.MongoUtils;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.jongo.marshall.jackson.oid.Id;
@@ -45,7 +45,7 @@ public abstract class AbstractDomainObject implements DomainObject {
     @SearchAttribute(key="owner",label="Owner",facet=true)
     @JsonIgnore
     public String getOwnerName() {
-        return MongoUtils.getNameFromSubjectKey(ownerKey);
+        return DomainUtils.getNameFromSubjectKey(ownerKey);
     }
     
     @SearchAttribute(key="subjects",label="Subjects",display=false)
@@ -54,7 +54,7 @@ public abstract class AbstractDomainObject implements DomainObject {
         Set<String> names = new HashSet<String>();
         for(String subjectKey : readers) {
             if (subjectKey==null) continue;
-            names.add(MongoUtils.getNameFromSubjectKey(subjectKey));
+            names.add(DomainUtils.getNameFromSubjectKey(subjectKey));
         }
         return names;
     }

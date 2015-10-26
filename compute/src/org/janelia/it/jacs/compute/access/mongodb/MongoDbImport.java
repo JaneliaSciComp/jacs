@@ -68,7 +68,8 @@ import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.screen.PatternMask;
 import org.janelia.it.jacs.model.domain.screen.ScreenSample;
-import org.janelia.it.jacs.model.domain.support.MongoUtils;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
@@ -2072,7 +2073,7 @@ public class MongoDbImport extends AnnotationDAO {
 	}
 
     private Reference getReference(DomainObject domainObject) {
-    	return new Reference(MongoUtils.getCollectionName(domainObject),domainObject.getId());
+    	return new Reference(DomainUtils.getCollectionName(domainObject),domainObject.getId());
     }
 
     private Set<String> getDefaultSubjectKeys(String subjectKey) {

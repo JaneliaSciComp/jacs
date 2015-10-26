@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.browser.api;
+package org.janelia.it.jacs.model.domain.support;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -15,6 +15,7 @@ import java.util.Set;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
 import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
@@ -23,16 +24,15 @@ import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.Image;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.screen.PatternMask;
 import org.janelia.it.jacs.model.domain.screen.ScreenSample;
-import org.janelia.it.jacs.model.domain.support.MongoUtils;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
-import org.janelia.it.jacs.shared.utils.ReflectionUtils;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
@@ -52,14 +52,14 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 
 /**
- * The main domain-object DAO for the JACS system.
+ * Data access object for the domain object model. 
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class DomainDAO {
 
     private static final Logger log = LoggerFactory.getLogger(DomainDAO.class);
-
+    
     protected MongoClient m;
     protected Jongo jongo;
 
@@ -100,23 +100,23 @@ public class DomainDAO {
                         .enable(MapperFeature.AUTO_DETECT_GETTERS)
                         .enable(MapperFeature.AUTO_DETECT_SETTERS)
                         .build());
-        this.alignmentBoardCollection = registerCollectionByClass(AlignmentBoard.class);
-        this.annotationCollection = registerCollectionByClass(Annotation.class);
-        this.compartmentSetCollection = registerCollectionByClass(CompartmentSet.class);
-        this.dataSetCollection = registerCollectionByClass(DataSet.class);
-        this.flyLineCollection = registerCollectionByClass(FlyLine.class);
-        this.fragmentCollection = registerCollectionByClass(NeuronFragment.class);
-        this.imageCollection = registerCollectionByClass(Image.class);
-        this.objectSetCollection = registerCollectionByClass(ObjectSet.class);
-        this.ontologyCollection = registerCollectionByClass(Ontology.class);
-        this.patternMaskCollection = registerCollectionByClass(PatternMask.class);
-        this.sampleCollection = registerCollectionByClass(Sample.class);
-        this.screenSampleCollection = registerCollectionByClass(ScreenSample.class);
-        this.subjectCollection = registerCollectionByClass(Subject.class);
-        this.treeNodeCollection = registerCollectionByClass(TreeNode.class);
+        this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
+        this.annotationCollection = getCollectionByClass(Annotation.class);
+        this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
+        this.dataSetCollection = getCollectionByClass(DataSet.class);
+        this.flyLineCollection = getCollectionByClass(FlyLine.class);
+        this.fragmentCollection = getCollectionByClass(NeuronFragment.class);
+        this.imageCollection = getCollectionByClass(Image.class);
+        this.objectSetCollection = getCollectionByClass(ObjectSet.class);
+        this.ontologyCollection = getCollectionByClass(Ontology.class);
+        this.patternMaskCollection = getCollectionByClass(PatternMask.class);
+        this.sampleCollection = getCollectionByClass(Sample.class);
+        this.screenSampleCollection = getCollectionByClass(ScreenSample.class);
+        this.subjectCollection = getCollectionByClass(Subject.class);
+        this.treeNodeCollection = getCollectionByClass(TreeNode.class);
     }
 
-    private MongoCollection registerCollectionByClass(Class<?> domainClass) {
+    public MongoCollection getCollectionByClass(Class<?> domainClass) {
         String collectionName = getCollectionName(domainClass);
         return jongo.getCollection(collectionName);
     }
@@ -133,19 +133,19 @@ public class DomainDAO {
         m.setWriteConcern(writeConcern);
     }
 
-    private Class<? extends DomainObject> getObjectClass(String collectionName) {
-        return MongoUtils.getObjectClass(collectionName);
+    public Class<? extends DomainObject> getObjectClass(String collectionName) {
+        return DomainUtils.getObjectClass(collectionName);
     }
 
-    private String getCollectionName(Class<?> domainClass) {
-        return MongoUtils.getCollectionName(domainClass);
+    public String getCollectionName(Class<?> domainClass) {
+        return DomainUtils.getCollectionName(domainClass);
     }
 
     private String getCollectionName(DomainObject domainObject) {
-        return MongoUtils.getCollectionName(domainObject);
+        return DomainUtils.getCollectionName(domainObject);
     }
 
-    private MongoCollection getCollectionByName(String collectionName) {
+    public MongoCollection getCollectionByName(String collectionName) {
         return jongo.getCollection(collectionName);
     }
 
@@ -200,10 +200,17 @@ public class DomainDAO {
      * Get the domain object referenced by the type and id. 
      */
     public <T extends DomainObject> T getDomainObject(String subjectKey, Class<T> domainClass, Long id) {
-        Reference reference = new Reference(getCollectionName(domainClass), id);
-        return (T)getDomainObject(subjectKey, reference);
+        return getDomainObject(subjectKey, getCollectionName(domainClass), id);
     }
 
+    /**
+     * Get the domain object referenced by the type and id. 
+     */
+    public <T extends DomainObject> T getDomainObject(String subjectKey, String collectionName, Long id) {
+        Reference reference = new Reference(collectionName, id);
+        return (T)getDomainObject(subjectKey, reference);
+    }
+    
     /**
      * Get the domain object referenced by the given Reference.
      */
@@ -220,10 +227,10 @@ public class DomainDAO {
     public <T extends DomainObject> T getDomainObject(String subjectKey, T domainObject) {
         Reference ref = new Reference();
         ref.setTargetId(domainObject.getId());
-        ref.setTargetType(MongoUtils.getCollectionName(domainObject));
+        ref.setTargetType(DomainUtils.getCollectionName(domainObject));
         return (T)getDomainObject(subjectKey, ref);
     }
-
+    
     /**
      * Get the domain objects referenced by the given list of References.
      */
@@ -252,53 +259,67 @@ public class DomainDAO {
         return domainObjects;
     }
 
+    public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, Class<T> domainClass, Collection<Long> ids) {
+        return getDomainObjects(subjectKey, getCollectionName(domainClass), ids);
+    }
+    
     /**
      * Get the domain objects of the given type and ids.
      */
-    public List<DomainObject> getDomainObjects(String subjectKey, String type, Collection<Long> ids) {
+    public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, String type, Collection<Long> ids) {
 
         long start = System.currentTimeMillis();
-        log.trace("getDomainObjects(subjectKey="+subjectKey+",type="+type+",ids.size="+ids.size()+")");
+        log.trace("getDomainObjects(subjectKey="+subjectKey+",type="+type+")");
 
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
 
         Class<? extends DomainObject> clazz = getObjectClass(type);
         if (clazz==null) {
-            return new ArrayList<>();
+            return new ArrayList<T>();
         }
 
         MongoCursor<? extends DomainObject> cursor = null;
-        if (subjects == null) {
-            cursor = getCollectionByName(type).find("{_id:{$in:#}}", ids).as(clazz);
+        if (ids==null) {
+            if (subjects == null) {
+                cursor = getCollectionByName(type).find().as(clazz);
+            }
+            else {
+                cursor = getCollectionByName(type).find("{readers:{$in:#}}", ids, subjects).as(clazz);
+            }
         }
         else {
-            cursor = getCollectionByName(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(clazz);
+            if (subjects == null) {
+                cursor = getCollectionByName(type).find("{_id:{$in:#}}", ids).as(clazz);
+            }
+            else {
+                cursor = getCollectionByName(type).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(clazz);
+            }
         }
 
-        List<DomainObject> list = toList(cursor, ids);
+        List<T> list = (List<T>)toList(cursor, ids);
         log.trace("Getting "+list.size()+" "+type+" objects took "+(System.currentTimeMillis()-start)+" ms");
         return list;
     }
 
-//    public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {
-//        Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
-//        String type = reverseRef.getReferringType();
-//
-//        MongoCursor<? extends DomainObject> cursor = null;
-//        if (subjects==null) {
-//        	cursor = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#}", reverseRef.getReferenceId()).as(getObjectClass(type));
-//        }
-//        else {
-//        	cursor = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#,readers:{$in:#}}", reverseRef.getReferenceId(), subjects).as(getObjectClass(type));
-//        }
-//        
-//        List<DomainObject> list = toList(cursor);
-//        if (list.size()!=reverseRef.getCount()) {
-//            log.warn("Reverse reference ("+reverseRef.getReferringType()+":"+reverseRef.getReferenceAttr()+":"+reverseRef.getReferenceId()+
-//                    ") denormalized count ("+reverseRef.getCount()+") does not match actual count ("+list.size()+")");
-//        }
-//        return list;
-//    }
+    public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {
+        Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
+        String type = reverseRef.getReferringType();
+
+        MongoCursor<? extends DomainObject> cursor = null;
+        if (subjects==null) {
+        	cursor = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#}", reverseRef.getReferenceId()).as(getObjectClass(type));
+        }
+        else {
+        	cursor = getCollectionByName(type).find("{'"+reverseRef.getReferenceAttr()+"':#,readers:{$in:#}}", reverseRef.getReferenceId(), subjects).as(getObjectClass(type));
+        }
+        
+        List<DomainObject> list = toList(cursor);
+        if (list.size()!=reverseRef.getCount()) {
+            log.warn("Reverse reference ("+reverseRef.getReferringType()+":"+reverseRef.getReferenceAttr()+":"+reverseRef.getReferenceId()+
+                    ") denormalized count ("+reverseRef.getCount()+") does not match actual count ("+list.size()+")");
+        }
+        return list;
+    }
 
     public List<Annotation> getAnnotations(String subjectKey, Long targetId) {
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
@@ -333,46 +354,50 @@ public class DomainDAO {
         return toList(ontologyCollection.find("{readers:{$in:#}}",subjects).as(Ontology.class));
     }
 
-//    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return toList(imageCollection.find("{sampleId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
-//    }
-//    
-//    public List<ScreenSample> getScreenSampleByFlyLine(String subjectKey, String flyLine) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return toList(screenSampleCollection.find("{flyLine:{$regex:#},readers:{$in:#}}",flyLine+".*", subjects).as(ScreenSample.class));
-//    }
-//    
-//    public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}",sampleId,subjects).as(NeuronFragment.class));
-//    }
-//    
-//    public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return toList(fragmentCollection.find("{separationId:#,readers:{$in:#}}",separationId,subjects).as(NeuronFragment.class));
-//    }
-//    
-//    public List<ScreenSample> getScreenSamples(String subjectKey) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return toList(screenSampleCollection.find("{readers:{$in:#}}",subjectKey,subjects).as(ScreenSample.class));
-//    }
-//    
-//    public List<PatternMask> getPatternMasks(String subjectKey, Long screenSampleId) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return toList(patternMaskCollection.find("{screenSampleId:#,readers:{$in:#}}",screenSampleId,subjects).as(PatternMask.class));
-//    }
-//   
-//    public TreeNode getTreeNodeById(String subjectKey, Long id) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
-//    }
-//    
-//    public TreeNode getParentTreeNodes(String subjectKey, Long id) {
-//        Set<String> subjects = getSubjectSet(subjectKey);
-//        return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
-//    }
+    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(imageCollection.find("{sampleId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
+    }
+    
+    public List<ScreenSample> getScreenSampleByFlyLine(String subjectKey, String flyLine) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(screenSampleCollection.find("{flyLine:{$regex:#},readers:{$in:#}}",flyLine+".*", subjects).as(ScreenSample.class));
+    }
+    
+    public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}",sampleId,subjects).as(NeuronFragment.class));
+    }
+    
+    public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(fragmentCollection.find("{separationId:#,readers:{$in:#}}",separationId,subjects).as(NeuronFragment.class));
+    }
+    
+    public List<ScreenSample> getScreenSamples(String subjectKey) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(screenSampleCollection.find("{readers:{$in:#}}",subjectKey,subjects).as(ScreenSample.class));
+    }
+    
+    public List<PatternMask> getPatternMasks(String subjectKey, Long screenSampleId) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(patternMaskCollection.find("{screenSampleId:#,readers:{$in:#}}",screenSampleId,subjects).as(PatternMask.class));
+    }
+   
+    public TreeNode getTreeNodeById(String subjectKey, Long id) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
+    }
+    
+    public TreeNode getParentTreeNodes(String subjectKey, Long id) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
+    }
 
+    public void changePermissions(String subjectKey, String type, Long id, String granteeKey, String rights, boolean grant) throws Exception {
+        changePermissions(subjectKey, type, Arrays.asList(id), granteeKey, rights, grant);
+    }
+    
     public void changePermissions(String subjectKey, String type, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
         String op = grant ? "addToSet" : "pull";
         String attr = rights.equals("w") ? "writers" : "readers";
@@ -799,9 +824,10 @@ public class DomainDAO {
         return getDomainObject(subjectKey, objectSet);
     }
 
-    public DomainObject updateProperty(String subjectKey, DomainObject domainObject, String propName, String propValue) {
+    public DomainObject updateProperty(String subjectKey, String collectionName, Long id, String propName, String propValue) {
+        DomainObject domainObject = getDomainObject(subjectKey, collectionName, id);
         try {
-            ReflectionUtils.set(domainObject, propName, propValue);
+            set(domainObject, propName, propValue);
         }
         catch (Exception e) {
             throw new IllegalStateException("Could not update object attribute "+propName,e);
@@ -810,11 +836,25 @@ public class DomainDAO {
         MongoCollection collection = getCollectionByName(type);
         WriteResult wr = collection.update("{_id:#,writers:#}",domainObject.getId(),subjectKey).with("{$set: {"+propName+":#, updatedDate:#}}",propValue,new Date());
         if (wr.getN()!=1) {
-            log.warn("Could not update "+type+"#"+domainObject.getId()+"."+propName+": "+wr.getError());
+            log.warn("Could not update "+type+"#"+domainObject.getId()+"."+propName);
         }
         return getDomainObject(subjectKey, domainObject);
     }
 
+    // Copy and pasted from ReflectionUtils in shared module
+    private void set(Object obj, String attributeName, Object value) throws Exception {
+        Class[] argTypes = {value.getClass()};
+        Object[] argValues = {value};
+        String methodName = getAccessor("set", attributeName);
+        obj.getClass().getMethod(methodName, argTypes).invoke(obj, argValues);
+    }
+
+    // Copy and pasted from ReflectionUtils in shared module
+    private static String getAccessor(String prefix, String attributeName) {
+        String firstChar = attributeName.substring(0, 1).toUpperCase();
+        return prefix+firstChar+attributeName.substring(1);
+    }
+    
     private Long getNewId() {
         return TimebasedIdentifierGenerator.generateIdList(1).get(0);
     }

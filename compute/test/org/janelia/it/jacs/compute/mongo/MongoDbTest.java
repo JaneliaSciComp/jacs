@@ -1,6 +1,6 @@
 package org.janelia.it.jacs.compute.mongo;
 
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.junit.BeforeClass;
 
 public class MongoDbTest {

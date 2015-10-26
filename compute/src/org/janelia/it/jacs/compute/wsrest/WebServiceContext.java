@@ -1,13 +1,15 @@
 package org.janelia.it.jacs.compute.wsrest;
 
-import java.io.IOException;
-import java.util.*;
 import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
+
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.janelia.it.jacs.compute.access.mongodb.*;
 
 /**
  * Created by schauderd on 8/8/15.

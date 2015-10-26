@@ -11,11 +11,11 @@ import net.sf.ehcache.Cache;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAO;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 
 /**
@@ -70,7 +70,7 @@ public class MongoLargeOperations extends LargeOperations {
     	log.info("Building ancestor map for all entities");
     	Cache ancestorMapCache = caches.get(ANCESTOR_MAP);
     	
-    	for(Iterator<TreeNode> iterator = dao.getDomainObjects(TreeNode.class).iterator(); iterator.hasNext(); ) {
+    	for(Iterator<TreeNode> iterator = dao.getDomainObjects(null, TreeNode.class, null).iterator(); iterator.hasNext(); ) {
     		TreeNode treeNode = iterator.next();
     		if (!treeNode.hasChildren()) continue;
     		for(Reference ref : treeNode.getChildren()) {
