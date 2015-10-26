@@ -1,27 +1,11 @@
 package org.janelia.it.jacs.compute.wsrest;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.api.EntityBeanRemote;
-import org.janelia.it.jacs.model.entity.DataSet;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.status.CurrentTaskStatus;
-import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
-import org.janelia.it.jacs.model.tasks.Event;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
-import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.model.user_data.User;
-import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
-import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
-import org.jboss.resteasy.spi.Failure;
-import org.jboss.resteasy.spi.NotFoundException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -35,8 +19,38 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
+import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.model.entity.DataSet;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.json.JsonRelease;
+import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
+import org.janelia.it.jacs.model.status.CurrentTaskStatus;
+import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
+import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.model.user_data.User;
+import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
+import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
+import org.jboss.resteasy.spi.Failure;
+import org.jboss.resteasy.spi.NotFoundException;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Defines RESTful web service entry points.
@@ -526,6 +540,154 @@ public class RestfulWebService {
     }
 
     /**
+     * Get release information. 
+     */
+    @GET
+    @Path("release")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Formatted
+    public Response getReleaseInfo() {
+
+        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
+        List<JsonRelease> releaseList = new ArrayList<>();
+
+        try {
+            for(Entity releaseEntity : entityBean.getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+                releaseList.add(new JsonRelease(releaseEntity));
+            }
+        }
+        catch (ComputeException e) {
+            logger.error("Problem getting releases",e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        
+        return Response.status(Response.Status.OK).entity(releaseList).build();
+    }
+    
+    /**
+     * Get release information. 
+     */
+    @GET
+    @Path("release/{releaseName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Formatted
+    public Response getReleaseInfo(
+            @PathParam("releaseName")String releaseName) {
+
+        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
+        List<JsonRelease> releaseList = new ArrayList<>();
+        
+        try {
+            for(Entity releaseEntity : entityBean.getEntitiesByNameAndTypeName(null, releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+                releaseList.add(new JsonRelease(releaseEntity));
+            }
+        }
+        catch (ComputeException e) {
+            logger.error("Problem getting releases",e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        
+        return Response.status(Response.Status.OK).entity(releaseList).build();
+    }
+
+    /**
+     * Get status of annotations for a release. 
+     */
+    @GET
+    @Path("release/{releaseName}/status")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Formatted
+    public Response getReleaseStatus(
+            @PathParam("releaseName")String releaseName) {
+
+        final String context = "getReleaseStatus: ";
+        final AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
+        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
+        final EntityBeanEntityLoader entityLoader = new EntityBeanEntityLoader(entityBean);
+        final Map<String,JsonLineStatus> lines = new HashMap<>();
+        
+        try {
+            // Consider all releases with a given name
+            for(Entity releaseEntity : entityBean.getEntitiesByNameAndTypeName(null, releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+
+                // Find the release folder
+                Entity releaseFolder = null;
+                for(Entity folder : entityBean.getEntitiesByNameAndTypeName(releaseEntity.getOwnerKey(), releaseName, EntityConstants.TYPE_FOLDER)) {
+                    if (!folder.getOwnerKey().equals(releaseEntity.getOwnerKey())) continue;
+                    if (releaseFolder!=null) {
+                        return getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR,
+                                "Multiple annotation folders for release " + releaseName);
+                    }
+                    releaseFolder = folder;
+                }
+                
+                // Get all annotators
+                Set<String> annotatorKeys = new HashSet<>();
+                String annotatorsStr = releaseEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATORS);
+                if (annotatorsStr != null) {
+                    for (String key : annotatorsStr.split(",")) {
+                        annotatorKeys.add(key);
+                    }
+                }
+                annotatorKeys.add(releaseEntity.getOwnerKey());
+                
+                // Walk the release folder hierarchy
+                entityLoader.populateChildren(releaseFolder);
+                for(Entity flylineFolder : EntityUtils.getChildrenOfType(releaseFolder, EntityConstants.TYPE_FOLDER)) {
+                    entityLoader.populateChildren(flylineFolder);
+
+                    // Get all sample annotations
+                    Multimap<String, Entity> annotationsByTarget = HashMultimap.<String, Entity>create();
+                    for (Entity annotation : annotationBean.getAnnotationsForChildren(null, flylineFolder.getId())) {
+                        String targetId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
+                        annotationsByTarget.put(targetId, annotation);
+                    }
+                    
+                    // Count of samples in this release for this fly line
+                    int numSamples = 0;
+                    // Count of representative samples marked for export
+                    int numRepresentatives = 0;
+                    
+                    for(Entity sample : EntityUtils.getChildrenOfType(flylineFolder, EntityConstants.TYPE_SAMPLE)) {
+                        boolean export = false;
+                        for(Entity annotation : annotationsByTarget.get(sample.getId().toString())) {
+                            if (!annotatorKeys.contains(annotation.getOwnerKey())) {
+                                continue;
+                            }
+                            if (annotation.getName().equals(SageArtifactExportService.ANNOTATION_EXPORT_20X)) {
+                                export = true;
+                            }
+                            else if (annotation.getName().equals(SageArtifactExportService.ANNOTATION_EXPORT_63X)) { 
+                                export = true;
+                            }
+                        }
+                        if (export) {
+                            numRepresentatives++;
+                        }
+                        numSamples++;
+                    }
+                    
+                    JsonLineStatus status = lines.get(flylineFolder.getName());
+                    if (status==null) {
+                        status = new JsonLineStatus();
+                        lines.put(flylineFolder.getName(), status);
+                    }
+                    
+                    status.addSamples(numSamples);
+                    status.addRepresentatives(numRepresentatives);
+                    status.getReleaseIds().add(releaseEntity.getId().toString());
+                }
+            }
+        }
+        catch (Exception e) {
+            return getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR,
+                    "Problem getting release status" + releaseName);
+        }
+        
+        return Response.status(Response.Status.OK).entity(lines).build();
+    }
+    
+    /**
      * Wraps {@link Entity} objects in the specified list as {@link DataSet}
      * objects so that JAXB can marshall the resulting list more clearly.
      *
@@ -567,15 +729,18 @@ public class RestfulWebService {
         return sb.toString();
     }
 
-    private Response getErrorResponse(String context,
-                                      Response.Status status,
-                                      String errorMessage,
-                                      Exception e)  {
+    private Response getErrorResponse(String context, Response.Status status, String errorMessage)  {
+        return getErrorResponse(context, status, errorMessage, null);
+    }
+    
+    private Response getErrorResponse(String context, Response.Status status, String errorMessage, Exception e)  {
         final RestfulWebServiceFailure failure = new RestfulWebServiceFailure(errorMessage, e);
-        logger.error(context + errorMessage, e);
+        if (e != null) {
+            logger.error(context + errorMessage, e);
+        }
         return Response.status(status).entity(failure).build();
     }
-
+    
     private String getResponseString(Response response) {
         return response.getStatus() + ": " + response.getEntity();
     }

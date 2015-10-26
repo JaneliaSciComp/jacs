@@ -62,6 +62,9 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
         }
+
+        sampleProcessingResult.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, sampleArea.getName());
+        entityBean.saveOrUpdateEntity(sampleProcessingResult);
         
         String stitchedFilename = sampleArea.getStitchedFilename();
 

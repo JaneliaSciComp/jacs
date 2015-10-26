@@ -9,7 +9,7 @@
 	 <sql-type jdbc-type="NUMERIC" precision='1' hibernate-type="boolean" />
 	 <sql-type jdbc-type="NUMERIC" hibernate-type="Long" /> 
 	</type-mapping>
-	
+	 
     <table-filter match-catalog="sage" match-name="cv"/>
     <table-filter match-catalog="sage" match-name="cv_relationship"/>
     <table-filter match-catalog="sage" match-name="cv_term"/>
@@ -18,5 +18,7 @@
     <table-filter match-catalog="sage" match-name="image_property"/>
     <table-filter match-catalog="sage" match-name="line"/>
     <table-filter match-catalog="sage" match-name="secondary_image"/>
-    
+    <table-filter match-catalog="sage" match-name="session"/>
+    <table-filter match-catalog="sage" match-name="observation"/>
+     
 </hibernate-reverse-engineering>

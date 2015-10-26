@@ -10,10 +10,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
-import org.janelia.it.jacs.model.tasks.utility.GenericTask;
-import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
-import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
+import org.janelia.it.jacs.model.tasks.utility.*;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -620,6 +617,22 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    /**
+     * Method to point to a file of object id's and move them from one ring into another.  (Probably should parameterize the rings)
+     * Example file exists in /groups/jacs/jacsShare/saffordTest/scalityMigration.txt
+     *
+     */
+    public void scalityMigrationService(String filePath) {
+        try {
+            ScalityMigrationTask migrationTask = new ScalityMigrationTask("system", new ArrayList<Event>(), filePath);
+            migrationTask = (ScalityMigrationTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(migrationTask);
+            EJBFactory.getLocalComputeBean().submitJob("ScalityMigration", migrationTask.getObjectId());
+        }
+        catch (DaoException | RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void visuallyLosslessCorrectionService(String filePath, String debug) {
         try {
@@ -682,7 +695,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab10022015b.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft1015c.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);
@@ -722,11 +735,19 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSageArtifactExport(String user) {
+    public void runSageArtifactExport(String owner, String releaseName) {
         try {
+            Subject subject = EJBFactory.getLocalComputeBean().getSubjectByNameOrKey(owner);
+            if (subject==null) throw new IllegalArgumentException("User with name "+owner+" does not exist");
+            List<Entity> releases = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(subject.getKey(), releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE);
+            if (releases.isEmpty()) throw new IllegalArgumentException("Release with name "+releaseName+" does not exist");
+            if (releases.size()>1) throw new IllegalArgumentException("More than one release with name "+releaseName);
+            Entity release = releases.get(0);
             String processName = "SageArtifactExport";
             String displayName = "Sage Artifact Export";
-            saveAndRunTask(user, processName, displayName);
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
+            taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null)); 
+            saveAndRunTask(subject.getKey(), processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running SAGE Artifact Export", ex);

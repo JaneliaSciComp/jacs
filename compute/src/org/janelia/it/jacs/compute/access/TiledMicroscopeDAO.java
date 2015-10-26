@@ -25,7 +25,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     AnnotationDAO annotationDAO;
     ComputeDAO computeDAO;
 
-    public final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
+    private final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
 
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
@@ -231,7 +231,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             pathData.setOrderIndex(0);
             pathData.setParentEntity(neuronEntity);
             // perhaps not entirely kosher to use this temp value, but it works
-            pathData.setValue(TMP_GEO_VALUE);
+            pathData.setValue(threadSafeTempGeoValue());
             annotationDAO.saveOrUpdate(pathData);
             neuronEntity.getEntityData().add(pathData);
             annotationDAO.saveOrUpdate(neuronEntity);
@@ -241,7 +241,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             String valueString=null;
             for (EntityData ed: neuronEntity.getEntityData()) {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
-                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
                         valueString=TmAnchoredPath.toStringFromArguments(ed.getId(), annotationID1, annotationID2, pointlist);
                         ed.setValue(valueString);
                         annotationDAO.saveOrUpdate(ed);
@@ -294,6 +294,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     throw new Exception("Could not find parent matching parentId="+parentAnnotationId);
                 }
             }
+            // Todd wants to see signs of LVV activity in the server logs; add annotation is the
+            //  only common operation that makes sense
+            log.info("LVV: adding annotation to neuron " + neuronId + " at " + x + ", " + y + ", " + z);
             return createGeometricAnnotation(neuron, isRoot, parentAnnotationId, index, x, y, z, comment, neuronId);
             /* This code is verbatim included in the method called above. LLF
             
@@ -462,7 +465,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             entityData.setOrderIndex(0);
             entityData.setParentEntity(neuron);
             // this is kind of bogus, but it works:
-            entityData.setValue(TMP_GEO_VALUE);
+            entityData.setValue(threadSafeTempGeoValue());
             annotationDAO.saveOrUpdate(entityData);
             neuron.getEntityData().add(entityData);
             annotationDAO.saveOrUpdate(neuron);
@@ -472,7 +475,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             String valueString=null;
             for (EntityData ed : neuron.getEntityData()) {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
-                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
                         valueString = TmStructuredTextAnnotation.toStringFromArguments(ed.getId(), parentID,
                                 parentType, formatVersion, data);
                         ed.setValue(valueString);
@@ -1186,7 +1189,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
         geoEd.setOrderIndex(0);
         geoEd.setParentEntity(neuron);
-        geoEd.setValue(TMP_GEO_VALUE);
+        geoEd.setValue(threadSafeTempGeoValue());
         annotationDAO.saveOrUpdate(geoEd);
         neuron.getEntityData().add(geoEd);
         annotationDAO.saveOrUpdate(neuron);
@@ -1196,7 +1199,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         for (EntityData ed : neuron.getEntityData()) {
             if (isRoot) {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
                         valueString = TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
                         ed.setValue(valueString);
                         annotationDAO.saveOrUpdate(ed);
@@ -1205,7 +1208,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 }
             } else {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
-                    if (ed.getValue().equals(TMP_GEO_VALUE)) {
+                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
                         valueString = TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
                         ed.setValue(valueString);
                         annotationDAO.saveOrUpdate(ed);
@@ -1223,6 +1226,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         //  to put in:
         geoAnnotation.setNeuronId(neuronId);
         return geoAnnotation;
+    }
+
+    private String threadSafeTempGeoValue() {
+        return TMP_GEO_VALUE + Thread.currentThread().getName();
     }
 
 }

@@ -13,7 +13,7 @@ import java.util.Set;
 public class Line implements Serializable {
 
     private Integer id;
-    private CvTerm cvTerm;
+    private CvTerm lab;
     private String name;
     private Integer geneId;
     private Integer organismId;
@@ -24,15 +24,15 @@ public class Line implements Serializable {
     public Line() {
     }
 
-    public Line(CvTerm cvTerm, String name, Date createDate) {
-        this.cvTerm = cvTerm;
+    public Line(CvTerm lab, String name, Date createDate) {
+        this.lab = lab;
         this.name = name;
         this.createDate = createDate;
     }
 
-    public Line(CvTerm cvTerm, String name, Integer geneId, Integer organismId, String genotype, Date createDate,
+    public Line(CvTerm lab, String name, Integer geneId, Integer organismId, String genotype, Date createDate,
             Set<Image> images) {
-        this.cvTerm = cvTerm;
+        this.lab = lab;
         this.name = name;
         this.geneId = geneId;
         this.organismId = organismId;
@@ -49,12 +49,12 @@ public class Line implements Serializable {
         this.id = id;
     }
 
-    public CvTerm getCvTerm() {
-        return this.cvTerm;
+    public CvTerm getLab() {
+        return this.lab;
     }
 
-    public void setCvTerm(CvTerm cvTerm) {
-        this.cvTerm = cvTerm;
+    public void setLab(CvTerm lab) {
+        this.lab = lab;
     }
 
     public String getName() {

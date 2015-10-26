@@ -62,6 +62,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         sourceStackFormat = processData.getString("SOURCE_STACK_FORMAT");
         targetRootUrl = processData.getString("TARGET_ROOT_URL");
         targetStackFormat = processData.getString("TARGET_STACK_FORMAT");
+        if (targetStackFormat == null || targetStackFormat.trim().length() == 0) {
+            targetStackFormat = sourceStackFormat;
+        }
         if (targetRootUrl == null) {
             targetRootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
         }
@@ -152,9 +155,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
                 startX, startY, startZ, width, height, depth);
         try(FileWriter fw = new FileWriter(configFile)) {
             fw.write(sourceRootUrl + "\n");
-            fw.write(sourceStackFormat + "\n");
+            writeValueOrNone(sourceStackFormat, fw);
             fw.write(targetRootUrl + "\n");
-            fw.write(targetStackFormat + "\n");
+            writeValueOrNone(targetStackFormat, fw);
             fw.write(imageWidth + "\n");
             fw.write(imageHeight + "\n");
             fw.write(imageDepth + "\n");
@@ -203,9 +206,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         StringBuffer script = new StringBuffer();
         // read the vars from stdin
         script.append("read SOURCE_URL_ROOT\n");
-        script.append("read SOURCE_STACK_FORMAT\n");
+        if (sourceStackFormat != null) script.append("read SOURCE_STACK_FORMAT\n");
         script.append("read TARGET_ROOT_URL\n");
-        script.append("read TARGET_STACK_FORMAT\n");
+        if (targetStackFormat != null) script.append("read TARGET_STACK_FORMAT\n");
         script.append("read IMAGE_WIDTH\n");
         script.append("read IMAGE_HEIGHT\n");
         script.append("read IMAGE_DEPTH\n");

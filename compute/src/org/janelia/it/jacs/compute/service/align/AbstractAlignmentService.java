@@ -48,6 +48,9 @@ import com.google.common.collect.Ordering;
  */
 public abstract class AbstractAlignmentService extends SubmitDrmaaJobService implements Aligner {
 
+	protected static final String BRAIN_AREA = "Brain";
+	protected static final String VNC_AREA = "VNC";
+	
     protected static final String ARCHIVE_PREFIX = "/archive";
     
     protected EntityBeanLocal entityBean;
@@ -134,29 +137,30 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         // strategy for finding input files and other parameters.
         for(AnatomicalArea anatomicalArea : sampleAreas) {
             String areaName = anatomicalArea.getName();
-            if ("Brain".equalsIgnoreCase(areaName) || StringUtils.isEmpty(areaName)) {
-                Entity result = entityBean.getEntityById(anatomicalArea.getSampleProcessingResultId());
-                entityLoader.populateChildren(result);
-                if (result!=null) {
-                    if (!alignedAreas.isEmpty()) {
-                        contextLogger.warn("Found more than one default brain area to align. Using: "+alignedAreas.get(0).getName());
-                    }
-                    else {
-                        Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                        alignedAreas.add(anatomicalArea);
-                        input1 = new AlignmentInputFile();
-                        input1.setPropertiesFromEntity(image);
-                        input1.setSampleId(sampleEntity.getId());
-                        input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
-                        if (warpNeurons) {
-                            input1.setInputSeparationFilename(getConsolidatedLabel(result));
-                        }
-                    }
-                }
-            }
+            Entity result = getLatestResultOfType(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, areaName);
+        	if (result!=null) {
+	            if (BRAIN_AREA.equalsIgnoreCase(areaName) || StringUtils.isEmpty(areaName)) {
+	                entityLoader.populateChildren(result);
+	                if (!alignedAreas.isEmpty()) {
+	                    contextLogger.warn("Found more than one default brain area to align. Using: "+alignedAreas.get(0).getName());
+	                }
+	                else {
+	                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+	                    alignedAreas.add(anatomicalArea);
+	                    input1 = new AlignmentInputFile();
+	                    input1.setPropertiesFromEntity(image);
+	                    input1.setSampleId(sampleEntity.getId());
+	                    input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
+	                    if (warpNeurons) {
+	                        input1.setInputSeparationFilename(getConsolidatedLabel(result));
+	                    }
+	                }
+	            }
+        	}
         }
         
         if (input1==null) {
+        	contextLogger.info("No input found, will not run aligner.");
         	runAligner = false;
         }
     }
@@ -249,6 +253,39 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             });
             data.putItem("REGENERATE_INPUT", regenerateInputs);
         }
+    }
+
+    protected Entity getLatestResultOfType(Entity objectiveSample, String resultType, String anatomicalArea) throws Exception {
+        entityLoader.populateChildren(objectiveSample);
+
+        contextLogger.debug("Looking for latest result of type "+resultType+" with anatomicalArea="+anatomicalArea);
+        
+        List<Entity> pipelineRuns = EntityUtils.getChildrenOfType(objectiveSample, EntityConstants.TYPE_PIPELINE_RUN);
+        Collections.reverse(pipelineRuns);
+        for(Entity pipelineRun : pipelineRuns) {
+            entityLoader.populateChildren(pipelineRun);
+
+            contextLogger.debug("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
+
+            if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR) != null) {
+                continue;
+            }
+            
+            List<Entity> results = EntityUtils.getChildrenForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT);
+            Collections.reverse(results);
+            for(Entity result : results) {
+
+                contextLogger.debug("    Check result "+result.getName()+" (id="+result.getId()+")");
+                
+                if (result.getEntityTypeName().equals(resultType)) {
+                    if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
+                        entityLoader.populateChildren(result);
+                        return result;
+                    }
+                }
+            }   
+        }
+        return null;
     }
     
     protected String getConsolidatedLabel(Entity result) throws Exception {

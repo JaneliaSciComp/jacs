@@ -400,7 +400,6 @@ public class MIPMapTilesTask extends Task {
         setParameter(PARAM_targetType, targetType);
     }
 
-
     @XmlElement(name = "targetMediaFormat")
     public String getTargetMediaFormat() {
         return getParameter(PARAM_targetMediaFormat);
