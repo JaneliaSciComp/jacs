@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.json;
+package org.janelia.it.jacs.model.entity.json;
 
 import org.janelia.it.jacs.model.user_data.FileNode;
 

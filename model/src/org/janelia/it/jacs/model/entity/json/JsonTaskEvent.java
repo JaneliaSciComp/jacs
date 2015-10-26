@@ -1,6 +1,5 @@
-package org.janelia.it.jacs.compute.wsrest.json;
+package org.janelia.it.jacs.model.entity.json;
 
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.janelia.it.jacs.model.tasks.Event;
 
 import javax.xml.bind.annotation.XmlAccessType;

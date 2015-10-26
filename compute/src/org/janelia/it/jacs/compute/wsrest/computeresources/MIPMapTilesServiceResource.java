@@ -1,8 +1,7 @@
 package org.janelia.it.jacs.compute.wsrest.computeresources;
 
 
-import org.janelia.it.jacs.compute.wsrest.json.JsonTask;
-import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.mip.MIPMapTilesTask;
 import org.janelia.it.jacs.model.user_data.mip.MIPMapTilesResultNode;
 import org.slf4j.Logger;
