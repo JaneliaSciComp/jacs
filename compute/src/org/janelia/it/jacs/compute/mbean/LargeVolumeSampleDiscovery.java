@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileOwnerAttributeView;
+import org.apache.log4j.Logger;
 /**
  * This should ultimately allow the user to invoke an auto-creation of samples for LVV.
  * Created by fosterl on 10/23/15.
@@ -24,6 +25,10 @@ import java.nio.file.attribute.FileOwnerAttributeView;
  */
 public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBean {
     public static final String SHARED_PERMISSION = "group:mouselight_common_user";
+    // Setting ownership of all created samples, to Jayaram, to avoid breakage
+    // due to disagreements between filesystem and Workstation usernames.
+    public static final String OWNERSHIP_USER = "chandrashekarj";
+    private static final Logger logger = Logger.getLogger(LargeVolumeSampleDiscovery.class);
 
     @Override
     public void discoverSamples() {
@@ -58,12 +63,14 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                 }
 
                 if ( original ) {
-                    String ownerSubject = "user:" + ownerAttributeView.getOwner().getName();
+                    final String userName = ownerAttributeView.getOwner().getName();
+                    logger.info("Found sample belonging to " + userName + ".  Adding " + sample.getName());
                     TmSample tmSample = timBean.createTiledMicroscopeSample(
-                            ownerSubject, sample.getName(), fileLocation
+                            OWNERSHIP_USER, sample.getName(), fileLocation
                     );
                     Long entityId = tmSample.getId();  // Happens to be the entity id of the wrapped entity.
-                    //Entity sampleEntity = entityBean.getEntityById(ownerSubject, entityId);
+
+                    String ownerSubject = "user:" + OWNERSHIP_USER;
                     entityBean.grantPermissions( ownerSubject, entityId, SHARED_PERMISSION, "r", true);
                 }
             }
