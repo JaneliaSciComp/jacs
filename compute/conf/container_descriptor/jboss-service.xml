@@ -53,6 +53,8 @@
     </mbean>
     <mbean code="org.janelia.it.jacs.compute.mbean.Validator" name="ComputeServer:service=Validator"
            xmbean-dd="resource:META-INF/Validation-xmbean.xml"/>
+    <mbean code="org.janelia.it.jacs.compute.mbean.LargeVolumeSampleDiscovery" name="ComputeServer:service=LargeVolumeSampleDiscovery"
+           xmbean-dd="resource:META-INF/LargeVolumeSampleDiscovery-xmbean.xml"/>
      
     <mbean code="org.jboss.mq.server.jmx.Queue" name="jboss.mq.destination:service=Queue,name=ComputeServer">
         <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>
