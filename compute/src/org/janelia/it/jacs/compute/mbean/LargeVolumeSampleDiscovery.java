@@ -30,10 +30,6 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
         try {
             // Need to find out whether samples already exist.
             AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
-//            List<Long> entityIds = annotationBean.getAllEntityIdsByType( EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE );
-//            for (Long entityId : entityIds) {
-//                annotationBean.getEntitiesWithFilePath()
-//            }
 
             TiledMicroscopeBeanRemote timBean = EJBFactory.getRemoteTiledMicroscopeBean();
             EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
