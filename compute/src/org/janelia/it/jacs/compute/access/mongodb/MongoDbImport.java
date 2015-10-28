@@ -1986,7 +1986,9 @@ public class MongoDbImport extends AnnotationDAO {
 	            }
 			}
 		}
-	    
+		
+		String translationType = null;
+		
 	    // --------------------------------------------------------------------------------
 		// 4) Load the members, translating them if necessary
 	    List<Long> memberIds = new ArrayList<Long>();
@@ -2001,7 +2003,7 @@ public class MongoDbImport extends AnnotationDAO {
 	        
         	Entity translatedEntity = translatedEntities.get(childEntity.getId());
         	if (translatedEntity!=null) {
-        		// already translate this above
+        		// already translated this above
         		logger.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+childType+"#"+importEntityId);
         		importEntityId = translatedEntity.getId();
         	}
@@ -2012,15 +2014,20 @@ public class MongoDbImport extends AnnotationDAO {
         		for (String entityType : entityTranslationPriority) {
         			Entity owningEntity = getAncestorWithType(childEntity.getOwnerKey(), importEntityId, entityType);
                 	if (owningEntity!=null) {
-                		importEntity = owningEntity;
-                		importEntityId = owningEntity.getId();
-                		logger.info(indent+"  Will reference "+entityType+"#"+importEntityId+" instead of unknown "+childType+"#"+importEntityId);
+                		logger.info(indent+"  Will reference "+entityType+"#"+owningEntity.getId()+" instead of unknown "+childType+"#"+importEntityId);                		
+                        importEntity = owningEntity;
+                        importEntityId = owningEntity.getId();
                 		break;
                 	}
         		}
         	}
         
 	        if (importEntity!=null) {
+	            if (translationType!=null && !importEntity.getEntityTypeName().equals(translationType)) {
+	                logger.info("  Skipping item ("+importEntity.getEntityTypeName()+") which did not get translation to translation type "+translationType);
+	                continue;
+	            }
+	            translationType = importEntity.getEntityTypeName();
 	            String type = getCollectionName(importEntity.getEntityTypeName());
 	            if (INSERT_ROGUE_ENTITIES && !"unknown".equals(type)) {
 	                // A minor optimization, since we can only do rogue imports on images
@@ -2035,6 +2042,9 @@ public class MongoDbImport extends AnnotationDAO {
 	        }
 	    }
 
+	    if (translationType!=null) {
+	        objectSet.setTargetType(getCollectionName(translationType));
+	    }
 	    
         if (!memberIds.isEmpty()) {
             objectSet.setMembers(memberIds);
