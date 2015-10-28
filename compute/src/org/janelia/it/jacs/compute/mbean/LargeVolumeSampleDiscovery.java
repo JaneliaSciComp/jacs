@@ -18,12 +18,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
+import org.janelia.it.jacs.model.util.MatrixUtilities;
 /**
  * This should ultimately allow the user to invoke an auto-creation of samples for LVV.
  * Created by fosterl on 10/23/15.
  * @See TiledMicroscopeManager - which currently does not do much.  Should this method be in that instead?
  */
 public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBean {
+    
     public static final String SHARED_PERMISSION = "group:mouselight_common_user";
     // Setting ownership of all created samples, to Jayaram, to avoid breakage
     // due to disagreements between filesystem and Workstation usernames.
@@ -40,10 +43,8 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
             EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
             SampleDiscovery discovery = new SampleDiscovery();
             Set<File> sampleDirectories = discovery.discover();
-            // NOTE: questions should be answered before going much further on this.
-            //  What user for that first field?
-            //  What if a sample on same directory already exists?
-            //
+            
+            // Iterate over all samples, adding them to db.
             for (File sample: sampleDirectories) {
                 Path path = Paths.get(sample.getAbsolutePath());
                 FileOwnerAttributeView ownerAttributeView = Files.getFileAttributeView(path, FileOwnerAttributeView.class);
@@ -56,6 +57,7 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                         for (EntityActorPermission permission: permissions) {
                             if ( permission.getSubjectKey().equals(SHARED_PERMISSION)) {
                                 original = false;
+                                logger.info("Sample " + fileLocation + " already known.  Ignoring.");
                                 break;
                             }
                         }
@@ -63,6 +65,16 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                 }
 
                 if ( original ) {
+                    CoordinateToRawTransform transform = null;
+                    try {
+                        transform = timBean.getTransform(fileLocation);
+                    } catch (Exception ex) {
+                        logger.error("Failed to interpret the tilebase file for " + fileLocation + ".  Excluding it from Sample generation.");
+                        
+                        continue;
+
+                    }
+                    
                     final String userName = ownerAttributeView.getOwner().getName();
                     logger.info("Found sample belonging to " + userName + ".  Adding " + sample.getName());
                     TmSample tmSample = timBean.createTiledMicroscopeSample(
@@ -72,11 +84,22 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
 
                     String ownerSubject = "user:" + OWNERSHIP_USER;
                     entityBean.grantPermissions( ownerSubject, entityId, SHARED_PERMISSION, "r", true);
+                    
+                    // Now, apply conversion matrices to the sample.
+                    int[] origin = transform.getOrigin();
+                    double[] voxelMicrometers = transform.getScale();
+                    String voxToMicronString = MatrixUtilities.createSerializableVoxToMicron(voxelMicrometers, origin);
+                    String micronToVoxString = MatrixUtilities.createSerializableMicronToVox(voxelMicrometers, origin);
+
+                    entityBean.setOrUpdateValue(ownerSubject, entityId, EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX, micronToVoxString);
+                    entityBean.setOrUpdateValue(ownerSubject, entityId, EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX, voxToMicronString);
+
                 }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
+
 }
 
