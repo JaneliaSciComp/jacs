@@ -127,7 +127,7 @@ public class ImageStack
         byte[] result = new byte[_width * _height * count];
         Frame f = _image.get(idx);
         for ( int j = 0; j < count; j++ ) {
-            if ( component+j > f.imageBytes.size() ) {
+            if ( component+j >= f.imageBytes.size() ) {
                 for ( int i = 0; i < _width * _height; i++ )
                     result[count*i + j] = 0;
             } else {
