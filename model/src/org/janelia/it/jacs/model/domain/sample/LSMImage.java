@@ -204,7 +204,7 @@ public class LSMImage extends Image {
 
     @SAGEAttribute(cvName="light_imagery", termName="total_pixels")
     @SearchAttribute(key="total_pixels_i",label="Total Pixels")
-    private Integer totalPixels;
+    private String totalPixels;
 
     @SAGEAttribute(cvName="light_imagery", termName="tracks")
     @SearchAttribute(key="tracks_i",label="Tracks")
@@ -670,11 +670,11 @@ public class LSMImage extends Image {
         this.tissueOrientation = tissueOrientation;
     }
 
-    public Integer getTotalPixels() {
+    public String getTotalPixels() {
         return totalPixels;
     }
 
-    public void setTotalPixels(Integer totalPixels) {
+    public void setTotalPixels(String totalPixels) {
         this.totalPixels = totalPixels;
     }
 

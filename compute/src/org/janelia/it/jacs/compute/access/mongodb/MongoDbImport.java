@@ -440,9 +440,11 @@ public class MongoDbImport extends AnnotationDAO {
         Deque<Entity> samples = new LinkedList<Entity>(getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_SAMPLE));
         log.info("Got "+samples.size()+" samples for "+subjectKey);
         resetSession();
-        int loaded = loadSamples(samples);
-        log.info("Loading " + loaded + " samples for " + subjectKey + " took "
-                + (System.currentTimeMillis() - start) + " ms");
+        if (!samples.isEmpty()) {
+            int loaded = loadSamples(samples);
+            log.info("Loading " + loaded + " samples for " + subjectKey + " took "
+                    + (System.currentTimeMillis() - start) + " ms");
+        }
     }
     
     private int loadSamples(Deque<Entity> samples) {
@@ -586,7 +588,8 @@ public class MongoDbImport extends AnnotationDAO {
 
                     List<PipelineResult> sprResults = new ArrayList<PipelineResult>();
                     for(Entity separationEntity : EntityUtils.getChildrenOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-                        sprResults.add(getNeuronSeparation(parentSampleEntity, separationEntity));
+                        NeuronSeparation ns = getNeuronSeparation(parentSampleEntity, separationEntity);
+                        if (ns!=null) sprResults.add(ns);
                     }
                     
                     SampleProcessingResult result = getSampleProcessingResult(resultEntity);
@@ -609,7 +612,8 @@ public class MongoDbImport extends AnnotationDAO {
                         String objective = separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
                         
                         if (StringUtils.isEmpty(objective)) objective = "";
-                        nsResultMap.put(objective,getNeuronSeparation(parentSampleEntity, separationEntity));
+                        NeuronSeparation ns = getNeuronSeparation(parentSampleEntity, separationEntity);
+                        if (ns!=null) nsResultMap.put(objective,ns);
                     }
                     
                     Entity verifyMovie = null;
@@ -932,7 +936,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, sageId);
         if (sageProps==null) {
-            log.warn("Cannot find LSM#"+lsm.getId()+" in SAGE, with SAGE Id "+sageId);
+            log.warn("    Cannot find LSM#"+lsm.getId()+" in SAGE, with SAGE Id "+sageId);
         }
         else {
             for(String key : lsmSageAttrs.keySet()) {
@@ -950,6 +954,12 @@ public class MongoDbImport extends AnnotationDAO {
                             // Dates are represented as java.sql.Timestamps, which is a subclass of Date, 
                             // so this should be safe to assign directly
                             trueValue = value;
+                        }
+                        else if (fieldType.equals(Long.class)) {
+
+                            log.info(key+" is a "+value.getClass().getName()+" with value "+value);
+                            
+                            trueValue = Long.parseLong(value.toString());
                         }
                         else if (fieldType.equals(Integer.class)) {
                             trueValue = Integer.parseInt(value.toString());
@@ -1008,25 +1018,28 @@ public class MongoDbImport extends AnnotationDAO {
         image.setOpticalResolution(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
         image.setImageSize(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
 
-        
-        Map<FileType,String> files = new HashMap<FileType,String>();
         String path = image.getFilepath();
-        if (path.endsWith(".png") || path.endsWith(".gif") || path.endsWith(".jpg") || path.endsWith(".jpeg")) {
-            addImage(files,FileType.Unclassified2d,path);
+        if (path!=null) {
+            Map<FileType,String> files = new HashMap<FileType,String>();
+            if (path.endsWith(".png") || path.endsWith(".gif") || path.endsWith(".jpg") || path.endsWith(".jpeg")) {
+                addImage(files,FileType.Unclassified2d,path);
+            }
+            else {
+                addStackFiles(imageEntity, files, null);    
+            }
+            image.setFiles(files);
         }
-        else {
-            addStackFiles(imageEntity, files, null);    
-        }
-        image.setFiles(files);
         
         return image;
     }
     
     private NeuronSeparation getNeuronSeparation(Entity sampleEntity, Entity separationEntity) throws Exception {
+        if (separationEntity==null) return null;
         populateChildren(separationEntity);
         
         List<NeuronFragment> neuronFragments = new ArrayList<NeuronFragment>();
         Entity nfCollectionEntity = EntityUtils.getLatestChildOfType(separationEntity, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
+        if (nfCollectionEntity==null) return null;
         
         populateChildren(nfCollectionEntity);
         for(Entity fragmentEntity : EntityUtils.getChildrenOfType(nfCollectionEntity, EntityConstants.TYPE_NEURON_FRAGMENT)) {
@@ -1731,6 +1744,7 @@ public class MongoDbImport extends AnnotationDAO {
         		item.setVisible("true".equalsIgnoreCase(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY)));
         		item.setColor(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
         		item.setRenderMethod(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RENDER_METHOD));
+        		// TODO: Fix this. It creates references to samples and neurons just fine, but compartments are not domain objects so the reference type is "unknown".
         		Reference target = getReference(targetEntity);
         		item.setTarget(target);
         		List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
@@ -1764,25 +1778,32 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Loading workspace for "+subjectKey);
 
-        Entity workspaceEntity = getDefaultWorkspace(subjectKey);
-        if (workspaceEntity==null) {
-        	log.error("Could not find default workspace for "+subjectKey);	
-        	return;
-        }
-        
-        LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
-        Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
-        List<Reference> children = loadRootFolders(rootFolders, visited);
-        
         Workspace workspace = new Workspace();
-        workspace.setId(workspaceEntity.getId());
-        workspace.setName(workspaceEntity.getName());
-        workspace.setOwnerKey(workspaceEntity.getOwnerKey());
+        workspace.setOwnerKey(subjectKey);
         workspace.setReaders(getDefaultSubjectKeys(subjectKey));
         workspace.setWriters(workspace.getReaders());
-        workspace.setCreationDate(workspaceEntity.getCreationDate());
-        workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
-        workspace.setChildren(children);
+        
+        Entity workspaceEntity = getDefaultWorkspace(subjectKey);
+        if (workspaceEntity==null) {
+            workspace.setId(dao.getNewId());
+            workspace.setName("Default Workspace");
+            Date now = new Date();
+            workspace.setCreationDate(now);
+            workspace.setUpdatedDate(now);
+            workspace.setChildren(new ArrayList<Reference>());
+        	return;
+        }
+        else {
+            LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
+            Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
+            List<Reference> children = loadRootFolders(rootFolders, visited);
+            workspace.setId(workspaceEntity.getId());
+            workspace.setName(workspaceEntity.getName());
+            workspace.setCreationDate(workspaceEntity.getCreationDate());
+            workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
+            workspace.setChildren(children);
+        }
+        
         treeNodeCollection.insert(workspace);
         
         log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -1861,7 +1882,6 @@ public class MongoDbImport extends AnnotationDAO {
 	    
 	    // Load children
 	    for(Entity childFolder : EntityUtils.getChildrenOfType(folderEntity, EntityConstants.TYPE_FOLDER)) {
-	    	
 	    	DomainObject domainObject = loadFolderHierarchy(childFolder, visited, indent+"  ");
             if (domainObject!=null) {
                 Reference ref = getReference(domainObject);

@@ -179,9 +179,17 @@ public class DomainDAO {
     }
 
     /**
-     * Create a list of the result set in the order of the given id list.
+     * Create a list of the result set in the order of the given id list. If ids is null then 
+     * return the result set in the order it comes back.
      */
     private List<DomainObject> toList(MongoCursor<? extends DomainObject> cursor, Collection<Long> ids) {
+        if (ids==null) {
+            List<DomainObject> list = new ArrayList<>();
+            for(DomainObject item : cursor) {
+                list.add(item);
+            }
+            return list;
+        }
         List<DomainObject> list = new ArrayList<>(ids.size());
         Map<Long,DomainObject> map = new HashMap<>(ids.size());
         for(DomainObject item : cursor) {
@@ -855,7 +863,7 @@ public class DomainDAO {
         return prefix+firstChar+attributeName.substring(1);
     }
     
-    private Long getNewId() {
+    public Long getNewId() {
         return TimebasedIdentifierGenerator.generateIdList(1).get(0);
     }
     
