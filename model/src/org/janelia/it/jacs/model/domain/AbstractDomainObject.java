@@ -12,6 +12,8 @@ import org.jongo.marshall.jackson.oid.Id;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 /**
  * Every top-level "domain object" we store in MongoDB has a core set of attributes
  * which allow for identification (id/name) and permissions (owner/readers/writers)
@@ -19,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public abstract class AbstractDomainObject implements DomainObject {
 
     @Id

@@ -5,11 +5,16 @@ import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @MongoMapped(collectionName = "objectSet")
+@SearchType(key="objectSet",label="Object Set")
 public class ObjectSet extends AbstractDomainObject {
 
+    @SearchAttribute(key="target_type_txt",label="Target Type",facet=true)
     private String targetType;
     private List<Long> members;
 

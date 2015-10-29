@@ -11,11 +11,8 @@ import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 @MongoMapped(collectionName = "image")
 @SearchType(key="image",label="Image")
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class Image extends AbstractDomainObject implements HasFiles, HasFilepath {
 
     @SearchAttribute(key="filepath_txt",label="File Path")

@@ -6,11 +6,16 @@ import java.util.List;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.gui.search.criteria.Criteria;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 
 @MongoMapped(collectionName = "filter")
+@SearchType(key="filter",label="Filter")
 public class Filter extends AbstractDomainObject {
 
+    @SearchAttribute(key="searchType",label="Search Type",facet=true)
     private String searchType;
+    @SearchAttribute(key="searchString",label="Search String")
     private String searchString;
     private List<Criteria> criteriaList;
     private String sort;
