@@ -78,4 +78,5 @@ public interface TiledMicroscopeBeanRemote {
     public Map<Integer,byte[]> getTextureBytes( String basePath, int[] viewerCoord, int[] dimensions ) throws ComputeException;
 
     public CoordinateToRawTransform getTransform( String basePath ) throws ComputeException;
+    public RawFileInfo getNearestChannelFiles(String basePath, int[] viewerCoord) throws ComputeException;
 }
