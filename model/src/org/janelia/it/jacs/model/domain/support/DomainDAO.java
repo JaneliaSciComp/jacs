@@ -146,6 +146,7 @@ public class DomainDAO {
     }
 
     public MongoCollection getCollectionByName(String collectionName) {
+        if (collectionName==null) throw new IllegalArgumentException("collectionName argument may not be null");
         return jongo.getCollection(collectionName);
     }
 
@@ -160,7 +161,7 @@ public class DomainDAO {
      * Return the set of subjectKeys which are readable by the given subject. This includes the subject itself, and all of the groups it is part of. 
      */
     private Set<String> getSubjectSet(String subjectKey) {
-        Subject subject = subjectCollection.findOne("{key:#}",subjectKey).projection("{_id:0,groups:1}").as(Subject.class);
+        Subject subject = subjectCollection.findOne("{key:#}",subjectKey).projection("{_id:0,class:1,groups:1}").as(Subject.class);
         if (subject==null) throw new IllegalArgumentException("No such subject: "+subjectKey);
         Set<String> groups = subject.getGroups();
         groups.add(subjectKey);
@@ -400,91 +401,6 @@ public class DomainDAO {
     public TreeNode getParentTreeNodes(String subjectKey, Long id) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
-    }
-
-    public void changePermissions(String subjectKey, String type, Long id, String granteeKey, String rights, boolean grant) throws Exception {
-        changePermissions(subjectKey, type, Arrays.asList(id), granteeKey, rights, grant);
-    }
-    
-    public void changePermissions(String subjectKey, String type, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
-        String op = grant ? "addToSet" : "pull";
-        String attr = rights.equals("w") ? "writers" : "readers";
-        MongoCollection collection = getCollectionByName(type);
-
-        String logIds = ids.size()<6 ? ""+ids : ids.size()+" ids";
-
-        log.info("Changing permissions on all "+type+" documents with ids: "+logIds);
-        WriteResult wr = collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
-        log.info("Changed permissions on "+wr.getN()+" documents");
-
-//        log.debug("  updated "+wr.getN()+" "+type);
-
-//        
-//        if (wr.getN()!=ids.size()) { 
-//            
-//            Set<Long> idSet = new HashSet<Long>(ids);
-//            Set<Long> returnSet = new HashSet<Long>();
-//            
-//            int i = 0;
-//            for(Object o : collection.find("{_id:{$in:#}}",ids).as(getObjectClass(type))) {
-//                Sample s = (Sample)o;
-//                returnSet.add(s.getId());
-//            }
-//
-//            log.warn("WARN: Changing permissions on "+ids.size()+" items only affected "+wr.getN()+" Got: "+i);
-//            idSet.removeAll(returnSet);
-//            
-//            log.warn(idSet);
-//        }
-
-//        Grant on VT MCFO Case 1 and took 147653 ms
-//        Revoke on VT MCFO Case 1 and took 149949 ms
-
-//        Grant on VT MCFO Case 1 and took 142196 ms
-//        Revoke on VT MCFO Case 1 and took 149955 ms
-
-//        No writers check:
-//        Grant on VT MCFO Case 1 and took 145893 ms
-//        Revoke on VT MCFO Case 1 and took 146716 ms
-
-//        Unacknowledged, with writers check:
-//        Grant on VT MCFO Case 1 and took 147216 ms
-//        Revoke on VT MCFO Case 1 and took 152989 ms
-
-
-        if ("treeNode".equals(type)) {
-            for(Long id : ids) {
-
-                TreeNode node = collection.findOne("{_id:#,writers:#}",id,subjectKey).projection("{_id:0,class:1,children:1}").as(TreeNode.class);
-
-                if (node==null) {
-                    throw new IllegalArgumentException("Could not find folder with id="+id);
-                }
-
-                if (node.hasChildren()) {
-                    Multimap<String,Long> groupedIds = HashMultimap.<String,Long>create();
-                    for(Reference ref : node.getChildren()) {
-                        groupedIds.put(ref.getTargetType(), ref.getTargetId());
-                    }
-
-                    for(String refType : groupedIds.keySet()) {
-                        Collection<Long> refIds = groupedIds.get(refType);
-                        changePermissions(subjectKey, refType, refIds, granteeKey, rights, grant);
-                    }
-                }
-            }
-        }
-        else if ("sample".equals(type)) {
-            log.info("Changing permissions on all fragments and lsms associated with samples: "+logIds);
-            WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
-            log.info("Updated permissions on "+wr1.getN()+" fragments");
-            WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
-            log.info("Updated permissions on "+wr2.getN()+" lsms");
-        }
-        else if ("screenSample".equals(type)) {
-            log.info("Changing permissions on all patternMasks associated with screenSamples: "+logIds);
-            patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}}",granteeKey);
-        }
     }
 
     private <T extends DomainObject> T saveImpl(String subjectKey, T domainObject) throws Exception {
@@ -847,6 +763,79 @@ public class DomainDAO {
             log.warn("Could not update "+type+"#"+domainObject.getId()+"."+propName);
         }
         return getDomainObject(subjectKey, domainObject);
+    }
+
+    public void changePermissions(String subjectKey, String type, Long id, String granteeKey, String rights, boolean grant) throws Exception {
+        changePermissions(subjectKey, type, Arrays.asList(id), granteeKey, rights, grant);
+    }
+    
+    public void changePermissions(String subjectKey, String type, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
+        String op = grant ? "addToSet" : "pull";
+        String attr = rights.equals("w") ? "writers" : "readers";
+        MongoCollection collection = getCollectionByName(type);
+
+        String logIds = ids.size()<6 ? ""+ids : ids.size()+" ids";
+
+        if (grant) {
+            log.info("Granting {} permissions on all {} documents with ids {} to {}",rights,type,logIds,granteeKey);
+        }
+        else {
+            log.info("Revoking {} permissions on all {} documents with ids {} to {}",rights,type,logIds,granteeKey);
+        }
+        
+        WriteResult wr = collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+        log.info("Changed permissions on "+wr.getN()+" documents");
+
+        if (wr.getN()>0) {
+            if ("treeNode".equals(type)) {
+                log.info("Changing permissions on all members of the folders: {}",logIds);
+                for(Long id : ids) {
+                    TreeNode node = collection.findOne("{_id:#,writers:#}",id,subjectKey).as(TreeNode.class);
+                    if (node==null) {
+                        throw new IllegalArgumentException("Could not find folder with id="+id);
+                    }
+    
+                    if (node.hasChildren()) {
+                        Multimap<String,Long> groupedIds = HashMultimap.<String,Long>create();
+                        for(Reference ref : node.getChildren()) {
+                            groupedIds.put(ref.getTargetType(), ref.getTargetId());
+                        }
+    
+                        for(String refType : groupedIds.keySet()) {
+                            Collection<Long> refIds = groupedIds.get(refType);
+                            changePermissions(subjectKey, refType, refIds, granteeKey, rights, grant);
+                        }
+                    }
+                }
+            }
+            else if ("objectSet".equals(type)) {
+                log.info("Changing permissions on all members of the object sets: {}",logIds);
+                for(Long id : ids) {
+                    ObjectSet set = collection.findOne("{_id:#,writers:#}",id,subjectKey).as(ObjectSet.class);
+                    if (set==null) {
+                        throw new IllegalArgumentException("Could not find object set with id="+id);
+                    }
+                    if (set.hasMembers()) {
+                        changePermissions(subjectKey, set.getTargetType(), set.getMembers(), granteeKey, rights, grant);
+                    }
+                }
+            }
+            else if ("sample".equals(type)) {
+                
+                log.info("Changing permissions on all fragments and lsms associated with samples: {}",logIds);
+                
+                WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+                log.info("Updated permissions on {} fragments",wr1.getN());
+                
+                WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+                log.info("Updated permissions on {} lsms",wr2.getN());
+                
+            }
+            else if ("screenSample".equals(type)) {
+                log.info("Changing permissions on all patternMasks associated with screen samples: {}",logIds);
+                patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}}",granteeKey);
+            }
+        }
     }
 
     // Copy and pasted from ReflectionUtils in shared module
