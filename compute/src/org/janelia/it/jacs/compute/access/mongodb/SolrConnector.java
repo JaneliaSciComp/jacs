@@ -391,6 +391,9 @@ public class SolrConnector extends SolrDAO {
             else if (collectionObject instanceof String) {
                 findStrings(visited, rootObject, collectionObject, field, indent+"  ");   
             }
+            else if (collectionObject instanceof Number) {
+                // Ignore
+            }
             else {
                 log.warn("Encountered collection with objects of type "+clazz.getName());
             }
