@@ -7,7 +7,6 @@ import java.util.Set;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -40,7 +39,7 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	
     	String objectiveList = data.getItemAsString("RUN_OBJECTIVES");
     	if (objectiveList!=null) {
-			logger.info("Will only run the objectives provided by RUN_OBJECTIVES: "+objectiveList);
+    	    contextLogger.info("Will only run the objectives provided by RUN_OBJECTIVES: "+objectiveList);
     		Set<String> objectiveSet = new HashSet<String>(Task.listOfStringsFromCsvString(objectiveList));
 			if (!objectiveSet.contains(Objective.OBJECTIVE_20X.getName())) {
 				run20x = false;
@@ -56,7 +55,7 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	if (run20x) {
 			String pipelineStr20x = data.getItemAsString("PIPELINES_TO_RUN_20X");
 			if (pipelineStr20x!=null) {
-				logger.info("Will run these 20x pipelines: "+pipelineStr20x);
+			    contextLogger.info("Will run these 20x pipelines: "+pipelineStr20x);
 				pipelines20x = Task.listOfStringsFromCsvString(pipelineStr20x);
 			}
     	}
@@ -64,7 +63,7 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	if (run40x) {
 			String pipelineStr40x = data.getItemAsString("PIPELINES_TO_RUN_40X");
 			if (pipelineStr40x!=null) {
-				logger.info("Will run these 40x pipelines: "+pipelineStr40x);
+			    contextLogger.info("Will run these 40x pipelines: "+pipelineStr40x);
 				pipelines40x = Task.listOfStringsFromCsvString(pipelineStr40x);
 			}
     	}
@@ -72,7 +71,7 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
     	if (run63x) {
 			String pipelineStr63x = data.getItemAsString("PIPELINES_TO_RUN_63X");
 			if (pipelineStr63x!=null) {
-				logger.info("Will run these 63x pipelines: "+pipelineStr63x);
+			    contextLogger.info("Will run these 63x pipelines: "+pipelineStr63x);
 				pipelines63x = Task.listOfStringsFromCsvString(pipelineStr63x);
 			}
     	}
@@ -97,7 +96,7 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
                 } 
                 else if (run40x && Objective.OBJECTIVE_40X.getName().equals(objective)) {
                     if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines40x)) {
-                        data.putItem("SAMPLE_63X_ID", subSampleId);
+                        data.putItem("SAMPLE_40X_ID", subSampleId);
                 	}
                 } 
                 else if (run63x && Objective.OBJECTIVE_63X.getName().equals(objective)) {
@@ -136,10 +135,10 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
         }
     	
         if (pipelineSet.isEmpty()) {
-        	logger.info("Sample "+subSample.getName()+" has no unfulfilled pipelines");
+            contextLogger.info("Sample "+subSample.getName()+" has no unfulfilled pipelines");
         }
         else {
-        	logger.info("Sample "+subSample.getName()+" has unfulfilled pipelines: "+pipelineSet);	
+            contextLogger.info("Sample "+subSample.getName()+" has unfulfilled pipelines: "+pipelineSet);	
         }
         
 		return pipelineSet.isEmpty();

@@ -9,6 +9,7 @@
             <input name="ALIGNMENT_ALGORITHM_PARAMS" value="brainalign40x_512px_INT.sh"/>
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
             <input name="PIPELINE_PROCESS" value="LeetWholeBrain40x512pxINT"/>
+            <input name="OUTPUT_COLOR_SPEC" value="RGB"/>
         </include>
 		
     </sequence>

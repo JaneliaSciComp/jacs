@@ -44,7 +44,7 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
                         String spArea = sp.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
                         if (spArea==null) spArea = "";
                         if (sampleArea!=null && !sampleArea.getName().equals(spArea)) {
-                            logger.debug("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
+                            contextLogger.debug("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
                             continue;
                         }
                         latestSp = sp;
@@ -60,22 +60,24 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
         if (latestSp!=null) {
             String stitchedFilename = latestSp.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
             if (stitchedFilename!=null) {
+                sampleArea.setStitchedFilename(stitchedFilename);
+                
                 entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestSp.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
                 entityBean.saveOrUpdateEntity(myPipelineRun);
-                logger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+pipelineRunId);
+                contextLogger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+pipelineRunId);
+                
                 processData.putItem("RESULT_ENTITY_ID", latestSp.getId().toString());
-                logger.info("Putting '"+latestSp.getId()+"' in RESULT_ENTITY_ID");
-                processData.putItem("STITCHED_FILENAME", stitchedFilename);    
-                logger.info("Putting '"+stitchedFilename+"' in STITCHED_FILENAME");
+                contextLogger.info("Putting '"+latestSp.getId()+"' in RESULT_ENTITY_ID");
+                
                 processData.putItem("RUN_PROCESSING", Boolean.FALSE);    
-                logger.info("Putting '"+Boolean.FALSE+"' in RUN_PROCESSING");
+                contextLogger.info("Putting '"+Boolean.FALSE+"' in RUN_PROCESSING");
             }
             else {
-                logger.warn("Sample processing result has no default 3d image path: "+latestSp.getId());
+                contextLogger.warn("Sample processing result has no default 3d image path: "+latestSp.getId());
             }
         }
         else {
-            logger.info("No existing sample processing available for reuse for sample: "+sampleEntityId);
+            contextLogger.info("No existing sample processing available for reuse for sample: "+sampleEntityId);
         }
     }
 }

@@ -11,7 +11,8 @@ public interface SampleDataManagerMBean {
     public void runAllSampleMaintenancePipelines(); // All maintenance pipelines for all users
     public void runUserSampleMaintenancePipelines(String user); // All maintenance pipelines for a single users
     public void runSampleCleaning(String user, Boolean testRun);
-    public void runSampleTrashCompactor(String user, Boolean testRun); 
+    public void runSampleTrashCompactor(String user, Boolean testRun);
+    public void runAllSampleDataCompression(String compressionType);
     public void runSampleDataCompression(String user, String dataSetName, String compressionType);
     public void runSingleSampleDataCompression(String sampleId, String compressionType);
     public void runSampleImageRegistration(String user);
@@ -26,11 +27,12 @@ public interface SampleDataManagerMBean {
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void cancelAllIncompleteDataSetPipelineTasks();
-    public String runAllDataSetPipelines(String runMode, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force);
-    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, Boolean force);
-    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams);
-    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseProcessing, Boolean reuseAlignment, String extraParams);
-    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseProcessing, Boolean reuseAlignment);
+    public void cancelAllIncompleteUserTasks(String user);
+    public String runAllDataSetPipelines(String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force);
+    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force);
+    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams);
+    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams);
+    public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment);
     public void runNeuronSeparationPipeline(String resultEntityId);
     public void runNeuronSeparationMapping(String separationId1, String separationId2);
     
@@ -44,11 +46,12 @@ public interface SampleDataManagerMBean {
     public void runRepairSeparationResultsPipeline(String user);
     public void runScalityCorrectionService(String user);
 
+    public void scalityMigrationService(String filePath);
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode);
     public void visuallyLosslessCorrectionService(String filePath, String debug);
     
     // SAGE database
     public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab, String debug, String lock);
-    public void runSageArtifactExport(String user);
+    public void runSageArtifactExport(String owner, String releaseName);
     public void runSageQiScoreSync(Boolean testRun);
 }

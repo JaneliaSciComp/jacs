@@ -4,21 +4,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipelineGridService;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -27,7 +22,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * discover additional files each time.
  * 
  * Input variables if adding files to an existing separation:
- * 	 SEPARATION or SEPARATION_ID  
+ * 	 RESULT_ENTITY or RESULT_ENTITY_ID  
  * 
  * Input variables if discovering new separation:
  *   ROOT_ENTITY_ID - the parent of the separation
@@ -39,129 +34,71 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class IncrementalSeparationDiscoveryService extends AbstractEntityService {
+public class IncrementalSeparationDiscoveryService extends IncrementalResultDiscoveryService {
 
     private static final String NEURON_MIP_PREFIX = NeuronSeparationPipelineGridService.NAME+".PR.neuron";
 
-    protected FileDiscoveryHelper helper;
-    protected Date createDate;
-    
-    private Map<String,Entity> resultItems = new HashMap<String,Entity>();
-	private List<Entity> newResultItems = new ArrayList<Entity>();
-	
 	@Override
-    public void execute() throws Exception {
+	protected Entity createNewResultEntity(String resultName) throws Exception {
 
-        this.createDate = new Date();
+        Long inputImageId = data.getRequiredItemAsLong("INPUT_IMAGE_ID");
+        Entity inputEntity = entityBean.getEntityTree(inputImageId);
         
-        this.helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
-        helper.addFileExclusion("*.log");
-        helper.addFileExclusion("*.oos");
-        helper.addFileExclusion("sge_*");
-        helper.addFileExclusion("temp");
-        helper.addFileExclusion("tmp.*");
-        helper.addFileExclusion("core.*");
-    	helper.addFileExclusion("*.sh");
-
-        Entity separation = (Entity)data.getItem("SEPARATION");
-        if (separation==null) {
-        	Long separationId = data.getItemAsLong("SEPARATION_ID");
-        	if (separationId!=null) {
-        		separation = entityBean.getEntityTree(separationId);
-        		if (separation==null) {
-        		    logger.error("Separation "+separationId+" no longer exists. There is nothing to do.");
-        		    return;
-        		}
-        	}
+        String objective = data.getItemAsString("OBJECTIVE");
+        String opticalRes = data.getItemAsString("OPTICAL_RESOLUTION");
+        String pixelRes = data.getItemAsString("PIXEL_RESOLUTION");
+        
+        Long sourceSeparationId = data.getItemAsLong("SOURCE_SEPARATION_ID");
+        Entity sourceSeparation = null;
+        if (sourceSeparationId!=null) {
+            sourceSeparation = entityBean.getEntityById(sourceSeparationId);
         }
         
-        if (separation==null) {
-        	// A new neuron separation discovery
-
-            Long rootEntityId = data.getRequiredItemAsLong("ROOT_ENTITY_ID");
-        	Entity parentEntity = entityBean.getEntityTree(rootEntityId);
-        	
-        	Long inputImageId = data.getRequiredItemAsLong("INPUT_IMAGE_ID");
-        	Entity inputEntity = entityBean.getEntityTree(inputImageId);
-        	
-        	FileNode resultFileNode = (FileNode)data.getItem("ROOT_FILE_NODE");
-
-        	String objective = data.getItemAsString("OBJECTIVE");
-        	String opticalRes = data.getItemAsString("OPTICAL_RESOLUTION");
-        	String pixelRes = data.getItemAsString("PIXEL_RESOLUTION");
-        	
-        	Long sourceSeparationId = data.getItemAsLong("SOURCE_SEPARATION_ID");
-        	Entity sourceSeparation = null;
-        	if (sourceSeparationId!=null) {
-        	    sourceSeparation = entityBean.getEntityById(sourceSeparationId);
-        	}
-        	
-        	boolean isWarped = !StringUtils.isEmpty(data.getItemAsString("ALIGNED_CONSOLIDATED_LABEL_FILEPATH"));
-        	
-    	    String resultEntityName = (String)processData.getItem("RESULT_ENTITY_NAME");
-            if (StringUtils.isEmpty(resultEntityName)) {
-            	resultEntityName = "Neuron Separation";
-            }
-
-        	if (!StringUtils.isEmpty(objective)) {
-        		resultEntityName += " "+objective;
-        	}
-        	
-    		separation = createSeparation(resultFileNode.getDirectoryPath(), parentEntity, resultEntityName, 
-    		        objective, opticalRes, pixelRes, inputEntity, sourceSeparation, isWarped);	
+        boolean isWarped = !StringUtils.isEmpty(data.getItemAsString("ALIGNED_CONSOLIDATED_LABEL_FILEPATH"));
+        
+        if (StringUtils.isEmpty(resultName)) {
+            resultName = "Neuron Separation";
         }
-        else {
-        	// Find existing result items in the neuron separation
-        	logger.info("Finding existing result items...");
-        	findResultItems(separation);
+
+        if (!StringUtils.isEmpty(objective)) {
+            resultName += " "+objective;
         }
         
-        // Add additional files to the neuron separation
-    	discoverySeparationFiles(separation);
-    	
-    	processData.putItem("SEPARATION_ID", separation.getId().toString());
-    }
-    
-    private Entity createSeparation(String separationDir, Entity parentEntity, String resultEntityName, 
-    		String objective, String opticalRes, String pixelRes, Entity inputEntity, Entity sourceSeparation, 
-    		boolean isWarped) throws Exception {
+        Entity separation = helper.createFileEntity(resultFileNode.getDirectoryPath(), resultName, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
         
-        Entity separation = helper.createFileEntity(separationDir, resultEntityName, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-        helper.addToParent(parentEntity, separation, parentEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);
-        
-        logger.info("Created new separation result: "+separation.getName()+" (id="+separation.getId()+")");
+        contextLogger.info("Created new separation result: "+separation.getName()+" (id="+separation.getId()+")");
         
         if (opticalRes!=null) {
             entityHelper.setOpticalResolution(separation, opticalRes);
-            logger.info("Set optical resolution to "+opticalRes+" on "+separation.getId());
+            contextLogger.info("Set optical resolution to "+opticalRes+" on "+separation.getId());
         }
         else {
-            logger.info("No optical resolution defined for separation "+separation.getId());
+            contextLogger.info("No optical resolution defined for separation "+separation.getId());
         }
         
         if (pixelRes!=null) {
             entityHelper.setPixelResolution(separation, pixelRes);
-            logger.info("Set pixel resolution to "+pixelRes+" on "+separation.getId());
+            contextLogger.info("Set pixel resolution to "+pixelRes+" on "+separation.getId());
         }
         else {
-            logger.info("No pixel resolution defined for separation "+separation.getId());
+            contextLogger.info("No pixel resolution defined for separation "+separation.getId());
         }
 
         if (objective!=null) {
             entityHelper.setObjective(separation, objective);
-            logger.info("Set objective to "+objective+" on "+separation.getId());
+            contextLogger.info("Set objective to "+objective+" on "+separation.getId());
         }
         else {
-            logger.info("No objective defined for separation "+separation.getId());
+            contextLogger.info("No objective defined for separation "+separation.getId());
         }
         
         if (sourceSeparation!=null) {
             helper.addToParent(separation, sourceSeparation, null, EntityConstants.ATTRIBUTE_SOURCE_SEPARATION);
-            logger.info("Set source separation to "+sourceSeparation.getId()+" on "+separation.getId());
+            contextLogger.info("Set source separation to "+sourceSeparation.getId()+" on "+separation.getId());
         }
         else {
-            logger.info("No source defined for separation "+separation.getId());
-            logger.info("Marking "+separation.getId()+" as a warped separation");
+            contextLogger.info("No source defined for separation "+separation.getId());
+            contextLogger.info("Marking "+separation.getId()+" as a warped separation");
         }
         
         if (isWarped) {
@@ -174,7 +111,8 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         return separation;
 	}
     
-    protected void discoverySeparationFiles(Entity separation) throws Exception {
+	@Override
+    protected void discoverResultFiles(Entity separation) throws Exception {
 
     	if (!separation.getEntityTypeName().equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
     		throw new IllegalStateException("Expected Neuron Separation Result as input");
@@ -205,7 +143,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         Map<Integer,Entity> chanEntities = new HashMap<Integer,Entity>();
 
         List<File> files = helper.collectFiles(dir, true);
-        logger.info("Collected "+files.size()+" files in "+dir);
+        contextLogger.info("Collected "+files.size()+" files in "+dir);
         FileUtils.sortFilesByName(files);
         
         List<Entity> resultFiles = new ArrayList<Entity>();
@@ -218,48 +156,48 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
                 fragmentMipFiles.add(file); // will be added to an entity later
             }
             else if ("Reference.v3dpbd".equals(filename) || "Reference.v3draw".equals(filename)) {
-                referenceVolume = getOrCreateResultItem(separation, file);
+                referenceVolume = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedSignal.v3dpbd".equals(filename) || "ConsolidatedSignal.v3draw".equals(filename)) {
-                signalVolume = getOrCreateResultItem(separation, file);
+                signalVolume = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedLabel.v3dpbd".equals(filename) || "ConsolidatedLabel.v3draw".equals(filename)) {
-            	labelVolume = getOrCreateResultItem(separation, file);
+            	labelVolume = getOrCreateResultItem(file);
             }
             else if ("ReferenceMIP.png".equals(filename)) {
-                referenceMIP = getOrCreateResultItem(separation, file);
+                referenceMIP = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedSignalMIP.png".equals(filename)) {
-                signalMIP = getOrCreateResultItem(separation, file);
+                signalMIP = getOrCreateResultItem(file);
             }
             else if ("ConsolidatedSignal2_25.mp4".equals(filename)) {
-                fastSignal = getOrCreateResultItem(separation, file);
+                fastSignal = getOrCreateResultItem(file);
             }
             else if ("Reference2_100.mp4".equals(filename)) {
-                fastReference = getOrCreateResultItem(separation, file);
+                fastReference = getOrCreateResultItem(file);
             }
             else if (filename.startsWith("SeparationResult") && filename.endsWith(".nsp")) {
-            	resultFiles.add(getOrCreateResultItem(separation, file));
+            	resultFiles.add(getOrCreateResultItem(file));
             }
             else if (filename.startsWith("SeparationResult") && filename.endsWith(".pbd")) {
-            	resultFiles.add(getOrCreateResultItem(separation, file));
+            	resultFiles.add(getOrCreateResultItem(file));
             }
             else if (filename.startsWith("mapping_issues")) {
-            	resultFiles.add(getOrCreateResultItem(separation, file));
+            	resultFiles.add(getOrCreateResultItem(file));
             }
             else if (filename.equals("ref.mask")) {
-            	refMask = getOrCreateResultItem(separation, file);
+            	refMask = getOrCreateResultItem(file);
             }
             else if (filename.equals("ref.chan")) {
-            	refChan = getOrCreateResultItem(separation, file);
+            	refChan = getOrCreateResultItem(file);
             }
             else if (filename.endsWith("mask")) {
-            	Entity maskImage = getOrCreateResultItem(separation, file);
+            	Entity maskImage = getOrCreateResultItem(file);
                 Integer index = getNeuronIndexFromMaskChanFile(filename);
                 maskEntities.put(index, maskImage);
             }
             else if (filename.endsWith("chan")) {
-            	Entity maskImage = getOrCreateResultItem(separation, file);
+            	Entity maskImage = getOrCreateResultItem(file);
                 Integer index = getNeuronIndexFromMaskChanFile(filename);
                 chanEntities.put(index, maskImage);
             }
@@ -287,11 +225,11 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
 
         Entity inputImage = separation.getChildByAttributeName(EntityConstants.ATTRIBUTE_INPUT_IMAGE);
         if (inputImage!=null) {
-        	logger.info("Setting fast 3d image on the separation's input image: "+inputImage.getName());
+            contextLogger.info("Setting fast 3d image on the separation's input image: "+inputImage.getName());
         	helper.setImageIfNecessary(inputImage, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, fastSignal);
         }
         else {
-        	logger.warn("Could not find input image for separation: "+separation.getId());
+            contextLogger.warn("Could not find input image for separation: "+separation.getId());
         }
         
         // Process Neurons
@@ -308,7 +246,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         });
         
         for(File file : fragmentMipFiles) {
-            Entity fragmentMIP = getOrCreateResultItem(separation, file);         
+            Entity fragmentMIP = getOrCreateResultItem(file);         
             Integer index = getIndex(fragmentMIP.getName());
             
             logger.trace("Processing neuron #"+index+" with MIP "+fragmentMIP.getName());
@@ -330,33 +268,6 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         }
     }
 
-	private void findResultItems(Entity entity) throws Exception {
-		
-		logger.trace("  findResultItems "+entity.getName()+" ("+entity.getId()+")");
-		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		if (filepath!=null) {
-			logger.trace("  "+entity.getName()+": "+filepath);
-			resultItems.put(filepath, entity);
-		}
-		
-		populateChildren(entity);
-		for(Entity child : entity.getChildren()) {
-			findResultItems(child);
-		}
-	}
-	
-    private Entity getOrCreateResultItem(Entity separation, File resultFile) throws Exception {
-    	
-    	logger.trace("Get or create "+resultFile.getAbsolutePath());
-    	Entity resultItem = resultItems.get(resultFile.getAbsolutePath());
-    	if (resultItem==null) {
-    		resultItem = helper.createResultItemForFile(resultFile);
-    		newResultItems.add(resultItem);
-    		resultItems.put(resultFile.getAbsolutePath(), resultItem);
-    	}
-    	return resultItem;
-    }
-    
     private Integer getIndex(String filename) {
         Pattern p = Pattern.compile("[^\\d]*?(\\d+)\\.png");
         Matcher m = p.matcher(filename);
@@ -377,11 +288,10 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         	return Integer.parseInt(index);
         }
         catch (Exception e) {
-            logger.warn("Could not parse mask/chan file name: "+filename+", "+e.getMessage());
+            contextLogger.warn("Could not parse mask/chan file name: "+filename+", "+e.getMessage());
         }
     	return null;
     }
-
 
 	private Entity getOrCreateFragmentsFolder(Entity separation) throws Exception {
         Entity fragmentsFolder = EntityUtils.findChildWithType(separation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
@@ -400,7 +310,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         fragmentsEntity.setUpdatedDate(createDate);
         fragmentsEntity.setName("Neuron Fragments");
         fragmentsEntity = entityBean.saveOrUpdateEntity(fragmentsEntity);
-        logger.info("Saved fragment collection as "+fragmentsEntity.getId());
+        contextLogger.info("Saved fragment collection as "+fragmentsEntity.getId());
         return fragmentsEntity;
     }
 
@@ -425,20 +335,7 @@ public class IncrementalSeparationDiscoveryService extends AbstractEntityService
         fragmentEntity.setName("Neuron Fragment "+index);
         fragmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
         fragmentEntity = entityBean.saveOrUpdateEntity(fragmentEntity);
-        logger.info("Saved fragment entity as "+fragmentEntity.getId());
+        contextLogger.info("Saved fragment entity as "+fragmentEntity.getId());
         return fragmentEntity;
     }
-
-	private void addToParentIfNecessary(Entity parent, Entity child, String entityAttrName) throws Exception {
-	    if (child==null) return;
-		for(EntityData ed : parent.getOrderedEntityData()) {
-			Entity existingChild = ed.getChildEntity();
-			if (existingChild!=null) {
-				if (ed.getEntityAttrName().equals(entityAttrName) && existingChild.getId().equals(child.getId())) {
-					return; // already an entity child
-				}
-			}
-		}
-        helper.addToParent(parent, child, parent.getMaxOrderIndex()+1, entityAttrName);
-	}
 }

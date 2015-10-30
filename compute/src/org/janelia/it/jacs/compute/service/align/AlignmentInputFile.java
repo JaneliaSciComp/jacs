@@ -7,8 +7,18 @@ package org.janelia.it.jacs.compute.service.align;
  */
 public class AlignmentInputFile extends ImageStack {
 
+    protected Long sampleId;
     protected String inputSeparationFilename;
-
+    
+    public AlignmentInputFile() {
+    }
+    
+    public Long getSampleId() {
+        return sampleId;
+    }
+    public void setSampleId(Long sampleId) {
+        this.sampleId = sampleId;
+    }
     public String getInputSeparationFilename() {
         return inputSeparationFilename;
     }
@@ -20,14 +30,13 @@ public class AlignmentInputFile extends ImageStack {
     public String toString() {
         return "AlignmentInputFile{" +
                 "filepath=" + filepath +
-                ", inputSeparationFilename=" + inputSeparationFilename +
+                ", objective=" + objective +
                 ", opticalResolution=" + opticalResolution +
                 ", pixelResolution=" + pixelResolution + 
                 ", channelSpec=" + channelSpec +
-                ", channelColors=" + channelColors + 
-                ", refChannel=" + refChannel +
-                ", refChannelOneIndexed=" + refChannelOneIndexed +
-                ", numChannels=" + numChannels +
+                ", channelColors=" + channelColors +
+                ", sampleId=" + sampleId +
+                ", inputSeparationFilename=" + inputSeparationFilename +
                 '}';
     }
 }

@@ -7,7 +7,7 @@ import org.janelia.it.jacs.web.gwt.common.client.model.download.DownloadableData
 import org.janelia.it.jacs.web.gwt.common.client.popup.launcher.PopupAboveLauncher;
 import org.janelia.it.jacs.web.gwt.common.client.service.ResultReceiver;
 import org.janelia.it.jacs.web.gwt.download.client.DownloadFilePopup;
-import org.janelia.it.jacs.web.gwt.download.client.PublicationServiceHelper;
+//import org.janelia.it.jacs.web.gwt.download.client.PublicationServiceHelper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,7 +48,7 @@ public class MetaDataMouseListener implements TreeListener {
                 }
             }
         };
-        PublicationServiceHelper.checkFileLocation(rcv, dataFile.getLocation());
+//        PublicationServiceHelper.checkFileLocation(rcv, dataFile.getLocation());
     }
 }
 

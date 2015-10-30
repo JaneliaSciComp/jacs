@@ -100,15 +100,15 @@
     </target>
 
     <!-- Defines the set of targets that should be run to completely build this module. -->
-	<target name="build" depends="setup, jaxb-code-generate, war" description="compiles and packages this module"/>
+	<target name="build" depends="setup, war" description="compiles and packages this module"/>
 
 
-    <target name="jaxb-code-generate" depends="setup">
-        <xjc schema="${schema.home}/project.xsd" destdir="${jaxb.src.dir}" package="org.janelia.it.jacs.server.ie.jaxb"
-             classpath="${shared.module}/build/jars/jacs-shared.jar">
-              <produces dir="${jaxb.src.dir}/org/janelia/it/jacs/server/ie/jaxb" />
-        </xjc>
-    </target>
+    <!--<target name="jaxb-code-generate" depends="setup">-->
+        <!--<xjc schema="${schema.home}/project.xsd" destdir="${jaxb.src.dir}" package="org.janelia.it.jacs.server.ie.jaxb"-->
+             <!--classpath="${shared.module}/build/jars/jacs-shared.jar">-->
+              <!--<produces dir="${jaxb.src.dir}/org/janelia/it/jacs/server/ie/jaxb" />-->
+        <!--</xjc>-->
+    <!--</target>-->
 
     <target name="build-no-GWT" description="compiles and packages this module">
         <antcall target="build">
@@ -151,14 +151,14 @@
                 <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.tic.TIC" />
                 <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/tic/TIC.gwt.xml" />
             </antcall>
-            <antcall target="gwt-compile-module">
-              <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />
-              <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />
-            </antcall>
-            <antcall target="gwt-compile-module">
-                <param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.test.CleanGWTEntities" />
-                <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/test/CleanGWTEntities.gwt.xml" />
-            </antcall>
+            <!--<antcall target="gwt-compile-module">-->
+              <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.admin.Admin" />-->
+              <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />-->
+            <!--</antcall>-->
+            <!--<antcall target="gwt-compile-module">-->
+                <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.test.CleanGWTEntities" />-->
+                <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/test/CleanGWTEntities.gwt.xml" />-->
+            <!--</antcall>-->
 
             <!--<antcall target="gwt-compile-module">-->
             <!--<param name="gwt.module.name" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis" />-->
@@ -520,48 +520,48 @@
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/advancedblast/AdvancedBlast.gwt.xml" />
         </antcall>
     </target>
-    <target name="deploy-psiblast" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.psiBlast.PsiBlast"/>
-            <param name="url.target" value="PsiBlast"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/psiBlast/PsiBlast.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-reversepsiblast" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.reversePsiBlast.ReversePsiBlast"/>
-            <param name="url.target" value="ReversePsiBlast"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/reversePsiBlast/ReversePsiBlast.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-ap16s" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.ap16s.AnalysisPipeline16S"/>
-            <param name="url.target" value="AnalysisPipeline16S"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/ap16s/AnalysisPipeline16S.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-prokAnnotation" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.prokAnnot.ProkAnnot"/>
-            <param name="url.target" value="ProkAnnot"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/prokAnnot/ProkAnnot.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-eukAnnotation" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.eukAnnot.EukAnnot"/>
-            <param name="url.target" value="EukAnnot"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/eukAnnot/EukAnnot.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-barcodeDesigner" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.barcode.BarCodeDesigner"/>
-            <param name="url.target" value="BarCodeDesigner"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/barcode/BarCodeDesigner.gwt.xml" />
-        </antcall>
-    </target>
+    <!--<target name="deploy-psiblast" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.psiBlast.PsiBlast"/>-->
+            <!--<param name="url.target" value="PsiBlast"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/psiBlast/PsiBlast.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-reversepsiblast" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.reversePsiBlast.ReversePsiBlast"/>-->
+            <!--<param name="url.target" value="ReversePsiBlast"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/reversePsiBlast/ReversePsiBlast.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-ap16s" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.ap16s.AnalysisPipeline16S"/>-->
+            <!--<param name="url.target" value="AnalysisPipeline16S"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/ap16s/AnalysisPipeline16S.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-prokAnnotation" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.prokAnnot.ProkAnnot"/>-->
+            <!--<param name="url.target" value="ProkAnnot"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/prokAnnot/ProkAnnot.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-eukAnnotation" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.eukAnnot.EukAnnot"/>-->
+            <!--<param name="url.target" value="EukAnnot"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/eukAnnot/EukAnnot.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-barcodeDesigner" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.barcode.BarCodeDesigner"/>-->
+            <!--<param name="url.target" value="BarCodeDesigner"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/barcode/BarCodeDesigner.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
     <target name="deploy-neuronSeparator" depends="setup">
         <antcall target="deploy-gwt-module">
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.neuronSeparator.NeuronSeparator"/>
@@ -569,20 +569,20 @@
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/neuronSeparator/NeuronSeparator.gwt.xml" />
         </antcall>
     </target>
-    <target name="deploy-mgAnnotation" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.mgAnnot.MgAnnot"/>
-            <param name="url.target" value="MgAnnot"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/mgAnnot/MgAnnot.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-profileComparison" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.matrix.ProfileComparison"/>
-            <param name="url.target" value="ProfileComparison"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/matrix/ProfileComparison.gwt.xml" />
-        </antcall>
-    </target>
+    <!--<target name="deploy-mgAnnotation" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.mgAnnot.MgAnnot"/>-->
+            <!--<param name="url.target" value="MgAnnot"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/mgAnnot/MgAnnot.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-profileComparison" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.matrix.ProfileComparison"/>-->
+            <!--<param name="url.target" value="ProfileComparison"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/matrix/ProfileComparison.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
     <target name="deploy-neuronalAssayAnalysis" depends="setup">
         <antcall target="deploy-gwt-module">
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.geci.NeuronalAssayAnalysis"/>
@@ -597,34 +597,34 @@
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/tic/TIC.gwt.xml" />
         </antcall>
     </target>
-    <target name="deploy-zlaticLab" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.zlatic.ZlaticLab"/>
-            <param name="url.target" value="ZlaticLab"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/zlatic/ZlatciLab.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-intersiteComparisonTool" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.ict.IntersiteComparisonTool"/>
-            <param name="url.target" value="IntersiteComparisonTool"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/ict/IntersiteComparisonTool.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-degeneratePrimerDesign" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.dpd.DegeneratePrimerDesign"/>
-            <param name="url.target" value="DegeneratePrimerDesign"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/dpd/DegeneratePrimerDesign.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-closurePrimerDesign" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.cpd.ClosurePrimerDesign"/>
-            <param name="url.target" value="ClosurePrimerDesign"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/cpd/ClosurePrimerDesign.gwt.xml" />
-        </antcall>
-    </target>
+    <!--<target name="deploy-zlaticLab" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.zlatic.ZlaticLab"/>-->
+            <!--<param name="url.target" value="ZlaticLab"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/zlatic/ZlatciLab.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-intersiteComparisonTool" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.ict.IntersiteComparisonTool"/>-->
+            <!--<param name="url.target" value="IntersiteComparisonTool"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/ict/IntersiteComparisonTool.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-degeneratePrimerDesign" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.dpd.DegeneratePrimerDesign"/>-->
+            <!--<param name="url.target" value="DegeneratePrimerDesign"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/dpd/DegeneratePrimerDesign.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-closurePrimerDesign" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.cpd.ClosurePrimerDesign"/>-->
+            <!--<param name="url.target" value="ClosurePrimerDesign"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/cpd/ClosurePrimerDesign.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
     <target name="deploy-blast" depends="setup">
         <antcall target="deploy-gwt-module">
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.blast.Blast"/>
@@ -632,48 +632,48 @@
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/blast/Blast.gwt.xml" />
         </antcall>
     </target>
-    <target name="deploy-frv" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.frv.Frv"/>
-            <param name="url.target" value="Frv"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/frv/Frv.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-frvdata" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.frdata.FRData"/>
-            <param name="url.target" value="FRData"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/frdata/FRData.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-inspect" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.inspect.Inspect"/>
-            <param name="url.target" value="Inspect"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/inspect/Inspect.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-browse-proj-page" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.download.BrowseProjectsPage"/>
-            <param name="url.target" value="BrowseProjectsPage"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/download/BrowseProjectsPage.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-pubs" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.download.DownloadByPubPage"/>
-            <param name="url.target" value="DownloadByPubPage"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/download/DownloadByPubPage.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-samples" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.download.ProjectSamplesPage"/>
-            <param name="url.target" value="ProjectSamplesPage"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/download/ProjectSamplesPage.gwt.xml" />
-        </antcall>
-    </target>
+    <!--<target name="deploy-frv" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.frv.Frv"/>-->
+            <!--<param name="url.target" value="Frv"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/frv/Frv.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-frvdata" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.frdata.FRData"/>-->
+            <!--<param name="url.target" value="FRData"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/frdata/FRData.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-inspect" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.inspect.Inspect"/>-->
+            <!--<param name="url.target" value="Inspect"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/inspect/Inspect.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-browse-proj-page" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.download.BrowseProjectsPage"/>-->
+            <!--<param name="url.target" value="BrowseProjectsPage"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/download/BrowseProjectsPage.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-pubs" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.download.DownloadByPubPage"/>-->
+            <!--<param name="url.target" value="DownloadByPubPage"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/download/DownloadByPubPage.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-samples" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.download.ProjectSamplesPage"/>-->
+            <!--<param name="url.target" value="ProjectSamplesPage"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/download/ProjectSamplesPage.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
     <target name="deploy-status" depends="setup">
         <antcall target="deploy-gwt-module">
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.status.Status"/>
@@ -681,48 +681,48 @@
             <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/status/Status.gwt.xml" />
         </antcall>
     </target>
-    <target name="deploy-gmap" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.map.MapTest"/>
-            <param name="url.target" value="MapTest"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/map/MapTest.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-admin" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.admin.Admin"/>
-            <param name="url.target" value="Admin"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-edit-proj" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.admin.editproject.EditProject"/>
-            <param name="url.target" value="EditProject"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/editproject/EditProject.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-edit-pub" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.admin.editpublication.EditPublication"/>
-            <param name="url.target" value="EditPublication"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/editpublication/EditPublication.gwt.xml" />
-        </antcall>
-    </target>
-    <target name="deploy-detail" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.detail.DetailPage"/>
-            <param name="url.target" value="DetailPage"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/detail/DetailPage.gwt.xml" />
-        </antcall>
-    </target>
-   <target name="deploy-search" depends="setup">
-        <antcall target="deploy-gwt-module">
-            <param name="module.path" value="org.janelia.it.jacs.web.gwt.search.Search"/>
-            <param name="url.target" value="Search"/>
-            <param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/search/Search.gwt.xml" />
-        </antcall>
-    </target>
+    <!--<target name="deploy-gmap" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.map.MapTest"/>-->
+            <!--<param name="url.target" value="MapTest"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/map/MapTest.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-admin" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.admin.Admin"/>-->
+            <!--<param name="url.target" value="Admin"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/Admin.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-edit-proj" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.admin.editproject.EditProject"/>-->
+            <!--<param name="url.target" value="EditProject"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/editproject/EditProject.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-edit-pub" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.admin.editpublication.EditPublication"/>-->
+            <!--<param name="url.target" value="EditPublication"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/admin/editpublication/EditPublication.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+    <!--<target name="deploy-detail" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.detail.DetailPage"/>-->
+            <!--<param name="url.target" value="DetailPage"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/detail/DetailPage.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
+   <!--<target name="deploy-search" depends="setup">-->
+        <!--<antcall target="deploy-gwt-module">-->
+            <!--<param name="module.path" value="org.janelia.it.jacs.web.gwt.search.Search"/>-->
+            <!--<param name="url.target" value="Search"/>-->
+            <!--<param name="gwt.module.descriptor" value="org/janelia/it/jacs/web/gwt/search/Search.gwt.xml" />-->
+        <!--</antcall>-->
+    <!--</target>-->
     <target name="deploy-header" depends="setup">
         <antcall target="deploy-gwt-module">
             <param name="module.path" value="org.janelia.it.jacs.web.gwt.header.Header"/>
@@ -814,17 +814,16 @@
 
         <echo message="Overlay properties file: ${deployment-specific.properties.file.name}" />
         <antcall target="deploy-tomcat-app">
-            <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
+            <param name="ssh.common.params" value="${user.server.login}@${server.address}"/>
+            <param name="scp.common.params" value=""/>
             <param name="server.username" value="${user.server.login}" />
-            <param name="server.address" value="${server.address}" />
+            <param name="deployment-specific.properties.dir" value="${jacs.properties.dir}"/>
+            <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
         </antcall>
     </target>
 
-    <target name="deploy-tomcat-app" depends="setup, get-user-input-for-deployment">
+    <target name="deploy-tomcat-app" depends="setup">
         <!-- set connection params, and check connection -->
-        <property name="ssh.common.params" value="${server.username}@${server.address}"/>
-        <property name="scp.common.params" value=""/>
-
         <echo message="Testing connection" />
         <exec executable="${ssh}" description="Testing connection"
               outputproperty="exec.output" failonerror="true">

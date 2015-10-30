@@ -4,15 +4,14 @@ package org.janelia.it.jacs.server.api;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.genomics.BaseSequenceEntity;
 import org.janelia.it.jacs.model.genomics.Read;
-import org.janelia.it.jacs.model.metadata.BioMaterial;
-import org.janelia.it.jacs.model.metadata.GeoPoint;
-import org.janelia.it.jacs.model.metadata.Sample;
+import org.janelia.it.jacs.model.genomics.Sample;
 import org.janelia.it.jacs.shared.node.FastaUtil;
 import org.janelia.it.jacs.web.gwt.common.client.model.genomics.BlastHitWithSample;
 import org.janelia.it.jacs.web.gwt.common.client.model.genomics.GenericDNA;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Michael Press
@@ -53,10 +52,10 @@ public class DataSetAPIRemarshaller {
         Sample modelSample = modelHit.getSubjectEntity().getSample();
         org.janelia.it.jacs.web.gwt.common.client.model.metadata.Sample sample =
                 new org.janelia.it.jacs.web.gwt.common.client.model.metadata.Sample();
-        sample.setObjectId(modelSample.getSampleId());
-        sample.setSampleName(modelSample.getSampleName());
-        sample.setSites(getSites(modelSample));
-        sample.setSampleAcc(modelSample.getSampleAcc());
+//        sample.setObjectId(modelSample.getSampleId());
+//        sample.setSampleName(modelSample.getSampleName());
+//        sample.setSites(getSites(modelSample));
+//        sample.setSampleAcc(modelSample.getSampleAcc());
 
         // Create a client-side query entity
         org.janelia.it.jacs.web.gwt.common.client.model.genomics.BaseSequenceEntity subjectEntity =
@@ -180,85 +179,85 @@ public class DataSetAPIRemarshaller {
         }
     }
 
-    private static Set<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site> getSites(Sample sample) {
-        Set sites = new HashSet();
-        try {
-            if (sample != null) {
-                for (Object modelSite : sample.getBioMaterials()) {
-                    sites.add(getSiteFromModelSite((BioMaterial) modelSite));
-                }
-            }
-        }
-        catch (Exception e) {
-            _logger.error("Error getting sites for sample " + ((sample == null) ? "null" : sample.getSampleAcc()));
-        }
-        return sites;
-    }
-
-    // TODO: sync with DbPublicationHelper
-    private static org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site getSiteFromModelSite(BioMaterial modelSite) {
-        org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site site = new org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site();
-        site.setSiteId(modelSite.getMaterialAcc());
-        site.setBiomass(modelSite.getObservationAsString("biomass"));
-//        site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density"));
-        if (modelSite.getObservationAsString("chlorophyll density").length() > 0)
-            site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density"));
-        else if (modelSite.getObservationAsString("chlorophyll density/sample month").length() > 0)
-            site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density/sample month"));
-        else if (modelSite.getObservationAsString("chlorophyll density/annual").length() > 0)
-            site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density/annual"));
-        else site.setChlorophyllDensity("");
-        site.setCountry(((GeoPoint) modelSite.getCollectionSite()).getCountry());
-        site.setDissolvedInorganicCarbon(modelSite.getObservationAsString("dissolved inorganic carbon"));
-        site.setDissolvedInorganicPhospate(modelSite.getObservationAsString("dissolved inorganic phosphate"));
-        site.setDissolvedOrganicCarbon(modelSite.getObservationAsString("dissolved organic carbon"));
-        site.setDissolvedOxygen(modelSite.getObservationAsString("dissolved oxygen"));
-        site.setFluorescence(modelSite.getObservationAsString("fluorescence"));
-        site.setGeographicLocation(modelSite.getCollectionSite().getRegion());
-        site.setGeographicLocationDetail(modelSite.getCollectionSite().getComment());
-        site.setHabitatType(modelSite.getCollectionSite().getSiteDescription());
-        if (modelSite.getCollectionSite() != null) {
-            site.setLatitude(((GeoPoint) modelSite.getCollectionSite()).getLatitude());
-            site.setLatitudeDouble(((GeoPoint) modelSite.getCollectionSite()).getLatitudeAsDouble());
-            site.setLongitude(((GeoPoint) modelSite.getCollectionSite()).getLongitude());
-            site.setLongitudeDouble(((GeoPoint) modelSite.getCollectionSite()).getLongitudeAsDouble());
-        }
-        if (modelSite.getCollectionHost() != null) {
-            site.setHostOrganism(modelSite.getCollectionHost().getOrganism());
-            site.setHostDetails(modelSite.getCollectionHost().getHostDetails());
-        }
-        site.setNitrate_plus_nitrite(modelSite.getObservationAsString("nitrate+nitrite"));
-        site.setNumberOfSamplesPooled(modelSite.getObservationAsString("number of samples pooled"));
-        site.setNumberOfStationsSampled(modelSite.getObservationAsString("number of stations sampled"));
-        site.setProject(modelSite.getProject());
-        site.setSalinity(modelSite.getObservationAsString("salinity"));
-        site.setSampleDepth(((GeoPoint) modelSite.getCollectionSite()).getDepth());
-        site.setSampleLocation(modelSite.getCollectionSite().getLocation());
-        if (modelSite.getCollectionStartTime() != null)
-            site.setStartTime(new Date(modelSite.getCollectionStartTime().getTime()));
-        if (modelSite.getCollectionStopTime() != null)
-            site.setStopTime(new Date(modelSite.getCollectionStopTime().getTime()));
-        site.setTemperature(modelSite.getObservationAsString("temperature"));
-        site.setTransmission(modelSite.getObservationAsString("transmission"));
-        site.setVolume_filtered(modelSite.getObservationAsString("volume filtered"));
-        site.setWaterDepth(modelSite.getObservationAsString("water depth"));
-        return site;
-    }
-
-    public static Map<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site, Integer> remapSites(
-            Map<BioMaterial, Integer> modelSites) {
-        _logger.debug("DataSetAPIRemarshaller().remapSites()");
-        if (modelSites == null) {
-            return null;
-        }
-        Map<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site, Integer> sites =
-                new HashMap<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site, Integer>();
-        for (Object item : modelSites.keySet()) {
-            BioMaterial modelSite = (BioMaterial) item;
-            sites.put(getSiteFromModelSite(modelSite), modelSites.get(modelSite));
-        }
-        if (_logger.isDebugEnabled()) _logger.debug("remapSites() converted " + sites.size() + " sites");
-        return sites;
-    }
+//    private static Set<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site> getSites(Sample sample) {
+//        Set sites = new HashSet();
+//        try {
+//            if (sample != null) {
+//                for (Object modelSite : sample.getBioMaterials()) {
+//                    sites.add(getSiteFromModelSite((BioMaterial) modelSite));
+//                }
+//            }
+//        }
+//        catch (Exception e) {
+//            _logger.error("Error getting sites for sample " + ((sample == null) ? "null" : sample.getSampleAcc()));
+//        }
+//        return sites;
+//    }
+//
+//    // TODO: sync with DbPublicationHelper
+//    private static org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site getSiteFromModelSite(BioMaterial modelSite) {
+//        org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site site = new org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site();
+//        site.setSiteId(modelSite.getMaterialAcc());
+//        site.setBiomass(modelSite.getObservationAsString("biomass"));
+////        site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density"));
+//        if (modelSite.getObservationAsString("chlorophyll density").length() > 0)
+//            site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density"));
+//        else if (modelSite.getObservationAsString("chlorophyll density/sample month").length() > 0)
+//            site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density/sample month"));
+//        else if (modelSite.getObservationAsString("chlorophyll density/annual").length() > 0)
+//            site.setChlorophyllDensity(modelSite.getObservationAsString("chlorophyll density/annual"));
+//        else site.setChlorophyllDensity("");
+//        site.setCountry(((GeoPoint) modelSite.getCollectionSite()).getCountry());
+//        site.setDissolvedInorganicCarbon(modelSite.getObservationAsString("dissolved inorganic carbon"));
+//        site.setDissolvedInorganicPhospate(modelSite.getObservationAsString("dissolved inorganic phosphate"));
+//        site.setDissolvedOrganicCarbon(modelSite.getObservationAsString("dissolved organic carbon"));
+//        site.setDissolvedOxygen(modelSite.getObservationAsString("dissolved oxygen"));
+//        site.setFluorescence(modelSite.getObservationAsString("fluorescence"));
+//        site.setGeographicLocation(modelSite.getCollectionSite().getRegion());
+//        site.setGeographicLocationDetail(modelSite.getCollectionSite().getComment());
+//        site.setHabitatType(modelSite.getCollectionSite().getSiteDescription());
+//        if (modelSite.getCollectionSite() != null) {
+//            site.setLatitude(((GeoPoint) modelSite.getCollectionSite()).getLatitude());
+//            site.setLatitudeDouble(((GeoPoint) modelSite.getCollectionSite()).getLatitudeAsDouble());
+//            site.setLongitude(((GeoPoint) modelSite.getCollectionSite()).getLongitude());
+//            site.setLongitudeDouble(((GeoPoint) modelSite.getCollectionSite()).getLongitudeAsDouble());
+//        }
+//        if (modelSite.getCollectionHost() != null) {
+//            site.setHostOrganism(modelSite.getCollectionHost().getOrganism());
+//            site.setHostDetails(modelSite.getCollectionHost().getHostDetails());
+//        }
+//        site.setNitrate_plus_nitrite(modelSite.getObservationAsString("nitrate+nitrite"));
+//        site.setNumberOfSamplesPooled(modelSite.getObservationAsString("number of samples pooled"));
+//        site.setNumberOfStationsSampled(modelSite.getObservationAsString("number of stations sampled"));
+//        site.setProject(modelSite.getProject());
+//        site.setSalinity(modelSite.getObservationAsString("salinity"));
+//        site.setSampleDepth(((GeoPoint) modelSite.getCollectionSite()).getDepth());
+//        site.setSampleLocation(modelSite.getCollectionSite().getLocation());
+//        if (modelSite.getCollectionStartTime() != null)
+//            site.setStartTime(new Date(modelSite.getCollectionStartTime().getTime()));
+//        if (modelSite.getCollectionStopTime() != null)
+//            site.setStopTime(new Date(modelSite.getCollectionStopTime().getTime()));
+//        site.setTemperature(modelSite.getObservationAsString("temperature"));
+//        site.setTransmission(modelSite.getObservationAsString("transmission"));
+//        site.setVolume_filtered(modelSite.getObservationAsString("volume filtered"));
+//        site.setWaterDepth(modelSite.getObservationAsString("water depth"));
+//        return site;
+//    }
+//
+//    public static Map<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site, Integer> remapSites(
+//            Map<BioMaterial, Integer> modelSites) {
+//        _logger.debug("DataSetAPIRemarshaller().remapSites()");
+//        if (modelSites == null) {
+//            return null;
+//        }
+//        Map<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site, Integer> sites =
+//                new HashMap<org.janelia.it.jacs.web.gwt.common.client.model.metadata.Site, Integer>();
+//        for (Object item : modelSites.keySet()) {
+//            BioMaterial modelSite = (BioMaterial) item;
+//            sites.put(getSiteFromModelSite(modelSite), modelSites.get(modelSite));
+//        }
+//        if (_logger.isDebugEnabled()) _logger.debug("remapSites() converted " + sites.size() + " sites");
+//        return sites;
+//    }
 
 }

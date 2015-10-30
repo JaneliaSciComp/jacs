@@ -105,14 +105,12 @@ public class TmNeuron implements IsSerializable, Serializable {
             String edAttr = ed.getEntityAttrName();
             if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
                     edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                TmGeoAnnotation ga = new TmGeoAnnotation(ed.getValue());
+                TmGeoAnnotation ga = new TmGeoAnnotation(ed);
                 if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                     rootAnnotations.add(ga);
                 }
                 geoAnnotationMap.put(ga.getId(), ga);
-                // these values only set when we do it here, in the context of a neuron
                 ga.setNeuronId(id);
-                ga.setEmptyChildList();
             } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
                 TmAnchoredPath path = new TmAnchoredPath(ed.getValue());
                 anchoredPathMap.put(path.getEndpoints(), path);
@@ -121,7 +119,7 @@ public class TmNeuron implements IsSerializable, Serializable {
                 textAnnotationMap.put(ann.getParentId(), ann);
             }
         }
-        // Second step is to link childen to produce the graph for
+        // Second step is to link children to produce the graph for
         //  the GeoAnnotations
         for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
             Long parentId = ga.getParentId();

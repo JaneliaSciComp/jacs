@@ -28,6 +28,9 @@ public class CopyVariablesService implements IService {
 	            	logger.info("Putting value '"+value+"' in "+processVarOut);
 	            	processData.putItem(processVarOut, value);
         		}
+        		else {
+        		    logger.warn("Input variable ("+processVarIn+") is null, cannot populate "+processVarOut);
+        		}
                 num++;
         	}
         } 

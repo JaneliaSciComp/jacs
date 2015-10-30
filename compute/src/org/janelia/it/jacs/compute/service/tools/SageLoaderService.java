@@ -120,7 +120,7 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         }
     }
 
-    public void init(IProcessData processData) throws Exception {
+    protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         task = ProcessDataHelper.getTask(processData);
         if (computeDAO == null) {computeDAO = new ComputeDAO(logger);}
@@ -263,4 +263,12 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     }
 
     private static final Pattern IMAGES_FOUND = Pattern.compile("Images found:(?:\\W)*([\\d])*");
+
+    /**
+     * This service must run immediately on the dedicated nodes
+     */
+    @Override
+    protected boolean isImmediateProcessingJob() {
+        return true;
+    }
 }

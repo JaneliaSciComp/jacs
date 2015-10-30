@@ -10,7 +10,7 @@ import org.janelia.it.jacs.model.common.BlastableNodeVO;
 import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.common.UserDataNodeVO;
 import org.janelia.it.jacs.model.genomics.SequenceType;
-import org.janelia.it.jacs.model.metadata.BioMaterial;
+//import org.janelia.it.jacs.model.metadata.BioMaterial;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.DataSource;
@@ -20,7 +20,7 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatasetNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
-import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
+//import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.server.access.NodeDAO;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -311,51 +311,51 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
         return blastSubjectNodes;
     }
 
-    public Map<BioMaterial, Integer> getSitesForBlastResultNode(Long taskId)
-            throws DataAccessException, DaoException {
-        try {
-            String sql =
-                    "select\n" +
-                            "  ss.material_acc as site_acc,\n" +
-                            "  ss.latitude,\n" +
-                            "  ss.longitude,\n" +
-                            "  ss.location as sample_location,\n" +
-                            "  count(distinct bh.subject_acc) as number_of_sequences\n" +
-                            "from \n" +
-                            "   flyportal.node n\n" +
-                            "   inner join flyportal.blast_hit bh on bh.result_node_id=n.node_id\n" +
-                            "   inner join flyportal.sequence_entity subj on subj.accession=bh.subject_acc\n" +
-                            "   inner join flyportal.sample_site ss on ss.sample_acc=subj.sample_acc\n" +
-                            "where n.task_id=" + taskId.toString() + "\n" +
-                            "group by ss.material_acc, ss.longitude, ss.latitude, ss.location";
-            Query query = getSession().createSQLQuery(sql);
-            _logger.debug(query);
-
-            List list = query.list();
-            if (list == null || list.size() == 0) return null;
-
-            // Convert the List<Object[]> to Map<Site, Integer>
-            Map<BioMaterial, Integer> sites = new HashMap<BioMaterial, Integer>();
-            for (Object listItem : list) {
-                Object[] items = (Object[]) listItem;
-                BioMaterial site = new BioMaterial((String) items[0], (String) items[1], (String) items[2], (String) items[3]);
-                sites.put(site, new Integer(((BigInteger) items[4]).intValue()));  // convert BigInt to Int
-            }
-
-            _logger.debug("getSitesForBlastResultNode() retrieved " + sites.size() + " sites");
-            return sites;
-        }
-        catch (DataAccessResourceFailureException e) {
-            throw handleException(e, "NodeDAOImpl - getSitesForBlastResultNode");
-        }
-        catch (IllegalStateException e) {
-            throw handleException(e, "NodeDAOImpl - getSitesForBlastResultNode");
-        }
-        catch (Throwable t) {
-            throw handleThrowable(t, "NodeDAOImpl - getSitesForBlastResultNode");
-        }
-    }
-
+//    public Map<BioMaterial, Integer> getSitesForBlastResultNode(Long taskId)
+//            throws DataAccessException, DaoException {
+//        try {
+//            String sql =
+//                    "select\n" +
+//                            "  ss.material_acc as site_acc,\n" +
+//                            "  ss.latitude,\n" +
+//                            "  ss.longitude,\n" +
+//                            "  ss.location as sample_location,\n" +
+//                            "  count(distinct bh.subject_acc) as number_of_sequences\n" +
+//                            "from \n" +
+//                            "   flyportal.node n\n" +
+//                            "   inner join flyportal.blast_hit bh on bh.result_node_id=n.node_id\n" +
+//                            "   inner join flyportal.sequence_entity subj on subj.accession=bh.subject_acc\n" +
+//                            "   inner join flyportal.sample_site ss on ss.sample_acc=subj.sample_acc\n" +
+//                            "where n.task_id=" + taskId.toString() + "\n" +
+//                            "group by ss.material_acc, ss.longitude, ss.latitude, ss.location";
+//            Query query = getSession().createSQLQuery(sql);
+//            _logger.debug(query);
+//
+//            List list = query.list();
+//            if (list == null || list.size() == 0) return null;
+//
+//            // Convert the List<Object[]> to Map<Site, Integer>
+//            Map<BioMaterial, Integer> sites = new HashMap<BioMaterial, Integer>();
+//            for (Object listItem : list) {
+//                Object[] items = (Object[]) listItem;
+//                BioMaterial site = new BioMaterial((String) items[0], (String) items[1], (String) items[2], (String) items[3]);
+//                sites.put(site, new Integer(((BigInteger) items[4]).intValue()));  // convert BigInt to Int
+//            }
+//
+//            _logger.debug("getSitesForBlastResultNode() retrieved " + sites.size() + " sites");
+//            return sites;
+//        }
+//        catch (DataAccessResourceFailureException e) {
+//            throw handleException(e, "NodeDAOImpl - getSitesForBlastResultNode");
+//        }
+//        catch (IllegalStateException e) {
+//            throw handleException(e, "NodeDAOImpl - getSitesForBlastResultNode");
+//        }
+//        catch (Throwable t) {
+//            throw handleThrowable(t, "NodeDAOImpl - getSitesForBlastResultNode");
+//        }
+//    }
+//
     public void saveOrUpdateNode(Node targetNode) throws DataAccessException, DaoException {
         saveOrUpdateObject(targetNode, "NodeDAOImpl - saveOrUpdateNode");
     }
@@ -432,41 +432,41 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
     }
 
 
-    public BlastableNodeVO[] getReversePsiBlastDatasets() throws DaoException {
-        List<ReversePsiBlastDatabaseNode> results;
-        try {
-            StringBuffer hqlQuery = new StringBuffer();
-            hqlQuery.append("select clazz from ReversePsiBlastDatabaseNode clazz order by clazz.name");
-            Query query = getSession().createQuery(hqlQuery.toString());
-            _logger.info(query.toString());
-
-            // NOTE: if multiple columns, the result would have been a list of Object arrays.
-            results = query.list();
-            _logger.info("Query resulted in " + results.size() + " hits");
-        }
-        catch (HibernateException e) {
-            throw convertHibernateAccessException(e);
-        }
-        catch (DataAccessResourceFailureException e) {
-            throw handleException(e, "NodeDAOImpl - getBlastableDatabaseList");
-        }
-        catch (IllegalStateException e) {
-            throw handleException(e, "NodeDAOImpl - getBlastableDatabaseList");
-        }
-        BlastableNodeVO[] result;
-        if (results == null) {
-            result = new BlastableNodeVO[0];
-        }
-        else {
-            result = new BlastableNodeVO[results.size()];
-            int resIndex = 0;
-            for (Node subjectNode : results)
-                result[resIndex++] = createBlastableNodeVO(subjectNode);
-        }
-        return result;
-    }
-
-
+//    public BlastableNodeVO[] getReversePsiBlastDatasets() throws DaoException {
+//        List<ReversePsiBlastDatabaseNode> results;
+//        try {
+//            StringBuffer hqlQuery = new StringBuffer();
+//            hqlQuery.append("select clazz from ReversePsiBlastDatabaseNode clazz order by clazz.name");
+//            Query query = getSession().createQuery(hqlQuery.toString());
+//            _logger.info(query.toString());
+//
+//            // NOTE: if multiple columns, the result would have been a list of Object arrays.
+//            results = query.list();
+//            _logger.info("Query resulted in " + results.size() + " hits");
+//        }
+//        catch (HibernateException e) {
+//            throw convertHibernateAccessException(e);
+//        }
+//        catch (DataAccessResourceFailureException e) {
+//            throw handleException(e, "NodeDAOImpl - getBlastableDatabaseList");
+//        }
+//        catch (IllegalStateException e) {
+//            throw handleException(e, "NodeDAOImpl - getBlastableDatabaseList");
+//        }
+//        BlastableNodeVO[] result;
+//        if (results == null) {
+//            result = new BlastableNodeVO[0];
+//        }
+//        else {
+//            result = new BlastableNodeVO[results.size()];
+//            int resIndex = 0;
+//            for (Node subjectNode : results)
+//                result[resIndex++] = createBlastableNodeVO(subjectNode);
+//        }
+//        return result;
+//    }
+//
+//
     /**
      * @param targetNode             - place where the data lives
      * @param commonParameterKey     - task parameterKey to match
@@ -513,10 +513,10 @@ public class NodeDAOImpl extends DaoBaseImpl implements NodeDAO {
         else if (subjectNode instanceof BlastDatasetNode) {
             sequenceType = ((BlastDatasetNode) subjectNode).getSequenceType();
         }
-        else if (subjectNode instanceof ReversePsiBlastDatabaseNode) {
-            Long count = subjectNode.getLength();
-            numSequences = null == count ? "" : count.toString();
-        }
+//        else if (subjectNode instanceof ReversePsiBlastDatabaseNode) {
+//            Long count = subjectNode.getLength();
+//            numSequences = null == count ? "" : count.toString();
+//        }
         if (subjectNode.getOwner() != null) {
             nodeOwner = subjectNode.getOwner();
         }

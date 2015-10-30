@@ -6,7 +6,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.recruitment.CreateRecruitmentFileNodeException;
+import org.janelia.it.jacs.compute.service.exceptions.CreateFileNodeException;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
@@ -24,7 +24,7 @@ public class CreateNeuronSeparatorResultFileNodeService implements IService {
     private NeuronSeparatorResultNode resultFileNode;
     private String sessionName;
 
-    public void execute(IProcessData processData) throws CreateRecruitmentFileNodeException {
+    public void execute(IProcessData processData) throws CreateFileNodeException {
         try {
             this.task = ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
@@ -33,7 +33,7 @@ public class CreateNeuronSeparatorResultFileNodeService implements IService {
             processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultFileNode.getObjectId());
         }
         catch (Exception e) {
-            throw new CreateRecruitmentFileNodeException(e);
+            throw new CreateFileNodeException(e);
         }
     }
 

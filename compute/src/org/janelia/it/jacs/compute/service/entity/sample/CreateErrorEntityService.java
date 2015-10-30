@@ -37,6 +37,7 @@ import org.janelia.it.jacs.shared.utils.entity.DataReporter;
  */
 public class CreateErrorEntityService extends AbstractEntityService {
 
+	public static final String ANNOTATION_OWNER = "group:workstation_users";
     private static final String FROM_EMAIL = SystemConfigurationProperties.getString("System.DataErrorSource");
     private static final String TO_EMAIL = SystemConfigurationProperties.getString("System.DataErrorDestination");
 	private static final String ERRORS_DIR_NAME = "Error";
@@ -73,14 +74,14 @@ public class CreateErrorEntityService extends AbstractEntityService {
 
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);
         this.error = new ClassifiedError(exception);
-        logger.info("Classified error as "+error.getType()+" with description '"+error.getDescription()+"'");
+        contextLogger.info("Classified error as "+error.getType()+" with description '"+error.getDescription()+"'");
         
     	Entity errorEntity = entityBean.createEntity(rootEntity.getOwnerKey(), EntityConstants.TYPE_ERROR, "Error");
-    	logger.info("Saved error entity as id="+errorEntity.getId());
+    	contextLogger.info("Saved error entity as id="+errorEntity.getId());
     	
         File errorFile = new File(outputDir, errorEntity.getId().toString()+".txt");
         FileUtils.writeStringToFile(errorFile, error.getStackTrace());
-        logger.info("Wrote error message to "+errorFile);
+        contextLogger.info("Wrote error message to "+errorFile);
         
         entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, errorFile.getAbsolutePath());
         entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_DESCRIPTION, error.getDescription());
@@ -125,7 +126,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             }
             
             if (numConsecutiveErrors>=MAX_CONSECUTIVE_ERRORS) {
-            	logger.info("Sample has experienced "+numConsecutiveErrors+" consecutive errors. Will not mark for reprocessing.");
+            	contextLogger.info("Sample has experienced "+numConsecutiveErrors+" consecutive errors. Will not mark for reprocessing.");
             	return;
             }
             
@@ -136,7 +137,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
                 throw new EntityException("Could not find containing Sample for "+rootEntity.getId());
             }
             entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
-            logger.info("Marked sample for reprocessing: "+sample.getId());
+            contextLogger.info("Marked sample for reprocessing: "+sample.getId());
         }
         catch (Exception e) {
             logger.error("Error trying to mark sample for reprocessing",e);
@@ -152,7 +153,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             String valueString = error.getDescription();
             final OntologyAnnotation annotation = new OntologyAnnotation(
                     null, rootEntity.getId(), keyEntity.getId(), keyString, null, valueString);
-            Entity annotationEntity = annotationBean.createOntologyAnnotation("user:system", annotation);
+            Entity annotationEntity = annotationBean.createOntologyAnnotation(ANNOTATION_OWNER, annotation);
             
             // Report the sample
             Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);
@@ -196,7 +197,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             // Start with the inner-most exception and find one that we know how to process
             Collections.reverse(trace);
             for(Throwable t : trace) {
-            	logger.info("Attempting to classify "+t.getClass().getName());
+            	contextLogger.info("Attempting to classify "+t.getClass().getName());
                 if (t instanceof MissingGridResultException) {
                     classify((MissingGridResultException)t);
                     return;
@@ -248,7 +249,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             files.add(new File(dir, "DrmaaSubmitter.log"));
             
             for(File file : files) {
-            	logger.info("  Parsing file "+file.getAbsolutePath());
+            	contextLogger.info("  Parsing file "+file.getAbsolutePath());
                 try(BufferedReader br = new BufferedReader(new FileReader(file))) {
                     String line = br.readLine();
                     while (line != null) {

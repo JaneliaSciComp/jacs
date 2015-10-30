@@ -67,7 +67,7 @@
         <mkdir dir="${dep.dir}" />
 
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
-		<path id="compute.classpath">
+	<path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
@@ -99,7 +99,7 @@
        		<classpath refid="dependency.classpath" />
         </manifestclasspath>
 
-		<jar destfile="${build.jars.dir}/${jar.name}">
+	<jar destfile="${build.jars.dir}/${jar.name}">
             <fileset dir="${build.classes.dir}" includes="**/*.class"/>
             <fileset dir="${basedir}/conf/resource" includes="*.process"/>
             <manifest>
@@ -182,15 +182,15 @@
             <fileset dir="${jacs.properties.dir}">
                 <include name="jacs.properties"/>
             </fileset>
-            <fileset dir="${basedir}/jsp">
-                <include name="index.jsp"/>
-                <include name="css/*"/>
-                <include name="images/*"/>
-                <include name="includes/*"/>
-                <include name="js/*"/>
-                <include name="*.jsp"/>
-                <include name="*.css"/>
-            </fileset>
+            <!--<fileset dir="${basedir}/jsp">-->
+                <!--<include name="index.jsp"/>-->
+                <!--<include name="css/*"/>-->
+                <!--<include name="images/*"/>-->
+                <!--<include name="includes/*"/>-->
+                <!--<include name="js/*"/>-->
+                <!--<include name="*.jsp"/>-->
+                <!--<include name="*.css"/>-->
+            <!--</fileset>-->
             <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
@@ -200,10 +200,13 @@
         <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/RestfulWebService.class"/>
+                <include name="org/**/wsrest/computeresources/**/*.class"/>
+                <include name="org/**/wsrest/dataresources/**/*.class"/>
             </classes>
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
             </lib>
+            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
@@ -212,10 +215,13 @@
         <war warfile="${basedir}/build/jars/${secure-rest-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/SecureRestfulWebService.class"/>
+                <include name="org/**/wsrest/computeresources/**/*.class"/>
+                <include name="org/**/wsrest/dataresources/**/*.class"/>
             </classes>
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
             </lib>
+            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
@@ -285,7 +291,7 @@
             	<include name="org/janelia/it/jacs/compute/api/EntityBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/SearchBeanRemote.class"/>
             	<include name="org/janelia/it/jacs/compute/api/SolrBeanRemote.class"/>
-                <include name="org/janelia/it/jacs/compute/api/GenomeContextBeanRemote.class"/>
+                <!--<include name="org/janelia/it/jacs/compute/api/GenomeContextBeanRemote.class"/>-->
                 <include name="org/janelia/it/jacs/compute/api/GeometricSearchBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/ComputeException.class"/>
                 <include name="org/janelia/it/jacs/compute/access/DaoException.class"/>
@@ -294,7 +300,7 @@
                 <include name="org/janelia/it/jacs/compute/api/JobControlBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/TiledMicroscopeBeanRemote.class"/>
             	<include name="org/janelia/it/jacs/compute/api/support/*.class"/>
-                <include name="org/janelia/it/jacs/compute/gcdml/**/*.class"/>
+                <!--<include name="org/janelia/it/jacs/compute/gcdml/**/*.class"/>-->
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
@@ -311,44 +317,44 @@
         </antcall>
 
         <!-- copy required perl script -->
-        <copy file="${basedir}/scripts/camera_html_blast.pl" todir="${basedir}/build/jars" overwrite="true"/>
+        <!--<copy file="${basedir}/scripts/camera_html_blast.pl" todir="${basedir}/build/jars" overwrite="true"/>-->
     </target>
 
-    <target name="commandline-gcdml-tar" depends="local-jar">
-        <delete file="${build.jars.dir}/commandline-gcdml.tar" />
-        <mkdir dir="${build.jars.dir}/gcdml-dir/jar" />
+    <!--<target name="commandline-gcdml-tar" depends="local-jar">-->
+        <!--<delete file="${build.jars.dir}/commandline-gcdml.tar" />-->
+        <!--<mkdir dir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${common.dir}/Spring/log4j-1.2.14.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/GWT/gwt-user.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/hibernate3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/dom4j-1.6.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/commons-collections-2.1.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/Spring/cglib.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <!--These jars below were removed as the ant target is defunct.  Still keeping the target around, for now. -->
-        <!--<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/jbossall-client.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/commons-logging.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <copy file="${common.dir}/JBoss-Server-4.2.3.GA/javassist.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.dir}/JBoss-Server-4.2.3.GA/antlr.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--<copy file="${common.dir}/Spring/log4j-1.2.14.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/GWT/gwt-user.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/hibernate3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/dom4j-1.6.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/commons-collections-2.1.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/Spring/cglib.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--&lt;!&ndash;These jars below were removed as the ant target is defunct.  Still keeping the target around, for now. &ndash;&gt;-->
+        <!--&lt;!&ndash;<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/jbossall-client.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
+        <!--&lt;!&ndash;<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/commons-logging.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
+        <!--<copy file="${common.dir}/JBoss-Server-4.2.3.GA/javassist.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.dir}/JBoss-Server-4.2.3.GA/antlr.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${common.module}/JAXB-2.1.5/jaxb-api.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.module}/JAXB-2.1.5/jaxb-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${common.module}/JAXB-2.1.5/jaxb1-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb-api.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb1-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${basedir}/../model/build/jars/jacs-model.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="${basedir}/../jacs/conf/container_descriptor/hibernate.cfg.xml" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--<copy file="${basedir}/../model/build/jars/jacs-model.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="${basedir}/../jacs/conf/container_descriptor/hibernate.cfg.xml" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <!--<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
+        <!--&lt;!&ndash;<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
+        <!--<copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
 
-        <copy file="${build.jars.dir}/compute.jar" todir="${build.jars.dir}/gcdml-dir/jar" />
-        <copy file="/conf/jacs.properties" todir="${build.jars.dir}/gcdml-dir" />
-        <copy file="${basedir}/../shared/build/jars/gcdml-shared.jar" todir="${build.jars.dir}/gcdml-dir" />
+        <!--<copy file="${build.jars.dir}/compute.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
+        <!--<copy file="/conf/jacs.properties" todir="${build.jars.dir}/gcdml-dir" />-->
+        <!--<copy file="${basedir}/../shared/build/jars/gcdml-shared.jar" todir="${build.jars.dir}/gcdml-dir" />-->
 
-        <tar destfile="${build.jars.dir}/commandline-gcdml.tar" basedir="${build.jars.dir}/gcdml-dir" />
+        <!--<tar destfile="${build.jars.dir}/commandline-gcdml.tar" basedir="${build.jars.dir}/gcdml-dir" />-->
 
-        <delete dir="${build.jars.dir}/gcdml-dir" />
+        <!--<delete dir="${build.jars.dir}/gcdml-dir" />-->
 
-    </target>
+    <!--</target>-->
     
     <!-- Set some generic properties.  Doing it in this target gives us access to all  -->
 	<!-- props in the generic set-common-properties -->
@@ -481,6 +487,7 @@
         <!-- read in properties -->
         <property file="${temp.dir}/jacs.properties" prefix="FromPropFile"/>
         <property name="jboss.home" value="${FromPropFile.ServerRoot.Dir}/jboss-4.2.3.GA" />
+	<property name="startjbossscript" value="${FromPropFile.ServerStartScript}" />
 
         <echo message="computeserver.ejb.service = ${FromPropFile.computeserver.ejb.service}" />
 
@@ -543,9 +550,9 @@
 
          <!--restart JBoss -->
         <echo message="Starting JBoss" />
-        <exec executable="${ssh}" description="Starting Jboss (/groups/jacs/jacsHosts/bin/startjboss.sh ${jboss.home} default)"
+        <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} default)"
               outputproperty="exec.output" errorproperty="exec.error">
-            <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/startjboss.sh ${jboss.home} default"/>
+            <arg line="${ssh.common.params} ${startjbossscript} ${jboss.home} default"/>
         </exec>
         <echo message="Done : ${exec.output}"  />
         <echo message="Done : ${exec.error}"  />

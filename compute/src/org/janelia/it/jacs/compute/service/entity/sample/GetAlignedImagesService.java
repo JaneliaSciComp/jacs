@@ -32,12 +32,12 @@ public class GetAlignedImagesService extends AbstractEntityService {
     	}
     	
     	if (imageIds.isEmpty()) {
-    	    logger.info("No images with an objective for alignment "+resultEntityId+". Using the default 3d image.");
+    	    contextLogger.info("No images with an objective for alignment "+resultEntityId+". Using the default 3d image.");
     	    Entity default3dImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
     	    imageIds.add(default3dImage.getId().toString());
     	}
     	
-    	logger.info("Putting "+imageIds.size()+" image ids in IMAGE_ID");
+    	contextLogger.info("Putting "+imageIds.size()+" image ids in IMAGE_ID");
     	processData.putItem("IMAGE_ID", imageIds);
     }
 }

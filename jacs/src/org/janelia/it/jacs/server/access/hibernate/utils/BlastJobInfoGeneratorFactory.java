@@ -19,9 +19,9 @@ public class BlastJobInfoGeneratorFactory {
         if ("BlastTask".equals(classname)) {
             return new BlastTaskBlastJobInfoGenerator(taskDAO);
         }
-        else if ("ReversePsiBlastTask".equals(classname)) {
-            return new ReversePsiBlastTaskBlastJobInfoGenerator(taskDAO);
-        }
+//        else if ("ReversePsiBlastTask".equals(classname)) {
+//            return new ReversePsiBlastTaskBlastJobInfoGenerator(taskDAO);
+//        }
         else {
             throw new Exception("BlastJobInfoGeneratorFactory cannot construct a BlastJobInfoGenerator " +
                     " from a " + classname + " object");

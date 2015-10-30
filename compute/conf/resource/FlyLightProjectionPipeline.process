@@ -13,16 +13,12 @@
             <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="REUSE_PIPELINE_RUNS"/>
-            <input name="REUSE_PROCESSING"/>
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="reuse pipeline runs"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PIPELINE_RUNS"/>
-            <input name="TASK_PARAMETER_3" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_3" value="REUSE_PROCESSING"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="reuse pipeline runs" value="REUSE_PIPELINE_RUNS"/>
+            </input>
             <output name="SAMPLE_ENTITY_ID"/>
             <output name="REUSE_PIPELINE_RUNS"/>
-            <output name="REUSE_PROCESSING"/>
         </operation>
         
         <!-- Get sub-samples -->
@@ -46,7 +42,6 @@
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
                 <input name="PIPELINE_PROCESS"/>
-                <input name="REUSE_PROCESSING"/>
             </include>
         
         </sequence>
@@ -62,7 +57,6 @@
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
                 <input name="PIPELINE_PROCESS"/>
-                <input name="REUSE_PROCESSING"/>
             </include>
             
         </sequence>

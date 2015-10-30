@@ -42,9 +42,9 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     	entityBean.saveOrUpdateEntity(pipelineRun);
     	entityBean.addEntityToParent(ownerKey, sampleEntity.getId(), pipelineRun.getId(), sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
 
-    	logger.info("Added new pipeline run to sample "+sampleEntity);
+    	contextLogger.info("Added new pipeline run to sample "+sampleEntity);
     	
     	processData.putItem("PIPELINE_RUN_ENTITY_ID", pipelineRun.getId().toString());
-        logger.info("Putting '"+pipelineRun.getId()+"' in PIPELINE_RUN_ENTITY_ID");
+    	contextLogger.info("Putting '"+pipelineRun.getId()+"' in PIPELINE_RUN_ENTITY_ID");
     }
 }

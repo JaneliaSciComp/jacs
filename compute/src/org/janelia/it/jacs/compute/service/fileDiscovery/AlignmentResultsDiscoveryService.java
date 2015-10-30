@@ -81,8 +81,13 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String verifyFilename = properties.getProperty("alignment.verify.filename");
                     if (verifyFilename!=null) {
                         EntityData verifyEntityEd = resultItemMap.get(verifyFilename);
-                        Entity verifyEntity = verifyEntityEd.getChildEntity();
-                        helper.addToParent(stackEntity, verifyEntity, 0, EntityConstants.ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE);
+                        if (verifyEntityEd!=null) {
+                            Entity verifyEntity = verifyEntityEd.getChildEntity();
+                            helper.addToParent(stackEntity, verifyEntity, 0, EntityConstants.ATTRIBUTE_ALIGNMENT_VERIFY_MOVIE);
+                        }
+                        else {
+                            throw new ServiceException("Result referenced by alignment.verify.filename="+verifyFilename+" does not exist");
+                        }
                     }
 
                     String channels = properties.getProperty("alignment.image.channels");

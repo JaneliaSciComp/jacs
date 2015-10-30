@@ -37,7 +37,7 @@ public class DownloadSampleFileClickListener implements ClickListener {
                 }
             }
         };
-        PublicationServiceHelper.checkFileLocation(rcv, _file.getLocation());
+//        PublicationServiceHelper.checkFileLocation(rcv, _file.getLocation());
     }
 
 }

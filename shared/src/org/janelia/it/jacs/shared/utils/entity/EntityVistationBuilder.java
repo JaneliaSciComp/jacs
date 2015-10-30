@@ -232,6 +232,18 @@ public class EntityVistationBuilder {
         return this;
     }
 
+    public EntityVistationBuilder reverse() {
+        if (filters.isEmpty()) throw new IllegalStateException("Cannot reverse order when no filter has been applied");
+        EntityFilter lastFilter = filters.get(filters.size()-1);
+        if (lastFilter instanceof ChildEntityFilter) {
+            ((ChildEntityFilter)lastFilter).reversed = true;
+        }
+        else {
+            throw new IllegalStateException("Cannot reverse order for filter of type "+lastFilter.getClass().getName());
+        }
+        return this;
+    }
+
     public EntityVistationBuilder withAttribute(String attrName, String attrValue) {
         filters.add(new AttributeFilter(attrName, attrValue));
         return this;
@@ -349,6 +361,7 @@ public class EntityVistationBuilder {
     private abstract class ChildEntityFilter implements EntityFilter {
     	
     	String parameter;
+    	boolean reversed = false;
     	
     	public ChildEntityFilter(String parameter) {
     		this.parameter = parameter;
@@ -356,7 +369,11 @@ public class EntityVistationBuilder {
     	
     	public List<EntityData> getFilteredRelatives(Entity entity) {
     		List<EntityData> filtered = new ArrayList<EntityData>();
-    		for(EntityData ed : entity.getOrderedEntityData()) {
+    		List<EntityData> eds = entity.getOrderedEntityData();
+    		if (reversed) {
+    		    Collections.reverse(eds);
+    		}
+    		for(EntityData ed : eds) {
     			if (allow(ed)) {
     				filtered.add(ed);
     			}

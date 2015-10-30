@@ -18,10 +18,10 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  * If the LSMs are compressed using bzip2 or gzip, then they will be decompressed. 
  *   
  * Input variables:
- *   BULK_MERGE_PARAMETERS - LSM paths
+ *   SAMPLE_AREA - object containing a list of MergedLsmPair
  *   
  * Output variables:
- *   BULK_MERGE_PARAMETERS - updated LSM paths
+ *   SAMPLE_AREA - object containing an updated list of MergedLsmPair
  *   LSM_SOURCE_FILE_PATHS - source archive paths
  *   LSM_TARGET_FILE_PATHS - target non-archive paths
  *   
@@ -34,18 +34,14 @@ public class GetLsmFilePathsService implements IService {
 	public void execute(IProcessData processData) throws ServiceException {
         try {
 
-            Object bulkMergeParamObj = processData.getItem("BULK_MERGE_PARAMETERS");
-            if (bulkMergeParamObj==null) {
-            	throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS may not be null");
-            }
+            FileNode resultNode = ProcessDataHelper.getResultFileNode(processData);
 
-            if (!(bulkMergeParamObj instanceof List)) {
-            	throw new IllegalArgumentException("Input parameter BULK_MERGE_PARAMETERS must be a List");
+            AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
+            if (sampleArea==null) {
+                throw new ServiceException("Input parameter SAMPLE_AREA may not be null");
             }
         	
-        	FileNode resultNode = ProcessDataHelper.getResultFileNode(processData);
-        	
-        	List<MergedLsmPair> mergedLsmPairs = (List<MergedLsmPair>)bulkMergeParamObj;
+        	List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
         	List<String> sourceFilePaths = new ArrayList<String>();
         	List<String> targetFilePaths = new ArrayList<String>();
         	
@@ -69,9 +65,9 @@ public class GetLsmFilePathsService implements IService {
             	newPairs.add(mergedLsmPair.getMovedLsmPair(newPath1, newPath2));
             }
             
+            sampleArea.setMergedLsmPairs(newPairs);
             processData.putItem("LSM_SOURCE_FILE_PATHS",sourceFilePaths);
             processData.putItem("LSM_TARGET_FILE_PATHS",targetFilePaths);
-            processData.putItem("BULK_MERGE_PARAMETERS",newPairs);
         } 
         catch (Exception e) {
             throw new ServiceException(e);

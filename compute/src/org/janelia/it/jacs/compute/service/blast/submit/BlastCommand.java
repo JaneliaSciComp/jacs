@@ -4,7 +4,7 @@ package org.janelia.it.jacs.compute.service.blast.submit;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.blast.*;
-import org.janelia.it.jacs.model.tasks.psiBlast.PsiBlastTask;
+//import org.janelia.it.jacs.model.tasks.psiBlast.PsiBlastTask;
 import org.janelia.it.jacs.model.vo.ParameterException;
 
 import java.io.File;
@@ -26,7 +26,7 @@ public class BlastCommand {
         programMap.setProperty(BlastXTask.BLASTX_NAME, "blastx");
         programMap.setProperty(TBlastNTask.TBLASTN_NAME, "tblastn");
         programMap.setProperty(TBlastXTask.TBLASTX_NAME, "tblastx");
-        programMap.setProperty(PsiBlastTask.BLAST_NAME, "blastpgp");
+//        programMap.setProperty(PsiBlastTask.BLAST_NAME, "blastpgp");
     }
 
     public String getCommandString(Task task, File subjectDatabase, long totalDatabaseLength, String tempBlastOutputFileName) throws ParameterException {
@@ -58,9 +58,9 @@ public class BlastCommand {
             sb.append(blastCmd).append(" ").append(((TBlastXTask) task).generateCommandStringNotIncludingIOParams());
             sb.append((" -p " + programName));
         }
-        else if (PsiBlastTask.BLAST_NAME.equals(task.getTaskName())) {
-            sb.append(task.getTaskName()).append(" ").append(((PsiBlastTask) task).generateCommandStringNotIncludingIOParams());
-        }
+//        else if (PsiBlastTask.BLAST_NAME.equals(task.getTaskName())) {
+//            sb.append(task.getTaskName()).append(" ").append(((PsiBlastTask) task).generateCommandStringNotIncludingIOParams());
+//        }
         else {
             throw new RuntimeException("Could not find generateCommand method for blast type " + task.getTaskName());
         }

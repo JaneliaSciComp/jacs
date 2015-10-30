@@ -10,14 +10,10 @@ import org.janelia.it.jacs.model.user_data.*;
 import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
-import org.janelia.it.jacs.model.user_data.hmmer.HmmerPfamDatabaseNode;
-import org.janelia.it.jacs.model.user_data.recruitment.RecruitmentResultFileNode;
-import org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 
 import javax.ejb.Remote;
-
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Date;
@@ -67,14 +63,11 @@ public interface ComputeBeanRemote {
     public BlastResultNode getBlastHitResultDataNodeByTaskId(Long taskId) throws DaoException, RemoteException;
     public Map<Long,String> getAllTaskPvoStrings() throws RemoteException;
     public Task getTaskForNodeId(long nodeId) throws RemoteException;
-    public void setRVHitsForNode(Long recruitmentNodeId, String numRecruited) throws RemoteException;
 
     // 1st test method... move to test ejb if number grows
     public void verifyBlastResultContents(Long blastResultFileNodeId, String expectedBlastResultsZipFilePath) throws DaoException, IOException;
 
     public Node getInputNodeForTask(Long objectId) throws RemoteException;
-
-    public RecruitmentResultFileNode getSystemRecruitmentResultNodeByRecruitmentFileNodeId(String giNumber) throws RemoteException, DaoException;
 
     public String getRecruitmentFilterDataTaskForUserByGenbankId(String genbankName, String userlogin) throws RemoteException;
 
@@ -89,8 +82,6 @@ public interface ComputeBeanRemote {
 
     public List<BlastDatabaseFileNode> getBlastDatabases() throws RemoteException;
     public List<BlastDatabaseFileNode> getBlastDatabasesOfAUser(String username) throws RemoteException;
-    public List<HmmerPfamDatabaseNode> getHmmerPfamDatabases() throws RemoteException;
-    public List<ReversePsiBlastDatabaseNode> getReversePsiBlastDatabases() throws RemoteException;
     public String createTemporaryFileNodeArchive(String archiveName, String sourceNodeId) throws Exception;
     public List<String> getFiles(String tmpDirectory, boolean directoriesOnly) throws RemoteException;
 

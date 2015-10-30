@@ -4,11 +4,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 
 /**
  * Upgrade the model to use the most current entity structure.
@@ -16,12 +16,8 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class UpgradeUserDataService extends AbstractEntityService {
-
-    private SampleHelper sampleHelper;
     
     public void execute() throws Exception {
-
-        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
         final String serverVersion = computeBean.getAppVersion();
         logger.info("Updating data model for "+ownerKey+" to latest version: "+serverVersion);
@@ -99,7 +95,7 @@ public class UpgradeUserDataService extends AbstractEntityService {
     
     private void setCompletionDate(Entity sample, Date date, boolean setLsmAttributes) throws Exception {
 
-        String completionDate = sampleHelper.format(date);
+        String completionDate = ISO8601Utils.format(date);
         logger.info("Setting completion "+completionDate+" on "+sample.getName()+" (id="+sample.getId()+")");
         
         // Set completion date for sample

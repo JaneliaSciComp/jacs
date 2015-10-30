@@ -46,11 +46,10 @@ import com.google.common.collect.Multimap;
 /**
  * Convert a single tile to a sample image. Parameters:
  *   RESULT_FILE_NODE - the directory to use for SGE config and output
- *   BULK_MERGE_PARAMETERS - a list of MergedLsmPair (may only contain MergedLsmPairs with a single image each)
  *   METADATA_RESULT_FILE_NODE - the directory in which we can find json-format LSM metadata files
- *   RUN_MERGE - was merge actually run on the pairs in BULK_MERGE_PARAMETERS?
+ *   RUN_MERGE - was merge actually run on the pairs?
  *   SAMPLE_ENTITY_ID - the sample entity, with channel specifications
- *   SAMPLE_AREA - the anatomical area we are interested in
+ *   SAMPLE_AREA - the anatomical area we are interested in (merged LSM pairs may only contain a single image each)
  *   CHANNEL_DYE_SPEC (optional) - the dye specification
  *   OUTPUT_CHANNEL_ORDER (optional) - the requested channel ordering 
  * 
@@ -86,6 +85,12 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     
     // State for processing
     protected String referenceDye;
+    private Map<MergedLsmPair, String> mappings = new HashMap<>();
+
+    @Override
+    protected String getGridServicePrefixName() {
+        return "convert";
+    }
     
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -111,14 +116,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 
             merged = data.getItemAsBoolean("RUN_MERGE");
             sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
-
-            final Object bulkMergeParamObj = data.getRequiredItem("BULK_MERGE_PARAMETERS");
-            if (bulkMergeParamObj instanceof List) {
-                mergedLsmPairs = (List<MergedLsmPair>) bulkMergeParamObj;
-            } else {
-                throw new ServiceException("Input parameter BULK_MERGE_PARAMETERS must be an ArrayList<MergedLsmPair>");
-            }
-
+            mergedLsmPairs = sampleArea.getMergedLsmPairs();
+            
             Object mergeAlgoObj = data.getItem("MERGE_ALGORITHM");
             if (mergeAlgoObj instanceof String) {
             	mergeAlgorithm = (String)mergeAlgoObj;
@@ -135,6 +134,7 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
             
             populateMaps();
+            determineMappings();
 
         } catch (ServiceException se) {
             throw se;
@@ -143,18 +143,10 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         }
     }
     
-    @Override
-    protected String getGridServicePrefixName() {
-        return "convert";
-    }
-    
-    @Override
-    protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+    protected void determineMappings() throws Exception {
 
         String channelDyeSpec = data.getItemAsString("CHANNEL_DYE_SPEC");
         String outputChannelOrder = data.getItemAsString("OUTPUT_CHANNEL_ORDER");
-
-        int configIndex = 1;
 
         String consensusChannelMapping = null;
         String consensusSignalChannels = null;
@@ -444,20 +436,32 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
             
             String mapping = generateChannelMapping(inputChannelList, outputChannelList);
-            // TODO: Make sure we're actually doing something. If the file is merged and the channel mapping is 1-to-1, then there's no point in running.
-            // Right now this doesn't work because the SubmitDrmaaJobService doesn't support aborted runs.  
-            //if (!merged || !mapping.replaceAll("([0-9]),\\1,?", "").equals("")) { 
-            	writeInstanceFiles(mergedLsmPair, mapping, configIndex++);
-            //}
+            if (!merged || !mapping.replaceAll("([0-9]),\\1,?", "").equals("")) { 
+                mappings.put(mergedLsmPair, mapping);
+            }
         }
         
-        createShellScript(writer);
-        setJobIncrementStop(configIndex-1);
+        if (mappings.isEmpty()) {
+            cancel();
+        }
         
         data.putItem("LSM_CHANNEL_MAPPING", consensusChannelMapping);
         data.putItem("CHANNEL_SPEC", consensusChanSpec);
         data.putItem("SIGNAL_CHANNELS", consensusSignalChannels);
         data.putItem("REFERENCE_CHANNEL", consensusReferenceChannels);
+    }
+    
+    @Override
+    protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
+
+        int configIndex = 1;
+        for(MergedLsmPair mergedLsmPair : mappings.keySet()) {
+            String mapping = mappings.get(mergedLsmPair);
+            writeInstanceFiles(mergedLsmPair, mapping, configIndex++);
+        }
+        
+        createShellScript(writer);
+        setJobIncrementStop(configIndex-1);
     }
 
     private void writeInstanceFiles(MergedLsmPair mergedLsmPair, String mapping, int configIndex) throws Exception {
@@ -621,8 +625,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 	private String findExistingJson(final String lsmName) throws Exception {
 		final StringHolder stringHolder = new StringHolder();
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
-                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
-                .childrenOfType(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)
+                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN).reverse()
+                .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT).reverse()
                 .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA).first()
                 .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
                 .run(new EntityVisitor() {

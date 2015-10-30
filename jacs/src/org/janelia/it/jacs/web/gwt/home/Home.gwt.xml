@@ -27,7 +27,7 @@
     <inherits name="org.janelia.it.jacs.Model"/>
     <inherits name="org.janelia.it.jacs.web.gwt.common.Common"/>
     <inherits name="org.janelia.it.jacs.web.gwt.status.StatusComponent"/>
-    <inherits name="org.janelia.it.jacs.web.gwt.search.SearchComponent"/>
+    <!--<inherits name="org.janelia.it.jacs.web.gwt.search.SearchComponent"/>-->
 
     <stylesheet src="/jacs/css/home.css"/>
 

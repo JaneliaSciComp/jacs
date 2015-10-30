@@ -26,15 +26,15 @@
 
     <mbean code="org.janelia.it.jacs.compute.mbean.ComputeStartup" name="ComputeServer:service=ComputeStartup"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.BlastTest" name="ComputeServer:service=BlastTest"/>
-    <mbean code="org.janelia.it.jacs.compute.mbean.HmmerTest" name="ComputeServer:service=HmmerTest"/>
-    <mbean code="org.janelia.it.jacs.compute.mbean.ReversePsiBlastTest" name="ComputeServer:service=ReversePsiBlastTest"/>
+    <!--<mbean code="org.janelia.it.jacs.compute.mbean.HmmerTest" name="ComputeServer:service=HmmerTest"/>-->
+    <!--<mbean code="org.janelia.it.jacs.compute.mbean.ReversePsiBlastTest" name="ComputeServer:service=ReversePsiBlastTest"/>-->
     <mbean code="org.janelia.it.jacs.compute.mbean.AdministrativeManager" name="ComputeServer:service=AdministrativeManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.AnnotationManager" name="ComputeServer:service=AnnotationManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.FileNodeManager" name="ComputeServer:service=FileNodeManager"/>
-    <mbean code="org.janelia.it.jacs.compute.mbean.RecruitmentNodeManager" name="ComputeServer:service=RecruitmentNodeManager"/>
+    <!--<mbean code="org.janelia.it.jacs.compute.mbean.RecruitmentNodeManager" name="ComputeServer:service=RecruitmentNodeManager"/>-->
     <mbean code="org.janelia.it.jacs.compute.mbean.AnnotationNodeManager" name="ComputeServer:service=AnnotationNodeManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.SearchDataManager" name="ComputeServer:service=SearchDataManager"/>
-    <mbean code="org.janelia.it.jacs.compute.mbean.GenomeProjectNodeManager" name="ComputeServer:service=GenomeProjectNodeManager"/>
+    <!--<mbean code="org.janelia.it.jacs.compute.mbean.GenomeProjectNodeManager" name="ComputeServer:service=GenomeProjectNodeManager"/>-->
     <mbean code="org.janelia.it.jacs.compute.mbean.GridJobsManager" name="ComputeServer:service=GridJobsManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.LocalTestManager" name="ComputeServer:service=LocalTestManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.SampleDataManager" name="ComputeServer:service=SampleDataManager"
@@ -53,6 +53,8 @@
     </mbean>
     <mbean code="org.janelia.it.jacs.compute.mbean.Validator" name="ComputeServer:service=Validator"
            xmbean-dd="resource:META-INF/Validation-xmbean.xml"/>
+    <mbean code="org.janelia.it.jacs.compute.mbean.LargeVolumeSampleDiscovery" name="ComputeServer:service=LargeVolumeSampleDiscovery"
+           xmbean-dd="resource:META-INF/LargeVolumeSampleDiscovery-xmbean.xml"/>
      
     <mbean code="org.jboss.mq.server.jmx.Queue" name="jboss.mq.destination:service=Queue,name=ComputeServer">
         <depends optional-attribute-name="DestinationManager">jboss.mq:service=DestinationManager</depends>

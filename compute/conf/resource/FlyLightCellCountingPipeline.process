@@ -7,18 +7,20 @@
 
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="TASK_PARAMETER_1" value="sample entity id"/>
-            <input name="PROCESS_VARIABLE_1" value="SAMPLE_ENTITY_ID"/>
-            <input name="TASK_PARAMETER_2" value="reuse processing"/>
-            <input name="PROCESS_VARIABLE_2" value="REUSE_PROCESSING"/>
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="reuse pipeline runs" value="REUSE_PIPELINE_RUNS"/>
+            </input>
             <output name="SAMPLE_ENTITY_ID"/>
-            <output name="REUSE_PROCESSING"/>
+            <output name="REUSE_PIPELINE_RUNS"/>
         </operation>
 
         <!-- Get sub-samples -->
         <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
-            <input name="REUSE_PROCESSING"/>
+            <input name="REUSE_PIPELINE_RUNS"/>
             <output name="PARENT_SAMPLE_ID"/>
             <output name="SAMPLE_20X_ID"/>
             <output name="SAMPLE_63X_ID"/>
@@ -30,6 +32,7 @@
                 <input name="PIPELINE_NAME" value="Cell Counting 20x"/>
                 <input name="PIPELINE_PROCESS"/>
                 <input name="RUN_CELL_COUNTING" value="no"/>
+                <input name="PIPELINE_PROCESS"/>
             </include>
 
         </sequence>
@@ -43,6 +46,7 @@
                 <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
                 <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
                 <input name="RUN_CELL_COUNTING" value="yes"/>
+                <input name="PIPELINE_PROCESS"/>
             </include>
 
         </sequence>

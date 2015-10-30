@@ -170,9 +170,14 @@ public class EntityHelper {
         	// TODO: this shouldn't be necessary in the future
         	EntityData oldEd = default3dImage.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
         	if (oldEd!=null) {
-        		setDefault2dImage(entity, oldEd.getValue());	
+                setDefault2dImage(entity, create2dImage(oldEd.getValue()));	
         		removeDefaultImageFilePath(default3dImage);
         	}
+    	}
+    	
+    	Entity allMip = default3dImage.getChildByAttributeName(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE);
+    	if (allMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);	
     	}
 
     	Entity signalMip = default3dImage.getChildByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE);
@@ -184,30 +189,35 @@ public class EntityHelper {
     	if (refMip!=null) {
     		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);	
     	}
-		
     }
 
+	public void set2dImages(Entity entity, Entity default2dImage, Entity allMip, Entity signalMip, Entity refMip) throws ComputeException {
+
+    	if (default2dImage!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
+    	}
+    	
+    	if (allMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);	
+    	}
+
+    	if (signalMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
+    	}
+
+    	if (refMip!=null) {
+    		setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);	
+    	}
+	}
+	
 	/**
 	 * Sets the given image as the default 2d image for the given entity.
 	 * @param entity
 	 * @param default2dImage
 	 * @throws ComputeException
 	 */
-	public void setDefault2dImage(Entity entity, Entity default2dImage) throws ComputeException {
-        setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
-    }
-
-	/**
-	 * Sets the default 2d image for the given entity. This creates a new entity with the given filename as the name.
-	 * @param entity
-	 * @param defaultImageFilepath
-	 * @throws ComputeException
-	 */
-	public Entity setDefault2dImage(Entity entity, String defaultImageFilepath) throws ComputeException {
-        logger.debug("Adding Default 2D Image to "+entity.getName()+" (id="+entity.getId()+")");
-        Entity default2dImage = create2dImage(defaultImageFilepath);
-        setDefault2dImage(entity, default2dImage);
-        return default2dImage;
+	public boolean setDefault2dImage(Entity entity, Entity default2dImage) throws ComputeException {
+        return setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, default2dImage);
     }
 
 	/**
@@ -215,14 +225,17 @@ public class EntityHelper {
 	 * @param entity
 	 * @param image
 	 * @param attributeName
+	 * @return true if the image was necessary
 	 * @throws ComputeException
 	 */
-	public void setImageIfNecessary(Entity entity, String attributeName, Entity image) throws ComputeException {
-		if (image==null || entity==null) return;
+	public boolean setImageIfNecessary(Entity entity, String attributeName, Entity image) throws ComputeException {
+		if (image==null || entity==null) return false;
     	EntityData currImage = entity.getEntityDataByAttributeName(attributeName);
     	if (currImage==null || currImage.getChildEntity()==null || !currImage.getId().equals(image.getId())) {
     		setImage(entity, attributeName, image);	
+    		return true;
     	}
+    	return false;
 	}
 	
 	/**
@@ -400,7 +413,7 @@ public class EntityHelper {
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
         if (entity==null || StringUtils.isEmpty(value)) return;
         EntityData currEd = entity.getEntityDataByAttributeName(attributeName);
-        if (currEd==null || !currEd.getValue().equals(value)) {
+        if (currEd==null || currEd.getValue()==null || !currEd.getValue().equals(value)) {
             entity.setValueByAttributeName(attributeName, value);
             entityBean.saveOrUpdateEntity(entity);
         }
@@ -412,8 +425,7 @@ public class EntityHelper {
                 ") as child of "+parent.getName()+" ("+parent.getEntityTypeName()+"#"+parent.getId()+")");
     }
 
-    public Entity getRequiredSampleEntity(String key,
-                                          String sampleEntityId) throws Exception {
+    private Entity getRequiredSampleEntity(String key, Long sampleEntityId) throws Exception {
         final Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
         if (sampleEntity == null) {
             throw new IllegalArgumentException("Entity not found for " + key + " " + sampleEntityId);
@@ -436,8 +448,16 @@ public class EntityHelper {
 
     public Entity getRequiredSampleEntity(ProcessDataAccessor data) throws Exception {
         final String defaultKey = "SAMPLE_ENTITY_ID";
-        final String sampleEntityId = data.getRequiredItemAsString(defaultKey);
-        return getRequiredSampleEntity(defaultKey, sampleEntityId);
+        final Object sampleEntityId = data.getRequiredItem(defaultKey);
+        if (sampleEntityId instanceof Long) {
+            return getRequiredSampleEntity(defaultKey, (Long)sampleEntityId);
+        }
+        else if (sampleEntityId instanceof String) {
+            return getRequiredSampleEntity(defaultKey, new Long((String)sampleEntityId));
+        }
+        else {
+            throw new IllegalArgumentException("Illegal type for SAMPLE_ENTITY_ID (must be Long or String)");
+        }
     }
 
 }

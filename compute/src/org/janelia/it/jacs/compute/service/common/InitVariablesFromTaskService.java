@@ -33,8 +33,8 @@ public class InitVariablesFromTaskService implements IService {
             this.task = ProcessDataHelper.getTask(processData);
             this.contextLogger = new ContextLogger(logger);
             contextLogger.appendToLogContext(task);
-            
-            boolean override = true;
+
+            this.override = true;
             String overrideStr = (String)processData.getItem("OVERRIDE");
             if (!StringUtils.isEmpty(overrideStr)) {
                 override = Boolean.parseBoolean(overrideStr);
@@ -66,7 +66,6 @@ public class InitVariablesFromTaskService implements IService {
     
     private void processEntry(String taskParamName, String processVarName) throws Exception {
         String value = task.getParameter(taskParamName);
-        contextLogger.debug("Init "+processVarName+" with value '"+value+"' from task parameter "+taskParamName);
         if (value != null) {
             // We specifically avoid overriding existing values in ProcessData, because if the process file
             // is being <include>'d, then the task may not contain the parameter which is already in
@@ -74,9 +73,11 @@ public class InitVariablesFromTaskService implements IService {
             if (override || processData.getItem(processVarName)==null) {
                 if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
                     processData.putItem(processVarName, Boolean.valueOf(value));
-                } else {
+                } 
+                else {
                     processData.putItem(processVarName, value);
                 }
+                contextLogger.info("Init "+processVarName+" with value '"+value+"' from '"+taskParamName+"'");
             }
             else {
                 contextLogger.debug("  Will not override existing value '"+processData.getItem(processVarName)+"'");
