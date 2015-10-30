@@ -54,6 +54,7 @@ import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
@@ -63,6 +64,7 @@ import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
 import org.janelia.it.jacs.model.domain.sample.SampleCellCountingResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
@@ -583,8 +585,13 @@ public class MongoDbImport extends AnnotationDAO {
             
             for(Entity resultEntity : EntityUtils.getChildrenForAttribute(runEntity, EntityConstants.ATTRIBUTE_RESULT)) {
                 populateChildren(resultEntity);
-                
-                if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
+
+                if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_LSM_SUMMARY_RESULT)) {
+                    LSMSummaryResult result = getLSMSummaryResult(resultEntity);
+                    result.setObjective(sampleObjective);
+                    results.add(result);
+                }
+                else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
 
                     List<PipelineResult> sprResults = new ArrayList<PipelineResult>();
                     for(Entity separationEntity : EntityUtils.getChildrenOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
@@ -599,6 +606,11 @@ public class MongoDbImport extends AnnotationDAO {
                         result.setResults(sprResults);
                     }
                     
+                    results.add(result);
+                }
+                else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_POST_PROCESSING_RESULT)) {
+                    SamplePostProcessingResult result = getSamplePostProcessingResult(resultEntity);
+                    result.setObjective(sampleObjective);
                     results.add(result);
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_CELL_COUNTING_RESULT)) {
@@ -739,6 +751,39 @@ public class MongoDbImport extends AnnotationDAO {
             addImage(files,FileType.FastStack,getRelativeFilename(result,fast3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
         }
     }
+
+    private LSMSummaryResult getLSMSummaryResult(Entity resultEntity) throws Exception {
+        LSMSummaryResult result = new LSMSummaryResult();
+        result.setName(resultEntity.getName());
+        result.setCreationDate(resultEntity.getCreationDate());
+        result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        
+        Map<FileType,String> files = new HashMap<FileType,String>();
+        
+        Entity imageEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+        if (imageEntity!=null) {
+            addStackFiles(imageEntity, files, result);
+        }
+        else {
+            log.warn("  Sample processing result has no default stack: "+resultEntity.getId());
+        }
+
+        Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
+        if (supportingDataEntity!=null) {
+            for(Entity child : supportingDataEntity.getChildren()) {
+                String childName = child.getName();
+                String childFilepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (childName.endsWith("lsm.json")) {
+                    String name = ArchiveUtils.getDecompressedFilepath(childName);
+                    lsmJsonFiles.put(name, childFilepath);
+                }
+            }
+        }
+
+        if (!files.isEmpty()) result.setFiles(files);
+        
+        return result;
+    }
     
     private SampleProcessingResult getSampleProcessingResult(Entity resultEntity) throws Exception {
         SampleProcessingResult result = new SampleProcessingResult();
@@ -784,6 +829,39 @@ public class MongoDbImport extends AnnotationDAO {
         return result;
     }
 
+    private SamplePostProcessingResult getSamplePostProcessingResult(Entity resultEntity) throws Exception {
+        SamplePostProcessingResult result = new SamplePostProcessingResult();
+        result.setName(resultEntity.getName());
+        result.setCreationDate(resultEntity.getCreationDate());
+        result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        
+        Map<FileType,String> files = new HashMap<FileType,String>();
+        
+        Entity imageEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+        if (imageEntity!=null) {
+            addStackFiles(imageEntity, files, result);
+        }
+        else {
+            log.warn("  Sample processing result has no default stack: "+resultEntity.getId());
+        }
+
+        Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
+        if (supportingDataEntity!=null) {
+            for(Entity child : supportingDataEntity.getChildren()) {
+                String childName = child.getName();
+                String childFilepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                if (childName.endsWith("lsm.json")) {
+                    String name = ArchiveUtils.getDecompressedFilepath(childName);
+                    lsmJsonFiles.put(name, childFilepath);
+                }
+            }
+        }
+
+        if (!files.isEmpty()) result.setFiles(files);
+        
+        return result;
+    }
+    
     private SampleCellCountingResult getSampleCellCountingResult(Entity resultEntity) {
     	SampleCellCountingResult result = new SampleCellCountingResult();
     	result.setName(resultEntity.getName());
@@ -1190,7 +1268,7 @@ public class MongoDbImport extends AnnotationDAO {
         Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         if (alignedStack!=null) {
             addImage(images,FileType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            addImage(images,FileType.CompleteMip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+            addImage(images,FileType.AllMip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         Entity heatmap = EntityUtils.findChildWithName(patternAnnotationEntity, "Heatmap");
         if (heatmap!=null) {
