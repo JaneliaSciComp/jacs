@@ -11,6 +11,11 @@ import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
+/**
+ * An image file on disk, and related metadata, such as where to find summary files such as MIPs or movies.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "image")
 @SearchType(key="image",label="Image")
 public class Image extends AbstractDomainObject implements HasFiles, HasFilepath {

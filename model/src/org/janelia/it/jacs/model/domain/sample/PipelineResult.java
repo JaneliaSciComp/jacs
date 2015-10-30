@@ -7,11 +7,15 @@ import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
-
+/**
+ * The result of some processing. May be nested if further processing is done on this result.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class PipelineResult implements HasFilepath, HasFiles {
 

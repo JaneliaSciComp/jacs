@@ -7,6 +7,11 @@ import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
+/**
+ * A fly line associated with screen data. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "flyLine")
 @SearchType(key="flyLine",label="Fly Line")
 public class FlyLine extends AbstractDomainObject {

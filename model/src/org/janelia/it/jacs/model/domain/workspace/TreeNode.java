@@ -10,6 +10,11 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * A generic node in a domain object tree. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "treeNode")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class TreeNode extends AbstractDomainObject {

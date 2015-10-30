@@ -2,6 +2,12 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 
+/**
+ * An error in processing a Sample. The filepath points to a file 
+ * containing the stacktrace of the exception that was thrown.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class PipelineError implements HasFilepath {
 
     private String filepath;

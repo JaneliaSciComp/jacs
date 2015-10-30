@@ -10,6 +10,11 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * A static set of objects in a single collection. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "objectSet")
 @SearchType(key="objectSet",label="Object Set")
 public class ObjectSet extends AbstractDomainObject {

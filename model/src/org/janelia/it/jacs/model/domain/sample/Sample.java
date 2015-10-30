@@ -10,6 +10,16 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
+/**
+ * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 
+ * of data set and slide code. A single sample may include many LSMs. For example, it may include images taken 
+ * at multiple objectives (e.g. 20x/63x), of different anatomical areas (e.g. Brain/VNC), and of different 
+ * tile regions which are stitched together.   
+ *
+ * Contains references to NeuronFragment objects in the fragment collection.  
+ *
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "sample")
 @SearchType(key="sample",label="Sample")
 public class Sample extends AbstractDomainObject {

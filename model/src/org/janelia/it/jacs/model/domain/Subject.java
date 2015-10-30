@@ -8,6 +8,11 @@ import org.jongo.marshall.jackson.oid.Id;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+/**
+ * A user or group in the Workstation system. 
+ *
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "subject")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class Subject implements HasIdentifier {

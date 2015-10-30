@@ -5,6 +5,12 @@ import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 
+/**
+ * A domain object is anything stored at the top level of a collection. 
+ * It must have a GUID, a name, and user ownership/permissions. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public interface DomainObject extends HasIdentifier {
 
     public Long getId();

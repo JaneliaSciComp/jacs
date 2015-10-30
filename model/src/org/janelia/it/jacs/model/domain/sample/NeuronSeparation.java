@@ -5,6 +5,11 @@ import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
+/**
+ * The result of running the Neuron Separator on some input file.
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class NeuronSeparation extends PipelineResult {
 
     private String name;

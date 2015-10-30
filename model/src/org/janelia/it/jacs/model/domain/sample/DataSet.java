@@ -6,6 +6,11 @@ import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.enums.SampleImageType;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
+/**
+ * A data set definition which controls how Samples are processed. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "dataSet")
 public class DataSet extends AbstractDomainObject {
 

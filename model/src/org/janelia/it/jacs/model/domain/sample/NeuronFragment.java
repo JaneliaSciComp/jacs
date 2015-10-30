@@ -11,6 +11,11 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 
+/**
+ * A neuron fragment segmented from an image by the Neuron Separator. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasFiles, HasFilepath {
 

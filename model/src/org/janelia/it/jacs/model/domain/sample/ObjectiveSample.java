@@ -3,6 +3,11 @@ package org.janelia.it.jacs.model.domain.sample;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * A set of LSMs in a Sample with a common objective. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class ObjectiveSample {
 
     private List<SampleTile> tiles;

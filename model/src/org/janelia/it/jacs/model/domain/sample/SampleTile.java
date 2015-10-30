@@ -8,6 +8,12 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 
+/**
+ * A sample tile consists of a set of LSMs with the same objective, 
+ * and in the same anatomical area. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class SampleTile implements HasFiles {
 
     private String name;

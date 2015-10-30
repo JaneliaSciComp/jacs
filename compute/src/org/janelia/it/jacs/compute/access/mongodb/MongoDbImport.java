@@ -860,11 +860,12 @@ public class MongoDbImport extends AnnotationDAO {
                 
                 FileGroup group = groups.get(key);
                 if (group==null) {
-                	group = new FileGroup(); 
+                	group = new FileGroup();
+                	group.setFilepath(parent.getFilepath());
                 	groups.put(key, group);
                 }
                 
-                group.getFiles().put(fileType, getRelativeFilename(parent, childFilepath));
+                group.getFiles().put(fileType, getRelativeFilename(group, childFilepath));
             }
         }
         

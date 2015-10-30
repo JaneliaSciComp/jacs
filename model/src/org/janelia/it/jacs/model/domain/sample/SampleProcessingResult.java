@@ -1,5 +1,11 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+/**
+ * The result of processing the LSMs of a single anatomical area
+ * of an ObjectiveSample. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class SampleProcessingResult extends PipelineResult {
 	
 	private String anatomicalArea;

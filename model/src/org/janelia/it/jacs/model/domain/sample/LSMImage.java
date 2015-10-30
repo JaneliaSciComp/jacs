@@ -8,6 +8,11 @@ import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
+/**
+ * A 3d image stack in LSM format, usually output from a microscope. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @SearchType(key="lsmImage",label="LSM Image")
 public class LSMImage extends Image {
 

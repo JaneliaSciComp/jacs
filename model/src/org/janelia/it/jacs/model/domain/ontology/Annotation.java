@@ -6,6 +6,11 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
+/**
+ * An annotation on a single domain object, using some Ontology.  
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "annotation")
 public class Annotation extends AbstractDomainObject {
 

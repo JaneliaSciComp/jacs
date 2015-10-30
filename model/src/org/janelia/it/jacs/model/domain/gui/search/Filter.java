@@ -9,6 +9,11 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
+/**
+ * A saved filter on domain objects, acting against the SOLR server. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 @MongoMapped(collectionName = "filter")
 @SearchType(key="filter",label="Filter")
 public class Filter extends AbstractDomainObject {

@@ -4,6 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Summary files for all of the LSMs in an ObjectiveSample. 
+ * Generally this consists of MIPs and movies. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class LSMSummaryResult extends PipelineResult {
 
 	private Map<String,FileGroup> groups = new HashMap<>();

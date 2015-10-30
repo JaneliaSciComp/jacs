@@ -4,6 +4,11 @@ import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 
+/**
+ * The result of running an alignment algorithm on a sample. 
+ * 
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
 public class SampleAlignmentResult extends PipelineResult {
 
 	private String anatomicalArea;
