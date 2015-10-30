@@ -419,8 +419,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 TmGeoAnnotation serializedAnnotation = createGeometricAnnotation(neuron, isRoot, parentAnnotationId, unserializedAnnotation);
                 nodeIdToAnnotationId.put(nodeId, serializedAnnotation.getId());
 
-                log.trace("Node " + nodeId + " at " + serializedAnnotation.toString() + ", has id " + serializedAnnotation.getId()
-                        + ", has parent " + serializedAnnotation.getParentId() + ", under neuron " + serializedAnnotation.getNeuronId());
+                if (log.isTraceEnabled()) {
+                    log.trace("Node " + nodeId + " at " + serializedAnnotation.toString() + ", has id " + serializedAnnotation.getId()
+                            + ", has parent " + serializedAnnotation.getParentId() + ", under neuron " + serializedAnnotation.getNeuronId());
+                }
             }
 
             if (putativeRootCount > 1) {
