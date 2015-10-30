@@ -712,8 +712,6 @@ public class MongoDbImport extends AnnotationDAO {
             for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
                 LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
                 if (lsmImage!=null) {
-                    // Denormalize tile MIPs into the LSMs
-                    lsmImage.getFiles().putAll(images);
                     lsmImages.add(lsmImage);
                     lsmReferences.add(getReference(lsmEntity));
                 }
@@ -991,10 +989,29 @@ public class MongoDbImport extends AnnotationDAO {
             return null;
         }
         
+        Map<FileType, String> files = lsm.getFiles();
+        
         String name = ArchiveUtils.getDecompressedFilepath(lsm.getName());
         String jsonFilepath = lsmJsonFiles.get(name);
         if (jsonFilepath!=null) {
-            addImage(lsm.getFiles(),FileType.LsmMetadata,jsonFilepath);
+            addImage(files,FileType.LsmMetadata,jsonFilepath);
+        }
+        
+        addImage(files,FileType.AllMip,getRelativeFilename(lsm,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE)));
+        addImage(files,FileType.ReferenceMip,getRelativeFilename(lsm,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+        addImage(files,FileType.SignalMip,getRelativeFilename(lsm,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
+        
+        String allMip = files.get(FileType.AllMip);
+        if (allMip!=null) {
+        	files.put(FileType.AllMovie,allMip.replace("png", "mp4"));
+        }
+        String referenceMip = files.get(FileType.ReferenceMip);
+        if (referenceMip!=null) {
+        	files.put(FileType.ReferenceMovie,referenceMip.replace("png", "mp4"));
+        }
+        String signalMip = files.get(FileType.SignalMip);
+        if (signalMip!=null) {
+        	files.put(FileType.SignalMovie,signalMip.replace("png", "mp4"));
         }
         
         if (sampleEntity!=null) lsm.setSample(getReference(sampleEntity));
