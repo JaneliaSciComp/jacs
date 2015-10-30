@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -115,7 +116,14 @@ public class SampleCleaningService extends AbstractEntityService {
     	Set<Entity> toReallyDelete = new HashSet<Entity>();
     	for(Entity entity : toDelete) {
     		long numFound = annotationBean.getNumDescendantsAnnotated(entity.getId());
-    		if (numFound>0) {
+			if (numFound==1) {
+				List<Entity> annotations = annotationBean.getAnnotationsForEntity(CreateErrorEntityService.ANNOTATION_OWNER, entity.getId());
+				if (annotations.isEmpty()) {
+	            	logger.info("    Rejecting candidate "+entity.getId()+" because it and its descendants have an annotation, and it is not an Error annotation.");
+	            	continue;
+				}
+			}
+			else if (numFound>0) {    			
             	logger.info("    Rejecting candidate "+entity.getId()+" because it and its descendants have "+numFound+" annotations");
             	continue;
     		}

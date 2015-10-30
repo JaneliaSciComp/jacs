@@ -550,7 +550,7 @@ public class RestfulWebService {
 
         final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
         List<JsonRelease> releaseList = new ArrayList<>();
-        
+
         try {
             for(Entity releaseEntity : entityBean.getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
                 releaseList.add(new JsonRelease(releaseEntity));
