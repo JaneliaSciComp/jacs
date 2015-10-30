@@ -147,8 +147,7 @@ public class DomainUtils {
     }
     
     /**
-     * Returns the subject name part of a given subject key. For example, for "group:flylight", this will return "flylight".
-     *
+     * Returns the subject name part of a given subject key. For example, for "group:flylight", this returns "flylight".
      * @param subjectKey
      * @return
      */
@@ -157,6 +156,18 @@ public class DomainUtils {
             return null;
         }
         return subjectKey.substring(subjectKey.indexOf(':') + 1);
+    }
+
+    /**
+     * Returns the type part of the given subject key. For example, for "group:flylight", this returns "group".
+     * @param subjectKey
+     * @return
+     */
+    public static String getTypeFromSubjectKey(String subjectKey) {
+        if (subjectKey == null) {
+            return null;
+        }
+        return subjectKey.substring(0, subjectKey.indexOf(':'));
     }
     
     public static String identify(DomainObject domainObject) {
@@ -271,7 +282,7 @@ public class DomainUtils {
             @Override
             public int compare(Subject o1, Subject o2) {
                 ComparisonChain chain = ComparisonChain.start()
-                        .compare(o1.getClass().getName(), o2.getClass().getName(), Ordering.natural())
+                        .compare(getTypeFromSubjectKey(o1.getKey()), getTypeFromSubjectKey(o2.getKey()), Ordering.natural())
                         .compare(o1.getFullName(), o2.getFullName(), Ordering.natural().nullsLast())
                         .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst());
                 return chain.result();
