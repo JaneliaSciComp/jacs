@@ -14,8 +14,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @SearchType(key="objectSet",label="Object Set")
 public class ObjectSet extends AbstractDomainObject {
 
-    @SearchAttribute(key="target_type_txt",label="Target Type",facet=true)
-    private String targetType;
+    @SearchAttribute(key="collection_name_txt",label="Collection Name",facet=true)
+    private String collectionName;
     private List<Long> members;
 
     public boolean hasMembers() {
@@ -45,12 +45,12 @@ public class ObjectSet extends AbstractDomainObject {
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public String getTargetType() {
-        return targetType;
+    public String getCollectionName() {
+        return collectionName;
     }
 
-    public void setTargetType(String targetType) {
-        this.targetType = targetType;
+    public void setCollectionName(String collectionName) {
+        this.collectionName = collectionName;
     }
 
     public List<Long> getMembers() {

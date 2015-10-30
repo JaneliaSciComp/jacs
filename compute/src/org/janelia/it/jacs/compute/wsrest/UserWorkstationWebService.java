@@ -181,7 +181,7 @@ public class UserWorkstationWebService extends ResourceConfig {
             ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
             List<Reference> refs = new ArrayList<>();
             for(Long id : members) {
-                refs.add(new Reference(objectSet.getTargetType(), id));
+                refs.add(new Reference(objectSet.getCollectionName(), id));
             }
             ObjectSet updatedNode = dao.addMembers(subjectKey, objectSet, refs);
             return mapper.writeValueAsString(updatedNode);
@@ -204,7 +204,7 @@ public class UserWorkstationWebService extends ResourceConfig {
             ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
             List<Reference> refs = new ArrayList<>();
             for(Long id : members) {
-                refs.add(new Reference(objectSet.getTargetType(), id));
+                refs.add(new Reference(objectSet.getCollectionName(), id));
             }
             ObjectSet updatedNode = dao.removeMembers(subjectKey, objectSet, refs);
             return mapper.writeValueAsString(updatedNode);

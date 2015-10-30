@@ -1051,7 +1051,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         ReverseReference fragmentsReference = new ReverseReference();
         fragmentsReference.setCount(new Long(neuronFragments.size()));
-        fragmentsReference.setReferringType("fragment");
+        fragmentsReference.setCollectionName("fragment");
         fragmentsReference.setReferenceAttr("separationId");
         fragmentsReference.setReferenceId(separationEntity.getId());
         
@@ -1201,7 +1201,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         ReverseReference masksRef = new ReverseReference();
         masksRef.setCount(new Long(masks.size()));
-        masksRef.setReferringType("patternMask");
+        masksRef.setCollectionName("patternMask");
         masksRef.setReferenceAttr("screenSample.targetId");
         masksRef.setReferenceId(screenSample.getId());
         screenSample.setPatternMasks(masksRef);
@@ -1938,7 +1938,7 @@ public class MongoDbImport extends AnnotationDAO {
 			return objectSet;
 		}
 
-		objectSet.setTargetType(getCollectionName(maxCountType));
+		objectSet.setCollectionName(getCollectionName(maxCountType));
 				
 		if (maxCount!=totalNumChildren) {
 			log.info(indent+"  Importing "+maxCount+" entities of type "+maxCountType+" in folder "+folderEntity.getId());
@@ -2043,7 +2043,7 @@ public class MongoDbImport extends AnnotationDAO {
 	    }
 
 	    if (translationType!=null) {
-	        objectSet.setTargetType(getCollectionName(translationType));
+	        objectSet.setCollectionName(getCollectionName(translationType));
 	    }
 	    
         if (!memberIds.isEmpty()) {

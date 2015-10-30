@@ -170,12 +170,14 @@ public class DomainUtils {
         return subjectKey.substring(0, subjectKey.indexOf(':'));
     }
     
+    /**
+     * Returns a string uniquely identifying the object instance. 
+     * @param domainObject
+     * @return
+     */
     public static String identify(DomainObject domainObject) {
-        return "("+(domainObject==null?"null entity":domainObject.getName())+", @"+System.identityHashCode(domainObject)+")";
-    }
-    
-    public static String getFilepath(HasFilepath hasFilepath) {
-        return hasFilepath.getFilepath();
+        if (domainObject==null) return "(null)";
+        return "("+domainObject.getName()+", @"+System.identityHashCode(domainObject)+")";
     }
     
     /**
@@ -224,7 +226,7 @@ public class DomainUtils {
         if (treeNode.hasChildren()) {
             for(Iterator<Reference> i = treeNode.getChildren().iterator(); i.hasNext(); ) {
                 Reference iref = i.next();
-                if (iref.getTargetId().equals(domainObject.getId())) {
+                if (iref.getId().equals(domainObject.getId())) {
                     return true;
                 }
             }
@@ -314,8 +316,8 @@ public class DomainUtils {
         Collection<Reference> refs = new ArrayList<>();
         for(DomainObject obj : domainObjects) {
             Reference ref = new Reference();
-            ref.setTargetId(obj.getId());
-            ref.setTargetType(getCollectionName(obj));
+            ref.setId(obj.getId());
+            ref.setCollectionName(getCollectionName(obj));
             refs.add(ref);
         }
         return refs;
