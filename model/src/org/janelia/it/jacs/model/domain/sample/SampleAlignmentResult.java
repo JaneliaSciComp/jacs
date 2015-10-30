@@ -6,6 +6,7 @@ import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 
 public class SampleAlignmentResult extends PipelineResult {
 
+	private String anatomicalArea;
     private String imageSize;
     private String opticalResolution;
     private String channelColors;
@@ -17,6 +18,14 @@ public class SampleAlignmentResult extends PipelineResult {
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 
+    public String getAnatomicalArea() {
+        return anatomicalArea;
+    }
+
+    public void setAnatomicalArea(String anatomicalArea) {
+        this.anatomicalArea = anatomicalArea;
+    }
+    
     public String getImageSize() {
         return imageSize;
     }

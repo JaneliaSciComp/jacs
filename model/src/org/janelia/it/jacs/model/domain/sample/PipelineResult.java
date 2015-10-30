@@ -16,8 +16,6 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 public class PipelineResult implements HasFilepath, HasFiles {
 
     private String name;
-    private String objective;
-    private String anatomicalArea;
     private String filepath;
     private Date creationDate;
     private List<PipelineResult> results;
@@ -62,22 +60,6 @@ public class PipelineResult implements HasFilepath, HasFiles {
 
     public void setName(String name) {
         this.name = name;
-    }
-    
-    public String getObjective() {
-        return objective;
-    }
-
-    public void setObjective(String objective) {
-        this.objective = objective;
-    }
-
-    public String getAnatomicalArea() {
-        return anatomicalArea;
-    }
-
-    public void setAnatomicalArea(String anatomicalArea) {
-        this.anatomicalArea = anatomicalArea;
     }
 
     @Override

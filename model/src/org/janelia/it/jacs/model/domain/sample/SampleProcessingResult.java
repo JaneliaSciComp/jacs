@@ -1,7 +1,8 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 public class SampleProcessingResult extends PipelineResult {
-
+	
+	private String anatomicalArea;
     private String imageSize;
     private String opticalResolution;
     private String channelColors;
@@ -9,6 +10,14 @@ public class SampleProcessingResult extends PipelineResult {
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 
+    public String getAnatomicalArea() {
+        return anatomicalArea;
+    }
+
+    public void setAnatomicalArea(String anatomicalArea) {
+        this.anatomicalArea = anatomicalArea;
+    }
+    
     public String getImageSize() {
         return imageSize;
     }

@@ -52,6 +52,7 @@ import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
@@ -588,7 +589,6 @@ public class MongoDbImport extends AnnotationDAO {
 
                 if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_LSM_SUMMARY_RESULT)) {
                     LSMSummaryResult result = getLSMSummaryResult(resultEntity);
-                    result.setObjective(sampleObjective);
                     results.add(result);
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
@@ -600,8 +600,6 @@ public class MongoDbImport extends AnnotationDAO {
                     }
                     
                     SampleProcessingResult result = getSampleProcessingResult(resultEntity);
-                    result.setObjective(sampleObjective);
-                    
                     if (!sprResults.isEmpty()) {
                         result.setResults(sprResults);
                     }
@@ -610,7 +608,6 @@ public class MongoDbImport extends AnnotationDAO {
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_POST_PROCESSING_RESULT)) {
                     SamplePostProcessingResult result = getSamplePostProcessingResult(resultEntity);
-                    result.setObjective(sampleObjective);
                     results.add(result);
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_CELL_COUNTING_RESULT)) {
@@ -753,35 +750,11 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     private LSMSummaryResult getLSMSummaryResult(Entity resultEntity) throws Exception {
-        LSMSummaryResult result = new LSMSummaryResult();
+    	LSMSummaryResult result = new LSMSummaryResult();
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        
-        Map<FileType,String> files = new HashMap<FileType,String>();
-        
-        Entity imageEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        if (imageEntity!=null) {
-            addStackFiles(imageEntity, files, result);
-        }
-        else {
-            log.warn("  Sample processing result has no default stack: "+resultEntity.getId());
-        }
-
-        Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
-        if (supportingDataEntity!=null) {
-            for(Entity child : supportingDataEntity.getChildren()) {
-                String childName = child.getName();
-                String childFilepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                if (childName.endsWith("lsm.json")) {
-                    String name = ArchiveUtils.getDecompressedFilepath(childName);
-                    lsmJsonFiles.put(name, childFilepath);
-                }
-            }
-        }
-
-        if (!files.isEmpty()) result.setFiles(files);
-        
+        result.setGroups(createFileGroups(result, resultEntity));
         return result;
     }
     
@@ -834,32 +807,70 @@ public class MongoDbImport extends AnnotationDAO {
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        
-        Map<FileType,String> files = new HashMap<FileType,String>();
-        
-        Entity imageEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        if (imageEntity!=null) {
-            addStackFiles(imageEntity, files, result);
-        }
-        else {
-            log.warn("  Sample processing result has no default stack: "+resultEntity.getId());
-        }
+        result.setGroups(createFileGroups(result, resultEntity));
+        return result;
+    }
 
+    private Map<String,FileGroup> createFileGroups(HasFilepath parent, Entity resultEntity) throws Exception {
+
+    	Map<String,FileGroup> groups = new HashMap<>();
+        populateChildren(resultEntity);
         Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
         if (supportingDataEntity!=null) {
             for(Entity child : supportingDataEntity.getChildren()) {
                 String childName = child.getName();
                 String childFilepath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                if (childName.endsWith("lsm.json")) {
-                    String name = ArchiveUtils.getDecompressedFilepath(childName);
-                    lsmJsonFiles.put(name, childFilepath);
+
+                int d = childName.indexOf('.');
+                String name = childName.substring(0, d);
+                String ext = childName.substring(d);
+                
+                FileType fileType = null;
+                
+                String key = null;
+                if ("lsm.json".equals(ext)) {
+                	key = name;
+                	fileType = FileType.LsmMetadata;
                 }
+                else {
+                	int u = name.lastIndexOf('_');
+                	key = name.substring(0, u);
+                	String type = name.substring(u);
+                	if ("png".equals(ext)) {
+                		if ("all".equals(type)) {
+                			fileType = FileType.AllMip;	
+                		}
+                		else if ("reference".equals(type)) {
+                			fileType = FileType.ReferenceMip;	
+                		}
+                		else if ("signal".equals(type)) {
+                			fileType = FileType.SignalMip;	
+                		}
+	                }
+	                else if ("mp4".equals(ext)) {
+	                	if ("all".equals(type)) {
+                			fileType = FileType.AllMovie;	
+                		}
+                		else if ("reference".equals(type)) {
+                			fileType = FileType.ReferenceMovie;	
+                		}
+                		else if ("signal".equals(type)) {
+                			fileType = FileType.SignalMovie;	
+                		}
+	                }
+	            }
+                
+                FileGroup group = groups.get(key);
+                if (group==null) {
+                	group = new FileGroup(); 
+                	groups.put(key, group);
+                }
+                
+                group.getFiles().put(fileType, getRelativeFilename(parent, childFilepath));
             }
         }
-
-        if (!files.isEmpty()) result.setFiles(files);
         
-        return result;
+        return groups;
     }
     
     private SampleCellCountingResult getSampleCellCountingResult(Entity resultEntity) {
