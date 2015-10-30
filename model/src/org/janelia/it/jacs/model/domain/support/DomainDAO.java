@@ -769,25 +769,54 @@ public class DomainDAO {
         changePermissions(subjectKey, type, Arrays.asList(id), granteeKey, rights, grant);
     }
     
-    public void changePermissions(String subjectKey, String type, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
-        String op = grant ? "addToSet" : "pull";
-        String attr = rights.equals("w") ? "writers" : "readers";
-        MongoCollection collection = getCollectionByName(type);
+    public void changePermissions(String subjectKey, String collectionName, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
 
+        if ("unknown".equals(collectionName)) {
+            return;
+        }
+        
+        String op = grant ? "addToSet" : "pull";
+        
+        int numKeys = 1;
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("$").append(op).append(":{");
+        
+        if (rights.contains("r")) {
+            sb.append("readers:#");
+        }
+        if (rights.contains("w")) {
+            if (sb.length()>0) {
+                numKeys++;
+                sb.append(",");
+            }
+            sb.append("writers:#");
+        }
+        
+        sb.append("}}");
+        String withClause = sb.toString();
+
+        Object[] keys = new String[numKeys];
+        for(int i=0; i<numKeys; i++) {
+            keys[i] = granteeKey;
+        }
+        
+        log.info("withClause: "+withClause);
+        
         String logIds = ids.size()<6 ? ""+ids : ids.size()+" ids";
 
         if (grant) {
-            log.info("Granting {} permissions on all {} documents with ids {} to {}",rights,type,logIds,granteeKey);
+            log.info("Granting {} permissions on all {} documents with ids {} to {}",rights,collectionName,logIds,granteeKey);
         }
         else {
-            log.info("Revoking {} permissions on all {} documents with ids {} to {}",rights,type,logIds,granteeKey);
+            log.info("Revoking {} permissions on all {} documents with ids {} to {}",rights,collectionName,logIds,granteeKey);
         }
-        
-        WriteResult wr = collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+
+        MongoCollection collection = getCollectionByName(collectionName);
+        WriteResult wr = collection.update("{_id:{$in:#},writers:#}",ids,subjectKey).multi().with(withClause,keys);
         log.info("Changed permissions on "+wr.getN()+" documents");
 
         if (wr.getN()>0) {
-            if ("treeNode".equals(type)) {
+            if ("treeNode".equals(collectionName)) {
                 log.info("Changing permissions on all members of the folders: {}",logIds);
                 for(Long id : ids) {
                     TreeNode node = collection.findOne("{_id:#,writers:#}",id,subjectKey).as(TreeNode.class);
@@ -808,7 +837,7 @@ public class DomainDAO {
                     }
                 }
             }
-            else if ("objectSet".equals(type)) {
+            else if ("objectSet".equals(collectionName)) {
                 log.info("Changing permissions on all members of the object sets: {}",logIds);
                 for(Long id : ids) {
                     ObjectSet set = collection.findOne("{_id:#,writers:#}",id,subjectKey).as(ObjectSet.class);
@@ -820,20 +849,20 @@ public class DomainDAO {
                     }
                 }
             }
-            else if ("sample".equals(type)) {
+            else if ("sample".equals(collectionName)) {
                 
                 log.info("Changing permissions on all fragments and lsms associated with samples: {}",logIds);
                 
-                WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+                WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with(withClause,keys);
                 log.info("Updated permissions on {} fragments",wr1.getN());
                 
-                WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}",granteeKey);
+                WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with(withClause,keys);
                 log.info("Updated permissions on {} lsms",wr2.getN());
                 
             }
-            else if ("screenSample".equals(type)) {
+            else if ("screenSample".equals(collectionName)) {
                 log.info("Changing permissions on all patternMasks associated with screen samples: {}",logIds);
-                patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with("{$"+op+":{"+attr+":#}}}",granteeKey);
+                patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with(withClause,keys);
             }
         }
     }
@@ -887,13 +916,15 @@ public class DomainDAO {
 
 //    public static void main(String[] args) throws Exception {
 //        
-//        String MONGO_SERVER_URL = "rokicki-ws";
+//        String MONGO_SERVER_URL = "mongodb2";
 //        String MONGO_DATABASE = "jacs";
-//        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
+//        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, "flyportal", "flyportal");
 //        Collection<Workspace> workspaces = dao.getWorkspaces("user:asoy");
 //        for(Workspace workspace : workspaces) {
 //            System.out.println(workspace.getId()+" "+workspace);
 //        }
+//        dao.changePermissions("user:nerna", "objectSet", Arrays.asList(1827600279629987929L), "user:rokickik", "rw", true);
+//        
 //    }
 
 }
