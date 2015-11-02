@@ -72,12 +72,11 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm propertyWorkstationSampleId;
     private CvTerm sessionType;
     private CvTerm observationTerm;
-    private CvTerm source;
+    private CvTerm lab;
     private CvTerm chanSpec;
     private CvTerm dimensionX;
     private CvTerm dimensionY;
     private CvTerm dimensionZ;
-    private CvTerm lab;
     
     private Map<Long,Entity> currLineAnnotationMap = new HashMap<>();
     private List<String> exportedNames = new ArrayList<String>();
@@ -135,12 +134,11 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.propertyWorkstationSampleId = getCvTermByName("light_imagery","workstation_sample_id"); 
         this.sessionType = getCvTermByName("flylight_public_annotation","splitgal4_public_annotation");
         this.observationTerm = getCvTermByName("flylight_public_annotation","intensity");
-        this.source = getCvTermByName("lab","JFRC");
+        this.lab = getCvTermByName("lab","JFRC");
         this.chanSpec = getCvTermByName("light_imagery","channel_spec");
         this.dimensionX = getCvTermByName("light_imagery","dimension_x");
         this.dimensionY = getCvTermByName("light_imagery","dimension_y");
         this.dimensionZ = getCvTermByName("light_imagery","dimension_z");
-        this.lab = getCvTermByName("lab", "rubin");
         
         Entity releasesFolder = null;
         for(Entity entity : entityBean.getEntitiesByNameAndTypeName(releaseEntity.getOwnerKey(), EntityConstants.NAME_FLY_LINE_RELEASES, EntityConstants.TYPE_FOLDER)) {
@@ -520,7 +518,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         if (image!=null) {
         	image.setFamily(consensusFamily);
         	image.setLine(line);
-        	image.setSource(source);
+        	image.setSource(lab);
         	image.setUrl(url);
         	image.setRepresentative(true);
         	image.setDisplay(true);
@@ -529,7 +527,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             logger.info("    Updated SAGE primary image "+image.getId()+" with name "+image.getName());
         }
         else {
-            image = new Image(consensusFamily, line, source, imageName, url, path, true, true, CREATED_BY, createDate);
+            image = new Image(consensusFamily, line, lab, imageName, url, path, true, true, CREATED_BY, createDate);
             image = sage.saveImage(image);
             logger.info("    Created SAGE primary image "+image.getId()+" with name "+image.getName());
         }
