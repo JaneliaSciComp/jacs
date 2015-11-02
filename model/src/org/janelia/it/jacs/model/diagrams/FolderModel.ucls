@@ -74,9 +74,9 @@
       <operations public="false" package="false" protected="false" private="false" static="false"/>    
     </display>  
   </class>  
-  <class id="9" language="java" name="org.janelia.it.jacs.model.domain.gui.search.criteria.SetCriteria" project="model" 
-    file="/model/src/org/janelia/it/jacs/model/domain/gui/search/criteria/SetCriteria.java" binary="false" 
-    corner="BOTTOM_RIGHT">    
+  <class id="9" language="java" name="org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria" 
+    project="model" file="/model/src/org/janelia/it/jacs/model/domain/gui/search/criteria/ObjectSetCriteria.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="601" y="614"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
       visibility="true">      

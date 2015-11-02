@@ -324,7 +324,7 @@ public class SolrConnector extends SolrDAO {
 		else if (childObj instanceof Reference) {
             Reference ref = (Reference) childObj;
             // Don't fetch objects which we've already visited
-            String key = dao.getObjectClass(ref.getCollectionName()).getName()+"#"+ref.getId();
+            String key = dao.getObjectClass(ref.getCollectionName()).getName()+"#"+ref.getTargetId();
             if (visited.contains(key)) {
                 return;
             }

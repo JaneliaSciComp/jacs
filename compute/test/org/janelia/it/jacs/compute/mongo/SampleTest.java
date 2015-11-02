@@ -245,9 +245,9 @@ public class SampleTest extends MongoDbTest {
                 ObjectiveSample osample = sample.getObjectives().get(objective);
                 for(SampleTile tile : osample.getTiles()) {
                     for(Reference lsmRef : tile.getLsmReferences()) {
-                        LSMImage image = lsmMap.get(lsmRef.getId());
+                        LSMImage image = lsmMap.get(lsmRef.getTargetId());
                         if (image==null) {
-                            throw new IllegalStateException("Missing LSM: "+lsmRef.getId());
+                            throw new IllegalStateException("Missing LSM: "+lsmRef.getTargetId());
                         }
                         //System.out.println(sample.getName()+" -> "+image.getFiles().get(FileType.Stack));
                         mappedLsms++;
@@ -277,7 +277,7 @@ public class SampleTest extends MongoDbTest {
         List<Long> sampleIds = new ArrayList<Long>();
         if (treeNode.getChildren()==null) return c;
         for(Reference ref : treeNode.getChildren()) {
-            sampleIds.add(ref.getId());
+            sampleIds.add(ref.getTargetId());
         }
         for(DomainObject obj : dao.getDomainObjects(subjectKey, treeNode.getChildren())) {
             Sample sample = (Sample)obj;

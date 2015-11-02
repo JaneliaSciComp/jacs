@@ -226,7 +226,7 @@ public class DomainUtils {
         if (treeNode.hasChildren()) {
             for(Iterator<Reference> i = treeNode.getChildren().iterator(); i.hasNext(); ) {
                 Reference iref = i.next();
-                if (iref.getId().equals(domainObject.getId())) {
+                if (iref.getTargetId().equals(domainObject.getId())) {
                     return true;
                 }
             }
@@ -316,7 +316,7 @@ public class DomainUtils {
         Collection<Reference> refs = new ArrayList<>();
         for(DomainObject obj : domainObjects) {
             Reference ref = new Reference();
-            ref.setId(obj.getId());
+            ref.setTargetId(obj.getId());
             ref.setCollectionName(getCollectionName(obj));
             refs.add(ref);
         }

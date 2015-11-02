@@ -7,32 +7,32 @@ package org.janelia.it.jacs.model.domain;
  */
 public class Reference {
 
-    private String collectionName;
-    private Long id;
+    private String targetCollectionName;
+    private Long targetId;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Reference() {
     }
 
-    public Reference(String collectionName, Long id) {
-        this.collectionName = collectionName;
-        this.id = id;
+    public Reference(String targetCollectionName, Long targetId) {
+        this.targetCollectionName = targetCollectionName;
+        this.targetId = targetId;
     }
 
     public String getCollectionName() {
-        return collectionName;
+        return targetCollectionName;
     }
 
     public void setCollectionName(String type) {
-        this.collectionName = type;
+        this.targetCollectionName = type;
     }
 
-    public Long getId() {
-        return id;
+    public Long getTargetId() {
+        return targetId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setTargetId(Long targetId) {
+        this.targetId = targetId;
     }
 
     @Override
@@ -40,9 +40,9 @@ public class Reference {
         final int prime = 31;
         int result = 1;
         result = prime*result
-                +((id==null) ? 0 : id.hashCode());
+                +((targetId==null) ? 0 : targetId.hashCode());
         result = prime*result
-                +((collectionName==null) ? 0 : collectionName.hashCode());
+                +((targetCollectionName==null) ? 0 : targetCollectionName.hashCode());
         return result;
     }
 
@@ -58,20 +58,20 @@ public class Reference {
             return false;
         }
         Reference other = (Reference) obj;
-        if (id==null) {
-            if (other.id!=null) {
+        if (targetId==null) {
+            if (other.targetId!=null) {
                 return false;
             }
         }
-        else if (!id.equals(other.id)) {
+        else if (!targetId.equals(other.targetId)) {
             return false;
         }
-        if (collectionName==null) {
-            if (other.collectionName!=null) {
+        if (targetCollectionName==null) {
+            if (other.targetCollectionName!=null) {
                 return false;
             }
         }
-        else if (!collectionName.equals(other.collectionName)) {
+        else if (!targetCollectionName.equals(other.targetCollectionName)) {
             return false;
         }
         return true;
@@ -79,6 +79,6 @@ public class Reference {
 
     @Override
     public String toString() {
-        return "Reference[" + collectionName + "#" + id + "]";
+        return "Reference[" + targetCollectionName + "#" + targetId + "]";
     }
 }

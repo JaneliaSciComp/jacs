@@ -225,7 +225,7 @@ public class DomainDAO {
      */
     public DomainObject getDomainObject(String subjectKey, Reference reference) {
         List<Long> ids = new ArrayList<>();
-        ids.add(reference.getId());
+        ids.add(reference.getTargetId());
         List<DomainObject> objs = getDomainObjects(subjectKey, reference.getCollectionName(), ids);
         if (objs.isEmpty()) {
             return null;
@@ -235,7 +235,7 @@ public class DomainDAO {
 
     public <T extends DomainObject> T getDomainObject(String subjectKey, T domainObject) {
         Reference ref = new Reference();
-        ref.setId(domainObject.getId());
+        ref.setTargetId(domainObject.getId());
         ref.setCollectionName(DomainUtils.getCollectionName(domainObject));
         return (T)getDomainObject(subjectKey, ref);
     }
@@ -256,7 +256,7 @@ public class DomainDAO {
                 log.warn("Requested null reference");
                 continue;
             }
-            referenceMap.put(reference.getCollectionName(), reference.getId());
+            referenceMap.put(reference.getCollectionName(), reference.getTargetId());
         }
 
         for(String collectionName : referenceMap.keySet()) {
@@ -311,7 +311,7 @@ public class DomainDAO {
 
     public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
-        String collectionName = reverseRef.getCollectionName();
+        String collectionName = reverseRef.getReferringCollectionName();
 
         MongoCursor<? extends DomainObject> cursor = null;
         if (subjects==null) {
@@ -323,7 +323,7 @@ public class DomainDAO {
         
         List<DomainObject> list = toList(cursor);
         if (list.size()!=reverseRef.getCount()) {
-            log.warn("Reverse reference ("+reverseRef.getCollectionName()+":"+reverseRef.getReferenceAttr()+":"+reverseRef.getReferenceId()+
+            log.warn("Reverse reference ("+reverseRef.getReferringCollectionName()+":"+reverseRef.getReferenceAttr()+":"+reverseRef.getReferenceId()+
                     ") denormalized count ("+reverseRef.getCount()+") does not match actual count ("+list.size()+")");
         }
         return list;
@@ -583,7 +583,7 @@ public class DomainDAO {
         if (log.isTraceEnabled()) {
             log.trace("{} has the following references: ",treeNode.getName());
             for(Reference reference : references) {
-                log.trace("  {}#{}",reference.getCollectionName(),reference.getId());
+                log.trace("  {}#{}",reference.getCollectionName(),reference.getTargetId());
             }
             log.trace("They should be put in this ordering: ");
             for(int i=0; i<order.length; i++) {
@@ -629,7 +629,7 @@ public class DomainDAO {
             throw new IllegalArgumentException("Tree node not found: "+treeNodeArg.getId());
         }
         for(Reference ref : references) {
-            if (ref.getId()==null) {
+            if (ref.getTargetId()==null) {
                 throw new IllegalArgumentException("Cannot add child without an id");
             }
             if (ref.getCollectionName()==null) {
@@ -652,7 +652,7 @@ public class DomainDAO {
         }
         int i = 0;
         for(Reference ref : references) {
-            if (ref.getId()==null) {
+            if (ref.getTargetId()==null) {
                 throw new IllegalArgumentException("Cannot add child without an id");
             }
             if (ref.getCollectionName()==null) {
@@ -675,7 +675,7 @@ public class DomainDAO {
             throw new IllegalArgumentException("Tree node not found: "+treeNodeArg.getId());
         }
         for(Reference ref : references) {
-            if (ref.getId()==null) {
+            if (ref.getTargetId()==null) {
                 throw new IllegalArgumentException("Cannot add child without an id");
             }
             if (ref.getCollectionName()==null) {
@@ -711,7 +711,7 @@ public class DomainDAO {
             throw new IllegalArgumentException("Cannot add null members");
         }
         for(Reference ref : references) {
-            if (ref.getId()==null) {
+            if (ref.getTargetId()==null) {
                 throw new IllegalArgumentException("Cannot add member without an id");
             }
             String collectionName = ref.getCollectionName();
@@ -724,7 +724,7 @@ public class DomainDAO {
             else if (!collectionName.equals(objectSet.getCollectionName())) {
                 throw new IllegalArgumentException("Cannot add reference to collection "+collectionName+" to object set of "+objectSet.getCollectionName());
             }
-            objectSet.addMember(ref.getId());
+            objectSet.addMember(ref.getTargetId());
         }
         log.info("Adding "+references.size()+" objects to "+objectSet.getName());
         saveImpl(subjectKey, objectSet);
@@ -737,10 +737,10 @@ public class DomainDAO {
         }
 
         for(Reference ref : references) {
-            if (ref.getId()==null) {
+            if (ref.getTargetId()==null) {
                 throw new IllegalArgumentException("Cannot remove member without an id");
             }
-            objectSet.removeMember(ref.getId());
+            objectSet.removeMember(ref.getTargetId());
         }
         log.info("Removing "+references.size()+" objects from "+objectSet.getName());
         saveImpl(subjectKey, objectSet);
@@ -825,7 +825,7 @@ public class DomainDAO {
                     if (node.hasChildren()) {
                         Multimap<String,Long> groupedIds = HashMultimap.<String,Long>create();
                         for(Reference ref : node.getChildren()) {
-                            groupedIds.put(ref.getCollectionName(), ref.getId());
+                            groupedIds.put(ref.getCollectionName(), ref.getTargetId());
                         }
     
                         for(String refCollectionName : groupedIds.keySet()) {

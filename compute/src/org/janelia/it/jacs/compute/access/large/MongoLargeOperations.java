@@ -47,7 +47,7 @@ public class MongoLargeOperations extends LargeOperations {
 		int i = 0;
     	for(Iterator<Annotation> iterator = dao.getCollectionByClass(Annotation.class).find().as(Annotation.class).iterator(); iterator.hasNext(); ) {
     		Annotation annotation = iterator.next();
-    		Long targetId = annotation.getTarget().getId();
+    		Long targetId = annotation.getTarget().getTargetId();
             Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)getValue(annotationMapCache, targetId);
 			if (annots == null) {
 				annots = new HashSet<SimpleAnnotation>();
@@ -74,7 +74,7 @@ public class MongoLargeOperations extends LargeOperations {
     		TreeNode treeNode = iterator.next();
     		if (!treeNode.hasChildren()) continue;
     		for(Reference ref : treeNode.getChildren()) {
-    			Long childId = ref.getId();
+    			Long childId = ref.getTargetId();
     			
     			AncestorSet ancestorSet = (AncestorSet)getValue(ancestorMapCache, childId);
     			if (ancestorSet==null) {

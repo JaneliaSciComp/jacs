@@ -176,6 +176,7 @@ public class MongoDbImport extends AnnotationDAO {
         loadSubjects();
 
         log.info("Adding samples");
+        // TODO: handle deleted (i.e. "hidden") neurons
         // TODO: handle curated neurons
         // TODO: handle pattern mask results in samples (knappj)
         loadSamples();
@@ -1125,17 +1126,17 @@ public class MongoDbImport extends AnnotationDAO {
         image.setOpticalResolution(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
         image.setImageSize(sanitizeCSV(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
 
+        Map<FileType,String> files = new HashMap<FileType,String>();
         String path = image.getFilepath();
         if (path!=null) {
-            Map<FileType,String> files = new HashMap<FileType,String>();
             if (path.endsWith(".png") || path.endsWith(".gif") || path.endsWith(".jpg") || path.endsWith(".jpeg")) {
                 addImage(files,FileType.Unclassified2d,path);
             }
             else {
                 addStackFiles(imageEntity, files, null);    
             }
-            image.setFiles(files);
         }
+        image.setFiles(files);
         
         return image;
     }
@@ -1158,7 +1159,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         ReverseReference fragmentsReference = new ReverseReference();
         fragmentsReference.setCount(new Long(neuronFragments.size()));
-        fragmentsReference.setCollectionName("fragment");
+        fragmentsReference.setReferringCollectionName("fragment");
         fragmentsReference.setReferenceAttr("separationId");
         fragmentsReference.setReferenceId(separationEntity.getId());
         
@@ -1308,7 +1309,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         ReverseReference masksRef = new ReverseReference();
         masksRef.setCount(new Long(masks.size()));
-        masksRef.setCollectionName("patternMask");
+        masksRef.setReferringCollectionName("patternMask");
         masksRef.setReferenceAttr("screenSample.targetId");
         masksRef.setReferenceId(screenSample.getId());
         screenSample.setPatternMasks(masksRef);
@@ -1867,11 +1868,10 @@ public class MongoDbImport extends AnnotationDAO {
     /* TREE NODES (WORKSPACES, FOLDERS, VIEWS) */
     
     private void loadWorkspaces() throws DaoException {
-    	Map<Long,DomainObject> visited = new HashMap<Long,DomainObject>();
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
             try {
-                loadWorkspace(subjectKey, visited);
+                loadWorkspace(subjectKey);
             }
             catch (Exception e) {
                 log.error("Error loading workspace for " + subjectKey, e);
@@ -1879,7 +1879,7 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
     
-    private void loadWorkspace(String subjectKey, Map<Long,DomainObject> visited) throws Exception {
+    private void loadWorkspace(String subjectKey) throws Exception {
 
         long start = System.currentTimeMillis();
 
@@ -1903,7 +1903,7 @@ public class MongoDbImport extends AnnotationDAO {
         else {
             LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
             Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
-            List<Reference> children = loadRootFolders(rootFolders, visited);
+            List<Reference> children = loadRootFolders(subjectKey, rootFolders);
             workspace.setId(workspaceEntity.getId());
             workspace.setName(workspaceEntity.getName());
             workspace.setCreationDate(workspaceEntity.getCreationDate());
@@ -1916,19 +1916,20 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
     }
     
-    private List<Reference> loadRootFolders(Deque<Entity> rootFolders, Map<Long,DomainObject> visited) {
+    private List<Reference> loadRootFolders(String subjectKey, Deque<Entity> rootFolders) {
 
+        Set<Long> visitedSet = new HashSet<Long>();
         List<Reference> roots = new ArrayList<Reference>();
         
         for(Iterator<Entity> i = rootFolders.iterator(); i.hasNext(); ) {
             Entity folderEntity = i.next();
-            
+                        
             Session session = null;
             try {
                 long start = System.currentTimeMillis();
                 
                 session = openNewExternalSession();
-                DomainObject domainObject = loadFolderHierarchy(folderEntity, visited, "  ");
+                DomainObject domainObject = loadFolderHierarchy(folderEntity, visitedSet, "  ");
                 if (domainObject!=null) {
                     Reference ref = getReference(domainObject);
                     roots.add(ref);
@@ -1951,7 +1952,7 @@ public class MongoDbImport extends AnnotationDAO {
         return roots;
     }
     
-    private DomainObject loadFolderHierarchy(Entity folderEntity, Map<Long,DomainObject> visited, String indent) throws Exception {
+    private DomainObject loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, String indent) throws Exception {
 
     	if ("supportingFiles".equals(folderEntity.getName())) {
     		log.info(indent+"Skipping "+folderEntity.getName());
@@ -1960,15 +1961,17 @@ public class MongoDbImport extends AnnotationDAO {
     	
         log.trace(indent+"Loading "+folderEntity.getName());
         
-        if (visited.containsKey(folderEntity.getId())) {
-            return visited.get(folderEntity.getId());
+        if (visitedSet.contains(folderEntity.getId())) {
+            log.info(indent+"Already visited "+folderEntity.getName());
+            return null;
         }
-
+        
+        visitedSet.add(folderEntity.getId());
+        
         if (EntityUtils.getChildrenOfType(folderEntity, EntityConstants.TYPE_FOLDER).isEmpty()) {
         	// This folder contains only non-Folder objects, so we'll consider it an object set
         	ObjectSet objectSet = getObjectSet(folderEntity, indent);
             objectSetCollection.insert(objectSet);
-            visited.put(objectSet.getId(), objectSet);
             return objectSet;
         }
         
@@ -1989,7 +1992,7 @@ public class MongoDbImport extends AnnotationDAO {
 	    
 	    // Load children
 	    for(Entity childFolder : EntityUtils.getChildrenOfType(folderEntity, EntityConstants.TYPE_FOLDER)) {
-	    	DomainObject domainObject = loadFolderHierarchy(childFolder, visited, indent+"  ");
+	    	DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, indent+"  ");
             if (domainObject!=null) {
                 Reference ref = getReference(domainObject);
                 children.add(ref);
@@ -2002,7 +2005,6 @@ public class MongoDbImport extends AnnotationDAO {
         }
 
         treeNodeCollection.insert(treeNode);
-        visited.put(treeNode.getId(), treeNode);
         return treeNode;
     }
 

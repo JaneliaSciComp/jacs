@@ -9,18 +9,18 @@ package org.janelia.it.jacs.model.domain;
  */
 public class ReverseReference {
 
-    private String collectionName;
+    private String referringCollectionName;
     private String referenceAttr;
     private Long referenceId;
     private Long count;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public String getCollectionName() {
-        return collectionName;
+    public String getReferringCollectionName() {
+        return referringCollectionName;
     }
 
-    public void setCollectionName(String referringCollectionName) {
-        this.collectionName = referringCollectionName;
+    public void setReferringCollectionName(String referringCollectionName) {
+        this.referringCollectionName = referringCollectionName;
     }
 
     public String getReferenceAttr() {
@@ -56,7 +56,7 @@ public class ReverseReference {
         result = prime*result
                 +((referenceId==null) ? 0 : referenceId.hashCode());
         result = prime*result
-                +((collectionName==null) ? 0 : collectionName.hashCode());
+                +((referringCollectionName==null) ? 0 : referringCollectionName.hashCode());
         return result;
     }
 
@@ -88,12 +88,12 @@ public class ReverseReference {
         else if (!referenceId.equals(other.referenceId)) {
             return false;
         }
-        if (collectionName==null) {
-            if (other.collectionName!=null) {
+        if (referringCollectionName==null) {
+            if (other.referringCollectionName!=null) {
                 return false;
             }
         }
-        else if (!collectionName.equals(other.collectionName)) {
+        else if (!referringCollectionName.equals(other.referringCollectionName)) {
             return false;
         }
         return true;
@@ -101,6 +101,6 @@ public class ReverseReference {
     
     @Override
     public String toString() {
-        return "ReverseReference[" + collectionName + "." + referenceAttr + "=" + referenceId + "]";
+        return "ReverseReference[" + referringCollectionName + "." + referenceAttr + "=" + referenceId + "]";
     }
 }
