@@ -17,7 +17,7 @@ public class SageSession implements java.io.Serializable {
     private Image image;
     private Line line;
     private String name;
-    private Integer experimentId;
+    private Experiment experiment;
     private Integer phaseId;
     private String annotator;
     private Date createDate;
@@ -35,14 +35,14 @@ public class SageSession implements java.io.Serializable {
         this.createDate = createDate;
     }
 
-    public SageSession(CvTerm type, CvTerm lab, Image image, Line line, String name, Integer experimentId, Integer phaseId,
+    public SageSession(CvTerm type, CvTerm lab, Image image, Line line, String name, Experiment experiment, Integer phaseId,
             String annotator, Date createDate, Set<Observation> observations) {
         this.type = type;
         this.lab = lab;
         this.image = image;
         this.line = line;
         this.name = name;
-        this.experimentId = experimentId;
+        this.experiment = experiment;
         this.phaseId = phaseId;
         this.annotator = annotator;
         this.createDate = createDate;
@@ -97,12 +97,12 @@ public class SageSession implements java.io.Serializable {
         this.name = name;
     }
 
-    public Integer getExperimentId() {
-        return this.experimentId;
+    public Experiment getExperiment() {
+        return this.experiment;
     }
 
-    public void setExperimentId(Integer experimentId) {
-        this.experimentId = experimentId;
+    public void setExperiment(Experiment experiment) {
+        this.experiment = experiment;
     }
 
     public Integer getPhaseId() {

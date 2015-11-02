@@ -26,9 +26,9 @@
         <property name="path" type="string">
             <column name="path" length="1000" />
         </property>
-        <property name="experimentId" type="java.lang.Integer">
+        <many-to-one name="experiment" class="org.janelia.it.jacs.model.sage.Experiment" fetch="select">
             <column name="experiment_id" />
-        </property>
+        </many-to-one>
         <property name="captureDate" type="timestamp">
             <column name="capture_date" length="19" />
         </property>

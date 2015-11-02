@@ -19,7 +19,7 @@ public class Image implements Serializable {
     private String name;
     private String url;
     private String path;
-    private Integer experimentId;
+    private Experiment experiment;
     private Date captureDate;
     private boolean representative;
     private boolean display;
@@ -46,7 +46,7 @@ public class Image implements Serializable {
     }
 
     public Image(CvTerm family, Line line, CvTerm source, String name, String url, String path,
-            Integer experimentId, Date captureDate, boolean representative, boolean display, String createdBy,
+            Experiment experiment, Date captureDate, boolean representative, boolean display, String createdBy,
             Date createDate, Set<ImageProperty> imageProperties, Set<SecondaryImage> secondaryImages) {
         this.family = family;
         this.line = line;
@@ -54,7 +54,7 @@ public class Image implements Serializable {
         this.name = name;
         this.url = url;
         this.path = path;
-        this.experimentId = experimentId;
+        this.experiment = experiment;
         this.captureDate = captureDate;
         this.representative = representative;
         this.display = display;
@@ -120,12 +120,12 @@ public class Image implements Serializable {
         this.path = path;
     }
 
-    public Integer getExperimentId() {
-        return this.experimentId;
+    public Experiment getExperiment() {
+        return this.experiment;
     }
 
-    public void setExperimentId(Integer experimentId) {
-        this.experimentId = experimentId;
+    public void setExperimentId(Experiment experiment) {
+        this.experiment = experiment;
     }
 
     public Date getCaptureDate() {
