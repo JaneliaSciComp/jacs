@@ -822,19 +822,22 @@ public class MongoDbImport extends AnnotationDAO {
 
                 int d = childName.indexOf('.');
                 String name = childName.substring(0, d);
-                String ext = childName.substring(d);
+                String ext = childName.substring(d+1);
                 
                 FileType fileType = null;
-                
+
                 String key = null;
                 if ("lsm.json".equals(ext)) {
                 	key = name;
                 	fileType = FileType.LsmMetadata;
                 }
+                else if ("lsm.metadata".equals(ext)) {
+                    // Ignore, to get rid of the old-style Perl metadata files
+                }
                 else {
                 	int u = name.lastIndexOf('_');
                 	key = name.substring(0, u);
-                	String type = name.substring(u);
+                	String type = name.substring(u+1);
                 	if ("png".equals(ext)) {
                 		if ("all".equals(type)) {
                 			fileType = FileType.AllMip;	
@@ -847,7 +850,7 @@ public class MongoDbImport extends AnnotationDAO {
                 		}
 	                }
 	                else if ("mp4".equals(ext)) {
-	                	if ("all".equals(type)) {
+	                	if ("all".equals(type) || "movie".equals(type)) {
                 			fileType = FileType.AllMovie;	
                 		}
                 		else if ("reference".equals(type)) {
@@ -859,10 +862,16 @@ public class MongoDbImport extends AnnotationDAO {
 	                }
 	            }
                 
+                if (fileType==null) {
+                    log.warn("  Could not determine file type for: "+childName);
+                    continue;
+                }
+                
                 FileGroup group = groups.get(key);
                 if (group==null) {
                 	group = new FileGroup();
                 	group.setFilepath(parent.getFilepath());
+                	group.setFiles(new HashMap<FileType,String>());
                 	groups.put(key, group);
                 }
                 
