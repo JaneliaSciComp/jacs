@@ -124,7 +124,7 @@ public class Image implements Serializable {
         return this.experiment;
     }
 
-    public void setExperimentId(Experiment experiment) {
+    public void setExperiment(Experiment experiment) {
         this.experiment = experiment;
     }
 

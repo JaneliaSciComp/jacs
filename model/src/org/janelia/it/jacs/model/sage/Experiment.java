@@ -49,7 +49,7 @@ public class Experiment implements java.io.Serializable {
         this.type = type;
     }
 
-    public CvTerm getCvTermByLabId() {
+    public CvTerm getLab() {
         return this.lab;
     }
 
