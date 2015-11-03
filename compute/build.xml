@@ -34,7 +34,6 @@
     <property name="webServices.dir" value="${basedir}/conf/webServices"/>
 
     <property name="rest-ws-war" value="${localname}-rest-ws.war"/>
-    <property name="secure-rest-ws-war" value="${localname}-secure-rest-ws.war"/>
 
     <!-- Compiles all src code from other than the src area into ${build.classes.dir} -->
 	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
@@ -212,21 +211,6 @@
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
             </manifest>
         </war>
-        <war warfile="${basedir}/build/jars/${secure-rest-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
-            <classes dir="${build.classes.dir}">
-                <include name="org/**/wsrest/SecureRestfulWebService.class"/>
-                <include name="org/**/wsrest/computeresources/**/*.class"/>
-                <include name="org/**/wsrest/dataresources/**/*.class"/>
-            </classes>
-            <lib dir="${basedir}/lib/resteasy-2.3.4">
-                <include name="**/*.jar"/>
-            </lib>
-            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
-            <manifest>
-                <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
-            </manifest>
-        </war>
     </target>
 
     <target name="build-ear" depends="make-jars-dir, build-war" description="builds the ear file">
@@ -236,7 +220,6 @@
             <fileset file="${basedir}/lib/drmaa.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.war"/>
             <fileset file="${basedir}/build/jars/${rest-ws-war}"/>
-            <fileset file="${basedir}/build/jars/${secure-rest-ws-war}"/>
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.sar"/>
             <fileset file="${basedir}/build/jars/${localname}.har"/>
