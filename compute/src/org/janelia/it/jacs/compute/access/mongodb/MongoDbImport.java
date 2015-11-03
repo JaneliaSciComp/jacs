@@ -833,6 +833,7 @@ public class MongoDbImport extends AnnotationDAO {
                 }
                 else if ("lsm.metadata".equals(ext)) {
                     // Ignore, to get rid of the old-style Perl metadata files
+                    continue;
                 }
                 else {
                 	int u = name.lastIndexOf('_');
