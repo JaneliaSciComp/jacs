@@ -1,0 +1,10 @@
+<process name="Fly Light Paired Sample Polarity Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence>
+    
+        <include name="Pipeline" process="FlyLightPairedSamplePipeline">
+            <input name="PIPELINE_PROCESS" value="FlyLightPairedSample"/>
+            <input name="IMAGE_TYPE" value="polarity"/>
+        </include>
+        
+    </sequence>
+</process>

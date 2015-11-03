@@ -13,25 +13,18 @@ public class Observation implements java.io.Serializable {
     private CvTerm type;
     private SageSession session;
     private CvTerm term;
-    private Integer experimentId;
+    private Experiment experiment;
     private String value;
     private Date createDate;
 
     public Observation() {
     }
 
-    public Observation(CvTerm type, CvTerm term, String value, Date createDate) {
-        this.type = type;
-        this.term = term;
-        this.value = value;
-        this.createDate = createDate;
-    }
-
-    public Observation(CvTerm type, SageSession session, CvTerm term, Integer experimentId, String value, Date createDate) {
+    public Observation(CvTerm type, SageSession session, CvTerm term, Experiment experiment, String value, Date createDate) {
         this.type = type;
         this.session = session;
         this.term = term;
-        this.experimentId = experimentId;
+        this.experiment = experiment;
         this.value = value;
         this.createDate = createDate;
     }
@@ -68,12 +61,12 @@ public class Observation implements java.io.Serializable {
         this.term = term;
     }
 
-    public Integer getExperimentId() {
-        return this.experimentId;
+    public Experiment getExperiment() {
+        return this.experiment;
     }
 
-    public void setExperimentId(Integer experimentId) {
-        this.experimentId = experimentId;
+    public void setExperiment(Experiment experiment) {
+        this.experiment = experiment;
     }
 
     public String getValue() {

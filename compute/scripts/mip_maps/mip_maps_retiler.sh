@@ -102,6 +102,10 @@ if [ "$TARGET_MEDIA_FORMAT" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -Dformat=$TARGET_MEDIA_FORMAT"
 fi										    
 
+if [ "$TARGET_SKIP_EMPTY_TILES" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DignoreEmptyTiles=$TARGET_SKIP_EMPTY_TILES"
+fi 
+
 # Invoke the tiler
 tiler_cmd="java -Xms${JAVA_MEMORY} -Xmx${JAVA_MEMORY} ${TILER_PARAMS} -jar ${TILER_JAR_FILE}"
 echo "Execute $tiler_cmd"
