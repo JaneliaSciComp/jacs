@@ -20,13 +20,6 @@ public class Observation implements java.io.Serializable {
     public Observation() {
     }
 
-    public Observation(CvTerm type, CvTerm term, String value, Date createDate) {
-        this.type = type;
-        this.term = term;
-        this.value = value;
-        this.createDate = createDate;
-    }
-
     public Observation(CvTerm type, SageSession session, CvTerm term, Experiment experiment, String value, Date createDate) {
         this.type = type;
         this.session = session;

@@ -30,17 +30,6 @@ public class Line implements Serializable {
         this.createDate = createDate;
     }
 
-    public Line(CvTerm lab, String name, Integer geneId, Integer organismId, String genotype, Date createDate,
-            Set<Image> images) {
-        this.lab = lab;
-        this.name = name;
-        this.geneId = geneId;
-        this.organismId = organismId;
-        this.genotype = genotype;
-        this.createDate = createDate;
-        this.images = images;
-    }
-
     public Integer getId() {
         return this.id;
     }

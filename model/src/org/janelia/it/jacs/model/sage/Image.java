@@ -45,25 +45,6 @@ public class Image implements Serializable {
         this.createDate = createDate;
     }
 
-    public Image(CvTerm family, Line line, CvTerm source, String name, String url, String path,
-            Experiment experiment, Date captureDate, boolean representative, boolean display, String createdBy,
-            Date createDate, Set<ImageProperty> imageProperties, Set<SecondaryImage> secondaryImages) {
-        this.family = family;
-        this.line = line;
-        this.source = source;
-        this.name = name;
-        this.url = url;
-        this.path = path;
-        this.experiment = experiment;
-        this.captureDate = captureDate;
-        this.representative = representative;
-        this.display = display;
-        this.createdBy = createdBy;
-        this.createDate = createDate;
-        this.imageProperties = imageProperties;
-        this.secondaryImages = secondaryImages;
-    }
-
     public Integer getId() {
         return this.id;
     }
