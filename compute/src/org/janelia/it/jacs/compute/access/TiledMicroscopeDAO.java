@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.access;
 
 import com.google.common.base.Stopwatch;
+import java.io.File;
+import java.io.FileFilter;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
@@ -10,8 +12,12 @@ import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
+import org.janelia.it.jacs.shared.swc.SWCData;
+
 import java.util.*;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
+import org.janelia.it.jacs.shared.swc.SWCDataConverter;
+import org.janelia.it.jacs.shared.swc.SWCNode;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,6 +32,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     ComputeDAO computeDAO;
 
     private final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
+    private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
 
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
@@ -159,6 +166,123 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
+        }
+    }
+    
+    /**
+     * Make a set of neurons, and possibly a workspace, representing the folder
+     * given here.  Set the neurons' (workspace') ownership to the owner
+     * key given.
+     * 
+     * @param swcFolderLoc where is the server-accessible folder?
+     * @param ownerKey winds up owning it all.
+     * @param workspaceId optional: if null -> make workspace.
+     * @param sampleId if null workspace, must be given, otherwise optional.
+     * @throws ComputeException thrown as wrapper for any exceptions. 
+     */
+    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException {
+        File swcFolder = new File(swcFolderLoc);
+        File[] swcFiles = swcFolder.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isFile()  &&  pathname.getName().toLowerCase().endsWith(".swc");
+            }
+        });
+
+        if (workspaceId == null) {
+            if (sampleId == null) {
+                throw new ComputeException("Cannot apply SWC neurons without either valid workspace or sample ID.");
+            }
+            else {
+                // Ensure there is a workspaces folder, and then
+                // create a new workspace within that folder.
+                String folderName = WORKSPACES_FOLDER_NAME;
+                Collection<Entity> folders = annotationDAO.getEntitiesByName(ownerKey, folderName);
+                Entity folder;
+                if (folders != null && folders.size() > 0) {
+                    folder = folders.iterator().next();
+                } else {
+                    folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
+                }
+                createTiledMicroscopeWorkspace(folder.getId(), sampleId, ownerKey, swcFolder.getName());
+            }
+        }
+        
+        for (File swcFile: swcFiles) {
+            importSWCFile(swcFile, workspaceId);
+        }
+    }
+    
+    private void importSWCFile(File swcFile, Long workspaceId) throws ComputeException {
+        // the constructor also triggers the parsing, but not the validation
+        try {
+            SWCData swcData = SWCData.read(swcFile);
+            if (!swcData.isValid()) {
+                throw new ComputeException(String.format("invalid SWC file %s; reason: %s",
+                        swcFile.getName(), swcData.getInvalidReason()));
+            }
+
+            // note from CB, July 2013: Vaa3d can't handle large coordinates in swc files,
+            //  so he added an OFFSET header and recentered on zero when exporting
+            // therefore, if that header is present, respect it
+            double[] externalOffset = swcData.parseOffset();
+
+            // create one neuron for the file; take name from the filename (strip extension)
+            String neuronName = swcData.parseName();
+            if (neuronName == null) {
+                neuronName = swcFile.getName();
+            }
+            if (neuronName.endsWith(SWCData.STD_SWC_EXTENSION)) {
+                neuronName = neuronName.substring(0, neuronName.length() - SWCData.STD_SWC_EXTENSION.length());
+            }
+            final TmNeuron neuron = createTiledMicroscopeNeuron(workspaceId, neuronName);
+
+            // Bulk update in play.
+            // and as long as we're doing brute force, we can update progress
+            //  granularly (if we have a worker); start with 5% increments (1/20)
+            int totalLength = swcData.getNodeList().size();
+            int updateFrequency = totalLength / 20;
+            if (updateFrequency == 0) {
+                updateFrequency = 1;
+            }
+//            if (worker != null) {
+//                worker.setProgress(0L, totalLength);
+//            }
+
+            Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
+            SWCDataConverter swcDataConverter = new SWCDataConverter();            
+            Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
+            for (SWCNode node : swcData.getNodeList()) {
+                // Internal points, as seen in annotations, are same as external
+                // points in SWC: represented as voxels. --LLF
+                double[] internalPoint = swcDataConverter.internalFromExternal(
+                        new double[]{
+                            node.getX() + externalOffset[0],
+                            node.getY() + externalOffset[1],
+                            node.getZ() + externalOffset[2],}
+                );
+
+                // Build an external, unblessed annotation.  Set the id to the index.
+                TmGeoAnnotation unserializedAnnotation = new TmGeoAnnotation(
+                        new Long(node.getIndex()), "",
+                        internalPoint[0], internalPoint[1], internalPoint[2],
+                        null, new Date()
+                );
+                unserializedAnnotation.setNeuronId(neuron.getId());
+                annotations.put(node.getIndex(), unserializedAnnotation);
+//                if (worker != null && (node.getIndex() % updateFrequency) == 0) {
+//                    worker.setProgress(node.getIndex(), totalLength);
+//                }
+
+                nodeParentLinkage.put(node.getIndex(), node.getParentIndex());
+            }
+
+            // Fire off the bulk update.  The "un-serialized" or
+            // db-unknown annotations could be swapped for "blessed" versions.
+            addLinkedGeometricAnnotations(nodeParentLinkage, annotations);
+
+        } catch (Exception ex) {
+            throw new ComputeException(ex);
         }
     }
 

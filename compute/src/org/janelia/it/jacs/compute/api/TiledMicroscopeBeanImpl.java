@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.api;
 
+import java.util.Date;
+import java.util.HashMap;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
@@ -78,6 +80,17 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
+    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.importSWCFolder(swcFolderLoc, ownerKey, workspaceId, sampleId);
+        } catch (Exception e) {
+            String errorString = "Error calling importSWCFolder in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+    
     @Override
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException {
