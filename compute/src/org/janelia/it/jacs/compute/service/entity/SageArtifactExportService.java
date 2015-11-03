@@ -74,10 +74,9 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm propertyDimensionX;
     private CvTerm propertyDimensionY;
     private CvTerm propertyDimensionZ;
-    private CvTerm sessionType;
+    private CvTerm sessionExperimentType;
     private CvTerm observationTerm;
     private CvTerm lab;
-    private CvTerm experimentType;
 
     private Experiment releaseExperiment;
     private Map<Long,Entity> currLineAnnotationMap = new HashMap<>();
@@ -138,16 +137,15 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.propertyDimensionX = getCvTermByName("light_imagery","dimension_x");
         this.propertyDimensionY = getCvTermByName("light_imagery","dimension_y");
         this.propertyDimensionZ = getCvTermByName("light_imagery","dimension_z");
-        this.sessionType = getCvTermByName("flylight_public_annotation","splitgal4_public_annotation");
+        this.sessionExperimentType = getCvTermByName("flylight_public_annotation","splitgal4_public_annotation");
         this.observationTerm = getCvTermByName("flylight_public_annotation","intensity");
         this.lab = getCvTermByName("lab","JFRC");
-        this.experimentType = getCvTermByName("light_imagery","workstation_release");
 
         // Get or create experiment that represents this release in SAGE
-        releaseExperiment = sage.getExperiment(releaseEntity.getName(), experimentType);
+        releaseExperiment = sage.getExperiment(releaseEntity.getName(), sessionExperimentType);
         if (releaseExperiment==null) {
             logger.info("Creating new experiment for release: "+releaseEntity.getName());
-            releaseExperiment = new Experiment(experimentType, lab, releaseEntity.getName(), EntityUtils.getNameFromSubjectKey(releaseEntity.getOwnerKey()), createDate);
+            releaseExperiment = new Experiment(sessionExperimentType, lab, releaseEntity.getName(), EntityUtils.getNameFromSubjectKey(releaseEntity.getOwnerKey()), createDate);
             releaseExperiment = sage.saveExperiment(releaseExperiment);
         }
         else {
@@ -622,10 +620,10 @@ public class SageArtifactExportService extends AbstractEntityService {
     private void exportLineAnnotations(String lineName) throws Exception {
         
         Line line = getLineByName(lineName);
-        SageSession session = sage.getSageSession(lineName, sessionType, releaseExperiment);
+        SageSession session = sage.getSageSession(lineName, sessionExperimentType, releaseExperiment);
         if (session==null) {
             logger.info("  Creating new session for line "+lineName);
-            session = new SageSession(sessionType, lab, line, lineName, releaseExperiment, null, createDate);
+            session = new SageSession(sessionExperimentType, lab, line, lineName, releaseExperiment, null, createDate);
         }
         else {
             logger.info("  Updating existing session for line "+lineName+" (id="+session.getId()+")");
