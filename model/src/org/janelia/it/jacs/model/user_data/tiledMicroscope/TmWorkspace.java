@@ -160,7 +160,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
     }
 
     private Matrix deserializeMatrix(String matrixString, String matrixName) {
-        return MatrixUtilities.deserializeMatrix(matrixName, matrixString);
+        return MatrixUtilities.deserializeMatrix(matrixString, matrixName);
     }
     
 }
