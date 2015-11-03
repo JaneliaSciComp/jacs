@@ -4,11 +4,11 @@ package org.janelia.it.jacs.web.gwt.home.client.panel;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Window;
+//import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.*;
-import org.hibernate.search.Search;
+//import org.hibernate.search.Search;
 import org.janelia.it.jacs.model.common.SortArgument;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.shared.tasks.SearchCategoryInfo;
@@ -22,7 +22,7 @@ import org.janelia.it.jacs.web.gwt.common.client.ui.imagebundles.ImageBundleFact
 import org.janelia.it.jacs.web.gwt.common.client.ui.link.Link;
 import org.janelia.it.jacs.web.gwt.common.client.ui.table.comparables.FormattedDateTime;
 import org.janelia.it.jacs.web.gwt.common.client.util.HtmlUtils;
-import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
+//import org.janelia.it.jacs.web.gwt.common.client.util.UrlBuilder;
 
 import java.util.List;
 import java.util.Map;

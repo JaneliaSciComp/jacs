@@ -2,8 +2,6 @@
 package org.janelia.it.jacs.model.tasks;
 // Generated Aug 17, 2006 3:17:24 PM by Hibernate Tools 3.2.0.beta6a
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import javax.xml.bind.annotation.*;
