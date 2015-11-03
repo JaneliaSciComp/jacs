@@ -48,6 +48,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private Double targetQuality;
     private String targetType;
     private String targetMediaFormat;
+    private Boolean targetSkipEmptyTiles;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -72,6 +73,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         targetQuality = processData.getDouble("TARGET_QUALITY");
         targetType = processData.getString("TARGET_TYPE");
         targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
+        targetSkipEmptyTiles = processData.getBoolean("TARGET_SKIP_EMPTY_TILES");
     }
 
     private void extractImageParameters(IProcessData processData) throws MissingDataException {
@@ -183,6 +185,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             writeValueOrNone(targetQuality, fw);
             writeValueOrNone(targetType, fw);
             writeValueOrNone(targetMediaFormat, fw);
+            writeValueOrNone(targetSkipEmptyTiles, fw);
         } catch (IOException e) {
             throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e);
         }
@@ -234,6 +237,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         if (targetQuality != null) script.append("read TARGET_QUALITY\n");
         if (targetType != null) script.append("read TARGET_TYPE\n");
         if (targetMediaFormat != null) script.append("read TARGET_MEDIA_FORMAT\n");
+        if (targetSkipEmptyTiles != null) script.append("read TARGET_SKIP_EMPTY_TILES\n");
 
         // pass them to the script as environment variables
         script
@@ -266,6 +270,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("TARGET_QUALITY=$TARGET_QUALITY ")
             .append("TARGET_TYPE=$TARGET_TYPE ")
             .append("TARGET_MEDIA_FORMAT=$TARGET_MEDIA_FORMAT ")
+            .append("TARGET_SKIP_EMPTY_TILES=$TARGET_SKIP_EMPTY_TILES ")
             .append(MIPMapTilesHelper.getMipMapsRetilerCommands()).append('\n');
         writer.write(script.toString());
     }
