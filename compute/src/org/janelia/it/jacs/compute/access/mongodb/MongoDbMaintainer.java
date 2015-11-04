@@ -100,7 +100,7 @@ public class MongoDbMaintainer {
 
         MongoCollection dataSetCollection = dao.getCollectionByName("dataSet");
         ensureDomainIndexes(dataSetCollection);
-        dataSetCollection.ensureIndex("{identifier:1}");
+        dataSetCollection.ensureIndex("{identifier:1}","{unique:true}");
         dataSetCollection.ensureIndex("{pipelineProcesses:1}");
 
         MongoCollection flyLineCollection = dao.getCollectionByName("flyLine");
@@ -145,7 +145,7 @@ public class MongoDbMaintainer {
         screenSampleCollection.ensureIndex("{flyLine:1}");
         
         MongoCollection subjectCollection = dao.getCollectionByName("subject");
-        subjectCollection.ensureIndex("{key:1}");
+        subjectCollection.ensureIndex("{key:1}","{unique:true}");
         subjectCollection.ensureIndex("{name:1}");
         subjectCollection.ensureIndex("{groups:1}");
 
