@@ -1106,7 +1106,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    private RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
+    public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
         RawFileInfo rtnVal = null;
         try {
             RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
