@@ -295,9 +295,13 @@ public class SageArtifactExportService extends AbstractEntityService {
             if (publishingSubjectKeys.size()>1) {
                 logger.warn("    More than one user marked "+sample.getName()+" for publication. Using: "+publishingUser);
             }
-            syncSample(sample, publishingUser);
-            // Annotate as published
-            syncPublishedAnnotation(sample);
+            if (syncSample(sample, publishingUser)) {
+	            // Annotate as published
+	            syncPublishedAnnotation(sample);
+            }
+            else {
+            	unpublishSample(sample);
+            }
         }
         else {
             if (exported) {
@@ -312,7 +316,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         return export ? 1 : 0;
     }
     
-    private void syncSample(Entity sample, String publishingUser) throws Exception {
+    private boolean syncSample(Entity sample, String publishingUser) throws Exception {
 
         logger.info("    Exporting "+sample.getName());
         
@@ -324,7 +328,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         Entity postResult = getLatestPostProcessingResult(sample);
         if (postResult==null) {
             logger.error("    Sample has no post-processed artifacts to export");
-            return;
+            return false;
         }
         entityLoader.populateChildren(postResult);
         Entity artifactFiles = EntityUtils.getSupportingData(postResult);
@@ -424,7 +428,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         for (ImageArea imageArea : imageAreaMap.values()) {
             
             logger.debug("    Synchronizing area '"+imageArea.areaName+"'");
-            List<Integer> areaSageImageIds = new ArrayList<>();
+            List<Image> areaSageImages = new ArrayList<>();
             
             for(ImageTile imageTile : imageArea.tiles) {
             
@@ -435,19 +439,20 @@ public class SageArtifactExportService extends AbstractEntityService {
                 for(ImageStack imageStack : imageTile.images) {
                     tileSageImageIds.add(imageStack.sageId);
                 }
-                areaSageImageIds.addAll(tileSageImageIds);
+                List<Image> images = sage.getImages(tileSageImageIds);
+                areaSageImages.addAll(images);
 
+                if (images.size()!=tileSageImageIds.size()) {
+                	logger.warn("Could not find all SAGE images in list: "+tileSageImageIds);
+                	return false;
+                }
+                
                 if (imageTile.mergedImage!=null) {
                     // Merged LSM, create new primary image for the merged tile
-                    tileSourceImage = getOrCreatePrimaryImage(sample, imageTile.mergedImage, line, areaSageImageIds, publishingUser);
+                    tileSourceImage = getOrCreatePrimaryImage(sample, imageTile.mergedImage, line, images, publishingUser);
                 }
                 else {
                     // Single LSM, make that the primary image
-                    List<Image> images = sage.getImages(areaSageImageIds);
-                    if (images.isEmpty()) {
-                        logger.error("Could not find SAGE image with id: "+areaSageImageIds.get(0));
-                        continue;
-                    }
                     tileSourceImage = images.get(0);
                     sage.setImageProperty(tileSourceImage, propertyPublishedTo, PUBLISHED_TO, createDate);
                     sage.setImageProperty(tileSourceImage, propertyToPublish, "Y", createDate);
@@ -463,15 +468,17 @@ public class SageArtifactExportService extends AbstractEntityService {
             if (imageArea.stitchedImage!=null) {
                 logger.info("      Synchronizing stitched image for area '"+imageArea.areaName+"'");
                 // Merged LSM, create new primary image for the merged tile
-                Image areaSourceImage = getOrCreatePrimaryImage(sample, imageArea.stitchedImage, line, areaSageImageIds, publishingUser);
+                Image areaSourceImage = getOrCreatePrimaryImage(sample, imageArea.stitchedImage, line, areaSageImages, publishingUser);
                 
                 synchronizeSecondaryImages(artifactFiles, areaSourceImage, imageArea.stitchedImage.tag, objective);
                 exportedNames.add(areaSourceImage.getName());
             }
         }
+        
+        return true;
     }
     
-    private Image getOrCreatePrimaryImage(Entity sample, ImageStack imageStack, Line line, List<Integer> sourceSageImageIds, String publishingUser) throws Exception {
+    private Image getOrCreatePrimaryImage(Entity sample, ImageStack imageStack, Line line, List<Image> sourceSageImages, String publishingUser) throws Exception {
 
         String imageName = imageStack.name;
         logger.info("  Synchronizing primary image "+imageName);
@@ -480,14 +487,18 @@ public class SageArtifactExportService extends AbstractEntityService {
         Map<CvTerm,String> consensusValues = new HashMap<CvTerm,String>();
         CvTerm consensusFamily = null;
         
-        for(Image sourceImage : sage.getImages(sourceSageImageIds)) {
+        for(Image sourceImage : sourceSageImages) {
             
             if (consensusFamily!=null && !sourceImage.getFamily().equals(consensusFamily)) {
-                throw new Exception("No family consensus across SAGE images: "+sourceSageImageIds+" ("+sourceImage.getFamily().getId()+"!="+consensusFamily.getId()+")");
+                throw new Exception("No family consensus across SAGE images: "+sourceImage.getFamily().getId()+"!="+consensusFamily.getId());
             }
             
             consensusFamily = sourceImage.getFamily();
-            
+
+			if (consensusFamily==null) {
+				logger.warn("LSM source image has no family: "+sourceImage.getId());
+			}
+			
             for(ImageProperty prop : sourceImage.getImageProperties()) {
                 if (consensusValues.containsKey(prop.getType())) {
                     String value = consensusValues.get(prop.getType());
