@@ -32,6 +32,7 @@ import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
+import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -431,6 +432,7 @@ public class MongoDbImport extends AnnotationDAO {
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
             try { 
+//                if (!"user:dolanm".equals(subjectKey)) continue;
                 loadSamples(subjectKey);
             }
             catch (Exception e) {
@@ -579,6 +581,41 @@ public class MongoDbImport extends AnnotationDAO {
             return null;
         }
 
+        List<LSMImage> allLsms = new ArrayList<LSMImage>();
+        
+        List<SampleTile> tiles = new ArrayList<SampleTile>();
+        populateChildren(supportingDataEntity);
+        for(Entity tileEntity : supportingDataEntity.getOrderedChildren()) {
+
+            Map<FileType,String> images = new HashMap<FileType,String>();
+            addImage(images,FileType.ReferenceMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
+            addImage(images,FileType.SignalMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
+            
+            List<LSMImage> lsmImages = new ArrayList<LSMImage>();
+            List<Reference> lsmReferences = new ArrayList<Reference>();
+            
+            populateChildren(tileEntity);
+            for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
+                LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
+                if (lsmImage!=null) {
+                    lsmImages.add(lsmImage);
+                    lsmReferences.add(getReference(lsmEntity));
+                }
+            }
+
+            allLsms.addAll(lsmImages);
+            imageCollection.insert(lsmImages.toArray());
+            
+            SampleTile tile = new SampleTile();
+            tile.setName(tileEntity.getName());
+            tile.setAnatomicalArea(tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
+            tile.setLsmReferences(lsmReferences);
+            tile.setFiles(images);
+            tiles.add(tile);
+        }
+        
+        sample.setTiles(tiles);
+        
         List<SamplePipelineRun> runs = new ArrayList<SamplePipelineRun>();
         for(Entity runEntity : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
             populateChildren(runEntity);
@@ -589,7 +626,7 @@ public class MongoDbImport extends AnnotationDAO {
                 populateChildren(resultEntity);
 
                 if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_LSM_SUMMARY_RESULT)) {
-                    LSMSummaryResult result = getLSMSummaryResult(resultEntity);
+                    LSMSummaryResult result = getLSMSummaryResult(allLsms, resultEntity);
                     results.add(result);
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
@@ -608,7 +645,7 @@ public class MongoDbImport extends AnnotationDAO {
                     results.add(result);
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_POST_PROCESSING_RESULT)) {
-                    SamplePostProcessingResult result = getSamplePostProcessingResult(resultEntity);
+                    SamplePostProcessingResult result = getSamplePostProcessingResult(sample, resultEntity);
                     results.add(result);
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_CELL_COUNTING_RESULT)) {
@@ -697,38 +734,6 @@ public class MongoDbImport extends AnnotationDAO {
         }
 
         sample.setPipelineRuns(runs);
-
-        List<SampleTile> tiles = new ArrayList<SampleTile>();
-        populateChildren(supportingDataEntity);
-        for(Entity tileEntity : supportingDataEntity.getOrderedChildren()) {
-
-            Map<FileType,String> images = new HashMap<FileType,String>();
-            addImage(images,FileType.ReferenceMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
-            addImage(images,FileType.SignalMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
-            
-            List<LSMImage> lsmImages = new ArrayList<LSMImage>();
-            List<Reference> lsmReferences = new ArrayList<Reference>();
-            
-            populateChildren(tileEntity);
-            for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
-                LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
-                if (lsmImage!=null) {
-                    lsmImages.add(lsmImage);
-                    lsmReferences.add(getReference(lsmEntity));
-                }
-            }
-
-            imageCollection.insert(lsmImages.toArray());
-            
-            SampleTile tile = new SampleTile();
-            tile.setName(tileEntity.getName());
-            tile.setAnatomicalArea(tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
-            tile.setLsmReferences(lsmReferences);
-            tile.setFiles(images);
-            tiles.add(tile);
-        }
-        
-        sample.setTiles(tiles);
         
         return sample;
     }
@@ -748,12 +753,20 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
 
-    private LSMSummaryResult getLSMSummaryResult(Entity resultEntity) throws Exception {
+    private LSMSummaryResult getLSMSummaryResult(List<LSMImage> lsms, Entity resultEntity) throws Exception {
     	LSMSummaryResult result = new LSMSummaryResult();
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        result.setGroups(createFileGroups(result, resultEntity));
+        Set<String> keys = new HashSet<>();
+        for(LSMImage lsm : lsms) {
+            String name = lsm.getName();
+            int index = name.indexOf('.');
+            String key = index<1 ? name : name.substring(0, index);
+            keys.add(key);
+        }
+        keys.add("montage");
+        result.setGroups(createFileGroups(result, resultEntity, keys));
         return result;
     }
     
@@ -801,16 +814,22 @@ public class MongoDbImport extends AnnotationDAO {
         return result;
     }
 
-    private SamplePostProcessingResult getSamplePostProcessingResult(Entity resultEntity) throws Exception {
+    private SamplePostProcessingResult getSamplePostProcessingResult(ObjectiveSample objectiveSample, Entity resultEntity) throws Exception {
         SamplePostProcessingResult result = new SamplePostProcessingResult();
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        result.setGroups(createFileGroups(result, resultEntity));
+        Set<String> keys = new HashSet<>();
+        for(SampleTile tile : objectiveSample.getTiles()) {
+            keys.add(tile.getName());
+            keys.add(tile.getAnatomicalArea());
+        }
+        keys.add("montage");
+        result.setGroups(createFileGroups(result, resultEntity, keys));
         return result;
     }
 
-    private Map<String,FileGroup> createFileGroups(HasFilepath parent, Entity resultEntity) throws Exception {
+    private Map<String,FileGroup> createFileGroups(HasFilepath parent, Entity resultEntity, Set<String> keys) throws Exception {
 
     	Map<String,FileGroup> groups = new HashMap<>();
         populateChildren(resultEntity);
@@ -868,12 +887,24 @@ public class MongoDbImport extends AnnotationDAO {
                     continue;
                 }
                 
-                FileGroup group = groups.get(key);
+                String translatedKey = key;
+                for(String trueKey : keys) {
+                    if (key.equals(trueKey)) {
+                        translatedKey = trueKey;
+                        break;
+                    }
+                    else if (key.contains("-"+trueKey+"-")) {
+                        translatedKey = trueKey;
+                        break;
+                    }
+                }
+                
+                FileGroup group = groups.get(translatedKey);
                 if (group==null) {
                 	group = new FileGroup();
                 	group.setFilepath(parent.getFilepath());
                 	group.setFiles(new HashMap<FileType,String>());
-                	groups.put(key, group);
+                	groups.put(translatedKey, group);
                 }
                 
                 group.getFiles().put(fileType, getRelativeFilename(group, childFilepath));
@@ -1878,10 +1909,11 @@ public class MongoDbImport extends AnnotationDAO {
     /* TREE NODES (WORKSPACES, FOLDERS, VIEWS) */
     
     private void loadWorkspaces() throws DaoException {
+        Map<Long,DomainObject> visited = new HashMap<Long,DomainObject>();
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
             try {
-                loadWorkspace(subjectKey);
+                loadWorkspace(subjectKey, visited);
             }
             catch (Exception e) {
                 log.error("Error loading workspace for " + subjectKey, e);
@@ -1889,7 +1921,7 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
     
-    private void loadWorkspace(String subjectKey) throws Exception {
+    private void loadWorkspace(String subjectKey, Map<Long,DomainObject> visited) throws Exception {
 
         long start = System.currentTimeMillis();
 
@@ -1913,7 +1945,7 @@ public class MongoDbImport extends AnnotationDAO {
         else {
             LinkedList<Entity> rootFolders = new LinkedList<Entity>(workspaceEntity.getOrderedChildren());
             Collections.sort(rootFolders, new EntityRootComparator(subjectKey));
-            List<Reference> children = loadRootFolders(subjectKey, rootFolders);
+            List<Reference> children = loadRootFolders(subjectKey, rootFolders, visited);
             workspace.setId(workspaceEntity.getId());
             workspace.setName(workspaceEntity.getName());
             workspace.setCreationDate(workspaceEntity.getCreationDate());
@@ -1926,7 +1958,7 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
     }
     
-    private List<Reference> loadRootFolders(String subjectKey, Deque<Entity> rootFolders) {
+    private List<Reference> loadRootFolders(String subjectKey, Deque<Entity> rootFolders, Map<Long,DomainObject> loaded) {
 
         Set<Long> visitedSet = new HashSet<Long>();
         List<Reference> roots = new ArrayList<Reference>();
@@ -1939,7 +1971,8 @@ public class MongoDbImport extends AnnotationDAO {
                 long start = System.currentTimeMillis();
                 
                 session = openNewExternalSession();
-                DomainObject domainObject = loadFolderHierarchy(folderEntity, visitedSet, "  ");
+                DomainObject domainObject = loadFolderHierarchy(folderEntity, visitedSet, loaded, "  ");
+                loaded.put(domainObject.getId(), domainObject);
                 if (domainObject!=null) {
                     Reference ref = getReference(domainObject);
                     roots.add(ref);
@@ -1962,7 +1995,7 @@ public class MongoDbImport extends AnnotationDAO {
         return roots;
     }
     
-    private DomainObject loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, String indent) throws Exception {
+    private DomainObject loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, Map<Long,DomainObject> loaded, String indent) throws Exception {
 
     	if ("supportingFiles".equals(folderEntity.getName())) {
     		log.info(indent+"Skipping "+folderEntity.getName());
@@ -1971,8 +2004,12 @@ public class MongoDbImport extends AnnotationDAO {
     	
         log.trace(indent+"Loading "+folderEntity.getName());
         
-        if (visitedSet.contains(folderEntity.getId())) {
-            log.info(indent+"Already visited "+folderEntity.getName());
+        if (loaded.containsKey(folderEntity.getId())) {
+            return loaded.get(folderEntity.getId());
+        }
+        else if (visitedSet.contains(folderEntity.getId())) {
+            // This should only happen when there are loops, which we don't want to load anyway
+            log.warn(indent+"Skipping reference to visited but not yet loaded: "+folderEntity.getName());
             return null;
         }
         
@@ -2002,7 +2039,7 @@ public class MongoDbImport extends AnnotationDAO {
 	    
 	    // Load children
 	    for(Entity childFolder : EntityUtils.getChildrenOfType(folderEntity, EntityConstants.TYPE_FOLDER)) {
-	    	DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, indent+"  ");
+	    	DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, loaded, indent+"  ");
             if (domainObject!=null) {
                 Reference ref = getReference(domainObject);
                 children.add(ref);
