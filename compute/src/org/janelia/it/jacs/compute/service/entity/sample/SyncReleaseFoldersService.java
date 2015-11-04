@@ -125,8 +125,8 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     	Collections.sort(lines);
     	for(String line : lines) {
 
-            logger.debug("Processing line "+line);
             List<Entity> samples = new ArrayList<>(samplesByLine.get(line));
+            logger.info("Processing line "+line+" with "+samples.size()+" samples");
             
             // Ensure there is at least one 63x polarity sample
 
@@ -139,7 +139,7 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
             }
     	    
             if (!has63xPolaritySample) {
-                logger.debug("  Ignoring line which has no 63x polarity samples");
+                logger.info("  Ignoring line which has no 63x polarity samples");
                 continue;
             }
             
@@ -159,13 +159,15 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
                     return o1.getName().compareTo(o2.getName());
                 }
             });
-    	    
+
+            logger.info("  Adding samples to line folder");
+            
     	    // Add missing samples
     	    for(Entity sample : samples) {
-    	        logger.debug("  Processing sample "+sample.getName());
+    	        logger.debug("    Processing sample "+sample.getName());
     	        EntityData ed = EntityUtils.findChildEntityDataWithChildId(lineFolder, sample.getId());
     	        if (ed==null) {
-    	            logger.debug("    Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");   
+    	            logger.debug("      Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");   
     	            sampleHelper.addToParent(lineFolder, sample, lineFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
     	            numAdded++;
     	        }
@@ -189,7 +191,7 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     private boolean has63xPolaritySample(Entity sample) throws Exception {
 
         String identifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-        if (identifier==null || !identifier.contains("polarity")) {
+        if (identifier==null || !identifier.toLowerCase().contains("polarity")) {
             // If the parent sample is not a polarity sample then we don't need to check anything else
             return false;
         }

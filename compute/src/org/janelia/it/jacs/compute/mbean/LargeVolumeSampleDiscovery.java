@@ -88,6 +88,10 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                     // Now, apply conversion matrices to the sample.
                     int[] origin = transform.getOrigin();
                     double[] voxelMicrometers = transform.getScale();
+                    for (int i = 0; i < 3; i++) {
+                        origin[i] /= 1000;
+                        voxelMicrometers[i] /= 1000;
+                    }
                     String voxToMicronString = MatrixUtilities.createSerializableVoxToMicron(voxelMicrometers, origin);
                     String micronToVoxString = MatrixUtilities.createSerializableMicronToVox(voxelMicrometers, origin);
 
