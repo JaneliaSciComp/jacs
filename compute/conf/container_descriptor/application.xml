@@ -45,10 +45,4 @@
             <context-root>/rest-v1</context-root>
         </web>
     </module>
-    <module>
-        <web>
-            <web-uri>compute-secure-rest-ws.war</web-uri>
-            <context-root>/secure/rest-v1</context-root>
-        </web>
-    </module>
 </application>

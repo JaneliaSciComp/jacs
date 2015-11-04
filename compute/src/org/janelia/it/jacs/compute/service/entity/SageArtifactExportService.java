@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +21,7 @@ import org.janelia.it.jacs.model.ontology.types.Interval;
 import org.janelia.it.jacs.model.ontology.types.OntologyElementType;
 import org.janelia.it.jacs.model.ontology.types.Tag;
 import org.janelia.it.jacs.model.sage.CvTerm;
+import org.janelia.it.jacs.model.sage.Experiment;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
@@ -70,15 +70,15 @@ public class SageArtifactExportService extends AbstractEntityService {
     private CvTerm propertyPublishingUser;
     private CvTerm propertyRelease;
     private CvTerm propertyWorkstationSampleId;
-    private CvTerm sessionType;
+    private CvTerm propertyChanSpec;
+    private CvTerm propertyDimensionX;
+    private CvTerm propertyDimensionY;
+    private CvTerm propertyDimensionZ;
+    private CvTerm sessionExperimentType;
     private CvTerm observationTerm;
-    private CvTerm source;
-    private CvTerm chanSpec;
-    private CvTerm dimensionX;
-    private CvTerm dimensionY;
-    private CvTerm dimensionZ;
     private CvTerm lab;
-    
+
+    private Experiment releaseExperiment;
     private Map<Long,Entity> currLineAnnotationMap = new HashMap<>();
     private List<String> exportedNames = new ArrayList<String>();
     
@@ -133,30 +133,28 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.propertyPublishingUser = getCvTermByName("light_imagery","publishing_user");
         this.propertyRelease = getCvTermByName("light_imagery","release");
         this.propertyWorkstationSampleId = getCvTermByName("light_imagery","workstation_sample_id"); 
-        this.sessionType = getCvTermByName("flylight_public_annotation","splitgal4_public_annotation");
+        this.propertyChanSpec = getCvTermByName("light_imagery","channel_spec");
+        this.propertyDimensionX = getCvTermByName("light_imagery","dimension_x");
+        this.propertyDimensionY = getCvTermByName("light_imagery","dimension_y");
+        this.propertyDimensionZ = getCvTermByName("light_imagery","dimension_z");
+        this.sessionExperimentType = getCvTermByName("flylight_public_annotation","splitgal4_public_annotation");
         this.observationTerm = getCvTermByName("flylight_public_annotation","intensity");
-        this.source = getCvTermByName("lab","JFRC");
-        this.chanSpec = getCvTermByName("light_imagery","channel_spec");
-        this.dimensionX = getCvTermByName("light_imagery","dimension_x");
-        this.dimensionY = getCvTermByName("light_imagery","dimension_y");
-        this.dimensionZ = getCvTermByName("light_imagery","dimension_z");
-        this.lab = getCvTermByName("lab", "rubin");
-        
-        Entity releasesFolder = null;
-        for(Entity entity : entityBean.getEntitiesByNameAndTypeName(releaseEntity.getOwnerKey(), EntityConstants.NAME_FLY_LINE_RELEASES, EntityConstants.TYPE_FOLDER)) {
-            if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null) {
-                releasesFolder = entity;
-            }
-        }
+        this.lab = getCvTermByName("lab","JFRC");
 
-        if (releasesFolder==null) {
-            throw new Exception("No releases folder owned by "+releaseEntity.getOwnerKey()+" was found with name '"+ANNOTATION_EXPORTED+"'");
+        // Get or create experiment that represents this release in SAGE
+        releaseExperiment = sage.getExperiment(releaseEntity.getName(), sessionExperimentType);
+        if (releaseExperiment==null) {
+            logger.info("Creating new experiment for release: "+releaseEntity.getName());
+            releaseExperiment = new Experiment(sessionExperimentType, lab, releaseEntity.getName(), EntityUtils.getNameFromSubjectKey(releaseEntity.getOwnerKey()), createDate);
+            releaseExperiment = sage.saveExperiment(releaseExperiment);
+        }
+        else {
+            logger.info("Using existing experiment for release: "+releaseEntity.getName());
         }
         
-        entityLoader.populateChildren(releasesFolder);
-        Entity releaseFolder = EntityUtils.findChildWithName(releasesFolder, releaseEntity.getName());
+        // Walk through release folder and export samples and line annotations
+        Entity releaseFolder = findReleaseFolder();
         entityLoader.populateChildren(releaseFolder);
-        
         for(Entity flyLineFolder : EntityUtils.getChildrenOfType(releaseFolder, EntityConstants.TYPE_FOLDER)) {
             
             currLineAnnotationMap.clear();
@@ -186,6 +184,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
        
+        // Log the exported names
         if (!exportedNames.isEmpty()) {
 	        StringBuilder sb = new StringBuilder();
 	        for(String name : exportedNames) {
@@ -194,6 +193,20 @@ public class SageArtifactExportService extends AbstractEntityService {
 	        }
 	        logger.info("Exported primary image names:\n"+sb);
         }
+    }
+    
+    private Entity findReleaseFolder() throws Exception {
+        Entity releasesFolder = null;
+        for(Entity entity : entityBean.getEntitiesByNameAndTypeName(releaseEntity.getOwnerKey(), EntityConstants.NAME_FLY_LINE_RELEASES, EntityConstants.TYPE_FOLDER)) {
+            if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)!=null) {
+                releasesFolder = entity;
+            }
+        }
+        if (releasesFolder==null) {
+            throw new Exception("No releases folder owned by "+releaseEntity.getOwnerKey()+" was found with name '"+ANNOTATION_EXPORTED+"'");
+        }
+        entityLoader.populateChildren(releasesFolder);
+        return EntityUtils.findChildWithName(releasesFolder, releaseEntity.getName());
     }
 
     private int processSamples(Entity sample) throws Exception {
@@ -496,18 +509,18 @@ public class SageArtifactExportService extends AbstractEntityService {
         consensusValues.put(propertyPublishingUser, publishingUser);
         consensusValues.put(propertyRelease, releaseEntity.getName());
         consensusValues.put(propertyWorkstationSampleId, sample.getId().toString());
-        consensusValues.put(chanSpec, imageStack.chanSpec);
-        consensusValues.put(dimensionX, null);
-        consensusValues.put(dimensionY, null);
-        consensusValues.put(dimensionZ, null);
+        consensusValues.put(propertyChanSpec, imageStack.chanSpec);
+        consensusValues.put(propertyDimensionX, null);
+        consensusValues.put(propertyDimensionY, null);
+        consensusValues.put(propertyDimensionZ, null);
         
         String pixelRes = imageStack.pixelRes;
         if (pixelRes!=null) {
             String[] res = pixelRes.split("x");
             if (res.length==3) {
-                consensusValues.put(dimensionX, res[0]);
-                consensusValues.put(dimensionY, res[1]);
-                consensusValues.put(dimensionZ, res[2]);
+                consensusValues.put(propertyDimensionX, res[0]);
+                consensusValues.put(propertyDimensionY, res[1]);
+                consensusValues.put(propertyDimensionZ, res[2]);
             }
             else {
                 logger.warn("Cannot parse pixel resolution: "+res);
@@ -515,12 +528,12 @@ public class SageArtifactExportService extends AbstractEntityService {
         }
         
         String path = imageStack.filepath;
-        String url = getUrl(path);
+        String url = getWebdavUrl(path);
         
         if (image!=null) {
         	image.setFamily(consensusFamily);
         	image.setLine(line);
-        	image.setSource(source);
+        	image.setSource(lab);
         	image.setUrl(url);
         	image.setRepresentative(true);
         	image.setDisplay(true);
@@ -529,7 +542,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             logger.info("    Updated SAGE primary image "+image.getId()+" with name "+image.getName());
         }
         else {
-            image = new Image(consensusFamily, line, source, imageName, url, path, true, true, CREATED_BY, createDate);
+            image = new Image(consensusFamily, line, lab, imageName, url, path, true, true, CREATED_BY, createDate);
             image = sage.saveImage(image);
             logger.info("    Created SAGE primary image "+image.getId()+" with name "+image.getName());
         }
@@ -585,7 +598,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     private SecondaryImage getOrCreateSecondaryImage(Entity entity, CvTerm productType, Image sourceImage) throws Exception {
         String imageName = entity.getId()+"-"+entity.getName();
         String path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        String url = getUrl(path);
+        String url = getWebdavUrl(path);
         
         SecondaryImage secondaryImage = sage.getSecondaryImageByName(imageName);
         
@@ -596,32 +609,34 @@ public class SageArtifactExportService extends AbstractEntityService {
             logger.info("    Updated SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
         }
         else {
-            secondaryImage = new SecondaryImage(sourceImage, productType, imageName, path, getUrl(path), createDate);
+            secondaryImage = new SecondaryImage(sourceImage, productType, imageName, path, url, createDate);
             sage.saveSecondaryImage(secondaryImage);
             logger.info("    Created SAGE secondary image "+secondaryImage.getId()+" with name "+secondaryImage.getName());
         }
         
         return secondaryImage;
     }
-
+    
     private void exportLineAnnotations(String lineName) throws Exception {
         
         Line line = getLineByName(lineName);
-        SageSession session = sage.getSageSession(lineName, sessionType);
+        SageSession session = sage.getSageSession(lineName, sessionExperimentType, releaseExperiment);
         if (session==null) {
-            logger.info("    Creating new session for line "+lineName);
-            session = new SageSession(sessionType, lab, line, lineName, null, createDate);
+            logger.info("  Creating new session for line "+lineName);
+            session = new SageSession(sessionExperimentType, lab, line, lineName, releaseExperiment, null, createDate);
         }
         else {
-            logger.info("    Updating existing session for line "+lineName+" (id="+session.getId()+")");
+            logger.info("  Updating existing session for line "+lineName+" (id="+session.getId()+")");
             session.setLine(line);
             session.setLab(lab);
+            session.setExperiment(releaseExperiment);
         }
         
         Set<String> annotators = new HashSet<>();
-        Map<String,Observation> observationMap = new HashMap<>();
+        Map<String,Observation> newObservationMap = new HashMap<>();
+        Map<String,Observation> currObservationMap = new HashMap<>();
         for(Observation observation : session.getObservations()) {
-            observationMap.put(observation.getType().getName(), observation);
+            currObservationMap.put(observation.getType().getName(), observation);
         }
 
         Multimap<String,Entity> annotationDeduper = HashMultimap.<String,Entity>create();
@@ -650,7 +665,6 @@ public class SageArtifactExportService extends AbstractEntityService {
             annotators.add(EntityUtils.getNameFromSubjectKey(annotationEntity.getOwnerKey()));
             
             Entity keyEntity = entityBean.getEntityById(keyEntityId);
-            
             String typeName = keyEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE);
             OntologyElementType type = OntologyElementType.createTypeByName(typeName);
             type.init(keyEntity);
@@ -675,9 +689,9 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
 
             String obsName = observationType.getName();
-            Observation observation = observationMap.get(obsName);
+            Observation observation = currObservationMap.get(obsName);
             if (observation==null) {
-                observation = new Observation(observationType, session, observationTerm, null, value, createDate);
+                observation = new Observation(observationType, session, observationTerm, releaseExperiment, value, createDate);
             }
             else {
                 if (observation.getId()==null) {
@@ -687,7 +701,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                 observation.setValue(value);
             }
             
-            observationMap.put(obsName, observation);
+            newObservationMap.put(obsName, observation);
 
             for (int i=1; i<annotations.size(); i++) {
                 Entity dupAnnotation = annotations.get(i);
@@ -695,16 +709,8 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
 
-        // Everything not in the map is no longer needed and can be deleted
-        for (Iterator<Observation> it = session.getObservations().iterator(); it.hasNext(); ) {
-            Observation entry = it.next();
-            Observation obs = observationMap.get(entry.getType().getName());
-            if (obs==null || !obs.getId().equals(entry.getId())) {
-                it.remove();    
-            }
-        }
-    
-        session.getObservations().addAll(observationMap.values());
+        session.getObservations().clear();
+        session.getObservations().addAll(newObservationMap.values());
         
         logger.info("    Observations: ");
         for(Observation observation : session.getObservations()) {
@@ -776,7 +782,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         return null;
     }
     
-    private String getUrl(String filepath) {
+    private String getWebdavUrl(String filepath) {
     	if (filepath==null) return null;
         return WEBDAV_PREFIX+filepath;
     }

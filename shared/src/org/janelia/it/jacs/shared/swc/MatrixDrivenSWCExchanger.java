@@ -4,11 +4,9 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.workstation.gui.large_volume_viewer.annotation;
+package org.janelia.it.jacs.shared.swc;
 
 import Jama.Matrix;
-import org.janelia.it.workstation.gui.large_volume_viewer.TileFormat;
-import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
 
 /**
  * Uses matrices (based on JAMA package), to convert between internal and
@@ -18,23 +16,25 @@ import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
  */
 public class MatrixDrivenSWCExchanger implements ImportExportSWCExchanger {
     public static final int EXPECTED_ARRAY_SIZE = 3;
-    private TileFormat tileFormat;
+    private Matrix micronToVoxMatrix;
+    private Matrix voxToMicronMatrix;
     
-    public MatrixDrivenSWCExchanger( TileFormat tileFormat ) {
-        this.tileFormat = tileFormat;
+    public MatrixDrivenSWCExchanger( Matrix micronToVoxMatrix, Matrix voxToMicronMatrix ) {
+        this.micronToVoxMatrix = micronToVoxMatrix;
+        this.voxToMicronMatrix = voxToMicronMatrix;
     }
 
     @Override
     public double[] getInternal(double[] external) {
         Matrix externalMatrix = inputMatrix(external);
-        Matrix internalMatrix = tileFormat.getMicronToVoxMatrix().times(externalMatrix);
+        Matrix internalMatrix = micronToVoxMatrix.times(externalMatrix);
         return outputMatrix(internalMatrix);
     }
 
     @Override
     public double[] getExternal(double[] internal) {
         Matrix internalMatrix = inputMatrix(internal);
-        Matrix externalMatrix = tileFormat.getVoxToMicronMatrix().times(internalMatrix);
+        Matrix externalMatrix = voxToMicronMatrix.times(internalMatrix);
         return outputMatrix(externalMatrix);
     }
     

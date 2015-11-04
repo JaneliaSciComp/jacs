@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.access;
 
+import Jama.Matrix;
 import com.google.common.base.Stopwatch;
 import java.io.File;
 import java.io.FileFilter;
@@ -16,6 +17,9 @@ import org.janelia.it.jacs.shared.swc.SWCData;
 
 import java.util.*;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
+import org.janelia.it.jacs.model.util.MatrixUtilities;
+import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
+import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
 import org.janelia.it.jacs.shared.swc.SWCDataConverter;
 import org.janelia.it.jacs.shared.swc.SWCNode;
 
@@ -31,7 +35,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     AnnotationDAO annotationDAO;
     ComputeDAO computeDAO;
 
-    private final static String TMP_GEO_VALUE="@@@ new geo value string @@@";
+    private final static String TMP_GEO_VALUE = "@@@ new geo value string @@@";
     private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
 
     public TiledMicroscopeDAO(Logger logger) {
@@ -168,32 +172,31 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             throw new DaoException(e);
         }
     }
-    
+
     /**
      * Make a set of neurons, and possibly a workspace, representing the folder
-     * given here.  Set the neurons' (workspace') ownership to the owner
-     * key given.
-     * 
+     * given here. Set the neurons' (workspace') ownership to the owner key
+     * given.
+     *
      * @param swcFolderLoc where is the server-accessible folder?
      * @param ownerKey winds up owning it all.
      * @param workspaceId optional: if null -> make workspace.
-     * @param sampleId if null workspace, must be given, otherwise optional.
-     * @throws ComputeException thrown as wrapper for any exceptions. 
+     * @param sampleId required, to find the base path, optionally can get from workspace.
+     * @throws ComputeException thrown as wrapper for any exceptions.
      */
     public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException {
         File swcFolder = new File(swcFolderLoc);
         File[] swcFiles = swcFolder.listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
-                return pathname.isFile()  &&  pathname.getName().toLowerCase().endsWith(".swc");
+                return pathname.isFile() && pathname.getName().toLowerCase().endsWith(".swc");
             }
         });
 
         if (workspaceId == null) {
             if (sampleId == null) {
                 throw new ComputeException("Cannot apply SWC neurons without either valid workspace or sample ID.");
-            }
-            else {
+            } else {
                 // Ensure there is a workspaces folder, and then
                 // create a new workspace within that folder.
                 String folderName = WORKSPACES_FOLDER_NAME;
@@ -207,13 +210,42 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 createTiledMicroscopeWorkspace(folder.getId(), sampleId, ownerKey, swcFolder.getName());
             }
         }
+
+        if (sampleId == null) {
+            Entity workspaceEntity = annotationDAO.getEntityById( workspaceId );
+            if (workspaceEntity == null  ||  ! workspaceEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+                throw new ComputeException("Workspace ID " + workspaceId + " does not point to a valid workspace.");
+            }
+            EntityData ed = workspaceEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+            if (ed == null) {
+                throw new ComputeException("Workspace ID " + workspaceId + " does not have any " + EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS + " values to identify sample.");
+            }
+                    
+            sampleId = Long.parseLong(ed.getValue());
+        }                
+
+        SWCDataConverter swcDataConverter = new SWCDataConverter();
+        Entity sampleEntity = annotationDAO.getEntityById(sampleId);
+        if (!sampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+            throw new ComputeException("Sample ID given is not sample type.  Instead, " + sampleId + " is a " + sampleEntity.getEntityTypeName());
+        }
+        String sampleBasePath = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        if (sampleBasePath == null) {
+            throw new ComputeException("Failed to find a base file path for " + sampleId);
+        }
         
-        for (File swcFile: swcFiles) {
-            importSWCFile(swcFile, workspaceId);
+        CoordinateToRawTransform coordToRawTransform = this.getTransform(sampleBasePath);
+        Matrix micronToVox = MatrixUtilities.buildMicronToVox(coordToRawTransform.getScale(), coordToRawTransform.getOrigin());
+        Matrix voxToMicron = MatrixUtilities.buildVoxToMicron(coordToRawTransform.getScale(), coordToRawTransform.getOrigin());
+        ImportExportSWCExchanger exchanger = new MatrixDrivenSWCExchanger(micronToVox, voxToMicron);
+        swcDataConverter.setSWCExchanger(exchanger);
+
+        for (File swcFile : swcFiles) {
+            importSWCFile(swcFile, workspaceId, swcDataConverter);
         }
     }
-    
-    private void importSWCFile(File swcFile, Long workspaceId) throws ComputeException {
+
+    private void importSWCFile(File swcFile, Long workspaceId, SWCDataConverter swcDataConverter) throws ComputeException {
         // the constructor also triggers the parsing, but not the validation
         try {
             SWCData swcData = SWCData.read(swcFile);
@@ -237,20 +269,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
             final TmNeuron neuron = createTiledMicroscopeNeuron(workspaceId, neuronName);
 
-            // Bulk update in play.
-            // and as long as we're doing brute force, we can update progress
-            //  granularly (if we have a worker); start with 5% increments (1/20)
-            int totalLength = swcData.getNodeList().size();
-            int updateFrequency = totalLength / 20;
-            if (updateFrequency == 0) {
-                updateFrequency = 1;
-            }
-//            if (worker != null) {
-//                worker.setProgress(0L, totalLength);
-//            }
-
             Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
-            SWCDataConverter swcDataConverter = new SWCDataConverter();            
             Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
             for (SWCNode node : swcData.getNodeList()) {
                 // Internal points, as seen in annotations, are same as external
@@ -270,9 +289,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 );
                 unserializedAnnotation.setNeuronId(neuron.getId());
                 annotations.put(node.getIndex(), unserializedAnnotation);
-//                if (worker != null && (node.getIndex() % updateFrequency) == 0) {
-//                    worker.setProgress(node.getIndex(), totalLength);
-//                }
 
                 nodeParentLinkage.put(node.getIndex(), node.getParentIndex());
             }
@@ -422,60 +438,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             //  only common operation that makes sense
             log.info("LVV: adding annotation to neuron " + neuronId + " at " + x + ", " + y + ", " + z);
             return createGeometricAnnotation(neuron, isRoot, parentAnnotationId, index, x, y, z, comment, neuronId);
-            /* This code is verbatim included in the method called above. LLF
-            
-            EntityData geoEd=new EntityData();
-            geoEd.setOwnerKey(neuron.getOwnerKey());
-            geoEd.setCreationDate(new Date());
-            geoEd.setUpdatedDate(new Date());
-            Long parentId=0L;
-            if (isRoot) {
-                parentId = neuron.getId();
-                geoEd.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
-            } else {
-                parentId=parentAnnotationId;
-                geoEd.setEntityAttrName(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
-            }
-            geoEd.setOrderIndex(0);
-            geoEd.setParentEntity(neuron);
-            geoEd.setValue(TMP_GEO_VALUE);
-            annotationDAO.saveOrUpdate(geoEd);
-            neuron.getEntityData().add(geoEd);
-            annotationDAO.saveOrUpdate(neuron);
-            // Find and update value string
-            boolean valueStringUpdated=false;
-            String valueString=null;
-            for (EntityData ed : neuron.getEntityData()) {
-                if (isRoot) {
-                    if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                        if (ed.getValue().equals(TMP_GEO_VALUE)) {
-                            valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
-                            ed.setValue(valueString);
-                            annotationDAO.saveOrUpdate(ed);
-                            valueStringUpdated=true;
-                        }
-                    }
-                } else {
-                    if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
-                        if (ed.getValue().equals(TMP_GEO_VALUE)) {
-                            valueString=TmGeoAnnotation.toStringFromArguments(ed.getId(), parentId, index, x, y, z, comment);
-                            ed.setValue(valueString);
-                            annotationDAO.saveOrUpdate(ed);
-                            valueStringUpdated=true;
-                        }
-                    }
-                }
-            }
-            if (!valueStringUpdated) {
-                throw new Exception("Could not find geo entry to update for value string");
-            }
-            TmGeoAnnotation geoAnnotation=new TmGeoAnnotation(geoEd);
-            // normally this is filled in automatically when the annotation is part of
-            //  a neuron, but here it's not (explicitly); however, we know the value
-            //  to put in:
-            geoAnnotation.setNeuronId(neuronId);
-            return geoAnnotation;
-            */
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
@@ -543,10 +505,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 TmGeoAnnotation serializedAnnotation = createGeometricAnnotation(neuron, isRoot, parentAnnotationId, unserializedAnnotation);
                 nodeIdToAnnotationId.put(nodeId, serializedAnnotation.getId());
 
-                if (log.isTraceEnabled()) {
-                    log.trace("Node " + nodeId + " at " + serializedAnnotation.toString() + ", has id " + serializedAnnotation.getId()
-                            + ", has parent " + serializedAnnotation.getParentId() + ", under neuron " + serializedAnnotation.getNeuronId());
-                }
+                log.trace("Node " + nodeId + " at " + serializedAnnotation.toString() + ", has id " + serializedAnnotation.getId()
+                        + ", has parent " + serializedAnnotation.getParentId() + ", under neuron " + serializedAnnotation.getNeuronId());
             }
 
             if (putativeRootCount > 1) {
@@ -1146,7 +1106,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
+    private RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
         RawFileInfo rtnVal = null;
         try {
             RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
@@ -1177,24 +1137,45 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         log.info("attempting to fix connectivity for neuron " + neuronID);
 
-        // first we need to load all annotations (just like TmNeuron does);
-        //  then we can loop over them again and check for missing parents/children
-        ArrayList<EntityData> annList = new ArrayList<>();
+        // first, load all entity data and find the root and link (non-root)
+        //  annotations; they can all be parents, but each has different
+        //  possible parents
         HashSet<Long> parentSet = new HashSet<>();
+        ArrayList<EntityData> linkList = new ArrayList<>();
+        ArrayList<EntityData> rootList = new ArrayList<>();
         Entity neuronEntity = annotationDAO.getEntityById(neuronID);
         for (EntityData ed: neuronEntity.getEntityData()) {
             String attributeName = ed.getEntityAttrName();
-            if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
-                attributeName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+            if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
                 parentSet.add(ed.getId());
-                // no need to check roots; they are children of neurons
-                if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
-                    annList.add(ed);
+                linkList.add(ed);
+            } else if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                parentSet.add(ed.getId());
+                rootList.add(ed);
                 }
+            }
+
+        // check roots: are they children of the neuron?
+        for (EntityData ed: rootList) {
+            TmGeoAnnotation annotation;
+            try {
+                annotation = new TmGeoAnnotation(ed);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new DaoException(e);
+            }
+            if (annotation != null && !annotation.getParentId().equals(neuronID)) {
+                log.info("root " + annotation.getId() + " had wrong parent; reassigned to current neuron");
+                String valueString=TmGeoAnnotation.toStringFromArguments(annotation.getId(),
+                    neuronID, annotation.getIndex(), annotation.getX(), annotation.getY(),
+                    annotation.getZ(), annotation.getComment());
+                ed.setValue(valueString);
+                annotationDAO.saveOrUpdate(ed);
             }
         }
 
-        for (EntityData ed: annList) {
+        // check non-roots: do we have their parents?
+        for (EntityData ed: linkList) {
             // I really don't get why we launder everything to DaoException, but
             //  that seems to be the pattern:
             TmGeoAnnotation annotation;
@@ -1205,7 +1186,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new DaoException(e);
             }
             if (annotation != null && !parentSet.contains(annotation.getParentId())) {
-                log.info(annotation.getId() + " had missing parent; promoted to root");
+                log.info("link " + annotation.getId() + " had missing parent; promoted to root");
 
                 // when a missing parent is found:
                 //     edit value: set parent ID to neuron ID

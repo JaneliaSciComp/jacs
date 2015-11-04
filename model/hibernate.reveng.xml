@@ -20,5 +20,8 @@
     <table-filter match-catalog="sage" match-name="secondary_image"/>
     <table-filter match-catalog="sage" match-name="session"/>
     <table-filter match-catalog="sage" match-name="observation"/>
+    <table-filter match-catalog="sage" match-name="experiment"/>
+    <table-filter match-catalog="sage" match-name="experiment_property"/>
+    <table-filter match-catalog="sage" match-name="experiment_relationship"/>
      
 </hibernate-reverse-engineering>
