@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.service.mip;
 
+import org.ggf.drmaa.DrmaaException;
+import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -49,6 +51,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private String targetType;
     private String targetMediaFormat;
     private Boolean targetSkipEmptyTiles;
+    private String processingAccount;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -74,6 +77,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         targetType = processData.getString("TARGET_TYPE");
         targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
         targetSkipEmptyTiles = processData.getBoolean("TARGET_SKIP_EMPTY_TILES");
+        processingAccount = processData.getString("PROCESSING_ACCOUNT");
     }
 
     private void extractImageParameters(IProcessData processData) throws MissingDataException {
@@ -116,6 +120,15 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             throw new IllegalArgumentException("Invalid value for " + key + ": " + value);
         }
         return value;
+    }
+
+    @Override
+    protected String getAccount() {
+        if (processingAccount != null && processingAccount.trim().length() > 0) {
+            return processingAccount.trim();
+        } else {
+            return super.getAccount();
+        }
     }
 
     @Override

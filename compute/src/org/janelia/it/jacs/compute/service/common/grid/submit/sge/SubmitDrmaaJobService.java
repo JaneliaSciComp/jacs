@@ -488,6 +488,12 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
     }
 
+    /**
+     * @return the processing account that will be set using "-A <account> " option
+     */
+    protected String getAccount() {
+        return task.getOwner();
+    }
 
     /**
      * This method is intended for adding native commands for sge to specify account
@@ -497,7 +503,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * @throws org.ggf.drmaa.DrmaaException - Drmaa had an issue setting the specification
      */
     protected void setAccount(SerializableJobTemplate jt) throws DrmaaException {
-        String account = task.getOwner();
+        String account = getAccount();
         if (account != null && account.length() > 0) {
             logger.info("setaccount = -A " + account);
             jt.setNativeSpecification("-A " + account);
