@@ -20,9 +20,9 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MIPMapTilesService.class);
 
-    private static final int DESIRED_PROCESSED_X_TILES = 5; // 5 horizontal tiles
-    private static final int DESIRED_PROCESSED_Y_TILES = 5; // 5 vertical tiles
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 10; // 10 layers
+    private static final int DESIRED_PROCESSED_X_TILES = 4; // 4 horizontal tiles
+    private static final int DESIRED_PROCESSED_Y_TILES = 4; // 4 vertical tiles
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 2; // 2 layers
 
     private Long imageWidth;
     private Long imageHeight;
@@ -199,7 +199,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 6;
+        return 15;
     }
 
     /**
