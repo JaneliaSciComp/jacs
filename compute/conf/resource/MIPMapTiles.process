@@ -38,7 +38,7 @@
                 <input name="TARGET_TYPE" />
                 <input name="TARGET_MEDIA_FORMAT" />
                 <input name="TARGET_SKIP_EMPTY_TILES" />
-                <input name="PROCESSING_ACCOUNT">
+                <input name="PROCESSING_ACCOUNT" />
 
                 <output name="TARGET_ROOT_URL" />
                 <output name="TARGET_STACK_FORMAT" />
@@ -71,7 +71,7 @@
                 <input name="TARGET_TYPE" />
                 <input name="TARGET_MEDIA_FORMAT" />
                 <input name="TARGET_SKIP_EMPTY_TILES" />
-                <input name="PROCESSING_ACCOUNT">
+                <input name="PROCESSING_ACCOUNT" />
 
             </operation>
         </sequence>
