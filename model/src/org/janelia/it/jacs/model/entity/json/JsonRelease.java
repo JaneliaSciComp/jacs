@@ -53,6 +53,12 @@ public class JsonRelease {
     }
 
     @JsonProperty
+    public Boolean getSAGESync() {
+        if (!Hibernate.isInitialized(entity)) return null;
+        return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)!=null;
+    }
+
+    @JsonProperty
     public Integer getLagTimeMonths() {
         if (!Hibernate.isInitialized(entity)) return null;
         String lagTimeMonthsStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LAG_TIME_MONTHS);
