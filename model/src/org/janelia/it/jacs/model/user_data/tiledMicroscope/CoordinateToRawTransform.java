@@ -40,6 +40,8 @@ public class CoordinateToRawTransform implements Serializable {
     }
 
     /**
+     * Returns origin in nanometers.
+     * 
      * @return the origin
      */
     public int[] getOrigin() {
@@ -47,6 +49,7 @@ public class CoordinateToRawTransform implements Serializable {
     }
 
     /**
+     * Returns scale in nanometers.
      * @return the scale
      */
     public double[] getScale() {

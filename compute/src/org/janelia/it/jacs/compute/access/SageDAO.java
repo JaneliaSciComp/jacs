@@ -34,6 +34,7 @@ import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.sage.CvTerm;
+import org.janelia.it.jacs.model.sage.Experiment;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 import org.janelia.it.jacs.model.sage.Line;
@@ -475,14 +476,20 @@ public class SageDAO {
         return secondaryImage;
     }
 
-    public SageSession getSageSession(String sessionName, CvTerm type) {
+    public SageSession getSageSession(String sessionName, CvTerm type, Experiment experiment) {
         if (log.isTraceEnabled()) {
             log.trace("getSession(sessionName="+sessionName+")");    
         }
         Session session = getCurrentSession();
-        Query query = session.createQuery("select session from SageSession session where session.name = :name and session.type = :type order by session.id ");
+        Query query = session.createQuery(
+                "select session from SageSession session "
+                + "where session.name = :name "
+                + "and session.type = :type "
+                + "and session.experiment = :experiment "
+                + "order by session.id ");
         query.setString("name", sessionName);
         query.setEntity("type", type);
+        query.setEntity("experiment", experiment);
         List<SageSession> sessions = query.list();
         if (sessions.isEmpty()) return null;
         return sessions.get(0);
@@ -514,6 +521,40 @@ public class SageDAO {
             throw new DaoException("Error saving observation in SAGE", e);
         }
         return observation;
+    }
+
+    public Experiment getExperiment(String experimentName, CvTerm type, String experimenter) {
+        if (log.isTraceEnabled()) {
+            log.trace("getExperiment(experimentName="+experimentName+")");    
+        }
+        
+        Session session = getCurrentSession();
+        Query query = session.createQuery(
+                "select experiment from Experiment experiment "
+                + "where experiment.name = :name "
+                + "and experiment.type = :type "
+                + "and experiment.experimenter = :experimenter "
+                + "order by experiment.id ");
+        query.setString("name", experimentName);
+        query.setEntity("type", type);
+        query.setString("experimenter", experimenter);
+        List<Experiment> experiments = query.list();
+        if (experiments.isEmpty()) return null;
+        return experiments.get(0);
+    }
+    
+    public Experiment saveExperiment(Experiment experiment) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("saveExperiment(experiment="+experiment.getName()+")");    
+        }
+        
+        try {
+            getCurrentSession().saveOrUpdate(experiment);
+        } 
+        catch (Exception e) {
+            throw new DaoException("Error saving experiment in SAGE", e);
+        }
+        return experiment;
     }
     
     /**

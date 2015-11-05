@@ -233,7 +233,7 @@ public class Vaa3DHelper {
 	    // Don't allow it to run for more than a set amount of time, in case it hangs due to requiring user input
 	    script.append("  if [ \"$t\" -gt "+maxSecs+" ]; then\n");
 	    script.append("    echo \"Killing Xvfb session which has been running for over "+maxSecs+" seconds\"\n");
-	    script.append("    kill $"+xvfbPidVarName+" 2> /dev/null\n");
+	    script.append("    kill -9 $"+xvfbPidVarName+" 2> /dev/null\n");
 	    script.append("  fi\n");
 	    
 		script.append("done\n");

@@ -26,27 +26,14 @@ public class SageSession implements java.io.Serializable {
     public SageSession() {
     }
 
-    public SageSession(CvTerm type, CvTerm lab, Line line, String name, String annotator, Date createDate) {
+    public SageSession(CvTerm type, CvTerm lab, Line line, String name, Experiment experiment, String annotator, Date createDate) {
         this.type = type;
         this.lab = lab;
-        this.line = line;
-        this.name = name;
-        this.annotator = annotator;
-        this.createDate = createDate;
-    }
-
-    public SageSession(CvTerm type, CvTerm lab, Image image, Line line, String name, Experiment experiment, Integer phaseId,
-            String annotator, Date createDate, Set<Observation> observations) {
-        this.type = type;
-        this.lab = lab;
-        this.image = image;
         this.line = line;
         this.name = name;
         this.experiment = experiment;
-        this.phaseId = phaseId;
         this.annotator = annotator;
         this.createDate = createDate;
-        this.observations = observations;
     }
 
     public Integer getId() {
