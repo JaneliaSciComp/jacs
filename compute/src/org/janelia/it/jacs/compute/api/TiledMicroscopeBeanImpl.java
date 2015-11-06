@@ -357,24 +357,26 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         return rtnVal;
     }
     
-    /** Return all channel files whose centroids are nearest the coords given. */
-    @Override
-    public RawFileInfo getNearestChannelFiles(String basePath, int[] viewerCoord) throws ComputeException {
-        RawFileInfo rtnVal = null;
-        try {
-            RawFileInfo rfi = _tiledMicroscopeDAO.getNearestFileInfo(basePath, viewerCoord);
-            if (rfi != null) {
-                rtnVal = rfi;
-            }
-        } catch (Exception e) {
-            String errorString = "Error calling getNearestChannelFiles DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(e);
-        }
-        return rtnVal;
-    }
-    
-    @Override
+	/**
+	 * Return all channel files whose centroids are nearest the coords given.
+	 */
+	@Override
+	public RawFileInfo getNearestChannelFiles(String basePath, int[] viewerCoord) throws ComputeException {
+		RawFileInfo rtnVal = null;
+		try {
+			RawFileInfo rfi = _tiledMicroscopeDAO.getNearestFileInfo(basePath, viewerCoord);
+			if (rfi != null) {
+				rtnVal = rfi;
+			}
+		} catch (Exception e) {
+			String errorString = "Error calling getNearestChannelFiles DAO layer: " + e.getMessage();
+			_logger.error(errorString);
+			throw new ComputeException(e);
+		}
+		return rtnVal;
+	}
+	
+	@Override
     public CoordinateToRawTransform getTransform( String basePath ) throws ComputeException {
         CoordinateToRawTransform transform = null;
         try {

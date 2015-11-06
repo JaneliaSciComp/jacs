@@ -753,6 +753,21 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.error("Error running SAGE Artifact Export", ex);
         }
     }
+
+    public void runSageArtifactExport() {
+        try {
+        	for(Entity releaseEntity : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+	            String processName = "SageArtifactExport";
+	            String displayName = "Sage Artifact Export";
+	            HashSet<TaskParameter> taskParameters = new HashSet<>();
+	            taskParameters.add(new TaskParameter("release entity id", releaseEntity.getId().toString(), null)); 
+	            saveAndRunTask(releaseEntity.getOwnerKey(), processName, displayName, taskParameters);
+        	}
+        } 
+        catch (Exception ex) {
+            log.error("Error running SAGE Artifact Export", ex);
+        }
+    }
     
     public void runSageQiScoreSync(Boolean testRun) {
         try {
