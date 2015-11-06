@@ -119,6 +119,7 @@ public class SampleCleaningService extends AbstractEntityService {
 			if (numFound==1) {
 				List<Entity> annotations = annotationBean.getAnnotationsForEntity(CreateErrorEntityService.ANNOTATION_OWNER, entity.getId());
 				if (annotations.isEmpty()) {
+					// TODO: need a better way to determine that this is actually an error annotation, this current check is a very poor heuristic.
 	            	logger.info("    Rejecting candidate "+entity.getId()+" because it and its descendants have an annotation, and it is not an Error annotation.");
 	            	continue;
 				}
