@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
-JAVA_MEMORY="15G"
+JAVA_MEMORY="21G"
 
 # Prepare the tiler parameters
 TILER_JAR_FILE="$SCRIPT_DIR/TileCATMAID-jar-with-dependencies.jar"

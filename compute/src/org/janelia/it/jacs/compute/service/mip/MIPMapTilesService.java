@@ -212,7 +212,12 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 15;
+        return 21;
+    }
+
+    @Override
+    protected int getRequiredSlots() {
+        return 8;
     }
 
     /**
