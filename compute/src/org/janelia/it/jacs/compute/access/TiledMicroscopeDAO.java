@@ -207,7 +207,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 } else {
                     folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
                 }
-                createTiledMicroscopeWorkspace(folder.getId(), sampleId, ownerKey, swcFolder.getName());
+                log.info("Creating new workspace called " + swcFolder.getName() + ", belonging to " + ownerKey);
+                TmWorkspace newWorkspace = createTiledMicroscopeWorkspace(folder.getId(), sampleId, swcFolder.getName(), ownerKey);
+                if (newWorkspace != null) {
+                    workspaceId = newWorkspace.getId();
+                }
+                else {
+                    final String message = "Failed to create workspace in folder "+ folder.getId() + " for sample " + sampleId;
+                    log.error(message);
+                    throw new ComputeException(message);
+                }
             }
         }
 
@@ -220,6 +229,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (ed == null) {
                 throw new ComputeException("Workspace ID " + workspaceId + " does not have any " + EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS + " values to identify sample.");
             }
+            log.info("Adding neurons to existing workspace " + workspaceId);
                     
             sampleId = Long.parseLong(ed.getValue());
         }                
@@ -235,8 +245,19 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
         
         CoordinateToRawTransform coordToRawTransform = this.getTransform(sampleBasePath);
-        Matrix micronToVox = MatrixUtilities.buildMicronToVox(coordToRawTransform.getScale(), coordToRawTransform.getOrigin());
+        double[] scale = coordToRawTransform.getScale();
+        int[] origin = coordToRawTransform.getOrigin();
+        for (int i = 0; i < scale.length; i++) {
+            origin[i] = (int)(origin[i] / scale[i]);
+            scale[i] /= 1000.0;
+        }
+        
+        Matrix micronToVox = MatrixUtilities.buildMicronToVox(scale, origin);
+        log.info("Computed micronToVox of ");
+        micronToVox.print(4,4);
         Matrix voxToMicron = MatrixUtilities.buildVoxToMicron(coordToRawTransform.getScale(), coordToRawTransform.getOrigin());
+        log.info("Computed voxToMicron of ");
+        voxToMicron.print(4,4);
         ImportExportSWCExchanger exchanger = new MatrixDrivenSWCExchanger(micronToVox, voxToMicron);
         swcDataConverter.setSWCExchanger(exchanger);
 
