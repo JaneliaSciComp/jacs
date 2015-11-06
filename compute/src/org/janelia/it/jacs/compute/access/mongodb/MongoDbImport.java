@@ -1111,7 +1111,9 @@ public class MongoDbImport extends AnnotationDAO {
                             trueValue = Long.parseLong(value.toString());
                         }
                         else if (fieldType.equals(Integer.class)) {
-                            trueValue = Integer.parseInt(value.toString());
+                            if (!StringUtils.isEmpty(value.toString())) {
+                                trueValue = Integer.parseInt(value.toString());
+                            }
                         }
                         else if (fieldType.equals(Boolean.class)) {
                             if (value instanceof Boolean) {
@@ -1972,8 +1974,8 @@ public class MongoDbImport extends AnnotationDAO {
                 
                 session = openNewExternalSession();
                 DomainObject domainObject = loadFolderHierarchy(folderEntity, visitedSet, loaded, "  ");
-                loaded.put(domainObject.getId(), domainObject);
                 if (domainObject!=null) {
+                    loaded.put(domainObject.getId(), domainObject);
                     Reference ref = getReference(domainObject);
                     roots.add(ref);
                 }
