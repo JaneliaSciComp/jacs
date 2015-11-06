@@ -245,17 +245,20 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
         
         CoordinateToRawTransform coordToRawTransform = this.getTransform(sampleBasePath);
-        double[] scale = coordToRawTransform.getScale();
-        int[] origin = coordToRawTransform.getOrigin();
+        double[] storedScale = coordToRawTransform.getScale();
+        int[] storedOrigin = coordToRawTransform.getOrigin();
+        double[] scale = new double[ storedScale.length ];
+        int[] origin = new int[ storedOrigin.length ];
+                
         for (int i = 0; i < scale.length; i++) {
-            origin[i] = (int)(origin[i] / scale[i]);
-            scale[i] /= 1000.0;
+            origin[i] = (int)(storedOrigin[i] / storedScale[i]);
+            scale[i] = storedScale[i] / 1000.0;
         }
         
         Matrix micronToVox = MatrixUtilities.buildMicronToVox(scale, origin);
         log.info("Computed micronToVox of ");
         micronToVox.print(4,4);
-        Matrix voxToMicron = MatrixUtilities.buildVoxToMicron(coordToRawTransform.getScale(), coordToRawTransform.getOrigin());
+        Matrix voxToMicron = MatrixUtilities.buildVoxToMicron(scale, origin);
         log.info("Computed voxToMicron of ");
         voxToMicron.print(4,4);
         ImportExportSWCExchanger exchanger = new MatrixDrivenSWCExchanger(micronToVox, voxToMicron);
