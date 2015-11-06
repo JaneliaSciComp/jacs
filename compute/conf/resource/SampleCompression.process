@@ -25,7 +25,7 @@
             <input name="OVERRIDE" value="false"/>
             <input name="COMPRESSION_TYPE"/>
             <input name="PROCESS_VARIABLE_MAP">
-                <entry key="COMPRESSION_TYPE" value="Lossless and H5J"/>
+                <entry key="COMPRESSION_TYPE" value="Visually Lossless"/>
             </input>
             <output name="COMPRESSION_TYPE"/>
         </operation>

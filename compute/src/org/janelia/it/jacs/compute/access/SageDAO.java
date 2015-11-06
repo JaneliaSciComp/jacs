@@ -523,7 +523,7 @@ public class SageDAO {
         return observation;
     }
 
-    public Experiment getExperiment(String experimentName, CvTerm type) {
+    public Experiment getExperiment(String experimentName, CvTerm type, String experimenter) {
         if (log.isTraceEnabled()) {
             log.trace("getExperiment(experimentName="+experimentName+")");    
         }
@@ -533,9 +533,11 @@ public class SageDAO {
                 "select experiment from Experiment experiment "
                 + "where experiment.name = :name "
                 + "and experiment.type = :type "
+                + "and experiment.experimenter = :experimenter "
                 + "order by experiment.id ");
         query.setString("name", experimentName);
         query.setEntity("type", type);
+        query.setString("experimenter", experimenter);
         List<Experiment> experiments = query.list();
         if (experiments.isEmpty()) return null;
         return experiments.get(0);
