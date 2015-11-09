@@ -123,6 +123,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
                 UserToolEvent.TOOL_CATEGORY_SESSION, UserToolEvent.TOOL_EVENT_LOGIN, new Date()));
     }
 
+    /**
+     * Adds the event given, to the session whose id is contained in it.
+     * Call this only from "manager" classes, rather than directly.  The
+     * event can be created more conveniently at a higher level.
+     * 
+     * @param userToolEvent interesting information on usage etc.
+     * @return the event thus posted, or null on failure.
+     */
     public UserToolEvent addEventToSession(UserToolEvent userToolEvent) {
         // Try to log an event but DO NOT tank anything if this fails.  Record the error only in the log.
         try {
@@ -131,6 +139,17 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         catch (DaoException e) {
             logger.error("Cannot log event to session: "+(null==userToolEvent?"null":userToolEvent.toString()));
             logger.error("Error: "+e.getMessage());
+        }
+        return null;
+    }
+
+    public UserToolEvent addEventToSessionAsync(UserToolEvent userToolEvent) {
+        // save as other override, but talk to MDB.
+        try {
+            return computeDAO.addEventToSession(userToolEvent);
+        } catch (DaoException e) {
+            logger.error("Cannot log event to session: " + (null == userToolEvent ? "null" : userToolEvent.toString()));
+            logger.error("Error: " + e.getMessage());
         }
         return null;
     }
