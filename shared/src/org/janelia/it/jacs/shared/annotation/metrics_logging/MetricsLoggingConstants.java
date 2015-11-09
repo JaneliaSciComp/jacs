@@ -14,6 +14,7 @@ package org.janelia.it.jacs.shared.annotation.metrics_logging;
 public class MetricsLoggingConstants {
     public static final String QUEUE = "queue/MetricsLoggingQueue";
 
+    public static final String ID_KEY = "id";
     public static final String CATEGORY_KEY = "category";
     public static final String USER_LOGIN_KEY = "userLogin";
     public static final String SESSION_ID_KEY = "sessionId";
