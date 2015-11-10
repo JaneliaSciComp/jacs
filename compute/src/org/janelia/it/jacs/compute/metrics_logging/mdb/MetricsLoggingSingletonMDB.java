@@ -12,6 +12,7 @@ import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import java.util.Date;
+import javax.jms.ObjectMessage;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import static org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants.*;
@@ -53,6 +54,8 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
         String action;
         Date timestamp;
         
+        UserToolEvent event = null;
+        
         if ( message instanceof  MapMessage ) {
             MapMessage mapMessage = (MapMessage)message;
             try {
@@ -65,24 +68,42 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
                 timestamp = new Date();
                 timestamp.setTime(mapMessage.getLong(TIMESTAMP_KEY));
                 
+                event = new UserToolEvent(sessionId, userLogin, toolName, category, action, timestamp);
             } catch ( JMSException jmse ) {
-                logger.error("Failed to obtain/use parameters for logging.");
+                logger.error("Failed to obtain/use parameters for logging.  Dropping this low-priority message.");
                 jmse.printStackTrace();
-                throw new EJBException(jmse);
             }
          
-            UserToolEvent event = new UserToolEvent(sessionId, userLogin, toolName, category, action, timestamp);
+        }
+        else if (message instanceof ObjectMessage) {
+            ObjectMessage objMessage = (ObjectMessage)message;
+            try {
+                Object messageObject = objMessage.getObject();
+                if (messageObject instanceof UserToolEvent) {
+                    event = (UserToolEvent) messageObject;
+                }
+                else {
+                    final String errorMessage = "Unexpected object type.  User Tool Event expected.  Dropping this low-priority message.";
+                    logger.error(errorMessage);
+                }
+            } catch ( JMSException jmse ) {
+                logger.error("Failed to obtain/use user tool event for logging.  Dropping this low-priority message.");
+                jmse.printStackTrace();
+            }
+        }
+        else {
+            logger.error("Invalid message type delivered.  Expected Map or Object Message, received " + message.getClass().getName());
+        }
+        
+        if (event != null) {
             try {
                 // Pump this event, using the compute infrastructure.
                 new ComputeDAO(logger).addEventToSession(event);
             } catch (ComputeException ce) {
-                logger.error("Failed to log the user tool event.  action=" + action);
+                logger.error("Failed to log the user tool event. Dropping this low-priority message.");
                 ce.printStackTrace();
                 throw new EJBException(ce);
             }
-        }
-        else {
-            logger.error("Invalid message type delivered.  Expected Map Message, received " + message.getClass().getName());
         }
     }
 
