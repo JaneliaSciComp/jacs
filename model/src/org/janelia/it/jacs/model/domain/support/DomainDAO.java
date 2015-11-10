@@ -308,7 +308,7 @@ public class DomainDAO {
     public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, String collectionName, Collection<Long> ids) {
 
         long start = System.currentTimeMillis();
-        log.trace("getDomainObjects(subjectKey={},collectionName="+collectionName+",ids.size="+ids.size()+")");
+        log.trace("getDomainObjects(subjectKey={},collectionName="+collectionName+",ids="+ids+")");
 
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
 
