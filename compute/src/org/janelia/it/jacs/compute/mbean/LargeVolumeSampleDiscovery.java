@@ -92,7 +92,7 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                     System.arraycopy(transform.getScale(), 0, voxelMicrometers, 0, 3);
                     
                     for (int i = 0; i < 3; i++) {
-                        origin[i] /= 1000;
+                        origin[i] /= voxelMicrometers[i];
                         voxelMicrometers[i] /= 1000;
                     }
                     String voxToMicronString = MatrixUtilities.createSerializableVoxToMicron(voxelMicrometers, origin);
