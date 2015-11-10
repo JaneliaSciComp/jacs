@@ -180,9 +180,6 @@ public class DomainUtils {
         return "("+domainObject.getName()+", @"+System.identityHashCode(domainObject)+")";
     }
     
-    /**
-     * @deprecated use the version with FileType instead of this weakly-typed String version
-     */
     public static String getFilepath(HasFiles hasFiles, String role) {
         return getFilepath(hasFiles, FileType.valueOf(role));
     }

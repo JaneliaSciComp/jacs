@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
-import org.jongo.marshall.jackson.oid.Id;
+import org.jongo.marshall.jackson.oid.MongoId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public abstract class OntologyTerm implements HasIdentifier {
-
-    @Id
+    
+    @MongoId
     private Long id;
     private String name;
     private List<OntologyTerm> terms;

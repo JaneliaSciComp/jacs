@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -63,6 +64,7 @@ public class DomainDAO {
     protected MongoClient m;
     protected Jongo jongo;
 
+    protected MongoCollection preferenceCollection;
     protected MongoCollection alignmentBoardCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection compartmentSetCollection;
@@ -114,9 +116,10 @@ public class DomainDAO {
         this.screenSampleCollection = getCollectionByClass(ScreenSample.class);
         this.subjectCollection = getCollectionByClass(Subject.class);
         this.treeNodeCollection = getCollectionByClass(TreeNode.class);
+        this.preferenceCollection = getCollectionByClass(Preference.class);
     }
 
-    public MongoCollection getCollectionByClass(Class<?> domainClass) {
+    public final MongoCollection getCollectionByClass(Class<?> domainClass) {
         String collectionName = getCollectionName(domainClass);
         return jongo.getCollection(collectionName);
     }
@@ -157,6 +160,34 @@ public class DomainDAO {
         return toList(subjectCollection.find().as(Subject.class));
     }
 
+    /**
+     * Return all the preferences for a given subject.
+     */
+    public List<Preference> getPreferences(String subjectKey) {
+        return toList(preferenceCollection.find("{subjectKey:#}",subjectKey).as(Preference.class));
+    }
+
+    /**
+     * Saves the given subject preference.
+     * @param subjectKey
+     * @param preference
+     * @return
+     * @throws Exception
+     */
+    public Preference save(String subjectKey, Preference preference) throws Exception {
+
+        if (preference.getId()==null) {
+            preference.setId(getNewId());
+            preferenceCollection.insert(preference);
+        }
+        else {
+            preferenceCollection.update("{_id:#,subjectKey:#}", preference.getId(), subjectKey).with(preference);
+        }
+        
+        log.info("Saved "+preference.getClass().getName()+"#"+preference.getId());
+        return preference;
+    }
+    
     /**
      * Return the set of subjectKeys which are readable by the given subject. This includes the subject itself, and all of the groups it is part of. 
      */
@@ -277,13 +308,13 @@ public class DomainDAO {
     public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, String collectionName, Collection<Long> ids) {
 
         long start = System.currentTimeMillis();
-        log.trace("getDomainObjects(subjectKey="+subjectKey+",domainObject="+collectionName+")");
+        log.trace("getDomainObjects(subjectKey={},collectionName="+collectionName+",ids.size="+ids.size()+")");
 
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
 
         Class<T> clazz = (Class<T>)getObjectClass(collectionName);
         if (clazz==null) {
-            return new ArrayList<T>();
+            return new ArrayList<>();
         }
 
         MongoCursor<T> cursor = null;
@@ -642,7 +673,7 @@ public class DomainDAO {
         return getDomainObject(subjectKey, treeNode);
     }
 
-    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, int startIndex) throws Exception {
+    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception {
         if (references==null) {
             throw new IllegalArgumentException("Cannot add null children");
         }
@@ -658,7 +689,12 @@ public class DomainDAO {
             if (ref.getCollectionName()==null) {
                 throw new IllegalArgumentException("Cannot add child without a collection name");
             }
-            treeNode.insertChild(startIndex+i, ref);
+            if (index!=null) {
+                treeNode.insertChild(index+i, ref);
+            }
+            else {
+                treeNode.addChild(ref);
+            }
             i++;
         }
         log.info("Adding "+references.size()+" objects to "+treeNode.getName());

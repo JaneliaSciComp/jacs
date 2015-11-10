@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.interfaces.IsParent;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -17,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 @MongoMapped(collectionName = "treeNode")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
-public class TreeNode extends AbstractDomainObject {
+public class TreeNode extends AbstractDomainObject implements IsParent {
 
     private List<Reference> children;
 
