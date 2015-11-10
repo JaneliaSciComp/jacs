@@ -196,8 +196,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             producer.send(message);
             producer.close();
             
-            return computeDAO.addEventToSession(userToolEvent);
-        } catch (DaoException | JMSException e) {
+            return userToolEvent;
+        } catch (JMSException e) {
             logger.error("Cannot log event to session: " + (null == userToolEvent ? "null" : userToolEvent.toString()));
             logger.error("Error: " + e.getMessage());
         }
