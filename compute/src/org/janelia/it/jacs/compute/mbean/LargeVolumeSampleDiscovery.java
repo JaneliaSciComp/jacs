@@ -86,8 +86,11 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                     entityBean.grantPermissions( ownerSubject, entityId, SHARED_PERMISSION, "r", true);
                     
                     // Now, apply conversion matrices to the sample.
-                    int[] origin = transform.getOrigin();
-                    double[] voxelMicrometers = transform.getScale();
+                    int[] origin = new int[3];
+                    System.arraycopy(transform.getOrigin(), 0, origin, 0, 3);
+                    double[] voxelMicrometers = new double[3];
+                    System.arraycopy(transform.getScale(), 0, voxelMicrometers, 0, 3);
+                    
                     for (int i = 0; i < 3; i++) {
                         origin[i] /= 1000;
                         voxelMicrometers[i] /= 1000;
