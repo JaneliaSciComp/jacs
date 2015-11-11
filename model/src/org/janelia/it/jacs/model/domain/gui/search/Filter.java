@@ -25,7 +25,7 @@ public class Filter extends AbstractDomainObject implements IsParent {
     private String searchString;
     private List<Criteria> criteriaList;
     private String sort;
-
+    
     public boolean hasCriteria() {
         return criteriaList!=null && !criteriaList.isEmpty();
     }

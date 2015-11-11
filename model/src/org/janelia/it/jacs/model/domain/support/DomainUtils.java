@@ -15,6 +15,12 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.gui.search.Filter;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.AttributeValueCriteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.Criteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.DateRangeCriteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.FacetCriteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
@@ -334,6 +340,61 @@ public class DomainUtils {
             }
         }
         return null;
+    }
+    
+
+    /**
+     * There are better ways of deep cloning, but this is easier for now. 
+     */
+    public static Filter cloneFilter(Filter filter) {
+        Filter newFilter = new Filter();
+        newFilter.setName(filter.getName());
+        newFilter.setSearchString(filter.getSearchString());
+        newFilter.setSearchType(filter.getSearchType());
+        newFilter.setSort(filter.getSort());
+        if (filter.hasCriteria()) {
+            for(Criteria criteria : filter.getCriteriaList()) {
+                newFilter.addCriteria(cloneCriteria(criteria));
+            }
+        }
+        
+        return newFilter;
+    }
+    
+    public static Criteria cloneCriteria(Criteria criteria) {
+        if (criteria instanceof AttributeValueCriteria) {
+            AttributeValueCriteria source = (AttributeValueCriteria)criteria;
+            AttributeValueCriteria newCriteria = new AttributeValueCriteria();
+            newCriteria.setAttributeName(source.getAttributeName());
+            newCriteria.setValue(source.getValue());
+            return newCriteria;
+        }
+        else if (criteria instanceof DateRangeCriteria) {
+            DateRangeCriteria source = (DateRangeCriteria)criteria;
+            DateRangeCriteria newCriteria = new DateRangeCriteria();
+            newCriteria.setAttributeName(source.getAttributeName());
+            newCriteria.setStartDate(source.getStartDate());
+            newCriteria.setEndDate(source.getEndDate());
+            return newCriteria;
+        }
+        else if (criteria instanceof FacetCriteria) {
+            FacetCriteria source = (FacetCriteria)criteria;
+            FacetCriteria newCriteria = new FacetCriteria();
+            newCriteria.setAttributeName(source.getAttributeName());
+            newCriteria.setValues(new HashSet<>(source.getValues()));
+            return newCriteria;
+        }
+        else if (criteria instanceof ObjectSetCriteria) {
+            ObjectSetCriteria source = (ObjectSetCriteria)criteria;
+            ObjectSetCriteria newCriteria = new ObjectSetCriteria();
+            newCriteria.setObjectSetName(source.getObjectSetName());
+            Reference setReference = new Reference(source.getObjectSetReference().getCollectionName(), source.getObjectSetReference().getTargetId());
+            newCriteria.setObjectSetReference(setReference);
+            return newCriteria;
+        }
+        else {
+            throw new IllegalArgumentException("Unknown criteria subtype: "+criteria.getClass().getName());
+        }
     }
     
     /**
