@@ -550,7 +550,7 @@ public class RestfulWebService {
 
         final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
         List<JsonRelease> releaseList = new ArrayList<>();
-        
+
         try {
             for(Entity releaseEntity : entityBean.getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
                 releaseList.add(new JsonRelease(releaseEntity));
@@ -609,7 +609,7 @@ public class RestfulWebService {
         try {
             // Consider all releases with a given name
             for(Entity releaseEntity : entityBean.getEntitiesByNameAndTypeName(null, releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
-
+                
                 // Find the release folder
                 Entity releaseFolder = null;
                 for(Entity folder : entityBean.getEntitiesByNameAndTypeName(releaseEntity.getOwnerKey(), releaseName, EntityConstants.TYPE_FOLDER)) {

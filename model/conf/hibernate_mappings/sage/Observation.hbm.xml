@@ -17,9 +17,9 @@
         <many-to-one name="term" class="org.janelia.it.jacs.model.sage.CvTerm" fetch="select">
             <column name="term_id" not-null="true" />
         </many-to-one>
-        <property name="experimentId" type="java.lang.Integer">
+        <many-to-one name="experiment" class="org.janelia.it.jacs.model.sage.Experiment" fetch="select">
             <column name="experiment_id" />
-        </property>
+        </many-to-one>
         <property name="value" type="string">
             <column name="value" length="65535" not-null="true" />
         </property>

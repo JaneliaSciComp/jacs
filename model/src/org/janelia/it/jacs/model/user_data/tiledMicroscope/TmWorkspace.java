@@ -4,12 +4,12 @@ import Jama.Matrix;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import org.janelia.it.jacs.model.util.MatrixUtilities;
+import static org.janelia.it.jacs.model.util.MatrixUtilities.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,9 +19,6 @@ import java.util.Set;
  */
 
 public class TmWorkspace implements IsSerializable, Serializable {
-    private static final int EXPECTED_MATRIX_SIZE = 4;
-    private static final String ROW_SEP = ";";
-    private static final String COL_SEP = ",";
 
     //todo seed this entirely from without: serializables should not have so much functionality. LLF
     private Long id;
@@ -159,61 +156,11 @@ public class TmWorkspace implements IsSerializable, Serializable {
     }
     
     public String serializeMatrix(Matrix matrix, String matrixName) {
-        StringBuilder rtnVal = new StringBuilder();
-        if (matrix == null  || 
-            matrix.getRowDimension() != EXPECTED_MATRIX_SIZE  || 
-            matrix.getColumnDimension() != EXPECTED_MATRIX_SIZE) {
-            System.err.println("Serialization of " + matrixName + " failed.  Unexpected dimensions.");
-            return null;
-        }
-        
-        double[][] matrixArr = matrix.getArray();
-        for (double[] row: matrixArr) {
-            if (rtnVal.length() > 0) {
-                rtnVal.append(ROW_SEP);
-            }
-            int colCount = 0;
-            for (double col: row) {
-                if (colCount > 0) {
-                    rtnVal.append(COL_SEP);
-                }
-                rtnVal.append(col);
-                colCount++;
-            }
-        }
-                
-        return rtnVal.toString();
+        return MatrixUtilities.serializeMatrix(matrix, matrixName);
     }
 
     private Matrix deserializeMatrix(String matrixString, String matrixName) {
-        Matrix rtnVal = null;
-        String[] rowMatrixStr = matrixString.split(ROW_SEP);
-        int x = 0;
-        int y = 0;
-        double[][] accumulator = new double[EXPECTED_MATRIX_SIZE][EXPECTED_MATRIX_SIZE];
-        if (rowMatrixStr.length == 4) {
-            for (String row: rowMatrixStr) {
-                String[] columnStr = row.split(COL_SEP);
-                x = 0;
-                try {                    
-                    for (String column : columnStr) {                        
-                        double colDouble = Double.parseDouble(column);
-                        accumulator[y][x] = colDouble;
-                        x++;
-                    }
-                } catch (NumberFormatException nfe) {
-                    // NOTE: this class is serialized.  Therefore, it cannot carry logger.
-                    System.err.println("Serialized value " + columnStr[x] + " at position " + x + "," + y + " of matrix " + matrixName + "value {" + matrixString + "}, could not be deserialized.");
-                }
-                y++;
-            }
-            rtnVal = new Matrix(accumulator);
-        }
-        else {
-            // NOTE: this class is serialized.  Therefore, it cannot carry logger.
-            System.err.println("Serialized matrix: " + matrixName + "value {" + matrixString + "}, could not be deserialized.");
-        }
-        return rtnVal;
+        return MatrixUtilities.deserializeMatrix(matrixString, matrixName);
     }
     
 }

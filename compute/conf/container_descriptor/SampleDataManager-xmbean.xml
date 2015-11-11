@@ -549,6 +549,16 @@
     </operation>
 
     <operation>
+        <description>Scality migration from one ring to another</description>
+        <name>scalityMigrationService</name>
+        <parameter>
+            <description>Path to the file with object id's</description>
+            <name>filePath</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
         <description>Fixing h5j's to have padding</description>
         <name>visuallyLosslessCorrectionService</name>
         <parameter>
@@ -578,6 +588,11 @@
         </parameter>
     </operation>
 
+    <operation>
+        <description>Export artifacts for all annotated samples for all releases</description>
+        <name>runSageArtifactExport</name>
+    </operation>
+    
     <operation>
         <description>Export Qi/Qm scores for all aligned 20x samples to SAGE</description>
         <name>runSageQiScoreSync</name>

@@ -30,15 +30,6 @@ public class Cv implements Serializable {
         this.createDate = createDate;
     }
 
-    public Cv(String name, String definition, boolean isCurrent, String displayName, Date createDate, Set<CvTerm> terms) {
-        this.name = name;
-        this.definition = definition;
-        this.isCurrent = isCurrent;
-        this.displayName = displayName;
-        this.createDate = createDate;
-        this.terms = terms;
-    }
-
     public Integer getId() {
         return this.id;
     }

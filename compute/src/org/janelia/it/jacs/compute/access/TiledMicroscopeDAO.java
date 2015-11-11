@@ -1020,7 +1020,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    private RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
+    public RawFileInfo getNearestFileInfo( String basePath, int[] viewerCoord ) throws DaoException {
         RawFileInfo rtnVal = null;
         try {
             RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher( basePath );
@@ -1051,24 +1051,45 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         log.info("attempting to fix connectivity for neuron " + neuronID);
 
-        // first we need to load all annotations (just like TmNeuron does);
-        //  then we can loop over them again and check for missing parents/children
-        ArrayList<EntityData> annList = new ArrayList<>();
+        // first, load all entity data and find the root and link (non-root)
+        //  annotations; they can all be parents, but each has different
+        //  possible parents
         HashSet<Long> parentSet = new HashSet<>();
+        ArrayList<EntityData> linkList = new ArrayList<>();
+        ArrayList<EntityData> rootList = new ArrayList<>();
         Entity neuronEntity = annotationDAO.getEntityById(neuronID);
         for (EntityData ed: neuronEntity.getEntityData()) {
             String attributeName = ed.getEntityAttrName();
-            if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
-                attributeName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+            if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
                 parentSet.add(ed.getId());
-                // no need to check roots; they are children of neurons
-                if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
-                    annList.add(ed);
+                linkList.add(ed);
+            } else if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
+                parentSet.add(ed.getId());
+                rootList.add(ed);
                 }
+            }
+
+        // check roots: are they children of the neuron?
+        for (EntityData ed: rootList) {
+            TmGeoAnnotation annotation;
+            try {
+                annotation = new TmGeoAnnotation(ed);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new DaoException(e);
+            }
+            if (annotation != null && !annotation.getParentId().equals(neuronID)) {
+                log.info("root " + annotation.getId() + " had wrong parent; reassigned to current neuron");
+                String valueString=TmGeoAnnotation.toStringFromArguments(annotation.getId(),
+                    neuronID, annotation.getIndex(), annotation.getX(), annotation.getY(),
+                    annotation.getZ(), annotation.getComment());
+                ed.setValue(valueString);
+                annotationDAO.saveOrUpdate(ed);
             }
         }
 
-        for (EntityData ed: annList) {
+        // check non-roots: do we have their parents?
+        for (EntityData ed: linkList) {
             // I really don't get why we launder everything to DaoException, but
             //  that seems to be the pattern:
             TmGeoAnnotation annotation;
@@ -1079,7 +1100,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new DaoException(e);
             }
             if (annotation != null && !parentSet.contains(annotation.getParentId())) {
-                log.info(annotation.getId() + " had missing parent; promoted to root");
+                log.info("link " + annotation.getId() + " had missing parent; promoted to root");
 
                 // when a missing parent is found:
                 //     edit value: set parent ID to neuron ID

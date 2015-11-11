@@ -13,6 +13,8 @@ public enum PipelineProcess implements NamedEnum {
     FlyLightOpticLobe("FlyLight Optic Lobe Pipeline"),
     FlyLightProjectionWithChannelSpec("FlyLight Projection With Channel Spec Pipeline"),
     FlyLightPairedSample("FlyLight Paired Sample"),
+    FlyLightPairedSamplePolarity("FlyLight Paired Sample Polarity"),
+    FlyLightPairedSampleMCFO("FlyLight Paired Sample MCFO"),
     FlyLightUnaligned("FlyLight Unaligned Pipeline"),
     FlyLightWholeBrain("FlyLight Whole Brain Pipeline"),
     FlyLightWholeBrain64x("FlyLight Whole Brain 63x Pipeline"),

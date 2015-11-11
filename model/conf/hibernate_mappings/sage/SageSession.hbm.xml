@@ -23,9 +23,9 @@
         <property name="name" type="string">
             <column name="name" length="767" not-null="true" />
         </property>
-        <property name="experimentId" type="java.lang.Integer">
+        <many-to-one name="experiment" class="org.janelia.it.jacs.model.sage.Experiment" fetch="select">
             <column name="experiment_id" />
-        </property>
+        </many-to-one>
         <property name="phaseId" type="java.lang.Integer">
             <column name="phase_id" />
         </property>

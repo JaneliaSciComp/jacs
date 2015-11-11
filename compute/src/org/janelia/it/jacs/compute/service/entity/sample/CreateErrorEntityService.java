@@ -37,6 +37,7 @@ import org.janelia.it.jacs.shared.utils.entity.DataReporter;
  */
 public class CreateErrorEntityService extends AbstractEntityService {
 
+	public static final String ANNOTATION_OWNER = "group:workstation_users";
     private static final String FROM_EMAIL = SystemConfigurationProperties.getString("System.DataErrorSource");
     private static final String TO_EMAIL = SystemConfigurationProperties.getString("System.DataErrorDestination");
 	private static final String ERRORS_DIR_NAME = "Error";
@@ -152,7 +153,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             String valueString = error.getDescription();
             final OntologyAnnotation annotation = new OntologyAnnotation(
                     null, rootEntity.getId(), keyEntity.getId(), keyString, null, valueString);
-            Entity annotationEntity = annotationBean.createOntologyAnnotation("user:system", annotation);
+            Entity annotationEntity = annotationBean.createOntologyAnnotation(ANNOTATION_OWNER, annotation);
             
             // Report the sample
             Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);

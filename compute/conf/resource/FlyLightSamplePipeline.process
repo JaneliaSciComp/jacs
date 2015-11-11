@@ -185,13 +185,7 @@
             
                 <!-- Was there a sample processing result that could be reused? -->
                 <sequence if="RUN_PROCESSING=false">
-                
-                    <!-- Set the result for this sample area -->
-                    <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
-                        <input name="SAMPLE_AREA"/>
-                        <input name="RESULT_ENTITY_ID"/>
-                    </operation>
-                        
+                                        
                     <!-- Extract default image filepath --> 
                     <operation name="Get Default Image" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
                         <input name="BEAN" value="$V{SAMPLE_AREA}"/>
@@ -422,12 +416,6 @@
             			<output name="DEFAULT_IMAGE_ID"/>
             	    </operation>
         		
-                    <!-- Set the result for this sample area. This is used later by alignment services. -->
-                    <operation name="Set Sample Processing Results" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleProcessingAreaService">
-                        <input name="SAMPLE_AREA"/>
-                        <input name="RESULT_ENTITY_ID"/>
-                    </operation>
-                        
             		<!-- Run analyses on unaligned results, if there are signal channels to analyze -->
                     <sequence if="SIGNAL_CHANNELS is not empty">
                     
@@ -474,21 +462,16 @@
         
         <!-- Post-processing only if we're persisting -->
         <sequence if="PERSIST=true">
-        
-            <!-- TODO: Right now, post-processing only works if processing is run. To fix this, we need to populate SAMPLE_AREAS and other variables when processing is reused. -->
-            <sequence if="RUN_PROCESSING=true" name="Sample post-processing" startEvent="running">
-            
-                <!-- Run post processing service -->        
-                <include name="Post-processing" process="FlyLightPostProcessingPipeline" startEvent="running">
-                    <input name="SAMPLE_AREAS"/>
-                    <input name="PIPELINE_RUN_ENTITY_ID"/>
-                    <input name="SAMPLE_ENTITY_ID"/>
-                    <input name="REUSE_POST"/>
-                    <input name="OUTPUT_COLOR_SPEC"/>
-                    <input name="IMAGE_TYPE"/>
-                </include>
-        
-            </sequence>
+    
+            <!-- Run post processing service -->        
+            <include name="Post-processing" process="FlyLightPostProcessingPipeline" startEvent="running">
+                <input name="SAMPLE_AREAS"/>
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="REUSE_POST"/>
+                <input name="OUTPUT_COLOR_SPEC"/>
+                <input name="IMAGE_TYPE"/>
+            </include>
             
         </sequence>
         

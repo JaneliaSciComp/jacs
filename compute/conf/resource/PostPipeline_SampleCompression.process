@@ -49,7 +49,7 @@
             <input name="COMPRESSION_TYPE"/>
             <input name="PROCESS_VARIABLE_MAP">
                 <entry key="SEPARATION_EXCLUDE" value="Consolidated*,Reference*,NeuronAligned*"/>
-                <entry key="COMPRESSION_TYPE" value="Visually Lossless and PBD"/>
+                <entry key="COMPRESSION_TYPE" value="Visually Lossless"/>
             </input>
             <output name="SEPARATION_EXCLUDE"/>
             <output name="COMPRESSION_TYPE"/>

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.util.ISO8601Utils;
 
 @JsonInclude(Include.NON_NULL)
 public class JsonRelease {
@@ -40,9 +41,21 @@ public class JsonRelease {
 	}
 
     @JsonProperty
+    public String getCreationDate() {
+        if (!Hibernate.isInitialized(entity)) return null;
+        return ISO8601Utils.format(entity.getCreationDate());
+    }
+    
+    @JsonProperty
     public String getReleaseDate() {
         if (!Hibernate.isInitialized(entity)) return null;
         return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RELEASE_DATE);
+    }
+
+    @JsonProperty
+    public Boolean getSAGESync() {
+        if (!Hibernate.isInitialized(entity)) return null;
+        return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)!=null;
     }
 
     @JsonProperty
@@ -77,9 +90,9 @@ public class JsonRelease {
     @JsonProperty
     public List<String> getSubscribers() {
         if (!Hibernate.isInitialized(entity)) return null;
-        String dataSetsStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SUBSCRIBERS);
-        if (dataSetsStr != null) {
-            return Task.listOfStringsFromCsvString(dataSetsStr);
+        String subscribers = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SUBSCRIBERS);
+        if (subscribers != null) {
+            return Task.listOfStringsFromCsvString(subscribers);
         }
         return null;
     }

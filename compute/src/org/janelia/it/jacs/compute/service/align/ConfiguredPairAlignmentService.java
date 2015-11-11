@@ -16,8 +16,6 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
         
-	private static final String BRAIN_AREA = "Brain";
-	
     @Override
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
         
@@ -70,39 +68,6 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     @Override
     protected void setLegacyConsensusValues() throws Exception {
     	// Do nothing, since we build our consensus values while populating the inputs
-    }
-    
-    private Entity getLatestResultOfType(Entity objectiveSample, String resultType, String anatomicalArea) throws Exception {
-        entityLoader.populateChildren(objectiveSample);
-
-        contextLogger.debug("Looking for latest result of type "+resultType+" with anatomicalArea="+anatomicalArea);
-        
-        List<Entity> pipelineRuns = EntityUtils.getChildrenOfType(objectiveSample, EntityConstants.TYPE_PIPELINE_RUN);
-        Collections.reverse(pipelineRuns);
-        for(Entity pipelineRun : pipelineRuns) {
-            entityLoader.populateChildren(pipelineRun);
-
-            contextLogger.debug("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
-
-            if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR) != null) {
-                continue;
-            }
-            
-            List<Entity> results = EntityUtils.getChildrenForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT);
-            Collections.reverse(results);
-            for(Entity result : results) {
-
-                contextLogger.debug("    Check result "+result.getName()+" (id="+result.getId()+")");
-                
-                if (result.getEntityTypeName().equals(resultType)) {
-                    if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
-                        entityLoader.populateChildren(result);
-                        return result;
-                    }
-                }
-            }   
-        }
-        return null;
     }
 
     private AlignmentInputFile buildInputFromResult(String inputType, Entity sampleProcessingResult, Entity objectiveSample, String objective) throws Exception {

@@ -10,10 +10,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
-import org.janelia.it.jacs.model.tasks.utility.GenericTask;
-import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
-import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
+import org.janelia.it.jacs.model.tasks.utility.*;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
@@ -61,13 +58,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleMaintenancePipelines() {
         try {
-            log.info("Building list of users with samples...");
+            log.info("Building list of users with data sets...");
             Set<String> subjectKeys = new TreeSet<>();
-            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
-            log.info("Found users with samples: " + subjectKeys);
-            for(String subjectKey : subjectKeys) {
+            List<String> sortedKeys = new ArrayList<>(subjectKeys);
+            Collections.sort(sortedKeys);
+            log.info("Found users with data sets: " + sortedKeys);
+            for(String subjectKey : sortedKeys) {
                 log.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
             }
@@ -620,6 +619,22 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    /**
+     * Method to point to a file of object id's and move them from one ring into another.  (Probably should parameterize the rings)
+     * Example file exists in /groups/jacs/jacsShare/saffordTest/scalityMigration.txt
+     *
+     */
+    public void scalityMigrationService(String filePath) {
+        try {
+            ScalityMigrationTask migrationTask = new ScalityMigrationTask("system", new ArrayList<Event>(), filePath);
+            migrationTask = (ScalityMigrationTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(migrationTask);
+            EJBFactory.getLocalComputeBean().submitJob("ScalityMigration", migrationTask.getObjectId());
+        }
+        catch (DaoException | RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void visuallyLosslessCorrectionService(String filePath, String debug) {
         try {
@@ -735,6 +750,21 @@ public class SampleDataManager implements SampleDataManagerMBean {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null)); 
             saveAndRunTask(subject.getKey(), processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            log.error("Error running SAGE Artifact Export", ex);
+        }
+    }
+
+    public void runSageArtifactExport() {
+        try {
+        	for(Entity releaseEntity : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+	            String processName = "SageArtifactExport";
+	            String displayName = "Sage Artifact Export";
+	            HashSet<TaskParameter> taskParameters = new HashSet<>();
+	            taskParameters.add(new TaskParameter("release entity id", releaseEntity.getId().toString(), null)); 
+	            saveAndRunTask(releaseEntity.getOwnerKey(), processName, displayName, taskParameters);
+        	}
         } 
         catch (Exception ex) {
             log.error("Error running SAGE Artifact Export", ex);
