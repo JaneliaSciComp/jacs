@@ -25,6 +25,7 @@ public interface TiledMicroscopeBeanRemote {
     public TmSample createTiledMicroscopeSample(String user, String sampleName, String pathToRenderFolder) throws ComputeException;
 
     public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException;
+    public void submitSwcFolderImport(String swcFolderLoc, String username, Long sampleId) throws ComputeException;
     
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException;
