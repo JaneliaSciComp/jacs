@@ -5,7 +5,7 @@ import org.janelia.it.jacs.model.domain.sample.*
 import org.janelia.it.jacs.model.domain.screen.*
 import org.janelia.it.jacs.model.domain.gui.search.Filter
 import org.janelia.it.jacs.shared.utils.DomainQuery
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAO
+import org.janelia.it.jacs.model.domain.support.DomainDAO
 
 
 /*

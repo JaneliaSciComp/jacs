@@ -1,7 +1,7 @@
 package test.wsrest
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAO
+import org.janelia.it.jacs.model.domain.support.DomainDAO
 import org.janelia.it.jacs.compute.wsrest.UserWorkstationWebService
 import org.janelia.it.jacs.model.domain.Reference
 import org.janelia.it.jacs.model.domain.Subject;
@@ -23,6 +23,7 @@ class UserWorkstationSpec extends Specification {
     def testObjectSet
     def testObjectSetAfterAdded, testObjectSetAfterRemoved
     def referenceAdds, referenceRemoves
+    def referenceAddLongs, referenceRemoveLongs
     def reorder
     def testSubjects
     DomainDAO dao
@@ -64,6 +65,7 @@ class UserWorkstationSpec extends Specification {
         ])
         testObjectSet = new ObjectSet([
                 id: 1980402565539430410L,
+                collectionName: "sample",
                 members: [1831527772221079641L,1831527772221079642L,1831527772221079643L]
         ])
         testObjectSetAfterAdded = new ObjectSet([
@@ -75,6 +77,14 @@ class UserWorkstationSpec extends Specification {
         testReorderTreeNode = new TreeNode([
                 id: 1980402565539430410L
         ])
+        referenceAddLongs = [
+                1831527772221079644L,
+                1831527772221079645L
+        ]
+        referenceRemoveLongs = [
+                1831527772221079642L,
+                1831527772221079643L
+        ]
         referenceAdds = [
                 new Reference ("sample",1831527772221079644L),
                 new Reference ("sample",1831527772221079645L)
@@ -124,7 +134,7 @@ class UserWorkstationSpec extends Specification {
         ObjectMapper mapper = new ObjectMapper()
         Workspace workspace = mapper.readValue(results, Workspace.class)
         workspace.children.size() == 3
-        workspace.children.get(1).targetType == "treeNode"
+        workspace.children.get(1).targetCollectionName == "treeNode"
     }
 
     def "create a TreeNode" () {
@@ -135,7 +145,7 @@ class UserWorkstationSpec extends Specification {
         ObjectMapper mapper = new ObjectMapper()
         TreeNode treeNode = mapper.readValue(results, TreeNode.class)
         treeNode.children.size() == 3
-        treeNode.children.get(1).targetType == "treeNode"
+        treeNode.children.get(1).targetCollectionName == "treeNode"
     }
 
     def "reorder a TreeNode" () {
@@ -181,7 +191,7 @@ class UserWorkstationSpec extends Specification {
 
     def "add children to ObjectSet" () {
         when:
-        def results = userWorkstationService.addMembers(testUser, testObjectSet.id, referenceAdds)
+        def results = userWorkstationService.addMembers(testUser, testObjectSet.id, referenceAddLongs)
 
         then:
         ObjectMapper mapper = new ObjectMapper()
@@ -191,7 +201,7 @@ class UserWorkstationSpec extends Specification {
 
     def "remove children from ObjectSet" () {
         when:
-        def results = userWorkstationService.removeMembers(testUser, testObjectSet.id, referenceRemoves)
+        def results = userWorkstationService.removeMembers(testUser, testObjectSet.id, referenceRemoveLongs)
 
         then:
         ObjectMapper mapper = new ObjectMapper()
