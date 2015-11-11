@@ -4,7 +4,7 @@ import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
-import org.jongo.marshall.jackson.oid.Id;
+import org.jongo.marshall.jackson.oid.MongoId;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -16,8 +16,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @MongoMapped(collectionName = "subject")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class Subject implements HasIdentifier {
-
-    @Id
+    
+    @MongoId
     private Long id;
     private String key;
     private String name;

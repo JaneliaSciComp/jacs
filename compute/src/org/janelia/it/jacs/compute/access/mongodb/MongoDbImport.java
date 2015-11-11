@@ -32,9 +32,9 @@ import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
-import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -116,6 +116,7 @@ public class MongoDbImport extends AnnotationDAO {
 	
 	// Cached collections
 	protected MongoCollection subjectCollection;
+	protected MongoCollection preferenceCollection;
     protected MongoCollection treeNodeCollection;
     protected MongoCollection objectSetCollection;
     protected MongoCollection dataSetCollection;
@@ -144,6 +145,7 @@ public class MongoDbImport extends AnnotationDAO {
     	dao.getMongo().setWriteConcern(WriteConcern.UNACKNOWLEDGED);
     	
     	this.subjectCollection = dao.getCollectionByClass(Subject.class);
+        this.preferenceCollection = dao.getCollectionByClass(Preference.class);
     	this.treeNodeCollection = dao.getCollectionByClass(TreeNode.class);
     	this.objectSetCollection = dao.getCollectionByClass(ObjectSet.class);
     	this.dataSetCollection = dao.getCollectionByClass(DataSet.class);
@@ -175,7 +177,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Adding subjects");
         loadSubjects();
-
+        
         log.info("Adding samples");
         // TODO: handle deleted (i.e. "hidden") neurons
         // TODO: handle curated neurons
@@ -256,6 +258,11 @@ public class MongoDbImport extends AnnotationDAO {
             newSubject.setFullName(subject.getFullName());
             newSubject.setGroups(new HashSet<String>(getGroupKeysForUsernameOrSubjectKey(subject.getKey())));
             subjectCollection.insert(newSubject);
+            for(org.janelia.it.jacs.model.user_data.prefs.SubjectPreference sp : subject.getPreferenceMap().values()) {
+                Preference preference = new Preference(subject.getKey(), sp.getCategory(), sp.getName(), sp.getValue());
+                preferenceCollection.insert(preference);
+            }
+            
         }
     }
     
@@ -739,17 +746,46 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     private void addStackFiles(Entity imageEntity, Map<FileType,String> files, HasFilepath result) throws Exception {
-        addImage(files,FileType.Stack,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        
+        populateChildren(imageEntity);
+        
+        if (imageEntity.getName().endsWith("h5j")) {
+            addStack(imageEntity, files, FileType.VisuallyLosslessStack, result);
+        }
+        else {
+            addStack(imageEntity, files, FileType.LosslessStack, result);
+        }
+        
         addImage(files,FileType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
         addImage(files,FileType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
-        populateChildren(imageEntity);
+        
+        Entity lossless = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
+        if (lossless!=null) {
+            addStack(lossless, files, FileType.LosslessStack, result);
+        }
+        
         Entity slightlyLossy = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE);
         if (slightlyLossy!=null) {
-            addImage(files,FileType.VisuallyLosslessStack,getRelativeFilename(result,slightlyLossy.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addStack(slightlyLossy, files, FileType.VisuallyLosslessStack, result);
         }
+        
         Entity fast3dImage = imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
         if (fast3dImage!=null) {
             addImage(files,FileType.FastStack,getRelativeFilename(result,fast3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        }
+    }
+    
+    private void addStack(Entity imageEntity, Map<FileType,String> files, FileType type, HasFilepath result) {
+
+        String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        if (filepath!=null) {
+            addImage(files,type,getRelativeFilename(result,filepath));
+        }
+        else {
+            String bpid = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+            if (bpid!=null) {
+                addImage(files,type,getScalityFilepath(bpid));
+            }
         }
     }
 
@@ -1026,9 +1062,9 @@ public class MongoDbImport extends AnnotationDAO {
 
         LSMImage lsm = (LSMImage)getImage(lsmEntity);
         // An LSM file must have a stack file path
-        String filepath = lsm.getFiles().get(FileType.Stack);
+        String filepath = lsm.getFiles().get(FileType.LosslessStack);
         if (filepath==null) {
-            log.error("LSM cannot be imported because it has no filepath: "+lsmEntity.getId());
+            log.warn("    LSM cannot be imported because it has no filepath: "+lsmEntity.getId());
             return null;
         }
         
@@ -1340,13 +1376,13 @@ public class MongoDbImport extends AnnotationDAO {
         Map<FileType,String> images = new HashMap<FileType,String>();
         Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
         if (alignedStack!=null) {
-            addImage(images,FileType.Stack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(images,FileType.LosslessStack,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
             addImage(images,FileType.AllMip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         Entity heatmap = EntityUtils.findChildWithName(patternAnnotationEntity, "Heatmap");
         if (heatmap!=null) {
-            addImage(images,FileType.HeatmapStack,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-            addImage(images,FileType.HeatmapMip,getRelativeFilename(screenSample,screenSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+            addImage(images,FileType.HeatmapStack,getRelativeFilename(screenSample,heatmap.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+            addImage(images,FileType.HeatmapMip,getRelativeFilename(screenSample,heatmap.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         screenSample.setImages(images);
         
@@ -1418,8 +1454,8 @@ public class MongoDbImport extends AnnotationDAO {
         }
         
         Map<FileType,String> images = new HashMap<FileType,String>();
-        addImage(images,FileType.Stack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
-        addImage(images,FileType.HeatmapMip,getRelativeFilename(mask,default2dImageFilepath));
+        addImage(images,FileType.LosslessStack,getRelativeFilename(mask,maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)));
+        addImage(images,FileType.AllMip,getRelativeFilename(mask,default2dImageFilepath));
         mask.setImages(images);
         return mask;
     }
@@ -1968,6 +2004,8 @@ public class MongoDbImport extends AnnotationDAO {
         for(Iterator<Entity> i = rootFolders.iterator(); i.hasNext(); ) {
             Entity folderEntity = i.next();
                         
+            if (!subjectKey.equals(folderEntity.getOwnerKey())) continue;
+            
             Session session = null;
             try {
                 long start = System.currentTimeMillis();
@@ -2224,6 +2262,26 @@ public class MongoDbImport extends AnnotationDAO {
         
         try {
             if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
+
+                if (entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)==null) {
+                    // Attempt to find the "real" LSM entity in the objective sample
+                    List<Long> lsmIds = new ArrayList<>();
+                    lsmIds.add(entity.getId());
+                    List<String> upMapping = new ArrayList<String>();
+                    upMapping.add("Sample");
+                    List<String> downMapping = new ArrayList<String>();
+                    upMapping.add("Sample");
+                    upMapping.add("Supporting Files");
+                    upMapping.add("Image Tile");
+                    upMapping.add("LSM Stack");
+                    List<MappedId> mappings = getProjectedResults(null, lsmIds, upMapping, downMapping);
+                    for(MappedId mappedId : mappings) {
+                        entity = getEntityById(mappedId.getMappedId());
+                        log.info(indent+"  Found real LSM in objective sample: "+entity.getId());
+                        break;
+                    }
+                }
+                
             	LSMImage image = getLSMImage(null, entity);
             	if (image!=null) {
             	    dao.getCollectionByName(type).save(image);
@@ -2366,6 +2424,10 @@ public class MongoDbImport extends AnnotationDAO {
     private String sanitizeCSV(String res) {
         if (res==null) return res;
         return res.replaceAll("'", "");
+    }
+
+    private String getScalityFilepath(String bpid) {
+        return "/Scality/"+bpid;
     }
     
     private String getRelativeFilename(HasFilepath result, String filepath) {
