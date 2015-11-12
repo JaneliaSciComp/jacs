@@ -123,24 +123,25 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws DaoException {
         try {
             Entity workspace = annotationDAO.getEntityById(workspaceId);
-            if (!workspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
-                throw new Exception("Tiled Neuron must be created with valid Workspace Id");
-            }
-            Entity neuron=new Entity();
-            neuron.setCreationDate(new Date());
-            neuron.setUpdatedDate(new Date());
-            neuron.setName(name);
-            neuron.setOwnerKey(workspace.getOwnerKey());
-            neuron.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
-            annotationDAO.saveOrUpdate(neuron);
-            // old
-            // EntityData ed = workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
-            // annotationDAO.saveOrUpdate(ed);
-            // Konrad said use annDAO instead so permissions are properly carried over:
-            annotationDAO.addEntityToParent(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
-            annotationDAO.saveOrUpdate(workspace);
-            TmNeuron tmNeuron=new TmNeuron(neuron);
-            return tmNeuron;
+            final String ownerKey = workspace.getOwnerKey();
+            
+            return createTiledMicroscopeNeuron(workspace, name, ownerKey);
+//
+//            Entity neuron=new Entity();
+//            neuron.setCreationDate(new Date());
+//            neuron.setUpdatedDate(new Date());
+//            neuron.setName(name);
+//            neuron.setOwnerKey(ownerKey);
+//            neuron.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
+//            annotationDAO.saveOrUpdate(neuron);
+//            // old
+//            // EntityData ed = workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
+//            // annotationDAO.saveOrUpdate(ed);
+//            // Konrad said use annDAO instead so permissions are properly carried over:
+//            annotationDAO.addEntityToParent(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
+//            annotationDAO.saveOrUpdate(workspace);
+//            TmNeuron tmNeuron=new TmNeuron(neuron);
+//            return tmNeuron;
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
@@ -193,6 +194,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
         });
 
+        Entity workspaceEntity = null;
+        TmWorkspace newWorkspace = null;
         if (workspaceId == null) {
             if (sampleId == null) {
                 throw new ComputeException("Cannot apply SWC neurons without either valid workspace or sample ID.");
@@ -207,8 +210,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 } else {
                     folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
                 }
-                log.info("Creating new workspace called " + swcFolder.getName() + ", belonging to " + ownerKey);
-                TmWorkspace newWorkspace = createTiledMicroscopeWorkspace(folder.getId(), sampleId, swcFolder.getName(), ownerKey);
+                log.info("Creating new workspace called " + swcFolder.getName() + ", ultimately belonging to " + ownerKey + ", but created under system user.");
+                newWorkspace = createTiledMicroscopeWorkspace(folder.getId(), sampleId, swcFolder.getName(), User.SYSTEM_USER_KEY);
                 if (newWorkspace != null) {
                     workspaceId = newWorkspace.getId();
                 }
@@ -220,8 +223,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
         }
 
+        workspaceEntity = annotationDAO.getEntityById( workspaceId );
         if (sampleId == null) {
-            Entity workspaceEntity = annotationDAO.getEntityById( workspaceId );
             if (workspaceEntity == null  ||  ! workspaceEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new ComputeException("Workspace ID " + workspaceId + " does not point to a valid workspace.");
             }
@@ -232,7 +235,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             log.info("Adding neurons to existing workspace " + workspaceId);
                     
             sampleId = Long.parseLong(ed.getValue());
-        }                
+        }
 
         SWCDataConverter swcDataConverter = new SWCDataConverter();
         Entity sampleEntity = annotationDAO.getEntityById(sampleId);
@@ -265,11 +268,20 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         swcDataConverter.setSWCExchanger(exchanger);
 
         for (File swcFile : swcFiles) {
-            importSWCFile(swcFile, workspaceId, swcDataConverter);
+            importSWCFile(swcFile, workspaceEntity, swcDataConverter, ownerKey);
+        }
+        
+        // Cleanup: return the workspace to ownership of true owner.
+        if (newWorkspace != null) {
+            newWorkspace.setOwnerKey(ownerKey);
+            Long entityId = newWorkspace.getId();
+            Entity entity = annotationDAO.getEntityById(entityId);
+            entity.setOwnerKey(ownerKey);
+            annotationDAO.saveOrUpdateEntity(entity);
         }
     }
 
-    private void importSWCFile(File swcFile, Long workspaceId, SWCDataConverter swcDataConverter) throws ComputeException {
+    private void importSWCFile(File swcFile, Entity workspaceEntity, SWCDataConverter swcDataConverter, String ownerKey) throws ComputeException {
         // the constructor also triggers the parsing, but not the validation
         try {
             SWCData swcData = SWCData.read(swcFile);
@@ -291,7 +303,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (neuronName.endsWith(SWCData.STD_SWC_EXTENSION)) {
                 neuronName = neuronName.substring(0, neuronName.length() - SWCData.STD_SWC_EXTENSION.length());
             }
-            final TmNeuron neuron = createTiledMicroscopeNeuron(workspaceId, neuronName);
+            final TmNeuron neuron = createTiledMicroscopeNeuron(workspaceEntity, neuronName, ownerKey);
 
             Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
             Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
@@ -323,6 +335,32 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         } catch (Exception ex) {
             throw new ComputeException(ex);
+        }
+    }
+
+    private TmNeuron createTiledMicroscopeNeuron(Entity workspace, String name, String ownerKey) throws DaoException {
+        try {
+            if (workspace == null  ||  !workspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+                throw new Exception("Tiled Neuron must be created with valid Workspace Id");
+            }
+            Entity neuron = new Entity();
+            neuron.setCreationDate(new Date());
+            neuron.setUpdatedDate(new Date());
+            neuron.setName(name);
+            neuron.setOwnerKey(ownerKey);
+            neuron.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
+            annotationDAO.saveOrUpdate(neuron);
+            // old
+            // EntityData ed = workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
+            // annotationDAO.saveOrUpdate(ed);
+            // Konrad said use annDAO instead so permissions are properly carried over:
+            annotationDAO.addEntityToParent(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
+            annotationDAO.saveOrUpdate(workspace);
+            TmNeuron tmNeuron = new TmNeuron(neuron);
+            return tmNeuron;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
         }
     }
 
