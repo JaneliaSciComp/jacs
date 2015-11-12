@@ -3,9 +3,10 @@ package org.janelia.it.jacs.compute.access;
 import Jama.Matrix;
 import com.google.common.base.Stopwatch;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
+import java.util.*;
 import org.apache.log4j.Logger;
+
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
@@ -15,10 +16,9 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
 import org.janelia.it.jacs.shared.swc.SWCData;
-
-import java.util.*;
 import org.janelia.it.jacs.compute.access.util.FileByTypeCollector;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
 import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
 import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
@@ -39,6 +39,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     private final static String TMP_GEO_VALUE = "@@@ new geo value string @@@";
     private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
+    private final static String BASE_PATH_PROP = "SWC.Import.BaseDir";
 
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
@@ -173,10 +174,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      */
     public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException {
         File swcFolder = new File(swcFolderLoc);
-        if (! swcFolder.exists()  ||  ! swcFolder.canRead()  ||  ! swcFolder.isDirectory()) {
-            throw new ComputeException("Folder " + swcFolderLoc + " either does not exist, is not a directory, or cannot be read.");
+        if (!swcFolder.isAbsolute()) {
+            String basePathstring = SystemConfigurationProperties.getString(BASE_PATH_PROP);
+            File basePath = new File(basePathstring);
+            swcFolder = new File(basePath, swcFolderLoc);
         }
 
+        if (! swcFolder.exists()  ||  ! swcFolder.canRead()  ||  ! swcFolder.isDirectory()) {
+            throw new ComputeException("Folder " + swcFolder + " either does not exist, is not a directory, or cannot be read.");
+        }
+        
         Entity workspaceEntity = null;
         TmWorkspace newWorkspace = null;
         if (workspaceId == null) {
