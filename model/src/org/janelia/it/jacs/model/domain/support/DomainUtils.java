@@ -350,7 +350,7 @@ public class DomainUtils {
         Filter newFilter = new Filter();
         newFilter.setName(filter.getName());
         newFilter.setSearchString(filter.getSearchString());
-        newFilter.setSearchType(filter.getSearchType());
+        newFilter.setSearchClass(filter.getSearchClass());
         newFilter.setSort(filter.getSort());
         if (filter.hasCriteria()) {
             for(Criteria criteria : filter.getCriteriaList()) {

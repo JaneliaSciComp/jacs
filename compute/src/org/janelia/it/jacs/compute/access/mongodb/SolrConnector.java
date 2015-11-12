@@ -213,15 +213,8 @@ public class SolrConnector extends SolrDAO {
 		fullTextStrings.clear();
 		
 		findStrings(new HashSet<String>(), domainObject, domainObject, true, "  ");
-
-//        for(String key : fullTextStrings.keySet()) {
-//            // Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
-//            List<String> strings = new ArrayList<>(fullTextStrings.get(key));
-//            // The _d is for "deep". We can always make these stored=false in Solr if we need to, since they're mainly for searching purposes. 
-//            doc.setField(key+"_d_txt", strings, 1.0f);
-//        }
 		Collection<String> strings = new HashSet<>(fullTextStrings.values());
-		doc.setField("fulltext_txt", strings, 0.8f);
+		doc.setField("fulltext_mt", strings, 0.8f);
                 
         for(SimpleAnnotation annotation : annotations) {        
             for(String subject : annotation.getSubjectsCsv().split(",")) {
