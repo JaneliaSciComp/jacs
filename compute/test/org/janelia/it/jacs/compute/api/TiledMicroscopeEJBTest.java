@@ -4,12 +4,9 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.compute.access;
+package org.janelia.it.jacs.compute.api;
 
 import java.util.Set;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanRemote;
-import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;

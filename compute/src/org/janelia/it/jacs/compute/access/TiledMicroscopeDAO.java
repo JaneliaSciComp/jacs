@@ -4,6 +4,7 @@ import Jama.Matrix;
 import com.google.common.base.Stopwatch;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
@@ -16,6 +17,7 @@ import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 import org.janelia.it.jacs.shared.swc.SWCData;
 
 import java.util.*;
+import org.janelia.it.jacs.compute.access.util.FileByTypeCollector;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
 import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
@@ -126,22 +128,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             final String ownerKey = workspace.getOwnerKey();
             
             return createTiledMicroscopeNeuron(workspace, name, ownerKey);
-//
-//            Entity neuron=new Entity();
-//            neuron.setCreationDate(new Date());
-//            neuron.setUpdatedDate(new Date());
-//            neuron.setName(name);
-//            neuron.setOwnerKey(ownerKey);
-//            neuron.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
-//            annotationDAO.saveOrUpdate(neuron);
-//            // old
-//            // EntityData ed = workspace.addChildEntity(neuron, EntityConstants.ATTRIBUTE_ENTITY);
-//            // annotationDAO.saveOrUpdate(ed);
-//            // Konrad said use annDAO instead so permissions are properly carried over:
-//            annotationDAO.addEntityToParent(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
-//            annotationDAO.saveOrUpdate(workspace);
-//            TmNeuron tmNeuron=new TmNeuron(neuron);
-//            return tmNeuron;
         } catch (Exception e) {
             e.printStackTrace();
             throw new DaoException(e);
@@ -187,12 +173,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      */
     public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException {
         File swcFolder = new File(swcFolderLoc);
-        File[] swcFiles = swcFolder.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isFile() && pathname.getName().toLowerCase().endsWith(".swc");
-            }
-        });
+        if (! swcFolder.exists()  ||  ! swcFolder.canRead()  ||  ! swcFolder.isDirectory()) {
+            throw new ComputeException("Folder " + swcFolderLoc + " either does not exist, is not a directory, or cannot be read.");
+        }
 
         Entity workspaceEntity = null;
         TmWorkspace newWorkspace = null;
@@ -266,6 +249,16 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         voxToMicron.print(4,4);
         ImportExportSWCExchanger exchanger = new MatrixDrivenSWCExchanger(micronToVox, voxToMicron);
         swcDataConverter.setSWCExchanger(exchanger);
+
+        // Collect all files for processing.
+        FileByTypeCollector fileCollector = new FileByTypeCollector(swcFolder.getAbsolutePath(), ".swc", 3);
+        try {
+            fileCollector.exec();
+        } catch (IOException ioe) {
+            log.error("IO Exception " + ioe + " during directory walk.");
+            throw new ComputeException(ioe);
+        }
+        Set<File> swcFiles = fileCollector.getFileSet();
 
         for (File swcFile : swcFiles) {
             importSWCFile(swcFile, workspaceEntity, swcDataConverter, ownerKey);
