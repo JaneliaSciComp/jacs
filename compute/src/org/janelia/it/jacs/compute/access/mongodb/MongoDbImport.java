@@ -2038,7 +2038,6 @@ public class MongoDbImport extends AnnotationDAO {
     private DomainObject loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, Map<Long,DomainObject> loaded, String indent) throws Exception {
 
     	if ("supportingFiles".equals(folderEntity.getName())) {
-    		log.info(indent+"Skipping "+folderEntity.getName());
     		return null;
     	}
     	
