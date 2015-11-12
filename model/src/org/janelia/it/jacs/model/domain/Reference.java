@@ -7,24 +7,24 @@ package org.janelia.it.jacs.model.domain;
  */
 public class Reference {
 
-    private String targetCollectionName;
+    private String targetClassName;
     private Long targetId;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Reference() {
     }
 
-    public Reference(String targetCollectionName, Long targetId) {
-        this.targetCollectionName = targetCollectionName;
+    public Reference(String targetClassName, Long targetId) {
+        this.targetClassName = targetClassName;
         this.targetId = targetId;
     }
 
-    public String getCollectionName() {
-        return targetCollectionName;
+    public String getTargetClassName() {
+        return targetClassName;
     }
 
     public void setCollectionName(String type) {
-        this.targetCollectionName = type;
+        this.targetClassName = type;
     }
 
     public Long getTargetId() {
@@ -42,7 +42,7 @@ public class Reference {
         result = prime*result
                 +((targetId==null) ? 0 : targetId.hashCode());
         result = prime*result
-                +((targetCollectionName==null) ? 0 : targetCollectionName.hashCode());
+                +((targetClassName==null) ? 0 : targetClassName.hashCode());
         return result;
     }
 
@@ -66,12 +66,12 @@ public class Reference {
         else if (!targetId.equals(other.targetId)) {
             return false;
         }
-        if (targetCollectionName==null) {
-            if (other.targetCollectionName!=null) {
+        if (targetClassName==null) {
+            if (other.targetClassName!=null) {
                 return false;
             }
         }
-        else if (!targetCollectionName.equals(other.targetCollectionName)) {
+        else if (!targetClassName.equals(other.targetClassName)) {
             return false;
         }
         return true;
@@ -79,6 +79,6 @@ public class Reference {
 
     @Override
     public String toString() {
-        return "Reference[" + targetCollectionName + "#" + targetId + "]";
+        return "Reference[" + targetClassName + "#" + targetId + "]";
     }
 }

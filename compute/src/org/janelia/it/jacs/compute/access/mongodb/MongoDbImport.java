@@ -1238,7 +1238,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         ReverseReference fragmentsReference = new ReverseReference();
         fragmentsReference.setCount(new Long(neuronFragments.size()));
-        fragmentsReference.setReferringCollectionName("fragment");
+        fragmentsReference.setReferringClassName(NeuronFragment.class.getName());
         fragmentsReference.setReferenceAttr("separationId");
         fragmentsReference.setReferenceId(separationEntity.getId());
         
@@ -1388,7 +1388,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         ReverseReference masksRef = new ReverseReference();
         masksRef.setCount(new Long(masks.size()));
-        masksRef.setReferringCollectionName("patternMask");
+        masksRef.setReferringClassName(PatternMask.class.getName());
         masksRef.setReferenceAttr("screenSample.targetId");
         masksRef.setReferenceId(screenSample.getId());
         screenSample.setPatternMasks(masksRef);
@@ -1722,7 +1722,7 @@ public class MongoDbImport extends AnnotationDAO {
             annotation.setValueTerm(valueTerm);
         }
         
-        Reference target = new Reference(getCollectionName(targetType), targetId);
+        Reference target = new Reference(getClassName(targetType), targetId);
         annotation.setTarget(target);
         
         return annotation;
@@ -1931,7 +1931,7 @@ public class MongoDbImport extends AnnotationDAO {
         		item.setVisible("true".equalsIgnoreCase(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY)));
         		item.setColor(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
         		item.setRenderMethod(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RENDER_METHOD));
-        		// TODO: Fix this. It creates references to samples and neurons just fine, but compartments are not domain objects so the reference type is "unknown".
+        		// TODO: Fix this. It creates references to samples and neurons just fine, but compartments are not domain objects so the reference type is null
         		Reference target = getReference(targetEntity);
         		item.setTarget(target);
         		List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
@@ -2075,8 +2075,6 @@ public class MongoDbImport extends AnnotationDAO {
 	    // Using a hash here to eliminate duplicates, especially those caused by folders which contain multiple descendants of the same sample
 	    HashSet<Reference> children = new LinkedHashSet<Reference>();
 	    
-	    getCollectionName(EntityConstants.TYPE_FOLDER);
-	    
 	    // Load children
 	    for(Entity childFolder : EntityUtils.getChildrenOfType(folderEntity, EntityConstants.TYPE_FOLDER)) {
 	    	DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, loaded, indent+"  ");
@@ -2134,7 +2132,7 @@ public class MongoDbImport extends AnnotationDAO {
 			return objectSet;
 		}
 
-		objectSet.setCollectionName(getCollectionName(maxCountType));
+		objectSet.setClassName(getClassName(maxCountType));
 				
 		if (maxCount!=totalNumChildren) {
 			log.info(indent+"  Importing "+maxCount+" entities of type "+maxCountType+" in folder "+folderEntity.getId());
@@ -2203,7 +2201,7 @@ public class MongoDbImport extends AnnotationDAO {
         		logger.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+childType+"#"+importEntityId);
         		importEntityId = translatedEntity.getId();
         	}
-        	else if (TRANSLATE_ENTITIES && "unknown".equals(childColName)) {
+        	else if (TRANSLATE_ENTITIES && childColName==null) {
         		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
         		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
         		// The priority list defines the ordered list of possible entity types to try as ancestors.  
@@ -2225,7 +2223,7 @@ public class MongoDbImport extends AnnotationDAO {
 	            }
 	            translationType = importEntity.getEntityTypeName();
 	            String type = getCollectionName(importEntity.getEntityTypeName());
-	            if (INSERT_ROGUE_ENTITIES && !"unknown".equals(type)) {
+	            if (INSERT_ROGUE_ENTITIES && type==null) {
 	                // A minor optimization, since we can only do rogue imports on images
 	                if ("image".equals(type)) {
     		            // Attempt imports of rogue entities which map to domain objects, but which have not been loaded by any other part of the import procedure
@@ -2239,7 +2237,7 @@ public class MongoDbImport extends AnnotationDAO {
 	    }
 
 	    if (translationType!=null) {
-	        objectSet.setCollectionName(getCollectionName(translationType));
+	        objectSet.setClassName(getCollectionName(translationType));
 	    }
 	    
         if (!memberIds.isEmpty()) {
@@ -2252,7 +2250,7 @@ public class MongoDbImport extends AnnotationDAO {
 	private void attemptRogueImport(Entity entity, String indent) {
 		
     	String entityType = entity.getEntityTypeName();
-        String type = getCollectionName(entityType);
+        String collectionName = getCollectionName(entityType);
 
         if (entity.getName().endsWith(".mask") || entity.getName().endsWith(".chan") ) {
             return;
@@ -2284,16 +2282,16 @@ public class MongoDbImport extends AnnotationDAO {
                 
             	LSMImage image = getLSMImage(null, entity);
             	if (image!=null) {
-            	    dao.getCollectionByName(type).save(image);
+            	    dao.getCollectionByName(collectionName).save(image);
             	}
             }
             else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
             	Image image = getImage(entity);
-            	dao.getCollectionByName(type).save(image);
+            	dao.getCollectionByName(collectionName).save(image);
             }
             else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
             	Image image = getImage(entity);
-            	dao.getCollectionByName(type).save(image);
+            	dao.getCollectionByName(collectionName).save(image);
             }
             else {
             	log.warn(indent+"  Cannot handle rogue entity type: "+entityType+"#"+entity.getId());
@@ -2315,11 +2313,11 @@ public class MongoDbImport extends AnnotationDAO {
     /* UTILITY METHODS */
 
     private Reference getReference(Entity entity) {
-        return new Reference(getCollectionName(entity.getEntityTypeName()), entity.getId());
+        return new Reference(getClassName(entity.getEntityTypeName()), entity.getId());
 	}
 
     private Reference getReference(DomainObject domainObject) {
-    	return new Reference(DomainUtils.getCollectionName(domainObject),domainObject.getId());
+    	return new Reference(domainObject.getClass().getName(),domainObject.getId());
     }
 
     private Set<String> getDefaultSubjectKeys(String subjectKey) {
@@ -2343,48 +2341,57 @@ public class MongoDbImport extends AnnotationDAO {
         if (value==null) return;
         images.put(key, value);
     }
-    
-    private String getCollectionName(String entityType) {
+
+    private Class<?> getClass(String entityType) {
         if (EntityConstants.TYPE_SAMPLE.equals(entityType)) {
-            return "sample";
+            return Sample.class;
         }
         else if (EntityConstants.TYPE_NEURON_FRAGMENT.equals(entityType)) {
-            return "fragment";
+            return NeuronFragment.class;
         }
         else if (EntityConstants.TYPE_FOLDER.equals(entityType)) {
-            return "treeNode";
+            return TreeNode.class;
         }
         else if (EntityConstants.TYPE_ANNOTATION.equals(entityType)) {
-            return "annotation";
+            return Annotation.class;
         }
         else if (EntityConstants.TYPE_ONTOLOGY_ROOT.equals(entityType)) {
-            return "ontology";
+            return Ontology.class;
         }
         else if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entityType)) {
-            return "screenSample";
+            return ScreenSample.class;
         }
         else if (EntityConstants.TYPE_ALIGNED_BRAIN_STACK.equals(entityType)) {
-            return "patternMask";
+            return PatternMask.class;
         }
         else if (EntityConstants.TYPE_FLY_LINE.equals(entityType)) {
-            return "flyLine";
+            return FlyLine.class;
         }
         else if (EntityConstants.TYPE_COMPARTMENT_SET.equals(entityType)) {
-            return "compartmentSet";
+            return CompartmentSet.class;
         }
         else if (EntityConstants.TYPE_ALIGNMENT_BOARD.equals(entityType)) {
-            return "alignmentBoard";
+            return AlignmentBoard.class;
         }
         else if (EntityConstants.TYPE_LSM_STACK.equals(entityType)) {
-            return "image";
+            return LSMImage.class;
         }
         else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
-            return "image";
+            return Image.class;
         }
         else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
-            return "image";
+            return Image.class;
         }
-        return "unknown";
+        return null;
+    }
+
+    private String getClassName(String entityType) {
+        Class<?> clazz = getClass(entityType);
+        return clazz==null?null:clazz.getName();
+    }
+    
+    private String getCollectionName(String entityType) {
+        return DomainUtils.getCollectionName(getClass(entityType));
     }
 
     /**

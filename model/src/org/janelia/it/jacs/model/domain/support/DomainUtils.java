@@ -83,11 +83,22 @@ public class DomainUtils {
         }
     }
 
+    public static String getCollectionName(String className) {
+        // TODO: improve performance with a map keyed by class name
+        for (Map.Entry<String, Class<? extends DomainObject>> entry : typeClasses.entrySet()) {
+            if (entry.getValue().getName().equals(className)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+    
     public static String getCollectionName(DomainObject domainObject) {
         return getCollectionName(domainObject.getClass());
     }
 
     public static String getCollectionName(Class<?> objectClass) {
+        if (objectClass==null) return null;
         MongoMapped mongoMappedAnnotation = null;
         Class<?> clazz = objectClass;
         while (mongoMappedAnnotation==null&&clazz!=null) {
@@ -139,6 +150,7 @@ public class DomainUtils {
     }
     
     public static Class<? extends DomainObject> getObjectClassByName(String className) {
+        if (className==null) return null;
         Class<?> clazz;
         try {
             clazz = Class.forName(className);
@@ -388,7 +400,7 @@ public class DomainUtils {
             ObjectSetCriteria source = (ObjectSetCriteria)criteria;
             ObjectSetCriteria newCriteria = new ObjectSetCriteria();
             newCriteria.setObjectSetName(source.getObjectSetName());
-            Reference setReference = new Reference(source.getObjectSetReference().getCollectionName(), source.getObjectSetReference().getTargetId());
+            Reference setReference = new Reference(source.getObjectSetReference().getTargetClassName(), source.getObjectSetReference().getTargetId());
             newCriteria.setObjectSetReference(setReference);
             return newCriteria;
         }
