@@ -1,13 +1,8 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
-import org.janelia.it.jacs.model.tasks.tiledMicroscope.SwcImportTask;
-import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
@@ -18,7 +13,6 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.List;
 import java.util.Map;
-import org.janelia.it.jacs.model.tasks.Task;
 
 /**
  * Created with IntelliJ IDEA.
@@ -93,38 +87,6 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
-    }
-    
-    @Override
-    public Task submitSwcFolderImport(String swcFolderLoc, String username, Long sampleId) throws ComputeException {
-        Task rtnVal = null;
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter(SwcImportTask.PARAM_sampleId, sampleId.toString(), null));
-            taskParameters.add(new TaskParameter(SwcImportTask.PARAM_userName, username, null));
-            taskParameters.add(new TaskParameter(SwcImportTask.PARAM_topLevelFolderName, swcFolderLoc, null));
-
-            String taskName = new File(swcFolderLoc).getName();
-            String displayName = taskName + " for 3D tiled microscope sample " + sampleId;
-            SwcImportTask task = new SwcImportTask(
-                    Collections.EMPTY_SET,
-                    username,
-                    null,
-                    taskParameters,
-                    taskName, 
-                    displayName
-            );
-            
-            task = (SwcImportTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            rtnVal = task;
-            EJBFactory.getLocalComputeBean().submitJob(SwcImportTask.PROCESS_NAME, task.getObjectId());
-            
-        } catch (Exception e) {
-            String errorString = "Error calling submitSwcFolder in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-        return rtnVal;
     }
     
     @Override
