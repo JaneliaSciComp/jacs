@@ -18,6 +18,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.List;
 import java.util.Map;
+import org.janelia.it.jacs.model.tasks.Task;
 
 /**
  * Created with IntelliJ IDEA.
@@ -95,7 +96,8 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
     
     @Override
-    public void submitSwcFolderImport(String swcFolderLoc, String username, Long sampleId) throws ComputeException {
+    public Task submitSwcFolderImport(String swcFolderLoc, String username, Long sampleId) throws ComputeException {
+        Task rtnVal = null;
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter(SwcImportTask.PARAM_sampleId, sampleId.toString(), null));
@@ -114,6 +116,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
             );
             
             task = (SwcImportTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            rtnVal = task;
             EJBFactory.getLocalComputeBean().submitJob(SwcImportTask.PROCESS_NAME, task.getObjectId());
             
         } catch (Exception e) {
@@ -121,6 +124,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
+        return rtnVal;
     }
     
     @Override
