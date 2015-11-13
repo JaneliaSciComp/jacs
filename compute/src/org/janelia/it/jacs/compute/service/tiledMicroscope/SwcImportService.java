@@ -10,8 +10,10 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.SwcImportNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.IOException;
+import java.util.Date;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanLocal;
+import org.janelia.it.jacs.model.tasks.Event;
 
 /**
  * Validation proceeds from here.
@@ -33,24 +35,33 @@ public class SwcImportService extends AbstractEntityService {
 
     @Override
     protected void execute() throws Exception {
-        sampleId = getGuidItem(SAMPLE_ID_PARAM);
-        userName = (String)processData.getItem(USER_NAME_PARAM);
-        folderName = (String) processData.getItem(FOLDER_NAME_PARAM);
+        try {
+            sampleId = getGuidItem(SAMPLE_ID_PARAM);
+            userName = (String) processData.getItem(USER_NAME_PARAM);
+            folderName = (String) processData.getItem(FOLDER_NAME_PARAM);
 
-        Long nodeId = getOrCreateResultNode();
+            Long nodeId = getOrCreateResultNode();
 
-        // NOTE: the default value for any boolean through JMX (from JBoss, at least) is TRUE.
-        //  Therefore, we want our most-common-case to match TRUE.  So TRUE-> do NOT issue debug info.
-        logger.info(
-                "Running SWC Import. ownerKey=" + ownerKey +
-                ", startingId=" + this.sampleId +
-                ", userName=" + userName +
-                ", folderName=" + folderName + "."
-        );
+            // NOTE: the default value for any boolean through JMX (from JBoss, at least) is TRUE.
+            //  Therefore, we want our most-common-case to match TRUE.  So TRUE-> do NOT issue debug info.
+            logger.info(
+                    "Running SWC Import. ownerKey=" + ownerKey
+                    + ", startingId=" + this.sampleId
+                    + ", userName=" + userName
+                    + ", folderName=" + folderName + "."
+            );
 
-        // Contact the EJB, and do the launch.
-        TiledMicroscopeBeanLocal tmEJB = EJBFactory.getLocalTiledMicroscopeBean();
-        tmEJB.importSWCFolder(folderName, ownerKey, null, sampleId);
+            // Contact the EJB, and do the launch.
+            computeBean.saveEvent(task.getObjectId(), Event.RUNNING_EVENT, "Running", new Date());
+
+            TiledMicroscopeBeanLocal tmEJB = EJBFactory.getLocalTiledMicroscopeBean();
+            tmEJB.importSWCFolder(folderName, ownerKey, null, sampleId);
+
+            computeBean.saveEvent(task.getObjectId(), Event.COMPLETED_EVENT, "Completed", new Date());
+        } catch (Exception ex) {
+            computeBean.saveEvent(task.getObjectId(), Event.ERROR_EVENT, ex.getMessage(), new Date());
+            throw ex;
+        }
     }
 
     private Long getGuidItem( String itemName ) {
