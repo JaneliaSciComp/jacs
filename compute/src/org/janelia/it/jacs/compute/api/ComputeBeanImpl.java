@@ -43,9 +43,27 @@ import javax.naming.directory.InitialDirContext;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.Hashtable;
+import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Date;
+//import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Resource;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -77,9 +95,16 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     private ComputeDAO computeDAO = new ComputeDAO(logger);
     private SubjectDAO subjectDAO = new SubjectDAO(logger);
     
+    @Resource(mappedName = MetricsLoggingConstants.QUEUE)
+    private Queue metricsLoggingQueue;
+    
+    @Resource(mappedName="java:/ConnectionFactory")
+    private ConnectionFactory connectionFactory;
+    
     public ComputeBeanImpl() {
     }
 
+    @Override
     public String getAppVersion() {
         String appVersion = null;
         try {
@@ -97,6 +122,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
      * @param userLogin
      * @param clientVersion
      */
+    @Override
     public void beginSession(String userLogin, String clientVersion) {
         logger.info("Begin session for "+userLogin+" using "+clientVersion);
     }
@@ -105,6 +131,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
      * @deprecated
      * @param userLogin
      */
+    @Override
     public void endSession(String userLogin) {
         logger.info("End session for "+userLogin);
     }
@@ -117,12 +144,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
      * @return the first UserToolEvent object.  The calling client is going to grab the session id from here to use on
      *          all subsequent calls
      */
+    @Override
     public UserToolEvent beginSession(String userLogin, String toolName, String clientVersion) {
     	logger.info("Begin session for "+userLogin+" using "+clientVersion);
         return addEventToSession(new UserToolEvent(null, userLogin, toolName,
                 UserToolEvent.TOOL_CATEGORY_SESSION, UserToolEvent.TOOL_EVENT_LOGIN, new Date()));
     }
 
+    /**
+     * Adds the event given, to the session whose id is contained in it.
+     * Call this only from "manager" classes, rather than directly.  The
+     * event can be created more conveniently at a higher level.
+     * 
+     * @param userToolEvent interesting information on usage etc.
+     * @return the event thus posted, or null on failure.
+     */
+    @Override
     public UserToolEvent addEventToSession(UserToolEvent userToolEvent) {
         // Try to log an event but DO NOT tank anything if this fails.  Record the error only in the log.
         try {
@@ -135,12 +172,46 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return null;
     }
 
+    @Override
+    public UserToolEvent addEventToSessionAsync(UserToolEvent userToolEvent) {
+        // save as other override, but talk to MDB.
+        try {
+            Connection connection = connectionFactory.createConnection();
+            javax.jms.Session session = connection.createSession(false, javax.jms.Session.CLIENT_ACKNOWLEDGE);
+
+            // Marshalling the event into a message.
+            ObjectMessage message = session.createObjectMessage();
+            if (message == null) {
+                logger.error("Session returned null message.");
+                return null;
+            }
+            else if (userToolEvent == null) {
+                logger.error("Cannot log null message.");
+                return null;
+            }
+            message.setObject(userToolEvent);
+            
+            // Send and complete.
+            MessageProducer producer = session.createProducer(metricsLoggingQueue);
+            producer.send(message);
+            producer.close();
+            
+            return userToolEvent;
+        } catch (JMSException e) {
+            logger.error("Cannot log event to session: " + (null == userToolEvent ? "null" : userToolEvent.toString()));
+            logger.error("Error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
     public void endSession(String userLogin, String toolName, Long userSessionId) {
     	logger.info("End session for "+userLogin);
         addEventToSession(new UserToolEvent(userSessionId, userLogin, toolName,
                 UserToolEvent.TOOL_CATEGORY_SESSION, UserToolEvent.TOOL_EVENT_LOGOUT, new Date()));
     }
 
+    @Override
     public Subject login(String userLogin, String password) {
         try {
             userLogin = EntityUtils.getNameFromSubjectKey(userLogin);
@@ -185,6 +256,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public Subject getSubjectByNameOrKey(String name) throws ComputeException {
         Subject subject = computeDAO.getSubjectByNameOrKey(name);
         if (subject==null) return null;
@@ -206,6 +278,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return subject;
     }
     
+    @Override
     public Subject getSubjectWithPreferences(String nameOrKey) throws ComputeException {
         Subject subject = getSubjectByNameOrKey(nameOrKey);
         if (subject==null) return null;
@@ -214,26 +287,32 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return subject;
     }
     
+    @Override
     public User getUserByNameOrKey(String name) throws ComputeException {
         return computeDAO.getUserByNameOrKey(name);
     }
     
+    @Override
     public Group getGroupByNameOrKey(String name) throws ComputeException {
         return computeDAO.getGroupByNameOrKey(name);
     }
     
+    @Override
 	public List<Subject> getSubjects() throws ComputeException {
         return subjectDAO.getSubjects();
 	}
 	
+    @Override
     public List<User> getUsers() throws ComputeException {
         return subjectDAO.getUsers();
     }
 	
+    @Override
 	public List<Group> getGroups() throws ComputeException {
         return subjectDAO.getGroups();
 	}
     
+    @Override
     public boolean createUser(String newUserName) throws DaoException {
         try {
             logger.info("Creating user " + newUserName);
@@ -255,6 +334,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return false;
     }
     
+    @Override
     public User createUser(String newUserName, String newFullName) throws ComputeException {
         try {
             createUser(newUserName);
@@ -269,6 +349,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
     
+    @Override
     public Group createGroup(String userLogin, String groupName) throws DaoException {
         try {
             logger.info("Creating group " + groupName);
@@ -280,6 +361,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public void removeGroup(String groupName) throws DaoException {
         try {
             logger.info("Removing group " + groupName);
@@ -291,6 +373,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
     
+    @Override
     public void addUserToGroup(String userName, String groupName) throws DaoException {
         try {
             logger.info("Adding user "+userName+" to group " + groupName);
@@ -302,6 +385,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public void removeUserFromGroup(String groupUser, String groupName) throws DaoException {
         try {
             logger.info("Removing user "+groupUser+" from group " + groupName);
@@ -313,12 +397,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
     
+    @Override
     public void setTaskNote(long taskId, String note) throws DaoException {
         Task task = computeDAO.getTaskById(taskId);
         task.setTaskNote(note);
         computeDAO.saveOrUpdate(task);
     }
 
+    @Override
     public void addTaskNote(long taskId, String note) throws DaoException {
         Task task = computeDAO.getTaskById(taskId);
         task.getMessages().add(new TaskMessage(task,note));
@@ -326,25 +412,30 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         computeDAO.saveOrUpdate(task);
     }
 
+    @Override
     public Long submitJob(String processDefName, Map<String, Object> processConfiguration) {
         ProcessManager processManager = new ProcessManager();
         return processManager.launch(processDefName, processConfiguration);
     }
 
+    @Override
     public void submitJob(String processDefName, long taskId) {
         ProcessManager processManager = new ProcessManager();
         processManager.launch(processDefName, taskId);
     }
 
+    @Override
     public void submitJobs(String processDefName, List<Long> taskIds) {
         ProcessManager processManager = new ProcessManager();
         processManager.launch(processDefName, taskIds);
     }
 
+    @Override
     public String[] getTaskStatus(long taskId) throws DaoException {
         return computeDAO.getTaskStatus(taskId);
     }
     
+    @Override
     public void stopContinuousExecution(long taskId) throws ServiceException {
     	Task task = getTaskById(taskId);
     	if (task==null) throw new ServiceException("No such task with id "+taskId);
@@ -360,6 +451,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     	}
     }
 
+    @Override
     public Task getMostRecentTaskWithNameAndParameters(String owner, String taskName, HashSet<TaskParameter> taskParameters) {
         Task matchingTask = null;
         logger.debug("Looking for matching task with params:");
@@ -385,6 +477,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return matchingTask;
     }
     
+    @Override
     public int cancelIncompleteTasksWithName(String owner, String name) throws ComputeException {
         try {
             return computeDAO.cancelIncompleteTasksWithName(owner, name);
@@ -394,6 +487,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public int cancelIncompleteTasksForUser(String subjectKey) throws ComputeException{
         try {
             return computeDAO.cancelIncompleteTasksForUser(subjectKey);
@@ -418,6 +512,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     	return map;
     }
     
+    @Override
     public Task getTaskById(long taskId) {
         Task task = computeDAO.getTaskById(taskId);
         // Init lazy-loading events
@@ -427,15 +522,18 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return task;
     }
 
+    @Override
     public Task getTaskWithMessages(long taskId) {
         return computeDAO.getTaskWithMessages(taskId);
     }
     
+    @Override
     public Subject saveOrUpdateSubject(Subject subject) throws DaoException{
         computeDAO.saveOrUpdate(subject);
         return subject;
     }
 
+    @Override
     public void removePreferenceCategory(String categoryName) throws DaoException {
 
         Session session = null;
@@ -452,7 +550,9 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             tx.commit();
         }
         catch (Exception e) {
-        	tx.rollback();
+        	if (tx != null) {
+                tx.rollback();
+            }
         	logger.error("Error trying to remove preference category "+categoryName,e);
             throw new DaoException(e);
         }
@@ -461,39 +561,48 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public Node getBlastDatabaseFileNodeByName(String name) {
         return computeDAO.getBlastDatabaseFileNodeByName(name);
     }
 
+    @Override
     public Node getResultNodeByTaskId(long taskId) {
         return computeDAO.getResultNodeByTaskId(taskId);
     }
 
+    @Override
     public List<Node> getResultNodesByTaskId(long taskId) {
         return computeDAO.getResultNodesByTaskId(taskId);
     }
 
+    @Override
     public Node getNodeById(long nodeId) {
         return computeDAO.getNodeById(nodeId);
     }
 
+    @Override
     public Object genericSave(Object object) throws DaoException {
         computeDAO.genericSave(object);
         return object;
     }
 
+    @Override
     public void genericDelete(Object object) throws DaoException {
         computeDAO.genericDelete(object);
     }
     
+    @Override
     public Node createNode(Node node) throws DaoException {
         return (Node) computeDAO.genericCreateAndReturn(node);
     }
 
+    @Override
     public Object genericLoad(Class c, Long id) throws DaoException {
         return computeDAO.genericLoad(c, id);
     }
 
+    @Override
     public Long getBlastDatabaseFileNodeIdByName(String name) {
         Node node = getBlastDatabaseFileNodeByName(name);
         if (node == null) {
@@ -502,32 +611,39 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return node.getObjectId();
     }
 
+    @Override
     public BlastResultNode getBlastHitResultDataNodeByTaskId(Long taskId) {
         return computeDAO.getBlastHitResultDataNodeByTaskId(taskId);
     }
 
+    @Override
     public Long getBlastHitCountByTaskId(Long taskId) throws DaoException {
         return computeDAO.getBlastHitCountByTaskId(taskId);
     }
 
+    @Override
     public BlastResultFileNode getBlastResultFileNodeByTaskId(Long taskId) throws DaoException {
         return computeDAO.getBlastResultFileNodeByTaskId(taskId);
     }
 
+    @Override
     public Task saveOrUpdateTask(Task task) throws DaoException {
         computeDAO.saveOrUpdate(task);
         return task;
     }
 
+    @Override
     public Node saveOrUpdateNode(Node node) throws DaoException {
         computeDAO.saveOrUpdate(node);
         return node;
     }
 
+    @Override
     public void saveTaskMessages(long taskId, Set<TaskMessage> messages) throws DaoException {
         computeDAO.saveTaskMessages(taskId, messages);
     }
 
+    @Override
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException {
         try {
             if (Event.ERROR_EVENT.equals(eventType) || Event.SUBTASKERROR_EVENT.equals(eventType)) {
@@ -542,6 +658,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return computeDAO.createEvent(taskId, eventType, description, timestamp);
     }
 
+    @Override
     public void addEventToTask(Long taskId, Event event) throws DaoException {
         try {
             if (Event.ERROR_EVENT.equals(event.getEventType()) || Event.SUBTASKERROR_EVENT.equals(event.getEventType())) {
@@ -557,7 +674,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     private void formatAndSendErrorMessage(Long taskId, String eventDescription, String eventTimestamp) {
-        StringBuffer sbuf = new StringBuffer();
+        StringBuilder sbuf = new StringBuilder();
         try {
             if (!SystemConfigurationProperties.getBoolean("System.SendErrorEmails")) {
                 return;
@@ -587,10 +704,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public void updateTaskStatus(long taskId, String status, String comment) throws DaoException {
         computeDAO.updateTaskStatus(taskId, status, comment);
     }
 
+    @Override
     public void recordProcessSuccess(ProcessDef processDef, Long processId) {
         try {
             computeDAO.recordProcessSuccess(processDef, processId);
@@ -600,6 +719,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public void recordProcessError(ProcessDef processDef, Long processId, Throwable e) {
         try {
             updateTaskStatus(processId, Event.ERROR_EVENT, e.getMessage());
@@ -609,6 +729,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public Map<Long, String> getAllTaskPvoStrings() {
         Map<Long, String> result = null;
         try {
@@ -621,17 +742,20 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
 
+    @Override
     public void setBlastHitsForNode(Long nodeId, Long numHits) throws DaoException {
         BlastResultFileNode node = (BlastResultFileNode) computeDAO.getNodeById(nodeId);
         node.setBlastHitCount(numHits);
         computeDAO.saveOrUpdate(node);
     }
 
+    @Override
     public Task getTaskForNodeId(long nodeId) {
         return computeDAO.getTaskForNode(nodeId);
     }
 
     // 1st test method... move to test ejb if test methods grow
+    @Override
     public void verifyBlastResultContents(Long blastResultFileNodeId, String expectedBlastResultsZipFilePath) throws DaoException,
             IOException {
         BlastResultFileNode resultFileNode = (BlastResultFileNode) genericLoad(BlastResultFileNode.class, blastResultFileNodeId);
@@ -640,10 +764,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         FileUtil.ensureFileContentsEqual(expectedBlastResultsZipFilePath, actualBlastResultsZipFilePath);
     }
 
+    @Override
     public List<Node> getNodesByClassAndUser(String className, String username) throws DaoException {
         return computeDAO.getNodesByClassAndUser(className, username);
     }
 
+    @Override
     public Node getInputNodeForTask(Long objectId) {
         Task task = computeDAO.getTaskById(objectId);
         if (null == task.getInputNodes() || !task.getInputNodes().iterator().hasNext()) {
@@ -653,22 +779,27 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return task.getInputNodes().iterator().next();
     }
 
+    @Override
     public List getSampleInfo() throws DaoException {
         return computeDAO.getSampleInfo();
     }
 
+    @Override
     public String getSystemConfigurationProperty(String propertyKey) {
         return SystemConfigurationProperties.getString(propertyKey);
     }
 
+    @Override
     public List getHeaderDataForFRV(ArrayList readAccList) throws DaoException {
         return computeDAO.getHeaderDataForFRV(readAccList);
     }
 
+    @Override
     public String getRecruitmentFilterDataTaskForUserByGenbankId(String genbankName, String userLogin) {
         return computeDAO.getRecruitmentFilterDataTaskForUserByGenbankId(genbankName, userLogin);
     }
 
+    @Override
     public void setTaskParameter(Long taskId, String parameterKey, String parameterValue) throws DaoException {
         computeDAO.setTaskParameter(taskId, parameterKey, parameterValue);
     }
@@ -689,11 +820,13 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     /**
      * Method to clean up the db and filestore upon deletion of a node.
      *
+     * @param username - who owns the node
      * @param nodeId - node id of what is to be deleted
      * @param clearFromFilestoreIfAppropriate
      *               - whether to nuke the filestore dir, if node is a FileNode
      * @return boolean of success
      */
+    @Override
     public boolean deleteNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate) {
         try {
         	Node targetNode = retireNode(username, nodeId);
@@ -721,11 +854,13 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     /**
      * Method to clean up the db and filestore upon deletion of a node.
      *
+     * @param username - who owns the node
      * @param nodeId - node id of what is to be deleted
      * @param clearFromFilestoreIfAppropriate
      *               - whether to nuke the filestore dir, if node is a FileNode
      * @return boolean of success
      */
+    @Override
     public boolean trashNode(String username, Long nodeId, boolean clearFromFilestoreIfAppropriate) {
         try {
         	Node targetNode = retireNode(username, nodeId);
@@ -755,6 +890,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return true;
     }
 
+    @Override
     public int moveFileNodesToArchive(String filepath) throws DaoException {
         try {
             int nodesUpdated = 0;
@@ -815,6 +951,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public int getNumCategoryResults(Long nodeId, String category) {
         try {
             String sql =
@@ -848,14 +985,17 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return !containsFasta;
     }
 
+    @Override
     public List<Node> getNodeByName(String nodeName) throws DaoException {
         return computeDAO.getNodeByName(nodeName);
     }
 
+    @Override
     public List<Node> getNodeByPathOverride(String pathOverride) throws DaoException {
         return computeDAO.getNodeByPathOverride(pathOverride);
     }
     
+    @Override
     public void setSystemDataRelatedToGiNumberObsolete(String giNumber) throws DaoException {
         computeDAO.setSystemDataRelatedToGiNumberObsolete(giNumber);
     }
@@ -868,8 +1008,9 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
      * @throws org.janelia.it.jacs.compute.access.DaoException
      *          problem getting the data
      */
+    @Override
     public List getAllSampleNamesAsList() throws DaoException {
-        ArrayList<String> returnList = new ArrayList<String>();
+        ArrayList<String> returnList = new ArrayList<>();
         List sampleInfoList = getSampleInfo();
         for (Object o : sampleInfoList) {
             Object[] sampleInfo = (Object[]) o;
@@ -884,10 +1025,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return returnList;
     }
 
+    @Override
     public List<BlastDatabaseFileNode> getBlastDatabases() {
         return (List<BlastDatabaseFileNode>) computeDAO.getBlastDatabases(BlastDatabaseFileNode.class.getSimpleName());
     }
 
+    @Override
     public List<BlastDatabaseFileNode> getBlastDatabasesOfAUser(String username) {
         return (List<BlastDatabaseFileNode>) computeDAO.getBlastDatabasesOfAUser(BlastDatabaseFileNode.class.getSimpleName(), username);
     }
@@ -900,6 +1043,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
      * @return full name of the archive file itself (no path included)
      * @throws Exception there was a problem generating the archive
      */
+    @Override
     public String createTemporaryFileNodeArchive(String archiveNamePrefix, String sourceNodeId) throws Exception {
         try {
             FileNode tmpSourceNode = (FileNode) computeDAO.getNodeById(Long.valueOf(sourceNodeId));
@@ -912,6 +1056,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public List<String> getFiles(String tmpDirectory, final boolean directoriesOnly) {
         File tmpDir = new File(tmpDirectory);
         String[] tmpResults = new String[0];
@@ -928,6 +1073,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return finalResults;
     }
 
+    @Override
     public HashSet<String> getProjectCodes() throws Exception {
         return new DrmaaHelper(logger).getProjectCodes();
     }
@@ -938,6 +1084,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
      * @return a map of the taskId's as string and the event string
      * @throws Exception throws an error if there is a problem building the task map
      */
+    @Override
     public HashMap<String, String> getChildTaskStatusMap(Long parentTaskId) throws Exception {
         HashMap<String, String> childTaskStatusMap = new HashMap<String, String>();
         List<Task> childTaskList = computeDAO.getChildTasksByParentTaskId(parentTaskId);
@@ -947,14 +1094,17 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return childTaskStatusMap;
     }
 
+    @Override
     public List<Task> getUserTasksByType(String simpleName, String ownerKey) {
         return computeDAO.getUserTasksByType(simpleName, ownerKey);
     }
 
+    @Override
     public Task getRecruitmentFilterTaskByUserPipelineId(Long objectId) throws DaoException {
         return computeDAO.getRecruitmentFilterTaskByUserPipelineId(objectId);
     }
 
+    @Override
     public List<Task> getRecentUserParentTasks(String ownerKey) {
     	List<Task> tasks = computeDAO.getRecentUserParentTasksByOwner(ownerKey);
         for(Task task : tasks) {
@@ -964,6 +1114,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return tasks;
     }
     
+    @Override
     public List<Task> getUserParentTasks(String ownerKey) {
     	List<Task> tasks = computeDAO.getUserParentTasksByOwner(ownerKey);
         for(Task task : tasks) {
@@ -973,6 +1124,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return tasks;
     }
     
+    @Override
     public List<Task> getUserTasks(String ownerKey) {
     	List<Task> tasks = computeDAO.getUserTasks(ownerKey);
         for(Task task : tasks) {
@@ -982,16 +1134,19 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return tasks;
     }
 
+    @Override
     public List<Event> getEventsForTask(long taskId) throws DaoException {
     	Task task = getTaskById(taskId);
     	if (task == null) throw new DaoException("No such task with id "+taskId);
     	return task.getEvents();
     }
     
+    @Override
     public void setParentTaskId(Long parentTaskId, Long childTaskId) throws DaoException {
         computeDAO.setParentTaskId(parentTaskId, childTaskId);
     }
 
+    @Override
     public List<Task> getChildTasksByParentTaskId(long taskId) {
         List<Task> tasks = computeDAO.getChildTasksByParentTaskId(taskId);
         for(Task task : tasks) {
@@ -1001,15 +1156,18 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     	return tasks;
     }
 
+    @Override
     public Long getSystemDatabaseIdByName(String databaseName) {
         return computeDAO.getSystemDatabaseIdByName(databaseName);
     }
 
+    @Override
     public long getCumulativeCpuTime(long taskId) {
         return computeDAO.getCumulativeCpuTime(taskId);
     }
 
     // todo Can this not be within the blast service?
+    @Override
     public void validateBlastTaskQueryDatabaseMatch(BlastTask blastTask) throws Exception {
         Long queryNodeId = new Long(blastTask.getParameter(BlastTask.PARAM_query));
         String databaseCsvString = blastTask.getParameter(BlastTask.PARAM_subjectDatabases);
@@ -1080,6 +1238,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
+    @Override
     public void deleteTaskById(Long taskId) throws Exception {
         // First get entire task tree with this task as parent task
         List<Long> taskList = getTaskTreeIdList(taskId);
@@ -1094,6 +1253,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
     
+    @Override
     public void cancelTaskById(Long taskId) throws Exception {
         Task t = computeDAO.getTaskById(taskId);
         if (t==null) {
@@ -1111,6 +1271,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     // This method returns the ids of all tasks in the tree starting with given parent taskId
+    @Override
     public List<Long> getTaskTreeIdList(Long taskId) throws Exception {
         List<Long> taskTreeIdList = new ArrayList<Long>();
         taskTreeIdList.add(taskId);
@@ -1139,7 +1300,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         }
     }
 
-
+    @Override
     public ControlledVocabElement[] getControlledVocab(Long objectId, int vocabIndex) throws ServiceException {
         throw new ServiceException ("Controlled Vocab is a future piece, currently unsupported.");
     }

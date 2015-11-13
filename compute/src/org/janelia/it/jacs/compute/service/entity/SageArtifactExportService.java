@@ -137,7 +137,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         this.propertyPublishedTo = getCvTermByName("light_imagery","published_to");
         this.propertyToPublish = getCvTermByName("light_imagery","to_publish");
         this.propertyPublishingUser = getCvTermByName("light_imagery","publishing_user");
-        this.propertyRelease = getCvTermByName("light_imagery","release");
+        this.propertyRelease = getCvTermByName("light_imagery","alps_release");
         this.propertyWorkstationSampleId = getCvTermByName("light_imagery","workstation_sample_id"); 
         this.propertyChanSpec = getCvTermByName("light_imagery","channel_spec");
         this.propertyDimensionX = getCvTermByName("light_imagery","dimension_x");

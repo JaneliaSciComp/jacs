@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.shared.util;
+package org.janelia.it.jacs.shared.swc;
 
 import java.util.HashMap;
 import java.util.Map;
