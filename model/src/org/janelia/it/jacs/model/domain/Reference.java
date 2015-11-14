@@ -23,7 +23,7 @@ public class Reference {
         return targetClassName;
     }
 
-    public void setCollectionName(String type) {
+    public void setTargetClassName(String type) {
         this.targetClassName = type;
     }
 

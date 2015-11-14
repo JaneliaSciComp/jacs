@@ -225,6 +225,13 @@ public class DomainDAO {
     }
 
     /**
+     * Retrieve a refresh copy of the given domain object from the database. 
+     */
+    public <T extends DomainObject> T getDomainObject(String subjectKey, T domainObject) {
+        return (T)getDomainObject(subjectKey, domainObject.getClass(), domainObject.getId());
+    }
+    
+    /**
      * Get the domain object referenced by the collection name and id. 
      */
     public <T extends DomainObject> T getDomainObject(String subjectKey, Class<T> domainClass, Long id) {
@@ -245,13 +252,6 @@ public class DomainDAO {
         return objs.get(0);
     }
 
-    public <T extends DomainObject> T getDomainObject(String subjectKey, T domainObject) {
-        Reference ref = new Reference();
-        ref.setTargetId(domainObject.getId());
-        ref.setCollectionName(DomainUtils.getCollectionName(domainObject));
-        return (T)getDomainObject(subjectKey, ref);
-    }
-    
     /**
      * Get the domain objects referenced by the given list of References.
      */

@@ -260,6 +260,7 @@ public class MongoDbImport extends AnnotationDAO {
             subjectCollection.insert(newSubject);
             for(org.janelia.it.jacs.model.user_data.prefs.SubjectPreference sp : subject.getPreferenceMap().values()) {
                 Preference preference = new Preference(subject.getKey(), sp.getCategory(), sp.getName(), sp.getValue());
+                preference.setId(dao.getNewId());
                 preferenceCollection.insert(preference);
             }
             
@@ -2117,12 +2118,12 @@ public class MongoDbImport extends AnnotationDAO {
 		}
 		 
 		Integer maxCount = 0;
-		String maxCountType = null;
+		String maxCountEntityType = null;
 		for(String type : typeCounts.keySet()) {
 			Integer count = typeCounts.get(type);
 			if (count>maxCount) {
 				maxCount = count;
-				maxCountType = type;
+				maxCountEntityType = type;
 			}
 		}
 
@@ -2131,13 +2132,13 @@ public class MongoDbImport extends AnnotationDAO {
 			return objectSet;
 		}
 
-		objectSet.setClassName(getClassName(maxCountType));
+		objectSet.setClassName(getClassName(maxCountEntityType));
 				
 		if (maxCount!=totalNumChildren) {
-			log.info(indent+"  Importing "+maxCount+" entities of type "+maxCountType+" in folder "+folderEntity.getId());
+			log.info(indent+"  Importing "+maxCount+" entities of type "+maxCountEntityType+" in folder "+folderEntity.getId());
 			for(String type : typeCounts.keySet()) {
 				Integer count = typeCounts.get(type);
-				if (!type.equals(maxCountType)) {
+				if (!type.equals(maxCountEntityType)) {
 					log.warn(indent+"  Discarding "+count+" entities of type "+type+" in folder "+folderEntity.getId());
 				}
 			}
@@ -2147,7 +2148,7 @@ public class MongoDbImport extends AnnotationDAO {
 		// 2) Get the objects in the set
 		List<Entity> entityMembers = new ArrayList<Entity>(); 
 		for(Entity childEntity : folderEntity.getOrderedChildren()) {
-			if (childEntity.getEntityTypeName().equals(maxCountType)) {
+			if (childEntity.getEntityTypeName().equals(maxCountEntityType)) {
 				entityMembers.add(childEntity);
 			}
 		}
@@ -2156,7 +2157,7 @@ public class MongoDbImport extends AnnotationDAO {
 	    // 3) Preprocess all children and see if we need to do a bulk mapping
 		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
 		
-		if (EntityConstants.TYPE_SAMPLE.equals(maxCountType)) {    
+		if (EntityConstants.TYPE_SAMPLE.equals(maxCountEntityType)) {    
 		    // Case 1: Sub samples
 		    List<Long> subsampleIds = new ArrayList<Long>();
 		    for(Entity childEntity : entityMembers) {
@@ -2236,7 +2237,7 @@ public class MongoDbImport extends AnnotationDAO {
 	    }
 
 	    if (translationType!=null) {
-	        objectSet.setClassName(getCollectionName(translationType));
+	        objectSet.setClassName(getClassName(translationType));
 	    }
 	    
         if (!memberIds.isEmpty()) {

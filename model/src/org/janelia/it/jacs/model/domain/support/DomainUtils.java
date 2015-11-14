@@ -332,7 +332,7 @@ public class DomainUtils {
         for(DomainObject obj : domainObjects) {
             Reference ref = new Reference();
             ref.setTargetId(obj.getId());
-            ref.setCollectionName(getCollectionName(obj));
+            ref.setTargetClassName(getCollectionName(obj));
             refs.add(ref);
         }
         return refs;
