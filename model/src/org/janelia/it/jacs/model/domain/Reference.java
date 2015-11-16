@@ -79,6 +79,10 @@ public class Reference {
 
     @Override
     public String toString() {
-        return "Reference[" + targetClassName + "#" + targetId + "]";
+        return targetClassName + "#" + targetId;
+    }
+
+    public static Reference createFor(DomainObject domainObject) {
+        return new Reference(domainObject.getClass().getName(), domainObject.getId());
     }
 }

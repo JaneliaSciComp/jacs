@@ -57,8 +57,11 @@ public class DomainUtils {
         registerAnnotatedClasses();
     }
 
+    /**
+     * Look at all classes with the @MongoMapped annotation and register them as domain classes.
+     */
     private static void registerAnnotatedClasses() {
-
+        
         Reflections reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
         for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
             Class<? extends DomainObject> nodeClass = (Class<? extends DomainObject>)clazz;
@@ -280,6 +283,10 @@ public class DomainUtils {
     public static String unCamelCase(String s) {
         return s.replaceAll("(?<=\\p{Ll})(?=\\p{Lu})|(?<=\\p{L})(?=\\p{Lu}\\p{Ll})", " ");
     }
+
+    public static boolean hasReadAccess(DomainObject domainObject, String subjectKey) {
+        return domainObject.getReaders().contains(subjectKey);
+    }
     
     public static boolean hasWriteAccess(DomainObject domainObject, String subjectKey) {
         return domainObject.getWriters().contains(subjectKey);
@@ -306,38 +313,43 @@ public class DomainUtils {
             }
         });
     }
-
-    public static List<Long> getIdList(Collection<DomainObject> objects) {
-        List<Long> list = new ArrayList<>();
-        for(DomainObject domainObject : objects) {
+    
+    /**
+     * Generate a list of references to the given domain objects.
+     * @param objects collection of domain objects
+     * @return a list of references, one for each domain object
+     */
+    public static Collection<Reference> getReferences(Collection<DomainObject> domainObjects) {
+        Collection<Reference> refs = new ArrayList<>();
+        for(DomainObject domainObject : domainObjects) {
             if (domainObject!=null) {
-                list.add(domainObject.getId());
+                refs.add(Reference.createFor(domainObject));
             }
         }
-        return list;
+        return refs;
     }
 
-    public static Map<Long, DomainObject> getMapById(Collection<DomainObject> objects) {
-        Map<Long, DomainObject> objectMap = new HashMap<>();
+    /**
+     * Generate a map by reference to the given domain objects.
+     * @param objects collection of domain objects
+     * @return a map with the domain objects as values, keyed by reference to each domain object
+     */
+    public static Map<Reference, DomainObject> getMapByReference(Collection<DomainObject> objects) {
+        Map<Reference, DomainObject> objectMap = new HashMap<>();
         for (DomainObject domainObject : objects) {
             if (domainObject != null) {
-                objectMap.put(domainObject.getId(), domainObject);
+                objectMap.put(Reference.createFor(domainObject), domainObject);
             }
         }
         return objectMap;
     }
     
-    public static Collection<Reference> getReferences(Collection<DomainObject> domainObjects) {
-        Collection<Reference> refs = new ArrayList<>();
-        for(DomainObject obj : domainObjects) {
-            Reference ref = new Reference();
-            ref.setTargetId(obj.getId());
-            ref.setTargetClassName(getCollectionName(obj));
-            refs.add(ref);
-        }
-        return refs;
-    }
-    
+    /**
+     * Find the ontology term with the given id in the specified ontology tree.
+     * @param term ontololgy term tree structure
+     * @param termId GUID of the term to find 
+     * @return term with the given termId, or null if it cannot be found
+     */
     public static OntologyTerm findTerm(OntologyTerm term, Long termId) {
         if (termId==null) return null;
         if (term.getId()!=null && term.getId().equals(termId)) {
@@ -353,7 +365,6 @@ public class DomainUtils {
         }
         return null;
     }
-    
 
     /**
      * There are better ways of deep cloning, but this is easier for now. 
@@ -373,7 +384,7 @@ public class DomainUtils {
         return newFilter;
     }
     
-    public static Criteria cloneCriteria(Criteria criteria) {
+    private static Criteria cloneCriteria(Criteria criteria) {
         if (criteria instanceof AttributeValueCriteria) {
             AttributeValueCriteria source = (AttributeValueCriteria)criteria;
             AttributeValueCriteria newCriteria = new AttributeValueCriteria();

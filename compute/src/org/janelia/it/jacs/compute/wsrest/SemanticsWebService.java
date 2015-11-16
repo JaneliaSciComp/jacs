@@ -40,8 +40,9 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
-            List<Annotation> annotations = dao.getAnnotations(subjectKey, annotationIds);
-            return mapper.writeValueAsString(annotations);
+            // TODO: fix this. We are trying to eliminate use of bare GUIDs
+//            List<Annotation> annotations = dao.getAnnotations(subjectKey, references);
+//            return mapper.writeValueAsString(annotations);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -56,10 +57,11 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
-            List<Annotation> annotationList = dao.getAnnotations(subjectKey, annotationId);
-            if (annotationList!=null && annotationList.size()==1) {
-                dao.remove(subjectKey, annotationList.get(0));
-            }
+            // TODO: fix this. We are trying to eliminate use of bare GUIDs
+//            List<Annotation> annotationList = dao.getAnnotations(subjectKey, annotationId);
+//            if (annotationList!=null && annotationList.size()==1) {
+//                dao.remove(subjectKey, annotationList.get(0));
+//            }
         } catch (Exception e) {
             e.printStackTrace();
         }

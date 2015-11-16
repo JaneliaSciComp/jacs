@@ -243,13 +243,8 @@ public class DomainDAO {
      * Get the domain object referenced by the given Reference.
      */
     public DomainObject getDomainObject(String subjectKey, Reference reference) {
-        List<Long> ids = new ArrayList<>();
-        ids.add(reference.getTargetId());
-        List<DomainObject> objs = getDomainObjects(subjectKey, reference.getTargetClassName(), ids);
-        if (objs.isEmpty()) {
-            return null;
-        }
-        return objs.get(0);
+        List<DomainObject> objs = getDomainObjects(subjectKey, reference.getTargetClassName(), Arrays.asList(reference.getTargetId()));
+        return objs.isEmpty()?null:objs.get(0);
     }
 
     /**
@@ -279,10 +274,14 @@ public class DomainDAO {
         return domainObjects;
     }
 
+    /**
+     * Get the domain objects of a single class with the specified ids. 
+     * @param subjectKey
+     * @param className
+     * @param ids
+     * @return
+     */
     public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, String className, Collection<Long> ids) {
-        if (className==null) {
-            return new ArrayList<>();
-        }
         Class<T> clazz = (Class<T>)DomainUtils.getObjectClassByName(className);
         return getDomainObjects(subjectKey, clazz, ids);
     }
@@ -325,6 +324,12 @@ public class DomainDAO {
         return list;
     }
 
+    /**
+     * Get the domain objects referenced by the given reverse reference.
+     * @param subjectKey
+     * @param reverseRef
+     * @return
+     */
     public List<DomainObject> getDomainObjects(String subjectKey, ReverseReference reverseRef) {
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
         
@@ -347,22 +352,28 @@ public class DomainDAO {
         return list;
     }
 
-    public List<Annotation> getAnnotations(String subjectKey, Long targetId) {
+    public List<Annotation> getAnnotations(String subjectKey, Reference reference) {
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
 
         MongoCursor<Annotation> cursor = null;
         if (subjects==null) {
-            cursor = annotationCollection.find("{targetId:#}",targetId).as(Annotation.class);
+            cursor = annotationCollection.find("{targetId:#}",reference.getTargetId()).as(Annotation.class);
         }
         else {
-            cursor = annotationCollection.find("{targetId:#,readers:{$in:#}}",targetId,subjects).as(Annotation.class);
+            cursor = annotationCollection.find("{targetId:#,readers:{$in:#}}",reference.getTargetId(),subjects).as(Annotation.class);
         }
 
         return toList(cursor);
     }
 
-    public List<Annotation> getAnnotations(String subjectKey, Collection<Long> targetIds) {
+    public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
         Set<String> subjects = getSubjectSet(subjectKey);
+
+        List<Long> targetIds = new ArrayList<>();
+        for(Reference reference : references) {
+            targetIds.add(reference.getTargetId());
+        }
+        
         return toList(annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}",targetIds,subjects).as(Annotation.class));
     }
 
