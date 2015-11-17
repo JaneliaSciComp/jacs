@@ -115,33 +115,33 @@ public abstract class SeriesLauncher implements ILauncher {
      */
     protected void launchSeries(SeriesDef seriesDef, IProcessData processData) throws ComputeException {
         try {
-        	copyHardCodedLocalValuesToPd(seriesDef, processData);
-            
+            copyHardCodedLocalValuesToPd(seriesDef, processData);
+
             setupAsyncActionsLaunch(seriesDef);
             if (seriesDef.getForEachParam() != null) {
                 List<IProcessData> pds = DataExtractor.createForEachPDs(processData, seriesDef.getForEachParam());
                 if (pds != null) {
                     for (IProcessData pd : pds) {
-                    	try {
-                    		launchSeriesChildren(seriesDef, pd);
-                    	}
-                    	finally {
-	                        // If it's asynchronous, then pd would not have the series output parameters at this point
-	                        // The series mdb should send its output parameters in its reply message
-	                        if (seriesDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
-	                            // Copy the series' output parameters into the parent process data
-	                            DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
-	                        }
-                    	}
+                        try {
+                            launchSeriesChildren(seriesDef, pd);
+                        }
+                        finally {
+                            // If it's asynchronous, then pd would not have the series output parameters at this point
+                            // The series mdb should send its output parameters in its reply message
+                            if (seriesDef.getProcessorType() != ProcessorType.LOCAL_MDB) {
+                                // Copy the series' output parameters into the parent process data
+                                DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
+                            }
+                        }
                     }
                 }
             }
             else {
-            	IProcessData pd = new ProcessData();
-            	DataExtractor.copyData(processData, pd, seriesDef.getInputParameters());
-            	try {
-            		launchSeriesChildren(seriesDef, pd);	
-            	}
+                IProcessData pd = new ProcessData();
+                DataExtractor.copyData(processData, pd, seriesDef.getInputParameters());
+                try {
+                    launchSeriesChildren(seriesDef, pd);
+                }
                 finally {
                     DataExtractor.copyData(pd, processData, seriesDef.getOutputParameters());
                 }
@@ -149,10 +149,10 @@ public abstract class SeriesLauncher implements ILauncher {
             waitForAsyncActions(processData, seriesDef);
             recordProcessSuccess(processData, seriesDef);
         }
-    	catch (ComputeException e) {
-    		handleException(e, seriesDef, processData);
-    		throw e;
-    	}
+        catch (ComputeException e) {
+            handleException(e, seriesDef, processData);
+            throw e;
+        }
         finally {
             cleanupAsyncActionsLaunch();
         }
@@ -193,7 +193,7 @@ public abstract class SeriesLauncher implements ILauncher {
             messageInterface = JmsUtil.createAsyncMessageInterface();
             if (seriesDef.joinOnAsyncActions()) {
                 try {
-                    tempWaitQueue = messageInterface.getQueueForReceivingMessages();
+                    tempWaitQueue = messageInterface.getQueueForReceivingMessages(messageInterface.localConnectionType);
                     tempQueueName = tempWaitQueue.getQueueName();
                 }
                 catch (NamingException e) {
@@ -377,21 +377,21 @@ public abstract class SeriesLauncher implements ILauncher {
         helper.sendEmail("saffordt@janelia.hhmi.org", emailAddress, "Job '" + task.getJobName() + "' finished.", "Job '" + task.getJobName() +
                 "' with id " + task.getObjectId() + " finished with state '" + task.getLastEvent().getEventType() + "'");
     }
-    
+
     private void handleException(Exception e, SeriesDef seriesDef, IProcessData processData) {
 
-    	SequenceDef exceptionHandlerDef = seriesDef.getExceptionHandlerDef();
-    	if (exceptionHandlerDef==null) return;
-    	
-		processData.putItem(IProcessData.PROCESSING_EXCEPTION, e);
-		try {
-			launchSequence(exceptionHandlerDef, processData);
-		}
-		catch (Exception x) {
+        SequenceDef exceptionHandlerDef = seriesDef.getExceptionHandlerDef();
+        if (exceptionHandlerDef==null) return;
+
+        processData.putItem(IProcessData.PROCESSING_EXCEPTION, e);
+        try {
+            launchSequence(exceptionHandlerDef, processData);
+        }
+        catch (Exception x) {
             logger.error("Failed to run exception handler for SeriesDef, name="+seriesDef.getName(), x);
-		}
+        }
     }
-    
+
     /**
      * This method copies values hardcoded in include definition over to process data before
      * sequence is launched
@@ -402,12 +402,12 @@ public abstract class SeriesLauncher implements ILauncher {
     private void copyHardCodedLocalValuesToPd(SeriesDef seriesDef, IProcessData processData) {
         for (Parameter parameter : seriesDef.getLocalInputParameters()) {
             if (parameter.getValue() != null) {
-            	String value = (String)parameter.getValue();
-            	processData.putItem(parameter.getName(), value);
-            	if (value.startsWith("$V{")) {
-            		// dereference any variables across include boundaries
+                String value = (String)parameter.getValue();
+                processData.putItem(parameter.getName(), value);
+                if (value.startsWith("$V{")) {
+                    // dereference any variables across include boundaries
                     processData.putItem(parameter.getName(), processData.getItem(parameter.getName()));
-            	}
+                }
             }
         }
     }
