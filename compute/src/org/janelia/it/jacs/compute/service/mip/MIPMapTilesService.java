@@ -47,6 +47,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private Integer sourceScaleLevel;
     private Double sourceXYResolution;
     private Double sourceZResolution;
+    private String orientation;
     private Double targetQuality;
     private String targetType;
     private String targetMediaFormat;
@@ -73,6 +74,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             targetRootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
         }
         extractImageParameters(processData);
+        orientation = processData.getString("ORIENTATION");
         targetQuality = processData.getDouble("TARGET_QUALITY");
         targetType = processData.getString("TARGET_TYPE");
         targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
@@ -195,6 +197,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             fw.write(((startX + width) / targetTileWidth) + "\n");
             fw.write(startZ + "\n");
             fw.write((startZ + depth - 1) + "\n");
+            writeValueOrNone(orientation, fw);
             writeValueOrNone(targetQuality, fw);
             writeValueOrNone(targetType, fw);
             writeValueOrNone(targetMediaFormat, fw);
@@ -252,6 +255,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read TARGET_MAX_COL\n");
         script.append("read TARGET_MIN_Z\n");
         script.append("read TARGET_MAX_Z\n");
+        if (orientation != null) script.append("read ORIENTATION\n");
         if (targetQuality != null) script.append("read TARGET_QUALITY\n");
         if (targetType != null) script.append("read TARGET_TYPE\n");
         if (targetMediaFormat != null) script.append("read TARGET_MEDIA_FORMAT\n");
@@ -285,6 +289,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("TARGET_MAX_COL=$TARGET_MAX_COL ")
             .append("TARGET_MIN_Z=$TARGET_MIN_Z ")
             .append("TARGET_MAX_Z=$TARGET_MAX_Z ")
+            .append("ORIENTATION=$ORIENTATION ")
             .append("TARGET_QUALITY=$TARGET_QUALITY ")
             .append("TARGET_TYPE=$TARGET_TYPE ")
             .append("TARGET_MEDIA_FORMAT=$TARGET_MEDIA_FORMAT ")

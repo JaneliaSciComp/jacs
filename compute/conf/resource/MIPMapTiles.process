@@ -33,6 +33,7 @@
                 <input name="TARGET_MAX_COL" />
                 <input name="TARGET_MIN_Z" />
                 <input name="TARGET_MAX_Z" />
+                <input name="ORIENTATION" />
 
                 <input name="TARGET_QUALITY" />
                 <input name="TARGET_TYPE" />
