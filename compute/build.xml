@@ -472,7 +472,7 @@
         <!-- read in properties -->
         <property file="${temp.dir}/jacs.properties" prefix="FromPropFile"/>
         <property name="jboss.home" value="${FromPropFile.ServerRoot.Dir}/jboss-4.2.3.GA" />
-	<property name="startjbossscript" value="${FromPropFile.ServerStartScript}" />
+	    <property name="startjbossscript" value="${FromPropFile.ServerStartScript}" />
 
         <echo message="computeserver.ejb.service = ${FromPropFile.computeserver.ejb.service}" />
 
