@@ -36,7 +36,7 @@ import java.util.Map;
         @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/gridSubmitAndWait"),
-        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "300"),
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "200"),
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="5"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
@@ -46,32 +46,32 @@ import java.util.Map;
 //        @ActivationConfigProperty(propertyName="RedeliveryDelay", propertyValue="30"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 300, timeout = 10000)
+@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
     //public static QueueMessage originalMessage = null;
     public void onMessage(Message message) {
         try {
-	        logger = Logger.getLogger(GridSubmitAndWaitMDB.class);
-	        if (message instanceof ObjectMessage) {
-	            Object obj;
-	            try {
-	                obj = ((ObjectMessage) message).getObject();
-	            }
-	            catch (JMSException e) {
-	                logger.error("OnMessage : Unable to get message object", e);
-	                return;
-	            }
-	            if (obj instanceof GridProcessResult) {
-	                completeProcessing((GridProcessResult) obj);
-	            }
-	            else {
-	                submitToGrid((ObjectMessage) message);
-	            }
-	        }
-	        else {
-	            logger.error("OnMessage : Invalid message type in GridSubmitAndWait MDB.");
-	        }
+            logger = Logger.getLogger(GridSubmitAndWaitMDB.class);
+            if (message instanceof ObjectMessage) {
+                Object obj;
+                try {
+                    obj = ((ObjectMessage) message).getObject();
+                }
+                catch (JMSException e) {
+                    logger.error("OnMessage : Unable to get message object", e);
+                    return;
+                }
+                if (obj instanceof GridProcessResult) {
+                    completeProcessing((GridProcessResult) obj);
+                }
+                else {
+                    submitToGrid((ObjectMessage) message);
+                }
+            }
+            else {
+                logger.error("OnMessage : Invalid message type in GridSubmitAndWait MDB.");
+            }
         }
         catch (Throwable e) {
             logger.error("Error processing message",e);
@@ -79,15 +79,15 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
     }
 
     private void completeProcessing(GridProcessResult gpr) {
-        
+
         // Get the unique key from the queue message
         String uniqueKey = gpr.getGridSubmissionKey();
-        
+
         // Retriev the original Message and the service objects from the GridSubmitHelperMap
         Map dataMap = GridSubmitHelperMap.getInstance().getFromDataMap(uniqueKey);
-        
+
         if (dataMap == null) {
-        	throw new IllegalStateException("Unique key not found in data map: "+uniqueKey+" GridProcessResult("+gpr+")");
+            throw new IllegalStateException("Unique key not found in data map: "+uniqueKey+" GridProcessResult("+gpr+")");
         }
 
         QueueMessage queueMessage = ((QueueMessage) dataMap.get(GridSubmitHelperMap.ORIGINAL_QUEUE_MESSAGE_KEY));
@@ -102,12 +102,12 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
             // Call postprocess method of the service so that the necessary information is set to the processData
             try {
-	            originalservice.cleanup();
+                originalservice.cleanup();
                 originalservice.handleErrors();
-	            originalservice.postProcess();
+                originalservice.postProcess();
             }
             finally {
-            	GridSubmitHelperMap.getInstance().removeFromDataMap(uniqueKey);
+                GridSubmitHelperMap.getInstance().removeFromDataMap(uniqueKey);
             }
 
             //try to handle grid errors here

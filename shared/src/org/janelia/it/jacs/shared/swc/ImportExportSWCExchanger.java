@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.workstation.shared.util;
+package org.janelia.it.jacs.shared.swc;
 
 /**
  * For use of importing and exporting SWC data.  Provides methods for making

@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.api;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
@@ -12,7 +13,6 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.List;
 import java.util.Map;
-import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
 /**
  * Created with IntelliJ IDEA.
@@ -78,6 +78,17 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
 
+    @Override
+    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.importSWCFolder(swcFolderLoc, ownerKey, workspaceId, sampleId);
+        } catch (Exception e) {
+            String errorString = "Error calling importSWCFolder in DAO layer: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(errorString);
+        }
+    }
+    
     @Override
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException {
@@ -344,7 +355,26 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         return rtnVal;
     }
     
-    @Override
+	/**
+	 * Return all channel files whose centroids are nearest the coords given.
+	 */
+	@Override
+	public RawFileInfo getNearestChannelFiles(String basePath, int[] viewerCoord) throws ComputeException {
+		RawFileInfo rtnVal = null;
+		try {
+			RawFileInfo rfi = _tiledMicroscopeDAO.getNearestFileInfo(basePath, viewerCoord);
+			if (rfi != null) {
+				rtnVal = rfi;
+			}
+		} catch (Exception e) {
+			String errorString = "Error calling getNearestChannelFiles DAO layer: " + e.getMessage();
+			_logger.error(errorString);
+			throw new ComputeException(e);
+		}
+		return rtnVal;
+	}
+	
+	@Override
     public CoordinateToRawTransform getTransform( String basePath ) throws ComputeException {
         CoordinateToRawTransform transform = null;
         try {

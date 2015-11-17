@@ -1,0 +1,32 @@
+<!--
+	Loads SWC file contents as neurons, adds them to a new workspace, and associates the workspace with the sample given.
+-->
+<process name="SWC Import Pipeline" processor="queue/swcImport" startEvent="pending">
+
+	<sequence>
+
+	<!-- Import basic variables from the SwcImportTask
+
+    	     This service receives instructions below on which key:value pairs to transfer from task parameters
+    	     to process parameters. It then sets as outputs some of these parameters so they are available
+    	     to downstream steps. -->
+
+    	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="TASK_PARAMETER_1" value="top level folder name"/>
+            <input name="PROCESS_VARIABLE_1" value="FOLDER_NAME"/>
+            <input name="TASK_PARAMETER_2" value="sample id"/>
+            <input name="PROCESS_VARIABLE_2" value="SAMPLE_ID"/>
+            <input name="TASK_PARAMETER_3" value="user name"/>
+            <input name="PROCESS_VARIABLE_3" value="USER_NAME"/>
+    	    <output name="FOLDER_NAME"/>
+    	    <output name="SAMPLE_ID"/>
+    	    <output name="USER_NAME"/>
+    	</operation>
+    	<operation name="SWC Import Service" processor="org.janelia.it.jacs.compute.service.tiledMicroscope.SwcImportService">
+            <input name="FOLDER_NAME"/>
+            <input name="SAMPLE_ID"/>
+            <input name="USER_NAME"/>
+    	</operation>
+    </sequence>
+</process>
+

@@ -589,6 +589,11 @@
     </operation>
 
     <operation>
+        <description>Export artifacts for all annotated samples for all releases</description>
+        <name>runSageArtifactExport</name>
+    </operation>
+    
+    <operation>
         <description>Export Qi/Qm scores for all aligned 20x samples to SAGE</description>
         <name>runSageQiScoreSync</name>
         <parameter>

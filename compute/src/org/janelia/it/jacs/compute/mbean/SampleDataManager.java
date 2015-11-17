@@ -58,13 +58,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleMaintenancePipelines() {
         try {
-            log.info("Building list of users with samples...");
+            log.info("Building list of users with data sets...");
             Set<String> subjectKeys = new TreeSet<>();
-            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
-            log.info("Found users with samples: " + subjectKeys);
-            for(String subjectKey : subjectKeys) {
+            List<String> sortedKeys = new ArrayList<>(subjectKeys);
+            Collections.sort(sortedKeys);
+            log.info("Found users with data sets: " + sortedKeys);
+            for(String subjectKey : sortedKeys) {
                 log.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
             }
@@ -695,7 +697,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft1015c.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab1115.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);
@@ -748,6 +750,21 @@ public class SampleDataManager implements SampleDataManagerMBean {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null)); 
             saveAndRunTask(subject.getKey(), processName, displayName, taskParameters);
+        } 
+        catch (Exception ex) {
+            log.error("Error running SAGE Artifact Export", ex);
+        }
+    }
+
+    public void runSageArtifactExport() {
+        try {
+        	for(Entity releaseEntity : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+	            String processName = "SageArtifactExport";
+	            String displayName = "Sage Artifact Export";
+	            HashSet<TaskParameter> taskParameters = new HashSet<>();
+	            taskParameters.add(new TaskParameter("release entity id", releaseEntity.getId().toString(), null)); 
+	            saveAndRunTask(releaseEntity.getOwnerKey(), processName, displayName, taskParameters);
+        	}
         } 
         catch (Exception ex) {
             log.error("Error running SAGE Artifact Export", ex);
