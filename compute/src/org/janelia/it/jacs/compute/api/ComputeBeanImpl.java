@@ -9,7 +9,6 @@ import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -39,7 +38,6 @@ import javax.ejb.TransactionAttributeType;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -1073,9 +1071,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return finalResults;
     }
 
+    // todo Remove project code reference
     @Override
     public HashSet<String> getProjectCodes() throws Exception {
-        return new DrmaaHelper(logger).getProjectCodes();
+        return new HashSet<String>();
     }
 
     /**
