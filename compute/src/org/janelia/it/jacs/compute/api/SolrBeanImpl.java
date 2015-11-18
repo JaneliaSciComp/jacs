@@ -4,7 +4,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,15 +19,14 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.solr.SageTerm;
@@ -37,11 +35,6 @@ import org.janelia.it.jacs.shared.solr.SolrResults;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
-
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import java.util.*;
 
 /**
  * Implementation of SOLR indexing and searching operations. 

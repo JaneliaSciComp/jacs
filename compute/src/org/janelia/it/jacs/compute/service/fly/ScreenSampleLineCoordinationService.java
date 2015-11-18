@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
@@ -17,10 +17,7 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.model.user_data.User;
 
 /**
  * Created by IntelliJ IDEA.

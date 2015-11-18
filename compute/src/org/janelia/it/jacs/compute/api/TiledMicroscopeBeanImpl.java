@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 import org.jboss.annotation.ejb.PoolClass;

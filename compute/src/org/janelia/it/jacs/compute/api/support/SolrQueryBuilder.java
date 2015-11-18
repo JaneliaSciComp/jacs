@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrUtils;
 import org.janelia.it.jacs.shared.utils.EntityUtils;

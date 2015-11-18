@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Date;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;

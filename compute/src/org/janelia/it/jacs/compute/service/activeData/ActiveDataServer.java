@@ -6,10 +6,8 @@
 
 package org.janelia.it.jacs.compute.service.activeData;
 
-import java.io.File;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 
 /**

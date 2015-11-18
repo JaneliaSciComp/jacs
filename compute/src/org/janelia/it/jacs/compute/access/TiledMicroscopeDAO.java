@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.access;
 
 import com.google.common.base.Stopwatch;
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.janelia.it.jacs.model.entity.*;

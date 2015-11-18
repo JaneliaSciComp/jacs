@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;

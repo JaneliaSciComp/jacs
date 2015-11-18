@@ -3,7 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.service.align.ImageStack;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.image.InputImage;

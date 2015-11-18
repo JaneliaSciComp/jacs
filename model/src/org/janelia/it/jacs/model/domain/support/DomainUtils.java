@@ -49,6 +49,15 @@ public class DomainUtils {
 
     static {
         registerAnnotatedClasses();
+        typeClasses.put("sample", org.janelia.it.jacs.model.domain.sample.Sample.class);
+        typeClasses.put("fragment", org.janelia.it.jacs.model.domain.sample.NeuronFragment.class);
+        typeClasses.put("treeNode", org.janelia.it.jacs.model.domain.workspace.TreeNode.class);
+        typeClasses.put("workspace", org.janelia.it.jacs.model.domain.workspace.Workspace.class);
+        typeClasses.put("objectSet", org.janelia.it.jacs.model.domain.workspace.ObjectSet.class);
+        typeClasses.put("patternMask", org.janelia.it.jacs.model.domain.screen.PatternMask.class);
+        typeClasses.put("filter", org.janelia.it.jacs.model.domain.gui.search.Filter.class);
+        typeClasses.put("annotation", org.janelia.it.jacs.model.domain.ontology.Annotation.class);
+        typeClasses.put("ontology", org.janelia.it.jacs.model.domain.ontology.Ontology.class);
     }
 
     private static void registerAnnotatedClasses() {

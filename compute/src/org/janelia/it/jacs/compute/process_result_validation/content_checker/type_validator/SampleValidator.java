@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.compute.process_result_validation.content_checker.type_validator;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.process_result_validation.ValidationLogger;
 import org.janelia.it.jacs.model.entity.Entity;

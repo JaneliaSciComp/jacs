@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.solr.client.solrj.SolrQuery;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrResults;
 

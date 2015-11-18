@@ -380,6 +380,7 @@ public class DomainDAO {
     }
 
     public Workspace getDefaultWorkspace(String subjectKey) {
+        System.out.println (Workspace.class.getName());
         return treeNodeCollection.findOne("{class:#,ownerKey:#}",Workspace.class.getName(),subjectKey).as(Workspace.class);
     }
 
@@ -472,7 +473,7 @@ public class DomainDAO {
         
         String collectionName = getCollectionName(domainObject);
         MongoCollection collection = getCollectionByName(collectionName);
-        
+
         WriteResult result = collection.remove("{_id:#,writers:#}", domainObject.getId(), subjectKey);
         if (result.getN()!=1) {
             throw new IllegalStateException("Deleted "+result.getN()+" records instead of one: "+collectionName+"#"+domainObject.getId());

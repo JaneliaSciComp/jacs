@@ -1,6 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.launcher.archive.ArchiveAccessHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;

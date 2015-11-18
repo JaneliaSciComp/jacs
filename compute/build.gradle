@@ -220,6 +220,7 @@ dependencies {
     ngWarLib group: 'org.jongo', name: 'jongo', version: '1.2'
     ngWarLib group: 'org.mongodb', name: 'mongo-java-driver', version: '3.0.2'
     ngWarLib group: 'org.reflections', name: 'reflections', version: '0.9.8'
+    ngWarLib group: 'com.google.gwt', name: 'gwt-user', version: '2.7.0'
 }
 
 artifacts {

@@ -36,11 +36,11 @@ public class SemanticsWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getAnnotations(@QueryParam("subjectKey") final String subjectKey,
-                                 @QueryParam("annotationIds") final List<Long> annotationIds) {
+                                 @QueryParam("targetIds") final List<Long> targetIds) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
-            List<Annotation> annotations = dao.getAnnotations(subjectKey, annotationIds);
+            List<Annotation> annotations = dao.getAnnotations(subjectKey, targetIds);
             return mapper.writeValueAsString(annotations);
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,14 +51,14 @@ public class SemanticsWebService extends ResourceConfig {
     @DELETE
     @Path("/annotation")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void getAnnotations(@QueryParam("subjectKey") final String subjectKey,
+    public void deleteAnnotations(@QueryParam("subjectKey") final String subjectKey,
                                  @QueryParam("annotationId") final Long annotationId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         ObjectMapper mapper = new ObjectMapper();
         try {
-            List<Annotation> annotationList = dao.getAnnotations(subjectKey, annotationId);
-            if (annotationList!=null && annotationList.size()==1) {
-                dao.remove(subjectKey, annotationList.get(0));
+            Annotation annotation = dao.getDomainObject(subjectKey, Annotation.class, annotationId);
+            if (annotation!=null) {
+                dao.remove(subjectKey, annotation);
             }
         } catch (Exception e) {
             e.printStackTrace();

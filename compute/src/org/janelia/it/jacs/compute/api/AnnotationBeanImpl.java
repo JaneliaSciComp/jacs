@@ -16,6 +16,7 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.PatternSearchDAO;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;

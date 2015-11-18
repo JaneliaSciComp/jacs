@@ -3,7 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;

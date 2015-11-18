@@ -1,7 +1,7 @@
 
 package org.janelia.it.jacs.compute.engine.service;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 
 
 /**

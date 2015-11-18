@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName = "subject")
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class Subject implements HasIdentifier {
     
     @MongoId

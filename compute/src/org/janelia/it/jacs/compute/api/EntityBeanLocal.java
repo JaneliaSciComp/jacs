@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.compute.api;
 
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 

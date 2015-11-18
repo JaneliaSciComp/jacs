@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.ejb.Remote;
 
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;

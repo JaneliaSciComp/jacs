@@ -1,7 +1,7 @@
 
 package org.janelia.it.jacs.compute.engine.data;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 
 /**
  * @author Tareq Nabeel

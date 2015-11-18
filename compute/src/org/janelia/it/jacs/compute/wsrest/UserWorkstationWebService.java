@@ -50,6 +50,7 @@ public class UserWorkstationWebService extends ResourceConfig {
 
     public UserWorkstationWebService() {
         register(JacksonJsonProvider.class);
+        getDao();
     }
 
     // mapping using explicit object mapping; TO DO configure jackson integration with jersey
@@ -113,7 +114,7 @@ public class UserWorkstationWebService extends ResourceConfig {
         return null;
     }
 
-    @POST
+  /*  @POST
     @Path("/treenode/children")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -151,6 +152,7 @@ public class UserWorkstationWebService extends ResourceConfig {
         }
         return null;
     }
+*/
 
     @PUT
     @Path("/objectset")

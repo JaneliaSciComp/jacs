@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.compute.engine.util;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.DataExtractor;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;

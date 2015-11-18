@@ -2,7 +2,6 @@
 package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeException;
 
 import java.util.Arrays;
 
