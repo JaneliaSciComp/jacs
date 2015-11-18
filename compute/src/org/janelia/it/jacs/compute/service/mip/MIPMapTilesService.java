@@ -52,6 +52,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private String targetType;
     private String targetMediaFormat;
     private Boolean targetSkipEmptyTiles;
+    private Integer bgPixelValue;
     private String processingAccount;
 
     @Override
@@ -79,6 +80,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         targetType = processData.getString("TARGET_TYPE");
         targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
         targetSkipEmptyTiles = processData.getBoolean("TARGET_SKIP_EMPTY_TILES");
+        bgPixelValue = processData.getInt("BG_PIXEL_VALUE");
         processingAccount = processData.getString("PROCESSING_ACCOUNT");
     }
 
@@ -202,6 +204,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             writeValueOrNone(targetType, fw);
             writeValueOrNone(targetMediaFormat, fw);
             writeValueOrNone(targetSkipEmptyTiles, fw);
+            writeValueOrNone(bgPixelValue, fw);
         } catch (IOException e) {
             throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e);
         }
@@ -260,6 +263,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         if (targetType != null) script.append("read TARGET_TYPE\n");
         if (targetMediaFormat != null) script.append("read TARGET_MEDIA_FORMAT\n");
         if (targetSkipEmptyTiles != null) script.append("read TARGET_SKIP_EMPTY_TILES\n");
+        if (bgPixelValue != null) script.append("read BG_PIXEL_VALUE\n");
 
         // pass them to the script as environment variables
         script
@@ -294,6 +298,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("TARGET_TYPE=$TARGET_TYPE ")
             .append("TARGET_MEDIA_FORMAT=$TARGET_MEDIA_FORMAT ")
             .append("TARGET_SKIP_EMPTY_TILES=$TARGET_SKIP_EMPTY_TILES ")
+            .append("BG_PIXEL_VALUE=$BG_PIXEL_VALUE ")
             .append(MIPMapTilesHelper.getMipMapsRetilerCommands()).append('\n');
         writer.write(script.toString());
     }

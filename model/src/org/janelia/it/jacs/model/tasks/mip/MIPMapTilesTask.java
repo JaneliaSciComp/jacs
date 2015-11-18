@@ -40,6 +40,7 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_sourceWidth = "width of the cropped area";
     transient private static final String PARAM_sourceHeight = "height of the cropped area";
     transient private static final String PARAM_sourceDepth = "depth of the cropped area";
+    transient private static final String PARAM_bgPixelValue = "background pixel value";
 
     transient private static final String PARAM_targetRootUrl = "root url containing the target stack";
     transient private static final String PARAM_targetStackFormat = "format of the output stack";
@@ -113,6 +114,8 @@ public class MIPMapTilesTask extends Task {
                 return new LongParameterVO(Long.valueOf(value));
             case PARAM_sourceDepth:
                 return new LongParameterVO(Long.valueOf(value));
+            case PARAM_bgPixelValue:
+                return new IntegerParameterVO(Integer.valueOf(value));
             case PARAM_targetRootUrl:
                 return new TextParameterVO(value, 400);
             case PARAM_targetStackFormat:
@@ -296,6 +299,15 @@ public class MIPMapTilesTask extends Task {
 
     public void setSourceDepth(Long sourceDepth) {
         setParameterAsLong(PARAM_sourceDepth, sourceDepth);
+    }
+
+    @XmlElement(name = "bgPixelValue")
+    public Integer getBgPixelValue() {
+        return getParameterAsInteger(PARAM_bgPixelValue);
+    }
+
+    public void setBgPixelValue(Integer bgPixelValue) {
+        setParameterAsInteger(PARAM_bgPixelValue, bgPixelValue);
     }
 
     @XmlElement(name = "targetRootUrl")
