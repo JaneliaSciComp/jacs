@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.compute.service.common.grid.submit.sge;
 
+import com.google.common.base.Strings;
 import org.apache.log4j.Logger;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobTemplate;
@@ -13,7 +14,6 @@ import org.janelia.it.jacs.compute.drmaa.JobStatusLogger;
 import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
@@ -27,8 +27,6 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
-
-import com.google.common.base.Strings;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -347,10 +345,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             jt.setJobName(task.getOwner().replaceAll("\\W", "_") + "_" + getGridServicePrefixName());
             // setNativeSpecification(jt);
             setQueue(jt);
-            // Check if the SGE grid requires project info
-            if (SystemConfigurationProperties.getBoolean("Grid.RequiresProjectCode")) {
-                setProject(jt);
-            }
             // Check if the SGE grid requires account info
             if (SystemConfigurationProperties.getBoolean("Grid.RequiresAccountInfo")) {
                 setAccount(jt);
@@ -519,13 +513,6 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      * @throws Exception error checking preconditions
      */
     protected boolean checkSubmitJobPrecondition(DrmaaHelper drmaaHelper) throws Exception {
-        // If required, check the project code
-        if (SystemConfigurationProperties.getBoolean("Grid.RequiresProjectCode")) {
-            String tmpProjectCode = task.getParameter(Task.PARAM_project).trim();
-            if (!drmaaHelper.isProjectCodeValid(tmpProjectCode)) {
-                throw new ServiceException("Precondition check failed.  The project code provided is not valid on the grid: " + tmpProjectCode);
-            }
-        }
         return true;
     }
 

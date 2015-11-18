@@ -58,13 +58,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleMaintenancePipelines() {
         try {
-            log.info("Building list of users with samples...");
+            log.info("Building list of users with data sets...");
             Set<String> subjectKeys = new TreeSet<>();
-            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_SAMPLE)) {
+            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(sample.getOwnerKey());
             }
-            log.info("Found users with samples: " + subjectKeys);
-            for(String subjectKey : subjectKeys) {
+            List<String> sortedKeys = new ArrayList<>(subjectKeys);
+            Collections.sort(sortedKeys);
+            log.info("Found users with data sets: " + sortedKeys);
+            for(String subjectKey : sortedKeys) {
                 log.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
             }
@@ -695,7 +697,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft1015c.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab1115.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);

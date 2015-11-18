@@ -1,8 +1,7 @@
-package org.janelia.it.workstation.shared.util;
+package org.janelia.it.jacs.shared.swc;
 
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
-import org.janelia.it.workstation.geom.Vec3;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +16,9 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPathEndpoin
  * this class handles the details of translating TmNeurons into SWCData
  */
 public class SWCDataConverter {
+    private static final int SWC_X = 0;
+    private static final int SWC_Y = 1;
+    private static final int SWC_Z = 2;
 
     private ImportExportSWCExchanger exchanger;
     
@@ -40,13 +42,13 @@ public class SWCDataConverter {
         return fromTmNeuron(neuron, neuronCenterOfMass(neuron), downsampleModulo);
     }
 
-    public SWCData fromTmNeuron(TmNeuron neuron, Vec3 externalizedCenter, int downsampleModulo) {
+    public SWCData fromTmNeuron(TmNeuron neuron, double[] externalizedCenter, int downsampleModulo) {
 
         List<String> headerList = new ArrayList<>();
 
-        double xcenter = externalizedCenter.getX();
-        double ycenter = externalizedCenter.getY();
-        double zcenter = externalizedCenter.getZ();
+        double xcenter = externalizedCenter[SWC_X];
+        double ycenter = externalizedCenter[SWC_Y];
+        double zcenter = externalizedCenter[SWC_Z];
         List<SWCNode> nodeList;
         if (downsampleModulo == 0 ) { //|| neuron.getAnchoredPathMap().isEmpty()) {
             nodeList = nodesFromSubtrees(neuron, xcenter, ycenter, zcenter);
@@ -70,7 +72,7 @@ public class SWCDataConverter {
 
     public List<SWCData> fromTmNeuron(List<TmNeuron> neuronList, Map<Long,List<String>> extraHeaders, int downsampleModulo) {
         List<SWCData> rtnList = new ArrayList<>();
-        Vec3 com = neuronCenterOfMass(neuronList);
+        double[] com = neuronCenterOfMass(neuronList);
 
         List<SWCData> dataList = new ArrayList<>();
         for (TmNeuron neuron: neuronList) {
@@ -101,7 +103,7 @@ public class SWCDataConverter {
     }
 
     public SWCData fromAllTmNeuron(List<TmNeuron> neuronList, int downsampleModulo) {
-        Vec3 com = neuronCenterOfMass(neuronList);
+        double[] com = neuronCenterOfMass(neuronList);
 
         List<SWCData> dataList = new ArrayList<>();
         for (TmNeuron neuron: neuronList) {
@@ -124,7 +126,7 @@ public class SWCDataConverter {
         }
     }
     
-    public Vec3 neuronCenterOfMass(TmNeuron neuron) {
+    public double[] neuronCenterOfMass(TmNeuron neuron) {
         // it is probably not strictly correct, but I'm going
         //  to return the offset for center if the neuron
         //  is null or has no points
@@ -152,13 +154,13 @@ public class SWCDataConverter {
                 rtnVal[i] += externalCoords[i] / length;
             }
         }
-        return new Vec3(rtnVal[0], rtnVal[1], rtnVal[2]);
+        return rtnVal;
     }
 
-    public Vec3 neuronCenterOfMass(List<TmNeuron> neuronList) {
+    public double[] neuronCenterOfMass(List<TmNeuron> neuronList) {
 
-        Vec3 com;
-        Vec3 sum = new Vec3(0.0, 0.0, 0.0);
+        double[] com;
+        double[] sum = new double[3];
 
         int nNodes;
         int totalNodes = 0;
@@ -172,13 +174,20 @@ public class SWCDataConverter {
                 continue;
             }
             com = neuronCenterOfMass(neuron);
-            com.multEquals(nNodes);
-            sum.plusEquals(com);
+            for (int i = 0; i < com.length; i++) {
+                com[i] *= nNodes;
+            }
+            for (int i = 0; i < sum.length; i++) {
+                sum[i] += com[i];
+            }
             totalNodes += nNodes;
         }
 
         if (totalNodes > 0) {
-            sum.multEquals(1.0 / totalNodes);
+            final double totalNodesReciprocal = 1.0 / totalNodes;
+            for (int i = 0; i < sum.length; i++) {
+                sum[i] *= totalNodesReciprocal;
+            }
         }
         // note that if totalNodes is zero, sum is also all zeros
         return sum;
@@ -333,12 +342,9 @@ public class SWCDataConverter {
         return segmentType;
     }
 
-    private Vec3 calcDefaultCenterOfMass(double[] rtnVal) {
+    private double[] calcDefaultCenterOfMass(double[] rtnVal) {
         double[] defaultCoords = exchanger.getExternal(rtnVal);
-        Vec3 defaultValue = new Vec3(
-                defaultCoords[0], defaultCoords[1], defaultCoords[2]
-        );
-        return defaultValue;
+        return defaultCoords;
     }
 
     /**

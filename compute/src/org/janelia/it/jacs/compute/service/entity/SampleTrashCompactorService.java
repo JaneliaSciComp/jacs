@@ -63,19 +63,25 @@ public class SampleTrashCompactorService extends AbstractEntityService {
         }
         
         processFilestore(userFilestore);
-        processFilestore(archiveFilestore);
+        if (!userFilestore.getAbsolutePath().equals(archiveFilestore.getAbsolutePath())) {
+        	processFilestore(archiveFilestore);
+        }
         
 		logger.info("Processed "+numDirs+" directories. Found "+numResultNodes+" result nodes, of which "+numDefunctDirs+
 		        " were defunct. Trashed "+numDeletedResultNodes+" nodes. Left "+(numResultNodes-numDeletedResultNodes)+" nodes alone.");
     }
     
     private void processFilestore(File filestoreDir) throws Exception {
+        processChildren(new File(filestoreDir, "Summary"));
         processChildren(new File(filestoreDir, "Sample"));
+        processChildren(new File(filestoreDir, "Post"));
         processChildren(new File(filestoreDir, "Alignment"));
         processChildren(new File(filestoreDir, "Separation"));
         processChildren(new File(filestoreDir, "Intersection"));
         processChildren(new File(filestoreDir, "NeuronMerge"));
+        processChildren(new File(filestoreDir, "Normalization"));
         processChildren(new File(filestoreDir, "Temp"));
+        processChildren(new File(filestoreDir, "Error"));
     }
     
     private void processChildren(File dir) throws Exception {
