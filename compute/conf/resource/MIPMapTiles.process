@@ -33,11 +33,15 @@
                 <input name="TARGET_MAX_COL" />
                 <input name="TARGET_MIN_Z" />
                 <input name="TARGET_MAX_Z" />
+                <input name="ORIENTATION" />
 
                 <input name="TARGET_QUALITY" />
                 <input name="TARGET_TYPE" />
                 <input name="TARGET_MEDIA_FORMAT" />
                 <input name="TARGET_SKIP_EMPTY_TILES" />
+                <input name="BG_PIXEL_VALUE" />
+                <input name="PROCESSING_ACCOUNT" />
+
                 <output name="TARGET_ROOT_URL" />
                 <output name="TARGET_STACK_FORMAT" />
             </operation>
@@ -69,6 +73,7 @@
                 <input name="TARGET_TYPE" />
                 <input name="TARGET_MEDIA_FORMAT" />
                 <input name="TARGET_SKIP_EMPTY_TILES" />
+                <input name="PROCESSING_ACCOUNT" />
 
             </operation>
         </sequence>
