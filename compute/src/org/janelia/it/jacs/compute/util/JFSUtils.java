@@ -50,7 +50,6 @@ public class JFSUtils {
         	sb.append(JFS_LSM_STORE);
             sb.append("/");
             sb.append(JFS_SCALITY_NAMESPACE);
-            sb.append("/");
             sb.append(filepath);
         }
         else {

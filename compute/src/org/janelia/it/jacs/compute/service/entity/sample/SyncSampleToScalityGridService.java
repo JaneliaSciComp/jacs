@@ -255,17 +255,17 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("WORKING_DIR=").append(resultFileNode.getDirectoryPath()).append("\n");
         script.append("cd $WORKING_DIR\n");
         script.append(Vaa3DHelper.getHostnameEcho());
-        script.append("FILE_STUB=`basename $FILE_PATH`");
-        script.append("FILE_EXT=${FILE_STUB##*.}");
-        script.append("if [[ \"$FILE_EXT\" = \"lsm\" ]]; then");
-        script.append("  WORKING_FILE=$WORKING_DIR/$FILE_STUB.bz2");
-        script.append("  "+Vaa3DHelper.getFormattedConvertScriptCommand("$FILE_PATH","$WORKING_FILE", ""));
-        script.append("  FILE_PATH=${WORKING_FILE}");
-        script.append("  JFS_PATH=${JFS_PATH}.bz2");
-        script.append("fi");
+        script.append("FILE_STUB=`basename $FILE_PATH`\n");
+        script.append("FILE_EXT=${FILE_STUB##*.}\n");
+        script.append("if [[ \"$FILE_EXT\" = \"lsm\" ]]; then\n");
+        script.append("  WORKING_FILE=$WORKING_DIR/$FILE_STUB.bz2\n");
+        script.append("  "+Vaa3DHelper.getFormattedConvertScriptCommand("$FILE_PATH","$WORKING_FILE", "")).append("\n");
+        script.append("  FILE_PATH=${WORKING_FILE}\n");
+        script.append("  JFS_PATH=${JFS_PATH}.bz2\n");
+        script.append("fi\n");
         script.append("echo \"Copy source: $FILE_PATH\"\n");
         script.append("echo \"Copy target: $JFS_PATH\"\n");
-        script.append("CMD='"+JFS_CMD + " -command write \"$JFS_PATH\"' -file \"$FILE_PATH\" -checksum\n");
+        script.append("CMD=\""+JFS_CMD + " -command write $JFS_PATH -file $FILE_PATH -checksum\"\n");
         script.append("echo \"Running: $CMD\"\n");
         script.append("$CMD\n");
         writer.write(script.toString());
@@ -369,14 +369,17 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         
     	i=0;
     	for(Entity entity : entitiesToMove) {
-    		if (!hasError[i++]) {
+    		if (hasError[i++]) {
+    			contextLogger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
+    		}
+    		else {
                 String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 String jfsPath = JFSUtils.getScalityPathFromEntity(entity);
-    		    contextLogger.info("Synchronized "+entity.getId()+" to "+jfsPath);
                 String webdavUrl = JFSUtils.getWebdavUrlForJFSPath(jfsPath);
-    		    
                 File file = new File(filepath);
                 Long bytes = null;
+                
+    		    contextLogger.info("Synchronized "+entity.getId()+" to "+jfsPath);
                 
                 try {
                     if (filepath.endsWith(".lsm")) {
@@ -417,7 +420,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         		        	image.setName(image.getName()+".bz2");
                 		}
         		        image.setPath(null);
-	        		    image.setJFSPath(jfsPath);
+	        		    image.setJfsPath(jfsPath);
         		        image.setUrl(webdavUrl);
         		        sage.saveImage(image);
         		        contextLogger.info("Updated SAGE image "+image.getId());
@@ -435,9 +438,6 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     			}
     			
     		}	
-    		else {
-    			contextLogger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
-    		}
     	}
 	}
 
