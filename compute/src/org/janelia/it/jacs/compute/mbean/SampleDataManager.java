@@ -590,17 +590,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runScalityCorrectionService(String user) {
-        try {
-            String processName = "ScalityCorrectionPipeline";
-            String displayName = "Scality Correction Pipeline";
-            saveAndRunTask(user, processName, displayName);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-
     /**
      * Method to point to an ls file and pull out LSM's to be bzip2'd.
      * Example file exists in /groups/jacs/jacsShare/saffordTest/leetLSMs28days.txt (or older file)
