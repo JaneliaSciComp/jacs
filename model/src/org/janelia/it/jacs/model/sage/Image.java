@@ -102,11 +102,11 @@ public class Image implements Serializable {
         this.path = path;
     }
 
-    public String getJFSPath() {
+    public String getJfsPath() {
         return this.jfsPath;
     }
 
-    public void setJFSPath(String jfsPath) {
+    public void setJfsPath(String jfsPath) {
         this.jfsPath = jfsPath;
     }
     
