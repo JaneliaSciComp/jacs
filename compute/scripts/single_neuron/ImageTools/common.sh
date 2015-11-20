@@ -26,7 +26,7 @@ ensureLocalFile()
     local _WORKING_DIR="$2"
     local _FILE="$3"
     local _RESULTVAR="$4"
-    if [[ $_FILE == http* ]]; then
+    if [[ ! -e $_FILE ]]; then
         local _FILE_PATH=$_FILE
         local _FILE_STUB=`basename $_FILE_PATH`
         _FILE="$_WORKING_DIR/$_FILE_STUB"
