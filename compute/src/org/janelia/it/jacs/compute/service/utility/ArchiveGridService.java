@@ -66,7 +66,6 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         super.init(processData);
 
         try {
-            
             Object sourceFilePathObject = processData.getItem("SOURCE_FILE_PATHS");
             if (sourceFilePathObject!=null) {
                 if (sourceFilePathObject instanceof List) {

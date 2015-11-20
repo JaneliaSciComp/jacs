@@ -1,5 +1,19 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -7,23 +21,29 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.compute.util.FileUtils;
+import org.janelia.it.jacs.compute.util.JFSUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.sage.CvTerm;
+import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
+import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
 import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
-
-import java.io.*;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.joda.time.DateTime;
+import org.joda.time.Period;
 
 /**
- * Moves the given Sample's files to the Scality object store via the Sproxyd REST API and updates the object model to add a Scality BPID attribute to each file entity.
+ * Moves the given Sample's files to the Scality object store via JFS and updates the object model 
+ * to add a JFS Path attribute to each file entity.
+ * 
+ * This service can currently move all PBDs in the sample, or all LSMs. In the case of LSMs, it only moves
+ * LSMS that were processed more than 30 days ago. It also compresses the LSMs, and updates SAGE to point 
+ * to JFS instead of the file system.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -32,8 +52,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     private static final String CONFIG_PREFIX = "scalityConfiguration.";
     private static final String TIMING_PREFIX="Timing: ";
 
-    protected static final boolean SCALITY_ALLOW_WRITES =
-            SystemConfigurationProperties.getBoolean("Scality.AllowWrites");
+    protected static final boolean JFS_ALLOW_WRITES =
+            SystemConfigurationProperties.getBoolean("JFS.AllowWrites");
 
     protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
@@ -59,8 +79,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
     protected void init() throws Exception {
 
-        if (!SCALITY_ALLOW_WRITES) {
-            contextLogger.info("Scality writes are disallowed by configuration. Scality.AllowWrites is set to false in jacs.properties.");
+        if (!JFS_ALLOW_WRITES) {
+            contextLogger.info("JFS writes are disallowed by configuration. JFS.AllowWrites is set to false in jacs.properties.");
             cancel();
             return;
         }
@@ -114,13 +134,20 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
         if (types.remove("lsm")) {
             contextLogger.info("Searching "+sample.getId()+" for LSM files to move...");
+            final DateTime cutoffDate = new DateTime().minus(Period.months(1));
             EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                     .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
                     .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
                     .childrenOfType(EntityConstants.TYPE_LSM_STACK)
                     .run(new EntityVisitor() {
                 public void visit(Entity entity) throws Exception {
-                    addToEntitiesToMove(entity);
+                    String completionDateStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
+                    if (null!=completionDateStr) {
+                        DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
+                        if (cutoffDate.isAfter(completionDate)) {
+                            addToEntitiesToMove(entity);
+                        }
+                    }
                 }
             });
         }
@@ -166,7 +193,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         
         if (filepath==null) {
-            contextLogger.warn("Entity should be moved to Scality but has no filepath: "+entity.getId());
+            contextLogger.warn("Entity should be moved but has no filepath: "+entity.getId());
             return;
         }
 
@@ -227,11 +254,23 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         StringBuffer script = new StringBuffer();
         script.append("read FILE_PATH\n");
         script.append("read SCALITY_URL\n");
-        script.append("cd ").append(resultFileNode.getDirectoryPath()).append("\n");
+        script.append("WORKING_DIR=").append(resultFileNode.getDirectoryPath()).append("\n");
+        script.append("cd $WORKING_DIR\n");
         script.append(Vaa3DHelper.getHostnameEcho());
+        script.append("FILE_STUB=`basename $FILE_PATH`");
+        script.append("FILE_EXT=${FILE_STUB##*.}");
+        script.append("if [[ \"$FILE_EXT\" = \"lsm\" ]]; then");
+        script.append("  WORKING_FILE=$WORKING_DIR/$FILE_STUB.bz2");
+        script.append("  "+Vaa3DHelper.getFormattedConvertScriptCommand("$FILE_PATH","$WORKING_FILE", ""));
+        script.append("  FILE_PATH=${WORKING_FILE}");
+        script.append("  SCALITY_URL=${SCALITY_URL}.bz2");
+        script.append("fi");
+
         script.append("echo \"Copy source: $FILE_PATH\"\n");
         script.append("echo \"Copy target: $SCALITY_URL\"\n");
-        script.append("timing=`"+SCALITY_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"`\n");
+        script.append("CMD='"+SCALITY_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"'\n");
+        script.append("echo \"Running: $CMD\"\n");
+        script.append("timing=`$CMD`\n");
         script.append("echo \"$timing\"\n");
         writer.write(script.toString());
     }
@@ -254,6 +293,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
 	public void postProcess() throws MissingDataException {
 
+    	SageDAO sage = new SageDAO(logger);
+        CvTerm propertyFilesize = getCvTermByName(sage, "light_imagery","file_size");
+        
         contextLogger.debug("Processing "+resultFileNode.getDirectoryPath());
 
         File outputDir = new File(resultFileNode.getDirectoryPath(), "sge_output");
@@ -263,9 +305,10 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     		throw new MissingDataException("Number of entities to move ("+entitiesToMove.size()+") does not match number of output files ("+outputFiles.length+")");
     	}
     	
+    	// Find errors
+    	
     	boolean[] hasError = new boolean[entitiesToMove.size()];
     	String[] timings = new String[entitiesToMove.size()];
-
     	for(File outputFile : outputFiles) {
     		int index = getIndexExtension(outputFile);
     		Scanner in = null;
@@ -279,7 +322,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     				}
                     else if (line.startsWith("Result: failure")) {
                         hasError[index-1] = true;
-                        contextLogger.error("Error uploading "+entitiesToMove.get(index-1).getId()+" to Scality. Details can be found at "+outputFile.getAbsolutePath());
+                        contextLogger.error("Error uploading "+entitiesToMove.get(index-1).getId()+" to JFS. Details can be found at "+outputFile.getAbsolutePath());
                     }
     				else if (line.startsWith(TIMING_PREFIX)) {
     					timingCsv = line.substring(TIMING_PREFIX.length());
@@ -308,6 +351,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             }
         }
 
+        // Log timings
+        
         int i=0;
         StringBuilder sb = new StringBuilder();
         for(Entity entity : entitiesToMove) {
@@ -315,34 +360,46 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             File file = new File(filepath);
             if (!hasError[i]) {
                 String timingCsv = timings[i];
-                sb.append("\nScalityBenchmark,PUT,Sproxyd,"+file.getName()+","+timingCsv);
+                sb.append("\nJFSBenchmark,PUT,Sproxyd,"+file.getName()+","+timingCsv);
             }
             else {
-                sb.append("\nScalityBenchmark,PUT,Sproxyd,"+file.getName()+",Error");
+                sb.append("\nJFSBenchmark,PUT,Sproxyd,"+file.getName()+",Error");
             }
             i++;
         }
         contextLogger.info("Timings:"+sb);
         
+        // Update all entities that were transferred correctly
+        
     	i=0;
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
                 String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                String scalityUrl = ScalityDAO.getClusterUrlFromEntity(entity);
-    		    contextLogger.info("Synchronized "+entity.getId()+" to "+scalityUrl);
+                String jfsPath = JFSUtils.getJFSPathFromEntity(entity);
+    		    contextLogger.info("Synchronized "+entity.getId()+" to "+jfsPath);
+                String webdavUrl = JFSUtils.getWebdavUrlForJFSPath(jfsPath);
     		    
+                File file = new File(filepath);
+                Long bytes = null;
+                
                 try {
-                    String bpid = ScalityDAO.getBPIDFromEntity(entity);
-                    String scalityPath = EntityConstants.SCALITY_PATH_PREFIX+ScalityDAO.getBPIDFromEntity(entity);
-                    
-        			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_SCALITY_BPID, bpid);
+                    if (filepath.endsWith(".lsm")) {
+                    	// The LSM was compressed by this pipeline, so we need to add the correct extension everywhere
+	                    entity.setName(entity.getName()+".bz2");
+	                    entityBean.saveOrUpdateEntity(entity);
+	                    jfsPath += ".bz2";
+	                    bytes = file.length();
+                    }
+
+        			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
+        			
         			if (deleteSourceFiles) {
-        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, scalityPath);
+        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
                         if (numUpdated>0) {
-                            contextLogger.info("Updated "+numUpdated+" entity data values to "+scalityPath);
+                            contextLogger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
                         }
         			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
-        			    FileUtils.forceDelete(new File(filepath));
+        			    FileUtils.forceDelete(file);
                         contextLogger.info("Deleted "+filepath);
                     }
                 }
@@ -350,6 +407,36 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                     contextLogger.error("Error updating entity id="+entity.getId(),e);
                     throw new MissingDataException("Could not update entities, database may be in an inconsistent state!");
                 }
+                
+    			// Update SAGE if necessary
+                String sageIdStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID);
+    			if (sageIdStr!=null) {
+	                try {
+        				if (!jfsPath.endsWith(".lsm.bz2")) {
+        					contextLogger.warn("Expected lsm.bz2 extension on LSM: "+jfsPath);
+        				}
+        				
+        		        Image image = sage.getImage(new Integer(sageIdStr));
+        		        if (!image.getName().endsWith("bz2")) {
+        		        	image.setName(image.getName()+".bz2");
+                		}
+        		        image.setPath(null);
+	        		    image.setJFSPath(jfsPath);
+        		        image.setUrl(webdavUrl);
+        		        sage.saveImage(image);
+        		        contextLogger.info("Updated SAGE image "+image.getId());
+        		        
+        		        if (bytes!=null) {
+        		        	sage.setImageProperty(image, propertyFilesize, bytes.toString());
+            		        contextLogger.info("Updated bytes to "+bytes+" for image "+image.getId());
+        		        }
+        		        
+	                }
+	                catch (Exception e) {
+	                    contextLogger.error("Error updating SAGE image "+sageIdStr,e);
+	                    throw new MissingDataException("Could not update SAGE, it may be in an inconsistent state!");
+	                }
+    			}
     			
     		}	
     		else {
@@ -363,4 +450,18 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         String ext = name.substring(name.lastIndexOf('.')+1);
         return Integer.parseInt(ext);
     }
+    
+    private CvTerm getCvTermByName(SageDAO sage, String cvName, String termName) {
+    	try {
+	        CvTerm term = sage.getCvTermByName(cvName, termName);
+	        if (term==null) {
+	            throw new IllegalStateException("No such term: "+termName+" in CV "+cvName);
+	        }
+	        return term;
+    	}
+    	catch (Exception e) {
+            throw new IllegalStateException("Error getting term: "+termName+" in CV "+cvName,e);
+    	}
+    }
+        
 }
