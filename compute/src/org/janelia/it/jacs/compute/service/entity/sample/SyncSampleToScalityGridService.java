@@ -14,7 +14,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.access.SageDAO;
-import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
@@ -61,9 +60,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
-    private static final String SCALITY_SYNC_CMD = 
-            SystemConfigurationProperties.getString("Executables.ModuleBase") +
-            SystemConfigurationProperties.getString("ArchiveSyncSproxyd.Timing.ScriptPath");
+    private static final String JFS_CMD = 
+            SystemConfigurationProperties.getString("JFS.ScriptPath");
         
     private Entity sampleEntity;
     private Set<Long> seenEntityIds = new HashSet<>();
@@ -235,12 +233,12 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     
     private void writeInstanceFile(Entity entity, int configIndex) throws Exception {
 		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-		String scalityUrl = ScalityDAO.getClusterUrlFromEntity(entity);
+		String jfsPath = JFSUtils.getScalityPathFromEntity(entity);
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
         	fw.write(filepath + "\n");
-        	fw.write(scalityUrl + "\n");
+        	fw.write(jfsPath + "\n");
         }
         catch (IOException e) {
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e); 
@@ -253,7 +251,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     private void createShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
         script.append("read FILE_PATH\n");
-        script.append("read SCALITY_URL\n");
+        script.append("read JFS_PATH\n");
         script.append("WORKING_DIR=").append(resultFileNode.getDirectoryPath()).append("\n");
         script.append("cd $WORKING_DIR\n");
         script.append(Vaa3DHelper.getHostnameEcho());
@@ -263,12 +261,11 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("  WORKING_FILE=$WORKING_DIR/$FILE_STUB.bz2");
         script.append("  "+Vaa3DHelper.getFormattedConvertScriptCommand("$FILE_PATH","$WORKING_FILE", ""));
         script.append("  FILE_PATH=${WORKING_FILE}");
-        script.append("  SCALITY_URL=${SCALITY_URL}.bz2");
+        script.append("  JFS_PATH=${JFS_PATH}.bz2");
         script.append("fi");
-
         script.append("echo \"Copy source: $FILE_PATH\"\n");
-        script.append("echo \"Copy target: $SCALITY_URL\"\n");
-        script.append("CMD='"+SCALITY_SYNC_CMD + " PUT \"$FILE_PATH\" \"$SCALITY_URL\"'\n");
+        script.append("echo \"Copy target: $JFS_PATH\"\n");
+        script.append("CMD='"+JFS_CMD + " -command write \"$JFS_PATH\"' -file \"$FILE_PATH\" -checksum\n");
         script.append("echo \"Running: $CMD\"\n");
         script.append("timing=`$CMD`\n");
         script.append("echo \"$timing\"\n");
@@ -375,7 +372,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	for(Entity entity : entitiesToMove) {
     		if (!hasError[i++]) {
                 String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                String jfsPath = JFSUtils.getJFSPathFromEntity(entity);
+                String jfsPath = JFSUtils.getScalityPathFromEntity(entity);
     		    contextLogger.info("Synchronized "+entity.getId()+" to "+jfsPath);
                 String webdavUrl = JFSUtils.getWebdavUrlForJFSPath(jfsPath);
     		    

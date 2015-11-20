@@ -28,7 +28,7 @@ public class JFSUtils {
         return JFS_PREFIX_URL+jfsPath;
     }
     
-    public static String getJFSPathFromEntity(Entity entity) {
+    public static String getScalityPathFromEntity(Entity entity) {
         String jfsPath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
         if (jfsPath!=null) return jfsPath;
         // The entity doesn't know it's in JFS yet, so we need to create the path from scratch 

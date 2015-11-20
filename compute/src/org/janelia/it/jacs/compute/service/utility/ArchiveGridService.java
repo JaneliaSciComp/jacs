@@ -165,7 +165,6 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
     }
 
     protected void writeInstanceFile(FileWriter fw, String sourceFilepath, String targetFilepath) throws IOException {
-
     	if (sourceFilepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX)) {
     		String bpid = sourceFilepath.replaceFirst(EntityConstants.SCALITY_PATH_PREFIX, "");
     		String scalityUrl = ScalityDAO.getClusterUrlFromBPID(bpid);
