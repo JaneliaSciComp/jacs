@@ -510,10 +510,7 @@ public class EntityUtils {
         }
 
         if (path == null) {
-            path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
-            if (path!=null) {
-                path = EntityConstants.SCALITY_PATH_PREFIX+path;
-            }
+            path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
         }
 
         if (path == null) {

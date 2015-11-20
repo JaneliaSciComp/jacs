@@ -61,7 +61,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
     private static final String JFS_CMD = 
-            SystemConfigurationProperties.getString("JFS.ScriptPath");
+            SystemConfigurationProperties.getString("JFS.CommandLineUtil");
         
     private Entity sampleEntity;
     private Set<Long> seenEntityIds = new HashSet<>();
@@ -267,8 +267,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("echo \"Copy target: $JFS_PATH\"\n");
         script.append("CMD='"+JFS_CMD + " -command write \"$JFS_PATH\"' -file \"$FILE_PATH\" -checksum\n");
         script.append("echo \"Running: $CMD\"\n");
-        script.append("timing=`$CMD`\n");
-        script.append("echo \"$timing\"\n");
+        script.append("$CMD\n");
         writer.write(script.toString());
     }
 

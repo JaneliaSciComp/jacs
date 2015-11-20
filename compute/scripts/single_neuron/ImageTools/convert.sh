@@ -17,7 +17,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 . $DIR/common.sh
 
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
-SyncScript="$DIR/restSync.py"
+SyncScript="/misc/local/jfs/jfs"
 export TMPDIR=""
 
 NUMPARAMS=$#
