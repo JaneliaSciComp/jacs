@@ -267,7 +267,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("fi\n");
         script.append("echo \"Copy source: $FILE_PATH\"\n");
         script.append("echo \"Copy target: $JFS_PATH\"\n");
-        script.append("CMD=\""+JFS_CMD + " -command write $JFS_PATH -file $FILE_PATH -checksum\"\n");
+        script.append("CMD=\""+JFS_CMD + " -command write -path $JFS_PATH -file $FILE_PATH -checksum\"\n");
         script.append("echo \"Running: $CMD\"\n");
         script.append("$CMD\n");
         writer.write(script.toString());
@@ -342,9 +342,8 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                 try {
                     if (filepath.endsWith(".lsm")) {
                     	// The LSM was compressed by this pipeline, so we need to add the correct extension everywhere
-	                    entity.setName(entity.getName()+".bz2");
-	                    entityBean.saveOrUpdateEntity(entity);
 	                    jfsPath += ".bz2";
+	                    webdavUrl += ".bz2";
 	                    bytes = file.length();
                     }
 
@@ -361,7 +360,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 	                        contextLogger.info("Deleted "+filepath);
         				}
         				catch (IOException e) {
-	                        contextLogger.info("Problem deleting "+filepath+": "+e.getMessage());
+	                        contextLogger.info(e.getMessage());
         				}
                     }
                 }
