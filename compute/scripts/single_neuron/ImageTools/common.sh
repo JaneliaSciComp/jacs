@@ -31,7 +31,7 @@ ensureLocalFile()
         local _FILE_STUB=`basename $_FILE_PATH`
         _FILE="$_WORKING_DIR/$_FILE_STUB"
         echo "Copying to local file"
-        $_SYNC_SCRIPT -command read "$_FILE_PATH" -file "$_FILE"
+        $_SYNC_SCRIPT -command read -path "$_FILE_PATH" -file "$_FILE"
     fi
     eval $_RESULTVAR="'$_FILE'"
 }
