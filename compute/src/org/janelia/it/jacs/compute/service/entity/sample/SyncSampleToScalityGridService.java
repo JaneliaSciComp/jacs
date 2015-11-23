@@ -1,14 +1,11 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +46,6 @@ import org.joda.time.Period;
 public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
     private static final String CONFIG_PREFIX = "scalityConfiguration.";
-    private static final String TIMING_PREFIX="Timing: ";
 
     protected static final boolean JFS_ALLOW_WRITES =
             SystemConfigurationProperties.getBoolean("JFS.AllowWrites");
@@ -145,6 +141,12 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                         if (cutoffDate.isAfter(completionDate)) {
                             addToEntitiesToMove(entity);
                         }
+                        else {
+                        	contextLogger.info("LSM is too recent to move: "+entity.getId());
+                        }
+                    }
+                    else {
+                    	contextLogger.info("LSM has not been completed, so it can't be moved: "+entity.getId());
                     }
                 }
             });
@@ -290,7 +292,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 	public void postProcess() throws MissingDataException {
 
     	SageDAO sage = new SageDAO(logger);
-        CvTerm propertyFilesize = getCvTermByName(sage, "light_imagery","file_size");
+        CvTerm propertyFilesize = getCvTermByName(sage, "light_imagery", "file_size");
         
         contextLogger.debug("Processing "+resultFileNode.getDirectoryPath());
 
@@ -304,70 +306,26 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	// Find errors
     	
     	boolean[] hasError = new boolean[entitiesToMove.size()];
-    	String[] timings = new String[entitiesToMove.size()];
-    	for(File outputFile : outputFiles) {
-    		int index = getIndexExtension(outputFile);
-    		Scanner in = null;
-    		try {
-    			String timingCsv = null;
-    			in = new Scanner(new FileReader(outputFile));
-    			while (in.hasNext()) {
-    				String line = in.nextLine();
-    				if (line.startsWith("Result: success")) {
-						hasError[index-1] = false;
-    				}
-                    else if (line.startsWith("Result: failure")) {
-                        hasError[index-1] = true;
-                        contextLogger.error("Error uploading "+entitiesToMove.get(index-1).getId()+" to JFS. Details can be found at "+outputFile.getAbsolutePath());
-                    }
-    				else if (line.startsWith(TIMING_PREFIX)) {
-    					timingCsv = line.substring(TIMING_PREFIX.length());
-    				}
-    			}
-    			if (timingCsv!=null) {
-    				timings[index-1] = timingCsv;
-    			}
-    		}
-    		catch (FileNotFoundException e) {
-    			throw new MissingDataException("Missing file "+outputFile.getName(),e);
-    		}
-    		finally {
-    		    if (in!=null) in.close();
-    		}
-        }
-
         File errorDir = new File(resultFileNode.getDirectoryPath(), "sge_error");
         File[] errorFiles = FileUtil.getFilesWithPrefixes(errorDir, getGridServicePrefixName());
-
         for (File errorFile : errorFiles) {
             int index = getIndexExtension(errorFile);
             if (errorFile.length() > 0) {
-                contextLogger.warn("Not empty error file: " + errorFile.getAbsolutePath());
+                contextLogger.error("Errors encountered when synchronizing " + errorFile.getAbsolutePath()+":");
+            	try {
+            		String stderr = org.apache.commons.io.FileUtils.readFileToString(errorFile);
+            		logger.error(stderr);
+            	}
+            	catch (IOException e) {
+            		logger.error("Error reading STDERR file",e);
+            	}
                 hasError[index-1] = true;
             }
         }
-
-        // Log timings
-        
-        int i=0;
-        StringBuilder sb = new StringBuilder();
-        for(Entity entity : entitiesToMove) {
-            String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            File file = new File(filepath);
-            if (!hasError[i]) {
-                String timingCsv = timings[i];
-                sb.append("\nJFSBenchmark,PUT,Sproxyd,"+file.getName()+","+timingCsv);
-            }
-            else {
-                sb.append("\nJFSBenchmark,PUT,Sproxyd,"+file.getName()+",Error");
-            }
-            i++;
-        }
-        contextLogger.info("Timings:"+sb);
         
         // Update all entities that were transferred correctly
         
-    	i=0;
+    	int i=0;
     	for(Entity entity : entitiesToMove) {
     		if (hasError[i++]) {
     			contextLogger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
@@ -393,20 +351,25 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
         			
         			if (deleteSourceFiles) {
-        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
-                        if (numUpdated>0) {
-                            contextLogger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
-                        }
-        			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
-        			    FileUtils.forceDelete(file);
-                        contextLogger.info("Deleted "+filepath);
+        				try {
+        					FileUtils.forceDelete(file);
+	        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
+	                        if (numUpdated>0) {
+	                            contextLogger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
+	                        }
+	        			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
+	                        contextLogger.info("Deleted "+filepath);
+        				}
+        				catch (IOException e) {
+	                        contextLogger.info("Problem deleting "+filepath+": "+e.getMessage());
+        				}
                     }
                 }
                 catch (Exception e) {
                     contextLogger.error("Error updating entity id="+entity.getId(),e);
                     throw new MissingDataException("Could not update entities, database may be in an inconsistent state!");
                 }
-                
+
     			// Update SAGE if necessary
                 String sageIdStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID);
     			if (sageIdStr!=null) {
@@ -424,19 +387,16 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         		        image.setUrl(webdavUrl);
         		        sage.saveImage(image);
         		        contextLogger.info("Updated SAGE image "+image.getId());
-        		        
         		        if (bytes!=null) {
         		        	sage.setImageProperty(image, propertyFilesize, bytes.toString());
             		        contextLogger.info("Updated bytes to "+bytes+" for image "+image.getId());
         		        }
-        		        
 	                }
 	                catch (Exception e) {
 	                    contextLogger.error("Error updating SAGE image "+sageIdStr,e);
 	                    throw new MissingDataException("Could not update SAGE, it may be in an inconsistent state!");
 	                }
     			}
-    			
     		}	
     	}
 	}
@@ -459,5 +419,4 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             throw new IllegalStateException("Error getting term: "+termName+" in CV "+cvName,e);
     	}
     }
-        
 }
