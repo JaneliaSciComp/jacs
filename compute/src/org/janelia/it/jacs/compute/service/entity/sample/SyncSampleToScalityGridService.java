@@ -74,7 +74,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     protected void init() throws Exception {
 
         if (!JFS_ALLOW_WRITES) {
-            contextLogger.info("JFS writes are disallowed by configuration. JFS.AllowWrites is set to false in jacs.properties.");
+            logger.info("JFS writes are disallowed by configuration. JFS.AllowWrites is set to false in jacs.properties.");
             cancel();
             return;
         }
@@ -99,7 +99,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
             throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
         }
         
-        contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+        logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         String fileTypesStr = data.getRequiredItemAsString("FILE_TYPES");
         List<String> fileTypes = Task.listOfStringsFromCsvString(fileTypesStr);
@@ -107,7 +107,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         processSample(sampleEntity, fileTypes);
 
         if (entitiesToMove.isEmpty()) {
-            contextLogger.info("No entities to process, aborting.");
+            logger.info("No entities to process, aborting.");
             cancel();
             return;
         }
@@ -127,7 +127,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
 
         if (types.remove("lsm")) {
-            contextLogger.info("Searching "+sample.getId()+" for LSM files to move...");
+            logger.info("Searching "+sample.getId()+" for LSM files to move...");
             final DateTime cutoffDate = new DateTime().minus(Period.months(1));
             EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                     .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
@@ -142,18 +142,18 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                             addToEntitiesToMove(entity);
                         }
                         else {
-                        	contextLogger.info("LSM is too recent to move: "+entity.getId());
+                        	logger.info("LSM is too recent to move: "+entity.getId());
                         }
                     }
                     else {
-                    	contextLogger.info("LSM has not been completed, so it can't be moved: "+entity.getId());
+                    	logger.info("LSM has not been completed, so it can't be moved: "+entity.getId());
                     }
                 }
             });
         }
         
         if (types.remove("pbd")) {
-            contextLogger.info("Searching "+sample.getId()+" for PBD files to move...");
+            logger.info("Searching "+sample.getId()+" for PBD files to move...");
             EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
                     .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
                     .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
@@ -170,7 +170,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                         return;
                     }
                     if (!filepath.startsWith(JACS_DATA_DIR) && !filepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
-                        contextLogger.warn("Entity has path outside of filestore: "+entity.getId());
+                        logger.warn("Entity has path outside of filestore: "+entity.getId());
                         return;
                     }
                     addToEntitiesToMove(entity);
@@ -193,23 +193,23 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
         
         if (filepath==null) {
-            contextLogger.warn("Entity should be moved but has no filepath: "+entity.getId());
+            logger.warn("Entity should be moved but has no filepath: "+entity.getId());
             return;
         }
 
         File file = new File(filepath);
         
         if (isExcluded(file.getName())) {
-            contextLogger.debug("Excluding file: "+entity.getId());
+            logger.debug("Excluding file: "+entity.getId());
             return;
         }
         
         if (!file.exists()) {
-            contextLogger.warn("Entity has filepath which does not exist: "+entity.getId());
+            logger.warn("Entity has filepath which does not exist: "+entity.getId());
             return;
         }
 
-        contextLogger.info("Will synchronized file for entity: "+entity.getId());
+        logger.info("Will synchronized file for entity: "+entity.getId());
         entitiesToMove.add(entity);
     }
     
@@ -294,7 +294,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	SageDAO sage = new SageDAO(logger);
         CvTerm propertyFilesize = getCvTermByName(sage, "light_imagery", "file_size");
         
-        contextLogger.debug("Processing "+resultFileNode.getDirectoryPath());
+        logger.debug("Processing "+resultFileNode.getDirectoryPath());
 
         File outputDir = new File(resultFileNode.getDirectoryPath(), "sge_output");
     	File[] outputFiles = FileUtil.getFilesWithPrefixes(outputDir, getGridServicePrefixName());
@@ -311,7 +311,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         for (File errorFile : errorFiles) {
             int index = getIndexExtension(errorFile);
             if (errorFile.length() > 0) {
-                contextLogger.error("Errors encountered when synchronizing " + errorFile.getAbsolutePath()+":");
+            	logger.error("Errors encountered when synchronizing " + errorFile.getAbsolutePath()+":");
             	try {
             		String stderr = org.apache.commons.io.FileUtils.readFileToString(errorFile);
             		logger.error(stderr);
@@ -328,7 +328,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	int i=0;
     	for(Entity entity : entitiesToMove) {
     		if (hasError[i++]) {
-    			contextLogger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
+    			logger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
     		}
     		else {
                 String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
@@ -337,7 +337,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                 File file = new File(filepath);
                 Long bytes = null;
                 
-    		    contextLogger.info("Synchronized "+entity.getId()+" to "+jfsPath);
+                logger.info("Synchronized "+entity.getId()+" to "+jfsPath);
                 
                 try {
                     if (filepath.endsWith(".lsm")) {
@@ -354,18 +354,19 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         					FileUtils.forceDelete(file);
 	        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
 	                        if (numUpdated>0) {
-	                            contextLogger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
+	                        	logger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
 	                        }
 	        			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
-	                        contextLogger.info("Deleted "+filepath);
+	        			    logger.info("Deleted "+filepath);
         				}
         				catch (IOException e) {
-	                        contextLogger.info(e.getMessage());
+        					// Log "unable to delete file" message so that they can be parsed later and the files deleted
+	                        logger.info(e.getMessage());
         				}
                     }
                 }
                 catch (Exception e) {
-                    contextLogger.error("Error updating entity id="+entity.getId(),e);
+                	logger.error("Error updating entity id="+entity.getId(),e);
                     throw new MissingDataException("Could not update entities, database may be in an inconsistent state!");
                 }
 
@@ -374,7 +375,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     			if (sageIdStr!=null) {
 	                try {
         				if (!jfsPath.endsWith(".lsm.bz2")) {
-        					contextLogger.warn("Expected lsm.bz2 extension on LSM: "+jfsPath);
+        					logger.warn("Expected lsm.bz2 extension on LSM: "+jfsPath);
         				}
         				
         		        Image image = sage.getImage(new Integer(sageIdStr));
@@ -385,14 +386,14 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 	        		    image.setJfsPath(jfsPath);
         		        image.setUrl(webdavUrl);
         		        sage.saveImage(image);
-        		        contextLogger.info("Updated SAGE image "+image.getId());
+        		        logger.info("Updated SAGE image "+image.getId());
         		        if (bytes!=null) {
         		        	sage.setImageProperty(image, propertyFilesize, bytes.toString());
-            		        contextLogger.info("Updated bytes to "+bytes+" for image "+image.getId());
+        		        	logger.info("Updated bytes to "+bytes+" for image "+image.getId());
         		        }
 	                }
 	                catch (Exception e) {
-	                    contextLogger.error("Error updating SAGE image "+sageIdStr,e);
+	                	logger.error("Error updating SAGE image "+sageIdStr,e);
 	                    throw new MissingDataException("Could not update SAGE, it may be in an inconsistent state!");
 	                }
     			}
