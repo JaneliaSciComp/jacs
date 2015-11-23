@@ -226,12 +226,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
     }
     
 
-    public void runSyncSampleToScality(String sampleEntityId, String filetypes) {
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes, Boolean deleteSourceFiles) {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
+            taskParameters.add(new TaskParameter("delete source files", deleteSourceFiles.toString(), null));
             String processName = "SyncSampleToScality";
             String displayName = "Sync Sample to Scality";
             saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
@@ -241,11 +242,12 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes) {
+    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes, Boolean deleteSourceFiles) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
+            taskParameters.add(new TaskParameter("delete source files", deleteSourceFiles.toString(), null));
             String processName = "SyncUserFilesToScality";
             String displayName = "Sync User Files to Scality";
             saveAndRunTask(user, processName, displayName, taskParameters);

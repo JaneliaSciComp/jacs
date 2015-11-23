@@ -6,27 +6,36 @@
 	
         <input name="DATA_SET_NAME"/>
 	    <input name="FILE_TYPES"/>
+        <input name="DELETE_SOURCE_FILES"/>
 	
 	    <!-- Import variables from the task -->
 	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="DATA_SET_NAME"/>
             <input name="FILE_TYPES"/>
+            <input name="DELETE_SOURCE_FILES"/>
             <input name="TASK_PARAMETER_1" value="data set name"/>
             <input name="PROCESS_VARIABLE_1" value="DATA_SET_NAME"/>
             <input name="TASK_PARAMETER_2" value="file types"/>
             <input name="PROCESS_VARIABLE_2" value="FILE_TYPES"/>
+            <input name="TASK_PARAMETER_3" value="delete source files"/>
+            <input name="PROCESS_VARIABLE_3" value="DELETE_SOURCE_FILES"/>
             <output name="DATA_SET_NAME"/>
 	        <output name="FILE_TYPES"/>
+            <output name="DELETE_SOURCE_FILES"/>
 	    </operation>
 	    
         <!-- By default, only move LSMs -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
             <input name="FILE_TYPES"/>
+            <input name="DELETE_SOURCE_FILES"/>
             <input name="PROCESS_VARIABLE_1" value="FILE_TYPES"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="lsm"/>
+            <input name="PROCESS_VARIABLE_2" value="DELETE_SOURCE_FILES"/>
+            <input name="PROCESS_VARIABLE_VALUE_2" value="true"/>
             <output name="FILE_TYPES"/>
+            <output name="DELETE_SOURCE_FILES"/>
         </operation>
 	    
 	    <!-- Find all the Sample Entities in the database -->
@@ -43,6 +52,7 @@
             <include name="Process sample" process="SyncSampleToScality">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="FILE_TYPES"/>
+                <input name="DELETE_SOURCE_FILES"/>
             </include>
 	        
 	    </sequence>
