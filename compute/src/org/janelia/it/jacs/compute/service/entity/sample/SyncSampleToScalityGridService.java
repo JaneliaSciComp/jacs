@@ -348,15 +348,15 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                     }
 
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
+    			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
+    			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
+                    if (numUpdated>0) {
+                    	logger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
+                    }
         			
         			if (deleteSourceFiles) {
         				try {
         					FileUtils.forceDelete(file);
-	        			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
-	                        if (numUpdated>0) {
-	                        	logger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
-	                        }
-	        			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
 	        			    logger.info("Deleted "+filepath);
         				}
         				catch (IOException e) {
