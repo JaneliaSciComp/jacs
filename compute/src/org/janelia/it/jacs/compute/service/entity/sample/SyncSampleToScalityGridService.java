@@ -341,19 +341,25 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                 
                 try {
                     if (filepath.endsWith(".lsm")) {
+                    	
                     	// The LSM was compressed by this pipeline, so we need to add the correct extension everywhere
 	                    jfsPath += ".bz2";
 	                    webdavUrl += ".bz2";
 	                    bytes = file.length();
+	                    
+	                    // Update the entity name too
+	        			entity.setName(entity.getName()+".bz2");
+	                    entityBean.saveOrUpdateEntity(entity);
                     }
 
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
+                    
     			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
     			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
                     if (numUpdated>0) {
                     	logger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
                     }
-        			
+
         			if (deleteSourceFiles) {
         				try {
         					FileUtils.forceDelete(file);
@@ -379,9 +385,6 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         				}
         				
         		        Image image = sage.getImage(new Integer(sageIdStr));
-        		        if (!image.getName().endsWith("bz2")) {
-        		        	image.setName(image.getName()+".bz2");
-                		}
         		        image.setPath(null);
 	        		    image.setJfsPath(jfsPath);
         		        image.setUrl(webdavUrl);
