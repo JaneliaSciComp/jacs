@@ -68,7 +68,7 @@ else
     if [[ "$INPUT_FILE_EXT" = "$OUTPUT_FILE_EXT" && -z $SAVE_TO_8BIT ]]; then
         # The file is in the format we're looking for (for example, lsm)
         echo "~ Copying $INPUT_FILE to $OUTPUT_FILE"
-        cp "$INPUT_FILE" "$OUTPUT_FILE"
+        rsync -av "$INPUT_FILE" "$OUTPUT_FILE"
     else
         # Must convert using Vaa3d
         echo "~ Converting $INPUT_FILE to $OUTPUT_FILE"
