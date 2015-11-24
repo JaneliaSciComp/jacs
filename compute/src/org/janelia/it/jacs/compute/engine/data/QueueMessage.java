@@ -325,7 +325,16 @@ public class QueueMessage implements IProcessData {
 
     public Boolean getBoolean(String key) {
     	try {
-    		return (Boolean)getItem(key);	
+            Object itemValue = getItem(key);
+            if (itemValue == null) {
+                return false;
+            } else if (itemValue instanceof String) {
+                return Boolean.valueOf((String) itemValue);
+            } else if (itemValue instanceof Boolean) {
+                return (Boolean) itemValue;
+            } else {
+                return false;
+            }
     	}
     	catch (Throwable t) {
             logger.error("Exception thrown while trying to get " + key + " property from message");
