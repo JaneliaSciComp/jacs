@@ -164,7 +164,12 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 6;
+        return 15;
+    }
+
+    @Override
+    protected int getRequiredSlots() {
+        return 2;
     }
 
     /**
