@@ -20,7 +20,7 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MIPMapsScaleService.class);
 
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 4; // 4 sections
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 1; // 1 section
 
     private Long imageWidth;
     private Long imageHeight;
