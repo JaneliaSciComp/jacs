@@ -331,23 +331,24 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     			logger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
     		}
     		else {
-                String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                String oldFilepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
                 String jfsPath = JFSUtils.getScalityPathFromEntity(entity);
                 String webdavUrl = JFSUtils.getWebdavUrlForJFSPath(jfsPath);
-                File file = new File(filepath);
+                File file = new File(oldFilepath);
                 Long bytes = null;
+
+                if (oldFilepath.endsWith(".lsm")) {
+                	// The LSM was compressed by this pipeline, so we need to add the correct extension everywhere
+                    jfsPath += ".bz2";
+                    webdavUrl += ".bz2";
+                    bytes = file.length();
+                }
                 
                 logger.info("Synchronized "+entity.getId()+" to "+jfsPath);
                 
                 try {
-                    if (filepath.endsWith(".lsm")) {
-                    	
-                    	// The LSM was compressed by this pipeline, so we need to add the correct extension everywhere
-	                    jfsPath += ".bz2";
-	                    webdavUrl += ".bz2";
-	                    bytes = file.length();
-	                    
-	                    // Update the entity name too
+                    if (oldFilepath.endsWith(".lsm")) {
+	                    // Update the entity name 
 	        			entity.setName(entity.getName()+".bz2");
 	                    entityBean.saveOrUpdateEntity(entity);
                     }
@@ -355,7 +356,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
                     
     			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
-    			    int numUpdated = entityBean.bulkUpdateEntityDataValue(filepath, jfsPath);
+    			    int numUpdated = entityBean.bulkUpdateEntityDataValue(oldFilepath, jfsPath);
                     if (numUpdated>0) {
                     	logger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
                     }
@@ -363,7 +364,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         			if (deleteSourceFiles) {
         				try {
         					FileUtils.forceDelete(file);
-	        			    logger.info("Deleted "+filepath);
+	        			    logger.info("Deleted "+oldFilepath);
         				}
         				catch (IOException e) {
         					// Log "unable to delete file" message so that they can be parsed later and the files deleted
