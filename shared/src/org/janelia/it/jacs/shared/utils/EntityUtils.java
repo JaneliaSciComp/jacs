@@ -434,8 +434,10 @@ public class EntityUtils {
     }
     
     public static String getFilePath(Entity entity) {
-    	if (entity == null) return null;
-    	return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	if (entity==null) return null;
+    	String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	if (filepath==null) return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
+    	return filepath;
     }
 
     public static String getDefaultImageFilePath(Entity entity) {
@@ -507,10 +509,6 @@ public class EntityUtils {
             // TODO: This is for backwards compatibility with old data. Remove this in the future.
             path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
             log.debug("  Returning legacy file path: {}", path);
-        }
-
-        if (path == null) {
-            path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
         }
 
         if (path == null) {
