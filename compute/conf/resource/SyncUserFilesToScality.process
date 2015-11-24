@@ -48,12 +48,18 @@
 		
 	    <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
-        
-            <include name="Process sample" process="SyncSampleToScality">
-                <input name="SAMPLE_ENTITY_ID"/>
-                <input name="FILE_TYPES"/>
-                <input name="DELETE_SOURCE_FILES"/>
-            </include>
+    
+            <!-- Spawn a new task to process the Sample -->
+            <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                <input name="PROCESS_DEF_NAME" value="SyncSampleToScality"/>
+                <input name="DISPLAY_NAME" value="SyncSampleToScality"/>
+                <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+                <input name="PARAMETER_2_KEY" value="file types"/>
+                <input name="PARAMETER_2_VALUE" value="$V{FILE_TYPES}"/>
+                <input name="PARAMETER_3_KEY" value="delete source files"/>
+                <input name="PARAMETER_3_VALUE" value="$V{DELETE_SOURCE_FILES}"/>
+            </operation>
 	        
 	    </sequence>
 
