@@ -65,6 +65,10 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         sourceRootUrl = processData.getString("SOURCE_ROOT_URL");
+        if (!processData.getBoolean("RETILE_IMAGE")) {
+            LOG.info("No RETILE requested for {}", sourceRootUrl);
+            cancel();
+        }
         sourceStackFormat = processData.getString("SOURCE_STACK_FORMAT");
         targetRootUrl = processData.getString("TARGET_ROOT_URL");
         targetStackFormat = processData.getString("TARGET_STACK_FORMAT");

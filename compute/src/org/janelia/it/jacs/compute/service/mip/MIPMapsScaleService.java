@@ -57,6 +57,10 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
         if (rootUrl == null) {
             rootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
         }
+        if (!processData.getBoolean("SCALE_IMAGE")) {
+            LOG.info("No SCALE requested for {}", rootUrl);
+            cancel();
+        }
         extractImageParameters(processData);
         targetQuality = processData.getDouble("TARGET_QUALITY");
         targetType = processData.getString("TARGET_TYPE");
@@ -160,7 +164,12 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 6;
+        return 15;
+    }
+
+    @Override
+    protected int getRequiredSlots() {
+        return 2;
     }
 
     /**
