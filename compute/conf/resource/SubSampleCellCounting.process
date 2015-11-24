@@ -239,10 +239,11 @@
             <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
         </include>
                     
-        <!-- Move all generated files to archive -->
+        <!-- Move all generated files to archive 
         <include name="Move sample to archive" process="SyncSampleToArchive">
             <input name="SAMPLE_ENTITY_ID"/>
         </include>
+        -->
         
         <!-- Compress all the v3draw files we created  -->
         <exceptionHandler>

@@ -13,6 +13,7 @@ import java.util.Set;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.compute.util.JFSUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.Objective;
@@ -48,7 +49,6 @@ public class SageArtifactExportService extends AbstractEntityService {
     public static final String ANNOTATION_EXPORT_20X = "Publish20xToWeb";
     public static final String ANNOTATION_EXPORT_63X = "Publish63xToWeb";
     public static final String ANNOTATION_EXPORTED = "PublishedToWeb";
-    public static final String WEBDAV_PREFIX = "http://jacs-webdav.int.janelia.org:8080/Webdav";
     public static final String NO_CONSENSUS = "No Consensus";
     public static final String PUBLISHED_TO = "Split GAL4";
     public static final String PUBLICATION_OWNER = "group:workstation_users";
@@ -805,7 +805,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     
     private String getWebdavUrl(String filepath) {
     	if (filepath==null) return null;
-        return WEBDAV_PREFIX+filepath;
+        return JFSUtils.getWebdavUrlForJFSPath(filepath);
     }
     
     private CvTerm getCvTermByName(String cvName, String termName) throws DaoException {

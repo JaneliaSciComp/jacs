@@ -358,7 +358,7 @@ public class SageDAO {
             log.trace("getImages(id="+id+")");    
         }
         Session session = getCurrentSession();
-        Query query = session.createQuery("select image from Image image where image.id = :ids ");
+        Query query = session.createQuery("select image from Image image where image.id = :id ");
         query.setInteger("id", id);
         return (Image)query.uniqueResult();
     }

@@ -22,8 +22,8 @@ public interface SampleDataManagerMBean {
     // File management
     public void runSingleSampleArchival(String sampleEntityId);  
     public void runCompleteSampleArchival(String user);
-    public void runSyncSampleToScality(String sampleEntityId, String filetypes);  
-    public void runSyncDataSetToScality(String user, String dataSet, String filetypes);
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes, Boolean deleteSourceFiles);  
+    public void runSyncDataSetToScality(String user, String dataSet, String filetypes, Boolean deleteSourceFiles);
     
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void cancelAllIncompleteDataSetPipelineTasks();
@@ -44,7 +44,6 @@ public interface SampleDataManagerMBean {
     // Upgrade pipelines
     public void runRepairSeparationsPipeline(String user);
     public void runRepairSeparationResultsPipeline(String user);
-    public void runScalityCorrectionService(String user);
 
     public void scalityMigrationService(String filePath);
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode);
