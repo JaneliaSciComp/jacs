@@ -275,12 +275,12 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
     @Override
     protected int getRequiredSlots() {
-        return 16;
+        return 8;
     }
 
     @Override
     protected String getAdditionalNativeSpecification() {
-        return "-l scalityw=1";
+        return "-l scalityw=1 -l sandy=true";
     }
 
     @Override
