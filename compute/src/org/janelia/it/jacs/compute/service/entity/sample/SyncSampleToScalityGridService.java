@@ -289,6 +289,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         // Echo a completion token
         script.append("echo \""+COMPLETION_TOKEN+"\"\n");
         
+        // Clean up any temporary files
+        script.append("rm -f $WORKING_DIR/*.bz2\n");
+        
         writer.write(script.toString());
     }
 
