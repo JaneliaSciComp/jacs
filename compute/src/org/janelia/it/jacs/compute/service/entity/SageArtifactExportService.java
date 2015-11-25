@@ -52,6 +52,7 @@ public class SageArtifactExportService extends AbstractEntityService {
     public static final String NO_CONSENSUS = "No Consensus";
     public static final String PUBLISHED_TO = "Split GAL4";
     public static final String PUBLICATION_OWNER = "group:workstation_users";
+    public static final String LINE_ANNOTATION_CV_NAME = "alps_splitgal4_public_annotation";
     
     private SageDAO sage;
     
@@ -376,6 +377,7 @@ public class SageArtifactExportService extends AbstractEntityService {
                 imageStack.name = lsmStack.getId()+"-"+imageName;
                 imageStack.tag = imageName;
                 imageStack.filepath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                imageStack.jfspath = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
                 imageStack.sageId = new Integer(lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID));
                 imageStack.chanSpec = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
                 imageStack.pixelRes = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
@@ -548,10 +550,12 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
         }
         
-        String path = imageStack.filepath;
+        String path = imageStack.filepath==null?imageStack.jfspath:imageStack.filepath;
         String url = getWebdavUrl(path);
         
         if (image!=null) {
+        	image.setPath(imageStack.filepath);
+        	image.setJfsPath(imageStack.jfspath);
         	image.setFamily(consensusFamily);
         	image.setLine(line);
         	image.setSource(lab);
@@ -563,7 +567,8 @@ public class SageArtifactExportService extends AbstractEntityService {
             logger.info("    Updated SAGE primary image "+image.getId()+" with name "+image.getName());
         }
         else {
-            image = new Image(consensusFamily, line, lab, imageName, url, path, true, true, CREATED_BY, createDate);
+            image = new Image(consensusFamily, line, lab, imageName, url, imageStack.filepath, true, true, CREATED_BY, createDate);
+        	image.setJfsPath(imageStack.jfspath);
             image = sage.saveImage(image);
             logger.info("    Created SAGE primary image "+image.getId()+" with name "+image.getName());
         }
@@ -703,7 +708,7 @@ public class SageArtifactExportService extends AbstractEntityService {
             }
             
             String annotationName = keyEntity.getName();
-            CvTerm observationType = sage.getCvTermByName("flylight_public_annotation",annotationName);
+            CvTerm observationType = sage.getCvTermByName(LINE_ANNOTATION_CV_NAME,annotationName);
             if (observationType==null) {
                 logger.warn("      Cannot find corresponding SAGE term for ontology term '"+annotationName+"'");
                 continue;
@@ -841,6 +846,7 @@ public class SageArtifactExportService extends AbstractEntityService {
         String name;
         String tag;
         String filepath;
+        String jfspath;
         String chanSpec;
         String pixelRes;
         Integer sageId;
