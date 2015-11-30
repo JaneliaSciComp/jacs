@@ -168,9 +168,9 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         script.append("if [ \"$SOURCE_FILE\" == \"$TARGET_FILE\" ]; then\n");
         script.append("  echo \"Source and target are identical\"\n");
         script.append("else\n");
-        script.append("  "+Vaa3DHelper.getVaa3dHeadlessGridCommandPrefix());
+        script.append("  "+Vaa3DHelper.getVaa3dHeadlessGridCommandPrefix("  "));
         script.append("  "+Vaa3DHelper.getFormattedConvertScriptCommand("$SOURCE_FILE", "$TARGET_FILE", "") + "\n");
-        script.append("  "+Vaa3DHelper.getHeadlessGridCommandSuffix());
+        script.append("  "+Vaa3DHelper.getHeadlessGridCommandSuffix()).append("\n");
         if (deleteSourceFiles) {
             script.append("    "+REMOVE_COMMAND + " \"$SOURCE_FILE\"\n");    
         }

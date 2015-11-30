@@ -45,6 +45,7 @@ import org.joda.time.Period;
  */
 public class SyncSampleToScalityGridService extends AbstractEntityGridService {
 
+    private static final String COMPLETION_TOKEN = "Synchronization script ran to completion";
     private static final String CONFIG_PREFIX = "scalityConfiguration.";
 
     protected static final boolean JFS_ALLOW_WRITES =
@@ -251,12 +252,24 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     }
 
     private void createShellScript(FileWriter writer) throws Exception {
+    	
         StringBuffer script = new StringBuffer();
+        
+        // Exit on any errors
+        script.append("set -o errexit\n");
+        
+        // Print hostname for debugging purposes
+        script.append(Vaa3DHelper.getHostnameEcho());
+        
+        // Read parameters
         script.append("read FILE_PATH\n");
         script.append("read JFS_PATH\n");
+        
+        // Go to the working directory
         script.append("WORKING_DIR=").append(resultFileNode.getDirectoryPath()).append("\n");
         script.append("cd $WORKING_DIR\n");
-        script.append(Vaa3DHelper.getHostnameEcho());
+        
+        // If the file is an LSM, ensure that it is compressed before uploading
         script.append("FILE_STUB=`basename $FILE_PATH`\n");
         script.append("FILE_EXT=${FILE_STUB##*.}\n");
         script.append("if [[ \"$FILE_EXT\" = \"lsm\" ]]; then\n");
@@ -265,16 +278,26 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("  FILE_PATH=${WORKING_FILE}\n");
         script.append("  JFS_PATH=${JFS_PATH}.bz2\n");
         script.append("fi\n");
+        
+        // Use JFS to write the file to the Scality Ring
         script.append("echo \"Copy source: $FILE_PATH\"\n");
         script.append("echo \"Copy target: $JFS_PATH\"\n");
         script.append("CMD=\""+JFS_CMD + " -command write -path $JFS_PATH -file $FILE_PATH -checksum\"\n");
         script.append("echo \"Running: $CMD\"\n");
         script.append("$CMD\n");
+        
+        // Echo a completion token
+        script.append("echo \""+COMPLETION_TOKEN+"\"\n");
+        
+        // Clean up any temporary files
+        script.append("rm -f $WORKING_DIR/*.bz2\n");
+        
         writer.write(script.toString());
     }
 
     @Override
     protected int getRequiredSlots() {
+    	// Two jobs per node
         return 8;
     }
 
@@ -304,8 +327,23 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	}
     	
     	// Find errors
-    	
     	boolean[] hasError = new boolean[entitiesToMove.size()];
+
+    	// Ensure each script ran to completion. This ensures that nothing was killed prematurely. 
+    	for(File outputFile : outputFiles) {
+    		int index = getIndexExtension(outputFile);
+    		try {
+        		String stdout = org.apache.commons.io.FileUtils.readFileToString(outputFile);
+				if (!stdout.contains(COMPLETION_TOKEN)) {
+    				hasError[index-1] = true;
+    			}
+    		}
+        	catch (IOException e) {
+    			throw new MissingDataException("Error reading STDOUT file: "+outputFile.getName(),e);
+        	}
+        }
+    	
+    	// Ensure there is nothing in STDERR. JFS will write to STDERR if there are any problems with the upload.
         File errorDir = new File(resultFileNode.getDirectoryPath(), "sge_error");
         File[] errorFiles = FileUtil.getFilesWithPrefixes(errorDir, getGridServicePrefixName());
         for (File errorFile : errorFiles) {
@@ -324,7 +362,6 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
         
         // Update all entities that were transferred correctly
-        
     	int i=0;
     	for(Entity entity : entitiesToMove) {
     		if (hasError[i++]) {

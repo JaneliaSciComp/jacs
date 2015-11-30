@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
+import org.janelia.it.jacs.compute.util.JFSUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -139,8 +140,8 @@ public class InitSampleProcessingParametersService extends AbstractEntityService
 
 			Long lsmId1 = lsm1==null?null:lsm1.getId();
 			Long lsmId2 = lsm2==null?null:lsm2.getId();
-			String lsmFilepath1 = lsm1 == null ? null : lsm1.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-			String lsmFilepath2 = lsm2 == null ? null : lsm2.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+			String lsmFilepath1 = lsm1 == null ? null : EntityUtils.getFilePath(lsm1);
+			String lsmFilepath2 = lsm2 == null ? null : EntityUtils.getFilePath(lsm2);
 			String lsmRealPath1 = lsmFilepath1 == null ? null : new File(lsmFilepath1).getCanonicalPath();
 			String lsmRealPath2 = lsmFilepath2 == null ? null : new File(lsmFilepath2).getCanonicalPath();
 

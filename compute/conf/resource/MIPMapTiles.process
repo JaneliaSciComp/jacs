@@ -3,6 +3,7 @@
         <sequence name="Retiling" waitForAsync="true">
             <operation name="Retile the stack" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapTilesService" />
+                <input name="RETILE_IMAGE" />
                 <input name="RESULT_FILE_NODE_ID" />
 
                 <input name="IMAGE_WIDTH" />
@@ -50,6 +51,7 @@
         <sequence name="Scaling" waitForAsync="true">
             <operation name="Scale the stack" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapsScaleService" />
+                <input name="SCALE_IMAGE" />
                 <input name="RESULT_FILE_NODE_ID" />
 
                 <input name="IMAGE_WIDTH" />

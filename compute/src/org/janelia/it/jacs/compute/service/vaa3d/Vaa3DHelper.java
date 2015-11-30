@@ -115,15 +115,19 @@ public class Vaa3DHelper {
     	return "echo \"Running on \"`hostname`\n";
     }
 
+    public static String getVaa3dHeadlessGridCommandPrefix() {
+    	return getVaa3dHeadlessGridCommandPrefix("");
+    }
+    
     /**
      * For V3D plugins that are truly headless.
      * @return
      */
-    public static String getVaa3dHeadlessGridCommandPrefix() {
+    public static String getVaa3dHeadlessGridCommandPrefix(String indent) {
         StringBuffer prefix = new StringBuffer();
-        prefix.append(getHostnameEcho());
-        prefix.append("set -o errexit\n\n");
-        prefix.append(getVaa3dLibrarySetupCmd()).append("\n");
+        prefix.append(indent).append(getHostnameEcho());
+        prefix.append(indent).append("set -o errexit\n");
+        prefix.append(indent).append(getVaa3dLibrarySetupCmd()).append("\n");
         return prefix.toString();
     }
 

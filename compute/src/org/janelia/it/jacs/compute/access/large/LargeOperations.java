@@ -378,9 +378,13 @@ public class LargeOperations {
     
     private void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
     	String imagePath = (String)imageProps.get(SageDAO.IMAGE_PROP_PATH);
+    	String jfsPath = (String)imageProps.get(SageDAO.IMAGE_PROP_JFS_PATH);
     	if (imagePath==null) {
-    	    logger.error("Null image property path encountered at imageProps="+imageProps);
-    	    throw new IllegalStateException("Null image property path");
+    		if (jfsPath==null) {
+	    	    logger.error("Null image property paths encountered at imageProps="+imageProps);
+	    	    throw new IllegalStateException("Null image property paths");
+    		}
+    		imagePath = jfsPath;
     	}
     	String[] path = imagePath.split("/"); // take just the filename
     	String filename = path[path.length-1];
