@@ -316,7 +316,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (neuronName.endsWith(SWCData.STD_SWC_EXTENSION)) {
                 neuronName = neuronName.substring(0, neuronName.length() - SWCData.STD_SWC_EXTENSION.length());
             }
-            final TmNeuron neuron = createTiledMicroscopeNeuron(workspaceEntity, neuronName, ownerKey);
+            final TmNeuron neuron = createTiledMicroscopeNeuron(
+                    workspaceEntity, neuronName, ownerKey, false
+            );
 
             Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
             Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
@@ -352,6 +354,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     }
 
     private TmNeuron createTiledMicroscopeNeuron(Entity workspace, String name, String ownerKey) throws DaoException {
+        return createTiledMicroscopeNeuron(workspace, name, ownerKey, true);
+    }
+
+    private TmNeuron createTiledMicroscopeNeuron(Entity workspace, String name, String ownerKey, boolean workspaceChecks) throws DaoException {
         try {
             if (workspace == null  ||  !workspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Tiled Neuron must be created with valid Workspace Id");
@@ -368,7 +374,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             // annotationDAO.saveOrUpdate(ed);
             // Konrad said use annDAO instead so permissions are properly carried over:
             annotationDAO.addEntityToParent(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
-            annotationDAO.saveOrUpdate(workspace);
+            if (workspaceChecks) {
+                annotationDAO.saveOrUpdate(workspace);
+            }
             TmNeuron tmNeuron = new TmNeuron(neuron);
             return tmNeuron;
         } catch (Exception e) {
@@ -535,8 +543,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         Entity neuron = null;
         Long neuronId = null;
+        Map<Long,Entity> idToNeuron = new HashMap<>();
         try {
             int putativeRootCount = 0;
+            // Cache to avoid re-fetch.
             Map<Integer, Long> nodeIdToAnnotationId = new HashMap<>();
             // Ensure the order of progression through nodes matches node IDs.
             Set<Integer> sortedKeys = new TreeSet<>(annotations.keySet());
@@ -547,7 +557,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 Long nextNeuronId = unserializedAnnotation.getNeuronId();
                 if (neuron == null) {
                     neuronId = nextNeuronId;
-                    neuron = annotationDAO.getEntityById(neuronId);
+                    neuron = idToNeuron.get(neuronId);
+                    if (neuron == null) {
+                        neuron = annotationDAO.getEntityById(neuronId);
+                        idToNeuron.put(neuronId, neuron);
+                    }
                     if (neuron == null) {
                         throw new Exception("Failed to find neuron for id " + neuronId);
                     }
