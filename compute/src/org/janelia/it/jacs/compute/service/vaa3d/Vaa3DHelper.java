@@ -63,7 +63,7 @@ public class Vaa3DHelper {
     }
     
     public static String getFormattedMergePipelineCommand(String inputFilePath1, String inputFilePath2, String outputFilePath, String multiscanBlendVersion) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("sh "+MERGE_PIPELINE_SCRIPT);
         buf.append(" -o \""+outputFilePath+"\""); 
         if (!StringUtils.isEmpty(multiscanBlendVersion)) {
@@ -75,7 +75,7 @@ public class Vaa3DHelper {
     }
 
     public static String getFormattedMapChannelPipelineCommand(String inputFilePath, String outputFilePath, String channelMapping) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         buf.append("sh "+MAP_CHANNEL_PIPELINE_SCRIPT);
         buf.append(" -i \""+inputFilePath+"\""); 
         buf.append(" -o \""+outputFilePath+"\""); 
@@ -98,7 +98,7 @@ public class Vaa3DHelper {
     }
     
     public static String getFormattedBlendCommand(String inputDirectoryPath, String outputFilePath) {
-    	StringBuffer buf = new StringBuffer();
+    	StringBuilder buf = new StringBuilder();
     	buf.append("OUTPUT_FILE="+outputFilePath+"\n");
     	buf.append(VAA3D_BASE_CMD +" -x ifusion.so -f iblender -i \""+inputDirectoryPath+"\" -o \"output.v3draw\" -p \"#s 1\"\n");
     	buf.append("EXT=${OUTPUT_FILE#*.}\n");
@@ -124,7 +124,7 @@ public class Vaa3DHelper {
      * @return
      */
     public static String getVaa3dHeadlessGridCommandPrefix(String indent) {
-        StringBuffer prefix = new StringBuffer();
+        StringBuilder prefix = new StringBuilder();
         prefix.append(indent).append(getHostnameEcho());
         prefix.append(indent).append("set -o errexit\n");
         prefix.append(indent).append(getVaa3dLibrarySetupCmd()).append("\n");
@@ -148,7 +148,7 @@ public class Vaa3DHelper {
     }
     
     public static String getVaa3DGridCommandPrefix(String displayPort, String xvfbResolution) {
-        StringBuffer prefix = new StringBuffer();
+        StringBuilder prefix = new StringBuilder();
 
         // Skip ports that are currently in use, or "locked"
         prefix.append(getHostnameEcho());
@@ -213,7 +213,7 @@ public class Vaa3DHelper {
      * @return
      */
     public static String getXvfbScreenshotLoop(String outputDir, String xvfbPortVarName, String xvfbPidVarName, int secs, int maxSecs) {
-        StringBuffer script = new StringBuffer();
+        StringBuilder script = new StringBuilder();
         
         script.append("XVFB_SCREENSHOT_DIR=\"").append(outputDir).append("\"\n");
         script.append("mkdir -p $XVFB_SCREENSHOT_DIR\n");
@@ -242,6 +242,23 @@ public class Vaa3DHelper {
 	    
 		script.append("done\n");
 		
+		return script.toString();
+    }
+    
+    public static String getScratchDirCreationScript(String tmpDirVarName) {
+        StringBuilder script = new StringBuilder();
+        
+        script.append("export TMPDIR=").append(SCRATCH_DIR).append("\n");
+        script.append("mkdir -p $TMPDIR\n");
+        script.append(tmpDirVarName+"=`mktemp -d`\n");
+        
+        script.append("function cleanTemp {\n");
+        script.append("    rm -rf $"+tmpDirVarName+"\n");
+        script.append("    echo \"Cleaned up $"+tmpDirVarName+"\"\n");
+        script.append("}\n");
+        
+        script.append("trap cleanTemp EXIT\n");
+        
 		return script.toString();
     }
     
