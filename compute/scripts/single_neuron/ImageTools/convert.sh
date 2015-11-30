@@ -37,7 +37,7 @@ cd $WORKING_DIR
 
 function cleanWorkingDir {
     rm -rf $WORKING_DIR
-    echo "~ Cleaned up Working Dir"
+    echo "~ Cleaned up $WORKING_DIR"
 }
 trap cleanWorkingDir EXIT
         
@@ -59,7 +59,7 @@ if [[ "$INPUT_FILE_EXT" = "$OUTPUT_FILE_EXT" && -z $SAVE_TO_8BIT ]]; then
 else
     # Decompress input file
     ensureUncompressedFile "$WORKING_DIR" "$INPUT_FILE" INPUT_FILE
-    echo "Uncompressed input file:" `ls -l $INPUT_FILE`
+    echo "Uncompressed input file:" `ls -lh $INPUT_FILE`
     INPUT_FILE_EXT=${INPUT_FILE##*.}
 
     # Check if we need to compress output file
