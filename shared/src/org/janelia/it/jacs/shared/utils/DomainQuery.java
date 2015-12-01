@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.shared.utils;
 
 import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.DomainObject;
 import java.util.List;
 
 /**
@@ -13,6 +14,7 @@ public class DomainQuery {
     String objectType;
     String propertyName;
     String propertyValue;
+    DomainObject domainObject;
 
     public List<Reference> getReferences() {
         return references;
@@ -63,5 +65,13 @@ public class DomainQuery {
 
     public void setPropertyValue(String propertyValue) {
         this.propertyValue = propertyValue;
+    }
+
+    public DomainObject getDomainObject() {
+        return domainObject;
+    }
+
+    public void setDomainObject(DomainObject domainObject) {
+        this.domainObject = domainObject;
     }
 }

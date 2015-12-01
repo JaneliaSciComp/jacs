@@ -28,6 +28,7 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
@@ -98,11 +99,11 @@ public class SolrConnector extends SolrDAO {
             
 	    	log.info("Getting objects of type "+clazz.getName());
 	    	
-			String type = dao.getCollectionName(clazz);
+			String collectionName = DomainUtils.getCollectionName(clazz);
 			Set<Field> fields = ReflectionUtils.getAllFields(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
 			Set<Method> methods = ReflectionUtils.getAllMethods(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
 			
-			Iterator<?> iterator = dao.getCollectionByName(type).find("{$or:[{class:{$exists:0}},{class:#}]}",clazz.getName()).with(new QueryModifier() {
+			Iterator<?> iterator = dao.getCollectionByName(collectionName).find("{$or:[{class:{$exists:0}},{class:#}]}",clazz.getName()).with(new QueryModifier() {
                 public void modify(DBCursor cursor) {
                     cursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
                 }
@@ -139,7 +140,7 @@ public class SolrConnector extends SolrDAO {
 	            docs.clear();
 	        }
 
-            log.info("  Indexing '"+type+"' took "+(System.currentTimeMillis()-start)+" ms");
+            log.info("  Indexing '"+collectionName+"' took "+(System.currentTimeMillis()-start)+" ms");
 		}
     	
         try {
@@ -213,15 +214,8 @@ public class SolrConnector extends SolrDAO {
 		fullTextStrings.clear();
 		
 		findStrings(new HashSet<String>(), domainObject, domainObject, true, "  ");
-
-//        for(String key : fullTextStrings.keySet()) {
-//            // Need to create new ArrayList to avoid ConcurrentModificationException when the Solr thread tries to read it
-//            List<String> strings = new ArrayList<>(fullTextStrings.get(key));
-//            // The _d is for "deep". We can always make these stored=false in Solr if we need to, since they're mainly for searching purposes. 
-//            doc.setField(key+"_d_txt", strings, 1.0f);
-//        }
 		Collection<String> strings = new HashSet<>(fullTextStrings.values());
-		doc.setField("fulltext_txt", strings, 0.8f);
+		doc.setField("fulltext_mt", strings, 0.8f);
                 
         for(SimpleAnnotation annotation : annotations) {        
             for(String subject : annotation.getSubjectsCsv().split(",")) {
@@ -324,7 +318,7 @@ public class SolrConnector extends SolrDAO {
 		else if (childObj instanceof Reference) {
             Reference ref = (Reference) childObj;
             // Don't fetch objects which we've already visited
-            String key = dao.getObjectClass(ref.getCollectionName()).getName()+"#"+ref.getTargetId();
+            String key = ref.getTargetClassName()+"#"+ref.getTargetId();
             if (visited.contains(key)) {
                 return;
             }
