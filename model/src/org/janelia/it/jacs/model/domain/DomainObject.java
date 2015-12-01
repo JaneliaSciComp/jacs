@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * A domain object is anything stored at the top level of a collection. 
@@ -11,6 +12,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 public interface DomainObject extends HasIdentifier {
 
     public Long getId();
