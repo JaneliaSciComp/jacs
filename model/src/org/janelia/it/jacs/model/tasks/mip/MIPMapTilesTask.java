@@ -40,7 +40,8 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_sourceWidth = "width of the cropped area";
     transient private static final String PARAM_sourceHeight = "height of the cropped area";
     transient private static final String PARAM_sourceDepth = "depth of the cropped area";
-
+    transient private static final String PARAM_bgPixelValue = "background pixel value";
+    transient private static final String PARAM_processingType = "processing type";
     transient private static final String PARAM_targetRootUrl = "root url containing the target stack";
     transient private static final String PARAM_targetStackFormat = "format of the output stack";
     transient private static final String PARAM_targetTileWidth = "target image tile width";
@@ -51,10 +52,12 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_targetMaxCol = "target max col";
     transient private static final String PARAM_targetMinZ = "target min Z";
     transient private static final String PARAM_targetMaxZ = "target max Z";
+    transient private static final String PARAM_orientation = "tile orientation";
     transient private static final String PARAM_targetQuality = "target quality";
     transient private static final String PARAM_targetType = "target type";
     transient private static final String PARAM_targetMediaFormat = "target media format (jpg, png)";
     transient private static final String PARAM_targetSkipEmptyTiles = "target skip empty tiles";
+    transient private static final String PARAM_processingAccount = "processing account";
 
     public MIPMapTilesTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -111,6 +114,10 @@ public class MIPMapTilesTask extends Task {
                 return new LongParameterVO(Long.valueOf(value));
             case PARAM_sourceDepth:
                 return new LongParameterVO(Long.valueOf(value));
+            case PARAM_bgPixelValue:
+                return new IntegerParameterVO(Integer.valueOf(value));
+            case PARAM_processingType:
+                return new TextParameterVO(value, 10);
             case PARAM_targetRootUrl:
                 return new TextParameterVO(value, 400);
             case PARAM_targetStackFormat:
@@ -131,6 +138,8 @@ public class MIPMapTilesTask extends Task {
                 return new LongParameterVO(Long.valueOf(value));
             case PARAM_targetMaxZ:
                 return new LongParameterVO(Long.valueOf(value));
+            case PARAM_orientation:
+                return new TextParameterVO(value, 10);
             case PARAM_targetQuality:
                 return new DoubleParameterVO(Double.valueOf(value));
             case PARAM_targetType:
@@ -139,6 +148,8 @@ public class MIPMapTilesTask extends Task {
                 return new TextParameterVO(value, 400);
             case PARAM_targetSkipEmptyTiles:
                 return new BooleanParameterVO(Boolean.valueOf(value));
+            case PARAM_processingAccount:
+                return new TextParameterVO(value, 400);
             default:
                 return null;
         }
@@ -292,6 +303,24 @@ public class MIPMapTilesTask extends Task {
         setParameterAsLong(PARAM_sourceDepth, sourceDepth);
     }
 
+    @XmlElement(name = "bgPixelValue")
+    public Integer getBgPixelValue() {
+        return getParameterAsInteger(PARAM_bgPixelValue);
+    }
+
+    public void setBgPixelValue(Integer bgPixelValue) {
+        setParameterAsInteger(PARAM_bgPixelValue, bgPixelValue);
+    }
+
+    @XmlElement(name = "processingType")
+    public String getProcessingType() {
+        return getParameter(PARAM_processingType);
+    }
+
+    public void setProcessingType(String processingType) {
+        setParameter(PARAM_processingType, processingType);
+    }
+
     @XmlElement(name = "targetRootUrl")
     public String getTargetRootUrl() {
         return getParameter(PARAM_targetRootUrl);
@@ -382,6 +411,15 @@ public class MIPMapTilesTask extends Task {
         setParameterAsLong(PARAM_targetMaxZ, targetMaxZ);
     }
 
+    @XmlElement(name = "orientation")
+    public String getOrientation() {
+        return getParameter(PARAM_orientation);
+    }
+
+    public void setOrientation(String orientation) {
+        setParameter(PARAM_orientation, orientation);
+    }
+
     @XmlElement(name = "targetQuality")
     public Double getTargetQuality() {
         return getParameterAsDouble(PARAM_targetQuality);
@@ -418,4 +456,12 @@ public class MIPMapTilesTask extends Task {
         setParameterAsBoolean(PARAM_targetSkipEmptyTiles, skipEmptyTiles);
     }
 
+    @XmlElement(name = "processingAccount")
+    public String getProcessingAccount() {
+        return getParameter(PARAM_processingAccount);
+    }
+
+    public void setProcessingAccount(String processingAccount) {
+        setParameter(PARAM_processingAccount, processingAccount);
+    }
 }

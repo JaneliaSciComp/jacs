@@ -20,7 +20,7 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MIPMapsScaleService.class);
 
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 20; // 20 layers
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 1; // 1 section
 
     private Long imageWidth;
     private Long imageHeight;
@@ -40,6 +40,7 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
     private String targetType;
     private String targetMediaFormat;
     private Boolean targetSkipEmptyTiles;
+    private String processingAccount;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -56,11 +57,16 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
         if (rootUrl == null) {
             rootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
         }
+        if (!processData.getBoolean("SCALE_IMAGE")) {
+            LOG.info("No SCALE requested for {}", rootUrl);
+            cancel();
+        }
         extractImageParameters(processData);
         targetQuality = processData.getDouble("TARGET_QUALITY");
         targetType = processData.getString("TARGET_TYPE");
         targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
         targetSkipEmptyTiles = processData.getBoolean("TARGET_SKIP_EMPTY_TILES");
+        processingAccount = processData.getString("PROCESSING_ACCOUNT");
     }
 
     private void extractImageParameters(IProcessData processData) throws MissingDataException {
@@ -96,6 +102,15 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
             throw new IllegalArgumentException("Invalid value for " + key + ": " + value);
         }
         return value;
+    }
+
+    @Override
+    protected String getAccount() {
+        if (processingAccount != null && processingAccount.trim().length() > 0) {
+            return processingAccount.trim();
+        } else {
+            return super.getAccount();
+        }
     }
 
     @Override
@@ -149,7 +164,12 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 6;
+        return 15;
+    }
+
+    @Override
+    protected int getRequiredSlots() {
+        return 2;
     }
 
     /**

@@ -132,8 +132,8 @@ public class SampleDataCompressionService extends AbstractEntityService {
             Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
             for(Entity image : entities.values()) {
                 String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                String bpid = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
-                if ((filepath!=null && filepath.endsWith(inputType)) || (bpid!=null && bpid.endsWith(inputType))) {
+                String jfspath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
+                if ((filepath!=null && filepath.endsWith(inputType)) || (jfspath!=null && jfspath.endsWith(inputType))) {
                     addEntityToInputList(image);
                 }
             }
@@ -173,14 +173,14 @@ public class SampleDataCompressionService extends AbstractEntityService {
         }
 
         String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        String bpid = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+        String jfsPath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
         
         if (filepath==null) {
-        	if (bpid==null) {
-                contextLogger.warn("Entity has null filepath and BPID: "+imageEntity.getId());
+        	if (jfsPath==null) {
+                contextLogger.warn("Entity has null filepath and jfspath: "+imageEntity.getId());
                 return;	
         	}
-        	filepath = EntityConstants.SCALITY_PATH_PREFIX+bpid;
+        	filepath = jfsPath;
         }
         
         populateChildren(imageEntity);
@@ -271,7 +271,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	                else if (RECORD_MODE_FLIP.equals(recordMode)) {
 	
 	                	String h5jName = existingH5j.getName();
-	                	String h5jScalityBpid = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+	                	String h5jJfsPath = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
 	                	String h5jFormat = existingH5j.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
 	                	if (StringUtils.isEmpty(h5jFormat)) {
 	                		h5jFormat = "h5j";
@@ -279,7 +279,7 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	                	
 	                	String pbdName = imageEntity.getName();
 	                	String pbdFilepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-	                	String pbdScalityBpid = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
+	                	String pbdJfsPath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
 	                	String pbdFormat = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_IMAGE_FORMAT);
 	                	if (StringUtils.isEmpty(pbdFormat)) {
 	                		pbdFormat = "v3dpbd";
@@ -292,12 +292,12 @@ public class SampleDataCompressionService extends AbstractEntityService {
 	                	
 	                	imageEntity.setName(h5jName);
 	                	updateEntityData(imageEntity, EntityConstants.ATTRIBUTE_FILE_PATH, h5jFilepath);
-	                	updateEntityData(imageEntity, EntityConstants.ATTRIBUTE_SCALITY_BPID, h5jScalityBpid);
+	                	updateEntityData(imageEntity, EntityConstants.ATTRIBUTE_JFS_PATH, h5jJfsPath);
 	                	updateEntityData(imageEntity, EntityConstants.ATTRIBUTE_IMAGE_FORMAT, h5jFormat);
 	                	
 	                	existingH5j.setName(pbdName);
 	                	updateEntityData(existingH5j, EntityConstants.ATTRIBUTE_FILE_PATH, pbdFilepath);
-	                	updateEntityData(existingH5j, EntityConstants.ATTRIBUTE_SCALITY_BPID, pbdScalityBpid);
+	                	updateEntityData(existingH5j, EntityConstants.ATTRIBUTE_JFS_PATH, pbdJfsPath);
 	                	updateEntityData(existingH5j, EntityConstants.ATTRIBUTE_IMAGE_FORMAT, pbdFormat);
 	                	
 	                    if (!isDebug) {
@@ -556,16 +556,17 @@ public class SampleDataCompressionService extends AbstractEntityService {
         }
         
         if (!isDebug) {
+        	// TODO: use JFS to delete the path
             if (filepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX)) {
-            	String bpid = filepath.replaceFirst(EntityConstants.SCALITY_PATH_PREFIX,"");
-            	ScalityDAO scality = new ScalityDAO();
-                try {
-                	scality.delete(bpid);
-                    contextLogger.info("Deleted old Scality object: "+bpid);
-                }
-                catch (Exception e) {
-                	logger.info("Error deleting Scality object "+bpid+"",e);
-                }
+//            	String bpid = filepath.replaceFirst(EntityConstants.SCALITY_PATH_PREFIX,"");
+//            	ScalityDAO scality = new ScalityDAO();
+//                try {
+//                	scality.delete(bpid);
+//                    contextLogger.info("Deleted old Scality object: "+bpid);
+//                }
+//                catch (Exception e) {
+//                	logger.info("Error deleting Scality object "+bpid+"",e);
+//                }
             }
             else {
                 File file = new File(filepath);

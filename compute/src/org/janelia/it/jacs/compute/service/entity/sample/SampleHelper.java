@@ -820,7 +820,10 @@ public class SampleHelper extends EntityHelper {
                         }
                         else {
                             lsmDirty = true;
-                            dirty = true;
+                            // Don't trigger reprocessing if the TMOG date changes
+                            if (!EntityConstants.ATTRIBUTE_TMOG_DATE.equals(key)) {
+                            	dirty = true;
+                            }
                         }
                     }
                 }

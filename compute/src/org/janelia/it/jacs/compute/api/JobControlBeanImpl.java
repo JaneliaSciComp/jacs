@@ -37,7 +37,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     public List<TaskStatus> getActiveTasks() {
         ComputeDAO computeDAO = new ComputeDAO(logger);
-        List<TaskStatus> tasks = new LinkedList<>();
+        List<TaskStatus> tasks = new LinkedList<TaskStatus>();
         try {
 
             List<Long> taskIDs = computeDAO.getActiveTasks();
@@ -142,7 +142,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
         try {
             AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-            messageInterface.startMessageSession("queue/cancelTask");
+            messageInterface.startMessageSession("queue/cancelTask", messageInterface.localConnectionType);
             Message msg = messageInterface.createObjectMessage();
             msg.setLongProperty("TASK_ID", taskId);
             messageInterface.sendMessageWithinTransaction(msg);

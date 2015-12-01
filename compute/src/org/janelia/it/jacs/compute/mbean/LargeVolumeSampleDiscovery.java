@@ -90,7 +90,6 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                     System.arraycopy(transform.getOrigin(), 0, origin, 0, 3);
                     double[] voxelMicrometers = new double[3];
                     System.arraycopy(transform.getScale(), 0, voxelMicrometers, 0, 3);
-                    
                     for (int i = 0; i < 3; i++) {
                         origin[i] /= voxelMicrometers[i];
                         voxelMicrometers[i] /= 1000;

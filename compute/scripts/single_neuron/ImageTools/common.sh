@@ -26,11 +26,12 @@ ensureLocalFile()
     local _WORKING_DIR="$2"
     local _FILE="$3"
     local _RESULTVAR="$4"
-    if [[ $_FILE == http* ]]; then
-        local _URL=$_FILE
-        local _FILE_STUB=`basename $_URL`
+    if [[ ! -e $_FILE ]]; then
+        local _FILE_PATH=$_FILE
+        local _FILE_STUB=`basename $_FILE_PATH`
         _FILE="$_WORKING_DIR/$_FILE_STUB"
-        $_SYNC_SCRIPT GET "$_URL" "$_FILE"
+        echo "Copying to local file"
+        $_SYNC_SCRIPT -command read -path "$_FILE_PATH" -file "$_FILE"
     fi
     eval $_RESULTVAR="'$_FILE'"
 }

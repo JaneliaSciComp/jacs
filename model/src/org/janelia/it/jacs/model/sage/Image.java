@@ -19,6 +19,7 @@ public class Image implements Serializable {
     private String name;
     private String url;
     private String path;
+    private String jfsPath;
     private Experiment experiment;
     private Date captureDate;
     private boolean representative;
@@ -101,6 +102,14 @@ public class Image implements Serializable {
         this.path = path;
     }
 
+    public String getJfsPath() {
+        return this.jfsPath;
+    }
+
+    public void setJfsPath(String jfsPath) {
+        this.jfsPath = jfsPath;
+    }
+    
     public Experiment getExperiment() {
         return this.experiment;
     }

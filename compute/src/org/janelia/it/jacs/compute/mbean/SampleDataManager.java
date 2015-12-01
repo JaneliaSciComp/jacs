@@ -226,12 +226,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
     }
     
 
-    public void runSyncSampleToScality(String sampleEntityId, String filetypes) {
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes, Boolean deleteSourceFiles) {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
+            taskParameters.add(new TaskParameter("delete source files", deleteSourceFiles.toString(), null));
             String processName = "SyncSampleToScality";
             String displayName = "Sync Sample to Scality";
             saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
@@ -241,11 +242,12 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes) {
+    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes, Boolean deleteSourceFiles) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
+            taskParameters.add(new TaskParameter("delete source files", deleteSourceFiles.toString(), null));
             String processName = "SyncUserFilesToScality";
             String displayName = "Sync User Files to Scality";
             saveAndRunTask(user, processName, displayName, taskParameters);
@@ -590,17 +592,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runScalityCorrectionService(String user) {
-        try {
-            String processName = "ScalityCorrectionPipeline";
-            String displayName = "Scality Correction Pipeline";
-            saveAndRunTask(user, processName, displayName);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-
     /**
      * Method to point to an ls file and pull out LSM's to be bzip2'd.
      * Example file exists in /groups/jacs/jacsShare/saffordTest/leetLSMs28days.txt (or older file)
@@ -697,7 +688,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft1015c.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab1115.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);
