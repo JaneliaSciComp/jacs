@@ -266,7 +266,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("read JFS_PATH\n");
         
         // Go to the working directory
-        script.append("WORKING_DIR=").append(resultFileNode.getDirectoryPath()).append("\n");
+        script.append(Vaa3DHelper.getScratchDirCreationScript("WORKING_DIR"));
         script.append("cd $WORKING_DIR\n");
         
         // If the file is an LSM, ensure that it is compressed before uploading
@@ -288,9 +288,6 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         
         // Echo a completion token
         script.append("echo \""+COMPLETION_TOKEN+"\"\n");
-        
-        // Clean up any temporary files
-        script.append("rm -f $WORKING_DIR/*.bz2\n");
         
         writer.write(script.toString());
     }
@@ -385,13 +382,17 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                 
                 try {
                     if (oldFilepath.endsWith(".lsm")) {
-	                    // Update the entity name 
-	        			entity.setName(entity.getName()+".bz2");
-	                    entityBean.saveOrUpdateEntity(entity);
+	                    // Set the new name on all duplicate LSM entities 
+	                    for(Entity duplicate : entityBean.getEntitiesByNameAndTypeName(entity.getOwnerKey(), entity.getName(), entity.getEntityTypeName())) {
+		                    // Update the entity name 
+	                    	duplicate.setName(entity.getName()+".bz2");
+		                    entityBean.saveOrUpdateEntity(duplicate);
+	                    }
+	                    // Update in-memory entity, just in case
+                    	entity.setName(entity.getName()+".bz2");
                     }
 
         			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
-                    
     			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
     			    int numUpdated = entityBean.bulkUpdateEntityDataValue(oldFilepath, jfsPath);
                     if (numUpdated>0) {
