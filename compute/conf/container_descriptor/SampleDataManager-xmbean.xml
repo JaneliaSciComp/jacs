@@ -119,11 +119,36 @@
             <name>user</name>
             <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Data Set Name (e.g. "Cell Count" or leave empty to run all data sets for the user)</description>
+            <name>dataSetName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Max Samples (e.g. "10" or leave empty for no max)</description>
+            <name>maxSamples</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
         <description>Retire all the samples which are in "Desync" status for the all users</description>
-        <name>runSampleRetirement</name>
+        <name>runAllSampleRetirement</name>
+        <parameter>
+            <description>Max Samples Per User (e.g. "10" or leave empty for no max)</description>
+            <name>maxSamplesPerUser</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
