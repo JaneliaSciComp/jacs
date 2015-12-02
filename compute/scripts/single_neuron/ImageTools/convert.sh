@@ -75,7 +75,7 @@ else
         if [ "$bz2Output" = true ]; then
             # Bzip it into its final position
             echo "~ PBzipping $INPUT_FILE to $OUTPUT_FILE.bz2 with $NSLOTS slots"
-            pbzip2 -zc -p$NSLOTS  "$INPUT_FILE" > "$OUTPUT_FILE.bz2"
+            pbzip2 -zc -p$NSLOTS "$INPUT_FILE" > "$OUTPUT_FILE.bz2"
         else
             # Rsync it into its final position
             echo "~ Rsyncing $INPUT_FILE to $OUTPUT_FILE"
