@@ -313,10 +313,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             conn = getJdbcConnection();
             conn.setAutoCommit(false);
             
-            String entitySql = "insert into entity (id,name,owner_dkey,entity_type,creation_date,updated_date,num_children) values (?,?,?,?,?,?,?)";
+            String entitySql = "insert into entity (id,name,owner_key,entity_type,creation_date,updated_date,num_children) values (?,?,?,?,?,?,?)";
             stmtEntity = conn.prepareStatement(entitySql);
             
-            String edSql = "insert into entityData (id,parent_entity_id,entity_att,value,owner_dkey,creation_date,updated_date,orderIndex,child_entity_id) values (?,?,?,?,?,?,?,?,?)";
+            String edSql = "insert into entityData (id,parent_entity_id,entity_att,value,owner_key,creation_date,updated_date,orderIndex,child_entity_id) values (?,?,?,?,?,?,?,?,?)";
             stmtEd = conn.prepareStatement(edSql);
             
             int idIndex = ids.size()-1;
@@ -326,8 +326,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             
             for(Entity entity : entities) {
             
-                newEntityId = ids.get(idIndex--);
-                entity.setId(newEntityId);
+                newEntityId = entity.getId();
+                if (newEntityId == null) {
+                    newEntityId = ids.get(idIndex--);
+                    entity.setId(newEntityId);
+                }
                 
                 stmtEntity.setLong(1, newEntityId);
                 stmtEntity.setString(2, entity.getName());
@@ -354,8 +357,11 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 
                 for(EntityData ed : entity.getEntityData()) {
 
-                    Long newEdId = ids.get(idIndex--);
-                    ed.setId(newEdId);
+                    Long newEdId = ed.getId();
+                    if (newEdId == null) {
+                        newEdId = ids.get(idIndex--);
+                        ed.setId(newEdId);
+                    }
                     
                     stmtEd.setLong(1, newEdId);
                     stmtEd.setLong(2, newEntityId);
@@ -401,10 +407,15 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     stmtEd.executeBatch();
                 }
             }
-            
-            stmtEntity.executeBatch();
-            stmtEd.executeBatch();
-            
+
+            if (entityCount % batchSize != 0) {
+                stmtEntity.executeBatch();
+            }
+            if (edCount % batchSize != 0) {
+                stmtEd.executeBatch();
+            }
+
+            log.info("Committing bulk entity changes.");
             conn.commit();
             
             log.info("Saved bulk entity tree with root id="+newEntityId);
@@ -1924,6 +1935,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         propagatePermissions(parent, entity, true, grantOwnerPermissions);
+        return ed;
+    }
+
+    public EntityData addNeuronToParentInMemory(Entity parent, Entity entity, Integer index, String attrName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("rapidlyAddNeuronToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+")");
+        }
+        if (parent.getId() != null  &&  parent.getId().equals(entity.getId())) {
+        	throw new IllegalArgumentException("Cannot add entity to itself: "+parent.getName());
+        }
+        if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
+
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        //saveOrUpdate(ed);
+
         return ed;
     }
 
