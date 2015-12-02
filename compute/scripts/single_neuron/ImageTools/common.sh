@@ -50,7 +50,7 @@ ensureUncompressedFile()
         ;;
     *.bz2 )
         _FILE="$_WORKING_DIR/$_FILE_STUB"
-        bzcat $_INFILE > $_FILE
+        pbzip2 -dc -p$NSLOTS $_INFILE > $_FILE
         ;;
     *)
         ;;
