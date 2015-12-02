@@ -421,12 +421,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             }
 
             if (entityCount > 0) {
-                log.info("Executing final Entity batch");
                 stmtEntity.executeBatch();
             }
             
             if (edCount > 0) {
-                log.info("Executing final ED batch");
                 stmtEd.executeBatch();
             }
             
