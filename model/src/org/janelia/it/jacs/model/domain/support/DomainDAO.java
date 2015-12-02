@@ -448,7 +448,6 @@ public class DomainDAO {
                 collection.save(domainObject);
             }
             else {
-                System.out.println (((ObjectSet)domainObject).getMembers());
                 WriteResult result = collection.update("{_id:#,writers:#,updatedDate:#}", domainObject.getId(), subjectKey, domainObject.getUpdatedDate()).with(domainObject);
                 if (result.getN()!=1) {
                     throw new IllegalStateException("Updated "+result.getN()+" records instead of one: "+collectionName+"#"+domainObject.getId());
@@ -742,13 +741,9 @@ public class DomainDAO {
         return getDomainObject(subjectKey, treeNode);
     }
 
-    public ObjectSet addMembers(String subjectKey, ObjectSet objectSetArg, Collection<Reference> references) throws Exception {
+    public ObjectSet addMembers(String subjectKey, ObjectSet objectSet, Collection<Reference> references) throws Exception {
         if (references==null) {
             throw new IllegalArgumentException("Cannot add null members");
-        }
-        ObjectSet objectSet = getDomainObject(subjectKey, ObjectSet.class, objectSetArg.getId());
-        if (objectSet==null) {
-            throw new IllegalArgumentException("Object Set not found: "+objectSetArg.getId());
         }
         for(Reference ref : references) {
             if (ref.getTargetId()==null) {
@@ -771,13 +766,9 @@ public class DomainDAO {
         return getDomainObject(subjectKey, objectSet);
     }
 
-    public ObjectSet removeMembers(String subjectKey, ObjectSet objectSetArg, Collection<Reference> references) throws Exception {
+    public ObjectSet removeMembers(String subjectKey, ObjectSet objectSet, Collection<Reference> references) throws Exception {
         if (references==null) {
             throw new IllegalArgumentException("Cannot remove null members");
-        }
-        ObjectSet objectSet = getDomainObject(subjectKey, ObjectSet.class, objectSetArg.getId());
-        if (objectSet==null) {
-            throw new IllegalArgumentException("Object Set not found: "+objectSetArg.getId());
         }
 
         for(Reference ref : references) {
