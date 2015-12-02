@@ -7,6 +7,7 @@ import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -15,53 +16,55 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.jackson.JacksonFeature;
+
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import org.janelia.it.jacs.shared.utils.DomainQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/")
 public class SemanticsWebService extends ResourceConfig {
+    private static final Logger log = LoggerFactory.getLogger(SemanticsWebService.class);
+
     @Context
     SecurityContext securityContext;
 
     public SemanticsWebService() {
-        register(JacksonJsonProvider.class);
+        register(JacksonFeature.class);
     }
 
-    @GET
+    @POST
     @Path("/annotation")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getAnnotations(@QueryParam("subjectKey") final String subjectKey,
-                                 @QueryParam("targetIds") final List<Long> targetIds) {
+    public List<Annotation> getAnnotations(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            List<Annotation> annotations = dao.getAnnotations(subjectKey, targetIds);
-            return mapper.writeValueAsString(annotations);
+            List<Annotation> annotations = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
+            return annotations;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error occurred getting annotations\n " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     @DELETE
     @Path("/annotation")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void deleteAnnotations(@QueryParam("subjectKey") final String subjectKey,
-                                 @QueryParam("annotationId") final Long annotationId) {
+    public void removeAnnotations(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            Annotation annotation = dao.getDomainObject(subjectKey, Annotation.class, annotationId);
-            if (annotation!=null) {
-                dao.remove(subjectKey, annotation);
+            // TODO: fix this. We are trying to eliminate use of bare GUIDs
+            List<Annotation> annotationList = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
+            for (Annotation annotation : annotationList) {
+                dao.remove(query.getSubjectKey(), annotation);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error occurred removing annotations\n " + e.getMessage());
         }
     }
 
@@ -69,12 +72,11 @@ public class SemanticsWebService extends ResourceConfig {
     @Path("/ontology")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getOntologies(@QueryParam("subjectKey") final String subjectKey) {
+    public List<Ontology> getOntologies(@QueryParam("subjectKey") final String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        ObjectMapper mapper = new ObjectMapper();
         try {
             Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
-            return mapper.writeValueAsString(new ArrayList<Ontology>(ontologies));
+            return new ArrayList<Ontology>(ontologies);
         } catch (Exception e) {
             e.printStackTrace();
         }

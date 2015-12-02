@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @SearchType(key="objectSet",label="Object Set")
 public class ObjectSet extends AbstractDomainObject implements IsParent {
 
-    @SearchAttribute(key="collection_name_txt",label="Collection Name",facet=true)
-    private String collectionName;
+    @SearchAttribute(key="class_name_txt",label="Class Name",facet=true)
+    private String className;
     private List<Long> members;
 
     public boolean hasMembers() {
@@ -51,12 +51,12 @@ public class ObjectSet extends AbstractDomainObject implements IsParent {
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public String getCollectionName() {
-        return collectionName;
+    public String getClassName() {
+        return className;
     }
 
-    public void setCollectionName(String collectionName) {
-        this.collectionName = collectionName;
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     public List<Long> getMembers() {

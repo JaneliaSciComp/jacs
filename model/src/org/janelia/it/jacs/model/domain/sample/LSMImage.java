@@ -40,15 +40,15 @@ public class LSMImage extends Image {
     private Boolean representative;
     
     @SAGEAttribute(cvName="light_imagery", termName="age")
-    @SearchAttribute(key="age_s",label="Age",facet=true)
+    @SearchAttribute(key="age_txt",label="Age",facet=true)
     private String age;
 
     @SAGEAttribute(cvName="light_imagery", termName="annotated_by")
-    @SearchAttribute(key="annotatedby_s",label="Annotated By",facet=true)
+    @SearchAttribute(key="annotatedby_txt",label="Annotated By",facet=true)
     private String annotatedBy;
 
     @SAGEAttribute(cvName="light_imagery", termName="area")
-    @SearchAttribute(key="area_s",label="Anatomical Area",facet=true)
+    @SearchAttribute(key="area_txt",label="Anatomical Area",facet=true)
     private String anatomicalArea;
 
     @SAGEAttribute(cvName="light_imagery", termName="bc_correction1")

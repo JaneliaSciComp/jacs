@@ -9,18 +9,18 @@ package org.janelia.it.jacs.model.domain;
  */
 public class ReverseReference {
 
-    private String referringCollectionName;
+    private String referringClassName;
     private String referenceAttr;
     private Long referenceId;
     private Long count;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    public String getReferringCollectionName() {
-        return referringCollectionName;
+    public String getReferringClassName() {
+        return referringClassName;
     }
 
-    public void setReferringCollectionName(String referringCollectionName) {
-        this.referringCollectionName = referringCollectionName;
+    public void setReferringClassName(String referringClassName) {
+        this.referringClassName = referringClassName;
     }
 
     public String getReferenceAttr() {
@@ -56,7 +56,7 @@ public class ReverseReference {
         result = prime*result
                 +((referenceId==null) ? 0 : referenceId.hashCode());
         result = prime*result
-                +((referringCollectionName==null) ? 0 : referringCollectionName.hashCode());
+                +((referringClassName==null) ? 0 : referringClassName.hashCode());
         return result;
     }
 
@@ -88,12 +88,12 @@ public class ReverseReference {
         else if (!referenceId.equals(other.referenceId)) {
             return false;
         }
-        if (referringCollectionName==null) {
-            if (other.referringCollectionName!=null) {
+        if (referringClassName==null) {
+            if (other.referringClassName!=null) {
                 return false;
             }
         }
-        else if (!referringCollectionName.equals(other.referringCollectionName)) {
+        else if (!referringClassName.equals(other.referringClassName)) {
             return false;
         }
         return true;
@@ -101,6 +101,6 @@ public class ReverseReference {
     
     @Override
     public String toString() {
-        return "ReverseReference[" + referringCollectionName + "." + referenceAttr + "=" + referenceId + "]";
+        return "ReverseReference[" + referringClassName + "." + referenceAttr + "=" + referenceId + "]";
     }
 }
