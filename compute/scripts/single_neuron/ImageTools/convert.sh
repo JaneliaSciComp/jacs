@@ -75,7 +75,7 @@ else
         if [ "$bz2Output" = true ]; then
             # Bzip it into its final position
             echo "~ Bzipping $INPUT_FILE to $OUTPUT_FILE.bz2"
-            bzcat -z "$INPUT_FILE" > "$OUTPUT_FILE.bz2"
+            pbzip2 -kzc -p$NSLOTS  "$INPUT_FILE" > "$OUTPUT_FILE.bz2"
         else
             # Rsync it into its final position
             echo "~ Rsyncing $INPUT_FILE to $OUTPUT_FILE"
@@ -87,7 +87,7 @@ else
         $Vaa3D -cmd image-loader -convert$SAVE_TO_8BIT "$INPUT_FILE" "$OUTPUT_FILE"
         if [ "$bz2Output" = true ]; then
             echo "~ Compressing output file with bzip2"
-            bzip2 $OUTPUT_FILE
+            pbzip2 -p$NSLOTS $OUTPUT_FILE
         fi
     fi
 
