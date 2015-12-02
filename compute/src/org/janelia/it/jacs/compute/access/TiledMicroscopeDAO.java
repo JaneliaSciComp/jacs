@@ -94,10 +94,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             annotationDAO.saveOrUpdate(workspace);
             // create preferences
             TmPreferences preferences=createTiledMicroscopePreferences(workspace.getId());
-            Entity parentEntity = annotationDAO.getEntityById(parentId);
-            EntityData ed = parentEntity.addChildEntity(workspace);
-            annotationDAO.saveOrUpdate(ed);
-            annotationDAO.saveOrUpdate(parentEntity);
+            if (parentId != null) {
+                Entity parentEntity = annotationDAO.getEntityById(parentId);
+                EntityData ed = parentEntity.addChildEntity(workspace);
+                annotationDAO.saveOrUpdate(ed);
+                annotationDAO.saveOrUpdate(parentEntity);
+            }
             // associate brain sample
             EntityData sampleEd = new EntityData();
             sampleEd.setOwnerKey(workspace.getOwnerKey());
@@ -186,6 +188,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         
         Entity workspaceEntity = null;
         TmWorkspace newWorkspace = null;
+        Entity folder = null;
         if (workspaceId == null) {
             if (sampleId == null) {
                 throw new ComputeException("Cannot apply SWC neurons without either valid workspace or sample ID.");
@@ -194,14 +197,13 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 // create a new workspace within that folder.
                 String folderName = WORKSPACES_FOLDER_NAME;
                 Collection<Entity> folders = annotationDAO.getEntitiesByName(ownerKey, folderName);
-                Entity folder;
                 if (folders != null && folders.size() > 0) {
                     folder = folders.iterator().next();
                 } else {
                     folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
                 }
-                log.info("Creating new workspace called " + swcFolder.getName() + ", ultimately belonging to " + ownerKey + ", but created under system user.");
-                newWorkspace = createTiledMicroscopeWorkspace(folder.getId(), sampleId, swcFolder.getName(), User.SYSTEM_USER_KEY);
+                log.info("Creating new workspace called " + swcFolder.getName() + ", belonging to " + ownerKey + ".");
+                newWorkspace = createTiledMicroscopeWorkspace(null, sampleId, swcFolder.getName(), ownerKey);
                 if (newWorkspace != null) {
                     workspaceId = newWorkspace.getId();
                 }
@@ -267,17 +269,28 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
         Set<File> swcFiles = fileCollector.getFileSet();
 
+        int swcCounter = 0;
+        log.info("Importing total of " + swcFiles.size() + " SWC files into workspace " + workspaceId);
         for (File swcFile : swcFiles) {
+            if (swcCounter % 1000 == 0) {
+                log.info("Importing SWC file number: " + swcCounter + " into workspace " + workspaceId);
+            }
             importSWCFile(swcFile, workspaceEntity, swcDataConverter, ownerKey);
+            swcCounter ++;
         }
-        
-        // Cleanup: return the workspace to ownership of true owner.
-        if (newWorkspace != null) {
-            newWorkspace.setOwnerKey(ownerKey);
-            Long entityId = newWorkspace.getId();
-            Entity entity = annotationDAO.getEntityById(entityId);
-            entity.setOwnerKey(ownerKey);
-            annotationDAO.saveOrUpdateEntity(entity);
+        log.info("Final SWC file imported into workspace " + workspaceId);
+
+        // Cleanup: attach the workspace to its proper parent folder.
+        if (newWorkspace != null  &&  folder != null) {
+            Entity parentEntity = folder;
+            EntityData ed = parentEntity.addChildEntity(workspaceEntity);
+            annotationDAO.saveOrUpdate(ed);
+            annotationDAO.saveOrUpdate(parentEntity);
+        }
+        else {
+            final String message = "Failed to associate a workspace for " + swcFolderLoc + " belonging to " + ownerKey + " with parent " + WORKSPACES_FOLDER_NAME;
+            log.error(message);
+            throw new ComputeException(message);
         }
     }
 
@@ -303,7 +316,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (neuronName.endsWith(SWCData.STD_SWC_EXTENSION)) {
                 neuronName = neuronName.substring(0, neuronName.length() - SWCData.STD_SWC_EXTENSION.length());
             }
-            final TmNeuron neuron = createTiledMicroscopeNeuron(workspaceEntity, neuronName, ownerKey);
+            final TmNeuron neuron = createTiledMicroscopeNeuron(
+                    workspaceEntity, neuronName, ownerKey, false
+            );
 
             Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
             Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
@@ -339,6 +354,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     }
 
     private TmNeuron createTiledMicroscopeNeuron(Entity workspace, String name, String ownerKey) throws DaoException {
+        return createTiledMicroscopeNeuron(workspace, name, ownerKey, true);
+    }
+
+    private TmNeuron createTiledMicroscopeNeuron(Entity workspace, String name, String ownerKey, boolean workspaceChecks) throws DaoException {
         try {
             if (workspace == null  ||  !workspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
                 throw new Exception("Tiled Neuron must be created with valid Workspace Id");
@@ -355,7 +374,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             // annotationDAO.saveOrUpdate(ed);
             // Konrad said use annDAO instead so permissions are properly carried over:
             annotationDAO.addEntityToParent(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
-            annotationDAO.saveOrUpdate(workspace);
+            if (workspaceChecks) {
+                annotationDAO.saveOrUpdate(workspace);
+            }
             TmNeuron tmNeuron = new TmNeuron(neuron);
             return tmNeuron;
         } catch (Exception e) {
@@ -522,8 +543,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         Entity neuron = null;
         Long neuronId = null;
+        Map<Long,Entity> idToNeuron = new HashMap<>();
         try {
             int putativeRootCount = 0;
+            // Cache to avoid re-fetch.
             Map<Integer, Long> nodeIdToAnnotationId = new HashMap<>();
             // Ensure the order of progression through nodes matches node IDs.
             Set<Integer> sortedKeys = new TreeSet<>(annotations.keySet());
@@ -534,7 +557,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 Long nextNeuronId = unserializedAnnotation.getNeuronId();
                 if (neuron == null) {
                     neuronId = nextNeuronId;
-                    neuron = annotationDAO.getEntityById(neuronId);
+                    neuron = idToNeuron.get(neuronId);
+                    if (neuron == null) {
+                        neuron = annotationDAO.getEntityById(neuronId);
+                        idToNeuron.put(neuronId, neuron);
+                    }
                     if (neuron == null) {
                         throw new Exception("Failed to find neuron for id " + neuronId);
                     }
