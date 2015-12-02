@@ -19,13 +19,13 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 @SearchType(key="filter",label="Filter")
 public class Filter extends AbstractDomainObject implements IsParent {
 
-    @SearchAttribute(key="searchType",label="Search Class")
-    private String searchClass;
+    @SearchAttribute(key="searchType",label="Search Type")
+    private String searchType;
     @SearchAttribute(key="searchString",label="Search String")
     private String searchString;
     private List<Criteria> criteriaList;
     private String sort;
-    
+
     public boolean hasCriteria() {
         return criteriaList!=null && !criteriaList.isEmpty();
     }
@@ -49,12 +49,12 @@ public class Filter extends AbstractDomainObject implements IsParent {
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 
-    public String getSearchClass() {
-        return searchClass;
+    public String getSearchType() {
+        return searchType;
     }
 
-    public void setSearchClass(String searchClass) {
-        this.searchClass = searchClass;
+    public void setSearchType(String searchType) {
+        this.searchType = searchType;
     }
 
     public String getSearchString() {

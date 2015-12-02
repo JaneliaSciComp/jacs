@@ -7,24 +7,24 @@ package org.janelia.it.jacs.model.domain;
  */
 public class Reference {
 
-    private String targetClassName;
+    private String targetCollectionName;
     private Long targetId;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Reference() {
     }
 
-    public Reference(String targetClassName, Long targetId) {
-        this.targetClassName = targetClassName;
+    public Reference(String targetCollectionName, Long targetId) {
+        this.targetCollectionName = targetCollectionName;
         this.targetId = targetId;
     }
 
-    public String getTargetClassName() {
-        return targetClassName;
+    public String getCollectionName() {
+        return targetCollectionName;
     }
 
-    public void setTargetClassName(String type) {
-        this.targetClassName = type;
+    public void setCollectionName(String type) {
+        this.targetCollectionName = type;
     }
 
     public Long getTargetId() {
@@ -42,7 +42,7 @@ public class Reference {
         result = prime*result
                 +((targetId==null) ? 0 : targetId.hashCode());
         result = prime*result
-                +((targetClassName==null) ? 0 : targetClassName.hashCode());
+                +((targetCollectionName==null) ? 0 : targetCollectionName.hashCode());
         return result;
     }
 
@@ -66,12 +66,12 @@ public class Reference {
         else if (!targetId.equals(other.targetId)) {
             return false;
         }
-        if (targetClassName==null) {
-            if (other.targetClassName!=null) {
+        if (targetCollectionName==null) {
+            if (other.targetCollectionName!=null) {
                 return false;
             }
         }
-        else if (!targetClassName.equals(other.targetClassName)) {
+        else if (!targetCollectionName.equals(other.targetCollectionName)) {
             return false;
         }
         return true;
@@ -79,10 +79,6 @@ public class Reference {
 
     @Override
     public String toString() {
-        return targetClassName + "#" + targetId;
-    }
-
-    public static Reference createFor(DomainObject domainObject) {
-        return new Reference(domainObject.getClass().getName(), domainObject.getId());
+        return "Reference[" + targetCollectionName + "#" + targetId + "]";
     }
 }

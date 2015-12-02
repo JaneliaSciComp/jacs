@@ -20,91 +20,117 @@ import javax.ws.rs.core.SecurityContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.glassfish.jersey.jackson.JacksonFeature;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
-import org.janelia.it.jacs.shared.utils.DomainQuery;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
 @Path("/")
 public class UserWorkstationWebService extends ResourceConfig {
-    private static final Logger log = LoggerFactory.getLogger(DataViewsWebService.class);
-
     @Context
     SecurityContext securityContext;
 
+    DomainDAO dao;
+
+    public DomainDAO getDao() {
+        if (dao==null) {
+            dao = WebServiceContext.getDomainManager();
+        }
+        return dao;
+    }
+
+    public void setDao(DomainDAO dao) {
+        this.dao = dao;
+        WebServiceContext.setDomainManager(dao);
+    }
+
     public UserWorkstationWebService() {
-        register(JacksonFeature.class);
+        register(JacksonJsonProvider.class);
+        getDao();
     }
 
     // mapping using explicit object mapping; TO DO configure jackson integration with jersey
     @GET
     @Path("/workspace")
     @Produces(MediaType.APPLICATION_JSON)
-    public Workspace getWorkspace(@QueryParam("subjectKey") String subjectKey) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String getWorkspace(@QueryParam("subjectKey") String subjectKey,
+                               @QueryParam("option") String option) {
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            return dao.getDefaultWorkspace(subjectKey);
+            if (option!=null && option.toLowerCase().equals("full")) {
+                Map<String, List<DomainObject>> workspaceMap = new HashMap<String, List<DomainObject>>();
+                return mapper.writeValueAsString(dao.getWorkspaces(subjectKey));
+            } else {
+                Workspace workspace = dao.getDefaultWorkspace(subjectKey);
+                return mapper.writeValueAsString(workspace);
+            }
+
         } catch (Exception e) {
-            log.error("Error occurred getting default workspace \n " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
+        return null;
     }
 
     @PUT
     @Path("/treenode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode createTreeNode(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String createTreeNode(@QueryParam("subjectKey") final String subjectKey,
+                               TreeNode treeNode) {
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            return (TreeNode)dao.save(query.getSubjectKey(), query.getDomainObject());
+            TreeNode newTreeNode = dao.save(subjectKey, treeNode);
+            return mapper.writeValueAsString(newTreeNode);
         } catch (Exception e) {
-            log.error("Error occurred creating tree node \n " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
+        return null;
     }
 
     @POST
     @Path("/treenode/reorder")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode reorderTreeNode(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
-
-        try {
-            List<Long> orderList = query.getObjectIds();
-            int[] order = new int[orderList.size()];
-            for (int i=0; i<orderList.size(); i++) {
-                order[i] = orderList.get(i).intValue();
-            }
-            return dao.reorderChildren(query.getSubjectKey(), (TreeNode)query.getDomainObject(), order);
-        } catch (Exception e) {
-            log.error("Error occurred reordering Tree Node\n " + e.getMessage());
-            return null;
+    public String reorderTreeNode(@QueryParam("subjectKey") final String subjectKey,
+                                  @QueryParam("treeNodeId") final Long treeNodeId,
+                                  List<Integer> orderList) {
+        ObjectMapper mapper = new ObjectMapper();
+        int[] order = new int[orderList.size()];
+        for (int i=0; i<orderList.size(); i++) {
+            order[i] = orderList.get(i).intValue();
         }
+        Reference treeNodeRef = new Reference("treeNode",treeNodeId);
+        try {
+            TreeNode treeNode = (TreeNode)dao.getDomainObject(subjectKey, treeNodeRef);
+            TreeNode updatedNode = dao.reorderChildren(subjectKey, treeNode, order);
+            return mapper.writeValueAsString(updatedNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    @POST
+  /*  @POST
     @Path("/treenode/children")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode addChildren(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String addChildren(@QueryParam("subjectKey") final String subjectKey,
+                              @QueryParam("treeNodeId") final Long treeNodeId,
+                              @QueryParam("children") final List<Reference> children) {
+        ObjectMapper mapper = new ObjectMapper();
+        Reference treeNodeRef = new Reference("treeNode",treeNodeId);
         try {
-            return dao.addChildren(query.getSubjectKey(), (TreeNode)query.getDomainObject(), query.getReferences());
+            TreeNode treeNode = (TreeNode)dao.getDomainObject(subjectKey, treeNodeRef);
+            TreeNode updatedNode = dao.addChildren(subjectKey, treeNode, children);
+            return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
-            log.error("Error occurred add children to tree node \n " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
+        return null;
     }
 
 
@@ -112,72 +138,96 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Path("/treenode/children")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode removeChildren(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String removeChildren(@QueryParam("subjectKey") final String subjectKey,
+                                 @QueryParam("treeNodeId") final Long treeNodeId,
+                                 @QueryParam("children") final List<Reference> children) {
+        ObjectMapper mapper = new ObjectMapper();
+        Reference treeNodeRef = new Reference("treeNode",treeNodeId);
         try {
-            return dao.removeChildren(query.getSubjectKey(), (TreeNode)query.getDomainObject(), query.getReferences());
+            TreeNode treeNode = (TreeNode)dao.getDomainObject(subjectKey, treeNodeRef);
+            TreeNode updatedNode = dao.removeChildren(subjectKey, treeNode, children);
+            return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
-            log.error("Error occurred removing children from tree node \n " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
+        return null;
     }
-
+*/
 
     @PUT
     @Path("/objectset")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public ObjectSet createObjectSet(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String createObjectSet(@QueryParam("subjectKey") final String subjectKey,
+                                 ObjectSet objectSet) {
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            return (ObjectSet)dao.save(query.getSubjectKey(), query.getDomainObject());
+            ObjectSet newObjectSet = dao.save(subjectKey, objectSet);
+            return mapper.writeValueAsString(newObjectSet);
         } catch (Exception e) {
-            log.error("Error occurred creating object set \n " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
+        return null;
     }
 
     @POST
     @Path("/objectset/member")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public ObjectSet addMembers(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String addMembers(@QueryParam("subjectKey") final String subjectKey,
+                              @QueryParam("objectSetId") final Long objectSetId,
+                              @QueryParam("members") final List<Long> members) {
+        ObjectMapper mapper = new ObjectMapper();
+        Reference objectSetRef = new Reference("objectSet",objectSetId);
         try {
-            return dao.addMembers(query.getSubjectKey(), (ObjectSet)query.getDomainObject(), query.getReferences());
+            ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
+            List<Reference> refs = new ArrayList<>();
+            for(Long id : members) {
+                refs.add(new Reference(objectSet.getCollectionName(), id));
+            }
+            ObjectSet updatedNode = dao.addMembers(subjectKey, objectSet, refs);
+            return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
-            log.error("Error occurred adding members to object set \n " + e.getMessage());
             e.printStackTrace();
-            return null;
         }
+        return null;
     }
 
     @DELETE
     @Path("/objectset/member")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public ObjectSet removeMembers(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String removeMembers(@QueryParam("subjectKey") final String subjectKey,
+                            @QueryParam("objectSetId") final Long objectSetId,
+                            @QueryParam("members") final List<Long> members) {
+        ObjectMapper mapper = new ObjectMapper();
+        Reference objectSetRef = new Reference("objectSet",objectSetId);
         try {
-            return dao.removeMembers(query.getSubjectKey(), (ObjectSet)query.getDomainObject(), query.getReferences());
+            ObjectSet objectSet = (ObjectSet)dao.getDomainObject(subjectKey, objectSetRef);
+            List<Reference> refs = new ArrayList<>();
+            for(Long id : members) {
+                refs.add(new Reference(objectSet.getCollectionName(), id));
+            }
+            ObjectSet updatedNode = dao.removeMembers(subjectKey, objectSet, refs);
+            return mapper.writeValueAsString(updatedNode);
         } catch (Exception e) {
-            log.error("Error occurred removing members from Object Set \n " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
+        return null;
     }
 
     @GET
     @Path("/user/subjects")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Subject> getSubjects() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+    public String getSubjects() {
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            return dao.getSubjects();
+            List<Subject> subjects = dao.getSubjects();
+            return mapper.writeValueAsString(subjects);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        catch (Exception e) {
-            log.error("Error occurred getting subjects \n " + e.getMessage());
-            return null;
-        }
+        return null;
     }
 
 }

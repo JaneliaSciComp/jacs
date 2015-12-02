@@ -24,13 +24,13 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 @SearchType(key="sample",label="Sample")
 public class Sample extends AbstractDomainObject {
 
-    @SearchAttribute(key="age_txt",label="Age",facet=true)
+    @SearchAttribute(key="age_s",label="Age",facet=true)
     private String age;
     
     @SearchAttribute(key="chan_spec_s",label="Channel Specification",facet=true)
     private String chanSpec;
     
-    @SearchAttribute(key="data_set_txt",label="Data Set",facet=true)
+    @SearchAttribute(key="data_set_s",label="Data Set",facet=true)
     private String dataSet;
     
     @SearchAttribute(key="effector_txt",label="Effector")
@@ -39,13 +39,13 @@ public class Sample extends AbstractDomainObject {
     @SearchAttribute(key="gender_s",label="Gender",facet=true)
     private String gender;
     
-    @SearchAttribute(key="line_txt",label="Line")
+    @SearchAttribute(key="line_s",label="Line")
     private String line;
     
-    @SearchAttribute(key="slide_code_txt",label="Slide Code")
+    @SearchAttribute(key="slide_code_s",label="Slide Code")
     private String slideCode;
     
-    @SearchAttribute(key="status_txt",label="Status")
+    @SearchAttribute(key="status_s",label="Status")
     private String status;
     
     @SearchAttribute(key="visited_s",label="Visited")

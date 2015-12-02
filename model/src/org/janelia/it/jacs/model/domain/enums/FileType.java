@@ -8,6 +8,8 @@ package org.janelia.it.jacs.model.domain.enums;
 public enum FileType {
 
     // Stacks
+    @Deprecated // TODO: REMOVE THIS
+    Stack("Stack", false, false),
     LosslessStack("Lossless Stack", false, false),
     VisuallyLosslessStack("Visually Lossless Stack", false, false),
     FastStack("Fast-loading Stack", false, false),

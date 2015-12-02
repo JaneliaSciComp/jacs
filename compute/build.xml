@@ -68,8 +68,6 @@
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
 	<path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
-		    <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
-		    <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
 			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
 			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>

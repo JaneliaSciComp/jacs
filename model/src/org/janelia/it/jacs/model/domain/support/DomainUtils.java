@@ -15,12 +15,6 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.gui.search.Filter;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.AttributeValueCriteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.Criteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.DateRangeCriteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.FacetCriteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
@@ -66,11 +60,8 @@ public class DomainUtils {
         typeClasses.put("ontology", org.janelia.it.jacs.model.domain.ontology.Ontology.class);
     }
 
-    /**
-     * Look at all classes with the @MongoMapped annotation and register them as domain classes.
-     */
     private static void registerAnnotatedClasses() {
-        
+
         Reflections reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
         for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
             Class<? extends DomainObject> nodeClass = (Class<? extends DomainObject>)clazz;
@@ -95,22 +86,11 @@ public class DomainUtils {
         }
     }
 
-    public static String getCollectionName(String className) {
-        // TODO: improve performance with a map keyed by class name
-        for (Map.Entry<String, Class<? extends DomainObject>> entry : typeClasses.entrySet()) {
-            if (entry.getValue().getName().equals(className)) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
-    
     public static String getCollectionName(DomainObject domainObject) {
         return getCollectionName(domainObject.getClass());
     }
 
     public static String getCollectionName(Class<?> objectClass) {
-        if (objectClass==null) return null;
         MongoMapped mongoMappedAnnotation = null;
         Class<?> clazz = objectClass;
         while (mongoMappedAnnotation==null&&clazz!=null) {
@@ -162,7 +142,6 @@ public class DomainUtils {
     }
     
     public static Class<? extends DomainObject> getObjectClassByName(String className) {
-        if (className==null) return null;
         Class<?> clazz;
         try {
             clazz = Class.forName(className);
@@ -292,10 +271,6 @@ public class DomainUtils {
     public static String unCamelCase(String s) {
         return s.replaceAll("(?<=\\p{Ll})(?=\\p{Lu})|(?<=\\p{L})(?=\\p{Lu}\\p{Ll})", " ");
     }
-
-    public static boolean hasReadAccess(DomainObject domainObject, String subjectKey) {
-        return domainObject.getReaders().contains(subjectKey);
-    }
     
     public static boolean hasWriteAccess(DomainObject domainObject, String subjectKey) {
         return domainObject.getWriters().contains(subjectKey);
@@ -322,43 +297,38 @@ public class DomainUtils {
             }
         });
     }
-    
-    /**
-     * Generate a list of references to the given domain objects.
-     * @param objects collection of domain objects
-     * @return a list of references, one for each domain object
-     */
-    public static Collection<Reference> getReferences(Collection<DomainObject> domainObjects) {
-        Collection<Reference> refs = new ArrayList<>();
-        for(DomainObject domainObject : domainObjects) {
+
+    public static List<Long> getIdList(Collection<DomainObject> objects) {
+        List<Long> list = new ArrayList<>();
+        for(DomainObject domainObject : objects) {
             if (domainObject!=null) {
-                refs.add(Reference.createFor(domainObject));
+                list.add(domainObject.getId());
             }
         }
-        return refs;
+        return list;
     }
 
-    /**
-     * Generate a map by reference to the given domain objects.
-     * @param objects collection of domain objects
-     * @return a map with the domain objects as values, keyed by reference to each domain object
-     */
-    public static Map<Reference, DomainObject> getMapByReference(Collection<DomainObject> objects) {
-        Map<Reference, DomainObject> objectMap = new HashMap<>();
+    public static Map<Long, DomainObject> getMapById(Collection<DomainObject> objects) {
+        Map<Long, DomainObject> objectMap = new HashMap<>();
         for (DomainObject domainObject : objects) {
             if (domainObject != null) {
-                objectMap.put(Reference.createFor(domainObject), domainObject);
+                objectMap.put(domainObject.getId(), domainObject);
             }
         }
         return objectMap;
     }
     
-    /**
-     * Find the ontology term with the given id in the specified ontology tree.
-     * @param term ontololgy term tree structure
-     * @param termId GUID of the term to find 
-     * @return term with the given termId, or null if it cannot be found
-     */
+    public static Collection<Reference> getReferences(Collection<DomainObject> domainObjects) {
+        Collection<Reference> refs = new ArrayList<>();
+        for(DomainObject obj : domainObjects) {
+            Reference ref = new Reference();
+            ref.setTargetId(obj.getId());
+            ref.setCollectionName(getCollectionName(obj));
+            refs.add(ref);
+        }
+        return refs;
+    }
+    
     public static OntologyTerm findTerm(OntologyTerm term, Long termId) {
         if (termId==null) return null;
         if (term.getId()!=null && term.getId().equals(termId)) {
@@ -373,60 +343,6 @@ public class DomainUtils {
             }
         }
         return null;
-    }
-
-    /**
-     * There are better ways of deep cloning, but this is easier for now. 
-     */
-    public static Filter cloneFilter(Filter filter) {
-        Filter newFilter = new Filter();
-        newFilter.setName(filter.getName());
-        newFilter.setSearchString(filter.getSearchString());
-        newFilter.setSearchClass(filter.getSearchClass());
-        newFilter.setSort(filter.getSort());
-        if (filter.hasCriteria()) {
-            for(Criteria criteria : filter.getCriteriaList()) {
-                newFilter.addCriteria(cloneCriteria(criteria));
-            }
-        }
-        
-        return newFilter;
-    }
-    
-    private static Criteria cloneCriteria(Criteria criteria) {
-        if (criteria instanceof AttributeValueCriteria) {
-            AttributeValueCriteria source = (AttributeValueCriteria)criteria;
-            AttributeValueCriteria newCriteria = new AttributeValueCriteria();
-            newCriteria.setAttributeName(source.getAttributeName());
-            newCriteria.setValue(source.getValue());
-            return newCriteria;
-        }
-        else if (criteria instanceof DateRangeCriteria) {
-            DateRangeCriteria source = (DateRangeCriteria)criteria;
-            DateRangeCriteria newCriteria = new DateRangeCriteria();
-            newCriteria.setAttributeName(source.getAttributeName());
-            newCriteria.setStartDate(source.getStartDate());
-            newCriteria.setEndDate(source.getEndDate());
-            return newCriteria;
-        }
-        else if (criteria instanceof FacetCriteria) {
-            FacetCriteria source = (FacetCriteria)criteria;
-            FacetCriteria newCriteria = new FacetCriteria();
-            newCriteria.setAttributeName(source.getAttributeName());
-            newCriteria.setValues(new HashSet<>(source.getValues()));
-            return newCriteria;
-        }
-        else if (criteria instanceof ObjectSetCriteria) {
-            ObjectSetCriteria source = (ObjectSetCriteria)criteria;
-            ObjectSetCriteria newCriteria = new ObjectSetCriteria();
-            newCriteria.setObjectSetName(source.getObjectSetName());
-            Reference setReference = new Reference(source.getObjectSetReference().getTargetClassName(), source.getObjectSetReference().getTargetId());
-            newCriteria.setObjectSetReference(setReference);
-            return newCriteria;
-        }
-        else {
-            throw new IllegalArgumentException("Unknown criteria subtype: "+criteria.getClass().getName());
-        }
     }
     
     /**
