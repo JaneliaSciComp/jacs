@@ -625,14 +625,10 @@ public class MongoDbImport extends AnnotationDAO {
         
         List<SamplePipelineRun> runs = new ArrayList<SamplePipelineRun>();
         for(Entity runEntity : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
-
-            String process = runEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-            if (process.startsWith("YoshiMacro")) {
-                continue;
-            }
+            populateChildren(runEntity);
             
-            populateChildren(runEntity);            
             List<PipelineResult> results = new ArrayList<PipelineResult>();
+            
             for(Entity resultEntity : EntityUtils.getChildrenForAttribute(runEntity, EntityConstants.ATTRIBUTE_RESULT)) {
                 populateChildren(resultEntity);
 
@@ -727,7 +723,7 @@ public class MongoDbImport extends AnnotationDAO {
             SamplePipelineRun run = new SamplePipelineRun();
             run.setName(runEntity.getName());
             run.setCreationDate(runEntity.getCreationDate());
-            run.setPipelineProcess(process);
+            run.setPipelineProcess(runEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS));
             run.setPipelineVersion(1);
             
             Entity errorEntity = EntityUtils.findChildWithType(runEntity, EntityConstants.TYPE_ERROR);
