@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.api;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
 

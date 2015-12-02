@@ -20,7 +20,7 @@ import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
-import org.janelia.it.jacs.compute.access.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;

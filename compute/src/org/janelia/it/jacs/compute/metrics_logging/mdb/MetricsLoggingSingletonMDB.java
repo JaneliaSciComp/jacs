@@ -14,7 +14,7 @@ import javax.jms.MessageListener;
 import java.util.Date;
 import javax.jms.ObjectMessage;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
-import org.janelia.it.jacs.compute.access.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import static org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants.*;
 import org.janelia.it.jacs.model.user_data.UserToolEvent;
 

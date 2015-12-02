@@ -1,5 +1,5 @@
 
-package org.janelia.it.jacs.compute.access;
+package org.janelia.it.jacs.compute.api;
 
 /**
  * This class represents checked exceptions that are thrown from the Compute module

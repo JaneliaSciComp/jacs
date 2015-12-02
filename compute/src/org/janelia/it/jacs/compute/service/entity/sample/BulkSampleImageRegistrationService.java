@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;

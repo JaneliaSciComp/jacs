@@ -7,7 +7,6 @@ import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;

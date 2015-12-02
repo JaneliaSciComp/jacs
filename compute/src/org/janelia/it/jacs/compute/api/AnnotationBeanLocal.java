@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
 

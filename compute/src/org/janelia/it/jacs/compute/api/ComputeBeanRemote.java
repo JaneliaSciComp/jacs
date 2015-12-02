@@ -1,7 +1,6 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Event;

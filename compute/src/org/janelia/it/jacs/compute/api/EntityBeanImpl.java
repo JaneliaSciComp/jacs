@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;

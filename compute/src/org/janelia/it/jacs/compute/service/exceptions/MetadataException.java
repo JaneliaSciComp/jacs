@@ -1,6 +1,6 @@
 package org.janelia.it.jacs.compute.service.exceptions;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 
 /**
  * Indicates a problem with metadata. 

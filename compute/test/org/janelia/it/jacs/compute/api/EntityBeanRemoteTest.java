@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.model.TestCategories;
 import org.janelia.it.jacs.model.entity.Entity;

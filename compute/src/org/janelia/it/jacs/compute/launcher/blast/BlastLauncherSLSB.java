@@ -1,7 +1,7 @@
 
 package org.janelia.it.jacs.compute.launcher.blast;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.def.SeriesDef;
 import org.janelia.it.jacs.compute.engine.launcher.ILauncher;

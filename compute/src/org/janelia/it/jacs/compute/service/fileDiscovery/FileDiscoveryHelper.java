@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.access.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.compute.util.FileUtils;

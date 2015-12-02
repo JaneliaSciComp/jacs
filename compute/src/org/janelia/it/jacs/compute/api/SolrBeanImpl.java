@@ -19,7 +19,6 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;

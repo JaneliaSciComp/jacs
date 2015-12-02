@@ -10,7 +10,6 @@ import java.io.File;
 import java.util.List;
 import javax.ejb.Remote;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
 import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 
 /**

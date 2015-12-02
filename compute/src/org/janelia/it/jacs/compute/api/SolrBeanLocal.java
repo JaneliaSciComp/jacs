@@ -1,8 +1,6 @@
 
 package org.janelia.it.jacs.compute.api;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
-
 import javax.ejb.Local;
 
 /**

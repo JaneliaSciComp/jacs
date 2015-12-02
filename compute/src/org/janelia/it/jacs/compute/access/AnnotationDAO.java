@@ -27,6 +27,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Expression;
+import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.service.fly.MaskSampleAnnotationService;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;

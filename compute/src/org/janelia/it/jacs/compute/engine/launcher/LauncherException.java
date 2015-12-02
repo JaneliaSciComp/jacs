@@ -1,7 +1,7 @@
 
 package org.janelia.it.jacs.compute.engine.launcher;
 
-import org.janelia.it.jacs.compute.access.ComputeException;
+import org.janelia.it.jacs.compute.api.ComputeException;
 
 /**
  * This class represents the exception that will be thrown by an implementation of ILauncher
