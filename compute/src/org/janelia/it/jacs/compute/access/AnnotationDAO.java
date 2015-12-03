@@ -294,7 +294,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
         // There is limit 65,535 (2^16-1) placeholders in MySQL. We use rewriteBatchedStatements=true, 
         // so we're limited to 65535/9=7281 placeholders before MySQL starts exploding with "too many placeholders" errors.
-        final int batchSize = 7000;  
+        // Ideal batch size as discovered emperically by Konrad, is 500.
+        final int batchSize = 500;  
         
         log.info("Saving bulk entity tree rooted at "+root.getName());
         
