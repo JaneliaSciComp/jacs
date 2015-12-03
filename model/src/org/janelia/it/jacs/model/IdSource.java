@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * This is a fixed-block-oriented ID source, pulling IDs from the
  * @see TimebasedIdentifierGenerator, in such a way to optimize database
- * use, but appear seemless to caller.
+ * use, but appear seamless to caller.
  *
  * @author fosterl
  */
