@@ -248,6 +248,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runSyncDataSetToScality(String user, String dataSetName, String filetypes, Boolean deleteSourceFiles) {
         try {
+            if ("".equals(dataSetName)) {dataSetName=null;}
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
