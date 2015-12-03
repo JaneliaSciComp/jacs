@@ -215,6 +215,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      * @throws ComputeException thrown as wrapper for any exceptions.
      */
     public void importSWCFolder(String swcFolderLoc, String ownerKey, Long sampleId) throws ComputeException {
+        //this.combinedCreateNeuronTime = 0L;
+        //this.combinedGeoLinkTime = 0L;
+        //this.combinedNodeIterTime = 0L;
+        //this.combinedReadTime = 0L;
+        
         File swcFolder = new File(swcFolderLoc);
         if (!swcFolder.isAbsolute()) {
             String basePathstring = SystemConfigurationProperties.getString(BASE_PATH_PROP);
@@ -310,26 +315,27 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         annotationDAO.saveOrUpdate(ed);
         annotationDAO.saveOrUpdate(parentEntity);
         
-        log.info("Combined file read/parse time for folder is (ms)" + combinedReadTime / 1000);
-        log.info("Combined node iteration time for folder is (ms)" + combinedNodeIterTime / 1000);
-        log.info("Combined neuron creation time for folder is (ms)" + combinedCreateNeuronTime / 1000);
-        log.info("Combined geo annotation link time for folder is (ms)" + combinedGeoLinkTime / 1000);
+        //log.info("Combined file read/parse time for folder is (ms)" + combinedReadTime / 1000);
+        //log.info("Combined node iteration time for folder is (ms)" + combinedNodeIterTime / 1000);
+        //log.info("Combined neuron creation time for folder is (ms)" + combinedCreateNeuronTime / 1000);
+        //log.info("Combined geo annotation link time for folder is (ms)" + combinedGeoLinkTime / 1000);
     }
 
-    private long combinedReadTime = 0L; // Reads/parses of SWC data.
-    private long combinedNodeIterTime = 0L; // Building node list.
-    private long combinedGeoLinkTime = 0L;
-    private long combinedCreateNeuronTime = 0L;
+    //private long combinedReadTime = 0L; // Reads/parses of SWC data.
+    //private long combinedNodeIterTime = 0L; // Building node list.
+    //private long combinedGeoLinkTime = 0L;
+    //private long combinedCreateNeuronTime = 0L;
+    
     private void importSWCFile(File swcFile, Entity workspaceEntity, SWCDataConverter swcDataConverter, String ownerKey, long precomputedNeuronId, Iterator<Long> idSource) throws ComputeException {
         // the constructor also triggers the parsing, but not the validation
         try {
-            long startRead = System.nanoTime();
+            //long startRead = System.nanoTime();
             SWCData swcData = SWCData.read(swcFile);
             if (!swcData.isValid()) {
                 throw new ComputeException(String.format("invalid SWC file %s; reason: %s",
                         swcFile.getName(), swcData.getInvalidReason()));
             }
-            combinedReadTime += (System.nanoTime() - startRead) / 1000;
+            //combinedReadTime += (System.nanoTime() - startRead) / 1000;
 
             // note from CB, July 2013: Vaa3d can't handle large coordinates in swc files,
             //  so he added an OFFSET header and recentered on zero when exporting
@@ -344,13 +350,13 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (neuronName.endsWith(SWCData.STD_SWC_EXTENSION)) {
                 neuronName = neuronName.substring(0, neuronName.length() - SWCData.STD_SWC_EXTENSION.length());
             }
-            long startCreateN = System.nanoTime();
+            //long startCreateN = System.nanoTime();
             final TmNeuron neuron = this.createTmNeuronInMemory(workspaceEntity, neuronName, ownerKey, precomputedNeuronId);
-            combinedCreateNeuronTime += (System.nanoTime() - startCreateN) / 1000;
+            //combinedCreateNeuronTime += (System.nanoTime() - startCreateN) / 1000;
 
             Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
             Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
-            long startNodeIter = System.nanoTime();
+            //long startNodeIter = System.nanoTime();
             for (SWCNode node : swcData.getNodeList()) {
                 // Internal points, as seen in annotations, are same as external
                 // points in SWC: represented as voxels. --LLF
@@ -372,13 +378,13 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
                 nodeParentLinkage.put(node.getIndex(), node.getParentIndex());
             }
-            combinedNodeIterTime += (System.nanoTime() - startNodeIter) /1000;
+            //combinedNodeIterTime += (System.nanoTime() - startNodeIter) /1000;
 
             // Fire off the bulk update.  The "un-serialized" or
             // db-unknown annotations could be swapped for "blessed" versions.
-            long startGeoLink = System.nanoTime();
+            //long startGeoLink = System.nanoTime();
             addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuron, idSource);
-            combinedGeoLinkTime += (System.nanoTime() - startGeoLink) / 1000;
+            //combinedGeoLinkTime += (System.nanoTime() - startGeoLink) / 1000;
 
         } catch (Exception ex) {
             throw new ComputeException(ex);
