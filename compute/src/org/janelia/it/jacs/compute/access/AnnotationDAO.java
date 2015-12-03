@@ -292,7 +292,9 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("saveBulkEntityTree(root="+root+", subjectKey="+subjectKey+")");
         }
 
-        final int batchSize = 800;  
+        // There is limit 65,535 (2^16-1) placeholders in MySQL. We use rewriteBatchedStatements=true, 
+        // so we're limited to 65535/9=7281 placeholders before MySQL starts exploding with "too many placeholders" errors.
+        final int batchSize = 7000;  
         
         log.info("Saving bulk entity tree rooted at "+root.getName());
         
@@ -331,7 +333,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                     newEntityId = ids.get(idIndex--);
                     entity.setId(newEntityId);
                 }
-                
+
                 stmtEntity.setLong(1, newEntityId);
                 stmtEntity.setString(2, entity.getName());
                 stmtEntity.setString(3, subjectKey);
@@ -352,8 +354,14 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 }
                 
                 stmtEntity.setInt(7, entity.getChildren().size());
-                
+
+                entityCount++;
                 stmtEntity.addBatch();
+                
+                if (entityCount >= batchSize) {
+                    stmtEntity.executeBatch();
+                    entityCount = 0;
+                }
                 
                 for(EntityData ed : entity.getEntityData()) {
 
@@ -397,27 +405,32 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                         stmtEd.setObject(9, ed.getChildEntity().getId());   
                     }
                     
+                    edCount++;
                     stmtEd.addBatch();
-                }
-                
-                if (++entityCount % batchSize == 0) {
-                    stmtEntity.executeBatch();
-                }
-                if (++edCount % batchSize == 0) {
-                    stmtEd.executeBatch();
+                    
+                    if (edCount >= batchSize) {
+                        if (entityCount > 0) {
+                            // Serialize any outstanding entities, because they are probably referenced by the eds we're about to serialize
+                            stmtEntity.executeBatch();
+                            entityCount = 0;
+                        }
+                        stmtEd.executeBatch();
+                        edCount = 0;
+                    }
                 }
             }
 
-            if (entityCount % batchSize != 0) {
+            if (entityCount > 0) {
                 stmtEntity.executeBatch();
             }
-            if (edCount % batchSize != 0) {
+            
+            if (edCount > 0) {
                 stmtEd.executeBatch();
             }
-
-            log.info("Committing bulk entity changes.");
+            
             conn.commit();
             
+            // The last entity we process is the root, so now we know the root's id
             log.info("Saved bulk entity tree with root id="+newEntityId);
             Entity saved = getEntityById(newEntityId);
             if (saved==null) {
@@ -426,6 +439,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             return saved;
         }
         catch (Exception e) {
+            try {
+                conn.rollback();
+            }
+            catch (SQLException ex) {
+                log.warn("Error rolling back transaction after exception",e);
+            }
             throw new DaoException(e);
         }
         finally {
