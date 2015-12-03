@@ -519,11 +519,11 @@ public class EntityUtils {
     }
     
     public static String getAnyFilePath(Entity entity) {
-    	String filePath = getFilePath(entity);
-    	if (filePath != null) {
-    		return filePath;
+    	String filepath = getDefaultImageFilePath(entity);
+    	if (filepath != null) {
+    		return filepath;
     	}
-    	return getDefaultImageFilePath(entity);
+    	return getDefault3dImageFilePath(entity);
     }
     
     public static Entity findChildWithEntityId(Entity entity, Long entityId) {
