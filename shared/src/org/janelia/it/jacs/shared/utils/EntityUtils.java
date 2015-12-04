@@ -434,8 +434,10 @@ public class EntityUtils {
     }
     
     public static String getFilePath(Entity entity) {
-    	if (entity == null) return null;
-    	return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	if (entity==null) return null;
+    	String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	if (filepath==null) return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
+    	return filepath;
     }
 
     public static String getDefaultImageFilePath(Entity entity) {
@@ -510,13 +512,6 @@ public class EntityUtils {
         }
 
         if (path == null) {
-            path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
-            if (path!=null) {
-                path = EntityConstants.SCALITY_PATH_PREFIX+path;
-            }
-        }
-
-        if (path == null) {
             log.debug("  Could not find a path to return");
         }
 
@@ -524,11 +519,11 @@ public class EntityUtils {
     }
     
     public static String getAnyFilePath(Entity entity) {
-    	String filePath = getFilePath(entity);
-    	if (filePath != null) {
-    		return filePath;
+    	String filepath = getDefaultImageFilePath(entity);
+    	if (filepath != null) {
+    		return filepath;
     	}
-    	return getDefaultImageFilePath(entity);
+    	return getDefault3dImageFilePath(entity);
     }
     
     public static Entity findChildWithEntityId(Entity entity, Long entityId) {

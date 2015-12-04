@@ -33,14 +33,15 @@ public class TmNeuron implements IsSerializable, Serializable {
         PREV_PARALLEL,
     }
 
-    Long id;
-    String name;
-    Date creationDate;
-    Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
-    List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
-    Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
+    private Long id;
+    private String name;
+    private Date creationDate;
+    private transient Entity entity;
+    private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
+    private List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
+    private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
 
-    Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<Long, TmStructuredTextAnnotation>();
+    private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<Long, TmStructuredTextAnnotation>();
 
     public Long getId() {
         return id;
@@ -60,6 +61,10 @@ public class TmNeuron implements IsSerializable, Serializable {
 
     public Date getCreationDate() {
         return creationDate;
+    }
+    
+    public Entity getEntity() {
+        return entity;
     }
 
     @Override
@@ -95,6 +100,7 @@ public class TmNeuron implements IsSerializable, Serializable {
         if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
             throw new Exception("Entity type must be "+EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
         }
+        this.entity = entity;
         this.id=entity.getId();
         this.name=entity.getName();
         this.creationDate = entity.getCreationDate();

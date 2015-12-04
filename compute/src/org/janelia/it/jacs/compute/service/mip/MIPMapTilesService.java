@@ -24,7 +24,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     private static final int DESIRED_PROCESSED_X_TILES = 4; // 4 horizontal tiles
     private static final int DESIRED_PROCESSED_Y_TILES = 4; // 4 vertical tiles
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 2; // 2 layers
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 10; // 10 layers
 
     private Long imageWidth;
     private Long imageHeight;
@@ -65,6 +65,10 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         sourceRootUrl = processData.getString("SOURCE_ROOT_URL");
+        if (!processData.getBoolean("RETILE_IMAGE")) {
+            LOG.info("No RETILE requested for {}", sourceRootUrl);
+            cancel();
+        }
         sourceStackFormat = processData.getString("SOURCE_STACK_FORMAT");
         targetRootUrl = processData.getString("TARGET_ROOT_URL");
         targetStackFormat = processData.getString("TARGET_STACK_FORMAT");

@@ -17,11 +17,11 @@ import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 
 /**
  * DAO for CRUD operations against the Scality key store. 
+ *  
+ * @deprecated Use JFS instead. We may delete this class, or reactivate it for testing purposes, but it should not be used for now. 
  *  
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -43,12 +43,6 @@ public class ScalityDAO {
         managerParams.setDefaultMaxConnectionsPerHost(2);
         managerParams.setMaxTotalConnections(20);
         this.httpClient = new HttpClient(mgr); 
-	}
-
-	public void put(Entity entity) throws Exception {
-	    String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-	    final String bpid = getUrlFromEntity(entity);
-	    put(filepath, bpid);
 	}
 	
 	public void put(String filepath, String bpid) throws Exception {
@@ -128,11 +122,6 @@ public class ScalityDAO {
 	    }
 	}
 	
-	public void get(final Entity entity, final String filepath) throws Exception {
-		String bpid = ScalityDAO.getBPIDFromEntity(entity);
-		get(bpid, filepath, DEFAULT_BUFFER_SIZE);
-	}
-
 	public void get(final String bpid, final String filepath) throws Exception {
 		get(bpid, filepath, DEFAULT_BUFFER_SIZE);
 	}
@@ -169,11 +158,6 @@ public class ScalityDAO {
 			if (get!=null) get.releaseConnection();
 		}
     }
-
-	public void delete(Entity entity) throws Exception {
-		final String bpid = getBPIDFromEntity(entity);
-		delete(bpid);
-	}
 	
 	public void delete(String bpid) throws Exception {
 
@@ -218,18 +202,6 @@ public class ScalityDAO {
 		return count;
 	}
 
-    public static String getBPIDFromEntity(Entity entity) {
-        String bpid = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
-        if (bpid!=null) return bpid;
-        // The entity doesn't know it's in Scality yet, so we need to create the BPID from scratch 
-        StringBuilder sb = new StringBuilder(SCALITY_PATH_NAMESPACE);
-        sb.append("/");
-        sb.append(entity.getId());
-        sb.append("/");
-        sb.append(entity.getName());
-        return sb.toString();
-    }
-
 	public static String getClusterUrlFromBPID(String bpid) {
 		StringBuilder sb = new StringBuilder(SCALITY_CLUSTER_BASE_URL);
 		sb.append("/");
@@ -258,14 +230,6 @@ public class ScalityDAO {
 	    }
 	}
 	
-    public static String getUrlFromEntity(Entity entity) {
-        return getUrlFromBPID(getBPIDFromEntity(entity));
-    }
-
-    public static String getClusterUrlFromEntity(Entity entity) {
-        return getClusterUrlFromBPID(getBPIDFromEntity(entity));
-    }
-    
 	private static long getMbps(long bytes, long millis) {
 		return getKbps(bytes, millis) / 1000;
 	}

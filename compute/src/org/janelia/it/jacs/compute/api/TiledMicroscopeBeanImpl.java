@@ -79,12 +79,12 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
 
     @Override
-    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException {
+    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long sampleId) throws ComputeException {
         try {
-            _tiledMicroscopeDAO.importSWCFolder(swcFolderLoc, ownerKey, workspaceId, sampleId);
+            _tiledMicroscopeDAO.importSWCFolder(swcFolderLoc, ownerKey, sampleId);
         } catch (Exception e) {
             String errorString = "Error calling importSWCFolder in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
+            _logger.error(errorString, e);
             throw new ComputeException(errorString);
         }
     }

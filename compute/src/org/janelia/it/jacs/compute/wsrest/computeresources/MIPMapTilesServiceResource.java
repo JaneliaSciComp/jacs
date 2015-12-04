@@ -62,6 +62,19 @@ public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPM
     @Override
     protected Map<String, Object> prepareProcessConfiguration(MIPMapTilesTask task) throws ProcessingException {
         Map<String, Object> processConfig = super.prepareProcessConfiguration(task);
+        if (task.getProcessingType() != null) {
+            if ("retile".equalsIgnoreCase(task.getProcessingType())) {
+                processConfig.put("RETILE_IMAGE", Boolean.TRUE);
+            } else if ("scale".equalsIgnoreCase(task.getProcessingType())) {
+                processConfig.put("SCALE_IMAGE", Boolean.TRUE);
+            } else {
+                processConfig.put("RETILE_IMAGE", Boolean.TRUE);
+                processConfig.put("SCALE_IMAGE", Boolean.TRUE);
+            }
+        } else {
+            processConfig.put("RETILE_IMAGE", Boolean.TRUE);
+            processConfig.put("SCALE_IMAGE", Boolean.TRUE);
+        }
         processConfig.put("IMAGE_WIDTH", task.getImageWidth());
         processConfig.put("IMAGE_HEIGHT", task.getImageHeight());
         processConfig.put("IMAGE_DEPTH", task.getImageDepth());

@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
+import org.janelia.it.jacs.compute.service.entity.sample.SampleRetirementService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -174,25 +175,29 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runSampleRetirement(String user) {
+    public void runSampleRetirement(String user, String dataSetName, String maxSamples, Boolean testRun) {
         try {
             String processName = "SampleRetirementPipeline";
             String displayName = "Sample Retirement Pipeline";
-            saveAndRunTask(user, processName, displayName);
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
+            taskParameters.add(new TaskParameter(SampleRetirementService.PARAM_testRun, Boolean.toString(testRun), null)); 
+            taskParameters.add(new TaskParameter("data set name", dataSetName, null));
+            taskParameters.add(new TaskParameter("max samples", maxSamples, null));
+            saveAndRunTask(user, processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
         }
     }
     
-    public void runSampleRetirement() {
+    public void runAllSampleRetirement(String maxSamplesPerUser, Boolean testRun) {
         try {
             Set<String> subjectKeys = new TreeSet<>();
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             for(String subjectKey : subjectKeys) {
-                runSampleRetirement(subjectKey);
+                runSampleRetirement(subjectKey, null, maxSamplesPerUser, testRun);
             }
         } 
         catch (Exception ex) {
@@ -225,13 +230,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-
-    public void runSyncSampleToScality(String sampleEntityId, String filetypes) {
+    public void runSyncSampleToScality(String sampleEntityId, String filetypes, Boolean deleteSourceFiles) {
         try {
             Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
+            taskParameters.add(new TaskParameter("delete source files", deleteSourceFiles.toString(), null));
             String processName = "SyncSampleToScality";
             String displayName = "Sync Sample to Scality";
             saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
@@ -241,11 +246,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes) {
+    public void runSyncDataSetToScality(String user, String dataSetName, String filetypes, Boolean deleteSourceFiles) {
         try {
+            if ("".equals(dataSetName)) {dataSetName=null;}
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
+            taskParameters.add(new TaskParameter("delete source files", deleteSourceFiles.toString(), null));
             String processName = "SyncUserFilesToScality";
             String displayName = "Sync User Files to Scality";
             saveAndRunTask(user, processName, displayName, taskParameters);
@@ -583,17 +590,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "RepairSeparationResultsPipeline";
             String displayName = "Repair Separation Results Pipeline";
-            saveAndRunTask(user, processName, displayName);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-
-    public void runScalityCorrectionService(String user) {
-        try {
-            String processName = "ScalityCorrectionPipeline";
-            String displayName = "Scality Correction Pipeline";
             saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
