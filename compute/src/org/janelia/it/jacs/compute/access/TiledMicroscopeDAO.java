@@ -126,7 +126,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public TmWorkspace createTiledMicroscopeWorkspaceInMemory(Long parentId, Long brainSampleId, String name, String ownerKey) throws DaoException {
+    public TmWorkspace createTiledMicroscopeWorkspaceInMemory(Long brainSampleId, String name, String ownerKey) throws DaoException {
         try {
             // Validate sample
             Entity brainSampleEntity = annotationDAO.getEntityById(brainSampleId);
@@ -242,12 +242,19 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             String folderName = WORKSPACES_FOLDER_NAME;
             Collection<Entity> folders = annotationDAO.getEntitiesByName(ownerKey, folderName);
             if (folders != null && folders.size() > 0) {
-                folder = folders.iterator().next();
+                for (Entity nextFolder: folders) {
+                    // Some users can have multiple different workspaces
+                    // folders, owing to sharing, etc.
+                    if (nextFolder.getOwnerKey().equals(ownerKey)) {
+                        folder = nextFolder;
+                        break;
+                    }                    
+                }
             } else {
                 folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
             }
             log.info("Creating new workspace called " + swcFolder.getName() + ", belonging to " + ownerKey + ".");
-            newWorkspace = createTiledMicroscopeWorkspaceInMemory(null, sampleId, swcFolder.getName(), ownerKey);
+            newWorkspace = createTiledMicroscopeWorkspaceInMemory(sampleId, swcFolder.getName(), ownerKey);
         }
 
         workspaceEntity = newWorkspace.getEntity();
