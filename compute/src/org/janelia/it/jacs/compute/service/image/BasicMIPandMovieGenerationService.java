@@ -147,6 +147,8 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         // Start Xvfb
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT", "1280x1024x24")).append("\n");
 
+        // TODO: use Vaa3DHelper.getScratchDirCreationScript instead
+        
         // Create temp dir so that large temporary avis are not created on the network drive 
         script.append("export TMPDIR=").append(SCRATCH_DIR).append("\n");
         script.append("mkdir -p $TMPDIR\n");

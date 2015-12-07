@@ -3,6 +3,7 @@
         <sequence name="Retiling" waitForAsync="true">
             <operation name="Retile the stack" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapTilesService" />
+                <input name="RETILE_IMAGE" />
                 <input name="RESULT_FILE_NODE_ID" />
 
                 <input name="IMAGE_WIDTH" />
@@ -33,11 +34,15 @@
                 <input name="TARGET_MAX_COL" />
                 <input name="TARGET_MIN_Z" />
                 <input name="TARGET_MAX_Z" />
+                <input name="ORIENTATION" />
 
                 <input name="TARGET_QUALITY" />
                 <input name="TARGET_TYPE" />
                 <input name="TARGET_MEDIA_FORMAT" />
                 <input name="TARGET_SKIP_EMPTY_TILES" />
+                <input name="BG_PIXEL_VALUE" />
+                <input name="PROCESSING_ACCOUNT" />
+
                 <output name="TARGET_ROOT_URL" />
                 <output name="TARGET_STACK_FORMAT" />
             </operation>
@@ -46,6 +51,7 @@
         <sequence name="Scaling" waitForAsync="true">
             <operation name="Scale the stack" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapsScaleService" />
+                <input name="SCALE_IMAGE" />
                 <input name="RESULT_FILE_NODE_ID" />
 
                 <input name="IMAGE_WIDTH" />
@@ -69,6 +75,7 @@
                 <input name="TARGET_TYPE" />
                 <input name="TARGET_MEDIA_FORMAT" />
                 <input name="TARGET_SKIP_EMPTY_TILES" />
+                <input name="PROCESSING_ACCOUNT" />
 
             </operation>
         </sequence>

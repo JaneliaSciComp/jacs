@@ -1,5 +1,3 @@
-import javax.ejb.EntityContext;
-
 import org.janelia.it.jacs.model.entity.Entity
 import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.model.tasks.Event

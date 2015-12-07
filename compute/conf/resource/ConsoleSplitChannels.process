@@ -25,19 +25,13 @@
                 <output name="RESULT_FILE_NODE_DIR"/>
     	    </operation>
             
-            <operation name="Standardize Path" processor="org.janelia.it.jacs.compute.service.common.StandardizePathService">
-                <input name="FILE_PATH"/>
-                <input name="OUTPUT_VAR_NAME" value="INPUT_FILE"/>
-                <output name="INPUT_FILE"/>
-            </operation>
-            
         </sequence>
         
         <sequence name="Splitting channels" waitForAsync="true" startEvent="running">
             <operation name="Split Channels" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkChannelSplitService"/>
                 <input name="RESULT_FILE_NODE"/>
-                <input name="INPUT_FILE"/>
+                <input name="INPUT_FILE" value="$V{FILE_PATH}"/>
                 <input name="OUTPUT_EXTENSION"/>
             </operation>
         </sequence>

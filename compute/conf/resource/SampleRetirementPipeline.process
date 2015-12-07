@@ -4,7 +4,25 @@
 <process name="Sample Retirement Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
+        <input name="DATA_SET_NAME"/>
+        <input name="MAX_SAMPLES"/>
+    
+        <!-- Import variables from the task if any were not passed in as input parameters above -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="OVERRIDE" value="false"/>
+            <input name="DATA_SET_NAME"/>
+            <input name="MAX_SAMPLES"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="data set name" value="DATA_SET_NAME"/>
+                <entry key="max samples" value="MAX_SAMPLES"/>
+            </input>
+            <output name="DATA_SET_NAME"/>
+            <output name="MAX_SAMPLES"/>
+        </operation>
+        
 		<operation name="Sample Retirement" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleRetirementService">
+            <input name="DATA_SET_NAME"/>
+            <input name="MAX_SAMPLES"/>
 		</operation>
 		
     </sequence>
