@@ -37,11 +37,11 @@ public abstract class AbstractDomainObject implements DomainObject {
     private Set<String> writers;
 
     @SearchAttribute(key="creation_date",label="Creation Date")
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss aa")
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     private Date creationDate;
 
     @SearchAttribute(key="updated_date",label="Updated Date")
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss aa")
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     private Date updatedDate;
 
     @SearchAttribute(key="owner",label="Owner",facet=true)

@@ -1,7 +1,11 @@
 package org.janelia.it.jacs.shared.utils;
 
+import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
+import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
+
 import java.util.List;
 
 /**
@@ -11,10 +15,13 @@ public class DomainQuery {
     String subjectKey;
     List<Reference> references;
     List<Long> objectIds;
+    List<Integer> ordering;
     String objectType;
     String propertyName;
     String propertyValue;
     DomainObject domainObject;
+    List<OntologyTerm> objectList;
+    Preference preference;
 
     public List<Reference> getReferences() {
         return references;
@@ -73,5 +80,30 @@ public class DomainQuery {
 
     public void setDomainObject(DomainObject domainObject) {
         this.domainObject = domainObject;
+    }
+
+
+    public List<Integer> getOrdering() {
+        return ordering;
+    }
+
+    public void setOrdering(List<Integer> ordering) {
+        this.ordering = ordering;
+    }
+
+    public List<OntologyTerm> getObjectList() {
+        return objectList;
+    }
+
+    public void setObjectList(List<OntologyTerm> objectList) {
+        this.objectList = objectList;
+    }
+
+    public Preference getPreference() {
+        return preference;
+    }
+
+    public void setPreference(Preference preference) {
+        this.preference = preference;
     }
 }

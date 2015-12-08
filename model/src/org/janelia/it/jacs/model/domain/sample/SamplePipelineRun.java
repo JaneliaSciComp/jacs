@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * A single run of the pipeline on an ObjectiveSample. 
  * 
@@ -21,7 +22,9 @@ public class SamplePipelineRun {
     public boolean hasError() {
         return error!=null;
     }
-    
+
+
+    @JsonIgnore
     protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
         if (results==null) {
             return null;
@@ -35,14 +38,17 @@ public class SamplePipelineRun {
         return null;
     }
 
+    @JsonIgnore
     public PipelineResult getLatestResult() {
         return getLatestResultOfType(null);
     }
-    
+
+    @JsonIgnore
     public SampleProcessingResult getLatestProcessingResult() {
         return (SampleProcessingResult) getLatestResultOfType(SampleProcessingResult.class);
     }
 
+    @JsonIgnore
     public SampleAlignmentResult getLatestAlignmentResult() {
         return (SampleAlignmentResult) getLatestResultOfType(SampleAlignmentResult.class);
     }

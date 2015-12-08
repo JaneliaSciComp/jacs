@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * The result of some processing. May be nested if further processing is done on this result.
@@ -25,6 +26,7 @@ public class PipelineResult implements HasFilepath, HasFiles {
     private List<PipelineResult> results;
     private Map<FileType, String> files;
 
+    @JsonIgnore
     protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
         if (results==null) {
             return null;
@@ -38,6 +40,7 @@ public class PipelineResult implements HasFilepath, HasFiles {
         return null;
     }
 
+    @JsonIgnore
     public NeuronSeparation getLatestSeparationResult() {
         return (NeuronSeparation) getLatestResultOfType(NeuronSeparation.class);
     }

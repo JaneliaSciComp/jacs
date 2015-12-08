@@ -19,6 +19,7 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -59,6 +60,19 @@ public class UserWorkstationWebService extends ResourceConfig {
         }
     }
 
+    @GET
+    @Path("/workspaces")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Workspace> getAllWorkspace(@QueryParam("subjectKey") String subjectKey) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            return new ArrayList<Workspace>(dao.getWorkspaces(subjectKey));
+        } catch (Exception e) {
+            log.error("Error occurred getting default workspace \n " + e.getMessage());
+            return null;
+        }
+    }
+
     @PUT
     @Path("/treenode")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -81,26 +95,27 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
 
         try {
-            List<Long> orderList = query.getObjectIds();
+            List<Integer> orderList = query.getOrdering();
             int[] order = new int[orderList.size()];
             for (int i=0; i<orderList.size(); i++) {
                 order[i] = orderList.get(i).intValue();
             }
-            return dao.reorderChildren(query.getSubjectKey(), (TreeNode)query.getDomainObject(), order);
+            return dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
         } catch (Exception e) {
             log.error("Error occurred reordering Tree Node\n " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
 
-    @POST
+    @PUT
     @Path("/treenode/children")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode addChildren(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.addChildren(query.getSubjectKey(), (TreeNode)query.getDomainObject(), query.getReferences());
+            return dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
             log.error("Error occurred add children to tree node \n " + e.getMessage());
             return null;
@@ -108,14 +123,14 @@ public class UserWorkstationWebService extends ResourceConfig {
     }
 
 
-    @DELETE
+    @POST
     @Path("/treenode/children")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode removeChildren(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.removeChildren(query.getSubjectKey(), (TreeNode)query.getDomainObject(), query.getReferences());
+            return dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
             log.error("Error occurred removing children from tree node \n " + e.getMessage());
             return null;
@@ -137,7 +152,7 @@ public class UserWorkstationWebService extends ResourceConfig {
         }
     }
 
-    @POST
+    @PUT
     @Path("/objectset/member")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -152,14 +167,14 @@ public class UserWorkstationWebService extends ResourceConfig {
         }
     }
 
-    @DELETE
+    @POST
     @Path("/objectset/member")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectSet removeMembers(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.removeMembers(query.getSubjectKey(), (ObjectSet)query.getDomainObject(), query.getReferences());
+            return dao.removeMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
             log.error("Error occurred removing members from Object Set \n " + e.getMessage());
             return null;
@@ -168,6 +183,7 @@ public class UserWorkstationWebService extends ResourceConfig {
 
     @GET
     @Path("/user/subjects")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Subject> getSubjects() {
         DomainDAO dao = WebServiceContext.getDomainManager();
@@ -177,6 +193,52 @@ public class UserWorkstationWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting subjects \n " + e.getMessage());
             return null;
+        }
+    }
+
+    @GET
+    @Path("/user/preferences")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Preference> getPreferences(@QueryParam("subjectKey") String subjectKey) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            return dao.getPreferences(subjectKey);
+        }
+        catch (Exception e) {
+            log.error("Error occurred getting preferences \n " + e.getMessage());
+            return null;
+        }
+    }
+
+    @PUT
+    @Path("/user/preferences")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Preference setPreferences(DomainQuery query) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            return dao.save(query.getSubjectKey(), query.getPreference());
+        }
+        catch (Exception e) {
+            log.error("Error occurred setting preferences \n " + e.getMessage());
+            return null;
+        }
+    }
+
+    @PUT
+    @Path("/user/permissions")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public void changePermissions(Map<String, Object> params) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            DomainObject domainObj = (DomainObject)params.get("target");
+            dao.changePermissions((String) params.get("subjectKey"), (String) params.get("targetClass"), (Long)params.get("targetId"),
+                    (String) params.get("granteeKey"), (String) params.get("rights"), ((Boolean) params.get("grant")).booleanValue());
+        }
+        catch (Exception e) {
+            log.error("Error occurred setting permissions \n " + e.getMessage());
         }
     }
 

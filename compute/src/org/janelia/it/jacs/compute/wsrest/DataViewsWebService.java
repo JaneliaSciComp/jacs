@@ -81,12 +81,15 @@ public class DataViewsWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Filter createFilter(DomainQuery query) {
+        System.out.println ("TRACE");
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
+            System.out.println (newFilter);
             return newFilter;
         } catch (Exception e) {
             log.error("Error occurred creating Search Filter " + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }
@@ -98,10 +101,12 @@ public class DataViewsWebService extends ResourceConfig {
     public Filter updateFilter(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            System.out.println (query.getDomainObject().getUpdatedDate());
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
             return newFilter;
         } catch (Exception e) {
             log.error("Error occurred updating search filter " + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }

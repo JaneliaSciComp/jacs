@@ -9,7 +9,7 @@ import org.jongo.marshall.jackson.oid.MongoId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 public abstract class OntologyTerm implements HasIdentifier {
     
     @MongoId
@@ -50,6 +50,7 @@ public abstract class OntologyTerm implements HasIdentifier {
     
     public abstract boolean allowsChildren();
 
+    @JsonIgnore
     public abstract String getTypeName();
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */

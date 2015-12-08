@@ -147,6 +147,7 @@ task computeNGWar(dependsOn:classes, type: War) {
            into 'classes'
            include 'org/janelia/it/jacs/compute/wsrest/**'
            include 'org/janelia/it/jacs/compute/access/**/*'
+            include 'org/janelia/it/jacs/compute/api/ComputeException.class'
            include 'org/janelia/it/jacs/compute/util/**/*'
         }
 

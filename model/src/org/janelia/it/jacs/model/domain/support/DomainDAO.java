@@ -172,7 +172,7 @@ public class DomainDAO {
             preferenceCollection.update("{_id:#,subjectKey:#}", preference.getId(), subjectKey).with(preference);
         }
         
-        log.info("Saved "+preference.getClass().getName()+"#"+preference.getId());
+        log.info("Saved " + preference.getClass().getName() + "#" + preference.getId());
         return preference;
     }
     
@@ -378,7 +378,6 @@ public class DomainDAO {
     }
 
     public Workspace getDefaultWorkspace(String subjectKey) {
-        System.out.println (Workspace.class.getName());
         return treeNodeCollection.findOne("{class:#,ownerKey:#}",Workspace.class.getName(),subjectKey).as(Workspace.class);
     }
 
@@ -448,8 +447,7 @@ public class DomainDAO {
                 collection.save(domainObject);
             }
             else {
-                System.out.println (((ObjectSet)domainObject).getMembers());
-                WriteResult result = collection.update("{_id:#,writers:#,updatedDate:#}", domainObject.getId(), subjectKey, domainObject.getUpdatedDate()).with(domainObject);
+                WriteResult result = collection.update("{_id:#,writers:#}", domainObject.getId(), subjectKey).with(domainObject);
                 if (result.getN()!=1) {
                     throw new IllegalStateException("Updated "+result.getN()+" records instead of one: "+collectionName+"#"+domainObject.getId());
                 }
@@ -614,7 +612,7 @@ public class DomainDAO {
         if (log.isTraceEnabled()) {
             log.trace("{} has the following references: ",treeNode.getName());
             for(Reference reference : references) {
-                log.trace("  {}#{}",reference.getTargetClassName(),reference.getTargetId());
+                log.trace("  {}#{}", reference.getTargetClassName(),reference.getTargetId());
             }
             log.trace("They should be put in this ordering: ");
             for(int i=0; i<order.length; i++) {
