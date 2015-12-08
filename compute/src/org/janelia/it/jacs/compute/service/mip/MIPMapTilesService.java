@@ -24,7 +24,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     private static final int DESIRED_PROCESSED_X_TILES = 4; // 4 horizontal tiles
     private static final int DESIRED_PROCESSED_Y_TILES = 4; // 4 vertical tiles
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 2; // 2 layers
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 10; // 10 layers
 
     private Long imageWidth;
     private Long imageHeight;

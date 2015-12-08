@@ -74,8 +74,8 @@ else
         # The file is in the format we're looking for (for example, lsm)
         if [ "$bz2Output" = true ]; then
             # Bzip it into its final position
-            echo "~ Bzipping $INPUT_FILE to $OUTPUT_FILE.bz2"
-            bzcat -z "$INPUT_FILE" > "$OUTPUT_FILE.bz2"
+            echo "~ PBzipping $INPUT_FILE to $OUTPUT_FILE.bz2 with $NSLOTS slots"
+            pbzip2 -zc -p$NSLOTS "$INPUT_FILE" > "$OUTPUT_FILE.bz2"
         else
             # Rsync it into its final position
             echo "~ Rsyncing $INPUT_FILE to $OUTPUT_FILE"
@@ -86,8 +86,8 @@ else
         echo "~ Converting $INPUT_FILE to $OUTPUT_FILE"
         $Vaa3D -cmd image-loader -convert$SAVE_TO_8BIT "$INPUT_FILE" "$OUTPUT_FILE"
         if [ "$bz2Output" = true ]; then
-            echo "~ Compressing output file with bzip2"
-            bzip2 $OUTPUT_FILE
+            echo "~ Compressing output file with pbzip2 with $NSLOTS slots"
+            pbzip2 -p$NSLOTS $OUTPUT_FILE
         fi
     fi
 
