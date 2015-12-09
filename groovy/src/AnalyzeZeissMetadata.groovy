@@ -105,7 +105,7 @@ class AnalyzeZeissMetadataScript {
         
         try {
             file = new PrintWriter("newspec.txt")
-            file.print "Owner\tDataSet\tSample\tSlide Code\tLSM\tObjective\tArea\tTile\tChanSpec1\tNewSpec1\tChanSpec2\tNewSpec2\n"
+            file.print "Owner\tDataSet\tSample\tSlide Code\tObjective\tArea\tTile\tLSM1\tDyes1\tChanSpec1\tNewSpec1\tLSM2\tDyes2\tChanSpec2\tNewSpec2\n"
             
             f.e.getUserEntitiesByTypeName(null, TYPE_DATA_SET).each {
                 Entity dataSet = it
@@ -134,13 +134,14 @@ class AnalyzeZeissMetadataScript {
         if (status.equals(VALUE_DESYNC) || status.equals(VALUE_RETIRED)) return;
         f.loadChildren(sample)
         //println "    Processing "+sample.name
+        def slideCode = sample.getValueByAttributeName(ATTRIBUTE_SLIDE_CODE)
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, "Sample")
         childSamples.each {
-            processObjectiveSample(f, it, dataSetIdentifier, pipeline, file)
+            processObjectiveSample(f, it, dataSetIdentifier, pipeline, slideCode, file)
         }
     }
         
-    def processObjectiveSample(JacsUtils f, Entity sample, String dataSetIdentifier, String pipeline, PrintWriter file) {
+    def processObjectiveSample(JacsUtils f, Entity sample, String dataSetIdentifier, String pipeline, String slideCode, PrintWriter file) {
         
         tiles.clear();
                 
@@ -172,6 +173,8 @@ class AnalyzeZeissMetadataScript {
             file.print dataSetIdentifier
             file.print "\t"
             file.print sampleName
+            file.print "\t"
+            file.print slideCode
             file.print "\t"
             file.print objective
             file.print "\t"
@@ -216,13 +219,13 @@ class AnalyzeZeissMetadataScript {
     
     private void processLsm(JacsUtils f, Entity lsm, Map<String,String> dyeToTagMap, PrintWriter file) {
         
-        def slideCode = lsm.getValueByAttributeName(ATTRIBUTE_SLIDE_CODE)
+        def dyeNames = lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES)
         def chanspec = lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_SPECIFICATION)
-        def newspec = getNewSpec(lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES), dyeToTagMap)file.print "\t"
-        file.print "\t"
-        file.print slideCode
+        def newspec = getNewSpec(lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES), dyeToTagMap)
         file.print "\t"
         file.print lsm.name
+        file.print "\t"
+        file.print dyeNames
         file.print "\t"
         file.print chanspec==null?"":chanspec
         file.print "\t"
