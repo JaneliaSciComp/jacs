@@ -318,12 +318,6 @@ public class AsyncMessageInterface {
         QueueSession receiveSession = receiveConnection.createQueueSession(false, QueueSession.CLIENT_ACKNOWLEDGE);
         receiveConnection.start();
         Queue receiveQueue = receiveSession.createTemporaryQueue();
-        try {
-            Thread.sleep(1000);
-        }
-        catch (InterruptedException e) {
-            // Do nothing.  Trying to prevent a race condition between the creation of temporary queues and code referencing them
-        }
         //Queue receiveQueue=(Queue)initialContext.lookup("queue/A");
         QueueReceiver receiver = receiveSession.createReceiver(receiveQueue);
         QueueSessionInfo queueSessionInfo = new QueueSessionInfo(
