@@ -45,7 +45,7 @@ public class TiledMicroscopeEJBTest {
             }
             
             remoteTiledMicroscopeBean.createTiledMicroscopeWorkspace(parentId, sample.getId(), TEST_SAMPLE_NAME + " WS", User.SYSTEM_USER_KEY);            
-            remoteTiledMicroscopeBean.importSWCFolder(TEST_IMPORT_LOC, User.SYSTEM_USER_KEY, null, sample.getId());
+            remoteTiledMicroscopeBean.importSWCFolder(TEST_IMPORT_LOC, User.SYSTEM_USER_KEY, sample.getId());
         } catch (Exception ex) {
             // Reporting is the whole point of this test.
             ex.printStackTrace();

@@ -55,7 +55,7 @@ public class SwcImportService extends AbstractEntityService {
             computeBean.saveEvent(task.getObjectId(), Event.RUNNING_EVENT, "Running", new Date());
 
             TiledMicroscopeBeanLocal tmEJB = EJBFactory.getLocalTiledMicroscopeBean();
-            tmEJB.importSWCFolder(folderName, ownerKey, null, sampleId);
+            tmEJB.importSWCFolder(folderName, ownerKey, sampleId);
 
             computeBean.saveEvent(task.getObjectId(), Event.COMPLETED_EVENT, "Completed", new Date());
         } catch (Exception ex) {
