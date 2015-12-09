@@ -2,11 +2,10 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.io.Serializable;
 import java.util.*;
+import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntityPopulator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,11 +36,11 @@ public class TmNeuron implements IsSerializable, Serializable {
     private String name;
     private Date creationDate;
     private transient Entity entity;
-    private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
-    private List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
-    private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
+    private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<>();
+    private List<TmGeoAnnotation> rootAnnotations=new ArrayList<>();
+    private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<>();
 
-    private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<Long, TmStructuredTextAnnotation>();
+    private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<>();
 
     public Long getId() {
         return id;
@@ -65,6 +64,13 @@ public class TmNeuron implements IsSerializable, Serializable {
     
     public Entity getEntity() {
         return entity;
+    }
+    
+    public void setFromEntity(Entity e) {
+        this.entity = e;
+        this.setId(entity.getId());
+        this.setName(entity.getName());
+        this.creationDate = entity.getCreationDate();
     }
 
     @Override
@@ -97,48 +103,7 @@ public class TmNeuron implements IsSerializable, Serializable {
     }
 
     public TmNeuron(Entity entity) throws Exception {
-        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
-            throw new Exception("Entity type must be "+EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
-        }
-        this.entity = entity;
-        this.id=entity.getId();
-        this.name=entity.getName();
-        this.creationDate = entity.getCreationDate();
-
-        // First step is to take all those entity data and put them into the
-        //  appropriate objects, and the objects into the right collections
-        for (EntityData ed : entity.getEntityData()) {
-            String edAttr = ed.getEntityAttrName();
-            if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
-                    edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                TmGeoAnnotation ga = new TmGeoAnnotation(ed);
-                if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                    rootAnnotations.add(ga);
-                }
-                geoAnnotationMap.put(ga.getId(), ga);
-                ga.setNeuronId(id);
-            } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
-                TmAnchoredPath path = new TmAnchoredPath(ed.getValue());
-                anchoredPathMap.put(path.getEndpoints(), path);
-            } else if (edAttr.equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
-                TmStructuredTextAnnotation ann = new TmStructuredTextAnnotation(ed.getValue());
-                textAnnotationMap.put(ann.getParentId(), ann);
-            }
-        }
-        // Second step is to link children to produce the graph for
-        //  the GeoAnnotations
-        for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
-            Long parentId = ga.getParentId();
-            // if parent ID is the neuron ID, it's a root, the ID won't be in
-            //  the map, and we don't need to connect it:
-            if (!parentId.equals(this.id)) {
-                TmGeoAnnotation parent = geoAnnotationMap.get(parentId);
-                if (parent==null) {
-                    throw new TmConnectivityException(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
-                }
-                parent.addChild(ga);
-            }
-        }
+        new TmFromEntityPopulator().populateNeuron(entity, this);
     }
 
     public TmGeoAnnotation getParentOf(TmGeoAnnotation annotation) {

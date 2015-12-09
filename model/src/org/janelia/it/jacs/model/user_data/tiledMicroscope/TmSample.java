@@ -51,6 +51,10 @@ public class TmSample implements IsSerializable, Serializable {
     }
 
     public TmSample(Entity entity) throws Exception {
+        setFromEntity(entity);
+    }
+
+    private void setFromEntity(Entity entity) throws Exception {
         if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
             throw new Exception("Entity type must be "+EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE);
         }

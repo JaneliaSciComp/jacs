@@ -3,13 +3,11 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 import Jama.Matrix;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
+import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntityPopulator;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
-import static org.janelia.it.jacs.model.util.MatrixUtilities.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -108,6 +106,13 @@ public class TmWorkspace implements IsSerializable, Serializable {
     public Matrix getVoxToMicronMatrix() {
         return voxToMicronMatrix;
     }
+    
+    public void setFromEntity(Entity entity) {
+        this.id = entity.getId();
+        this.name = entity.getName();
+        this.ownerKey = entity.getOwnerKey();
+        this.workspace = entity;
+    }
 
     /**
      * @param voxToMicronMatrix the voxToMicronMatrix to set
@@ -129,44 +134,11 @@ public class TmWorkspace implements IsSerializable, Serializable {
     // retrieved from the database.
 
     public TmWorkspace(Entity entity, Entity sampleEntity) throws Exception {
-        if (entity.getEntityTypeName()==null || !entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
-            throw new Exception("Entity type must be="+EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
-        }
-        this.workspace = entity;
-        this.id=entity.getId();
-        this.name=entity.getName();
-        this.ownerKey=entity.getOwnerKey();
-        this.neuronList = new ArrayList<TmNeuron>();
-        for (Entity child : entity.getChildren()) {
-            if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
-                TmNeuron neuron=new TmNeuron(child);
-                neuronList.add(neuron);
-            } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
-                preferences=new TmPreferences(child);
-            }
-        }
-
-        if (sampleEntity != null) {
-            this.sampleID = sampleEntity.getId();
-            String matrixStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX);
-            if (matrixStr != null) {
-                Matrix matrix = deserializeMatrix(matrixStr, EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX);
-                setVoxToMicronMatrix(matrix);
-            }
-            matrixStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX);
-            if (matrixStr != null) {
-                Matrix matrix = deserializeMatrix(matrixStr, EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX);
-                setMicronToVoxMatrix(matrix);
-            }
-        }
+        new TmFromEntityPopulator().populateWorkspace(entity, sampleEntity, this);
     }
-    
+
     public String serializeMatrix(Matrix matrix, String matrixName) {
         return MatrixUtilities.serializeMatrix(matrix, matrixName);
     }
 
-    private Matrix deserializeMatrix(String matrixString, String matrixName) {
-        return MatrixUtilities.deserializeMatrix(matrixString, matrixName);
-    }
-    
 }

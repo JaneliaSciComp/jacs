@@ -2,12 +2,11 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntityPopulator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,14 +16,18 @@ import java.util.Map;
  */
 public class TmPreferences implements IsSerializable, Serializable {
     Long id;
-    Map<String,String> propertyMap=new HashMap<String,String>();
+    Map<String,String> propertyMap=new HashMap<>();
+
+    public TmPreferences(Long id) {
+        this.id=id;
+    }
 
     Long getId() {
         return id;
     }
-
-    public TmPreferences(Long id) {
-        this.id=id;
+    
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public void setProperty(String key, String value) {
@@ -38,19 +41,7 @@ public class TmPreferences implements IsSerializable, Serializable {
     public TmPreferences() {}
 
     public TmPreferences(Entity entity) throws Exception {
-        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
-            throw new Exception("Entity type must be " + EntityConstants.TYPE_PROPERTY_SET);
-        }
-        this.id=entity.getId();
-        for (EntityData ed : entity.getEntityData()) {
-            if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
-                String propertyString=ed.getValue();
-                int eIndex=propertyString.indexOf("=");
-                String key=propertyString.substring(0,eIndex);
-                String value=propertyString.substring(eIndex+1, propertyString.length());
-                propertyMap.put(key, value);
-            }
-        }
+        new TmFromEntityPopulator().populateFromEntity(entity, this);
     }
 
 }
