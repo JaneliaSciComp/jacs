@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
-import org.janelia.it.jacs.model.entity.Entity;
 
 import java.io.Serializable;
 import java.util.*;
-import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntityPopulator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,7 +33,7 @@ public class TmNeuron implements IsSerializable, Serializable {
     private Long id;
     private String name;
     private Date creationDate;
-    private transient Entity entity;
+    private String ownerKey;
     private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<>();
     private List<TmGeoAnnotation> rootAnnotations=new ArrayList<>();
     private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<>();
@@ -62,15 +60,22 @@ public class TmNeuron implements IsSerializable, Serializable {
         return creationDate;
     }
     
-    public Entity getEntity() {
-        return entity;
+    public void setCreationDate(Date date) {
+        this.creationDate = date;
     }
     
-    public void setFromEntity(Entity e) {
-        this.entity = e;
-        this.setId(entity.getId());
-        this.setName(entity.getName());
-        this.creationDate = entity.getCreationDate();
+    /**
+     * @return the ownerKey
+     */
+    public String getOwnerKey() {
+        return ownerKey;
+    }
+
+    /**
+     * @param ownerKey the ownerKey to set
+     */
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
     }
 
     @Override
@@ -102,9 +107,7 @@ public class TmNeuron implements IsSerializable, Serializable {
         this.name=name;
     }
 
-    public TmNeuron(Entity entity) throws Exception {
-        new TmFromEntityPopulator().populateNeuron(entity, this);
-    }
+    public TmNeuron() {}
 
     public TmGeoAnnotation getParentOf(TmGeoAnnotation annotation) {
         if (annotation == null) {

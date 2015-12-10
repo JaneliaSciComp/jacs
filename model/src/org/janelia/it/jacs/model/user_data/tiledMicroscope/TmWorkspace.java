@@ -2,11 +2,9 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import Jama.Matrix;
 import com.google.gwt.user.client.rpc.IsSerializable;
-import org.janelia.it.jacs.model.entity.Entity;
 
 import java.io.Serializable;
 import java.util.List;
-import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntityPopulator;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
 
 /**
@@ -23,7 +21,6 @@ public class TmWorkspace implements IsSerializable, Serializable {
     private String name;
     private String ownerKey;
     private Long sampleID;
-    private transient Entity workspace;
     private List<TmNeuron> neuronList;
     private TmPreferences preferences;
     private Matrix micronToVoxMatrix;
@@ -49,10 +46,6 @@ public class TmWorkspace implements IsSerializable, Serializable {
         return name;
     }
     
-    public Entity getEntity() {
-        return workspace;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -107,13 +100,6 @@ public class TmWorkspace implements IsSerializable, Serializable {
         return voxToMicronMatrix;
     }
     
-    public void setFromEntity(Entity entity) {
-        this.id = entity.getId();
-        this.name = entity.getName();
-        this.ownerKey = entity.getOwnerKey();
-        this.workspace = entity;
-    }
-
     /**
      * @param voxToMicronMatrix the voxToMicronMatrix to set
      */
@@ -129,12 +115,8 @@ public class TmWorkspace implements IsSerializable, Serializable {
         this.neuronList=neuronList;
         this.preferences=preferences;
     }
-
-    // This method will typically be used to generate a TmWorkspace object after the Workspace entity has been initially
-    // retrieved from the database.
-
-    public TmWorkspace(Entity entity, Entity sampleEntity) throws Exception {
-        new TmFromEntityPopulator().populateWorkspace(entity, sampleEntity, this);
+    
+    public TmWorkspace() {        
     }
 
     public String serializeMatrix(Matrix matrix, String matrixName) {

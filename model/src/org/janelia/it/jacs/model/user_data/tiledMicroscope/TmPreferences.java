@@ -1,12 +1,10 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
-import org.janelia.it.jacs.model.entity.Entity;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntityPopulator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,9 +37,5 @@ public class TmPreferences implements IsSerializable, Serializable {
     }
 
     public TmPreferences() {}
-
-    public TmPreferences(Entity entity) throws Exception {
-        new TmFromEntityPopulator().populateFromEntity(entity, this);
-    }
 
 }
