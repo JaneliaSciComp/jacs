@@ -38,6 +38,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     AnnotationDAO annotationDAO;
     ComputeDAO computeDAO;
+    
+    private TmFromEntityPopulator tmFactory = new TmFromEntityPopulator();
 
     private final static String TMP_GEO_VALUE = "@@@ new geo value string @@@";
     private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
@@ -117,7 +119,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             annotationDAO.saveOrUpdate(workspaceEntity);
             Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
             // back to user
-            TmWorkspace tmWorkspace = TmFromEntityPopulator.createWorkspace(workspaceEntity, sampleEntity);
+            TmWorkspace tmWorkspace = tmFactory.createWorkspace(workspaceEntity, sampleEntity);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
 
@@ -406,7 +408,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (workspaceChecks) {
                 annotationDAO.saveOrUpdate(workspace);
             }
-            TmNeuron tmNeuron = TmFromEntityPopulator.loadNeuron(neuron);
+            TmNeuron tmNeuron = tmFactory.loadNeuron(neuron);
             return tmNeuron;
         } catch (Exception e) {
             e.printStackTrace();
@@ -440,7 +442,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             //annotationDAO.saveOrUpdate(neuron);
             //(Entity parent, Entity entity, Integer index, String attrName, String value)            
             annotationDAO.addNeuronToParentInMemory(workspace, neuron, 1, EntityConstants.ATTRIBUTE_ENTITY);
-            TmNeuron tmNeuron = TmFromEntityPopulator.loadNeuron(neuron);
+            TmNeuron tmNeuron = tmFactory.loadNeuron(neuron);
 
             return tmNeuron;
         } catch (Exception e) {
@@ -479,7 +481,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             EntityData ed = workspace.addChildEntity(preferences, EntityConstants.ATTRIBUTE_ENTITY);
             annotationDAO.saveOrUpdate(ed);
             annotationDAO.saveOrUpdate(workspace);
-            TmPreferences tmPreferences=TmFromEntityPopulator.createTmPreferences(preferences);
+            TmPreferences tmPreferences=tmFactory.createTmPreferences(preferences);
             return tmPreferences;
         } catch (Exception e) {
             e.printStackTrace();
@@ -499,7 +501,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             preferences.setOwnerKey(workspace.getOwnerKey());
             preferences.setEntityTypeName(EntityConstants.TYPE_PROPERTY_SET);
             workspace.addChildEntity(preferences, EntityConstants.ATTRIBUTE_ENTITY);            
-            TmPreferences tmPreferences=TmFromEntityPopulator.createTmPreferences(preferences);
+            TmPreferences tmPreferences=tmFactory.createTmPreferences(preferences);
             return tmPreferences;
         } catch (Exception e) {
             e.printStackTrace();
@@ -550,7 +552,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
                     if (ed.getValue().equals(threadSafeTempGeoValue())) {
                         valueString = 
-                                TmFromEntityPopulator.toAnchoredPathStringFromArguments(ed.getId(), annotationID1, annotationID2, pointlist);
+                                tmFactory.toAnchoredPathStringFromArguments(ed.getId(), annotationID1, annotationID2, pointlist);
                         ed.setValue(valueString);
                         annotationDAO.saveOrUpdate(ed);
                         valueStringUpdated=true;
@@ -561,7 +563,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 throw new Exception("Could not find anchor path entity data to update for value string");
             }
             TmAnchoredPath anchoredPath =
-                    TmFromEntityPopulator.createTmAnchoredPath(valueString);
+                    tmFactory.createTmAnchoredPath(valueString);
             return anchoredPath;
         } catch (Exception e) {
             e.printStackTrace();
@@ -799,7 +801,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             for (EntityData ed : neuron.getEntityData()) {
                 if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
                     if (ed.getValue().equals(threadSafeTempGeoValue())) {
-                        valueString = TmFromEntityPopulator.toStructuredTextStringFromArguments(
+                        valueString = tmFactory.toStructuredTextStringFromArguments(
                                 ed.getId(), parentID, parentType, formatVersion, data
                         );
                         ed.setValue(valueString);
@@ -811,7 +813,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (!valueStringUpdated) {
                 throw new Exception("Could not find temp geo entry to update for value string");
             }
-            TmStructuredTextAnnotation structuredAnnotation = TmFromEntityPopulator.createTmStructuredTextAnnotation(valueString);
+            TmStructuredTextAnnotation structuredAnnotation = tmFactory.createTmStructuredTextAnnotation(valueString);
             return structuredAnnotation;
 
         } catch (Exception e) {
@@ -825,7 +827,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
        List<List<Integer>> pointList) throws DaoException {
         try {
             EntityData ed=(EntityData) computeDAO.genericLoad(EntityData.class, anchoredPath.getId());
-            String valueString=TmFromEntityPopulator.toAnchoredPathStringFromArguments(anchoredPath.getId(),
+            String valueString=tmFactory.toAnchoredPathStringFromArguments(anchoredPath.getId(),
                     annotationID1, annotationID2, pointList);
             ed.setValue(valueString);
             annotationDAO.saveOrUpdate(ed);
@@ -853,7 +855,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         throws DaoException {
         try {
             EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class, textAnnotation.getId());
-            String valueString = TmFromEntityPopulator.toStructuredTextStringFromArguments(textAnnotation.getId(),
+            String valueString = tmFactory.toStructuredTextStringFromArguments(textAnnotation.getId(),
                     textAnnotation.getParentId(), textAnnotation.getParentType(), textAnnotation.getFormatVersion(), data);
             ed.setValue(valueString);
             annotationDAO.saveOrUpdate(ed);
@@ -1042,7 +1044,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         // find root annotation of neurite; we need the neuron to help us with connectivity
         TmNeuron oldNeuron;
         try {
-            oldNeuron = TmFromEntityPopulator.loadNeuron(oldNeuronEntity);
+            oldNeuron = tmFactory.loadNeuron(oldNeuronEntity);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -1397,7 +1399,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         for (EntityData ed: rootList) {
             TmGeoAnnotation annotation;
             try {
-                annotation = TmFromEntityPopulator.createTmGeoAnnotation(ed);
+                annotation = tmFactory.createTmGeoAnnotation(ed);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new DaoException(e);
@@ -1418,7 +1420,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             //  that seems to be the pattern:
             TmGeoAnnotation annotation;
             try {
-                annotation = TmFromEntityPopulator.createTmGeoAnnotation(ed);
+                annotation = tmFactory.createTmGeoAnnotation(ed);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new DaoException(e);
@@ -1459,7 +1461,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             boolean connectivityException;
             TmFromEntityPopulator populator = new TmFromEntityPopulator();
             try {
-                workspace = TmFromEntityPopulator.createWorkspace(workspaceEntity, sampleEntity);
+                workspace = tmFactory.createWorkspace(workspaceEntity, sampleEntity);
                 connectivityException = false;
             }
             catch (TmConnectivityException e) {
@@ -1469,7 +1471,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (connectivityException) {
                 fixConnectivityWorkspace(workspaceId);
                 workspaceEntity = annotationDAO.getEntityById(workspaceId);
-                workspace = TmFromEntityPopulator.createWorkspace(workspaceEntity, sampleEntity);
+                workspace = tmFactory.createWorkspace(workspaceEntity, sampleEntity);
             }
             return workspace;
         } catch (Exception e) {
@@ -1488,7 +1490,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             //  putting the retry in the catch, for fear of infinite recursion
             boolean connectivityException;
             try {
-                neuron = TmFromEntityPopulator.loadNeuron(neuronEntity);
+                neuron = tmFactory.loadNeuron(neuronEntity);
                 connectivityException = false;
             }
             catch (TmConnectivityException e) {
@@ -1497,7 +1499,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (connectivityException) {
                 fixConnectivityNeuron(neuronId);
                 neuronEntity = annotationDAO.getEntityById(neuronId);
-                neuron = TmFromEntityPopulator.loadNeuron(neuronEntity);
+                neuron = tmFactory.loadNeuron(neuronEntity);
             }
             return neuron;
         } catch (Exception e) {
@@ -1566,7 +1568,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         if (!valueStringUpdated) {
             throw new Exception("Could not find geo entry to update for value string");
         }
-        TmGeoAnnotation geoAnnotation = TmFromEntityPopulator.createTmGeoAnnotation(geoEd);
+        TmGeoAnnotation geoAnnotation = tmFactory.createTmGeoAnnotation(geoEd);
             // normally this is filled in automatically when the annotation is part of
         //  a neuron, but here it's not (explicitly); however, we know the value
         //  to put in:
@@ -1617,7 +1619,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
         neuron.getEntityData().add(geoEd);
 
-        TmGeoAnnotation geoAnnotation = TmFromEntityPopulator.createTmGeoAnnotation(geoEd);
+        TmGeoAnnotation geoAnnotation = tmFactory.createTmGeoAnnotation(geoEd);
         // normally this is filled in automatically when the annotation is part of
         //  a neuron, but here it's not (explicitly); however, we know the value
         //  to put in:

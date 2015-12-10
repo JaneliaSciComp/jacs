@@ -29,45 +29,29 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  * @author fosterl
  */
 public class TmFromEntityPopulator {
-    public static TmWorkspace createWorkspace(Entity entity, Entity sampleEntity) throws Exception {
+    public TmWorkspace createWorkspace(Entity entity, Entity sampleEntity) throws Exception {
         TmWorkspace rtnVal = new TmWorkspace();
-        new TmFromEntityPopulator().populateWorkspace(entity, sampleEntity, rtnVal);
+        populateFromEntity(entity, sampleEntity, rtnVal);
         return rtnVal;
     }
     
-    public static TmNeuron loadNeuron(Entity entity) throws Exception, TmConnectivityException {
+    public TmNeuron loadNeuron(Entity entity) throws Exception, TmConnectivityException {
         TmNeuron rtnVal = new TmNeuron();
-        new TmFromEntityPopulator().populateNeuron(entity, rtnVal);
+        populateFromEntity(entity, rtnVal);
         return rtnVal;
     }
     
-    public static TmPreferences createTmPreferences(Entity entity) throws Exception {
+    public TmPreferences createTmPreferences(Entity entity) throws Exception {
         TmPreferences prefs = new TmPreferences();
-        new TmFromEntityPopulator().populateFromEntity(entity, prefs);
+        populateFromEntity(entity, prefs);
         return prefs;
-    }
-    
-    public void populateFromEntity(Entity entity, TmPreferences preferences) throws Exception {
-        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
-            throw new Exception("Entity type must be " + EntityConstants.TYPE_PROPERTY_SET);
-        }
-        preferences.setId(entity.getId());
-        for (EntityData ed : entity.getEntityData()) {
-            if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
-                String propertyString=ed.getValue();
-                int eIndex=propertyString.indexOf("=");
-                String key=propertyString.substring(0,eIndex);
-                String value=propertyString.substring(eIndex+1, propertyString.length());
-                preferences.setProperty(key, value);
-            }
-        }
     }
     
     /**
      * create from string from entity data; expected format is:
      * id:annID1:annID2:x,y,z:(repeat points)
      */
-    public static TmAnchoredPath createTmAnchoredPath(String pathString) throws Exception {
+    public TmAnchoredPath createTmAnchoredPath(String pathString) throws Exception {
         String[] fields = pathString.split(":", -1);
         if (fields.length < 3) {
             throw new Exception("not enough separators in pathString");
@@ -90,7 +74,7 @@ public class TmFromEntityPopulator {
         return new TmAnchoredPath(id, endpoints, pointList);
     }
 
-    public static String toAnchoredPathStringFromArguments(Long id, Long annotationID1, Long annotationID2, List<List<Integer>> pointList)
+    public String toAnchoredPathStringFromArguments(Long id, Long annotationID1, Long annotationID2, List<List<Integer>> pointList)
         throws Exception {
         // side note: we don't use TmAnchoredPathEndpoints here because this method is typically
         //  for the use of TiledMicroscopeDAO, which ends up working with the individual 
@@ -115,12 +99,12 @@ public class TmFromEntityPopulator {
         return builder.toString();
     }
 
-    public static String toStructuredTextStringFromArguments(Long id, Long parentID, int parentType, int formatVersion,
+    public String toStructuredTextStringFromArguments(Long id, Long parentID, int parentType, int formatVersion,
         String dataString) {
         return String.format("%d:%d:%d:%d:%s", id, parentID, parentType, formatVersion, dataString);
     }
     
-    public static TmStructuredTextAnnotation createTmStructuredTextAnnotation(String annString) throws Exception {
+    public TmStructuredTextAnnotation createTmStructuredTextAnnotation(String annString) throws Exception {
         // expect: id:parentid:parenttype:formatversion:datastring
         // note that datastring will hold colons as well (it's JSON), so stop the split at 5
         String[] items = annString.split(":", 5);
@@ -152,7 +136,7 @@ public class TmFromEntityPopulator {
         return annotation;
     }
     
-    public static TmGeoAnnotation createTmGeoAnnotation(EntityData data) throws Exception {
+    public TmGeoAnnotation createTmGeoAnnotation(EntityData data) throws Exception {
         TmGeoAnnotation rtnVal = new TmGeoAnnotation();
         // format expected: <id>:<parentId>:<index>:<x,y,z>:<comment>
         String geoString = data.getValue();
@@ -186,7 +170,7 @@ public class TmFromEntityPopulator {
         return rtnVal;
     }
 
-    private void populateWorkspace(Entity entity, Entity sampleEntity, TmWorkspace workspace) throws Exception {
+    private void populateFromEntity(Entity entity, Entity sampleEntity, TmWorkspace workspace) throws Exception {
         if (entity.getEntityTypeName() == null || !entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
             throw new Exception("Entity type must be=" + EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
         }
@@ -197,9 +181,9 @@ public class TmFromEntityPopulator {
         List<TmNeuron> neuronList = new ArrayList<>();
         for (Entity child : entity.getChildren()) {
             if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
-                neuronList.add(TmFromEntityPopulator.loadNeuron(child));
+                neuronList.add(loadNeuron(child));
             } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
-                workspace.setPreferences(TmFromEntityPopulator.createTmPreferences(child));
+                workspace.setPreferences(createTmPreferences(child));
             }
         }
         workspace.setNeuronList(neuronList);
@@ -219,7 +203,7 @@ public class TmFromEntityPopulator {
         }
     }
 
-    private void populateNeuron(Entity neuronEntity, TmNeuron tmNeuron) throws Exception, TmConnectivityException {
+    private void populateFromEntity(Entity neuronEntity, TmNeuron tmNeuron) throws Exception, TmConnectivityException {
         if (!neuronEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
             throw new Exception("Entity type must be " + EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
         }
@@ -248,7 +232,7 @@ public class TmFromEntityPopulator {
                 geoAnnotationMap.put(ga.getId(), ga);
                 ga.setNeuronId(id);
             } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
-                TmAnchoredPath path = TmFromEntityPopulator.createTmAnchoredPath(ed.getValue());
+                TmAnchoredPath path = createTmAnchoredPath(ed.getValue());
                 anchoredPathMap.put(path.getEndpoints(), path);
             } else if (edAttr.equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
                 TmStructuredTextAnnotation ann = createTmStructuredTextAnnotation(ed.getValue());
@@ -267,6 +251,22 @@ public class TmFromEntityPopulator {
                     throw new TmConnectivityException(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
                 }
                 parent.addChild(ga);
+            }
+        }
+    }
+
+    private void populateFromEntity(Entity entity, TmPreferences preferences) throws Exception {
+        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+            throw new Exception("Entity type must be " + EntityConstants.TYPE_PROPERTY_SET);
+        }
+        preferences.setId(entity.getId());
+        for (EntityData ed : entity.getEntityData()) {
+            if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
+                String propertyString = ed.getValue();
+                int eIndex = propertyString.indexOf("=");
+                String key = propertyString.substring(0, eIndex);
+                String value = propertyString.substring(eIndex + 1, propertyString.length());
+                preferences.setProperty(key, value);
             }
         }
     }
