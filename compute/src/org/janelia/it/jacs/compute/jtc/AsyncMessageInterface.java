@@ -152,8 +152,8 @@ public class AsyncMessageInterface {
     public void sendMessageWithinTransaction(Message message) throws JMSException, IllegalStateException {
         openTransaction = true;
         if (sender == null) throw new IllegalStateException("You MUST call startMessageSession first!!");
-        if (logger.isTraceEnabled()) {
-        	logger.trace("Sending message within transaction with size: "+getMessageSizeInBytes(message));
+        if (logger.isDebugEnabled()) {
+        	logger.debug("Sending message within transaction with size: "+getMessageSizeInBytes(message));
         }
         sender.send(message);
     }
@@ -168,8 +168,8 @@ public class AsyncMessageInterface {
     public void sendMessageWithinContainer(Message message) throws JMSException, IllegalStateException {
         if (sender == null) throw new IllegalStateException("You MUST call startMessageSession first!!");
         logger.info("Transaction in effect is " + this.session.getTransacted());
-        if (logger.isTraceEnabled()) {
-        	logger.trace("Sending message within container with size: "+getMessageSizeInBytes(message));
+        if (logger.isDebugEnabled()) {
+        	logger.debug("Sending message within container with size: "+getMessageSizeInBytes(message));
         }
         sender.send(message);
     }
@@ -217,8 +217,8 @@ public class AsyncMessageInterface {
         if (session != null) throw new IllegalStateException("Cannot use simple API while using transactional API");
         try {
             setupConnection(queueName, connectionType);
-            if (logger.isTraceEnabled()) {
-            	logger.trace("Sending message with size: "+getMessageSizeInBytes(message));
+            if (logger.isDebugEnabled()) {
+            	logger.debug("Sending message with size: "+getMessageSizeInBytes(message));
             }
             sender.send(message);
             session.commit();
@@ -234,8 +234,8 @@ public class AsyncMessageInterface {
             logger.warn("Cannot contact JMS server - reestablishing connection");
             try {
                 setupConnection(queueName, connectionType);
-                if (logger.isTraceEnabled()) {
-                	logger.trace("Resending message with size: "+getMessageSizeInBytes(message));
+                if (logger.isDebugEnabled()) {
+                	logger.debug("Resending message with size: "+getMessageSizeInBytes(message));
                 }
                 sender.send(message);
                 session.commit();
@@ -262,8 +262,8 @@ public class AsyncMessageInterface {
         if (session != null) throw new IllegalStateException("Cannot use simple API while using transactional API");
         try {
             setupConnection(queue, connectionType);
-            if (logger.isTraceEnabled()) {
-            	logger.trace("Sending message with size: "+getMessageSizeInBytes(message));
+            if (logger.isDebugEnabled()) {
+            	logger.debug("Sending message with size: "+getMessageSizeInBytes(message));
             }
             sender.send(message);
             session.commit();
@@ -279,8 +279,8 @@ public class AsyncMessageInterface {
             logger.warn("Cannot contact JMS server - reestablishing connection");
             try {
                 setupConnection(queue, connectionType);
-                if (logger.isTraceEnabled()) {
-                	logger.trace("Resending message with size: "+getMessageSizeInBytes(message));
+                if (logger.isDebugEnabled()) {
+                	logger.debug("Resending message with size: "+getMessageSizeInBytes(message));
                 }
                 sender.send(message);
                 session.commit();
@@ -483,15 +483,18 @@ public class AsyncMessageInterface {
 	        
 	        int len = baos.size();
 	        
-    		File outfile = new File("/tmp/msgdump","msg_"+System.currentTimeMillis()+"-"+len+".xml");
-    		FileWriter writer = new FileWriter(outfile);
-    		if (message instanceof ObjectMessage) {
-    			// This is very wasteful, because it deserializes the object just to stream it to XML. But this method is only called for trace debugging, so we put up with it for now.
-    			stream.toXML(((ObjectMessage)message).getObject(), writer);
-    		}
-    		else {
-    			stream.toXML(message, writer);
-    		}
+	        if (logger.isTraceEnabled()) {
+        		File outfile = new File("/tmp","msg_"+System.currentTimeMillis()+"-"+len+".xml");
+        		FileWriter writer = new FileWriter(outfile);
+        		if (message instanceof ObjectMessage) {
+        			// This is very wasteful, because it deserializes the object just to stream it to XML. But this method is only called for trace debugging, so we put up with it for now.
+        			stream.toXML(((ObjectMessage)message).getObject(), writer);
+        		}
+        		else {
+        			stream.toXML(message, writer);
+        		}
+        		logger.trace("Serialized message to "+outfile);
+	        }
 	        
 	        return len;
     	}
