@@ -36,8 +36,8 @@ import org.janelia.it.jacs.shared.swc.SWCNode;
 
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
-    AnnotationDAO annotationDAO;
-    ComputeDAO computeDAO;
+    private AnnotationDAO annotationDAO;
+    private ComputeDAO computeDAO;
     
     private TmFromEntityPopulator tmFactory = new TmFromEntityPopulator();
 

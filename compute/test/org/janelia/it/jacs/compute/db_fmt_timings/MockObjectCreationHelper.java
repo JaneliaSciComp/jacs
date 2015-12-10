@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @author fosterl
  */
-public class ObjectCreationHelper {
+public class MockObjectCreationHelper {
     public static final int NUM_STA = 5;
     public static final int NUM_GEO_ANNO = 1000;
     public static final int NUM_APS = 30;

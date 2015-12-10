@@ -50,7 +50,7 @@ public class JsonSerializerTest {
     @Test
     public void testMultiThreadedRW() throws Exception {
         System.out.println(">>>> Multithreaded R/W");
-        List<MockNeuronJsonData> neurons = new ObjectCreationHelper().createObjects();
+        List<MockNeuronJsonData> neurons = new MockObjectCreationHelper().createObjects();
         // make fixed size thread pool, 10 threads.  And then write each object to the string/read back from string.
         Long startTime = new Date().getTime();
         final List<String> neuronsAsStrings = new ArrayList<>();
@@ -112,7 +112,7 @@ public class JsonSerializerTest {
         try {
             Long start = new Date().getTime();
             StringWriter sw = new StringWriter(100000000);
-            List<MockNeuronJsonData> neurons = new ObjectCreationHelper().createObjects();
+            List<MockNeuronJsonData> neurons = new MockObjectCreationHelper().createObjects();
             mapper.writeValue(sw, neurons);
             System.out.println("Elapsed write time to mem: " + (new Date().getTime() - start) + "ms");                        
 
