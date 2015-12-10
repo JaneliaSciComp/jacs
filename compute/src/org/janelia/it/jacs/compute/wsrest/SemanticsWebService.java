@@ -5,16 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.PUT;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.glassfish.jersey.server.ResourceConfig;
@@ -48,8 +42,8 @@ public class SemanticsWebService extends ResourceConfig {
         try {
             return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
         } catch (Exception e) {
-            log.error("Error occurred creating annotations\n " + e.getMessage());
-            return null;
+            log.error("Error occurred creating annotations " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -62,8 +56,8 @@ public class SemanticsWebService extends ResourceConfig {
         try {
             return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
         } catch (Exception e) {
-            log.error("Error occurred updating annotations\n " + e.getMessage());
-            return null;
+            log.error("Error occurred updating annotations" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -77,8 +71,8 @@ public class SemanticsWebService extends ResourceConfig {
             List<Annotation> annotations = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
             return annotations;
         } catch (Exception e) {
-            log.error("Error occurred getting annotations\n " + e.getMessage());
-            return null;
+            log.error("Error occurred getting annotations" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -92,7 +86,8 @@ public class SemanticsWebService extends ResourceConfig {
         try {
             dao.remove(subjectKey, dao.getDomainObject(subjectKey, annotationRef));
         } catch (Exception e) {
-            log.error("Error occurred removing annotations\n " + e.getMessage());
+            log.error("Error occurred removing annotations" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -106,9 +101,9 @@ public class SemanticsWebService extends ResourceConfig {
             Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
             return new ArrayList<Ontology>(ontologies);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error occurred getting ontology" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
     @PUT
@@ -121,8 +116,8 @@ public class SemanticsWebService extends ResourceConfig {
         try {
             return (Ontology)dao.save(query.getSubjectKey(), query.getDomainObject());
         } catch (Exception e) {
-            log.error("Error occurred creating ontology\n " + e.getMessage());
-            return null;
+            log.error("Error occurred creating ontology" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -139,8 +134,8 @@ public class SemanticsWebService extends ResourceConfig {
             System.out.println (ont);
             dao.remove(subjectKey, ont);
         } catch (Exception e) {
-            log.error("Error occurred removing ontology\n " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error occurred removing ontology" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -160,9 +155,8 @@ public class SemanticsWebService extends ResourceConfig {
             }
             return dao.addTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
         } catch (Exception e) {
-            log.error("Error occurred adding ontology terms\n " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            log.error("Error occurred adding ontology terms" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -182,9 +176,8 @@ public class SemanticsWebService extends ResourceConfig {
             }
             return dao.reorderTerms(query.getSubjectKey(), ontologyId, parentId, order);
         } catch (Exception e) {
-            log.error("Error occurred reordering ontology\n " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            log.error("Error occurred reordering ontology" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -202,9 +195,8 @@ public class SemanticsWebService extends ResourceConfig {
             System.out.println (ontologyId + ":" + parentTermId + ":" + termId);
             return dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
         } catch (Exception e) {
-            log.error("Error occurred removing ontology terms\n " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            log.error("Error occurred removing ontology terms " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 }

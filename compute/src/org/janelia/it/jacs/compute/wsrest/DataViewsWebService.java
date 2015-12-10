@@ -2,15 +2,10 @@ package org.janelia.it.jacs.compute.wsrest;
 
 import java.util.List;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.glassfish.jersey.server.ResourceConfig;
@@ -49,9 +44,9 @@ public class DataViewsWebService extends ResourceConfig {
             }
             return detailObjects;
         } catch (Exception e) {
-            log.error("Error occurred processing Object Details " + e.getMessage());
+            log.error("Error occurred processing Object Details " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
     @POST
@@ -71,9 +66,9 @@ public class DataViewsWebService extends ResourceConfig {
             return updateObj;
 
         } catch (Exception e) {
-            log.error("Error occurred processing Domain Object Update Property " + e.getMessage());
+            log.error("Error occurred processing Domain Object Update Property " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
     @PUT
@@ -81,17 +76,14 @@ public class DataViewsWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Filter createFilter(DomainQuery query) {
-        System.out.println ("TRACE");
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
-            System.out.println (newFilter);
             return newFilter;
         } catch (Exception e) {
-            log.error("Error occurred creating Search Filter " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error occurred creating Search Filter " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
     @POST
@@ -105,9 +97,8 @@ public class DataViewsWebService extends ResourceConfig {
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
             return newFilter;
         } catch (Exception e) {
-            log.error("Error occurred updating search filter " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error occurred updating search filter " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 }

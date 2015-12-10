@@ -5,16 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.glassfish.jersey.server.ResourceConfig;
@@ -55,8 +49,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return dao.getDefaultWorkspace(subjectKey);
         } catch (Exception e) {
-            log.error("Error occurred getting default workspace \n " + e.getMessage());
-            return null;
+            log.error("Error occurred getting default workspace" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -68,8 +62,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return new ArrayList<Workspace>(dao.getWorkspaces(subjectKey));
         } catch (Exception e) {
-            log.error("Error occurred getting default workspace \n " + e.getMessage());
-            return null;
+            log.error("Error occurred getting default workspace" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -82,8 +76,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return (TreeNode)dao.save(query.getSubjectKey(), query.getDomainObject());
         } catch (Exception e) {
-            log.error("Error occurred creating tree node \n " + e.getMessage());
-            return null;
+            log.error("Error occurred creating tree node" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -102,9 +96,8 @@ public class UserWorkstationWebService extends ResourceConfig {
             }
             return dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
         } catch (Exception e) {
-            log.error("Error occurred reordering Tree Node\n " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            log.error("Error occurred reordering Tree Node" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -117,8 +110,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
-            log.error("Error occurred add children to tree node \n " + e.getMessage());
-            return null;
+            log.error("Error occurred add children to tree node " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -132,8 +125,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
-            log.error("Error occurred removing children from tree node \n " + e.getMessage());
-            return null;
+            log.error("Error occurred removing children from tree node " + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -147,8 +140,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return (ObjectSet)dao.save(query.getSubjectKey(), query.getDomainObject());
         } catch (Exception e) {
-            log.error("Error occurred creating object set \n " + e.getMessage());
-            return null;
+            log.error("Error occurred creating object set" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -161,9 +154,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return dao.addMembers(query.getSubjectKey(), (ObjectSet)query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
-            log.error("Error occurred adding members to object set \n " + e.getMessage());
-            e.printStackTrace();
-            return null;
+            log.error("Error occurred adding members to object set" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -176,8 +168,8 @@ public class UserWorkstationWebService extends ResourceConfig {
         try {
             return dao.removeMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
-            log.error("Error occurred removing members from Object Set \n " + e.getMessage());
-            return null;
+            log.error("Error occurred removing members from Object Set" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -191,8 +183,8 @@ public class UserWorkstationWebService extends ResourceConfig {
             return dao.getSubjects();
         }
         catch (Exception e) {
-            log.error("Error occurred getting subjects \n " + e.getMessage());
-            return null;
+            log.error("Error occurred getting subjects" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -206,8 +198,8 @@ public class UserWorkstationWebService extends ResourceConfig {
             return dao.getPreferences(subjectKey);
         }
         catch (Exception e) {
-            log.error("Error occurred getting preferences \n " + e.getMessage());
-            return null;
+            log.error("Error occurred getting preferences" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -221,8 +213,8 @@ public class UserWorkstationWebService extends ResourceConfig {
             return dao.save(query.getSubjectKey(), query.getPreference());
         }
         catch (Exception e) {
-            log.error("Error occurred setting preferences \n " + e.getMessage());
-            return null;
+            log.error("Error occurred setting preferences" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -238,7 +230,8 @@ public class UserWorkstationWebService extends ResourceConfig {
                     (String) params.get("granteeKey"), (String) params.get("rights"), ((Boolean) params.get("grant")).booleanValue());
         }
         catch (Exception e) {
-            log.error("Error occurred setting permissions \n " + e.getMessage());
+            log.error("Error occurred setting permissions" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
