@@ -126,46 +126,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public TmWorkspace createTiledMicroscopeWorkspaceInMemory(Long brainSampleId, String name, String ownerKey) throws DaoException {
-        try {
-            // Validate sample
-            Entity brainSampleEntity = annotationDAO.getEntityById(brainSampleId);
-            if (!brainSampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
-                throw new Exception("Tiled Microscope Workspace must be created with valid 3D Tile Microscope Sample Id");
-            }
-            Entity workspace=new Entity();
-            workspace.setCreationDate(new Date());
-            workspace.setUpdatedDate(new Date());
-            workspace.setName(name);
-            workspace.setOwnerKey(ownerKey);
-            workspace.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
-
-            // create preferences
-            TmPreferences preferences = createTiledMicroscopePreferencesInMemory(workspace);
-
-            // associate brain sample
-            EntityData sampleEd = new EntityData();
-            sampleEd.setOwnerKey(workspace.getOwnerKey());
-            sampleEd.setCreationDate(new Date());
-            sampleEd.setUpdatedDate(new Date());
-            sampleEd.setEntityAttrName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
-            
-            // need this?
-            sampleEd.setParentEntity(workspace);
-            sampleEd.setValue(brainSampleId.toString());
-            workspace.getEntityData().add(sampleEd);
-
-            Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
-            TmWorkspace tmWorkspace = new TmWorkspace(workspace, sampleEntity);
-            tmWorkspace.setPreferences(preferences);
-            return tmWorkspace;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new DaoException(e);
-        }
-    }
-
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws DaoException {
         try {
             Entity workspace = annotationDAO.getEntityById(workspaceId);
@@ -249,10 +209,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
             }
             log.info("Creating new workspace called " + swcFolder.getName() + ", belonging to " + ownerKey + ".");
-            newWorkspace = createTiledMicroscopeWorkspaceInMemory(sampleId, swcFolder.getName(), ownerKey);
+            workspaceEntity = createTiledMicroscopeWorkspaceInMemory(sampleId, swcFolder.getName(), ownerKey);
         }
 
-        workspaceEntity = newWorkspace.getEntity();
         SWCDataConverter swcDataConverter = new SWCDataConverter();
         Entity sampleEntity = annotationDAO.getEntityById(sampleId);
         if (!sampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
@@ -317,6 +276,40 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         annotationDAO.saveOrUpdate(ed);
         annotationDAO.saveOrUpdate(parentEntity);
         
+    }
+
+    private Entity createTiledMicroscopeWorkspaceInMemory(Long brainSampleId, String name, String ownerKey) throws DaoException {
+        try {
+            // Validate sample
+            Entity brainSampleEntity = annotationDAO.getEntityById(brainSampleId);
+            if (!brainSampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+                throw new Exception("Tiled Microscope Workspace must be created with valid 3D Tile Microscope Sample Id");
+            }
+            Entity workspace = new Entity();
+            workspace.setCreationDate(new Date());
+            workspace.setUpdatedDate(new Date());
+            workspace.setName(name);
+            workspace.setOwnerKey(ownerKey);
+            workspace.setEntityTypeName(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
+
+            // associate brain sample
+            EntityData sampleEd = new EntityData();
+            sampleEd.setOwnerKey(workspace.getOwnerKey());
+            sampleEd.setCreationDate(new Date());
+            sampleEd.setUpdatedDate(new Date());
+            sampleEd.setEntityAttrName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+
+            // need this?
+            sampleEd.setParentEntity(workspace);
+            sampleEd.setValue(brainSampleId.toString());
+            workspace.getEntityData().add(sampleEd);
+
+            return workspace;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DaoException(e);
+        }
     }
 
     private void importSWCFile(File swcFile, Entity workspaceEntity, SWCDataConverter swcDataConverter, String ownerKey, long precomputedNeuronId, Iterator<Long> idSource) throws ComputeException {
