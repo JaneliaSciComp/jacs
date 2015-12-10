@@ -215,11 +215,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      * @throws ComputeException thrown as wrapper for any exceptions.
      */
     public void importSWCFolder(String swcFolderLoc, String ownerKey, Long sampleId) throws ComputeException {
-        //this.combinedCreateNeuronTime = 0L;
-        //this.combinedGeoLinkTime = 0L;
-        //this.combinedNodeIterTime = 0L;
-        //this.combinedReadTime = 0L;
-        
         File swcFolder = new File(swcFolderLoc);
         if (!swcFolder.isAbsolute()) {
             String basePathstring = SystemConfigurationProperties.getString(BASE_PATH_PROP);
@@ -322,17 +317,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         annotationDAO.saveOrUpdate(ed);
         annotationDAO.saveOrUpdate(parentEntity);
         
-        //log.info("Combined file read/parse time for folder is (ms)" + combinedReadTime / 1000);
-        //log.info("Combined node iteration time for folder is (ms)" + combinedNodeIterTime / 1000);
-        //log.info("Combined neuron creation time for folder is (ms)" + combinedCreateNeuronTime / 1000);
-        //log.info("Combined geo annotation link time for folder is (ms)" + combinedGeoLinkTime / 1000);
     }
 
-    //private long combinedReadTime = 0L; // Reads/parses of SWC data.
-    //private long combinedNodeIterTime = 0L; // Building node list.
-    //private long combinedGeoLinkTime = 0L;
-    //private long combinedCreateNeuronTime = 0L;
-    
     private void importSWCFile(File swcFile, Entity workspaceEntity, SWCDataConverter swcDataConverter, String ownerKey, long precomputedNeuronId, Iterator<Long> idSource) throws ComputeException {
         // the constructor also triggers the parsing, but not the validation
         try {

@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.compute.json;
+package org.janelia.it.jacs.compute.db_fmt_timings;
 
 import java.io.Serializable;
 import java.util.Date;
