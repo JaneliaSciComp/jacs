@@ -93,18 +93,18 @@ public class ComputeBaseDAO {
         }
     }
 
-    public void recordProcessSuccess(ProcessDef processDef, Long processId) {
+    public void recordProcessSuccess(String processDefName, Long processId) {
         if (log.isTraceEnabled()) {
-            log.trace("recordProcessSuccess(processDef="+processDef+", processId="+processId+")");    
+            log.trace("recordProcessSuccess(processDef="+processDefName+", processId="+processId+")");    
         }
         try {
             if (log.isInfoEnabled()) {
-                log.info("Process: " + processDef.getName() + " Id:" + processId + " completed successfully");
+                log.info("Process: " + processDefName + " Id:" + processId + " completed successfully");
             }
             updateTaskStatus(processId, Event.COMPLETED_EVENT, "Process " + processId + " completed successfully");
         }
         catch (Exception e) {
-            log.error("Caught exception updating status of process: " + processDef, e);
+            log.error("Caught exception updating status of process: " + processDefName, e);
         }
     }
 
