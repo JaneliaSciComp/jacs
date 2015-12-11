@@ -41,34 +41,6 @@ public class TmStructuredTextAnnotation implements IsSerializable, Serializable 
         this.dataString = dataString;
     }
 
-    public TmStructuredTextAnnotation(String annString) throws Exception {
-        // expect: id:parentid:parenttype:formatversion:datastring
-        // note that datastring will hold colons as well (it's JSON), so stop the split at 5
-        String[] items = annString.split(":", 5);
-        if (items.length < 5) {
-            throw new Exception("could not parse annotation string " + annString);
-        }
-
-        id = new Long(items[0]);
-        parentId = new Long(items[1]);
-
-        // I'm not fond of this, but fiddling with an enum seemed overboard
-        parentType = Integer.parseInt(items[2]);
-        if (parentType < 1 || parentType > 3) {
-            throw new Exception(String.format("annotation string %s has bad parent type %s", annString, parentType));
-        }
-
-        // here we make sure we can handle the stored data; when we have v2, and we read
-        //  v1, we'll do conversion and update here
-        int storedFormatVersion = Integer.parseInt(items[3]);
-        if (storedFormatVersion > FORMAT_VERSION) {
-            throw new Exception(String.format("annotation string %s has newer format version %d than we can handle!", annString, storedFormatVersion));
-        }
-        // and someday... else storedFormatVersion < FORMAT_VERSION then does an update
-
-        dataString = items[4];
-    }
-
     /**
      * retrieve data, parsed; if we can't parse the stored string, return an empty object node instead
      */
@@ -95,11 +67,6 @@ public class TmStructuredTextAnnotation implements IsSerializable, Serializable 
         catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-    }
-
-    public static String toStringFromArguments(Long id, Long parentID, int parentType, int formatVersion,
-        String dataString) {
-        return String.format("%d:%d:%d:%d:%s", id, parentID, parentType, formatVersion, dataString);
     }
 
     public int getParentType() {

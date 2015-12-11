@@ -1,8 +1,6 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -50,14 +48,11 @@ public class TmSample implements IsSerializable, Serializable {
         this.name=name;
     }
 
-    public TmSample(Entity entity) throws Exception {
-        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
-            throw new Exception("Entity type must be "+EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE);
-        }
-        this.id=entity.getId();
-        this.name=entity.getName();
-        this.creationDate = entity.getCreationDate();
-        this.filePath = entity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).getValue();
+    public TmSample(Long id, String name, Date creationDate, String filePath) {
+        this.id=id;
+        this.name=name;
+        this.creationDate = creationDate;
+        this.filePath = filePath;
     }
 
 }
