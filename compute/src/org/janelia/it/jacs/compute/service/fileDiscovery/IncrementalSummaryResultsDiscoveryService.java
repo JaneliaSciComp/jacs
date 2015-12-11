@@ -87,7 +87,7 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
         for(Entity resultItem : supportingFiles.getChildren()) {
             if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_TEXT_FILE)) {
                 if (resultItem.getName().endsWith(".properties")) {
-                    String stub = resultItem.getName().replaceFirst("\\.json", ".lsm");
+                    String stub = resultItem.getName().replaceFirst("\\.properties", ".lsm");
                     propertiesEntityMap.put(stub, resultItem);
                     contextLogger.info("Found properties file: "+resultItem.getName());
                 }
