@@ -40,7 +40,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
     protected File outputDir;
     protected List<InputImage> inputImages; 
     protected boolean normalizeToFirst;
-    protected String outputs;
+    protected String options;
     
     @Override
     protected void init() throws Exception {
@@ -53,9 +53,9 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         
     	this.inputImages = (List<InputImage>)data.getRequiredItem("INPUT_IMAGES");
         this.normalizeToFirst = data.getItemAsBoolean("NORMALIZE_TO_FIRST_IMAGE");
-        this.outputs = data.getItemAsString("OUTPUTS");
-        if (outputs==null) {
-            this.outputs = "mips:movies:legends";
+        this.options = data.getItemAsString("OPTIONS");
+        if (options==null) {
+            this.options = "mips:movies:legends";
         }
         
         if (inputImages.isEmpty()) {
@@ -116,7 +116,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
             fw.write((chanSpec==null?"":chanSpec) + "\n");
             fw.write((colorSpec==null?"":colorSpec) + "\n");
             fw.write((divSpec==null?"":divSpec) + "\n");
-            fw.write(outputs + "\n");
+            fw.write(options + "\n");
             fw.write((randomPort+configIndex) + "\n");
         }
         catch (IOException e) {
@@ -140,7 +140,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         script.append("read CHAN_SPEC\n");
         script.append("read COLOR_SPEC\n");
         script.append("read DIV_SPEC\n");
-        script.append("read OUTPUTS\n");
+        script.append("read OPTIONS\n");
         script.append("read DISPLAY_PORT\n");
         script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
         
@@ -165,7 +165,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         // Run Fiji macro
         StringBuffer cmd = new StringBuffer();
         cmd.append(FIJI_BIN_PATH).append(" -macro ").append(FIJI_MACRO_PATH).append("/").append(MACRO_NAME);
-        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX_1,$OUTPUT_PREFIX_2,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OUTPUTS");
+        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX_1,$OUTPUT_PREFIX_2,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OPTIONS");
         script.append("echo \"Executing:\"\n");
         script.append("echo \""+cmd+"\"\n");
         script.append(cmd).append(" & \n");
