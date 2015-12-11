@@ -85,27 +85,27 @@ if [ "$TARGET_TILE_HEIGHT" != "" ]; then
 fi
 
 if [ "$TARGET_MIN_X" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportedMinX=$TARGET_MIN_X"
+    TILER_PARAMS="${TILER_PARAMS} -DexportMinX=$TARGET_MIN_X"
 fi
 
 if [ "$TARGET_MAX_X" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportedMaxX=$TARGET_MAX_X"
+    TILER_PARAMS="${TILER_PARAMS} -DexportMaxX=$TARGET_MAX_X"
 fi
 
 if [ "$TARGET_MIN_Y" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportedMinY=$TARGET_MIN_Y"
+    TILER_PARAMS="${TILER_PARAMS} -DexportMinY=$TARGET_MIN_Y"
 fi
 
 if [ "$TARGET_MAX_Y" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportedMaxY=$TARGET_MAX_Y"
+    TILER_PARAMS="${TILER_PARAMS} -DexportMaxY=$TARGET_MAX_Y"
 fi
 
 if [ "$TARGET_MIN_Z" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportedMinZ=$TARGET_MIN_Z"
+    TILER_PARAMS="${TILER_PARAMS} -DexportMinZ=$TARGET_MIN_Z"
 fi
 
 if [ "$TARGET_MAX_Z" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportedMaxZ=$TARGET_MAX_Z"
+    TILER_PARAMS="${TILER_PARAMS} -DexportMaxZ=$TARGET_MAX_Z"
 fi
 
 if [ "$ORIENTATION" != "" ]; then
