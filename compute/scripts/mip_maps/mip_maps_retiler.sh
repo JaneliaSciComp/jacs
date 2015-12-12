@@ -22,12 +22,10 @@ fi
 
 if [ "$IMAGE_WIDTH" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceWidth=${IMAGE_WIDTH}"
-    TILER_PARAMS="${TILER_PARAMS} -Dwidth=$IMAGE_WIDTH"
 fi
 
 if [ "$IMAGE_HEIGHT" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceHeight=$IMAGE_HEIGHT"
-    TILER_PARAMS="${TILER_PARAMS} -Dheight=$IMAGE_HEIGHT"
 fi
 
 if [ "$IMAGE_DEPTH" != "" ]; then
@@ -52,6 +50,14 @@ fi
 
 if [ "$SOURCE_Z_RESOLUTION" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceResZ=$SOURCE_Z_RESOLUTION"
+fi
+
+if [ "$SOURCE_WIDTH" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -Dwidth=$SOURCE_WIDTH"
+fi
+
+if [ "$SOURCE_HEIGHT" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -Dheight=$SOURCE_HEIGHT"
 fi
 
 if [ "$SOURCE_DEPTH" != "" ]; then
