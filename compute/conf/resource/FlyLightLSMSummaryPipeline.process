@@ -123,7 +123,7 @@
                     <input name="OUTPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
                     <input name="INPUT_IMAGES"/>
                     <input name="NORMALIZE_TO_FIRST_IMAGE" value="false"/>
-                    <input name="OUTPUTS" value="mips:movies:legends"/>
+                    <input name="OPTIONS" value="mips:movies:legends:bcomp"/>
                 </operation>
             </sequence>
 

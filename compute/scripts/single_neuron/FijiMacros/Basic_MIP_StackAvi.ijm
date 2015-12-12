@@ -1,7 +1,7 @@
 // Date released:  2014-10-01
 // FIJI macro for generating intensity-normalized Movies and MIPs
 //
-// Argument should be in this format: "Basedir,BrainPrefix,VNCPrefix,BrainPath,VNCPath,Laser,Gain,ChanSpec,ColorSpec,DivSpec,Outputs"
+// Argument should be in this format: "Basedir,BrainPrefix,VNCPrefix,BrainPath,VNCPath,Laser,Gain,ChanSpec,ColorSpec,DivSpec,Options"
 // 
 // Input parameters:
 //     Basedir: output directory for MIPs and movies
@@ -14,10 +14,15 @@
 //     ChannelSpec: image channel specification
 //     ColorSpec: color specification [(R)ed, (G)reen, (B)lue, grey(1), (C)yan, (M)agenta, (Y)ellow]
 //     DivSpec: divisor for each channel (optional)
-//     Outputs: colon-delimited list of outputs to generate ["mips","movies","legends"], e.g. "mips:legends"
+//     Options: colon-delimited list of boolean options, defaults to "mips:legends:hist"
+//         mips - generate MIPs 
+//         movies - generate movies
+//         legends - superimpose intensity legends on all MIPs
+//         hist - perform histogram stretching adjustment to normalize brightness
+//         bcomp - calculate and output brightness saturation value for each channel
 //
 // Calling this macro from the command line looks something like this:
-//     /path/to/ImageJ -macro 20x_MIP_StackAvi.ijm out,/output/dir,file_brain.lsm,file_vnc.lsm,rs,3,490
+//     /path/to/ImageJ -macro 20x_MIP_StackAvi.ijm /output/dir,brain,vnc,file_brain.lsm,file_vnc.lsm,3,490,rs,MG,12,mips:movies:legends
 //
 
 // Global variables
@@ -26,13 +31,14 @@ var numChannels;
 var numOutputChannels;
 var reverseMapping;
 var mipFormat = "PNG";
-var outputs = "mips:movies"
+var options = "mips:legends:hist"
 
 // Initialization
 
+setBatchMode(true);
 setBackgroundColor(0,0,0);
 setForegroundColor(255,255,255);
-setBatchMode(true);
+call("ij.ImagePlus.setDefault16bitRange", 12);
 
 // Arguments
 
@@ -48,7 +54,7 @@ var chanspec = toLowerCase(args[7]);
 var colorspec = toUpperCase(args[8]);
 var divspec = args[9];
 if (args.length > 10) {
-    outputs = toLowerCase(args[10]);
+    options = toLowerCase(args[10]);
 }
 
 var numChannels = lengthOf(chanspec);
@@ -77,20 +83,29 @@ print("Detector gain: "+gain);
 print("Channel spec: "+chanspec);
 print("Color spec: "+colorspec);
 print("Divisor spec: "+divspec);
-print("Outputs: "+outputs);
+print("Options: "+options);
 
 var createMIPS = false;
 var createMovies = false;
 var displayLegends = false;
-if (outputs!="") {
-    if (matches(outputs,".*mips.*")) {
+var histStretch = false;
+var brightnessComp = false;
+
+if (options!="") {
+    if (matches(options,".*mips.*")) {
         createMIPS = true;
     }
-    if (matches(outputs,".*movies.*")) {
+    if (matches(options,".*movies.*")) {
         createMovies = true;
     }
-    if (matches(outputs,".*legends.*")) {
+    if (matches(options,".*legends.*")) {
         displayLegends = true;
+    }
+    if (matches(options,".*hist.*")) {
+        histStretch = true;
+    }
+    if (matches(options,".*bcomp.*")) {
+        brightnessComp = true;
     }
 }
 
@@ -106,17 +121,17 @@ vncChannelMapping = getChannelMapping("VNC");
 print("Brain channel mapping: "+brainChannelMapping);
 print("VNC channel mapping: "+vncChannelMapping);
 
-var allChannels = "";
-var refChannels = "";
-var signalChannels = "";
-var singleSignalChannel = newArray(numSignalChannels);
-var refSignalChannel = newArray(numSignalChannels);
-for (var k=0; k<numSignalChannels; k++) {
+allChannels = "";
+refChannels = "";
+signalChannels = "";
+singleSignalChannel = newArray(numSignalChannels);
+refSignalChannel = newArray(numSignalChannels);
+for (k=0; k<numSignalChannels; k++) {
     singleSignalChannel[k] = "";
     refSignalChannel[k] = "";
 }
 
-var signalIndex = 0;
+ signalIndex = 0;
 for (j=0; j<numOutputChannels; j++) {
     i = reverseMapping[j];
     cc = substring(chanspec,i,i+1);
@@ -126,7 +141,7 @@ for (j=0; j<numOutputChannels; j++) {
         refChannels += "1";
         signalChannels += "0";
         for (k=0; k<numSignalChannels; k++) {
-            var s = singleSignalChannel[k];
+            s = singleSignalChannel[k];
             singleSignalChannel[k] = s + "0";
             refSignalChannel[k] = s + "1";
         }
@@ -134,14 +149,14 @@ for (j=0; j<numOutputChannels; j++) {
     else {
         refChannels += "0";
         signalChannels += "1";
-        for (var k=0; k<numSignalChannels; k++) {
+        for (k=0; k<numSignalChannels; k++) {
             if (k==signalIndex) {
-                var s = singleSignalChannel[k];
+                s = singleSignalChannel[k];
                 singleSignalChannel[k] = s + "1";
                 refSignalChannel[k] = s + "0";
             }
             else {
-                var s = singleSignalChannel[k];
+                s = singleSignalChannel[k];
                 singleSignalChannel[k] = s + "0";
                 refSignalChannel[k] = s + "0";
             }
@@ -161,40 +176,40 @@ if (vncImage!="") {
     openChannels(vncImage, "VNC");
 }
 
+if (brightnessComp) {
+	exportBrightnessCompensationValues("Brain", brainPrefix);
+	if (vncImage!="") {
+		exportBrightnessCompensationValues("VNC", vncPrefix);
+	}
+}
+
 // Array of the max values for each Brain channel
 brainMax=newArray(numChannels);
 
-for (var i=0; i<numChannels; i++) {
+for (i=0; i<numChannels; i++) {
     
     // Process Brain channel, save its intensity
     bname = "C" + (i+1) + "-Brain";
-    selectWindow(bname);
     print("Processing "+bname);
-    brainMinMax = performHistogramStretching();
+    brainMinMax = getMinMax(bname);
+    performHistogramAdjustment(bname, brainMinMax);
     minBrain = brainMinMax[0];
     maxBrain = brainMinMax[1];
     brainMax[i] = maxBrain;
-    
-    // Process VNC channel
+
+    // Process VNC channel 
     if (vncImage!="") {
         vname = "C" + (i+1) + "-VNC";
-        selectWindow(vname);
         print("Processing "+vname);
         
         cc = substring(chanspec,i,i+1);
         if (cc == 'r') {
-            performHistogramStretching();
+            vncMinMax = getMinMax(vname);
+            performHistogramAdjustment(vname, vncMinMax);
         }
         else {
             // Normalize VNC signal channel to corresponding Brain signal channel
-            if (bitDepth==16) {
-                setMinAndMax(minBrain, maxBrain);
-                run("8-bit");
-            } 
-            else {
-                scalar = 255/maxBrain;
-                run("Multiply...", "value=scalar stack");
-            }
+            performHistogramAdjustment(vname, brainMinMax);
         }
     }
 }
@@ -231,11 +246,11 @@ function openChannels(image,name) {
 // Create a channel mapping string for the image with the given name. 
 // Also set the global signalChannels variable with a signal channel bitmask. 
 function getChannelMapping(name) {
-    var merge_name = "";
-    var targets = newArray(numChannels);
+    merge_name = "";
+    targets = newArray(numChannels);
     numOutputChannels = 0;
     
-    for (var i=0; i<numChannels; i++) {
+    for (i=0; i<numChannels; i++) {
         cname = "C" + (i+1) + "-" + name;
         cc = substring(chanspec,i,i+1);
         col = substring(colorspec,i,i+1);
@@ -274,14 +289,14 @@ function getChannelMapping(name) {
     }
     
     // Compute reverse mapping
-    var ordered = Array.copy(targets);
+    ordered = Array.copy(targets);
     Array.sort(ordered);
         
     reverseMapping = newArray(numOutputChannels);
     j = 0;
-    for (var ij=0; ij<numChannels; ij++) {
+    for (ij=0; ij<numChannels; ij++) {
         if (ordered[ij]>0) {
-            for (var i=0; i<numChannels; i++) {
+            for (i=0; i<numChannels; i++) {
                 if (ordered[ij]==targets[i]) {
                     reverseMapping[j] = i;
                 }
@@ -299,7 +314,7 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
     
     if (displayLegends) {
         si = 0;
-        for (var j=0; j<numOutputChannels; j++) {
+        for (j=0; j<numOutputChannels; j++) {
             i = reverseMapping[j];
             cc = substring(chanspec,i,i+1);
             wname = "C" + (i+1) + "-"+name;
@@ -336,7 +351,7 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
             Stack.setActiveChannels(signalChannels);
             saveAs(mipFormat, basedir+'/'+titleSignalMIP);
 
-            for (var k=0; k<numSignalChannels; k++) {
+            for (k=0; k<numSignalChannels; k++) {
                 Stack.setActiveChannels(singleSignalChannel[k]);
                 saveAs(mipFormat, basedir+'/'+titleSignalMIP+(k+1));
             }
@@ -347,7 +362,7 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
             run("Split Channels");
         
             merge_name = "";
-            for (var j=0; j<numOutputChannels; j++) {
+            for (j=0; j<numOutputChannels; j++) {
                 c = j+1;
                 wname = "C" + c + "-MAX_"+name;
                 i = reverseMapping[j];
@@ -365,7 +380,7 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
             run("Merge Channels...", merge_name+" create");
             saveAs(mipFormat, basedir+'/'+titleMIP);
             
-            for (var k=0; k<numSignalChannels; k++) {
+            for (k=0; k<numSignalChannels; k++) {
                 Stack.setActiveChannels(refSignalChannel[k]);
                 saveAs(mipFormat, basedir+'/'+titleRefSignalMIP+(k+1));
             }
@@ -489,19 +504,38 @@ function padImageDimensions(window_name) {
     }
 }
 
-function performHistogramStretching() {
-    ImageProcessing = getImageID();
-    getDimensions(width, height, channels, slices, frames);
-    W = round(width/5);
-    run("Z Project...", "projection=[Max Intensity]");
-    run("Size...", "width="+W+" height="+W+" depth=1 constrain average interpolation=Bilinear");
-    run("Select All");
-    getStatistics(area, mean, min, max, std, histogram);
-    close();
-    selectImage(ImageProcessing);
+/*
+ * Analyzes the given image and returns an array with two values 
+ * containing the min and max intensities of the image, 
+ * as derived from a 1/5 scale MIP of the image. 
+ */
+function getMinMax(window_name) {
     minMax=newArray(2);
-    minMax[0] = min;
-    minMax[1] = max;
+	if (histStretch) {
+	    selectWindow(window_name);
+	    getDimensions(width, height, channels, slices, frames);
+	    W = round(width/5);
+	    run("Z Project...", "projection=[Max Intensity]");
+	    run("Size...", "width="+W+" height="+W+" depth=1 constrain average interpolation=Bilinear");
+	    run("Select All");
+	    getStatistics(area, mean, min, max, std, histogram);
+	    close();
+	    minMax[0] = min;
+	    minMax[1] = max;
+		print("Performing histogram stretching with range "+minMax[0]+"-"+minMax[1]);
+	}
+	else {
+	    minMax[0] = 0;
+	    minMax[1] = 4095;
+		print("Performing histogram stretching to default range "+minMax[0]+"-"+minMax[1]);
+	}
+    return minMax;
+}
+
+function performHistogramAdjustment(window_name, minMax) {
+    selectWindow(window_name);
+    min = minMax[0];
+    max = minMax[1];
     if(bitDepth==16){
         setMinAndMax(min, max);
         run("8-bit");
@@ -510,5 +544,114 @@ function performHistogramStretching() {
         scalar = 255/max;
         run("Multiply...", "value=scalar stack");
     }
-    return minMax;
+}
+
+function exportBrightnessCompensationValues(name, outputPrefix) {
+	
+	// Analyze image
+	channelBrightness = getBrightnessArray(name);
+	
+	// Create CSV string of brightness values
+	brightnessCsv = "";
+	for(i=0; i<lengthOf(channelBrightness); i++) {
+		if (i>0) brightnessCsv += ",";
+		brightnessCsv = brightnessCsv + d2s(channelBrightness[i], 3);
+	}
+	
+	// Write brightness values to file
+	propertiesFilepath = basedir+"/"+outputPrefix+".properties";
+	print("Writing properties file: "+propertiesFilepath);
+	File.delete(propertiesFilepath); 
+	File.append("image.brightness.compensation="+brightnessCsv, propertiesFilepath);
+}
+
+function getBrightnessArray(name) {
+
+	array = newArray(numChannels);
+	for (i=0; i<numChannels; i++) {
+		cname = "C" + (i+1) + "-" + name;
+		array[i] = getBrightness(cname);
+	}
+	return array;
+}
+	
+function getBrightness(window_name) {
+	
+	selectWindow(window_name);
+		
+	// Specify bit depth as number of intensity values
+	nBins = 4096;
+	
+	// Fraction of total pixels desired saturated; drives intensity adjustment
+	// Saturation fractions probably only work for 2D or 3D, not both
+	saturationFraction = 0.0000015;
+		
+	getDimensions(width, height, channels, slices, frames);
+	totalPixels = width * width * slices;
+	
+	// Number of pixels to count to before identifying max desired intensity prior to adjustment
+	pixelsBelowSaturation = totalPixels - (totalPixels * saturationFraction);
+	
+	run("Clear Results");
+	
+	// Reset contrast
+	setMinAndMax(0, nBins);
+	//run("Apply LUT", "stack");
+	
+	// Initialize histogram
+	hMin=0;
+	
+	// Get histogram if 2D image
+	if (slices==1) {
+		getHistogram(values, counts, nBins, hMin, nBins);
+		for (i=0; i<nBins; i++) {
+			setResult("Value", i, values[i]);
+			setResult("Count", i, counts[i]);
+		}
+	} 
+	else {
+		//Get 3D histogram of image
+		for (slice=1; slice<=slices; slice++) {
+			selectImage(window_name);
+			Stack.setSlice(slice);
+			getHistogram(values,counts,nBins,hMin,nBins);
+			for (i=0; i<nBins; i++) {
+				if (slice>1) {
+					count = counts[i] + getResult("Count", i);
+				} 
+				else {
+					count = counts[i];
+				}
+				setResult("Value", i, values[i]);
+				setResult("Count", i, count);
+			}
+		}
+	}
+	
+	//refresh the results window.
+	updateResults();
+	
+	// Count pixels by intensity until reaching saturation threshold
+	pixelCount = 0;
+	j = 0;
+	while (pixelCount < pixelsBelowSaturation && j < nBins-1) {
+		pixelCount += getResult("Count", j);
+		j++;
+	}
+		
+	// Get active intensity value when saturation reached
+	maxThreshold = getResult("Value", j);
+	
+	// Can adjust threshold if want to leave some room above it and final maximum intensity
+	adjustedThreshold = maxThreshold / 1;
+	
+	// Calculate ratio of initial to final intensity; Final image is this ratio brighter
+	scalingValue = nBins / (adjustedThreshold + 1);
+
+	// Close measurements window
+	run("Clear Results");
+	run("Close");
+	
+	print(window_name+ " threshold: " + adjustedThreshold);
+	return scalingValue;
 }
