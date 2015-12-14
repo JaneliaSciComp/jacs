@@ -107,6 +107,11 @@ public class JavaSerializationSerializerTest {
         ThreadUtils.followUpExecution(executor, callbacks, 10);
         System.out.println(collectedNeurons.size() + " neurons collected.");
         
+        long totalBytesSize = 0L;
+        for (byte[] neuronArray : neuronsAsArrays) {
+            totalBytesSize += neuronArray.length;
+        }
+        System.out.println("Total size of serialized bytes=" + totalBytesSize);
         System.out.println("Time required for multi-threaded mem-to-object: " + (new Date().getTime() - startTime) + "ms.");
     }
 
