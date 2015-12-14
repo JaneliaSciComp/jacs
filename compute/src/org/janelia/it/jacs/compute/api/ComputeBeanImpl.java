@@ -1023,6 +1023,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return returnList;
     }
 
+    /**
+     * Tells whether the path provided is an actual file on the server.
+     * 
+     * @param serverPath putative, existing path.
+     * @param directoryOnly does the path have to be a directory?
+     * @return T if file exists/not directoryOnly; T if exists & directory/directoryOnly.
+     */
+    @Override
+    public boolean isServerPathAvailable( String serverPath, boolean directoryOnly ){
+        File serverFile = new File(serverPath);
+        boolean rtnVal = true;
+        rtnVal &= serverFile.exists();
+        rtnVal &= serverFile.isDirectory() || (! directoryOnly);
+        return rtnVal;
+    }
+
     @Override
     public List<BlastDatabaseFileNode> getBlastDatabases() {
         return (List<BlastDatabaseFileNode>) computeDAO.getBlastDatabases(BlastDatabaseFileNode.class.getSimpleName());
