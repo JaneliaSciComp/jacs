@@ -9,12 +9,19 @@ package org.janelia.it.jacs.compute.db_fmt_timings;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPath;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPathEndpoints;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmStructuredTextAnnotation;
 
 /**
+ * Builds up a hierarchy of mock data, consistent with Tiled Microscope objects.
  *
  * @author fosterl
  */
-public class ObjectCreationHelper {
+public class TmObjectCreationHelper {
     public static final int NUM_STA = 5;
     public static final int NUM_GEO_ANNO = 1000;
     public static final int NUM_APS = 30;
@@ -37,9 +44,9 @@ public class ObjectCreationHelper {
     private int numAps = 0;
     private int numSta = 0;
 
-    public List<MockNeuronJsonData> createObjects() {
+    public List<TmNeuron> createObjects() throws Exception {
 
-        List<MockNeuronJsonData> neurons = new ArrayList<>();
+        List<TmNeuron> neurons = new ArrayList<>();
         for (int i = 0; i < NUM_NEURONS; i++) {
             neurons.add(createNeuron());
         }
@@ -47,85 +54,59 @@ public class ObjectCreationHelper {
         return neurons;
     }
     
-    public List<List<MockNeuronJsonData>> createObjects(int divisor) {
-        if (NUM_NEURONS % divisor != 0) {
-            throw new RuntimeException("Invalid divisor.  Must divide evenly into " + NUM_NEURONS);
-        }
-        List<List<MockNeuronJsonData>> rtnVal = new ArrayList<>();
+    protected TmNeuron createNeuron() throws Exception {
         
-        for (int i = 0; i < divisor; i++) {
-            List<MockNeuronJsonData> nextList = new ArrayList<>();
-            for (int j = 0; j < NUM_NEURONS / divisor; j++) {
-                nextList.add(createNeuron());
-            }
-            rtnVal.add( nextList );
-        }
-        
-        return rtnVal;
-    }
+        TmNeuron data = new TmNeuron();
+        data.setId(randomId());
+        data.setCreationDate(new Date());
+        data.setName("Neuron_" + data.getId());
 
-    protected MockNeuronJsonData createNeuron() {
-        
-        MockNeuronJsonData data = new MockNeuronJsonData();
-        
-        List<MockNeuronJsonData.AnchoredPath> anchoredPaths = new ArrayList<>();
-        List<MockNeuronJsonData.GeoAnnotation> geoAnnotations = new ArrayList<>();
-        List<MockNeuronJsonData.StructuredTextAnnotation> structuredTextAnnotations = new ArrayList<>();
-        
+        final Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = data.getAnchoredPathMap();
         for (int j = 0; j < NUM_APS; j++) {
-            MockNeuronJsonData.AnchoredPath anchoredPath = new MockNeuronJsonData.AnchoredPath();
-            MockNeuronJsonData.AnchoredPath.EndPoints ep = new MockNeuronJsonData.AnchoredPath.EndPoints();
-            ep.setX1(randomX());
-            ep.setY1(randomY());
-            ep.setZ1(randomZ());
-            
-            ep.setX2(randomX());
-            ep.setY2(randomY());
-            ep.setZ2(randomZ());
-            anchoredPath.setEndPoints(ep);
+            TmAnchoredPathEndpoints ep = new TmAnchoredPathEndpoints(randomId(), randomId());
+//            ep.setX1(randomX());
+//            ep.setY1(randomY());
+//            ep.setZ1(randomZ());
+//            
+//            ep.setX2(randomX());
+//            ep.setY2(randomY());
+//            ep.setZ2(randomZ());
             
             int ranLen = (int) (Math.random() * 50.0) + 1;
-            double[][] points = new double[ranLen][3];
+            List<List<Integer>> points = new ArrayList<>();
             for (int k = 0; k < ranLen; k++) {
-                points[k][0] = randomX();
-                points[k][1] = randomY();
-                points[k][2] = randomZ();
+                List<Integer> point = new ArrayList<>();
+                point.add(new Double(randomX()).intValue());
+                point.add(new Double(randomY()).intValue());
+                point.add(new Double(randomZ()).intValue());
+                points.add(point);
             }
-            anchoredPath.setPoints(points);
-            anchoredPaths.add(anchoredPath);
+            TmAnchoredPath anchoredPath = new TmAnchoredPath(data.getId(), ep, points);
+            anchoredPathMap.put(ep, anchoredPath);
         }
         numAps += NUM_APS;
-        
+        final Map<Long, TmGeoAnnotation> geoAnnotationMap = data.getGeoAnnotationMap();
         for (int j = 0; j < NUM_GEO_ANNO; j++) {
-            MockNeuronJsonData.GeoAnnotation geoAnnotation = new MockNeuronJsonData.GeoAnnotation();
+            TmGeoAnnotation geoAnnotation = new TmGeoAnnotation();
             geoAnnotation.setId(randomId());
             geoAnnotation.setParentId(randomId());
-            geoAnnotation.setRadius(1.0);
+            //Not yet defined  geoAnnotation.setRadius(1.0);
             geoAnnotation.setX(randomX());
             geoAnnotation.setY(randomY());
             geoAnnotation.setZ(randomZ());
-            geoAnnotations.add(geoAnnotation);
+            geoAnnotationMap.put(randomId(), geoAnnotation);
         }
         numGeoAnno += NUM_GEO_ANNO;
-        
+                
+        final Map<Long, TmStructuredTextAnnotation> structuredTextAnnotationMap = data.getStructuredTextAnnotationMap();
         for (int j = 0; j < NUM_STA; j++) {
-            MockNeuronJsonData.StructuredTextAnnotation sta = new MockNeuronJsonData.StructuredTextAnnotation();
-            sta.setId(randomId());
-            sta.setFmtVersion(1);
-            sta.setParentId(randomId());
-            sta.setParentType(1);
-            sta.setData(randomLoremIpsum());
-            structuredTextAnnotations.add(sta);
+            TmStructuredTextAnnotation sta = new TmStructuredTextAnnotation(randomId(), randomId(), 1, randomLoremIpsum());
+            //sta.setFmtVersion(1);
+            //sta.setParentType(1);
+            structuredTextAnnotationMap.put( randomId(), sta );
         }
         numSta += NUM_STA;
         
-        data.setAnchoredPaths(anchoredPaths);
-        data.setGeoAnnotations(geoAnnotations);
-        data.setStructuredTextAnnotations(structuredTextAnnotations);
-        
-        data.setId(randomId());
-        data.setCreateDate(new Date());
-        data.setName("Neuron_" + data.getId());
         return data;
     }
     

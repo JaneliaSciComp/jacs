@@ -36,22 +36,23 @@ setBatchMode(true);
 
 // Arguments
 
-args = split(getArgument(),",");
-basedir = args[0];
-brainPrefix = args[1];
-vncPrefix = args[2];
-brainImage = args[3];
-vncImage = args[4];
-laser = args[5];
-gain = args[6];
-chanspec = toLowerCase(args[7]);
-colorspec = toUpperCase(args[8]);
-divspec = args[9];
+var args = split(getArgument(),",");
+var basedir = args[0];
+var brainPrefix = args[1];
+var vncPrefix = args[2];
+var brainImage = args[3];
+var vncImage = args[4];
+var laser = args[5];
+var gain = args[6];
+var chanspec = toLowerCase(args[7]);
+var colorspec = toUpperCase(args[8]);
+var divspec = args[9];
 if (args.length > 10) {
     outputs = toLowerCase(args[10]);
 }
 
-numChannels = lengthOf(chanspec);
+var numChannels = lengthOf(chanspec);
+var numSignalChannels = numChannels-1;
 
 if (divspec == "") {
     // Default divisor is for ref channel only
@@ -78,9 +79,9 @@ print("Color spec: "+colorspec);
 print("Divisor spec: "+divspec);
 print("Outputs: "+outputs);
 
-createMIPS = false;
-createMovies = false;
-displayLegends = false;
+var createMIPS = false;
+var createMovies = false;
+var displayLegends = false;
 if (outputs!="") {
     if (matches(outputs,".*mips.*")) {
         createMIPS = true;
@@ -98,13 +99,6 @@ if (!createMIPS && !createMovies) {
     run("Quit");
 }
 
-// Open input files
-
-openChannels(brainImage, "Brain");
-if (vncImage!="") {
-    openChannels(vncImage, "VNC");
-}
-
 // Figure out how to map the channels in the final image
 
 brainChannelMapping = getChannelMapping("Brain");
@@ -113,31 +107,64 @@ print("Brain channel mapping: "+brainChannelMapping);
 print("VNC channel mapping: "+vncChannelMapping);
 
 var allChannels = "";
-var signalChannels = "";
 var refChannels = "";
+var signalChannels = "";
+var singleSignalChannel = newArray(numSignalChannels);
+var refSignalChannel = newArray(numSignalChannels);
+for (var k=0; k<numSignalChannels; k++) {
+    singleSignalChannel[k] = "";
+    refSignalChannel[k] = "";
+}
+
+var signalIndex = 0;
 for (j=0; j<numOutputChannels; j++) {
     i = reverseMapping[j];
     cc = substring(chanspec,i,i+1);
     print("reverse mapped "+j+" -> "+i+ " ("+cc+")");
     allChannels += "1";
     if (cc == 'r') {
-        signalChannels += "0";
         refChannels += "1";
+        signalChannels += "0";
+        for (k=0; k<numSignalChannels; k++) {
+            var s = singleSignalChannel[k];
+            singleSignalChannel[k] = s + "0";
+            refSignalChannel[k] = s + "1";
+        }
     }
     else {
-        signalChannels += "1";
         refChannels += "0";
+        signalChannels += "1";
+        for (var k=0; k<numSignalChannels; k++) {
+            if (k==signalIndex) {
+                var s = singleSignalChannel[k];
+                singleSignalChannel[k] = s + "1";
+                refSignalChannel[k] = s + "0";
+            }
+            else {
+                var s = singleSignalChannel[k];
+                singleSignalChannel[k] = s + "0";
+                refSignalChannel[k] = s + "0";
+            }
+        }
+        signalIndex++;
     }
 }
 
 print("All channels: "+allChannels);
-print("Signal channels: "+signalChannels);
 print("Reference channels: "+refChannels);
+print("All signal channels: "+signalChannels);
+
+// Open input files
+
+openChannels(brainImage, "Brain");
+if (vncImage!="") {
+    openChannels(vncImage, "VNC");
+}
 
 // Array of the max values for each Brain channel
 brainMax=newArray(numChannels);
 
-for (i=0; i<numChannels; i++) {
+for (var i=0; i<numChannels; i++) {
     
     // Process Brain channel, save its intensity
     bname = "C" + (i+1) + "-Brain";
@@ -208,7 +235,7 @@ function getChannelMapping(name) {
     var targets = newArray(numChannels);
     numOutputChannels = 0;
     
-    for (i=0; i<numChannels; i++) {
+    for (var i=0; i<numChannels; i++) {
         cname = "C" + (i+1) + "-" + name;
         cc = substring(chanspec,i,i+1);
         col = substring(colorspec,i,i+1);
@@ -252,9 +279,9 @@ function getChannelMapping(name) {
         
     reverseMapping = newArray(numOutputChannels);
     j = 0;
-    for (ij=0; ij<numChannels; ij++) {
+    for (var ij=0; ij<numChannels; ij++) {
         if (ordered[ij]>0) {
-            for (i=0; i<numChannels; i++) {
+            for (var i=0; i<numChannels; i++) {
                 if (ordered[ij]==targets[i]) {
                     reverseMapping[j] = i;
                 }
@@ -272,7 +299,7 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
     
     if (displayLegends) {
         si = 0;
-        for (j=0; j<numOutputChannels; j++) {
+        for (var j=0; j<numOutputChannels; j++) {
             i = reverseMapping[j];
             cc = substring(chanspec,i,i+1);
             wname = "C" + (i+1) + "-"+name;
@@ -291,6 +318,7 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
         titleMIP = prefix + "_all";
         titleSignalMIP = prefix + "_signal";
         titleRefMIP = prefix + "_reference";
+        titleRefSignalMIP = prefix + "_refsignal";
         
         run("Z Project...", "projection=[Max Intensity]");
         run("Duplicate...", "title=mip duplicate");
@@ -307,14 +335,19 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
             saveAs(mipFormat, basedir+'/'+titleRefMIP);
             Stack.setActiveChannels(signalChannels);
             saveAs(mipFormat, basedir+'/'+titleSignalMIP);
-            close();
-            Stack.setActiveChannels(allChannels);
 
+            for (var k=0; k<numSignalChannels; k++) {
+                Stack.setActiveChannels(singleSignalChannel[k]);
+                saveAs(mipFormat, basedir+'/'+titleSignalMIP+(k+1));
+            }
+            
+            close();
+            
             // Divide channels and re-merge 
             run("Split Channels");
         
             merge_name = "";
-            for (j=0; j<numOutputChannels; j++) {
+            for (var j=0; j<numOutputChannels; j++) {
                 c = j+1;
                 wname = "C" + c + "-MAX_"+name;
                 i = reverseMapping[j];
@@ -331,6 +364,11 @@ function saveMipsAndMovies(name, prefix, maxValues, merge_name) {
             }
             run("Merge Channels...", merge_name+" create");
             saveAs(mipFormat, basedir+'/'+titleMIP);
+            
+            for (var k=0; k<numSignalChannels; k++) {
+                Stack.setActiveChannels(refSignalChannel[k]);
+                saveAs(mipFormat, basedir+'/'+titleRefSignalMIP+(k+1));
+            }
         }
         
         close();

@@ -19,12 +19,22 @@ public class ProcessDef extends SeriesDef {
     private static final String DEFAULT_LOCAL_SLSB_PROCESSOR = "local/ProcessLauncherSLSB";
 
     /**
+     * The name of the process file used to load this process definition. 
+     */
+    private final String processName;
+    
+    /**
      * Logic for initializing Process defintiion should be contained within a DefLoader
      *
      * @param parentProcessDef parent process definition
      */
-    protected ProcessDef(ProcessDef parentProcessDef) {
+    protected ProcessDef(ProcessDef parentProcessDef, String processName) {
+        this.processName = processName;
         setParentDef(parentProcessDef);
+    }
+    
+    public String getProcessName() {
+        return processName;
     }
 
     /**

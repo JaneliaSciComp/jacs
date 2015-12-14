@@ -26,9 +26,9 @@ public interface ComputeBeanLocal extends ComputeBeanRemote {
 
 	public Object genericLoad(Class c, Long id) throws DaoException;
 
-	public void recordProcessSuccess(ProcessDef processDef, Long processId);
+	public void recordProcessSuccess(String processDefName, Long processId);
 
-	public void recordProcessError(ProcessDef processDef, Long processId, Throwable e);
+	public void recordProcessError(String processDefName, Long processId, Throwable e);
 
 	public void setBlastHitsForNode(Long nodeId, Long numHits) throws DaoException;
 
