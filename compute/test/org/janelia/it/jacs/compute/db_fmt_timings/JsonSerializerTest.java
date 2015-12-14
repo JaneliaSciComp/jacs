@@ -103,6 +103,11 @@ public class JsonSerializerTest {
         }
         ThreadUtils.followUpExecution(executor, callbacks, FOLLOW_UP_MIN);
         
+        long totalJsonSize = 0L;
+        for (String neuronString : neuronsAsStrings) {
+            totalJsonSize += neuronString.length();
+        }
+        System.out.println("Total size of JSON=" + totalJsonSize);
         System.out.println("Time required for multi-threaded mem-to-object: " + (new Date().getTime() - startTime) + "ms.");
     }
 
