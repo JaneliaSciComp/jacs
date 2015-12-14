@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.data.QueueMessage;
 import org.janelia.it.jacs.compute.engine.def.ActionDef;
+import org.janelia.it.jacs.compute.engine.def.DefCache;
 import org.janelia.it.jacs.compute.engine.def.OperationDef;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.LauncherException;
@@ -82,7 +83,7 @@ public class JmsUtil {
             }
         }
         else {
-            logger.error("Error encountered during processing of message id:" + originalQueueMessage.getMessageId() + " for action: " + originalQueueMessage.getActionToProcess() + " for process:" + originalQueueMessage.getProcessDef(), e);
+            logger.error("Error encountered during processing of message id:" + originalQueueMessage.getMessageId() + " for action: " + originalQueueMessage.getActionToProcess() + " for process:" + originalQueueMessage.getProcessDefName(), e);
         }
     }
 
@@ -127,7 +128,6 @@ public class JmsUtil {
         catch (MissingDataException ee) {
             throw new LauncherException("Failed to reply for " + processedAction, ee);
         }
-
     }
 
     private static void copyLinkedChainInputParameters(IProcessData processData, QueueMessage replyMessage, ActionDef action, String queueToLinkTo, boolean setActionToProcess) throws LauncherException {
@@ -137,7 +137,7 @@ public class JmsUtil {
             }
             ActionDef firstLinkedAction = getLinkedAction(processData, action.getQueueToLinkTo());
             ActionDef linkedAction = firstLinkedAction;
-            ProcessDef processDef = processData.getProcessDef();
+            ProcessDef processDef = DefCache.getProcessDef(processData.getProcessDefName());
             do {
                 if (linkedAction.isOperation()) {
                     DataExtractor.copyData(processData, replyMessage, linkedAction.getParentDef().getInputParameters());
@@ -159,7 +159,7 @@ public class JmsUtil {
     }
 
     private static ActionDef getLinkedAction(IProcessData processData, String queueToReplyTo) throws MissingDataException {
-        ProcessDef processDef = processData.getProcessDef();
+        ProcessDef processDef = DefCache.getProcessDef(processData.getProcessDefName());
         ActionDef linkedAction = processDef.getLinkedAction(queueToReplyTo);
         if (linkedAction == null) {
             throw new RuntimeException("Linked queue for " + queueToReplyTo + " has to exist");

@@ -1,16 +1,32 @@
-
 package org.janelia.it.jacs.compute.jtc;
 
-import org.apache.log4j.Logger;
-
-import javax.jms.*;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import java.lang.IllegalStateException;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.jms.JMSException;
+import javax.jms.MapMessage;
+import javax.jms.Message;
+import javax.jms.MessageListener;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueReceiver;
+import javax.jms.QueueSender;
+import javax.jms.QueueSession;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.log4j.Logger;
+
+import com.thoughtworks.xstream.XStream;
 
 public class AsyncMessageInterface {
     private String localConnectionFactoryProperty = "AsyncMessageInterface.LocalConnectionFactory";
@@ -136,6 +152,9 @@ public class AsyncMessageInterface {
     public void sendMessageWithinTransaction(Message message) throws JMSException, IllegalStateException {
         openTransaction = true;
         if (sender == null) throw new IllegalStateException("You MUST call startMessageSession first!!");
+        if (logger.isDebugEnabled()) {
+        	logger.debug("Sending message within transaction with size: "+getMessageSizeInBytes(message));
+        }
         sender.send(message);
     }
 
@@ -149,9 +168,12 @@ public class AsyncMessageInterface {
     public void sendMessageWithinContainer(Message message) throws JMSException, IllegalStateException {
         if (sender == null) throw new IllegalStateException("You MUST call startMessageSession first!!");
         logger.info("Transaction in effect is " + this.session.getTransacted());
+        if (logger.isDebugEnabled()) {
+        	logger.debug("Sending message within container with size: "+getMessageSizeInBytes(message));
+        }
         sender.send(message);
     }
-
+    
     /**
      * Commit the transaction.  Must be called to send the message!!
      *
@@ -195,6 +217,9 @@ public class AsyncMessageInterface {
         if (session != null) throw new IllegalStateException("Cannot use simple API while using transactional API");
         try {
             setupConnection(queueName, connectionType);
+            if (logger.isDebugEnabled()) {
+            	logger.debug("Sending message with size: "+getMessageSizeInBytes(message));
+            }
             sender.send(message);
             session.commit();
             tearDownConnection();
@@ -209,6 +234,9 @@ public class AsyncMessageInterface {
             logger.warn("Cannot contact JMS server - reestablishing connection");
             try {
                 setupConnection(queueName, connectionType);
+                if (logger.isDebugEnabled()) {
+                	logger.debug("Resending message with size: "+getMessageSizeInBytes(message));
+                }
                 sender.send(message);
                 session.commit();
                 tearDownConnection();
@@ -234,6 +262,9 @@ public class AsyncMessageInterface {
         if (session != null) throw new IllegalStateException("Cannot use simple API while using transactional API");
         try {
             setupConnection(queue, connectionType);
+            if (logger.isDebugEnabled()) {
+            	logger.debug("Sending message with size: "+getMessageSizeInBytes(message));
+            }
             sender.send(message);
             session.commit();
             tearDownConnection();
@@ -248,6 +279,9 @@ public class AsyncMessageInterface {
             logger.warn("Cannot contact JMS server - reestablishing connection");
             try {
                 setupConnection(queue, connectionType);
+                if (logger.isDebugEnabled()) {
+                	logger.debug("Resending message with size: "+getMessageSizeInBytes(message));
+                }
                 sender.send(message);
                 session.commit();
                 tearDownConnection();
@@ -318,12 +352,6 @@ public class AsyncMessageInterface {
         QueueSession receiveSession = receiveConnection.createQueueSession(false, QueueSession.CLIENT_ACKNOWLEDGE);
         receiveConnection.start();
         Queue receiveQueue = receiveSession.createTemporaryQueue();
-        try {
-            Thread.sleep(1000);
-        }
-        catch (InterruptedException e) {
-            // Do nothing.  Trying to prevent a race condition between the creation of temporary queues and code referencing them
-        }
         //Queue receiveQueue=(Queue)initialContext.lookup("queue/A");
         QueueReceiver receiver = receiveSession.createReceiver(receiveQueue);
         QueueSessionInfo queueSessionInfo = new QueueSessionInfo(
@@ -444,6 +472,38 @@ public class AsyncMessageInterface {
         }
     }
 
+	private XStream stream = new XStream();
+	
+    private Integer getMessageSizeInBytes(Message message) {
+    	try {
+	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	        ObjectOutputStream oos = new ObjectOutputStream(baos);
+	        oos.writeObject(message);
+	        oos.close();
+	        
+	        int len = baos.size();
+	        
+	        if (logger.isTraceEnabled()) {
+        		File outfile = new File("/tmp","msg_"+System.currentTimeMillis()+"-"+len+".xml");
+        		FileWriter writer = new FileWriter(outfile);
+        		if (message instanceof ObjectMessage) {
+        			// This is very wasteful, because it deserializes the object just to stream it to XML. But this method is only called for trace debugging, so we put up with it for now.
+        			stream.toXML(((ObjectMessage)message).getObject(), writer);
+        		}
+        		else {
+        			stream.toXML(message, writer);
+        		}
+        		logger.trace("Serialized message to "+outfile);
+	        }
+	        
+	        return len;
+    	}
+    	catch (Exception e) {
+    		logger.error("Error getting message size",e);
+    		return null;
+    	}
+    }
+    
     private class QueueSessionInfo {
         private Queue queue;
         private QueueConnection connection;

@@ -133,7 +133,7 @@ public class BaseServiceMDB implements MessageListener {
         //EJBFactory.getLocalComputeBean().recordProcessSuccess(queueMessage.getProcessDef(), queueMessage.getProcessId());
         if (operationDef.updateProcessStatusOnSuccess()) {
             copyDataToFinalDestination(queueMessage.getProcessId());
-            new ComputeDAO(logger).recordProcessSuccess(queueMessage.getProcessDef(), queueMessage.getProcessId());
+            new ComputeDAO(logger).recordProcessSuccess(queueMessage.getProcessDefName(), queueMessage.getProcessId());
         }
     }
 
@@ -165,7 +165,7 @@ public class BaseServiceMDB implements MessageListener {
         try {
 
             if (e instanceof ValidServiceException) {
-                logger.error("Process: " + queueMessage.getProcessDef() + " failed due to user cancellation");
+                logger.error("Process: " + queueMessage.getProcessDefName() + " failed due to user cancellation");
             }
 //            else {
 //                logger.error("Process: " + queueMessage.getProcessDef() + " failed", e);

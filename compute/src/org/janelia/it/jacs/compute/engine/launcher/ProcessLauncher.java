@@ -167,8 +167,8 @@ public class ProcessLauncher extends SeriesLauncher {
     private void recordProcessError(IProcessData processData, Throwable e) {
         try {
             // Log it from here instead of compute bean so we know where it came from
-            _logger.error("Process: " + processData.getProcessDef() + " failed", e);
-            EJBFactory.getLocalComputeBean().recordProcessError(processData.getProcessDef(), processData.getProcessId(), e);
+            _logger.error("Process: " + processData.getProcessDefName() + " failed", e);
+            EJBFactory.getLocalComputeBean().recordProcessError(processData.getProcessDefName(), processData.getProcessId(), e);
 
             // Notify user
             Task task = ProcessDataHelper.getTask(processData);
