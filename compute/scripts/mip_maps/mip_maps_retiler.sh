@@ -52,6 +52,18 @@ if [ "$SOURCE_Z_RESOLUTION" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DsourceResZ=$SOURCE_Z_RESOLUTION"
 fi
 
+if [ "$SOURCE_MIN_X" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DminX=$SOURCE_MIN_X"
+fi
+
+if [ "$SOURCE_MIN_Y" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DminY=$SOURCE_MIN_Y"
+fi
+
+if [ "$SOURCE_MIN_Z" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DminZ=$SOURCE_MIN_Z"
+fi
+
 if [ "$SOURCE_WIDTH" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -Dwidth=$SOURCE_WIDTH"
 fi
@@ -72,20 +84,20 @@ if [ "$TARGET_TILE_HEIGHT" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DtileHeight=$TARGET_TILE_HEIGHT"
 fi
 
-if [ "$TARGET_MIN_ROW" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportMinR=$TARGET_MIN_ROW"
+if [ "$TARGET_MIN_X" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DexportMinX=$TARGET_MIN_X"
 fi
 
-if [ "$TARGET_MAX_ROW" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportMaxR=$TARGET_MAX_ROW"
+if [ "$TARGET_MAX_X" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DexportMaxX=$TARGET_MAX_X"
 fi
 
-if [ "$TARGET_MIN_COL" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportMinC=$TARGET_MIN_COL"
+if [ "$TARGET_MIN_Y" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DexportMinY=$TARGET_MIN_Y"
 fi
 
-if [ "$TARGET_MAX_COL" != "" ]; then
-    TILER_PARAMS="${TILER_PARAMS} -DexportMaxC=$TARGET_MAX_COL"
+if [ "$TARGET_MAX_Y" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -DexportMaxY=$TARGET_MAX_Y"
 fi
 
 if [ "$TARGET_MIN_Z" != "" ]; then

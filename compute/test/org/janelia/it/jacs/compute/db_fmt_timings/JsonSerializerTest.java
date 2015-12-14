@@ -13,6 +13,7 @@ import java.io.FileReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -61,7 +62,7 @@ public class JsonSerializerTest {
         
         for (MockNeuronJsonData neuron : neurons) {
             final MockNeuronJsonData nextNeuron = neuron;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() {
                     StringWriter sw = new StringWriter(100000);
@@ -83,14 +84,15 @@ public class JsonSerializerTest {
         callbacks.clear();
         executor = createExecutor(THREAD_COUNT);
         startTime = new Date().getTime();
+        final List<MockNeuronJsonData> collectedNeurons = Collections.synchronizedList(new ArrayList<MockNeuronJsonData>());
         for (String neuronString : neuronsAsStrings) {
             final String nextNeuronString = neuronString;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() {
                     try {
                         StringReader sr = new StringReader(nextNeuronString);
-                        mapper.readValue(sr, MockNeuronJsonData.class);
+                        collectedNeurons.add(mapper.readValue(sr, MockNeuronJsonData.class));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -102,12 +104,13 @@ public class JsonSerializerTest {
             
         }
         ThreadUtils.followUpExecution(executor, callbacks, FOLLOW_UP_MIN);
-        
-        long totalJsonSize = 0L;
+
+        long totalStringSize = 0L;
         for (String neuronString : neuronsAsStrings) {
-            totalJsonSize += neuronString.length();
+            totalStringSize += neuronString.length();
         }
-        System.out.println("Total size of JSON=" + totalJsonSize);
+
+        System.out.println("Total size as JSON strings " + totalStringSize);
         System.out.println("Time required for multi-threaded mem-to-object: " + (new Date().getTime() - startTime) + "ms.");
     }
 

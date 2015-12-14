@@ -138,8 +138,8 @@ public class MockObjectCreationHelper {
     }
 
     protected String randomLoremIpsum() {
-        int offsetA = (int) Math.random() * LOREM_IPSUM_EXCERPT.length();
-        int offsetB = (int) Math.random() * LOREM_IPSUM_EXCERPT.length();
+        int offsetA = (int) (Math.random() * LOREM_IPSUM_EXCERPT.length());
+        int offsetB = (int) (Math.random() * LOREM_IPSUM_EXCERPT.length());
         int offsetStart = offsetA < offsetB ? offsetA : offsetB;
         int offsetEnd = offsetA > offsetB ? offsetA : offsetB;
         return LOREM_IPSUM_EXCERPT.substring(offsetStart, offsetEnd);

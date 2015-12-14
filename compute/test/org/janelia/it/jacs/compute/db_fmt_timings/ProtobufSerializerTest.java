@@ -103,7 +103,7 @@ public class ProtobufSerializerTest {
 		final Schema<TmNeuron> schema = RuntimeSchema.getSchema(TmNeuron.class); 
         for (TmNeuron neuron : neurons) {
             final TmNeuron nextNeuron = neuron;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
 					final LinkedBuffer buffer = LinkedBuffer.allocate();        
@@ -141,7 +141,7 @@ public class ProtobufSerializerTest {
 //		final List<TmNeuron> collectedNeurons = new ArrayList<TmNeuron>(neuronsAsArrays.size());
         for (byte[] neuronArray : neuronsAsArrays) {
             final byte[] nextNeuronArray = neuronArray;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() {
 					// Populate a list of neurons from deserialized bytes.
