@@ -28,6 +28,8 @@ import org.junit.Test;
  * @author fosterl
  */
 public class JsonSerializerTest {
+    private static final int THREAD_COUNT = 30;
+    private static final int FOLLOW_UP_MIN = 10;
     private ObjectMapper mapper = new ObjectMapper(); // can reuse, share globally
     
     protected ExecutorService createExecutor(int numThreads) {
@@ -56,7 +58,7 @@ public class JsonSerializerTest {
         Long startTime = new Date().getTime();
         final List<String> neuronsAsStrings = new ArrayList<>();
         final List<Future<Void>> callbacks = new ArrayList<>();
-        ExecutorService executor = createExecutor(20);
+        ExecutorService executor = createExecutor(THREAD_COUNT);
         
         for (MockNeuronJsonData neuron : neurons) {
             final MockNeuronJsonData nextNeuron = neuron;
@@ -76,11 +78,11 @@ public class JsonSerializerTest {
             callbacks.add(executor.submit(callable));
         }
         // Need to run down the executor.
-        ThreadUtils.followUpExecution(executor, callbacks, 10);
+        ThreadUtils.followUpExecution(executor, callbacks, FOLLOW_UP_MIN);
         System.out.println("Time required for multi-threaded write-to-mem: " + (new Date().getTime() - startTime) + "ms.");
 
         callbacks.clear();
-        executor = createExecutor(20);
+        executor = createExecutor(THREAD_COUNT);
         startTime = new Date().getTime();
         final List<MockNeuronJsonData> collectedNeurons = Collections.synchronizedList(new ArrayList<MockNeuronJsonData>());
         for (String neuronString : neuronsAsStrings) {
@@ -104,8 +106,8 @@ public class JsonSerializerTest {
         ThreadUtils.followUpExecution(executor, callbacks, 10);
 
         long totalStringSize = 0L;
-        for (String s: neuronsAsStrings) {
-            totalStringSize += s.length();
+        for (String neuronString : neuronsAsStrings) {
+            totalStringSize += neuronString.length();
         }
 
         System.out.println("Total size as JSON strings " + totalStringSize);
