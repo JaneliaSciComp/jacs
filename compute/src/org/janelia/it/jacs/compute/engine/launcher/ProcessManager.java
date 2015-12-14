@@ -1,5 +1,10 @@
 package org.janelia.it.jacs.compute.engine.launcher;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.ejb.EJBException;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -7,16 +12,12 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.data.ProcessData;
-import org.janelia.it.jacs.compute.engine.def.DefLoader;
+import org.janelia.it.jacs.compute.engine.def.DefCache;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-
-import javax.ejb.EJBException;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This class is responsible for preparing the data for launching of a Process Launcher.
@@ -183,7 +184,7 @@ public class ProcessManager {
      * @param processDef  process definition to run
      */
     private void initProcessData(IProcessData processData, ProcessDef processDef) {
-        processData.putItem(ProcessData.PROCESS_DEFINITION, processDef);
+        processData.setProcessDefName(processDef.getProcessName());
         if (processData.getProcessIds() != null) {
             processDef.setForEachParam(IProcessData.PROCESS_ID);
         }
@@ -210,8 +211,7 @@ public class ProcessManager {
      * @return initialized process definition
      */
     private ProcessDef loadProcessDef(String defName) {
-        DefLoader processDefLoader = new DefLoader();
-        return processDefLoader.loadProcessDef(defName);
+        return DefCache.getProcessDef(defName);
     }
 
     public void launchChildProcess(/*ProcessDef parentProcessDef, ProcessDef childProcessDef, IProcessData parentProcessData*/) {

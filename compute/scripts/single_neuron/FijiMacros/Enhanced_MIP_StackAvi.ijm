@@ -1,5 +1,5 @@
 // Date released:  2014-10-05
-// FIJI macro for generating MIPs and movies for 63x input files.
+// FIJI macro for generating enchanced MIPs and movies for Polarity and MCFO data.
 //  
 // The argument should be in this format: "OutputDir,Prefix,Type,Image,Chanspec,Colorspec"
 // 
@@ -289,7 +289,7 @@ function openChannels() {
 }
 
 function getChannelMapping() {
-    var merge_name = "";
+    merge_name = "";
     signal_count = 0;
     
     for (i=0; i<lengthOf(chanspec); i++) {

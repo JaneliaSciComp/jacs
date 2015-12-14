@@ -1,12 +1,14 @@
 
 package org.janelia.it.jacs.compute.engine.data;
 
-import org.janelia.it.jacs.compute.engine.def.Parameter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.janelia.it.jacs.compute.engine.def.DefCache;
+import org.janelia.it.jacs.compute.engine.def.Parameter;
+import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 
 /**
  * This class encapsulates the logic used to copy data between service data and
@@ -75,7 +77,7 @@ public class DataExtractor {
      * @throws MissingDataException missing data error
      */
     private static void copyPrimaryData(IProcessData from, IProcessData to) throws MissingDataException {
-        to.setProcessDef(from.getProcessDef());
+        to.setProcessDefName(from.getProcessDefName());
         to.setActionToProcess(from.getActionToProcess());
         to.setProcessId(from.getProcessId());
 //        to.setProcess(from.getProcess());
@@ -100,7 +102,8 @@ public class DataExtractor {
             ProcessData pd = new ProcessData();
             DataExtractor.copyAllData(processData, pd);
             try {
-                pd.getProcessDef().setForEachParam(null);
+                ProcessDef def = DefCache.getProcessDef(pd.getProcessDefName());
+                def.setForEachParam(null);
             }
             catch (MissingDataException e) {
                 // this wouldn't happen in this method

@@ -5,14 +5,11 @@ import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.def.ActionDef;
-import org.janelia.it.jacs.compute.engine.def.DefLoader;
+import org.janelia.it.jacs.compute.engine.def.DefCache;
 import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.def.SequenceDef;
 import org.janelia.it.jacs.compute.engine.launcher.ILauncher;
-import org.janelia.it.jacs.compute.engine.launcher.LauncherException;
-import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessorFactory;
-import org.janelia.it.jacs.compute.engine.launcher.SequenceLauncher;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -70,8 +67,7 @@ public class SynchronousExecutionService implements IService {
                 }
         	}
         	
-        	DefLoader loader = new DefLoader();
-        	ProcessDef processDef = loader.loadProcessDef(processDefName);
+        	ProcessDef processDef = DefCache.getProcessDef(processDefName);
 
     		// Every process file we have has a <sequence> as a root, so we run that here
         	// so that the things in the <process> like updateProcessStatus are not triggered.
