@@ -5,13 +5,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.engine.def.ActionDef;
-import org.janelia.it.jacs.compute.engine.def.ProcessDef;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.engine.def.ActionDef;
 
 
 /**
@@ -90,12 +89,12 @@ public class ProcessData implements IProcessData {
         putItem(IProcessData.PROCESS_ID, ids);
     }
 
-    public ProcessDef getProcessDef() throws MissingDataException {
-        return (ProcessDef) getMandatoryItem(IProcessData.PROCESS_DEFINITION);
+    public String getProcessDefName() throws MissingDataException {
+        return (String) getMandatoryItem(IProcessData.PROCESS_DEFINITION);
     }
 
-    public void setProcessDef(ProcessDef processDef) {
-        putItem(IProcessData.PROCESS_DEFINITION, processDef);
+    public void setProcessDefName(String processDefName) {
+        putItem(IProcessData.PROCESS_DEFINITION, processDefName);
     }
 
     public ActionDef getProcessedAction() throws MissingDataException {

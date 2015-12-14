@@ -708,22 +708,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     @Override
-    public void recordProcessSuccess(ProcessDef processDef, Long processId) {
+    public void recordProcessSuccess(String processDefName, Long processId) {
         try {
-            computeDAO.recordProcessSuccess(processDef, processId);
+            computeDAO.recordProcessSuccess(processDefName, processId);
         }
         catch (Exception e) {
-            logger.error("Caught exception updating status of process: " + processDef, e);
+            logger.error("Caught exception updating status of process: " + processDefName, e);
         }
     }
 
     @Override
-    public void recordProcessError(ProcessDef processDef, Long processId, Throwable e) {
+    public void recordProcessError(String processDefName, Long processId, Throwable e) {
         try {
             updateTaskStatus(processId, Event.ERROR_EVENT, e.getMessage());
         }
         catch (Exception ee) {
-            logger.error("Caught exception updating status of process: " + processDef, ee);
+            logger.error("Caught exception updating status of process: " + processDefName, ee);
         }
     }
 

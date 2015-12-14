@@ -73,7 +73,7 @@
                         <input name="OUTPUT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
                         <input name="INPUT_IMAGES"/>
                         <input name="NORMALIZE_TO_FIRST_IMAGE"/>
-                        <input name="OUTPUTS" value="mips:movies:legends"/>
+                        <input name="OPTIONS" value="mips:movies:legends:hist"/>
                         <input name="MODE" value="$V{IMAGE_TYPE}"/>
                     </operation>
                 </sequence>

@@ -44,5 +44,6 @@
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/scannotation-1.0.3.jar"/>
 	<classpathentry kind="lib" path="lib/resteasy-2.3.4/stax-api-1.0-2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Logging"/>
+	<classpathentry kind="lib" path="lib/xstream/xstream-1.4.8.jar"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>
