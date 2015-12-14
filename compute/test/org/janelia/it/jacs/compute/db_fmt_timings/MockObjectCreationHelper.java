@@ -38,32 +38,22 @@ public class MockObjectCreationHelper {
     private int numSta = 0;
 
     public List<MockNeuronJsonData> createObjects() {
-
+		return createObjects(NUM_NEURONS);
+    }
+	
+	public List<MockNeuronJsonData> createSmallSetOfObjects() {
+		return createObjects(10);
+	}
+    
+	public List<MockNeuronJsonData> createObjects(int count) {
         List<MockNeuronJsonData> neurons = new ArrayList<>();
-        for (int i = 0; i < NUM_NEURONS; i++) {
+        for (int i = 0; i < count; i++) {
             neurons.add(createNeuron());
         }
         System.out.println("File contains " + numSta + " Struc-tex-anno, " + numGeoAnno + " geoAnnotations, and " + numAps + " Anchored Paths.");
         return neurons;
-    }
+	}
     
-    public List<List<MockNeuronJsonData>> createObjects(int divisor) {
-        if (NUM_NEURONS % divisor != 0) {
-            throw new RuntimeException("Invalid divisor.  Must divide evenly into " + NUM_NEURONS);
-        }
-        List<List<MockNeuronJsonData>> rtnVal = new ArrayList<>();
-        
-        for (int i = 0; i < divisor; i++) {
-            List<MockNeuronJsonData> nextList = new ArrayList<>();
-            for (int j = 0; j < NUM_NEURONS / divisor; j++) {
-                nextList.add(createNeuron());
-            }
-            rtnVal.add( nextList );
-        }
-        
-        return rtnVal;
-    }
-
     protected MockNeuronJsonData createNeuron() {
         
         MockNeuronJsonData data = new MockNeuronJsonData();
@@ -148,8 +138,8 @@ public class MockObjectCreationHelper {
     }
 
     protected String randomLoremIpsum() {
-        int offsetA = (int) Math.random() * LOREM_IPSUM_EXCERPT.length();
-        int offsetB = (int) Math.random() * LOREM_IPSUM_EXCERPT.length();
+        int offsetA = (int) (Math.random() * LOREM_IPSUM_EXCERPT.length());
+        int offsetB = (int) (Math.random() * LOREM_IPSUM_EXCERPT.length());
         int offsetStart = offsetA < offsetB ? offsetA : offsetB;
         int offsetEnd = offsetA > offsetB ? offsetA : offsetB;
         return LOREM_IPSUM_EXCERPT.substring(offsetStart, offsetEnd);

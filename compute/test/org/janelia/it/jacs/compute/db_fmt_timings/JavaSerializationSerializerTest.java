@@ -60,7 +60,7 @@ public class JavaSerializationSerializerTest {
         
         for (TmNeuron neuron : neurons) {
             final TmNeuron nextNeuron = neuron;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
                     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -87,7 +87,7 @@ public class JavaSerializationSerializerTest {
         final List<TmNeuron> collectedNeurons = Collections.synchronizedList(new ArrayList<TmNeuron>());
         for (byte[] neuronArray : neuronsAsArrays) {
             final byte[] nextNeuronArray = neuronArray;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() {
                     try (ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream( new ByteArrayInputStream(nextNeuronArray)))) {
@@ -107,6 +107,11 @@ public class JavaSerializationSerializerTest {
         ThreadUtils.followUpExecution(executor, callbacks, 10);
         System.out.println(collectedNeurons.size() + " neurons collected.");
         
+        long totalBytesSize = 0L;
+        for (byte[] neuronArray : neuronsAsArrays) {
+            totalBytesSize += neuronArray.length;
+        }
+        System.out.println("Total size of serialized bytes=" + totalBytesSize);
         System.out.println("Time required for multi-threaded mem-to-object: " + (new Date().getTime() - startTime) + "ms.");
     }
 

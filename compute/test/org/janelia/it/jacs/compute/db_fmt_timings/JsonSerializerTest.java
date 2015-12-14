@@ -13,6 +13,7 @@ import java.io.FileReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -27,6 +28,8 @@ import org.junit.Test;
  * @author fosterl
  */
 public class JsonSerializerTest {
+    private static final int THREAD_COUNT = 30;
+    private static final int FOLLOW_UP_MIN = 10;
     private ObjectMapper mapper = new ObjectMapper(); // can reuse, share globally
     
     protected ExecutorService createExecutor(int numThreads) {
@@ -55,11 +58,11 @@ public class JsonSerializerTest {
         Long startTime = new Date().getTime();
         final List<String> neuronsAsStrings = new ArrayList<>();
         final List<Future<Void>> callbacks = new ArrayList<>();
-        ExecutorService executor = createExecutor(20);
+        ExecutorService executor = createExecutor(THREAD_COUNT);
         
         for (MockNeuronJsonData neuron : neurons) {
             final MockNeuronJsonData nextNeuron = neuron;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() {
                     StringWriter sw = new StringWriter(100000);
@@ -75,20 +78,21 @@ public class JsonSerializerTest {
             callbacks.add(executor.submit(callable));
         }
         // Need to run down the executor.
-        ThreadUtils.followUpExecution(executor, callbacks, 10);
+        ThreadUtils.followUpExecution(executor, callbacks, FOLLOW_UP_MIN);
         System.out.println("Time required for multi-threaded write-to-mem: " + (new Date().getTime() - startTime) + "ms.");
 
         callbacks.clear();
-        executor = createExecutor(20);
+        executor = createExecutor(THREAD_COUNT);
         startTime = new Date().getTime();
+        final List<MockNeuronJsonData> collectedNeurons = Collections.synchronizedList(new ArrayList<MockNeuronJsonData>());
         for (String neuronString : neuronsAsStrings) {
             final String nextNeuronString = neuronString;
-            Callable<Void> callable = new Callable() {
+            Callable<Void> callable = new Callable<Void>() {
                 @Override
                 public Void call() {
                     try {
                         StringReader sr = new StringReader(nextNeuronString);
-                        mapper.readValue(sr, MockNeuronJsonData.class);
+                        collectedNeurons.add(mapper.readValue(sr, MockNeuronJsonData.class));
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -99,8 +103,14 @@ public class JsonSerializerTest {
             callbacks.add(executor.submit(callable));
             
         }
-        ThreadUtils.followUpExecution(executor, callbacks, 10);
-        
+        ThreadUtils.followUpExecution(executor, callbacks, FOLLOW_UP_MIN);
+
+        long totalStringSize = 0L;
+        for (String neuronString : neuronsAsStrings) {
+            totalStringSize += neuronString.length();
+        }
+
+        System.out.println("Total size as JSON strings " + totalStringSize);
         System.out.println("Time required for multi-threaded mem-to-object: " + (new Date().getTime() - startTime) + "ms.");
     }
 
