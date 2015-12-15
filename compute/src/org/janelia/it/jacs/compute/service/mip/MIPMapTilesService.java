@@ -24,7 +24,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     private static final int DESIRED_PROCESSED_X_TILES = 4; // 4 horizontal tiles
     private static final int DESIRED_PROCESSED_Y_TILES = 4; // 4 vertical tiles
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 2; // 2 layers
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 10; // 10 layers
 
     private Long imageWidth;
     private Long imageHeight;
@@ -42,6 +42,13 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private Long sourceDepth;
     private Integer sourceTileWidth;
     private Integer sourceTileHeight;
+
+    private Long targetMinX;
+    private Long targetMinY;
+    private Long targetMinZ;
+    private Long targetMaxX;
+    private Long targetMaxY;
+    private Long targetMaxZ;
     private Integer targetTileWidth;
     private Integer targetTileHeight;
     private Integer sourceScaleLevel;
@@ -65,6 +72,10 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         sourceRootUrl = processData.getString("SOURCE_ROOT_URL");
+        if (!processData.getBoolean("RETILE_IMAGE")) {
+            LOG.info("No RETILE requested for {}", sourceRootUrl);
+            cancel();
+        }
         sourceStackFormat = processData.getString("SOURCE_STACK_FORMAT");
         targetRootUrl = processData.getString("TARGET_ROOT_URL");
         targetStackFormat = processData.getString("TARGET_STACK_FORMAT");
@@ -104,6 +115,14 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         sourceTileWidth = getDimensionWithDefault(processData, "SOURCE_TILE_WIDTH", 256).intValue();
         sourceTileHeight = getDimensionWithDefault(processData, "SOURCE_TILE_HEIGHT", 256).intValue();
 
+        targetMinX = getDimensionWithDefault(processData,"TARGET_MIN_X", 0L).longValue();
+        targetMinY = getDimensionWithDefault(processData, "TARGET_MIN_Y", 0L).longValue();
+        targetMinZ = getDimensionWithDefault(processData, "TARGET_MIN_Z", 0L).longValue();
+
+        targetMaxX = getDimensionWithDefault(processData, "TARGET_MAX_X", sourceWidth).longValue();
+        targetMaxY = getDimensionWithDefault(processData, "TARGET_MAX_Y", sourceHeight).longValue();
+        targetMaxZ = getDimensionWithDefault(processData, "TARGET_MAX_Z", sourceDepth).longValue();
+
         targetTileWidth = getValidDimension(processData, "TARGET_TILE_WIDTH").intValue();
         targetTileHeight = getValidDimension(processData, "TARGET_TILE_HEIGHT").intValue();
     }
@@ -141,7 +160,12 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         int nJobs = 0;
         long processedWidth = sourceTileWidth * DESIRED_PROCESSED_X_TILES;
         long processedHeight = sourceTileHeight * DESIRED_PROCESSED_Y_TILES;
-        long processedDepth = DESIRED_PROCESSED_Z_LAYERS;
+        long processedDepth;
+        if (orientation != null) {
+            processedDepth = targetTileHeight * DESIRED_PROCESSED_Z_LAYERS;
+        } else {
+            processedDepth = DESIRED_PROCESSED_Z_LAYERS;;
+        }
         int xSplits = (int) Math.ceil(sourceWidth.doubleValue() / processedWidth);
         int ySplits = (int) Math.ceil(sourceHeight.doubleValue() / processedHeight);
         int zSplits = (int) Math.ceil(sourceDepth.doubleValue() / processedDepth);
@@ -149,15 +173,15 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         for (int z = 0; z < zSplits; z++) {
             for (int y = 0; y < ySplits; y++) {
                 for (int x = 0; x < xSplits; x++) {
-                    long startX = sourceMinX + x * processedWidth;
-                    long startY = sourceMinY + y * processedHeight;
-                    long startZ = sourceMinZ + z * processedDepth;
-                    long width = Math.min(processedWidth, sourceMinX + sourceWidth - startX);
-                    long height = Math.min(processedHeight, sourceMinY + sourceHeight - startY);
-                    long depth = Math.min(processedDepth, sourceMinZ + sourceDepth - startZ);
+                    long startX = targetMinX + x * processedWidth;
+                    long startY = targetMinY + y * processedHeight;
+                    long startZ = targetMinZ + z * processedDepth;
+                    long endX = Math.min(startX + processedWidth - 1, targetMaxX);
+                    long endY = Math.min(startY + processedHeight - 1, targetMaxY);
+                    long endZ = Math.min(startZ + processedDepth - 1, targetMaxZ);
                     createConfigurationFile(++nJobs,
                             startX, startY, startZ,
-                            width, height, depth);
+                            endX, endY, endZ);
                 }
             }
         }
@@ -166,12 +190,12 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     private void createConfigurationFile(int configIndex,
                                          long startX, long startY, long startZ,
-                                         long width, long height, long depth) throws ServiceException {
+                                         long endX, long endY, long endZ) throws ServiceException {
         File configFile = new File(
                 getSGEConfigurationDirectory(),
                 getGridServicePrefixName() + "Configuration." + configIndex);
         LOG.debug("Write configFile: {} for region ({}, {}, {}) ({}, {}, {}) ", configFile,
-                startX, startY, startZ, width, height, depth);
+                startX, startY, startZ, endX, endY, endZ);
         try(FileWriter fw = new FileWriter(configFile)) {
             fw.write(sourceRootUrl + "\n");
             writeValueOrNone(sourceStackFormat, fw);
@@ -185,20 +209,20 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             fw.write(sourceTileHeight + "\n");
             writeValueOrNone(sourceXYResolution, fw);
             writeValueOrNone(sourceZResolution, fw);
+            fw.write(sourceMinX + "\n");
+            fw.write(sourceMinY + "\n");
+            fw.write(sourceMinZ + "\n");
+            fw.write(sourceWidth + "\n");
+            fw.write(sourceHeight + "\n");
+            fw.write(sourceDepth + "\n");
             fw.write(startX + "\n");
             fw.write(startY + "\n");
             fw.write(startZ + "\n");
-            fw.write(width + "\n");
-            fw.write(height + "\n");
-            fw.write(depth + "\n");
+            fw.write(endX + "\n");
+            fw.write(endY + "\n");
+            fw.write(endZ + "\n");
             fw.write(targetTileWidth + "\n");
             fw.write(targetTileHeight + "\n");
-            fw.write((startY / targetTileHeight) + "\n");
-            fw.write(((startY + height) / targetTileHeight) + "\n");
-            fw.write((startX / targetTileWidth) + "\n");
-            fw.write(((startX + width) / targetTileWidth) + "\n");
-            fw.write(startZ + "\n");
-            fw.write((startZ + depth - 1) + "\n");
             writeValueOrNone(orientation, fw);
             writeValueOrNone(targetQuality, fw);
             writeValueOrNone(targetType, fw);
@@ -250,14 +274,14 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read SOURCE_WIDTH\n");
         script.append("read SOURCE_HEIGHT\n");
         script.append("read SOURCE_DEPTH\n");
+        script.append("read TARGET_MIN_X\n");
+        script.append("read TARGET_MIN_Y\n");
+        script.append("read TARGET_MIN_Z\n");
+        script.append("read TARGET_MAX_X\n");
+        script.append("read TARGET_MAX_Y\n");
+        script.append("read TARGET_MAX_Z\n");
         script.append("read TARGET_TILE_WIDTH\n");
         script.append("read TARGET_TILE_HEIGHT\n");
-        script.append("read TARGET_MIN_ROW\n");
-        script.append("read TARGET_MAX_ROW\n");
-        script.append("read TARGET_MIN_COL\n");
-        script.append("read TARGET_MAX_COL\n");
-        script.append("read TARGET_MIN_Z\n");
-        script.append("read TARGET_MAX_Z\n");
         if (orientation != null) script.append("read ORIENTATION\n");
         if (targetQuality != null) script.append("read TARGET_QUALITY\n");
         if (targetType != null) script.append("read TARGET_TYPE\n");
@@ -287,10 +311,10 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("SOURCE_DEPTH=$SOURCE_DEPTH ")
             .append("TARGET_TILE_WIDTH=$TARGET_TILE_WIDTH ")
             .append("TARGET_TILE_HEIGHT=$TARGET_TILE_HEIGHT ")
-            .append("TARGET_MIN_ROW=$TARGET_MIN_ROW ")
-            .append("TARGET_MAX_ROW=$TARGET_MAX_ROW ")
-            .append("TARGET_MIN_COL=$TARGET_MIN_COL ")
-            .append("TARGET_MAX_COL=$TARGET_MAX_COL ")
+            .append("TARGET_MIN_X=$TARGET_MIN_X ")
+            .append("TARGET_MAX_X=$TARGET_MAX_X ")
+            .append("TARGET_MIN_Y=$TARGET_MIN_Y ")
+            .append("TARGET_MAX_Y=$TARGET_MAX_Y ")
             .append("TARGET_MIN_Z=$TARGET_MIN_Z ")
             .append("TARGET_MAX_Z=$TARGET_MAX_Z ")
             .append("ORIENTATION=$ORIENTATION ")

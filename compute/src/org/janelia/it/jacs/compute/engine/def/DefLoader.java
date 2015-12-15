@@ -74,7 +74,7 @@ public class DefLoader implements Serializable {
             if (!PROCESS_ELE.equals(processElement.getName())) {
                 throw new UnexpectedElementException(processElement.getName() + "\n" + processElement.asXML());
             }
-            return createProcessDef(processElement, null);
+            return createProcessDef(processName, processElement, null);
         }
         catch (DocumentException e) {
             throw new RuntimeException(e);
@@ -88,8 +88,8 @@ public class DefLoader implements Serializable {
      * @param parentProcessDef parent process defintion, if one exists
      * @return returns the process definition which comes from the element passed in
      */
-    private ProcessDef createProcessDef(Element processElement, ProcessDef parentProcessDef) {
-        ProcessDef processDef = new ProcessDef(parentProcessDef);
+    private ProcessDef createProcessDef(String processName, Element processElement, ProcessDef parentProcessDef) {
+        ProcessDef processDef = new ProcessDef(parentProcessDef, processName);
         initSeriesDef(processDef, processElement);
         // todo We don't do anything with attributes?
 //        List attributes = processElement.attributes();
@@ -106,7 +106,7 @@ public class DefLoader implements Serializable {
                     processDef.addChildDef(createSequenceDef(child, processDef));
                 }
                 else if (PROCESS_ELE.equals(child.getName())) {
-                    processDef.addChildDef(createProcessDef(child, processDef));
+                    processDef.addChildDef(createProcessDef(null, child, processDef));
                 }
                 else {
                     throw new UnexpectedElementException(child.getName());

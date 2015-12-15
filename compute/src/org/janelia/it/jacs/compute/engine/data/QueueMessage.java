@@ -1,14 +1,6 @@
 
 package org.janelia.it.jacs.compute.engine.data;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.engine.def.ActionDef;
-import org.janelia.it.jacs.compute.engine.def.ProcessDef;
-
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.Message;
-import javax.jms.ObjectMessage;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -16,6 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.jms.JMSException;
+import javax.jms.MapMessage;
+import javax.jms.Message;
+import javax.jms.ObjectMessage;
+
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.engine.def.ActionDef;
 
 /**
  * This class encapsulates messages sent to and received from queues.  It's based on
@@ -226,13 +226,13 @@ public class QueueMessage implements IProcessData {
     public void setProcessId(Long id) {
         putItem(IProcessData.PROCESS_ID, id);
     }
-
-    public ProcessDef getProcessDef() throws MissingDataException {
-        return (ProcessDef) getMandatoryItem(IProcessData.PROCESS_DEFINITION);
+    
+    public String getProcessDefName() throws MissingDataException {
+        return (String) getMandatoryItem(IProcessData.PROCESS_DEFINITION);
     }
 
-    public void setProcessDef(ProcessDef processDef) {
-        putItem(IProcessData.PROCESS_DEFINITION, processDef);
+    public void setProcessDefName(String processDefName) {
+        putItem(IProcessData.PROCESS_DEFINITION, processDefName);
     }
 
     public ActionDef getProcessedAction() throws MissingDataException {
@@ -325,7 +325,16 @@ public class QueueMessage implements IProcessData {
 
     public Boolean getBoolean(String key) {
     	try {
-    		return (Boolean)getItem(key);	
+            Object itemValue = getItem(key);
+            if (itemValue == null) {
+                return false;
+            } else if (itemValue instanceof String) {
+                return Boolean.valueOf((String) itemValue);
+            } else if (itemValue instanceof Boolean) {
+                return (Boolean) itemValue;
+            } else {
+                return false;
+            }
     	}
     	catch (Throwable t) {
             logger.error("Exception thrown while trying to get " + key + " property from message");

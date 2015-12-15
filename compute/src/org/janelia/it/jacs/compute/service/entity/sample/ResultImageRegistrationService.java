@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.service.common.ContextLogger;
+import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
@@ -78,15 +80,21 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	public void execute(IProcessData processData, Entity pipelineRunEntity, Entity resultEntity, String defaultImageFilename) throws Exception {
 
         this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+        this.contextLogger = new ContextLogger(logger);
         this.task = ProcessDataHelper.getTask(processData);
+        this.contextLogger.appendToLogContext(task);
         this.processData = processData;
+        this.data = new ProcessDataAccessor(processData, contextLogger);
         this.entityBean = EJBFactory.getLocalEntityBean();
         this.computeBean = EJBFactory.getLocalComputeBean();
         this.annotationBean = EJBFactory.getLocalAnnotationBean();
+        this.solrBean = EJBFactory.getLocalSolrBean();
+        
         String ownerName = ProcessDataHelper.getTask(processData).getOwner();
         Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
         this.ownerKey = subject.getKey();
-        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
+        
+        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger, contextLogger);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
         
     	registerImages(pipelineRunEntity, resultEntity, defaultImageFilename);
@@ -519,8 +527,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 		if (supportingFiles==null) return null;
 		
         // Should find it here
+        populateChildren(supportingFiles);
 		Entity signalVolume = EntityUtils.findChildWithName(supportingFiles, "ConsolidatedSignal.v3dpbd");
 		if (signalVolume!=null) {
+	        populateChildren(signalVolume);
 		    Entity fast3dImage = signalVolume.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
             if (fast3dImage!=null) {
                 return fast3dImage;

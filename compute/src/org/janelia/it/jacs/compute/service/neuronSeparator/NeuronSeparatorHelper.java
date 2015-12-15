@@ -78,11 +78,6 @@ public class NeuronSeparatorHelper {
         return script.toString();
 	}
 
-	public static String getSummaryCreatorCommands() {
-        StringBuilder script = new StringBuilder();
-        script.append("sh "+SUMMARY_CREATOR_SCRIPT+" $OUTPUT_DIR $INPUT_FILE \"$SIGNAL_CHAN\" \"$REF_CHAN\"");
-        return script.toString();
-	}
 	
 	public static Entity getSeparationResult(Entity supportingFiles) {
         for(Entity file : supportingFiles.getChildren()) {
