@@ -79,7 +79,7 @@ public interface ComputeBeanRemote {
     public int getNumCategoryResults(Long nodeId, String category) throws RemoteException;
     public Node createNode(Node node) throws DaoException, RemoteException;
     public List getAllSampleNamesAsList() throws RemoteException, DaoException;
-
+    public boolean isServerPathAvailable( String serverPath, boolean directoryOnly );
     public List<BlastDatabaseFileNode> getBlastDatabases() throws RemoteException;
     public List<BlastDatabaseFileNode> getBlastDatabasesOfAUser(String username) throws RemoteException;
     public String createTemporaryFileNodeArchive(String archiveName, String sourceNodeId) throws Exception;

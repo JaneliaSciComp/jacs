@@ -21,35 +21,37 @@ class AnalyzeZeissMetadataScript {
     private final JacsUtils f;
     private PrintWriter file;
     private List<Entity> tiles = new ArrayList<Entity>();
-        
     
     def dyeMapping = [
         
         YoshiMBPolarityCase1_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        YoshiMBPolarityCase1_63x : "presynaptic=Alexa Fluor 633,Alexa Fluor 647,Cy5;ignore=DY-547,Alexa Fluor 568;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBPolarityCase1_63x : "reference=Alexa Fluor 488,Cy2;presynaptic=Alexa Fluor 633,Alexa Fluor 647,Cy5;ignore=DY-547,Alexa Fluor 568;membrane=Alexa Fluor 594",
         YoshiMBPolarityCase2_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        YoshiMBPolarityCase2_63x : "presynaptic=Alexa Fluor 568,Cy3;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBPolarityCase2_63x : "reference=Alexa Fluor 488,Cy2;presynaptic=Alexa Fluor 568,Cy3;membrane=Alexa Fluor 594",
         
-        YoshiMBPolarityCase3_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5",
-        YoshiMBPolarityCase3_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3",
-        NernaPolarityCase3_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
-        NernaPolarityCase3_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
-        PolarityCase3WithCMTKVnc_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
-        PolarityCase3WithCMTKVnc_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
+        YoshiMBPolarityCase3_20x     : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        YoshiMBPolarityCase3_63x     : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        NernaPolarityCase3_20x       : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        NernaPolarityCase3_63x       : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        PolarityCase3WithCMTKVnc_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        PolarityCase3WithCMTKVnc_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
         
-        YoshiMBPolarityCase4_20x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
-        YoshiMBPolarityCase4_63x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
+        YoshiMBPolarityCase4_20x     : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
+        YoshiMBPolarityCase4_63x     : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
         PolarityCase4WithCMTKVnc_20x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
         PolarityCase4WithCMTKVnc_63x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
         
-        YoshiMBSplitMCFOCase1_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        YoshiMBSplitMCFOCase1_63x : "membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1_20x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1_63x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBSplitMCFOCase1_20x         : "membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBSplitMCFOCase1_63x         : "membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        NernaMCFOCase1_20x                : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        NernaMCFOCase1_63x                : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
         NernaMCFOCase1Without20xMerge_20x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;reference=Alexa Fluor 488,Cy2",
         NernaMCFOCase1Without20xMerge_63x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        WolfftMCFOCase1Unaligned_20x : "reference=Alexa Fluor 488,Cy2",
-        WolfftMCFOCase1Unaligned_63x : "membrane_ha,membrane_v5,membrane_flag,reference"
+        
+        WolfftMCFOCase1_20x          : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
+        WolfftMCFOCase1_63x          : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594",
+        WolfftMCFOCase1Unaligned_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
+        WolfftMCFOCase1Unaligned_63x : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594"
     
     ]
     
@@ -102,7 +104,7 @@ class AnalyzeZeissMetadataScript {
         
         try {
             file = new PrintWriter("newspec.txt")
-            file.print "Owner\tDataSet\tSample\tObjective\tArea\tTile\tChanSpec1\tNewSpec1\tChanSpec2\tNewSpec2\n"
+            file.print "Owner\tDataSet\tSample\tSlide Code\tObjective\tArea\tTile\tLSM1\tDyes1\tChanSpec1\tNewSpec1\tLSM2\tDyes2\tChanSpec2\tNewSpec2\n"
             
             f.e.getUserEntitiesByTypeName(null, TYPE_DATA_SET).each {
                 Entity dataSet = it
@@ -131,13 +133,14 @@ class AnalyzeZeissMetadataScript {
         if (status.equals(VALUE_DESYNC) || status.equals(VALUE_RETIRED)) return;
         f.loadChildren(sample)
         //println "    Processing "+sample.name
+        def slideCode = sample.getValueByAttributeName(ATTRIBUTE_SLIDE_CODE)
         List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, "Sample")
         childSamples.each {
-            processObjectiveSample(f, it, dataSetIdentifier, pipeline, file)
+            processObjectiveSample(f, it, dataSetIdentifier, pipeline, slideCode, file)
         }
     }
         
-    def processObjectiveSample(JacsUtils f, Entity sample, String dataSetIdentifier, String pipeline, PrintWriter file) {
+    def processObjectiveSample(JacsUtils f, Entity sample, String dataSetIdentifier, String pipeline, String slideCode, PrintWriter file) {
         
         tiles.clear();
                 
@@ -155,7 +158,8 @@ class AnalyzeZeissMetadataScript {
         def dyeMapKey = pipeline+"_"+objective
         def dyeSpec = dyeMapping[dyeMapKey]
         if (dyeSpec==null) {
-            throw new Exception("No dye spec found for "+dyeMapKey)
+            println "No dye spec found for "+dyeMapKey
+            return
         }
         Map<String,String> dyeToTagMap = getDyeToTagMap(dyeSpec)
         
@@ -168,6 +172,8 @@ class AnalyzeZeissMetadataScript {
             file.print dataSetIdentifier
             file.print "\t"
             file.print sampleName
+            file.print "\t"
+            file.print slideCode
             file.print "\t"
             file.print objective
             file.print "\t"
@@ -184,7 +190,14 @@ class AnalyzeZeissMetadataScript {
                 int compare(Entity o1, Entity o2) {
                     String nc1 = o1.getValueByAttributeName(ATTRIBUTE_NUM_CHANNELS)
                     String nc2 = o2.getValueByAttributeName(ATTRIBUTE_NUM_CHANNELS)
-                    if (nc1==null || nc2==null) return 0;
+                    if (nc1==null || nc2==null) {
+                        String cs1 = o1.getValueByAttributeName(ATTRIBUTE_CHANNEL_SPECIFICATION)
+                        String cs2 = o2.getValueByAttributeName(ATTRIBUTE_CHANNEL_SPECIFICATION)
+                        if (cs1==null || cs2==null) return 0;
+                        Integer c1 = new Integer(cs1.length())
+                        Integer c2 = new Integer(cs2.length())
+                        return c2.compareTo(c1);
+                    }
                     Integer c1 = new Integer(nc1)
                     Integer c2 = new Integer(nc2)
                     return c2.compareTo(c1);
@@ -205,8 +218,13 @@ class AnalyzeZeissMetadataScript {
     
     private void processLsm(JacsUtils f, Entity lsm, Map<String,String> dyeToTagMap, PrintWriter file) {
         
+        def dyeNames = lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES)
         def chanspec = lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_SPECIFICATION)
         def newspec = getNewSpec(lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES), dyeToTagMap)
+        file.print "\t"
+        file.print lsm.name
+        file.print "\t"
+        file.print dyeNames
         file.print "\t"
         file.print chanspec==null?"":chanspec
         file.print "\t"
@@ -240,7 +258,7 @@ class AnalyzeZeissMetadataScript {
             String tag = dyeToTagMap.get(dye);
             if (tag==null) { 
                 println "   No mapping for dye: "+dye
-                newSpec.append("?")
+                newSpec.append("m")
             }
             else if (tag.startsWith("membrane")) {
                 newSpec.append("m")

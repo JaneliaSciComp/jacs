@@ -708,22 +708,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     @Override
-    public void recordProcessSuccess(ProcessDef processDef, Long processId) {
+    public void recordProcessSuccess(String processDefName, Long processId) {
         try {
-            computeDAO.recordProcessSuccess(processDef, processId);
+            computeDAO.recordProcessSuccess(processDefName, processId);
         }
         catch (Exception e) {
-            logger.error("Caught exception updating status of process: " + processDef, e);
+            logger.error("Caught exception updating status of process: " + processDefName, e);
         }
     }
 
     @Override
-    public void recordProcessError(ProcessDef processDef, Long processId, Throwable e) {
+    public void recordProcessError(String processDefName, Long processId, Throwable e) {
         try {
             updateTaskStatus(processId, Event.ERROR_EVENT, e.getMessage());
         }
         catch (Exception ee) {
-            logger.error("Caught exception updating status of process: " + processDef, ee);
+            logger.error("Caught exception updating status of process: " + processDefName, ee);
         }
     }
 
@@ -1021,6 +1021,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         returnList.add("AUSOIL_remnant_454UP");
         Collections.sort(returnList);
         return returnList;
+    }
+
+    /**
+     * Tells whether the path provided is an actual file on the server.
+     * 
+     * @param serverPath putative, existing path.
+     * @param directoryOnly does the path have to be a directory?
+     * @return T if file exists/not directoryOnly; T if exists & directory/directoryOnly.
+     */
+    @Override
+    public boolean isServerPathAvailable( String serverPath, boolean directoryOnly ){
+        File serverFile = new File(serverPath);
+        boolean rtnVal = true;
+        rtnVal &= serverFile.exists();
+        rtnVal &= serverFile.isDirectory() || (! directoryOnly);
+        return rtnVal;
     }
 
     @Override
