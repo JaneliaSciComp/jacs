@@ -1,12 +1,11 @@
 
 package org.janelia.it.jacs.compute.engine.data;
 
-import org.janelia.it.jacs.compute.engine.def.ActionDef;
-import org.janelia.it.jacs.compute.engine.def.ProcessDef;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.janelia.it.jacs.compute.engine.def.ActionDef;
 
 /**
  * This interface is implemented by ProcessData and QueueMessage
@@ -45,9 +44,9 @@ public interface IProcessData {
 
     public Boolean getBoolean(String property);
 
-    public ProcessDef getProcessDef() throws MissingDataException;
+    public String getProcessDefName() throws MissingDataException;
 
-    public void setProcessDef(ProcessDef processDef);
+    public void setProcessDefName(String processDefName);
 
     public ActionDef getProcessedAction() throws MissingDataException;
 

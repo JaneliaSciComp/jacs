@@ -322,7 +322,7 @@ public abstract class SeriesLauncher implements ILauncher {
 
                 // Updating to success should happen as part of the overall transaction, otherwise
                 // users could see the status as complete while hits haven't been peristed yet, for example
-                EJBFactory.getLocalComputeBean().recordProcessSuccess(processData.getProcessDef(), processData.getProcessId());
+                EJBFactory.getLocalComputeBean().recordProcessSuccess(processData.getProcessDefName(), processData.getProcessId());
             }
         }
         catch (Exception e) {

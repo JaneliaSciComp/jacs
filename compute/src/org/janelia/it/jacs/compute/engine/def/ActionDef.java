@@ -62,7 +62,7 @@ public abstract class ActionDef implements Serializable {
     /**
      * The parent definition
      */
-    private SeriesDef parentDef;
+    private transient SeriesDef parentDef;
 
     /**
      * Whether or not the process or sequence should halt if an operation fails

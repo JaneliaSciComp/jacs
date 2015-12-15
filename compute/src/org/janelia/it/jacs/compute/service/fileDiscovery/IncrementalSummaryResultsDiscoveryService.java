@@ -1,10 +1,12 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.FileUtils;
@@ -80,7 +82,18 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
                 contextLogger.info("Found JSON metadata file: "+resultItem.getName());
             }
         }
-
+        
+        Map<String,Entity> propertiesEntityMap = new HashMap<String,Entity>();
+        for(Entity resultItem : supportingFiles.getChildren()) {
+            if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_TEXT_FILE)) {
+                if (resultItem.getName().endsWith(".properties")) {
+                    String stub = resultItem.getName().replaceFirst("\\.properties", ".lsm");
+                    propertiesEntityMap.put(stub, resultItem);
+                    contextLogger.info("Found properties file: "+resultItem.getName());
+                }
+            }
+        }
+        
         entityLoader.populateChildren(sampleEntity);
         Entity sampleSupportingFiles = EntityUtils.getSupportingData(sampleEntity);
                 
@@ -93,49 +106,62 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
             for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
                 String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
                 contextLogger.debug("Processing metadata for LSM: "+lsmFilename);
-                
-                Entity jsonEntity = jsonEntityMap.get(lsmFilename);
-                if (jsonEntity==null) {
-                    contextLogger.warn("  No JSON metadata file found for LSM: "+lsmFilename);
-                    continue;
-                }
-
-                List<String> colors = new ArrayList<>();
-                List<String> dyeNames = new ArrayList<>();
-                File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                
-                try {
-                    LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
-                    for(Channel channel : metadata.getChannels()) {
-                        colors.add(channel.getColor());
-                        DetectionChannel detection = metadata.getDetectionChannel(channel);
-                        if (detection!=null) {
-                            dyeNames.add(detection.getDyeName());
-                        }
-                        else {
-                            dyeNames.add("Unknown");
-                        }
-                    }
-                }
-                catch (Exception e) {
-                    throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
-                }
 
                 boolean dirty = false;
                 
-                if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
-                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors))) {
-                        contextLogger.info("  Setting LSM colors: "+colors);
-                        dirty = true;
-                    }
+                Entity jsonEntity = jsonEntityMap.get(lsmFilename);
+                if (jsonEntity!=null) {
+	                List<String> colors = new ArrayList<>();
+	                List<String> dyeNames = new ArrayList<>();
+	                File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+	                
+	                try {
+	                    LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
+	                    for(Channel channel : metadata.getChannels()) {
+	                        colors.add(channel.getColor());
+	                        DetectionChannel detection = metadata.getDetectionChannel(channel);
+	                        if (detection!=null) {
+	                            dyeNames.add(detection.getDyeName());
+	                        }
+	                        else {
+	                            dyeNames.add("Unknown");
+	                        }
+	                    }
+	                }
+	                catch (Exception e) {
+	                    throw new Exception("Error parsing LSM metadata file: "+jsonFile,e);
+	                }
+	
+	                if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
+	                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors))) {
+	                        contextLogger.info("  Setting LSM colors: "+colors);
+	                        dirty = true;
+	                    }
+	                }
+	                
+	                if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
+	                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames))) {
+	                        contextLogger.info("  Setting LSM dyes: "+dyeNames);
+	                        dirty = true;
+	                    }
+	                }
                 }
                 
-                if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
-                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames))) {
-                        contextLogger.info("  Setting LSM dyes: "+dyeNames);
-                        dirty = true;
-                    }
-                }
+                Entity propertiesEntity = propertiesEntityMap.get(lsmFilename);
+                if (propertiesEntity!=null) {
+	                File propertiesFile = new File(propertiesEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+	                Properties properties = new Properties();
+	                properties.load(new FileReader(propertiesFile));
+	                
+	                String brightnessCompensation = properties.getProperty("image.brightness.compensation");
+	                if (!StringUtils.isEmpty(brightnessCompensation)) {
+	                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_BRIGHTNESS_COMPENSATION, brightnessCompensation)) {
+	                        contextLogger.info("  Setting brightness compensation: "+brightnessCompensation);
+	                        dirty = true;
+	                    }
+	                }
+	            }
+                
                 
                 if (dirty) {
                     entityBean.saveOrUpdateEntity(lsmStack);
