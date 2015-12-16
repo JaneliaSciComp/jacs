@@ -1,11 +1,13 @@
 package org.janelia.it.jacs.model.entity;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name="EntityRoleActor")
-public class EntityActorPermission implements Serializable {
+public class EntityActorPermission implements Serializable, IsSerializable {
 	
 	@XmlAttribute(name="guid")
     private Long id;

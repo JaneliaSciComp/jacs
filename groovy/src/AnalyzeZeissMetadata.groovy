@@ -21,38 +21,37 @@ class AnalyzeZeissMetadataScript {
     private final JacsUtils f;
     private PrintWriter file;
     private List<Entity> tiles = new ArrayList<Entity>();
-        
     
     def dyeMapping = [
         
         YoshiMBPolarityCase1_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        YoshiMBPolarityCase1_63x : "presynaptic=Alexa Fluor 633,Alexa Fluor 647,Cy5;ignore=DY-547,Alexa Fluor 568;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBPolarityCase1_63x : "reference=Alexa Fluor 488,Cy2;presynaptic=Alexa Fluor 633,Alexa Fluor 647,Cy5;ignore=DY-547,Alexa Fluor 568;membrane=Alexa Fluor 594",
         YoshiMBPolarityCase2_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        YoshiMBPolarityCase2_63x : "presynaptic=Alexa Fluor 568,Cy3;membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBPolarityCase2_63x : "reference=Alexa Fluor 488,Cy2;presynaptic=Alexa Fluor 568,Cy3;membrane=Alexa Fluor 594",
         
-        YoshiMBPolarityCase3_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5",
-        YoshiMBPolarityCase3_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3",
-        NernaPolarityCase3_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
-        NernaPolarityCase3_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
-        PolarityCase3WithCMTKVnc_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
-        PolarityCase3WithCMTKVnc_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Cy3,DY-547",
+        YoshiMBPolarityCase3_20x     : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        YoshiMBPolarityCase3_63x     : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        NernaPolarityCase3_20x       : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        NernaPolarityCase3_63x       : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        PolarityCase3WithCMTKVnc_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
+        PolarityCase3WithCMTKVnc_63x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 633,Alexa Fluor 647,Cy5;presynaptic=Alexa Fluor 568,Alexa Fluor 546,Cy3,DY-547",
         
-        YoshiMBPolarityCase4_20x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
-        YoshiMBPolarityCase4_63x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
+        YoshiMBPolarityCase4_20x     : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
+        YoshiMBPolarityCase4_63x     : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
         PolarityCase4WithCMTKVnc_20x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
         PolarityCase4WithCMTKVnc_63x : "membrane=Alexa Fluor 488,Cy2;reference=Alexa Fluor 568,Cy5",
         
-        YoshiMBSplitMCFOCase1_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        YoshiMBSplitMCFOCase1_63x : "membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1_20x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1_63x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBSplitMCFOCase1_20x         : "membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        YoshiMBSplitMCFOCase1_63x         : "membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        NernaMCFOCase1_20x                : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        NernaMCFOCase1_63x                : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
         NernaMCFOCase1Without20xMerge_20x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;reference=Alexa Fluor 488,Cy2",
         NernaMCFOCase1Without20xMerge_63x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
         
-        WolfftMCFOCase1_20x : "reference=Alexa Fluor 488,Cy2",
-        WolfftMCFOCase1_63x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        WolfftMCFOCase1Unaligned_20x : "reference=Alexa Fluor 488,Cy2",
-        WolfftMCFOCase1Unaligned_63x : "membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"
+        WolfftMCFOCase1_20x          : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
+        WolfftMCFOCase1_63x          : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594",
+        WolfftMCFOCase1Unaligned_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
+        WolfftMCFOCase1Unaligned_63x : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594"
     
     ]
     
@@ -259,7 +258,7 @@ class AnalyzeZeissMetadataScript {
             String tag = dyeToTagMap.get(dye);
             if (tag==null) { 
                 println "   No mapping for dye: "+dye
-                newSpec.append("?")
+                newSpec.append("m")
             }
             else if (tag.startsWith("membrane")) {
                 newSpec.append("m")
