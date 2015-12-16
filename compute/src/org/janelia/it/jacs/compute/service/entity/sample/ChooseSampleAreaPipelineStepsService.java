@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -29,7 +30,7 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService 
             populateChildren(tile);
             List<Entity> lsms = EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK);
             if (numImagesPerTile != null && numImagesPerTile != lsms.size()) {
-                throw new IllegalStateException("Sample " + sampleEntity.getName() + " (" + sampleEntity.getId() +
+                throw new MetadataException("Sample " + sampleEntity.getName() + " (" + sampleEntity.getId() +
                                                 ") has differing numbers of images per tile");
             }
             numImagesPerTile = lsms.size();
