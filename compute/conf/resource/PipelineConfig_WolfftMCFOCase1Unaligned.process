@@ -1,84 +1,27 @@
 <process name="Tanya MCFO Case 1 Unaligned Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
-        <input name="PIPELINE_PROCESS" value="WolfftMCFOCase1Unaligned"/>
-        <input name="CHANNEL_DYE_SPEC_20X" value="reference=Alexa Fluor 488,Cy2"/>
-        <input name="OUTPUT_CHANNEL_ORDER_20X" value="reference"/>
-        <input name="CHANNEL_DYE_SPEC_63X" value="membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2"/>
-        <input name="OUTPUT_CHANNEL_ORDER_63X" value="membrane_ha,membrane_v5,membrane_flag,reference"/>
-        <input name="RUN_OBJECTIVES"/>
+        <!-- Tanya asks for only reference channel in her 20x images -->
         
-        <!-- Import variables from the task -->
-        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
-            <input name="OVERRIDE" value="false"/>
-            <input name="SAMPLE_ENTITY_ID"/>
-            <input name="REUSE_PIPELINE_RUNS"/>
-            <input name="RUN_OBJECTIVES"/>
-            <input name="TASK_PARAMETER_MAP">
-                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
-                <entry key="reuse pipeline runs" value="REUSE_PIPELINE_RUNS"/>
-                <entry key="run objectives" value="RUN_OBJECTIVES"/>
-            </input>
-            <output name="SAMPLE_ENTITY_ID"/>
-            <output name="REUSE_PIPELINE_RUNS"/>
-            <output name="RUN_OBJECTIVES"/>
-        </operation>
-
-        <!-- Init variables -->
-        <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-            <input name="OVERRIDE" value="false"/>
-            <input name="REUSE_PIPELINE_RUNS"/>
-            <input name="PROCESS_VARIABLE_1" value="REUSE_PIPELINE_RUNS"/>
-            <input name="PROCESS_VARIABLE_VALUE_1" value="false"/>
-            <output name="REUSE_PIPELINE_RUNS"/>
-        </operation>
+        <include name="Pipeline" process="FlyLightPairedSamplePipeline">
+            <input name="PIPELINE_PROCESS" value="WolfftMCFOCase1Unaligned"/>
+            <input name="20X_PIPELINE_NAME" value="20x Unaligned Sample Pipeline"/>
+            <input name="20X_CHANNEL_DYE_SPEC" value="reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594"/>
+            <input name="20X_OUTPUT_CHANNEL_ORDER" value="reference"/>
+            <input name="20X_OUTPUT_COLOR_SPEC" value="1"/>
+            <input name="20X_ALIGNMENT_ALGORITHMS" value=""/>
+            <input name="20X_ALIGNMENT_ALGORITHM_PARAMS" value=""/>
+            <input name="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value=""/>
+            <input name="20X_PIPELINE_NAME" value="63x Unaligned Sample Pipeline"/>
+            <input name="63X_CHANNEL_DYE_SPEC" value="reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594"/>
+            <input name="63X_OUTPUT_CHANNEL_ORDER" value="membrane_ha,membrane_v5,membrane_flag,reference"/>
+            <input name="63X_OUTPUT_COLOR_SPEC" value="RGB1"/>
+            <input name="63X_ALIGNMENT_ALGORITHMS" value=""/>
+            <input name="63X_ALIGNMENT_ALGORITHM_PARAMS" value=""/>
+            <input name="63X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value=""/>
+            <input name="IMAGE_TYPE" value="mcfo"/>
+        </include>
         
-        <!-- Get sub-samples -->
-        <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
-            <input name="SAMPLE_ENTITY_ID"/>
-            <input name="REUSE_PIPELINE_RUNS"/>
-            <input name="RUN_OBJECTIVES"/>
-            <output name="PARENT_SAMPLE_ID"/>
-            <output name="SAMPLE_20X_ID"/>
-            <output name="SAMPLE_63X_ID"/>
-        </operation>
-
-        <sequence if="SAMPLE_20X_ID is not null">
-
-            <include name="20x Pipeline" process="FlyLightSamplePipeline">
-                <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_20X_ID}"/>
-                <input name="PIPELINE_NAME" value="20x Unaligned Sample Pipeline"/>
-                <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
-                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
-                <input name="ALIGNMENT_ALGORITHMS" value=""/>
-                <input name="ALIGNMENT_ALGORITHM_PARAMS" value=""/>
-                <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value=""/>
-                <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
-                <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_20X}"/>
-                <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_20X}"/>
-                <input name="PIPELINE_PROCESS"/>
-            </include>
-
-        </sequence>
-
-        <sequence if="SAMPLE_63X_ID is not null">
-
-            <include name="63x Pipeline" process="FlyLightSamplePipeline">
-                <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_63X_ID}"/>
-                <input name="PIPELINE_NAME" value="63x Unaligned Sample Pipeline"/>
-                <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
-                <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
-                <input name="ALIGNMENT_ALGORITHMS" value=""/>
-                <input name="ALIGNMENT_ALGORITHM_PARAMS" value=""/>
-                <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value=""/>
-                <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
-                <input name="CHANNEL_DYE_SPEC" value="$V{CHANNEL_DYE_SPEC_63X}"/>
-                <input name="OUTPUT_CHANNEL_ORDER" value="$V{OUTPUT_CHANNEL_ORDER_63X}"/>
-                <input name="PIPELINE_PROCESS"/>
-            </include>
-
-        </sequence>
-
     </sequence>
 
 </process>
