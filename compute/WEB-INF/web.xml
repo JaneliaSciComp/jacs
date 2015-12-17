@@ -45,11 +45,6 @@
         <!--<servlet-name>MetaGenoPipeController</servlet-name>-->
         <!--<servlet-class>org.janelia.it.jacs.compute.web.MetaGenoPipeController</servlet-class>-->
     <!--</servlet>-->
-
-    <servlet>
-        <servlet-name>ScalityProxy</servlet-name>
-        <servlet-class>org.janelia.it.jacs.compute.wsrest.ScalityProxyServlet</servlet-class>
-    </servlet>
     
     <!--<servlet-mapping>-->
         <!--<servlet-name>MetaGenoPipeHome</servlet-name>-->
@@ -65,11 +60,6 @@
         <!--<servlet-name>MetaGenoPipeController</servlet-name>-->
         <!--<url-pattern>/MetaGenoPipeController</url-pattern>-->
     <!--</servlet-mapping>-->
-
-    <servlet-mapping>
-        <servlet-name>ScalityProxy</servlet-name>
-        <url-pattern>/ScalityProxy/*</url-pattern>
-    </servlet-mapping>
     
 </web-app>
 

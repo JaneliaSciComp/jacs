@@ -25,6 +25,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
     private String name;
     private String ownerKey;
     private Long sampleID;
+    private transient Entity workspace;
     private List<TmNeuron> neuronList;
     private TmPreferences preferences;
     private Matrix micronToVoxMatrix;
@@ -48,6 +49,10 @@ public class TmWorkspace implements IsSerializable, Serializable {
 
     public String getName() {
         return name;
+    }
+    
+    public Entity getEntity() {
+        return workspace;
     }
 
     public void setName(String name) {
@@ -127,6 +132,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
         if (entity.getEntityTypeName()==null || !entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
             throw new Exception("Entity type must be="+EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
         }
+        this.workspace = entity;
         this.id=entity.getId();
         this.name=entity.getName();
         this.ownerKey=entity.getOwnerKey();

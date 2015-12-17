@@ -6,15 +6,18 @@ import org.jboss.ejb3.StrictMaxPool;
 import org.jboss.annotation.ejb.PoolClass;
 import javax.ejb.MessageDriven;
 import javax.ejb.ActivationConfigProperty;
-import javax.ejb.EJBException;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import java.util.Date;
+import javax.annotation.Resource;
+import javax.ejb.MessageDrivenContext;
+import javax.ejb.TransactionAttribute;
+import static javax.ejb.TransactionAttributeType.REQUIRED;
 import javax.jms.ObjectMessage;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
-import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.access.DaoException;
 import static org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants.*;
 import org.janelia.it.jacs.model.user_data.UserToolEvent;
 
@@ -37,13 +40,17 @@ import org.janelia.it.jacs.model.user_data.UserToolEvent;
         // Setting a very low value on trax-timeout.  Twofold reason:
         //  1. should NOT need a very long time for this.
         //  2. should NOT queue up this lo-pri/singleton resource.
-        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "1"),
+        @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "10"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 @PoolClass(value = StrictMaxPool.class, maxSize = 1, timeout = 10000)
+@TransactionAttribute(REQUIRED)
 public class MetricsLoggingSingletonMDB implements MessageListener {
     
+    private static final String DROP_MSG_WARNING = "  Dropping this low-priority message.";
     private Logger logger = Logger.getLogger( MetricsLoggingSingletonMDB.class );
+    
+    @Resource private MessageDrivenContext context;
 
     @Override
     public void onMessage(Message message) {
@@ -70,7 +77,7 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
                 
                 event = new UserToolEvent(sessionId, userLogin, toolName, category, action, timestamp);
             } catch ( JMSException jmse ) {
-                logger.error("Failed to obtain/use parameters for logging.  Dropping this low-priority message.");
+                logger.error("Failed to obtain/use parameters for logging." + DROP_MSG_WARNING);
                 jmse.printStackTrace();
             }
          
@@ -83,26 +90,26 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
                     event = (UserToolEvent) messageObject;
                 }
                 else {
-                    final String errorMessage = "Unexpected object type.  User Tool Event expected.  Dropping this low-priority message.";
+                    final String errorMessage = "Unexpected object type.  User Tool Event expected." + DROP_MSG_WARNING;
                     logger.error(errorMessage);
                 }
             } catch ( JMSException jmse ) {
-                logger.error("Failed to obtain/use user tool event for logging.  Dropping this low-priority message.");
+                logger.error("Failed to obtain/use user tool event for logging." + DROP_MSG_WARNING);
                 jmse.printStackTrace();
             }
         }
         else {
-            logger.error("Invalid message type delivered.  Expected Map or Object Message, received " + message.getClass().getName());
+            logger.error("Invalid message type delivered.  Expected Map or Object Message, received " + message.getClass().getName() + DROP_MSG_WARNING);
         }
         
         if (event != null) {
             try {
                 // Pump this event, using the compute infrastructure.
                 new ComputeDAO(logger).addEventToSession(event);
-            } catch (ComputeException ce) {
-                logger.error("Failed to log the user tool event. Dropping this low-priority message.");
+            } catch (DaoException ce) {
+                logger.error("Failed to log the user tool event." + DROP_MSG_WARNING);
                 ce.printStackTrace();
-                throw new EJBException(ce);
+                context.setRollbackOnly();
             }
         }
     }

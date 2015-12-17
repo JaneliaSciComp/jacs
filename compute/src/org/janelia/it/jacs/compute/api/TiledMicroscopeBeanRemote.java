@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.api;
 
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.RawFileInfo;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.*;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 
 import javax.ejb.Remote;
@@ -25,7 +24,7 @@ public interface TiledMicroscopeBeanRemote {
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws ComputeException;
     public TmSample createTiledMicroscopeSample(String user, String sampleName, String pathToRenderFolder) throws ComputeException;
 
-    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long workspaceId, Long sampleId) throws ComputeException;
+    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long sampleId, String workspaceName) throws ComputeException;
     
     public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
                                                   double x, double y, double z, String comment) throws ComputeException;

@@ -27,10 +27,12 @@ public class SwcImportService extends AbstractEntityService {
     public static final String FOLDER_NAME_PARAM = "FOLDER_NAME";
     public static final String USER_NAME_PARAM = "USER_NAME";
     public static final String SAMPLE_ID_PARAM = "SAMPLE_ID";
+    public static final String WORKSPACE_NAME_PARAM = "WORKSPACE_NAME";
 
     private Long sampleId;
     private String userName;
     private String folderName;
+    private String workspaceName;
     private FileNode importationNode;
 
     @Override
@@ -39,6 +41,7 @@ public class SwcImportService extends AbstractEntityService {
             sampleId = getGuidItem(SAMPLE_ID_PARAM);
             userName = (String) processData.getItem(USER_NAME_PARAM);
             folderName = (String) processData.getItem(FOLDER_NAME_PARAM);
+            workspaceName = (String) processData.getItem(WORKSPACE_NAME_PARAM);
 
             Long nodeId = getOrCreateResultNode();
 
@@ -48,6 +51,7 @@ public class SwcImportService extends AbstractEntityService {
                     "Running SWC Import. ownerKey=" + ownerKey
                     + ", startingId=" + this.sampleId
                     + ", userName=" + userName
+                    + ", workspaceName=" + workspaceName
                     + ", folderName=" + folderName + "."
             );
 
@@ -55,7 +59,7 @@ public class SwcImportService extends AbstractEntityService {
             computeBean.saveEvent(task.getObjectId(), Event.RUNNING_EVENT, "Running", new Date());
 
             TiledMicroscopeBeanLocal tmEJB = EJBFactory.getLocalTiledMicroscopeBean();
-            tmEJB.importSWCFolder(folderName, ownerKey, null, sampleId);
+            tmEJB.importSWCFolder(folderName, ownerKey, sampleId, workspaceName);
 
             computeBean.saveEvent(task.getObjectId(), Event.COMPLETED_EVENT, "Completed", new Date());
         } catch (Exception ex) {

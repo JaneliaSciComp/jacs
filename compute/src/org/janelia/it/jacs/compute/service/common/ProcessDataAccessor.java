@@ -61,7 +61,7 @@ public class ProcessDataAccessor {
         if (value instanceof Long) {
             longValue = (Long) value;
         } else if (value instanceof String) {
-            longValue = Long.parseLong((String) value);
+            longValue = "".equals(value) ? null : Long.parseLong((String) value);
         } else if (value instanceof Number) {
             longValue = ((Number) value).longValue();
         } else if (value != null) {

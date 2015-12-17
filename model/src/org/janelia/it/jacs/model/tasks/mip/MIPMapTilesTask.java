@@ -41,15 +41,15 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_sourceHeight = "height of the cropped area";
     transient private static final String PARAM_sourceDepth = "depth of the cropped area";
     transient private static final String PARAM_bgPixelValue = "background pixel value";
-
+    transient private static final String PARAM_processingType = "processing type";
     transient private static final String PARAM_targetRootUrl = "root url containing the target stack";
     transient private static final String PARAM_targetStackFormat = "format of the output stack";
     transient private static final String PARAM_targetTileWidth = "target image tile width";
     transient private static final String PARAM_targetTileHeight = "target image tile height";
-    transient private static final String PARAM_targetMinRow = "target min row";
-    transient private static final String PARAM_targetMaxRow = "target ax row";
-    transient private static final String PARAM_targetMinCol = "target min col";
-    transient private static final String PARAM_targetMaxCol = "target max col";
+    transient private static final String PARAM_targetMinX = "target min x";
+    transient private static final String PARAM_targetMaxX = "target max x";
+    transient private static final String PARAM_targetMinY = "target min y";
+    transient private static final String PARAM_targetMaxY = "target max y";
     transient private static final String PARAM_targetMinZ = "target min Z";
     transient private static final String PARAM_targetMaxZ = "target max Z";
     transient private static final String PARAM_orientation = "tile orientation";
@@ -116,6 +116,8 @@ public class MIPMapTilesTask extends Task {
                 return new LongParameterVO(Long.valueOf(value));
             case PARAM_bgPixelValue:
                 return new IntegerParameterVO(Integer.valueOf(value));
+            case PARAM_processingType:
+                return new TextParameterVO(value, 10);
             case PARAM_targetRootUrl:
                 return new TextParameterVO(value, 400);
             case PARAM_targetStackFormat:
@@ -124,13 +126,13 @@ public class MIPMapTilesTask extends Task {
                 return new IntegerParameterVO(Integer.valueOf(value));
             case PARAM_targetTileHeight:
                 return new IntegerParameterVO(Integer.valueOf(value));
-            case PARAM_targetMinRow:
+            case PARAM_targetMinX:
                 return new IntegerParameterVO(Integer.valueOf(value));
-            case PARAM_targetMaxRow:
+            case PARAM_targetMaxX:
                 return new IntegerParameterVO(Integer.valueOf(value));
-            case PARAM_targetMinCol:
+            case PARAM_targetMinY:
                 return new IntegerParameterVO(Integer.valueOf(value));
-            case PARAM_targetMaxCol:
+            case PARAM_targetMaxY:
                 return new IntegerParameterVO(Integer.valueOf(value));
             case PARAM_targetMinZ:
                 return new LongParameterVO(Long.valueOf(value));
@@ -310,6 +312,15 @@ public class MIPMapTilesTask extends Task {
         setParameterAsInteger(PARAM_bgPixelValue, bgPixelValue);
     }
 
+    @XmlElement(name = "processingType")
+    public String getProcessingType() {
+        return getParameter(PARAM_processingType);
+    }
+
+    public void setProcessingType(String processingType) {
+        setParameter(PARAM_processingType, processingType);
+    }
+
     @XmlElement(name = "targetRootUrl")
     public String getTargetRootUrl() {
         return getParameter(PARAM_targetRootUrl);
@@ -346,40 +357,40 @@ public class MIPMapTilesTask extends Task {
         setParameterAsInteger(PARAM_targetTileHeight, targetTileHeight);
     }
 
-    @XmlElement(name = "targetMinRow")
-    public Integer getTargetMinRow() {
-        return getParameterAsInteger(PARAM_targetMinRow);
+    @XmlElement(name = "targetMinX")
+    public Integer getTargetMinX() {
+        return getParameterAsInteger(PARAM_targetMinX);
     }
 
-    public void setTargetMinRow(Integer targetMinRow) {
-        setParameterAsInteger(PARAM_targetMinRow, targetMinRow);
+    public void setTargetMinX(Integer targetMinRow) {
+        setParameterAsInteger(PARAM_targetMinX, targetMinRow);
     }
 
-    @XmlElement(name = "targetMaxRow")
-    public Integer getTargetMaxRow() {
-        return getParameterAsInteger(PARAM_targetMaxRow);
+    @XmlElement(name = "targetMaxX")
+    public Integer getTargetMaxX() {
+        return getParameterAsInteger(PARAM_targetMaxX);
     }
 
-    public void setTargetMaxRow(Integer targetMinRow) {
-        setParameterAsInteger(PARAM_targetMaxRow, targetMinRow);
+    public void setTargetMaxX(Integer targetMinRow) {
+        setParameterAsInteger(PARAM_targetMaxX, targetMinRow);
     }
 
-    @XmlElement(name = "targetMinCol")
-    public Integer getTargetMinCol() {
-        return getParameterAsInteger(PARAM_targetMinCol);
+    @XmlElement(name = "targetMinY")
+    public Integer getTargetMinY() {
+        return getParameterAsInteger(PARAM_targetMinY);
     }
 
-    public void setTargetMinCol(Integer targetMinCol) {
-        setParameterAsInteger(PARAM_targetMinCol, targetMinCol);
+    public void setTargetMinY(Integer targetMinCol) {
+        setParameterAsInteger(PARAM_targetMinY, targetMinCol);
     }
 
-    @XmlElement(name = "targetMaxCol")
-    public Integer getTargetMaxCol() {
-        return getParameterAsInteger(PARAM_targetMaxCol);
+    @XmlElement(name = "targetMaxY")
+    public Integer getTargetMaxY() {
+        return getParameterAsInteger(PARAM_targetMaxY);
     }
 
-    public void setTargetMaxCol(Integer targetMaxCol) {
-        setParameterAsInteger(PARAM_targetMaxCol, targetMaxCol);
+    public void setTargetMaxY(Integer targetMaxCol) {
+        setParameterAsInteger(PARAM_targetMaxY, targetMaxCol);
     }
 
     @XmlElement(name = "targetMinZ")

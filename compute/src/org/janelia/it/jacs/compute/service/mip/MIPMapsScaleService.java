@@ -20,7 +20,7 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MIPMapsScaleService.class);
 
-    private static final int DESIRED_PROCESSED_Z_LAYERS = 4; // 4 sections
+    private static final int DESIRED_PROCESSED_Z_LAYERS = 1; // 1 section
 
     private Long imageWidth;
     private Long imageHeight;
@@ -56,6 +56,10 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
         if (rootUrl == null) {
             rootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
+        }
+        if (!processData.getBoolean("SCALE_IMAGE")) {
+            LOG.info("No SCALE requested for {}", rootUrl);
+            cancel();
         }
         extractImageParameters(processData);
         targetQuality = processData.getDouble("TARGET_QUALITY");
@@ -160,7 +164,12 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 6;
+        return 15;
+    }
+
+    @Override
+    protected int getRequiredSlots() {
+        return 2;
     }
 
     /**
