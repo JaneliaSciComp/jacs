@@ -1384,7 +1384,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         ArrayList<EntityData> linkList = new ArrayList<>();
         ArrayList<EntityData> rootList = new ArrayList<>();
         Entity neuronEntity = annotationDAO.getEntityById(neuronID);
-        for (EntityData ed: neuronEntity.getEntityData()) {
+        for (EntityData ed : neuronEntity.getEntityData()) {
             String attributeName = ed.getEntityAttrName();
             if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
                 parentSet.add(ed.getId());
@@ -1392,8 +1392,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             } else if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                 parentSet.add(ed.getId());
                 rootList.add(ed);
-                }
             }
+        }
 
         // check roots: are they children of the neuron?
         for (EntityData ed: rootList) {
@@ -1459,7 +1459,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             // see notes in TmNeuron() on the connectivity retry scheme
             TmWorkspace workspace = null;
             boolean connectivityException;
-            TmFromEntityPopulator populator = new TmFromEntityPopulator();
             try {
                 workspace = tmFactory.createWorkspace(workspaceEntity, sampleEntity);
                 connectivityException = false;
