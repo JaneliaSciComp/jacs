@@ -8,7 +8,11 @@ package org.janelia.it.jacs.model.user_data.tiled_microscope_builder;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.janelia.it.jacs.model.IdSource;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPath;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPathEndpoints;
@@ -172,60 +176,6 @@ public class TmModelManipulator {
         
         tmNeuron.getStructuredTextAnnotationMap().put( parentID, annotation );
 
-        /*
-            // get the neuron entity
-            Entity neuron=annotationDAO.getEntityById(neuronID);
-            if (!neuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
-                throw new Exception("Id is not valid TmNeuron type =" + neuronID);
-            }
-
-            // parent must be neuron or geoann:
-            if (parentType != TmStructuredTextAnnotation.GEOMETRIC_ANNOTATION &&
-                    parentType != TmStructuredTextAnnotation.NEURON) {
-                throw new Exception("parent must be a geometric annotation or a neuron");
-            }
-
-            // parent must not already have a structured text annotation
-            if (loadNeuron(neuronID).getStructuredTextAnnotationMap().containsKey(parentID)) {
-                throw new Exception("parent ID already has a structured text annotation; use update, not add");
-            }
-
-            EntityData entityData = new EntityData();
-            entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT);
-            entityData.setOwnerKey(neuron.getOwnerKey());
-            entityData.setCreationDate(new Date());
-            entityData.setUpdatedDate(new Date());
-            entityData.setOrderIndex(0);
-            entityData.setParentEntity(neuron);
-            // this is kind of bogus, but it works:
-            entityData.setValue(threadSafeTempGeoValue());
-            annotationDAO.saveOrUpdate(entityData);
-            neuron.getEntityData().add(entityData);
-            annotationDAO.saveOrUpdate(neuron);
-
-            // Find and update value string
-            boolean valueStringUpdated=false;
-            String valueString=null;
-            for (EntityData ed : neuron.getEntityData()) {
-                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
-                    if (ed.getValue().equals(threadSafeTempGeoValue())) {
-                        valueString = tmFactory.toStructuredTextStringFromArguments(
-                                ed.getId(), parentID, parentType, formatVersion, data
-                        );
-                        ed.setValue(valueString);
-                        annotationDAO.saveOrUpdate(ed);
-                        valueStringUpdated = true;
-                    }
-                }
-            }
-            if (!valueStringUpdated) {
-                throw new Exception("Could not find temp geo entry to update for value string");
-            }
-            TmStructuredTextAnnotation structuredAnnotation = tmFactory.createTmStructuredTextAnnotation(valueString);
-            return structuredAnnotation;
-
-        
-        */
         return annotation;
     }
     
@@ -291,13 +241,114 @@ public class TmModelManipulator {
         neuron.getRootAnnotations().add( newRoot );
         
     }    
-    
-    public void moveNeurite(TmGeoAnnotation annotation, TmNeuron newNeuron) throws Exception {
-            
+
+    /**
+     * Moves the annotation, and its tree, from old to new neuron.
+     * 
+     * @todo ensure that the new neuron is available at call time.
+     * @param annotation this will be moved.
+     * @param oldNeuron this is the current container of the annotation.
+     * @param newNeuron this will be the container of the annotation.
+     * @throws Exception thrown by called methods.
+     */
+    public void moveNeurite(TmGeoAnnotation annotation, TmNeuron oldNeuron, TmNeuron newNeuron) throws Exception {
+        // already in the neuron?  we're done
+        if (newNeuron.getId() == oldNeuron.getId()) {
+            //if (annotation.getParentId() == newNeuron.getId()) {
+            return;
+        }
+
+        // Find the root annotation.  Ultimate parent of the annotation.
+        TmGeoAnnotation rootAnnotation = annotation;
+        while (!rootAnnotation.isRoot()) {
+            rootAnnotation = oldNeuron.getParentOf(rootAnnotation);
+        }
+
+        // Move all the geo-annotations from the old to the new neuron.
+        Map<Long,TmGeoAnnotation> movedAnnotationIDs = new HashMap<>();
+        final Map<Long, TmStructuredTextAnnotation> oldStructuredTextAnnotationMap = oldNeuron.getStructuredTextAnnotationMap();
+        final Map<Long, TmStructuredTextAnnotation> newStructuredTextAnnotationMap = newNeuron.getStructuredTextAnnotationMap();
+        for (TmGeoAnnotation ann: oldNeuron.getSubTreeList(rootAnnotation)) {
+            movedAnnotationIDs.put(ann.getId(), ann);
+            ann.setParentId(newNeuron.getId());            
+            newNeuron.getGeoAnnotationMap().put(ann.getId(), ann);
+            // move any TmStructuredTextAnnotations as well:
+            if (oldStructuredTextAnnotationMap.containsKey(ann.getId())) {
+                TmStructuredTextAnnotation note = oldStructuredTextAnnotationMap.get(ann.getId());
+                oldStructuredTextAnnotationMap.remove(ann.getId());
+                newStructuredTextAnnotationMap.put(ann.getId(), note);
+            }
+
+        }
+        
+        // loop over anchored paths; if endpoints are in set of moved annotations,
+        //  move the path as well
+        Map<TmAnchoredPathEndpoints,TmAnchoredPath> oldNeuronAnchoredPathMap = oldNeuron.getAnchoredPathMap();
+        Map<TmAnchoredPathEndpoints,TmAnchoredPath> newNeuronAnchoredPathMap = newNeuron.getAnchoredPathMap();
+        for (TmAnchoredPathEndpoints endpoints : oldNeuron.getAnchoredPathMap().keySet()) {
+            // both endpoints are necessarily in the same neurite, so only need
+            //  to test one:
+            if (movedAnnotationIDs.containsKey(endpoints.getAnnotationID1())) {
+                TmAnchoredPath anchoredPath = oldNeuronAnchoredPathMap.remove(endpoints);
+                newNeuronAnchoredPathMap.put(endpoints, anchoredPath);
+            }
+        }
+
+        // Need to remove all these annotations from the old map, after
+        // iteration through the map above, to avoid concurrent modification.
+        for (Long movedAnnotationID: movedAnnotationIDs.keySet()) {
+            oldNeuron.getGeoAnnotationMap().remove(movedAnnotationID);
+        }
+        
+        // if it's the root, also change its parent annotation to the new neuron
+        rootAnnotation.setParentId(newNeuron.getId());
+//        if (rootAnnotation.getId().equals(rootAnnotation.getId())) {
+//        }
+
     }
     
     public List<TmNeuronDescriptor> getNeuronsForWorkspace(TmWorkspace workspace) throws Exception {
-        return null;
+        // Validate sample
+        if (workspace == null) {
+            throw new Exception("Neurons must be parented with valid Workspace Id");
+        }
+        List<TmNeuronDescriptor> descriptorList = new ArrayList<>();
+        for (TmNeuron neuron: workspace.getNeuronList()) {
+            TmNeuronDescriptor descriptor = new TmNeuronDescriptor(
+                    neuron.getId(), neuron.getName(), neuron.getGeoAnnotationMap().size() + neuron.getRootAnnotations().size()
+            );
+            descriptorList.add(descriptor);
+        }
+        return descriptorList;
+        /*
+            // Validate sample
+            Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
+            if (!workspaceEntity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
+                throw new Exception("Neurons must be parented with valid Workspace Id");
+            }
+            List<TmNeuronDescriptor> descriptorList=new ArrayList<TmNeuronDescriptor>();
+            for (Entity possibleNeuron : workspaceEntity.getChildren()) {
+                if (possibleNeuron.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+                    if (possibleNeuron.getOwnerKey().equals(ownerKey)) {
+                        Long nId=possibleNeuron.getId();
+                        String nName=possibleNeuron.getName();
+                        int annoCount=0;
+                        for (EntityData ed : possibleNeuron.getEntityData()) {
+                            String edName=ed.getEntityAttrName();
+                            if (edName.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE) || edName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
+                                annoCount++;
+                            }
+                        }
+                        TmNeuronDescriptor descriptor=new TmNeuronDescriptor(nId, nName, annoCount);
+                        descriptorList.add(descriptor);
+                    }
+                }
+            }
+            Collections.sort(descriptorList, new Comparator<TmNeuronDescriptor>() { @Override public int compare(TmNeuronDescriptor a,
+                  TmNeuronDescriptor b) { if (a.getId() < b.getId()) { return 1; } else { return 0; } } });
+            return descriptorList;
+        
+        */
     }    
 
     public void deleteAnchoredPath(TmWorkspace workspace, TmAnchoredPath path) throws Exception {
