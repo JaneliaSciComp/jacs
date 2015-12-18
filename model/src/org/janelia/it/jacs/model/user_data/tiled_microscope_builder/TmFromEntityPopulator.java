@@ -29,10 +29,15 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  * @author fosterl
  */
 public class TmFromEntityPopulator {
-    public TmWorkspace createWorkspace(Entity entity, Entity sampleEntity) throws Exception {
+    public TmWorkspace loadWorkspace(Entity entity, Entity sampleEntity, TmWorkspace.Version wsVersion) throws Exception {
         TmWorkspace rtnVal = new TmWorkspace();
+        rtnVal.setWorkspaceVersion(wsVersion);
         populateFromEntity(entity, sampleEntity, rtnVal);
         return rtnVal;
+    }
+    
+    public TmWorkspace loadWorkspace(Entity entity, Entity sampleEntity) throws Exception {
+        return loadWorkspace(entity, sampleEntity, TmWorkspace.Version.PB_1);
     }
     
     public TmNeuron loadNeuron(Entity entity) throws Exception, TmConnectivityException {
@@ -178,15 +183,19 @@ public class TmFromEntityPopulator {
         workspace.setName(entity.getName());
         workspace.setOwnerKey(entity.getOwnerKey());
 
-        List<TmNeuron> neuronList = new ArrayList<>();
-        for (Entity child : entity.getChildren()) {
-            if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
-                neuronList.add(loadNeuron(child));
-            } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
-                workspace.setPreferences(createTmPreferences(child));
+        // This avoids loading old-style, entity-based neurons, unless the
+        // workspace is from the previous workstation version.
+        if (workspace.getVersion().equals(TmWorkspace.Version.ENTITY_4)) {
+            List<TmNeuron> neuronList = new ArrayList<>();
+            for (Entity child : entity.getChildren()) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+                    neuronList.add(loadNeuron(child));
+                } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                    workspace.setPreferences(createTmPreferences(child));
+                }
             }
+            workspace.setNeuronList(neuronList);
         }
-        workspace.setNeuronList(neuronList);
 
         if (sampleEntity != null) {
             workspace.setSampleID(sampleEntity.getId());

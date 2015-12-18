@@ -15,6 +15,11 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  */
 
 public class TmWorkspace implements IsSerializable, Serializable {
+    public final static String WS_VERSION_PROP = "workspace_version";
+    public enum Version {
+        PB_1,             // Version 1 of the Protobuf-Encoded Neuron.
+        ENTITY_4          // Latest Workstation version, before Protobuf.
+    }
 
     //todo seed this entirely from without: serializables should not have so much functionality. LLF
     private Long id;
@@ -25,6 +30,8 @@ public class TmWorkspace implements IsSerializable, Serializable {
     private TmPreferences preferences;
     private Matrix micronToVoxMatrix;
     private Matrix voxToMicronMatrix;
+    
+    private Version version;
 
     public Long getId() {
         return id;
@@ -105,6 +112,14 @@ public class TmWorkspace implements IsSerializable, Serializable {
      */
     public void setVoxToMicronMatrix(Matrix voxToMicronMatrix) {
         this.voxToMicronMatrix = voxToMicronMatrix;
+    }
+    
+    public void setWorkspaceVersion(Version version) {
+        this.version = version;
+    }
+    
+    public Version getVersion() {
+        return version;
     }
 
     public TmWorkspace(Long id, String name, String ownerKey, Long sampleID, List<TmNeuron> neuronList, TmPreferences preferences) {

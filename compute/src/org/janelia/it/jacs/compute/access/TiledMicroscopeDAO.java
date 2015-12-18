@@ -44,7 +44,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     private final static String TMP_GEO_VALUE = "@@@ new geo value string @@@";
     private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
     private final static String BASE_PATH_PROP = "SWC.Import.BaseDir";
-
+    
     public TiledMicroscopeDAO(Logger logger) {
         super(logger);
         annotationDAO=new AnnotationDAO(logger);
@@ -116,10 +116,22 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             sampleEd.setValue(brainSampleId.toString());
             annotationDAO.saveOrUpdate(sampleEd);
             workspaceEntity.getEntityData().add(sampleEd);
-            annotationDAO.saveOrUpdate(workspaceEntity);
+
             Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
+            // declare the workspace compatibility.  All new WS's at time of
+            // writing, shall be ProtoBuf version 1.
+            EntityData wsVersionEd = new EntityData();
+            wsVersionEd.setOwnerKey(workspaceEntity.getOwnerKey());
+            wsVersionEd.setCreationDate(new Date());
+            wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
+            wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + TmWorkspace.Version.PB_1);
+            wsVersionEd.setParentEntity(workspaceEntity);
+            annotationDAO.saveOrUpdate(wsVersionEd);
+            workspaceEntity.getEntityData().add(wsVersionEd);
+            
+            annotationDAO.saveOrUpdate(workspaceEntity);
             // back to user
-            TmWorkspace tmWorkspace = tmFactory.createWorkspace(workspaceEntity, sampleEntity);
+            TmWorkspace tmWorkspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
 
@@ -1459,6 +1471,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             Long sampleID = null;
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);            
             Entity sampleEntity = null;
+            TmWorkspace.Version wsVersion = TmWorkspace.Version.ENTITY_4;
             if (workspaceEntity != null) {
                 EntityData sampleEd = workspaceEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
                 if (sampleEd == null) {
@@ -1467,13 +1480,20 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     sampleID = Long.valueOf(sampleEd.getValue());
                     sampleEntity = annotationDAO.getEntityById(sampleID);
                 }
+                // This will probably never be needed.
+                EntityData wsVersionEd = workspaceEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_PROPERTY);
+                if (wsVersionEd != null) {
+                    String wsVersionValue = wsVersionEd.getValue();
+                    String[] nvp = wsVersionValue.split("=");
+                    wsVersion = TmWorkspace.Version.valueOf(nvp[1].trim());
+                }
             }
 
             // see notes in TmNeuron() on the connectivity retry scheme
             TmWorkspace workspace = null;
             boolean connectivityException;
             try {
-                workspace = tmFactory.createWorkspace(workspaceEntity, sampleEntity);
+                workspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, wsVersion);
                 connectivityException = false;
             }
             catch (TmConnectivityException e) {
@@ -1483,7 +1503,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (connectivityException) {
                 fixConnectivityWorkspace(workspaceId);
                 workspaceEntity = annotationDAO.getEntityById(workspaceId);
-                workspace = tmFactory.createWorkspace(workspaceEntity, sampleEntity);
+                workspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, wsVersion);
             }
             return workspace;
         } catch (Exception e) {

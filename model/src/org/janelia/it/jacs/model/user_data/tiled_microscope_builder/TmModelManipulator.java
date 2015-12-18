@@ -29,7 +29,25 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
  */
 public class TmModelManipulator {
     private IdSource idSource = new IdSource();
+    private TmModelAdapter dataSource;
     private Logger log = Logger.getLogger(TmModelManipulator.class);
+
+    // NOTE: workspaces are still stored as entities.  As such, they should
+    // be created in a DAO.
+    
+    
+    public TmModelManipulator(TmModelAdapter dataSource) {
+        this.dataSource = dataSource;
+    }
+    
+    /**
+     * The workspace's neurons will not have been loaded with the workspace,
+     * because we wish to be able to load them from any client, including
+     * one which happens to be on the server.
+     */
+    public void loadWorkspaceNeurons(TmWorkspace workspace) throws Exception {
+        dataSource.loadNeurons(workspace);
+    }
     
     /**
      * Makes a new neuron.
@@ -425,21 +443,21 @@ public class TmModelManipulator {
         }
         
         // Check whether the roots are really known annotations.
-        final List<TmGeoAnnotation> toRemoveGEO = new ArrayList<>();
+        final List<TmGeoAnnotation> toRepairRoots = new ArrayList<>();
         for (TmGeoAnnotation root: tmNeuron.getRootAnnotations()) {
             if (! tmNeuron.getGeoAnnotationMap().containsKey(root.getId())) {
-                toRemoveGEO.add(root);
+                toRepairRoots.add(root);
                 errorResults
                         .append(root)
-                        .append(" removed from ")
+                        .append(" repaired in ")
                         .append(tmNeuron)
                         .append(" because it was not found among annotations.")
                         .append("\n");
             }
         }        
         // Separate pass to avoid concurrent-mod.
-        for (TmGeoAnnotation geo: toRemoveGEO) {
-            tmNeuron.getRootAnnotations().remove(geo);
+        for (TmGeoAnnotation geo: toRepairRoots) {
+            tmNeuron.getGeoAnnotationMap().put(geo.getId(), geo);
         }
         
         // Ensure parentage ids are properly established.
@@ -465,14 +483,14 @@ public class TmModelManipulator {
 //    }
     
     private void deleteEntityData(Long entityDataId) throws Exception {
-        
+        dataSource.deleteEntityData(entityDataId);
     }
     
     private void saveNeuron(TmNeuron neuron) throws Exception {
-        
+        dataSource.saveNeuron(neuron);
     }
     
     private TmNeuron refreshFromEntityData(TmNeuron neuron) throws Exception {
-        return neuron;
+        return dataSource.refreshFromEntityData(neuron);
     }
 }
