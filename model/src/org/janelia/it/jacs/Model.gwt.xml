@@ -30,12 +30,14 @@
     </source>
     <!--<source path="model/download"/>-->
     <source path="model/entity">
+        <include name="Entity.java"/>
+        <include name="EntityActorPermission.java"/>
         <include name="EntityType.java"/>
         <include name="EntityData.java"/>
         <include name="EntityAttribute.java"/>
         <include name="EntityConstants.java"/>
-        <include name="ForbiddenEntity.java"/>
         <include name="EntityStatus.java"/>
+        <exclude name="ForbiddenEntity.java"/>
     </source>
     <source path="model/genomics"/>
     <!--<source path="model/metadata"/>-->

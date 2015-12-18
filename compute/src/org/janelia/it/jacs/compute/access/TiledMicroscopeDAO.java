@@ -180,9 +180,15 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      * @param swcFolderLoc where is the server-accessible folder?
      * @param ownerKey winds up owning it all.
      * @param sampleId required, to find the base path, optionally can get from workspace.
+     * @param workspaceNameParam optional, may be left blank or null.
      * @throws ComputeException thrown as wrapper for any exceptions.
      */
-    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long sampleId) throws ComputeException {
+    public void importSWCFolder(String swcFolderLoc, String ownerKey, Long sampleId, String workspaceNameParam) throws ComputeException {
+        //this.combinedCreateNeuronTime = 0L;
+        //this.combinedGeoLinkTime = 0L;
+        //this.combinedNodeIterTime = 0L;
+        //this.combinedReadTime = 0L;
+        
         File swcFolder = new File(swcFolderLoc);
         if (!swcFolder.isAbsolute()) {
             String basePathstring = SystemConfigurationProperties.getString(BASE_PATH_PROP);
@@ -215,8 +221,15 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             } else {
                 folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
             }
-            log.info("Creating new workspace called " + swcFolder.getName() + ", belonging to " + ownerKey + ".");
-            workspaceEntity = createTiledMicroscopeWorkspaceInMemory(sampleId, swcFolder.getName(), ownerKey);
+            String workspaceName = null;
+            if (workspaceNameParam == null  ||  workspaceNameParam.length() == 0) {
+                workspaceName = swcFolder.getName();
+            }
+            else {
+                workspaceName = workspaceNameParam.trim();
+            }
+            log.info("Creating new workspace called " + workspaceName + ", belonging to " + ownerKey + ".");
+            createTiledMicroscopeWorkspaceInMemory(sampleId, workspaceName, ownerKey);
         }
 
         SWCDataConverter swcDataConverter = new SWCDataConverter();

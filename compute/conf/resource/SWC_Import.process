@@ -18,14 +18,18 @@
             <input name="PROCESS_VARIABLE_2" value="SAMPLE_ID"/>
             <input name="TASK_PARAMETER_3" value="user name"/>
             <input name="PROCESS_VARIABLE_3" value="USER_NAME"/>
+            <input name="TASK_PARAMETER_4" value="workspace name"/>
+            <input name="PROCESS_VARIABLE_4" value="WORKSPACE_NAME"/>
     	    <output name="FOLDER_NAME"/>
     	    <output name="SAMPLE_ID"/>
     	    <output name="USER_NAME"/>
+            <output name="WORKSPACE_NAME"/>
     	</operation>
     	<operation name="SWC Import Service" processor="org.janelia.it.jacs.compute.service.tiledMicroscope.SwcImportService">
             <input name="FOLDER_NAME"/>
             <input name="SAMPLE_ID"/>
             <input name="USER_NAME"/>
+            <input name="WORKSPACE_NAME"/>
     	</operation>
     </sequence>
 </process>
