@@ -9,7 +9,6 @@ import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
-import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -24,6 +23,7 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
+import org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -32,36 +32,24 @@ import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
 
+import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jms.*;
+import javax.jms.Queue;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Hashtable;
-import java.util.Collections;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Date;
-//import java.util.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Resource;
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.MessageProducer;
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
-import org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants;
+import java.lang.IllegalStateException;
+
+//import java.util.*;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -197,32 +185,34 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             producer.send(message);
             
             return userToolEvent;
-        } catch (Throwable th) {
+        }
+        catch (Throwable th) {
             logger.error("Cannot log event to session: " + (null == userToolEvent ? "null" : userToolEvent.toString()));
-            logger.error("Error: " + th.getMessage());
-            th.printStackTrace();
-        } finally {
+            logger.error("Error: " + th.getMessage(),th);
+        }
+        finally {
             String finalMessage = null;
             try {
                 if (producer != null)
                     producer.close();            
-            } catch (JMSException ex) {
+            }
+            catch (JMSException ex) {
                 finalMessage = ex.getMessage();
-                ex.printStackTrace();
+                logger.error("Error closing the producer",ex);
             }
             try {
                 if (session != null)
                     session.close();
             } catch (JMSException ex) {
                 finalMessage = ex.getMessage();
-                ex.printStackTrace();
+                logger.error("Error closing the session",ex);
             }
             try {
                 if (connection != null)
                     connection.close();
             } catch (JMSException ex) {
                 finalMessage = ex.getMessage();
-                ex.printStackTrace();
+                logger.error("Error closing the connection",ex);
             }
             if (finalMessage != null) {
                 logger.error("Failure during JMS message tear-down: " + finalMessage);
