@@ -173,9 +173,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     @Override
     public UserToolEvent addEventToSessionAsync(UserToolEvent userToolEvent) {
         // save as other override, but talk to MDB.
+        Connection connection = null;
+        javax.jms.Session session = null;
+        MessageProducer producer = null;
         try {
-            Connection connection = connectionFactory.createConnection();
-            javax.jms.Session session = connection.createSession(false, javax.jms.Session.CLIENT_ACKNOWLEDGE);
+            connection = connectionFactory.createConnection();
+            session = connection.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
 
             // Marshalling the event into a message.
             ObjectMessage message = session.createObjectMessage();
@@ -190,14 +193,40 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             message.setObject(userToolEvent);
             
             // Send and complete.
-            MessageProducer producer = session.createProducer(metricsLoggingQueue);
+            producer = session.createProducer(metricsLoggingQueue);
             producer.send(message);
-            producer.close();
             
             return userToolEvent;
-        } catch (JMSException e) {
+        } catch (Throwable th) {
             logger.error("Cannot log event to session: " + (null == userToolEvent ? "null" : userToolEvent.toString()));
-            logger.error("Error: " + e.getMessage());
+            logger.error("Error: " + th.getMessage());
+            th.printStackTrace();
+        } finally {
+            String finalMessage = null;
+            try {
+                if (producer != null)
+                    producer.close();            
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                ex.printStackTrace();
+            }
+            try {
+                if (session != null)
+                    session.close();
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                ex.printStackTrace();
+            }
+            try {
+                if (connection != null)
+                    connection.close();
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                ex.printStackTrace();
+            }
+            if (finalMessage != null) {
+                logger.error("Failure during JMS message tear-down: " + finalMessage);
+            }
         }
         return null;
     }
