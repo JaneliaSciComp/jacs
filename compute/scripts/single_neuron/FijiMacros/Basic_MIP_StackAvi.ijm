@@ -118,8 +118,8 @@ if (!createMIPS && !createMovies) {
 
 brainChannelMapping = getChannelMapping("Brain");
 vncChannelMapping = getChannelMapping("VNC");
-print("Brain channel mapping: "+brainChannelMapping);
-print("VNC channel mapping: "+vncChannelMapping);
+//print("Brain channel mapping: "+brainChannelMapping);
+//print("VNC channel mapping: "+vncChannelMapping);
 
 allChannels = "";
 refChannels = "";
@@ -135,7 +135,7 @@ for (k=0; k<numSignalChannels; k++) {
 for (j=0; j<numOutputChannels; j++) {
     i = reverseMapping[j];
     cc = substring(chanspec,i,i+1);
-    print("reverse mapped "+j+" -> "+i+ " ("+cc+")");
+    //print("reverse mapped "+j+" -> "+i+ " ("+cc+")");
     allChannels += "1";
     if (cc == 'r') {
         refChannels += "1";
@@ -165,15 +165,20 @@ for (j=0; j<numOutputChannels; j++) {
     }
 }
 
-print("All channels: "+allChannels);
-print("Reference channels: "+refChannels);
-print("All signal channels: "+signalChannels);
+//print("All channels: "+allChannels);
+//print("Reference channels: "+refChannels);
+//print("All signal channels: "+signalChannels);
 
 // Open input files
 
 openChannels(brainImage, "Brain");
 if (vncImage!="") {
     openChannels(vncImage, "VNC");
+}
+
+var defaultMaxValue = 4095;
+if (bitDepth()==8) {
+	defaultMaxValue = 255;
 }
 
 if (brightnessComp) {
@@ -526,7 +531,7 @@ function getMinMax(window_name) {
 	}
 	else {
 	    minMax[0] = 0;
-	    minMax[1] = 4095;
+	    minMax[1] = defaultMaxValue;
 		print("Performing histogram stretching to default range "+minMax[0]+"-"+minMax[1]);
 	}
     return minMax;
@@ -580,7 +585,7 @@ function getBrightness(window_name) {
 	selectWindow(window_name);
 		
 	// Specify bit depth as number of intensity values
-	nBins = 4096;
+	nBins = defaultMaxValue+1;
 	
 	// Fraction of total pixels desired saturated; drives intensity adjustment
 	// Saturation fractions probably only work for 2D or 3D, not both
@@ -596,7 +601,6 @@ function getBrightness(window_name) {
 	
 	// Reset contrast
 	setMinAndMax(0, nBins);
-	//run("Apply LUT", "stack");
 	
 	// Initialize histogram
 	hMin=0;
@@ -614,7 +618,12 @@ function getBrightness(window_name) {
 		for (slice=1; slice<=slices; slice++) {
 			selectImage(window_name);
 			Stack.setSlice(slice);
-			getHistogram(values,counts,nBins,hMin,nBins);
+			if (bitDepth()==8) {
+				getHistogram(values, counts, nBins);
+			}
+			else {
+				getHistogram(values, counts, nBins, hMin, nBins);
+			}
 			for (i=0; i<nBins; i++) {
 				if (slice>1) {
 					count = counts[i] + getResult("Count", i);
