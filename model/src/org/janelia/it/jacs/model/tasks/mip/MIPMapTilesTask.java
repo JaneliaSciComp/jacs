@@ -58,6 +58,7 @@ public class MIPMapTilesTask extends Task {
     transient private static final String PARAM_targetMediaFormat = "target media format (jpg, png)";
     transient private static final String PARAM_targetSkipEmptyTiles = "target skip empty tiles";
     transient private static final String PARAM_processingAccount = "processing account";
+    transient private static final String PARAM_interpolation = "interpolation";
 
     public MIPMapTilesTask(Set<Node> inputNodes, String owner, List<Event> events, Set<TaskParameter> taskParameterSet) {
         super(inputNodes, owner, events, taskParameterSet);
@@ -150,6 +151,8 @@ public class MIPMapTilesTask extends Task {
                 return new BooleanParameterVO(Boolean.valueOf(value));
             case PARAM_processingAccount:
                 return new TextParameterVO(value, 400);
+            case PARAM_interpolation:
+                return new TextParameterVO(value, 10);
             default:
                 return null;
         }
@@ -463,5 +466,14 @@ public class MIPMapTilesTask extends Task {
 
     public void setProcessingAccount(String processingAccount) {
         setParameter(PARAM_processingAccount, processingAccount);
+    }
+
+    @XmlElement(name = "interpolation")
+    public String getInterpolation() {
+        return getParameter(PARAM_interpolation);
+    }
+
+    public void setInterpolation(String interpolation) {
+        setParameter(PARAM_interpolation, interpolation);
     }
 }

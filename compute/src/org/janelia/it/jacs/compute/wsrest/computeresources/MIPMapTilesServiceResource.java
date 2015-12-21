@@ -108,6 +108,7 @@ public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPM
         processConfig.put("TARGET_SKIP_EMPTY_TILES", task.getSkipEmptyTiles());
         processConfig.put("BG_PIXEL_VALUE", task.getBgPixelValue());
         processConfig.put("PROCESSING_ACCOUNT", task.getProcessingAccount());
+        processConfig.put("INTERPOLATION", task.getInterpolation());
         return processConfig;
     }
 
