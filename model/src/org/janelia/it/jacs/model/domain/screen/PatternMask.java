@@ -10,7 +10,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 
-@MongoMapped(collectionName = "patternMask")
+@MongoMapped(collectionName="patternMask",label="Pattern Mask")
 public class PatternMask extends AbstractDomainObject implements HasFiles, HasFilepath {
 
     private Reference screenSample;

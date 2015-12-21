@@ -11,7 +11,7 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "dataSet")
+@MongoMapped(collectionName="dataSet",label="Data Set")
 public class DataSet extends AbstractDomainObject {
 
     private String identifier;

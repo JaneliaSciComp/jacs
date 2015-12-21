@@ -16,7 +16,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "image")
+@MongoMapped(collectionName="image",label="Image")
 @SearchType(key="image",label="Image")
 public class Image extends AbstractDomainObject implements HasFiles, HasFilepath {
 

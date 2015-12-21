@@ -20,7 +20,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "sample")
+@MongoMapped(collectionName="sample",label="Sample")
 @SearchType(key="sample",label="Sample")
 public class Sample extends AbstractDomainObject {
 

@@ -6,7 +6,7 @@ import java.util.Set;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
-@MongoMapped(collectionName = "ontology")
+@MongoMapped(collectionName="ontology",label="Ontology")
 public class Ontology extends OntologyTerm implements DomainObject {
 
     private String ownerKey;

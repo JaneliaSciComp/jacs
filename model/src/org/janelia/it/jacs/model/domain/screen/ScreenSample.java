@@ -13,7 +13,7 @@ import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
-@MongoMapped(collectionName = "screenSample")
+@MongoMapped(collectionName="screenSample",label="Screen Sample")
 @SearchType(key="screenSample",label="Screen Sample")
 public class ScreenSample extends AbstractDomainObject implements HasFiles, HasFilepath {
 

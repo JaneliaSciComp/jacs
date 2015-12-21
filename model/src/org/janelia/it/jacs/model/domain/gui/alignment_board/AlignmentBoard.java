@@ -5,7 +5,7 @@ import java.util.List;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
-@MongoMapped(collectionName = "alignmentBoard")
+@MongoMapped(collectionName="alignmentBoard",label="Alignment Board")
 public class AlignmentBoard extends AbstractDomainObject {
 
     private String imageSize;

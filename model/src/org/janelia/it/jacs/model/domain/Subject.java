@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "subject")
+@MongoMapped(collectionName="subject",label="Subject")
 public class Subject implements HasIdentifier {
     
     @MongoId

@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
-import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.jongo.marshall.jackson.oid.MongoId;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -64,9 +64,9 @@ public abstract class AbstractDomainObject implements DomainObject {
     @SearchAttribute(key="type",label="Type")
     @JsonIgnore
     public String getType() {
-        SearchType searchType = (SearchType)getClass().getAnnotation(SearchType.class);
-        if (searchType!=null) {
-            return searchType.key();
+        MongoMapped mongoMappedAnnot = (MongoMapped)getClass().getAnnotation(MongoMapped.class);
+        if (mongoMappedAnnot!=null) {
+            return mongoMappedAnnot.label();
         }
         return null;
     }

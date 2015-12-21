@@ -12,7 +12,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "flyLine")
+@MongoMapped(collectionName="flyLine",label="Fly Line")
 @SearchType(key="flyLine",label="Fly Line")
 public class FlyLine extends AbstractDomainObject {
 

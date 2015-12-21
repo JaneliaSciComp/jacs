@@ -12,17 +12,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public class SamplePipelineRun {
 
+    private Long id;
     private String name;
     private String pipelineProcess;
     private Integer pipelineVersion;
     private Date creationDate;
     private List<PipelineResult> results;
     private PipelineError error;
-
-    public boolean hasError() {
-        return error!=null;
-    }
-
 
     @JsonIgnore
     protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
@@ -66,9 +62,20 @@ public class SamplePipelineRun {
         }
         results.remove(result);
     }
-    
+
+    public boolean hasError() {
+        return error!=null;
+    }
+
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
     
     public Date getCreationDate() {
         return creationDate;

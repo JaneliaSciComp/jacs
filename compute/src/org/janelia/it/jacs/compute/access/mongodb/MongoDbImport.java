@@ -722,6 +722,7 @@ public class MongoDbImport extends AnnotationDAO {
             }
             
             SamplePipelineRun run = new SamplePipelineRun();
+            run.setId(runEntity.getId());
             run.setName(runEntity.getName());
             run.setCreationDate(runEntity.getCreationDate());
             run.setPipelineProcess(runEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS));
@@ -792,6 +793,7 @@ public class MongoDbImport extends AnnotationDAO {
 
     private LSMSummaryResult getLSMSummaryResult(List<LSMImage> lsms, Entity resultEntity) throws Exception {
     	LSMSummaryResult result = new LSMSummaryResult();
+    	result.setId(resultEntity.getId());
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
@@ -809,6 +811,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private SampleProcessingResult getSampleProcessingResult(Entity resultEntity) throws Exception {
         SampleProcessingResult result = new SampleProcessingResult();
+        result.setId(resultEntity.getId());
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
@@ -821,6 +824,10 @@ public class MongoDbImport extends AnnotationDAO {
         }
         
         Map<FileType,String> files = new HashMap<FileType,String>();
+
+        // In some cases, the stack no longer has access to the MIPs (e.g. GMR_33A12_AE_01-57C10PEST_attp8_3stop1-A-20120608_20_A3), so we need to take them from the result itself
+        addImage(files,FileType.ReferenceMip,getRelativeFilename(result,resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
+        addImage(files,FileType.SignalMip,getRelativeFilename(result,resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
         
         Entity imageEntity = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         if (imageEntity!=null) {
@@ -853,6 +860,7 @@ public class MongoDbImport extends AnnotationDAO {
 
     private SamplePostProcessingResult getSamplePostProcessingResult(ObjectiveSample objectiveSample, Entity resultEntity) throws Exception {
         SamplePostProcessingResult result = new SamplePostProcessingResult();
+        result.setId(resultEntity.getId());
         result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
@@ -953,6 +961,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private SampleCellCountingResult getSampleCellCountingResult(Entity resultEntity) {
     	SampleCellCountingResult result = new SampleCellCountingResult();
+        result.setId(resultEntity.getId());
     	result.setName(resultEntity.getName());
         result.setCreationDate(resultEntity.getCreationDate());
         result.setFilepath(resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
@@ -1011,6 +1020,7 @@ public class MongoDbImport extends AnnotationDAO {
     private SampleAlignmentResult getAlignmentResult(Entity alignmentEntity, Entity imageEntity, Entity movieEntity) throws Exception {
         
         SampleAlignmentResult result = new SampleAlignmentResult();
+        result.setId(alignmentEntity.getId());
         result.setName(alignmentEntity.getName());
         result.setCreationDate(imageEntity.getCreationDate());
         result.setAlignmentSpace(imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE));
@@ -1244,6 +1254,7 @@ public class MongoDbImport extends AnnotationDAO {
         fragmentsReference.setReferenceId(separationEntity.getId());
         
         NeuronSeparation neuronSeparation = new NeuronSeparation();
+        neuronSeparation.setId(separationEntity.getId());
         neuronSeparation.setName(separationEntity.getName());
         neuronSeparation.setCreationDate(separationEntity.getCreationDate());
         neuronSeparation.setFilepath(separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));

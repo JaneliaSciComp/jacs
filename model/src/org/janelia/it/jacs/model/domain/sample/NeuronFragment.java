@@ -16,7 +16,7 @@ import org.janelia.it.jacs.model.domain.support.SearchTraversal;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "fragment")
+@MongoMapped(collectionName="fragment",label="Neuron Fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasFiles, HasFilepath {
 
     @SearchTraversal({NeuronFragment.class})

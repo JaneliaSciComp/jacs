@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "objectSet")
+@MongoMapped(collectionName="objectSet",label="Object Set")
 @SearchType(key="objectSet",label="Object Set")
 public class ObjectSet extends AbstractDomainObject implements IsParent {
 

@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "annotation")
+@MongoMapped(collectionName="annotation",label="Annotation")
 public class Annotation extends AbstractDomainObject {
 
     @JsonUnwrapped

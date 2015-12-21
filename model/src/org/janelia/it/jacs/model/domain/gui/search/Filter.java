@@ -15,7 +15,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName = "filter")
+@MongoMapped(collectionName="filter",label="Filter")
 @SearchType(key="filter",label="Filter")
 public class Filter extends AbstractDomainObject implements IsParent {
 

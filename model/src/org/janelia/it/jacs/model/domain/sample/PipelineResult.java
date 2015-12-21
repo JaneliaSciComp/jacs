@@ -8,9 +8,10 @@ import java.util.Map;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * The result of some processing. May be nested if further processing is done on this result.
@@ -18,8 +19,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
-public class PipelineResult implements HasFilepath, HasFiles {
+public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
 
+    private Long id;
     private String name;
     private String filepath;
     private Date creationDate;
@@ -60,6 +62,14 @@ public class PipelineResult implements HasFilepath, HasFiles {
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
+    
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
     
     public String getName() {
         return name;

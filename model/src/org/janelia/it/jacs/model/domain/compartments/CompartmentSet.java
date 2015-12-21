@@ -6,7 +6,7 @@ import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
-@MongoMapped(collectionName = "compartmentSet")
+@MongoMapped(collectionName="compartmentSet",label="Compartment Set")
 public class CompartmentSet extends AbstractDomainObject implements HasFilepath {
 
     private String filepath;
