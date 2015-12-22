@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.shared.utils;
+package org.janelia.it.jacs.model.util;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
