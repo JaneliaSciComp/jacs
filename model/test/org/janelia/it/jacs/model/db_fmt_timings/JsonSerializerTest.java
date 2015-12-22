@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.janelia.it.jacs.compute.db_fmt_timings;
+package org.janelia.it.jacs.model.db_fmt_timings;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
