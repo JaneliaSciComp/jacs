@@ -189,6 +189,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_JFS_PATH                            = "JFS Path";
     public static final String ATTRIBUTE_TMOG_DATE                           = "TMOG Date"; // Timestamp indicating when the LSM or Sample was TMOG'd. For Samples, this is the max TMOG date of all the LSMs. 
     public static final String ATTRIBUTE_COMPLETION_DATE                     = "Completion Date"; // Timestamp indicating when the LSM or Sample was first completed.
+    public static final String ATTRIBUTE_PROTOBUF_NEURON                     = "PB Serialized Neuron";
     
     // Fly Line Release
     public static final String ATTRIBUTE_RELEASE_DATE                        = "Release Date"; // Timestamp indicating when the release will take place

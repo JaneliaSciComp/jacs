@@ -61,6 +61,8 @@ import com.fasterxml.jackson.databind.util.ISO8601Utils;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import java.io.InputStream;
+import sun.misc.BASE64Decoder;
 
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
@@ -580,6 +582,48 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
 
         return filter((Entity)query.uniqueResult());
+    }
+    
+    /**
+     * Given full knowledge of some entity that has entity-datas of the type
+     * provided, fetch the values from all such entitydata rows.  Prior to
+     * fetch, convert all byte array values to non-base-64 byte arrays.  The
+     * assumption is made, that the database content is base 64.
+     * 
+     * @param entityId the owner of the entity datas.
+     * @param entityDataType type of entity data, whose value will be fetched.
+     * @return collection of arrays of byte.
+     */
+    public List<byte[]> getB64DecodedEntityDataValues(Long entityId, String entityDataType) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getEntityDataByEntityIdAndType(entityId=" + entityId + ", entityDataType=" + entityDataType +  ")");
+        }
+
+        List<byte[]> rtnVal = new ArrayList<>();
+        try (Connection conn = getJdbcConnection() ) {
+            conn.setAutoCommit(false);
+            String sql = "select ED.value as chars from entityData ED "
+                    + "where ED.parent_entity_id=? and ED.entity_att=?";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, entityId);
+                ps.setString(2, entityDataType);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        try (InputStream is = rs.getAsciiStream("chars")) {
+                            rtnVal.add(decoder.decodeBuffer(is));
+                        }
+                    }
+                }
+            }
+            
+        } catch(Exception ex) {
+            log.error("Failed to find entity datas under ID " + entityId + " of type " + entityDataType);
+            log.error(ex.getMessage());
+            throw new DaoException(ex);
+        }
+
+        return rtnVal;
     }
 
     public Entity getEntityById(Long targetId) {

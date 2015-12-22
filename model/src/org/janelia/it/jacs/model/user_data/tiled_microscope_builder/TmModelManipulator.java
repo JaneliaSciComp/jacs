@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.IdSource;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPath;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPathEndpoints;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
@@ -69,6 +70,7 @@ public class TmModelManipulator {
         tmNeuron.setOwnerKey(ownerKey);
         tmNeuron.setName(name);
         tmNeuron.setCreationDate(new Date());
+        tmNeuron.setWorkspaceId(workspace.getId());
         workspace.getNeuronList().add(tmNeuron);
         saveNeuron(tmNeuron);
         

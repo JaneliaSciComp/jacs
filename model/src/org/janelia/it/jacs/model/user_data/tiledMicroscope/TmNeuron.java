@@ -31,6 +31,7 @@ public class TmNeuron implements IsSerializable, Serializable {
     }
 
     private Long id;
+    private Long workspaceId;
     private String name;
     private Date creationDate;
     private String ownerKey;
@@ -76,6 +77,20 @@ public class TmNeuron implements IsSerializable, Serializable {
      */
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
+    }
+
+    /**
+     * @return the workspaceId
+     */
+    public Long getWorkspaceId() {
+        return workspaceId;
+    }
+
+    /**
+     * @param workspaceId the workspaceId to set
+     */
+    public void setWorkspaceId(Long workspaceId) {
+        this.workspaceId = workspaceId;
     }
 
     @Override

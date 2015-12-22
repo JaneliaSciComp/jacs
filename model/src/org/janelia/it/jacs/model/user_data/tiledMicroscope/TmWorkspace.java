@@ -5,6 +5,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.io.Serializable;
 import java.util.List;
+import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
 
 /**
@@ -16,6 +17,7 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
 
 public class TmWorkspace implements IsSerializable, Serializable {
     public final static String WS_VERSION_PROP = "workspace_version";
+
     public enum Version {
         PB_1,             // Version 1 of the Protobuf-Encoded Neuron.
         ENTITY_4          // Latest Workstation version, before Protobuf.
