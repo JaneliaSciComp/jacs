@@ -3,13 +3,14 @@ package org.janelia.it.jacs.model.domain.sample;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
+import org.janelia.it.jacs.model.domain.interfaces.HasAnatomicalArea;
 
 /**
  * The result of running an alignment algorithm on a sample. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleAlignmentResult extends PipelineResult {
+public class SampleAlignmentResult extends PipelineResult implements HasAnatomicalArea {
 
 	private String anatomicalArea;
     private String imageSize;

@@ -1,12 +1,14 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import org.janelia.it.jacs.model.domain.interfaces.HasAnatomicalArea;
+
 /**
  * The result of processing the LSMs of a single anatomical area
  * of an ObjectiveSample. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleProcessingResult extends PipelineResult {
+public class SampleProcessingResult extends PipelineResult implements HasAnatomicalArea {
 	
 	private String anatomicalArea;
     private String imageSize;
