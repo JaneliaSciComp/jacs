@@ -135,6 +135,9 @@ public class TmModelManipulator {
             parent.addChild(rtnVal);
         }
 
+        tmNeuron.getRootAnnotations().add(rtnVal);
+        tmNeuron.getGeoAnnotationMap().put(rtnVal.getId(), rtnVal);
+
         saveNeuronData(tmNeuron);
         return rtnVal;        
     }
@@ -379,6 +382,10 @@ public class TmModelManipulator {
         }
     }
 
+    public TmNeuron refreshFromData(TmNeuron neuron) throws Exception {
+        return dataSource.refreshFromEntityData(neuron);
+    }
+
     private static final String UNREMOVE_GEO_ANNO_WARN_FMT = "Attempted to remove geo-annotation %d that was not in neuron %d.";
     public void deleteGeometricAnnotation(TmNeuron oldTmNeuron, TmGeoAnnotation tmAnno) throws Exception {
         TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
@@ -406,6 +413,10 @@ public class TmModelManipulator {
         }
     }        
     
+    public void saveNeuronData(TmNeuron neuron) throws Exception {
+        dataSource.saveNeuron(neuron);
+    }
+
     /**
      * fix connectivity issues for all neurons in a workspace
      */
@@ -487,11 +498,4 @@ public class TmModelManipulator {
         dataSource.deleteEntityData(neuron);
     }
     
-    private void saveNeuronData(TmNeuron neuron) throws Exception {
-        dataSource.saveNeuron(neuron);
-    }
-    
-    private TmNeuron refreshFromData(TmNeuron neuron) throws Exception {
-        return dataSource.refreshFromEntityData(neuron);
-    }
 }

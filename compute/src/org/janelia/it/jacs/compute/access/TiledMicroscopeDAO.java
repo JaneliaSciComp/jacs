@@ -141,6 +141,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    /** @deprecated */
     public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws DaoException {
         try {
             Entity workspace = annotationDAO.getEntityById(workspaceId);
@@ -409,10 +410,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    /** @deprecated */
     private TmNeuron createTiledMicroscopeNeuron(Entity workspace, String name, String ownerKey) throws DaoException {
         return createTiledMicroscopeNeuron(workspace, name, ownerKey, true);
     }
 
+    /** @deprecated */
     private TmNeuron createTiledMicroscopeNeuron(Entity workspace, String name, String ownerKey, boolean workspaceChecks) throws DaoException {
         try {
             if (workspace == null  ||  !workspace.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
@@ -451,6 +454,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      * @param precomputedNeuronId an ID, created for sufficient uniqueness.
      * @return the neuron model.
      * @throws DaoException 
+     * @deprecated now being done on client side.
      */
     private TmNeuron createTmNeuronInMemory(Entity workspace, String name, String ownerKey, long precomputedNeuronId) throws DaoException {
         try {
@@ -862,6 +866,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    /** @deprecated  */
     public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
                        int index, double x, double y, double z, String comment) throws DaoException {
         try {

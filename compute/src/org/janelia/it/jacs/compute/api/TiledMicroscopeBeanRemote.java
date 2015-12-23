@@ -40,6 +40,7 @@ public interface TiledMicroscopeBeanRemote {
 
     public void moveNeurite(TmGeoAnnotation annotation, TmNeuron newNeuron) throws ComputeException;
 
+    /** @deprecated */
     public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
                                           int index, double x, double y, double z, String comment) throws ComputeException;
 
