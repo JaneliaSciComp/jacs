@@ -6,7 +6,6 @@
 
 package org.janelia.it.jacs.model.user_data.tiled_microscope_builder;
 
-import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
 
@@ -20,5 +19,5 @@ public interface TmModelAdapter {
     void loadNeurons(TmWorkspace workspace) throws Exception;
     void saveNeuron(TmNeuron neuron) throws Exception;
     TmNeuron refreshFromEntityData(TmNeuron neuron) throws Exception;
-    void deleteEntityData(Long entityId) throws Exception;
+    void deleteEntityData(TmNeuron neuron) throws Exception;
 }

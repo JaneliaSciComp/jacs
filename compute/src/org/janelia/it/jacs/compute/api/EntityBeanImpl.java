@@ -644,6 +644,10 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
         return _annotationDAO.getB64DecodedEntityDataValues(entityId, entityDataType);
     }
     
+    public byte[] getB64DecodedEntityDataValue(Long entityId, Long entityDataId, String entityDataType) throws ComputeException {
+        return _annotationDAO.getB64DecodedEntityDataValue(entityId, entityDataId, entityDataType);
+    }
+    
     public Entity getEntityTree(Long entityId) throws ComputeException {
         return getEntityTree(null, entityId);
     }

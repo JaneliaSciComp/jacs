@@ -585,7 +585,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
     }
     
     /**
-     * Given full knowledge of some entity that has entity-datas of the type
+     * Given ID of some entity that has entity-datas of the type
      * provided, fetch the values from all such entitydata rows.  Prior to
      * fetch, convert all byte array values to non-base-64 byte arrays.  The
      * assumption is made, that the database content is base 64.
@@ -596,7 +596,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
      */
     public List<byte[]> getB64DecodedEntityDataValues(Long entityId, String entityDataType) throws DaoException {
         if (log.isTraceEnabled()) {
-            log.trace("getEntityDataByEntityIdAndType(entityId=" + entityId + ", entityDataType=" + entityDataType +  ")");
+            log.trace("getB64DecodedEntityDataValues(entityId=" + entityId + ", entityDataType=" + entityDataType +  ")");
         }
 
         List<byte[]> rtnVal = new ArrayList<>();
@@ -623,6 +623,50 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(ex);
         }
 
+        return rtnVal;
+    }
+    
+    /**
+     * Given the ids of the parent entity, and the entity-data itself, fetch
+     * the entity-data.  Also constrain by type.
+     * 
+     * @param entityId owns the entity data
+     * @param entityDataId uniquely identifies the entity data.
+     * @param entityDataType entity-data must be one of these.
+     * @return what was fetched, as decoded from base 64.
+     * @throws DaoException wraps any exception thrown.
+     */
+    public byte[] getB64DecodedEntityDataValue(Long entityId, Long entityDataId, String entityDataType) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getB64DecodedEntityDataValue(entityId=" + entityId + ", entityDataId=" + entityDataId + ", entityDataType=" + entityDataType +  ")");
+        }
+
+        byte[] rtnVal = null;
+        
+        try (Connection conn = getJdbcConnection()) {
+            conn.setAutoCommit(false);
+            String sql = "select ED.value as chars from entityData ED "
+                       + "where ED.parent_entity_id=? and ED.id=? and ED.entity_att=?";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, entityId);
+                ps.setLong(2, entityDataId);
+                ps.setString(3, entityDataType);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        try (InputStream is = rs.getAsciiStream("chars")) {
+                            rtnVal = decoder.decodeBuffer(is);
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Failed to find entity datas under ID " + entityId + " of type " + entityDataType);
+            log.error(ex.getMessage());
+            throw new DaoException(ex);
+        }
+        
         return rtnVal;
     }
 

@@ -75,6 +75,7 @@ public interface EntityBeanRemote {
     public long getCountUserEntitiesWithAttributeValue(String subjectKey, String attrName, String attrValue) throws ComputeException;
     
     public List<byte[]> getB64DecodedEntityDataValues(Long entityId, String entityDataType) throws ComputeException;
+    public byte[] getB64DecodedEntityDataValue(Long entityId, Long entityDataId, String entityDataType) throws ComputeException;
     public Entity getEntityTree(String subjectKey, Long entityId) throws ComputeException;
     public Entity getEntityAndChildren(String subjectKey, Long entityId) throws ComputeException;
     public Set<Entity> getParentEntities(String subjectKey, Long entityId) throws ComputeException;

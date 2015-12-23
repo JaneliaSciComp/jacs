@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.IdSource;
-import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPath;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPathEndpoints;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
@@ -72,7 +71,7 @@ public class TmModelManipulator {
         tmNeuron.setCreationDate(new Date());
         tmNeuron.setWorkspaceId(workspace.getId());
         workspace.getNeuronList().add(tmNeuron);
-        saveNeuron(tmNeuron);
+        saveNeuronData(tmNeuron);
         
         return tmNeuron;        
     }
@@ -97,7 +96,7 @@ public class TmModelManipulator {
         final TmAnchoredPathEndpoints key = new TmAnchoredPathEndpoints(annotationID1, annotationID2);
         final TmAnchoredPath value = new TmAnchoredPath( idSource.next(), key, pointlist );
         tmNeuron.getAnchoredPathMap().put(key,value);
-        saveNeuron(tmNeuron);
+        saveNeuronData(tmNeuron);
         return value;        
     }
 
@@ -136,7 +135,7 @@ public class TmModelManipulator {
             parent.addChild(rtnVal);
         }
 
-        saveNeuron(tmNeuron);
+        saveNeuronData(tmNeuron);
         return rtnVal;        
     }
 
@@ -154,7 +153,7 @@ public class TmModelManipulator {
             TmNeuron oldTmNeuron
     ) throws Exception {
         
-        TmNeuron tmNeuron = refreshFromEntityData(oldTmNeuron);
+        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         // verify that both annotations are in the input neuron
         if (!tmNeuron.getGeoAnnotationMap().containsKey(annotation.getId())) {
             throw new Exception("input neuron doesn't contain child annotation " + annotation.getId());
@@ -177,14 +176,14 @@ public class TmModelManipulator {
         
         // Change parent ID.
         annotation.setParentId(newParentAnnotationID);
-        saveNeuron(tmNeuron);
+        saveNeuronData(tmNeuron);
     }
 
     // @todo may need to add create, update dates + ownerKey
     public TmStructuredTextAnnotation addStructuredTextAnnotation(TmNeuron oldTmNeuron, Long parentID, int parentType, int formatVersion,
             String data) throws Exception {
         
-        TmNeuron tmNeuron = refreshFromEntityData(oldTmNeuron);
+        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         // parent must be neuron or geoann:
         if (parentType != TmStructuredTextAnnotation.GEOMETRIC_ANNOTATION
                 && parentType != TmStructuredTextAnnotation.NEURON) {
@@ -210,7 +209,7 @@ public class TmModelManipulator {
             return;
         }
                 
-        TmNeuron tmNeuron = refreshFromEntityData(oldTmNeuron);
+        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         if (!tmNeuron.getGeoAnnotationMap().containsKey(newRoot.getId())) {
             throw new Exception(String.format("input neuron %d doesn't contain new root annotation %d",
                     tmNeuron.getId(), newRoot.getId()));
@@ -243,7 +242,7 @@ public class TmModelManipulator {
         
         // Make sure the neuron knows about its new root.
         tmNeuron.getRootAnnotations().add( newRoot );
-        saveNeuron(tmNeuron);
+        saveNeuronData(tmNeuron);
     }
     
     public void splitNeurite(TmNeuron oldTmNeuron, TmGeoAnnotation newRoot) throws Exception {
@@ -252,7 +251,7 @@ public class TmModelManipulator {
             return;
         }
 
-        TmNeuron tmNeuron = refreshFromEntityData(oldTmNeuron);
+        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         if (!tmNeuron.getGeoAnnotationMap().containsKey(newRoot.getId())) {
             throw new Exception(String.format("input neuron %d doesn't contain new root annotation %d",
                     tmNeuron.getId(), newRoot.getId()));
@@ -286,8 +285,8 @@ public class TmModelManipulator {
             return;
         }
 
-        TmNeuron oldTmNeuron = refreshFromEntityData(inMemOldTmNeuron);
-        TmNeuron newTmNeuron = refreshFromEntityData(inMemNewTmNeuron);
+        TmNeuron oldTmNeuron = refreshFromData(inMemOldTmNeuron);
+        TmNeuron newTmNeuron = refreshFromData(inMemNewTmNeuron);
 
         // Find the root annotation.  Ultimate parent of the annotation.
         TmGeoAnnotation rootAnnotation = annotation;
@@ -333,8 +332,8 @@ public class TmModelManipulator {
         
         // if it's the root, also change its parent annotation to the new neuron
         rootAnnotation.setParentId(newTmNeuron.getId());
-        saveNeuron(newTmNeuron);
-        saveNeuron(oldTmNeuron);
+        saveNeuronData(newTmNeuron);
+        saveNeuronData(oldTmNeuron);
 
     }
     
@@ -362,10 +361,10 @@ public class TmModelManipulator {
      * @throws Exception 
      */
     public void deleteAnchoredPath(TmNeuron oldTmNeuron, TmAnchoredPath path) throws Exception {
-        TmNeuron tmNeuron = refreshFromEntityData(oldTmNeuron);
+        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         // Remove the anchor path from its containing neuron        
         tmNeuron.getAnchoredPathMap().remove(path.getEndpoints());
-        saveNeuron(tmNeuron);
+        saveNeuronData(tmNeuron);
     }
     
     private static final String UNREMOVE_NEURON_WARN_FMT = "Attempted to remove neuron %d that was not in workspace %d.";
@@ -373,7 +372,7 @@ public class TmModelManipulator {
         boolean wasRemoved = tmWorkspace.getNeuronList().remove(tmNeuron);
         if (wasRemoved) {
             // Need to signal to DB that this entitydata must be deleted.
-            deleteEntityData(tmNeuron.getId());
+            deleteNeuronData(tmNeuron);
         }
         else {
             log.warn(String.format(UNREMOVE_NEURON_WARN_FMT, tmNeuron.getId(), tmWorkspace.getId()));
@@ -382,12 +381,12 @@ public class TmModelManipulator {
 
     private static final String UNREMOVE_GEO_ANNO_WARN_FMT = "Attempted to remove geo-annotation %d that was not in neuron %d.";
     public void deleteGeometricAnnotation(TmNeuron oldTmNeuron, TmGeoAnnotation tmAnno) throws Exception {
-        TmNeuron tmNeuron = refreshFromEntityData(oldTmNeuron);
+        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         TmGeoAnnotation removedAnno = tmNeuron.getGeoAnnotationMap().remove(tmAnno.getId());
         if (removedAnno != null) {
             // Only removed, if it actually existed in the list.
             tmNeuron.getRootAnnotations().remove(tmAnno);
-            saveNeuron(tmNeuron);
+            saveNeuronData(tmNeuron);
         }
         else {
             log.warn(String.format(UNREMOVE_GEO_ANNO_WARN_FMT, tmAnno.getId(), tmNeuron.getId()));
@@ -396,11 +395,11 @@ public class TmModelManipulator {
 
     private static final String UNREMOVE_TEX_ANNO_WARN_FMT = "Attempted to remove structured-text-annotation %d that was not in neuron %d.";
     public void deleteStructuredText(TmNeuron oldTmNeuron, TmStructuredTextAnnotation tmStrucTextAnno) throws Exception {
-        TmNeuron tmNeuron = refreshFromEntityData(oldTmNeuron);
+        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         
         TmStructuredTextAnnotation removedAnno = tmNeuron.getStructuredTextAnnotationMap().remove(tmStrucTextAnno.getId());
         if (removedAnno != null) {
-           saveNeuron(tmNeuron);
+           saveNeuronData(tmNeuron);
         }
         else {
             log.warn(String.format(UNREMOVE_TEX_ANNO_WARN_FMT, tmStrucTextAnno.getId(), tmNeuron.getId()));
@@ -484,15 +483,15 @@ public class TmModelManipulator {
 //        
 //    }
     
-    private void deleteEntityData(Long entityDataId) throws Exception {
-        dataSource.deleteEntityData(entityDataId);
+    private void deleteNeuronData(TmNeuron neuron) throws Exception {
+        dataSource.deleteEntityData(neuron);
     }
     
-    private void saveNeuron(TmNeuron neuron) throws Exception {
+    private void saveNeuronData(TmNeuron neuron) throws Exception {
         dataSource.saveNeuron(neuron);
     }
     
-    private TmNeuron refreshFromEntityData(TmNeuron neuron) throws Exception {
+    private TmNeuron refreshFromData(TmNeuron neuron) throws Exception {
         return dataSource.refreshFromEntityData(neuron);
     }
 }
