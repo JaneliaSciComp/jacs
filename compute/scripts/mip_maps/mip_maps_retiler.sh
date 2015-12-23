@@ -6,7 +6,11 @@ JAVA_MEMORY="21G"
 # Prepare the tiler parameters
 TILER_JAR_FILE="$SCRIPT_DIR/TileCATMAID-jar-with-dependencies.jar"
 
-TILER_PARAMS="-DsourceUrlFormat=${SOURCE_URL_ROOT}/${SOURCE_STACK_FORMAT} -Dinterpolation=NN"
+TILER_PARAMS="-DsourceUrlFormat=${SOURCE_URL_ROOT}/${SOURCE_STACK_FORMAT}"
+
+if [ "$INTERPOLATION" != "" ]; then
+    TILER_PARAMS="${TILER_PARAMS} -Dinterpolation=$INTERPOLATION"
+fi
 
 if [ "$TARGET_ROOT_URL" != "" ]; then
     TILER_PARAMS="${TILER_PARAMS} -DexportBasePath=$TARGET_ROOT_URL"

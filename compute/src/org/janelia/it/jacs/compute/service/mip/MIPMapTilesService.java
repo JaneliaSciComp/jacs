@@ -61,6 +61,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private Boolean targetSkipEmptyTiles;
     private Integer bgPixelValue;
     private String processingAccount;
+    private String interpolation;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -93,6 +94,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         targetSkipEmptyTiles = processData.getBoolean("TARGET_SKIP_EMPTY_TILES");
         bgPixelValue = processData.getInt("BG_PIXEL_VALUE");
         processingAccount = processData.getString("PROCESSING_ACCOUNT");
+        interpolation = processData.getString("INTERPOLATION");
     }
 
     private void extractImageParameters(IProcessData processData) throws MissingDataException {
@@ -161,24 +163,25 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         long processedWidth = sourceTileWidth * DESIRED_PROCESSED_X_TILES;
         long processedHeight = sourceTileHeight * DESIRED_PROCESSED_Y_TILES;
         long processedDepth;
-        if (orientation != null) {
+        if (orientation != null && !"xy".equalsIgnoreCase(orientation) ) {
             processedDepth = targetTileHeight * DESIRED_PROCESSED_Z_LAYERS;
         } else {
             processedDepth = DESIRED_PROCESSED_Z_LAYERS;;
         }
-        int xSplits = (int) Math.ceil(sourceWidth.doubleValue() / processedWidth);
-        int ySplits = (int) Math.ceil(sourceHeight.doubleValue() / processedHeight);
-        int zSplits = (int) Math.ceil(sourceDepth.doubleValue() / processedDepth);
+
+        int xSplits = (int) Math.ceil((targetMaxX.doubleValue() - targetMinX.doubleValue()) / processedWidth);
+        int ySplits = (int) Math.ceil((targetMaxY.doubleValue() - targetMinY.doubleValue()) / processedHeight);
+        int zSplits = (int) Math.ceil((targetMaxZ.doubleValue() - targetMinZ.doubleValue()) / processedDepth);
 
         for (int z = 0; z < zSplits; z++) {
+            long startZ = targetMinZ + z * processedDepth;
+            long endZ = Math.min(startZ + processedDepth - 1, targetMaxZ);
             for (int y = 0; y < ySplits; y++) {
+                long startY = targetMinY + y * processedHeight;
+                long endY = Math.min(startY + processedHeight - 1, targetMaxY);
                 for (int x = 0; x < xSplits; x++) {
                     long startX = targetMinX + x * processedWidth;
-                    long startY = targetMinY + y * processedHeight;
-                    long startZ = targetMinZ + z * processedDepth;
                     long endX = Math.min(startX + processedWidth - 1, targetMaxX);
-                    long endY = Math.min(startY + processedHeight - 1, targetMaxY);
-                    long endZ = Math.min(startZ + processedDepth - 1, targetMaxZ);
                     createConfigurationFile(++nJobs,
                             startX, startY, startZ,
                             endX, endY, endZ);
@@ -229,6 +232,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             writeValueOrNone(targetMediaFormat, fw);
             writeValueOrNone(targetSkipEmptyTiles, fw);
             writeValueOrNone(bgPixelValue, fw);
+            writeValueOrNone(interpolation, fw);
         } catch (IOException e) {
             throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e);
         }
@@ -288,6 +292,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         if (targetMediaFormat != null) script.append("read TARGET_MEDIA_FORMAT\n");
         if (targetSkipEmptyTiles != null) script.append("read TARGET_SKIP_EMPTY_TILES\n");
         if (bgPixelValue != null) script.append("read BG_PIXEL_VALUE\n");
+        if (interpolation != null) script.append("read INTERPOLATION\n");
 
         // pass them to the script as environment variables
         script
@@ -323,6 +328,7 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("TARGET_MEDIA_FORMAT=$TARGET_MEDIA_FORMAT ")
             .append("TARGET_SKIP_EMPTY_TILES=$TARGET_SKIP_EMPTY_TILES ")
             .append("BG_PIXEL_VALUE=$BG_PIXEL_VALUE ")
+            .append("INTERPOLATION=$INTERPOLATION ")
             .append(MIPMapTilesHelper.getMipMapsRetilerCommands()).append('\n');
         writer.write(script.toString());
     }

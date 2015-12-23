@@ -118,8 +118,8 @@ if (!createMIPS && !createMovies) {
 
 brainChannelMapping = getChannelMapping("Brain");
 vncChannelMapping = getChannelMapping("VNC");
-//print("Brain channel mapping: "+brainChannelMapping);
-//print("VNC channel mapping: "+vncChannelMapping);
+print("Brain channel mapping: "+brainChannelMapping);
+print("VNC channel mapping: "+vncChannelMapping);
 
 allChannels = "";
 refChannels = "";
@@ -143,6 +143,7 @@ for (j=0; j<numOutputChannels; j++) {
         for (k=0; k<numSignalChannels; k++) {
             s = singleSignalChannel[k];
             singleSignalChannel[k] = s + "0";
+            s = refSignalChannel[k];
             refSignalChannel[k] = s + "1";
         }
     }
@@ -153,11 +154,13 @@ for (j=0; j<numOutputChannels; j++) {
             if (k==signalIndex) {
                 s = singleSignalChannel[k];
                 singleSignalChannel[k] = s + "1";
-                refSignalChannel[k] = s + "0";
+                s = refSignalChannel[k];
+                refSignalChannel[k] = s + "1";
             }
             else {
                 s = singleSignalChannel[k];
                 singleSignalChannel[k] = s + "0";
+                s = refSignalChannel[k];
                 refSignalChannel[k] = s + "0";
             }
         }
@@ -168,6 +171,10 @@ for (j=0; j<numOutputChannels; j++) {
 //print("All channels: "+allChannels);
 //print("Reference channels: "+refChannels);
 //print("All signal channels: "+signalChannels);
+//for (k=0; k<numSignalChannels; k++) {
+//	print("Signal "+k+": "+singleSignalChannel[k]);
+//	print("Ref signal "+k+": "+refSignalChannel[k]);
+//}
 
 // Open input files
 
@@ -659,6 +666,7 @@ function getBrightness(window_name) {
 
 	// Close measurements window
 	run("Clear Results");
+	selectWindow("Results");
 	run("Close");
 	
 	print(window_name+ " threshold: " + adjustedThreshold);
