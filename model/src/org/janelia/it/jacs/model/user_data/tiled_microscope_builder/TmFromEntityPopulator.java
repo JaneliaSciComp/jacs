@@ -185,17 +185,15 @@ public class TmFromEntityPopulator {
 
         // This avoids loading old-style, entity-based neurons, unless the
         // workspace is from the previous workstation version.
-        if (workspace.getVersion().equals(TmWorkspace.Version.ENTITY_4)) {
-            List<TmNeuron> neuronList = new ArrayList<>();
-            for (Entity child : entity.getChildren()) {
-                if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
-                    neuronList.add(loadNeuron(child));
-                } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
-                    workspace.setPreferences(createTmPreferences(child));
-                }
+        List<TmNeuron> neuronList = new ArrayList<>();
+        for (Entity child : entity.getChildren()) {
+            if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
+                neuronList.add(loadNeuron(child));
+            } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                workspace.setPreferences(createTmPreferences(child));
             }
-            workspace.setNeuronList(neuronList);
         }
+        workspace.setNeuronList(neuronList);
 
         if (sampleEntity != null) {
             workspace.setSampleID(sampleEntity.getId());

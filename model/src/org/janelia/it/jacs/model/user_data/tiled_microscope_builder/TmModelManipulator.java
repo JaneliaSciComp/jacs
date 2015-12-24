@@ -65,12 +65,11 @@ public class TmModelManipulator {
 
         final String ownerKey = workspace.getOwnerKey();
         TmNeuron tmNeuron = new TmNeuron();
-        tmNeuron.setId(idSource.next());
+        tmNeuron.setId(null);
         tmNeuron.setOwnerKey(ownerKey);
         tmNeuron.setName(name);
         tmNeuron.setCreationDate(new Date());
         tmNeuron.setWorkspaceId(workspace.getId());
-        workspace.getNeuronList().add(tmNeuron);
         saveNeuronData(tmNeuron);
         
         return tmNeuron;        
@@ -132,7 +131,11 @@ public class TmModelManipulator {
         // If non-root, add this as a child of its parent.
         if (parentAnnotationId != null) {
             TmGeoAnnotation parent = tmNeuron.getGeoAnnotationMap().get(parentAnnotationId);
-            parent.addChild(rtnVal);
+            // Parent might be the neuron itself, if this is a root.
+            // Otherwise, ensure the inter-annotation linkage.
+            if (parent != null) {
+                parent.addChild(rtnVal);
+            }
         }
 
         tmNeuron.getRootAnnotations().add(rtnVal);

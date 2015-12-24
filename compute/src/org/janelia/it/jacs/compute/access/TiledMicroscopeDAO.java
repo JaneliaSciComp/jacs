@@ -118,14 +118,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             workspaceEntity.getEntityData().add(sampleEd);
 
             Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
-            // declare the workspace compatibility.  All new WS's at time of
-            // writing, shall be ProtoBuf version 1.
-            EntityData wsVersionEd = new EntityData();
-            wsVersionEd.setOwnerKey(workspaceEntity.getOwnerKey());
-            wsVersionEd.setCreationDate(new Date());
-            wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
-            wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + TmWorkspace.Version.PB_1);
-            wsVersionEd.setParentEntity(workspaceEntity);
+            EntityData wsVersionEd = setWorkspaceLatestVersion(workspaceEntity);
             annotationDAO.saveOrUpdate(wsVersionEd);
             workspaceEntity.getEntityData().add(wsVersionEd);
             
@@ -336,6 +329,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             sampleEd.setParentEntity(workspace);
             sampleEd.setValue(brainSampleId.toString());
             workspace.getEntityData().add(sampleEd);
+            setWorkspaceLatestVersion(workspace);
 
             return workspace;
 
@@ -1476,6 +1470,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             Long sampleID = null;
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);            
             Entity sampleEntity = null;
+            // The default workspace version will be the latest pre-proto-buf
+            // version.  A version found in the database overrides that.
             TmWorkspace.Version wsVersion = TmWorkspace.Version.ENTITY_4;
             if (workspaceEntity != null) {
                 EntityData sampleEd = workspaceEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
@@ -1662,6 +1658,18 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         //  to put in:
         geoAnnotation.setNeuronId(neuronId);
         return geoAnnotation;
+    }
+
+    public EntityData setWorkspaceLatestVersion(Entity workspaceEntity) {
+        // declare the workspace compatibility.  All new WS's at time of
+        // writing, shall be ProtoBuf version 1.
+        EntityData wsVersionEd = new EntityData();
+        wsVersionEd.setOwnerKey(workspaceEntity.getOwnerKey());
+        wsVersionEd.setCreationDate(new Date());
+        wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
+        wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + TmWorkspace.Version.PB_1);
+        wsVersionEd.setParentEntity(workspaceEntity);
+        return wsVersionEd;
     }
 
     private String threadSafeTempGeoValue() {
