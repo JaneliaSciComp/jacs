@@ -127,6 +127,7 @@ public class TmModelManipulator {
         rtnVal.setComment(comment);
         rtnVal.setNeuronId(tmNeuron.getId());
         rtnVal.setParentId(parentAnnotationId);
+        rtnVal.setId(idSource.next());
 
         // If non-root, add this as a child of its parent.
         if (parentAnnotationId != null) {
