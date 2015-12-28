@@ -182,9 +182,9 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         script.append("done\n");
         
         // Move everything to the final output directory
-        script.append("cp $TEMP_DIR/*.png $OUTPUT_DIR\n");
-        script.append("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR\n");
-        script.append("cp $TEMP_DIR/*.properties $OUTPUT_DIR\n");
+        script.append("cp $TEMP_DIR/*.png $OUTPUT_DIR || true\n");
+        script.append("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR || true\n");
+        script.append("cp $TEMP_DIR/*.properties $OUTPUT_DIR || true\n");
         
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         
