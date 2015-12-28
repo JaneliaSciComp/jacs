@@ -14,24 +14,24 @@ import org.janelia.it.jacs.model.tasks.Task;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class GetSampleDataSetsService extends AbstractEntityService {
-	
+
     public void execute() throws Exception {
-        	
-    	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-    	if (sampleEntityId == null || "".equals(sampleEntityId)) {
-    		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-    	}
-    	
-    	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-    	if (sampleEntity == null) {
-    		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-    	}
-    	
-    	if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
-    		throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
-    	}
-    	
-    	contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+
+        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
+        if (sampleEntityId == null || "".equals(sampleEntityId)) {
+            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
+        }
+
+        Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
+        if (sampleEntity == null) {
+            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+        }
+
+        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
+            throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
+        }
+
+        contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         String dataSetStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         
@@ -43,7 +43,6 @@ public class GetSampleDataSetsService extends AbstractEntityService {
             for (String dataSetIdentifier : dataSetStr.split(",")) {
                 dataSetList.add(dataSetIdentifier);
             }
-            
             contextLogger.info("Putting ("+Task.csvStringFromCollection(dataSetList)+") in DATA_SET_IDENTIFIER");
             processData.putItem("DATA_SET_IDENTIFIER", dataSetList);
         }

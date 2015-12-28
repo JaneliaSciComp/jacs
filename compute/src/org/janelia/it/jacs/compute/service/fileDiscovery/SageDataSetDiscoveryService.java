@@ -24,14 +24,13 @@ import java.util.*;
  */ 
 public class SageDataSetDiscoveryService extends AbstractEntityService {
    
-	protected FileDiscoveryHelper fileHelper;
-	protected SampleHelper sampleHelper;
+    private SampleHelper sampleHelper;
 
-    protected String dataSetName = null;
+    private String dataSetName = null;
 
-    protected int sageRowsProcessed = 0;
-    protected int samplesMarkedDesync = 0;
-    
+    private int sageRowsProcessed = 0;
+    private int samplesMarkedDesync = 0;
+
     public void execute() throws Exception {
 
         dataSetName = (String) processData.getItem("DATA_SET_NAME");
@@ -39,15 +38,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         logger.info("Running SAGE data set discovery, ownerKey=" + ownerKey +
                     ", dataSetName=" + dataSetName);
 
-        this.fileHelper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
         this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-        
+
         // Clear "visited" flags on all our Samples
         sampleHelper.clearVisited();
         sampleHelper.setDataSetNameFilter(dataSetName);
-        
+
         Entity topLevelFolder = sampleHelper.getTopLevelDataSetFolder();
-		logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
+        logger.info("Will put discovered entities into top level entity "+topLevelFolder.getName()+", id="+topLevelFolder.getId());
 
         for(Entity dataSet : sampleHelper.getDataSets()) {
             if (dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_SYNC)==null) {
@@ -63,44 +61,44 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         }
 
         logger.info("Processed "+sageRowsProcessed+" rows for "+ownerKey+" ("+dataSetName+"), created "+sampleHelper.getNumSamplesCreated()+
-        		" samples, updated "+sampleHelper.getNumSamplesUpdated()+
-        		" samples, marked "+sampleHelper.getNumSamplesReprocessed()+
-        		" samples for reprocessing, marked "+samplesMarkedDesync+
-        		" samples as desynced, annexed "+sampleHelper.getNumSamplesAnnexed()+
-        		" samples, added "+sampleHelper.getNumSamplesAdded()+
+                " samples, updated "+sampleHelper.getNumSamplesUpdated()+
+                " samples, marked "+sampleHelper.getNumSamplesReprocessed()+
+                " samples for reprocessing, marked "+samplesMarkedDesync+
+                " samples as desynced, annexed "+sampleHelper.getNumSamplesAnnexed()+
+                " samples, added "+sampleHelper.getNumSamplesAdded()+
                 " samples to their corresponding data set folders, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
-        		" samples to Blocked Data folder.");
+                " samples to Blocked Data folder.");
         
-        if (samplesMarkedDesync>0) {
+        if (samplesMarkedDesync > 0) {
             logger.warn("IMPORTANT: "+samplesMarkedDesync+" samples were marked as desynchronized. These need to be manually curated and fixed or retired as soon as possible, to avoid confusion caused by duplicate samples!");
         }
-       
+
     }
     
     /**
      * Provide either imageFamily or dataSetIdentifier. 
      */
-    protected void processSageDataSet(Entity dataSet) throws Exception {
+    private void processSageDataSet(Entity dataSet) throws Exception {
 
         Multimap<String,SlideImage> slideGroups = LinkedListMultimap.create();
         
-		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-		logger.info("Querying SAGE for data set: "+dataSetIdentifier);
-		
-    	ResultSetIterator iterator = null;
-    	try {
-        	SageDAO sageDAO = new SageDAO(logger);
-			iterator = sageDAO.getAllImagePropertiesByDataSet(dataSetIdentifier);
-    		
-			// Load all slides for this data set into memory, so that we don't over-stay our welcome on the database cursor
-			// in case we need to do some time-intensive stuff (e.g. adding permissions)
-        	while (iterator.hasNext()) {
-        		Map<String,Object> row = iterator.next();
-        		SlideImage slideImage = createSlideImage(row);
-				slideGroups.put(slideImage.getSlideCode(), slideImage);
-				sageRowsProcessed++;
-			}
-    	}
+        String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        logger.info("Querying SAGE for data set: "+dataSetIdentifier);
+
+        ResultSetIterator iterator = null;
+        try {
+            SageDAO sageDAO = new SageDAO(logger);
+            iterator = sageDAO.getAllImagePropertiesByDataSet(dataSetIdentifier);
+
+            // Load all slides for this data set into memory, so that we don't over-stay our welcome on the database cursor
+            // in case we need to do some time-intensive stuff (e.g. adding permissions)
+            while (iterator.hasNext()) {
+                Map<String,Object> row = iterator.next();
+                SlideImage slideImage = createSlideImage(row);
+                slideGroups.put(slideImage.getSlideCode(), slideImage);
+                sageRowsProcessed++;
+            }
+        }
         finally {
             if (iterator!=null) {
                 try {
@@ -112,14 +110,14 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
                 }
             }
         }
-		
-    	// Now process all the slide
-		for (String slideCode : slideGroups.keySet()) {
+
+        // Now process all the slide
+        for (String slideCode : slideGroups.keySet()) {
             processSlideGroup(dataSet, slideCode, slideGroups.get(slideCode));
-		}
+        }
     }
     
-    protected SlideImage createSlideImage(Map<String,Object> row) throws Exception {
+    private SlideImage createSlideImage(Map<String,Object> row) throws Exception {
 
         SlideImage slideImage = new SlideImage();
         slideImage.setSageId((Long)row.get("image_query_id"));
@@ -177,8 +175,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
 		return slideImage;
     }
     
-    protected void processSlideGroup(Entity dataSet, String slideCode, Collection<SlideImage> slideGroup) throws Exception {
-    	
+    private void processSlideGroup(Entity dataSet, String slideCode, Collection<SlideImage> slideGroup) throws Exception {
+
         if (slideCode==null) {
             for(SlideImage slideImage : slideGroup) {
                 logger.error("SAGE id "+slideImage.getSageId()+" has null slide code");
@@ -205,23 +203,23 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
             
             String groupKey = area+"_"+tag;
-        	SlideImageGroup tileGroup = tileGroups.get(groupKey);
+            SlideImageGroup tileGroup = tileGroups.get(groupKey);
             if (tileGroup==null) {
-            	tileGroup = new SlideImageGroup(area, tag);
-        		tileGroups.put(groupKey, tileGroup);
+                tileGroup = new SlideImageGroup(area, tag);
+                tileGroups.put(groupKey, tileGroup);
             }
-            
-        	tileGroup.addFile(slideImage);
-    		if (slideImage.getJfsPath()==null && !slideImage.getFile().exists()) {
-    			logger.warn("File referenced by SAGE does not exist: "+slideImage.getImagePath());
-    			return;
-    		}
-        	
+
+            tileGroup.addFile(slideImage);
+            if (slideImage.getJfsPath()==null && !slideImage.getFile().exists()) {
+                logger.warn("File referenced by SAGE does not exist: "+slideImage.getImagePath());
+                return;
+            }
+
             tileNum++;
         }
-        
-    	List<SlideImageGroup> tileGroupList = new ArrayList<>(tileGroups.values());
-    	
+
+        List<SlideImageGroup> tileGroupList = new ArrayList<>(tileGroups.values());
+
         // Sort the pairs by their tag name
         Collections.sort(tileGroupList, new Comparator<SlideImageGroup>() {
 			@Override

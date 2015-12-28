@@ -34,6 +34,7 @@ public class SlideImage {
     private String vtLine;
     private String tmogDate;
     private File file;
+    private String datasetName;
 	
     public Map<String,String> getProperties() {
         Map<String,String> properties = new HashMap<>();
@@ -240,5 +241,6 @@ public class SlideImage {
     public void setTmogDate(String tmogDate) {
         this.tmogDate = tmogDate;
     }
-    
+    public String getDatasetName() { return datasetName; }
+    public void setDatasetName(String datasetName) { this.datasetName = datasetName; }
 }

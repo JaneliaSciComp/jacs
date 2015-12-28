@@ -1,0 +1,36 @@
+<!--
+    Run all of the pipelines associated with all of the Data Sets that the given Sample is a part of.
+-->
+<process name="LSM Processing Pipeline" processor="queue/lsmPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+    <sequence>
+
+        <!-- Import variables from the task -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="LSM_PATHS"/>
+            <input name="TASK_PARAMETER_MAP">
+                <entry key="lsmPaths" value="LSM_PATHS"/>
+            </input>
+            <output name="LSM_PATHS"/>
+            <output name="TASK_OWNER"/>
+        </operation>
+
+        <!-- Get the list of data sets which the sample is a part of -->
+        <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.fileDiscovery.LSMSampleInitService">
+            <input name="LSM_PATHS"/>
+            <output name="SAMPLE_ENTITY_ID"/>
+        </operation>
+
+        <sequence forEach="SAMPLE_ENTITY_ID">
+
+            <include name="Process sample" process="GSPS_CompleteSamplePipeline">
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="REUSE_PIPELINE_RUNS"/>
+                <input name="REUSE_SUMMARY"/>
+                <input name="REUSE_PROCESSING"/>
+                <input name="REUSE_ALIGNMENT"/>
+            </include>
+
+        </sequence>
+
+    </sequence>
+</process>
