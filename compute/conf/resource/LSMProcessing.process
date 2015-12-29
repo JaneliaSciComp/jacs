@@ -15,7 +15,7 @@
         </operation>
 
         <!-- Get the list of data sets which the sample is a part of -->
-        <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.fileDiscovery.LSMSampleInitService">
+        <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleInitService">
             <input name="LSM_PATHS"/>
             <output name="SAMPLE_ENTITY_ID"/>
         </operation>

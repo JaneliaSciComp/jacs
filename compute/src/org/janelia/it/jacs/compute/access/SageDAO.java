@@ -264,35 +264,6 @@ public class SageDAO {
     }
 
     /**
-     * Returns all the images in a given data set, with their "core" properties as columns.
-     * The client must call close() on the returned iterator when finished with it. 
-     * @return Iterator over the JDBC result set. 
-     * @throws DaoException
-     */
-//    public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
-//
-//        Connection connection = null;
-//        PreparedStatement pStatement = null;
-//        ResultSet resultSet = null;
-//
-//        try {
-//            connection = getJdbcConnection();
-//            pStatement = connection.prepareStatement(CORE_IMAGE_PROPERTY_SQL);
-//            pStatement.setString(1, dataSetName);
-//            pStatement.setFetchSize(Integer.MIN_VALUE);
-//
-//            resultSet = pStatement.executeQuery();
-//
-//        }
-//        catch (SQLException e) {
-//            ResultSetIterator.close(resultSet, pStatement, connection, log);
-//            throw new DaoException("Error querying SAGE", e);
-//        }
-//
-//        return new ResultSetIterator(connection, pStatement, resultSet);
-//    }
-
-    /**
      * Returns all the images in a given data set, with ALL their non-null properties as columns.
      * The client must call close() on the returned iterator when finished with it.
      * @return Iterator over the JDBC result set.

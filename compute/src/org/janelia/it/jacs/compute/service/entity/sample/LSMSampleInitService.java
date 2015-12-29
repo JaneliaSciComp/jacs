@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.fileDiscovery;
+package org.janelia.it.jacs.compute.service.entity.sample;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.LinkedListMultimap;
