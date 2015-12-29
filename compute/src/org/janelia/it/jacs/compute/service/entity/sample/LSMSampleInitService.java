@@ -74,6 +74,8 @@ public class LSMSampleInitService extends AbstractEntityService {
             return;
         }
         for (Entity dataset : datasets) {
+            sampleHelper.setDataSetNameFilter(dataset.getName());
+
             for (String slideCode : slideImagesGroupedBySlideCode.keys()) {
                 try {
                     prepareSlideImageGroupsBySlideCode(dataset, slideCode,
