@@ -152,12 +152,11 @@ public class SageDAO {
      * @param lsmPath
      * @return
      */
-    public SlideImage getSlideImageByOwnerAndLSMPath(String owner, String lsmPath) throws DaoException {
+    public SlideImage getSlideImageByOwnerAndLSMPath(String lsmPath) throws DaoException {
         String sql = "select " +
                     COMMON_IMAGE_VW_ATTR + " " +
                     "from image_vw " +
-                    "where image_vw.created_by = ? " +
-                    "and image_vw.path = ? ";
+                    "where image_vw.path = ? or image_vw.jfs_path = ? ";
         log.debug("GetSlideImageByLSMPath: " + sql + "(" + lsmPath + ")");
         SlideImage slideImage = null;
         Connection conn = null;
@@ -167,7 +166,7 @@ public class SageDAO {
             conn = getJdbcConnection();
             pstmt = conn.prepareStatement(sql);
             int fieldIndex = 1;
-            pstmt.setString(fieldIndex++, owner);
+            pstmt.setString(fieldIndex++, lsmPath);
             pstmt.setString(fieldIndex++, lsmPath);
             rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -201,7 +200,7 @@ public class SageDAO {
 
     private void fillImageProperties(SlideImage slideImage, Connection conn) throws DaoException {
         String sql = "select " +
-                "ip.type, ip.value " +
+                "ip.cv, ip.type, ip.value " +
                 "from image_property_vw ip " +
                 "where ip.image_id = ? ";
         PreparedStatement pstmt = null;
@@ -213,7 +212,12 @@ public class SageDAO {
             rs = pstmt.executeQuery();
             Map<String, Object> data = new HashMap<>();
             while (rs.next()) {
-                data.put(rs.getString("type"), rs.getObject("value"));
+                String cv = rs.getString("cv");
+                String type = rs.getString("type");
+                Object value = rs.getObject("value");
+                // prefix every type with the controlled vocabulary except the data_set type
+                String key = "data_set".equals(type) ? type : cv + "_" + type;
+                data.put(key, value);
             }
             slideImage.setDatasetName((String) data.get("data_set"));
             slideImage.setSlideCode((String) data.get("light_imagery_slide_code"));

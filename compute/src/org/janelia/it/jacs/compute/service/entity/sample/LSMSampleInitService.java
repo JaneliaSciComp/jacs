@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -26,14 +28,18 @@ public class LSMSampleInitService extends AbstractEntityService {
         sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
 
         String owner = processData.getString("TASK_OWNER");
-        List<String> lsmPaths = (List<String>) processData.getMandatoryItem("LSM_PATHS");
+        List<String> lsmPaths = ImmutableList.copyOf(
+                Splitter.on(',')
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .split((String) processData.getMandatoryItem("LSM_PATHS")));
 
         SageDAO sageDao = new SageDAO(logger);
 
         Map<String, Multimap<String,SlideImage>> slideGroupsByDataset = new HashMap<>();
         for (String lsmPath : lsmPaths) {
             try {
-                SlideImage slideImage = sageDao.getSlideImageByOwnerAndLSMPath(owner, lsmPath);
+                SlideImage slideImage = sageDao.getSlideImageByOwnerAndLSMPath(lsmPath);
                 String datasetName  = slideImage.getDatasetName();
                 Multimap<String,SlideImage> slideGroups = slideGroupsByDataset.get(datasetName);
                 if (slideGroups == null) {
@@ -59,7 +65,10 @@ public class LSMSampleInitService extends AbstractEntityService {
                                                    List<String> sampleEntityIds) {
         List<Entity> datasets;
         try {
-            datasets = entityBean.getEntitiesByNameAndTypeName(owner, datasetName, EntityConstants.TYPE_DATA_SET);
+            String subjectKey = "user:" + owner;
+            datasets = entityBean.getUserEntitiesWithAttributeValueAndTypeName(subjectKey,
+                    EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
+                    datasetName, EntityConstants.TYPE_DATA_SET);
         } catch (Exception e) {
             logger.error("Error retrieving dataset entities for " + datasetName, e);
             return;
