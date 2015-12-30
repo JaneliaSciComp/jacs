@@ -210,6 +210,16 @@ public class TmModelManipulator {
 
         return annotation;
     }
+	
+	public void updateStructuredTextAnnotation(TmNeuron neuron, TmStructuredTextAnnotation annotation, String jsonString) throws Exception {
+		neuron.getStructuredTextAnnotationMap().put(annotation.getId(), annotation);
+	}
+	
+	public void deleteStructuredTextAnnotation(TmNeuron neuron, long annotationId) {
+		if (neuron.getStructuredTextAnnotationMap().containsKey(annotationId)) {
+			neuron.getStructuredTextAnnotationMap().remove(annotationId);
+		}
+	}
     
     public void rerootNeurite(TmNeuron oldTmNeuron, TmGeoAnnotation newRoot) throws Exception {
         if (newRoot == null || oldTmNeuron == null) {
