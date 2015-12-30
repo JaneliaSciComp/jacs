@@ -22,18 +22,32 @@ import java.util.List;
  */
 public class LSMProcessingTask extends Task {
 
+    public static final String TASK_NAME = "lsmprocessing";
     public static final String DISPLAY_NAME = "LSM Processing Task";
     public static final String PARAM_LSM_PATHS = "lsmPaths";
+    public static final String PARAM_REUSE_PIPELINE_RUNS = "reuse pipeline runs";
+    public static final String PARAM_REUSE_SUMMARY = "reuse summary";
+    public static final String PARAM_REUSE_PROCESSING = "reuse processing";
+    public static final String PARAM_REUSE_ALIGNMENT = "reuse alignment";
 
     public LSMProcessingTask() {
         super();
+        setDefaultValues();
     }
 
     public LSMProcessingTask(String owner,
                              List<String> lsmPaths) {
         super(new HashSet<Node>(), owner, new ArrayList<Event>(), new HashSet<TaskParameter>());
-        this.taskName = DISPLAY_NAME;
+        setDefaultValues();
         setLsmPaths(lsmPaths);
+    }
+
+    private void setDefaultValues() {
+        setParameter(PARAM_REUSE_PIPELINE_RUNS, "true");
+        setParameter(PARAM_REUSE_SUMMARY, "true");
+        setParameter(PARAM_REUSE_PROCESSING, "true");
+        setParameter(PARAM_REUSE_ALIGNMENT, "true");
+        setTaskName(TASK_NAME);
     }
 
     public ParameterVO getParameterVO(String key) throws ParameterException {
@@ -55,5 +69,41 @@ public class LSMProcessingTask extends Task {
 
     public void setLsmPaths(List<String> lsmPaths) {
         setParameter(PARAM_LSM_PATHS, csvStringFromCollection(lsmPaths));
+    }
+
+    @XmlElement
+    public Boolean getReusePipelineRuns() {
+        return getParameterAsBoolean(PARAM_REUSE_PIPELINE_RUNS);
+    }
+
+    public void setReusePipelineRuns(Boolean val) {
+        setParameterAsBoolean(PARAM_REUSE_PIPELINE_RUNS, val);
+    }
+
+    @XmlElement
+    public Boolean getReuseSummary() {
+        return getParameterAsBoolean(PARAM_REUSE_SUMMARY);
+    }
+
+    public void setReuseSummary(Boolean val) {
+        setParameterAsBoolean(PARAM_REUSE_SUMMARY, val);
+    }
+
+    @XmlElement
+    public Boolean getReuseProcessing() {
+        return getParameterAsBoolean(PARAM_REUSE_PROCESSING);
+    }
+
+    public void setReuseProcessing(Boolean val) {
+        setParameterAsBoolean(PARAM_REUSE_PROCESSING, val);
+    }
+
+    @XmlElement
+    public Boolean getReuseAlignment() {
+        return getParameterAsBoolean(PARAM_REUSE_ALIGNMENT);
+    }
+
+    public void setReuseAlignment(Boolean val) {
+        setParameterAsBoolean(PARAM_REUSE_ALIGNMENT, val);
     }
 }

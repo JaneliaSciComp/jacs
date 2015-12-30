@@ -360,8 +360,8 @@ public class RestfulWebService {
                     throw new IllegalArgumentException("invalid owner parameter '" + owner + "' specified");
                 }
             }
-            lsmProcessingTask = new LSMProcessingTask(owner, lsmProcessingParams.getLsmPaths());
-            lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingTask);
+            lsmProcessingParams.setOwner(owner);
+            lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingParams);
             remoteComputeBean.submitJob("LSMProcessing", lsmProcessingTask.getObjectId());
         } catch (IllegalArgumentException e) {
             logger.error("Illegal argument", e);
