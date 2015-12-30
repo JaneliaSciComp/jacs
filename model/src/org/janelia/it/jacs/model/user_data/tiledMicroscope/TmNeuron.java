@@ -197,6 +197,14 @@ public class TmNeuron implements IsSerializable, Serializable {
     }
 
     private void appendSubTreeList(List<TmGeoAnnotation> annList, TmGeoAnnotation ann) {
+		if (ann == null) {
+			// For this to happen (below), one of the children of a
+			// annotation would have to be null, for "a" in the method call
+			// becomes "ann" in the argument list.
+			System.out.println("Null annotation in TmNeuron");
+			new Exception("recursed into null").printStackTrace();
+			return;
+		}
         annList.add(ann);
         for (TmGeoAnnotation a: getChildrenOf(ann)) {
             appendSubTreeList(annList, a);
