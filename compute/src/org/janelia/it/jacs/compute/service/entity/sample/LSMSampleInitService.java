@@ -52,17 +52,17 @@ public class LSMSampleInitService extends AbstractEntityService {
             }
         }
 
-        List<String> sampleEntityIds = new ArrayList<>();
+        Set<String> sampleEntityIds = new LinkedHashSet<>();
         for (String datasetName : slideGroupsByDataset.keySet()) {
             prepareSlideImageGroupsForDataset(owner, datasetName, slideGroupsByDataset.get(datasetName), sampleEntityIds);
         }
 
-        processData.putItem("SAMPLE_ENTITY_ID", Joiner.on(',').join(sampleEntityIds));
+        processData.putItem("SAMPLE_ENTITY_ID", ImmutableList.copyOf(sampleEntityIds));
     }
 
     private void prepareSlideImageGroupsForDataset(String owner, String datasetName,
                                                    Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
-                                                   List<String> sampleEntityIds) {
+                                                   Collection<String> sampleEntityIds) {
         List<Entity> datasets;
         try {
             String subjectKey = "user:" + owner;
@@ -91,7 +91,7 @@ public class LSMSampleInitService extends AbstractEntityService {
     private void prepareSlideImageGroupsBySlideCode(Entity dataset,
                                                     String slideCode,
                                                     Collection<SlideImage> slideImages,
-                                                    List<String> sampleEntityIds) throws Exception {
+                                                    Collection<String> sampleEntityIds) throws Exception {
         Map<String, SlideImageGroup> tileGroups = new LinkedHashMap<>();
 
         int tileNum = 0;
