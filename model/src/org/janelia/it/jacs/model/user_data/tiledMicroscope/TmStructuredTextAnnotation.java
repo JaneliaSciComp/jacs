@@ -32,6 +32,9 @@ public class TmStructuredTextAnnotation implements IsSerializable, Serializable 
     public static final int FORMAT_VERSION = 1;
     String dataString;
 
+	/** No-args c'tor required for use with Protostuff/protobuf */
+	public TmStructuredTextAnnotation() {		
+	}
 
     public TmStructuredTextAnnotation(Long id, Long parentId, int parentType,
        String dataString) {

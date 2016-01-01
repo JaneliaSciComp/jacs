@@ -7,6 +7,8 @@ import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
+ * Requires no-args constructor for use with Protostuff/Protobuf
+ * 
  * User: murphys
  * Date: 5/1/13
  * Time: 1:21 PM

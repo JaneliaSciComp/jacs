@@ -138,8 +138,11 @@ public class TmModelManipulator {
                 parent.addChild(rtnVal);
             }
         }
+		// Handle root geo annotations.
+		if (parentAnnotationId == null  ||  parentAnnotationId == tmNeuron.getId()) {
+	        tmNeuron.getRootAnnotations().add(rtnVal);
+		}
 
-        tmNeuron.getRootAnnotations().add(rtnVal);
         tmNeuron.getGeoAnnotationMap().put(rtnVal.getId(), rtnVal);
 
         saveNeuronData(tmNeuron);
@@ -258,7 +261,9 @@ public class TmModelManipulator {
         }
         
         // Make sure the neuron knows about its new root.
-        tmNeuron.getRootAnnotations().add( newRoot );
+		if (! tmNeuron.getRootAnnotations().contains( newRoot )) {
+			tmNeuron.getRootAnnotations().add( newRoot );
+		}
         saveNeuronData(tmNeuron);
     }
     
@@ -283,7 +288,9 @@ public class TmModelManipulator {
         // Ensure neuron knows this root; reset its parent
         //  to the neuron (as one does for a root)
         newRoot.setParentId(tmNeuron.getId());
-        tmNeuron.getRootAnnotations().add( newRoot );
+		if (! tmNeuron.getRootAnnotations().contains( newRoot )) {
+			tmNeuron.getRootAnnotations().add( newRoot );
+		}
         
     }    
 

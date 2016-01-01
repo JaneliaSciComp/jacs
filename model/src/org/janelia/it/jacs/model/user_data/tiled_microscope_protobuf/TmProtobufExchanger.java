@@ -34,10 +34,28 @@ public class TmProtobufExchanger {
      * @throws Exception from any called methods.
      */
     public TmNeuron deserializeNeuron( byte[] protobufData ) throws Exception {
+		return deserializeNeuron( protobufData, null );
+    }
+    
+    /**
+     * Use protobuf mechanism to turn an array of raw data into a fully
+     * inflated neuron.
+     * 
+     * @param protobufData found from serialized source.
+	 * @param oldNeuron existing, pre-instantiated neuron to populate.
+     * @return neuron as it should have existed prior to serialization.
+     * @throws Exception from any called methods.
+     */
+    public TmNeuron deserializeNeuron( byte[] protobufData, TmNeuron oldNeuron ) throws Exception {
         TmNeuron tmNeuron = null;
         final LinkedBuffer buffer = LinkedBuffer.allocate();
         try {
-            tmNeuron = schema.newMessage();
+			if (oldNeuron == null) {
+	            tmNeuron = schema.newMessage();
+			}
+			else {
+				tmNeuron = oldNeuron;
+			}
             //ByteArrayInputStream inputStream = new ByteArrayInputStream( nextNeuronArray );
             ProtobufIOUtil.mergeFrom(protobufData, tmNeuron, schema);
             //ProtostuffIOUtil.mergeFrom(inputStream, tmNeuron, schema, buffer);
