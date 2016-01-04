@@ -23,6 +23,7 @@ import org.janelia.it.jacs.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -35,6 +36,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 
@@ -351,6 +353,14 @@ public class DomainUtils {
             }
         }
         return objectMap;
+    }
+    
+    public static ListMultimap<Long,Annotation> getAnnotationsByDomainObjectId(Collection<Annotation> annotations) {
+        ListMultimap<Long,Annotation> annotationsByDomainObjectId = ArrayListMultimap.<Long,Annotation>create();
+        for(Annotation annotation : annotations) {
+            annotationsByDomainObjectId.put(annotation.getTarget().getTargetId(), annotation);
+        }
+        return annotationsByDomainObjectId;
     }
     
     /**
