@@ -17,7 +17,6 @@ import javax.ejb.TransactionAttribute;
 import static javax.ejb.TransactionAttributeType.REQUIRED;
 import javax.jms.ObjectMessage;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
-import org.janelia.it.jacs.compute.access.DaoException;
 import static org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants.*;
 import org.janelia.it.jacs.model.user_data.UserToolEvent;
 
@@ -106,7 +105,12 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
             try {
                 // Pump this event, using the compute infrastructure.
                 new ComputeDAO(logger).addEventToSession(event);
-            } catch (DaoException ce) {
+            } catch (Throwable ce) {
+                // This block will catch runtime exceptions.
+                // Runtime exceptions will cause this rollback.
+                // Unknown at this time, whether this can cause
+                // stale context resource to accumulate in event
+                // of RTE from called method.
                 logger.error("Failed to log the user tool event." + DROP_MSG_WARNING);
                 ce.printStackTrace();
                 context.setRollbackOnly();

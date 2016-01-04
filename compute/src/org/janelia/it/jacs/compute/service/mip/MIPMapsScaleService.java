@@ -27,6 +27,8 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
     private Long imageDepth;
     private String rootUrl;
     private String tileStackFormat;
+    private String orientation;
+    private Integer sourceScaleLevel;
 
     private Long sourceMinX;
     private Long sourceMinY;
@@ -82,6 +84,9 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
         sourceHeight = getDimensionWithDefault(processData, "SOURCE_HEIGHT", imageHeight).longValue();
         sourceDepth = getDimensionWithDefault(processData, "SOURCE_DEPTH", imageDepth).longValue();
 
+        orientation = processData.getString("ORIENTATION");
+        sourceScaleLevel = getDimensionWithDefault(processData, "SOURCE_MAGNIFICATION_LEVEL", 0).intValue();
+
         targetTileWidth = getValidDimension(processData, "TARGET_TILE_WIDTH").intValue();
         targetTileHeight = getValidDimension(processData, "TARGET_TILE_HEIGHT").intValue();
     }
@@ -118,17 +123,67 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
         writeShellScript(writer);
         int nJobs = 0;
         long processedDepth = DESIRED_PROCESSED_Z_LAYERS;
-        int zSplits = (int) Math.ceil(sourceDepth.doubleValue() / processedDepth);
+        long totalWidth;
+        long totalHeight;
+        long totalDepth;
+        long actualMinX;
+        long actualMinY;
+        long actualMinZ;
+        long actualWidth;
+        long actualHeight;
+        long actualDepth;
+        if (orientation == null || orientation.trim().length() == 0
+                || "xy".equalsIgnoreCase(orientation) || "yx".equalsIgnoreCase(orientation)) {
+            totalWidth = imageWidth >> sourceScaleLevel;
+            totalHeight = imageHeight >> sourceScaleLevel;
+            totalDepth = imageDepth;
+            actualMinX = sourceMinX >> sourceScaleLevel;
+            actualMinY = sourceMinY >> sourceScaleLevel;
+            actualMinZ = sourceMinZ;
+            actualWidth = sourceWidth >> sourceScaleLevel;
+            actualHeight = sourceHeight >> sourceScaleLevel;
+            actualDepth = sourceDepth;
+        } else if ("xz".equalsIgnoreCase(orientation) || "zx".equalsIgnoreCase(orientation)) {
+            totalWidth = imageWidth >> sourceScaleLevel;
+            totalHeight = imageDepth;
+            totalDepth = imageHeight >> sourceScaleLevel;
+            actualMinX = sourceMinX >> sourceScaleLevel;
+            actualMinY = sourceMinZ;
+            actualMinZ = sourceMinY >> sourceScaleLevel;
+            actualWidth = sourceWidth >> sourceScaleLevel;
+            actualHeight = sourceDepth;
+            actualDepth = sourceHeight >> sourceScaleLevel;
+        } else if ("zy".equalsIgnoreCase(orientation) || "yz".equalsIgnoreCase(orientation)) {
+            totalWidth = imageDepth;
+            totalHeight = imageHeight >> sourceScaleLevel;
+            totalDepth = imageWidth >> sourceScaleLevel;
+            actualMinX = sourceMinZ;
+            actualMinY = sourceMinY >> sourceScaleLevel;
+            actualMinZ = sourceMinX >> sourceScaleLevel;
+            actualWidth = sourceDepth;
+            actualHeight = sourceHeight >> sourceScaleLevel;
+            actualDepth = sourceWidth >> sourceScaleLevel;
+        } else {
+            LOG.warn("Invalid orientation {}", orientation);
+            throw new IllegalArgumentException("Invalid orientation value: " + orientation);
+        }
 
-        for (int z = 0; z < zSplits; z++) {
-            long startZ = sourceMinZ + z * processedDepth;
-            long depth = Math.min(processedDepth, sourceMinZ + sourceDepth - startZ);
-            createConfigurationFile(++nJobs, startZ, depth);
+        int splits = (int) Math.ceil((double) actualDepth/ processedDepth);
+
+        for (int splitIndex = 0; splitIndex < splits; ++splitIndex) {
+            long startZ = actualMinZ + splitIndex * processedDepth;
+            long depth = Math.min(processedDepth, actualMinZ + actualDepth - startZ);
+            createConfigurationFile(++nJobs, totalWidth, totalHeight, totalDepth,
+                    actualMinX, actualMinY, startZ,
+                    actualWidth, actualHeight, depth);
         }
         setJobIncrementStop(nJobs);
     }
 
-    private void createConfigurationFile(int configIndex, long startZ, long depth) throws ServiceException {
+    private void createConfigurationFile(int configIndex,
+                                         long totalWidth, long totalHeight, long totalDepth,
+                                         long startX, long startY, long startZ,
+                                         long width, long height, long depth) throws ServiceException {
         File configFile = new File(
                 getSGEConfigurationDirectory(),
                 getGridServicePrefixName() + "Configuration." + configIndex);
@@ -136,14 +191,14 @@ public class MIPMapsScaleService extends SubmitDrmaaJobService {
         try(FileWriter fw = new FileWriter(configFile)) {
             fw.write(rootUrl + "\n");
             fw.write(tileStackFormat + "\n");
-            fw.write(imageWidth + "\n");
-            fw.write(imageHeight + "\n");
-            fw.write(imageDepth + "\n");
-            fw.write(sourceMinX + "\n");
-            fw.write(sourceMinY + "\n");
+            fw.write(totalWidth + "\n");
+            fw.write(totalHeight + "\n");
+            fw.write(totalDepth + "\n");
+            fw.write(startX + "\n");
+            fw.write(startY + "\n");
             fw.write(startZ + "\n");
-            fw.write(sourceWidth + "\n");
-            fw.write(sourceHeight + "\n");
+            fw.write(width + "\n");
+            fw.write(height + "\n");
             fw.write((startZ + depth - 1) + "\n");
             fw.write(targetTileWidth + "\n");
             fw.write(targetTileHeight + "\n");

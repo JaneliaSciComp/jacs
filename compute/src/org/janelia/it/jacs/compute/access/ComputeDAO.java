@@ -315,13 +315,17 @@ public class ComputeDAO extends ComputeBaseDAO {
      * @throws DaoException thrown when there is a problem recording a task error
      */
     private void checkAndRecordError(GridJobStatus status) throws DaoException {
+        if (null==status) {
+            log.warn("Calling checkandRecordError but grid status object is null");
+            return;
+        }
         if (log.isTraceEnabled()) {
             log.trace("checkAndRecordError(status="+status+")");    
         }
         
         // If an exit code exists and is non-zero record an error.
         if (null!=status.getExitStatus() && 0!=status.getExitStatus()){
-            addEventToTask(status.getTaskID(), new Event(Event.ERROR_EVENT, new Date(), Event.ERROR_EVENT));
+            addEventToTask(status.getTaskID(), new Event("Error - GridJob exit status is "+status.getExitStatus(), new Date(), Event.ERROR_EVENT));
         }
     }
 
