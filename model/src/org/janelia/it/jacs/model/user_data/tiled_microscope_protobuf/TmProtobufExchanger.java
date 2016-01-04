@@ -56,9 +56,8 @@ public class TmProtobufExchanger {
 			else {
 				tmNeuron = oldNeuron;
 			}
-            //ByteArrayInputStream inputStream = new ByteArrayInputStream( nextNeuronArray );
+            clearNeuronValues(tmNeuron);
             ProtobufIOUtil.mergeFrom(protobufData, tmNeuron, schema);
-            //ProtostuffIOUtil.mergeFrom(inputStream, tmNeuron, schema, buffer);
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
@@ -66,7 +65,7 @@ public class TmProtobufExchanger {
         }
         return tmNeuron;
     }
-    
+
     /**
      * Turn a neuron into a series of bytes.
      * 
@@ -86,4 +85,14 @@ public class TmProtobufExchanger {
         }
         return protobuf;
     }
+
+    private void clearNeuronValues(TmNeuron tmNeuron) {
+        // NOTE: merge-from will cause duplication of collections within
+        // the neuron, unless clearing is done first.
+        tmNeuron.getAnchoredPathMap().clear();
+        tmNeuron.getGeoAnnotationMap().clear();
+        tmNeuron.getRootAnnotations().clear();
+        tmNeuron.getStructuredTextAnnotationMap().clear();
+    }
+    
 }
