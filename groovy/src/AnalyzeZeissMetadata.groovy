@@ -43,15 +43,15 @@ class AnalyzeZeissMetadataScript {
         
         YoshiMBSplitMCFOCase1_20x         : "membrane=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
         YoshiMBSplitMCFOCase1_63x         : "membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1_20x                : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1_63x                : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1Without20xMerge_20x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;reference=Alexa Fluor 488,Cy2",
-        NernaMCFOCase1Without20xMerge_63x : "membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594;reference=Alexa Fluor 488,Cy2",
+        NernaMCFOCase1_20x                : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594",
+        NernaMCFOCase1_63x                : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594",
+        NernaMCFOCase1Without20xMerge_20x : "reference=Alexa Fluor 488,Cy2;membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568",
+        NernaMCFOCase1Without20xMerge_63x : "reference=Alexa Fluor 488,Cy2;membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594",
         
         WolfftMCFOCase1_20x          : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
         WolfftMCFOCase1_63x          : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594",
-        WolfftMCFOCase1Unaligned_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        WolfftMCFOCase1Unaligned_63x : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594"
+        WolfftMCFOCase1Unaligned_20x : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594",
+        WolfftMCFOCase1Unaligned_63x : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594"
     
     ]
     
