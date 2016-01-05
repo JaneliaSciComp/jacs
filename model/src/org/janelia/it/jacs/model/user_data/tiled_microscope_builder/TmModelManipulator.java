@@ -284,13 +284,11 @@ public class TmModelManipulator {
         saveNeuronData(tmNeuron);
     }
     
-    public void splitNeurite(TmNeuron oldTmNeuron, TmGeoAnnotation newRoot) throws Exception {
-        
-        if (newRoot == null || oldTmNeuron == null) {
+    public void splitNeurite(TmNeuron tmNeuron, TmGeoAnnotation newRoot) throws Exception {        
+        if (newRoot == null || tmNeuron == null) {
             return;
         }
 
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         if (!tmNeuron.getGeoAnnotationMap().containsKey(newRoot.getId())) {
             throw new Exception(String.format("input neuron %d doesn't contain new root annotation %d",
                     tmNeuron.getId(), newRoot.getId()));
