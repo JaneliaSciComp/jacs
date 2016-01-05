@@ -146,24 +146,29 @@ public class TmModelManipulator {
         tmNeuron.getGeoAnnotationMap().put(rtnVal.getId(), rtnVal);
 
         saveNeuronData(tmNeuron);
+        // Ensure that the geo-annotation known to the neuron, after the
+        // save, is the one we return.  Get the other one out of circulation.
+        rtnVal = tmNeuron.getGeoAnnotationMap().get(rtnVal.getId());
         return rtnVal;        
     }
 
     /**
-     * Change the parentage of the annotation to the new annotation ID.
+     * Change the parentage of the annotation to the new annotation ID.  This
+     * operation is partial.  It can be applied to annotations which are
+     * incomplete.  Therefore, this operation does not carry out exchange with
+     * the database.
      * 
      * @todo may need to add create, update dates + ownerKey
      * @param annotation this gets different parent.
      * @param newParentAnnotationID this becomes the new parent.
-     * @param oldTmNeuron the annotation and new parent must be under this neuron.
+     * @param tmNeuron the annotation and new parent must be under this neuron.
      * @throws Exception thrown if condition(s) above not met.
      */
     public void reparentGeometricAnnotation(
             TmGeoAnnotation annotation, Long newParentAnnotationID,
-            TmNeuron oldTmNeuron
+            TmNeuron tmNeuron
     ) throws Exception {
         
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         // verify that both annotations are in the input neuron
         if (!tmNeuron.getGeoAnnotationMap().containsKey(annotation.getId())) {
             throw new Exception("input neuron doesn't contain child annotation " + annotation.getId());
@@ -177,6 +182,9 @@ public class TmModelManipulator {
             return;
         }
 
+        // Ensure: using the very same copy that is known to the neuron.
+        annotation = tmNeuron.getGeoAnnotationMap().get(annotation.getId());
+        
         // do NOT create cycles! new parent cannot be in original annotation's subtree:
         for (TmGeoAnnotation testAnnotation : tmNeuron.getSubTreeList(annotation)) {
             if (newParentAnnotationID.equals(testAnnotation.getId())) {
@@ -184,9 +192,18 @@ public class TmModelManipulator {
             }
         }
         
+        // Change child/down linkage.
+        TmGeoAnnotation parentAnnotation = tmNeuron.getParentOf(annotation);
+        if (parentAnnotation != null) {
+            parentAnnotation.getChildIds().remove(annotation.getId());
+        }
         // Change parent ID.
         annotation.setParentId(newParentAnnotationID);
-        saveNeuronData(tmNeuron);
+        TmGeoAnnotation newParentAnnotation = tmNeuron.getGeoAnnotationMap().get(newParentAnnotationID);
+        // Belt-and-suspenders: above tests that the map has this ID.
+        if (newParentAnnotation != null) {
+            newParentAnnotation.getChildIds().add(annotation.getId());
+        }
     }
 
     // @todo may need to add create, update dates + ownerKey
@@ -285,12 +302,17 @@ public class TmModelManipulator {
             return;
         }
 
+        // Remove this new root as a child of its parent.
+        TmGeoAnnotation oldParent = tmNeuron.getParentOf(newRoot);
+        if (oldParent != null) {
+            oldParent.getChildIds().remove(newRoot.getId());
+        }
         // Ensure neuron knows this root; reset its parent
-        //  to the neuron (as one does for a root)
+        //  to the neuron (as one does for a root).
         newRoot.setParentId(tmNeuron.getId());
 		if (! tmNeuron.getRootAnnotations().contains( newRoot )) {
 			tmNeuron.getRootAnnotations().add( newRoot );
-		}
+		}        
         
     }    
 
