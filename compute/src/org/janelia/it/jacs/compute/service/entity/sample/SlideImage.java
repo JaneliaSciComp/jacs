@@ -35,6 +35,7 @@ public class SlideImage {
     private String tmogDate;
     private File file;
     private String datasetName;
+    private String lab;
 	
     public Map<String,String> getProperties() {
         Map<String,String> properties = new HashMap<>();
@@ -243,4 +244,6 @@ public class SlideImage {
     }
     public String getDatasetName() { return datasetName; }
     public void setDatasetName(String datasetName) { this.datasetName = datasetName; }
+    public String getLab() { return lab; }
+    public void setLab(String lab) { this.lab = lab; }
 }

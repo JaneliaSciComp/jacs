@@ -152,12 +152,16 @@ public class SageDAO {
      * @param lsmPath
      * @return
      */
-    public SlideImage getSlideImageByOwnerAndLSMPath(String lsmPath) throws DaoException {
+    public SlideImage getSlideImageByOwnerAndLSMName(String lsmName) throws DaoException {
+
         String sql = "select " +
-                    COMMON_IMAGE_VW_ATTR + " " +
+                    COMMON_IMAGE_VW_ATTR + "," +
+                    "line_vw.lab as image_lab_name " +
                     "from image_vw " +
-                    "where image_vw.path = ? or image_vw.jfs_path = ? ";
-        log.debug("GetSlideImageByLSMPath: " + sql + "(" + lsmPath + ")");
+                    "join image image_t on image_t.id = image_vw.id " +
+                    "join line_vw on line_vw.id = image_t.line_id " +
+                    "where image_vw.name = ? ";
+        log.debug("GetSlideImageByLSMName: " + sql + "(" + lsmName + ")");
         SlideImage slideImage = null;
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -166,8 +170,7 @@ public class SageDAO {
             conn = getJdbcConnection();
             pstmt = conn.prepareStatement(sql);
             int fieldIndex = 1;
-            pstmt.setString(fieldIndex++, lsmPath);
-            pstmt.setString(fieldIndex++, lsmPath);
+            pstmt.setString(fieldIndex++, lsmName);
             rs = pstmt.executeQuery();
             if (rs.next()) {
                 slideImage = new SlideImage();
@@ -175,6 +178,7 @@ public class SageDAO {
                 slideImage.setImagePath(rs.getString("image_query_path"));
                 slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
                 slideImage.setLine(rs.getString("image_query_line"));
+                slideImage.setLab(rs.getString("image_lab_name"));
                 Date createDate = rs.getTimestamp("image_query_create_date");
                 if (createDate!=null) {
                     String tmogDate = ISO8601Utils.format(createDate);

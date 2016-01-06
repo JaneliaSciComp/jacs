@@ -1,17 +1,12 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.compute.service.entity.sample.SlideImage;
-import org.janelia.it.jacs.compute.service.entity.sample.SlideImageGroup;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 
@@ -39,7 +34,7 @@ public class LSMSampleInitService extends AbstractEntityService {
         Map<String, Multimap<String,SlideImage>> slideGroupsByDataset = new HashMap<>();
         for (String lsmPath : lsmPaths) {
             try {
-                SlideImage slideImage = sageDao.getSlideImageByOwnerAndLSMPath(lsmPath);
+                SlideImage slideImage = sageDao.getSlideImageByOwnerAndLSMName(lsmPath);
                 String datasetName  = slideImage.getDatasetName();
                 Multimap<String,SlideImage> slideGroups = slideGroupsByDataset.get(datasetName);
                 if (slideGroups == null) {
