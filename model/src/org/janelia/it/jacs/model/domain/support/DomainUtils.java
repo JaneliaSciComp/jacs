@@ -324,6 +324,19 @@ public class DomainUtils {
             }
         });
     }
+
+    /**
+     * Generate a list of ids for the given domain objects.
+     * @param domainObjects
+     * @return
+     */
+    public static List<Long> getIds(List<DomainObject> domainObjects) {
+        List<Long> ids = new ArrayList<>();
+        for(DomainObject domainObject : domainObjects) {
+            ids.add(domainObject.getId());
+        }
+        return ids;
+    }
     
     /**
      * Generate a list of references to the given domain objects.
