@@ -23,18 +23,18 @@ public class LSMSampleInitService extends AbstractEntityService {
         sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
 
         String owner = processData.getString("TASK_OWNER");
-        List<String> lsmPaths = ImmutableList.copyOf(
+        List<String> lsmNames = ImmutableList.copyOf(
                 Splitter.on(',')
                         .trimResults()
                         .omitEmptyStrings()
-                        .split((String) processData.getMandatoryItem("LSM_PATHS")));
+                        .split((String) processData.getMandatoryItem("LSM_NAMES")));
 
         SageDAO sageDao = new SageDAO(logger);
 
         Map<String, Multimap<String,SlideImage>> slideGroupsByDataset = new HashMap<>();
-        for (String lsmPath : lsmPaths) {
+        for (String lsmName : lsmNames) {
             try {
-                SlideImage slideImage = sageDao.getSlideImageByOwnerAndLSMName(lsmPath);
+                SlideImage slideImage = sageDao.getSlideImageByOwnerAndLSMName(lsmName);
                 String datasetName  = slideImage.getDatasetName();
                 Multimap<String,SlideImage> slideGroups = slideGroupsByDataset.get(datasetName);
                 if (slideGroups == null) {
@@ -43,7 +43,7 @@ public class LSMSampleInitService extends AbstractEntityService {
                 }
                 slideGroups.put(slideImage.getSlideCode(), slideImage);
             } catch (DaoException e) {
-                logger.warn("Error while retrieving image for " + lsmPath, e);
+                logger.warn("Error while retrieving image for " + lsmName, e);
             }
         }
 

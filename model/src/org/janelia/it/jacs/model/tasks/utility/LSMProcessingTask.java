@@ -24,7 +24,7 @@ public class LSMProcessingTask extends Task {
 
     public static final String TASK_NAME = "lsmprocessing";
     public static final String DISPLAY_NAME = "LSM Processing Task";
-    public static final String PARAM_LSM_PATHS = "lsmPaths";
+    public static final String PARAM_LSM_NAMES = "lsm names";
     public static final String PARAM_REUSE_PIPELINE_RUNS = "reuse pipeline runs";
     public static final String PARAM_REUSE_SUMMARY = "reuse summary";
     public static final String PARAM_REUSE_PROCESSING = "reuse processing";
@@ -35,11 +35,10 @@ public class LSMProcessingTask extends Task {
         setDefaultValues();
     }
 
-    public LSMProcessingTask(String owner,
-                             List<String> lsmPaths) {
+    public LSMProcessingTask(String owner, List<String> lsmNames) {
         super(new HashSet<Node>(), owner, new ArrayList<Event>(), new HashSet<TaskParameter>());
         setDefaultValues();
-        setLsmPaths(lsmPaths);
+        setLsmNames(lsmNames);
     }
 
     private void setDefaultValues() {
@@ -65,10 +64,10 @@ public class LSMProcessingTask extends Task {
     }
 
     @XmlElement
-    public List<String> getLsmPaths() { return listOfStringsFromCsvString(getParameter(PARAM_LSM_PATHS)); }
+    public List<String> getLsmNames() { return listOfStringsFromCsvString(getParameter(PARAM_LSM_NAMES)); }
 
-    public void setLsmPaths(List<String> lsmPaths) {
-        setParameter(PARAM_LSM_PATHS, csvStringFromCollection(lsmPaths));
+    public void setLsmNames(List<String> lsmNames) {
+        setParameter(PARAM_LSM_NAMES, csvStringFromCollection(lsmNames));
     }
 
     @XmlElement
