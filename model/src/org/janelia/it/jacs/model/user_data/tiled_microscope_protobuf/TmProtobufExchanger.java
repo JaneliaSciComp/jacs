@@ -91,7 +91,7 @@ public class TmProtobufExchanger {
         // the neuron, unless clearing is done first.
         tmNeuron.getAnchoredPathMap().clear();
         tmNeuron.getGeoAnnotationMap().clear();
-        tmNeuron.getRootAnnotations().clear();
+        tmNeuron.clearRootAnnotations();
         tmNeuron.getStructuredTextAnnotationMap().clear();
     }
     

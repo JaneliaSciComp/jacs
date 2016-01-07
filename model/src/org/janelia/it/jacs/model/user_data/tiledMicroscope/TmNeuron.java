@@ -38,7 +38,7 @@ public class TmNeuron implements IsSerializable, Serializable {
     private Date creationDate;
     private String ownerKey;
     private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<>();
-    private List<TmGeoAnnotation> rootAnnotations=new ArrayList<>();
+    private List<Long> rootAnnotationIds = new ArrayList<>();
     private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<>();
 
     private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<>();
@@ -110,9 +110,67 @@ public class TmNeuron implements IsSerializable, Serializable {
         return anchoredPathMap;
     }
 
+    /** 
+     * Returns all the root annotations, such that:
+     * + the contents of the returned collection may not be changed;
+     * + the annotations within the collection _could_ be changed.
+     * 
+     * Note that this contract guarantees that no new root annotations may
+     * be placed into the returned value, nor any added.  This collection is
+     * meant for read-only purposes.  Any removal of root annotations, or
+     * addition of root annotations, must be done via the id collection.
+     * 
+     * However, nothing may prevent a caller
+     * from modifying state of any geo-annotation found in this collection.
+     * 
+     * This collection is immutable to avoid deceiving callers about the
+     * effects of modifying the return value.
+     */
     public List<TmGeoAnnotation> getRootAnnotations() {
-        return rootAnnotations;
+        TmGeoAnnotation[] tempList = new TmGeoAnnotation[rootAnnotationIds.size()];
+        int i = 0;        
+        for (Long id: rootAnnotationIds) {
+            tempList[ i++ ] = geoAnnotationMap.get(id);
+        }
+        return Collections.unmodifiableList(Arrays.asList(tempList));
     }
+    
+    public TmGeoAnnotation getFirstRoot() {
+        if (rootAnnotationIds.size() > 0) {
+            return geoAnnotationMap.get(rootAnnotationIds.get(0));
+        }
+        else {
+            return null;
+        }
+    }
+    
+    public void removeRootAnnotation(TmGeoAnnotation root) {
+        removeRootAnnotation(root.getId());
+    }
+    
+    public void removeRootAnnotation(Long rootId) {
+        rootAnnotationIds.remove(rootId);
+    }
+    
+    public void addRootAnnotation(TmGeoAnnotation root) {
+        addRootAnnotation(root.getId());
+    }
+    
+    public void addRootAnnotation(Long rootId) {
+        rootAnnotationIds.add(rootId);
+    }
+    
+    public boolean containsRootAnnotation(TmGeoAnnotation root) {
+        return containsRootAnnotation(root.getId());
+    }
+    
+    public boolean containsRootAnnotation(Long rootId) {
+        return rootAnnotationIds.contains(rootId);
+    }
+    
+    public int getRootAnnotationCount() { return rootAnnotationIds.size(); }
+    
+    public void clearRootAnnotations() { rootAnnotationIds.clear(); }
 
     // maps ID of parent to text annotation
     public Map<Long, TmStructuredTextAnnotation> getStructuredTextAnnotationMap() {
