@@ -181,7 +181,7 @@ public class TmModelManipulator {
         if (annotation.getParentId().equals(newParentAnnotationID)) {
             return;
         }
-
+        
         // Ensure: using the very same copy that is known to the neuron.
         annotation = tmNeuron.getGeoAnnotationMap().get(annotation.getId());
         
@@ -192,6 +192,20 @@ public class TmModelManipulator {
             }
         }
         
+        // The reparented annotation will no longer be a root.
+        if (annotation.isRoot()) {
+            TmGeoAnnotation sameRoot = null;
+            for (TmGeoAnnotation nextRoot: tmNeuron.getRootAnnotations()) {
+                if (nextRoot.getId().equals(annotation.getId())) {
+                    sameRoot = nextRoot;
+                    break;
+                }                
+            }
+            if (sameRoot != null) {
+                tmNeuron.getRootAnnotations().remove(sameRoot);
+            }
+        }
+
         // Change child/down linkage.
         TmGeoAnnotation parentAnnotation = tmNeuron.getParentOf(annotation);
         if (parentAnnotation != null) {
@@ -241,12 +255,19 @@ public class TmModelManipulator {
 		}
 	}
     
-    public void rerootNeurite(TmNeuron oldTmNeuron, TmGeoAnnotation newRoot) throws Exception {
-        if (newRoot == null || oldTmNeuron == null) {
+    /**
+     * This can be a partial operation.  Therefore, it will not carry out any
+     * communication with the databse.
+     * 
+     * @param tmNeuron gets a new root.
+     * @param newRoot becomes a root, and added to neuron.
+     * @throws Exception 
+     */
+    public void rerootNeurite(TmNeuron tmNeuron, TmGeoAnnotation newRoot) throws Exception {
+        if (newRoot == null || tmNeuron == null) {
             return;
         }
                 
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         if (!tmNeuron.getGeoAnnotationMap().containsKey(newRoot.getId())) {
             throw new Exception(String.format("input neuron %d doesn't contain new root annotation %d",
                     tmNeuron.getId(), newRoot.getId()));
@@ -262,7 +283,7 @@ public class TmModelManipulator {
         TmGeoAnnotation testAnnotation = newRoot;
         while (!testAnnotation.isRoot()) {
             parentList.add(testAnnotation);
-            testAnnotation = tmNeuron.getParentOf(testAnnotation);
+            testAnnotation = tmNeuron.getParentOf(testAnnotation);            
         }
         //TmGeoAnnotation oldRoot = testAnnotation;
         parentList.add(testAnnotation);
@@ -271,17 +292,27 @@ public class TmModelManipulator {
         // reparent intervening annotations; skip the first item, which is the
         //  new root (which we've already dealt with)
         for (int i = 1; i < parentList.size(); i++) {
-            // change the parent ID and save
+            // change the parent ID/add as child, and save
             TmGeoAnnotation ann = parentList.get(i);
+
+            // Remove from old parent.
+            TmGeoAnnotation oldParentAnnotation = tmNeuron.getParentOf(ann);
+            if (oldParentAnnotation != null) {
+                oldParentAnnotation.getChildIds().remove(ann.getId());
+            }
+            
             Long newParentAnnotationID = parentList.get(i - 1).getId();
             ann.setParentId(newParentAnnotationID);
+            
+            // Add to new parent.
+            TmGeoAnnotation newParentAnnotation = tmNeuron.getGeoAnnotationMap().get(newParentAnnotationID);
+            newParentAnnotation.addChild(ann);
         }
         
         // Make sure the neuron knows about its new root.
 		if (! tmNeuron.getRootAnnotations().contains( newRoot )) {
 			tmNeuron.getRootAnnotations().add( newRoot );
 		}
-        saveNeuronData(tmNeuron);
     }
     
     public void splitNeurite(TmNeuron tmNeuron, TmGeoAnnotation newRoot) throws Exception {        
@@ -307,6 +338,9 @@ public class TmModelManipulator {
         }
         // Ensure neuron knows this root; reset its parent
         //  to the neuron (as one does for a root).
+        if (tmNeuron.getId() == null) {
+            log.error("Neuron ID= null.  Setting annotation as root will fail.");
+        }
         newRoot.setParentId(tmNeuron.getId());
 		if (! tmNeuron.getRootAnnotations().contains( newRoot )) {
 			tmNeuron.getRootAnnotations().add( newRoot );
