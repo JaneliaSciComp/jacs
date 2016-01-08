@@ -36,7 +36,14 @@
             <input name="TASK_OWNER"/>
             <input name="LSM_NAMES"/>
             <output name="SAMPLE_ENTITY_ID"/>
+            <output name="SAGE_TASK"/>
         </operation>
+
+        <sequence forEach="SAGE_TASK">
+            <include name="Load sample" process="SageLoader">
+                <input name="SAGE_TASK" />
+            </include>
+        </sequence>
 
         <sequence forEach="SAMPLE_ENTITY_ID">
 

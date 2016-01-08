@@ -175,6 +175,7 @@ public class SageDAO {
             if (rs.next()) {
                 slideImage = new SlideImage();
                 slideImage.setSageId(rs.getLong("image_query_id"));
+                slideImage.setImageName(rs.getString("image_query_name"));
                 slideImage.setImagePath(rs.getString("image_query_path"));
                 slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
                 slideImage.setLine(rs.getString("image_query_line"));
@@ -789,7 +790,7 @@ public class SageDAO {
 
         return sql.toString();
     }
-    
+
     /**
      *
      * @param  propertyTypeNames names of line properties to include in query.

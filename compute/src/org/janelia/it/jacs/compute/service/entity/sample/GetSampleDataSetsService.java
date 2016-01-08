@@ -34,7 +34,7 @@ public class GetSampleDataSetsService extends AbstractEntityService {
         contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
 
         String dataSetStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-        
+
         if (dataSetStr==null) {
             logger.warn("Sample is not part of a dataset, id="+sampleEntityId);
         }

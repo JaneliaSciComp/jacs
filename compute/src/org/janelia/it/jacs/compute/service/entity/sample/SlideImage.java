@@ -15,6 +15,7 @@ public class SlideImage {
     
     private Long sageId;
     private String slideCode;
+    private String imageName;
     private String imagePath;
     private String jfsPath;
     private String tileType;
@@ -122,6 +123,8 @@ public class SlideImage {
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
     }
+    public String getImageName() { return imageName; }
+    public void setImageName(String imageName) { this.imageName = imageName; }
     public String getImagePath() {
         return imagePath;
     }

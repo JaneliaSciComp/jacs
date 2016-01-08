@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -9,7 +11,11 @@ import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -18,11 +24,13 @@ import java.util.*;
 public class LSMSampleInitService extends AbstractEntityService {
 
     private SampleHelper sampleHelper;
+    private String owner;
 
     public void execute() throws Exception {
         sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        sampleHelper.getDataSets();
 
-        String owner = processData.getString("TASK_OWNER");
+        owner = processData.getString("TASK_OWNER");
         List<String> lsmNames = ImmutableList.copyOf(
                 Splitter.on(',')
                         .trimResults()
@@ -48,16 +56,19 @@ public class LSMSampleInitService extends AbstractEntityService {
         }
 
         Set<String> sampleEntityIds = new LinkedHashSet<>();
+        List<Task> sageLoadingTasks = new ArrayList<>();
         for (String datasetName : slideGroupsByDataset.keySet()) {
-            prepareSlideImageGroupsForDataset(owner, datasetName, slideGroupsByDataset.get(datasetName), sampleEntityIds);
+            prepareSlideImageGroupsForDataset(owner, datasetName, slideGroupsByDataset.get(datasetName), sampleEntityIds, sageLoadingTasks);
         }
 
+        processData.putItem("SAGE_TASK", sageLoadingTasks);
         processData.putItem("SAMPLE_ENTITY_ID", ImmutableList.copyOf(sampleEntityIds));
     }
 
     private void prepareSlideImageGroupsForDataset(String owner, String datasetName,
                                                    Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
-                                                   Collection<String> sampleEntityIds) {
+                                                   Collection<String> sampleEntityIds,
+                                                   List<Task> targetTasks) {
         List<Entity> datasets;
         try {
             String subjectKey = "user:" + owner;
@@ -70,12 +81,35 @@ public class LSMSampleInitService extends AbstractEntityService {
         }
         for (Entity dataset : datasets) {
             sampleHelper.setDataSetNameFilter(dataset.getName());
+            String configPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_CONFIG_PATH).getValue();
+            String grammarPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_GRAMMAR_PATH).getValue();
 
-            for (String slideCode : slideImagesGroupedBySlideCode.keys()) {
+            for (String slideCode : slideImagesGroupedBySlideCode.keySet()) {
                 try {
-                    prepareSlideImageGroupsBySlideCode(dataset, slideCode,
-                            slideImagesGroupedBySlideCode.get(slideCode),
+                    Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
+                    String[] labAndLine = prepareSlideImageGroupsBySlideCode(dataset, slideCode,
+                            slideImages,
                             sampleEntityIds);
+                    List<String> slideImageNames = ImmutableList.copyOf(Iterables.transform(slideImages, new Function<SlideImage, String>() {
+                        @Nullable
+                        @Override
+                        public String apply(SlideImage slideImage) {
+                            return slideImage.getImageName();
+                        }
+                    }));
+                    SageLoaderTask sageLoaderTask = new SageLoaderTask(owner,
+                            new ArrayList<Event>(),
+                            slideImageNames,
+                            labAndLine[1],
+                            configPath,
+                            grammarPath,
+                            labAndLine[0],
+                            "true",
+                            null);
+                    sageLoaderTask.setParentTaskId(task.getObjectId());
+                    computeBean.saveOrUpdateTask(sageLoaderTask);
+                    targetTasks.add(sageLoaderTask);
+
                 } catch (Exception e) {
                     logger.error("Error while preparing image groups for  " + datasetName + ": " + slideCode, e);
                 }
@@ -83,12 +117,15 @@ public class LSMSampleInitService extends AbstractEntityService {
         }
     }
 
-    private void prepareSlideImageGroupsBySlideCode(Entity dataset,
-                                                    String slideCode,
-                                                    Collection<SlideImage> slideImages,
-                                                    Collection<String> sampleEntityIds) throws Exception {
+    private String[] prepareSlideImageGroupsBySlideCode(Entity dataset,
+                                                        String slideCode,
+                                                        Collection<SlideImage> slideImages,
+                                                        Collection<String> sampleEntityIds)
+            throws Exception {
         Map<String, SlideImageGroup> tileGroups = new LinkedHashMap<>();
 
+        String line = null;
+        String lab = null;
         int tileNum = 0;
         for (SlideImage slideImage : slideImages) {
             String area = slideImage.getArea();
@@ -96,7 +133,18 @@ public class LSMSampleInitService extends AbstractEntityService {
             if (tag==null) {
                 tag = "Tile "+(tileNum+1);
             }
-
+            if (lab == null) {
+                lab = slideImage.getLab();
+            } else if (!lab.equals(slideImage.getLab())) {
+                logger.warn("Lab value for " + slideImage.getImageName() + " - " + slideImage.getLab()
+                        + "  does not match " + lab);
+            }
+            if (line == null) {
+                line = slideImage.getLine();
+            } else if (!line.equals(slideImage.getLine())) {
+                logger.warn("Line value for " + slideImage.getImageName() + " - " + slideImage.getLine()
+                        + "  does not match " + line);
+            }
             String groupKey = area+"_"+tag;
             SlideImageGroup tileGroup = tileGroups.get(groupKey);
             if (tileGroup==null) {
@@ -110,5 +158,6 @@ public class LSMSampleInitService extends AbstractEntityService {
 
         Entity sampleEntity = sampleHelper.createOrUpdateSample(null, slideCode, dataset, tileGroupList);
         sampleEntityIds.add(sampleEntity.getId().toString());
+        return new String[] {lab, line};
     }
 }

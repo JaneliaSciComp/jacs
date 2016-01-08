@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 
 public class SageLoaderService extends SubmitDrmaaJobService {
 
+    private SageLoaderTask sageLoaderTask;
+
     protected String getGridServicePrefixName() {
         return "sageLoader";
     }
@@ -45,7 +47,6 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     private void createShellScript(FileWriter writer)
             throws IOException, ParameterException {
         try {
-            SageLoaderTask sageLoaderTask = (SageLoaderTask) task;
             final String perlModulePath = SystemConfigurationProperties.getString("Sage.Perllib");
             final String perlBinPath = SystemConfigurationProperties.getString("Perl.Path");
             final String cmdPrefix =
@@ -67,7 +68,10 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             }
 
             script.append(" -user jacs");
-            appendTaskParameters(sageLoaderTask, script);
+            final File dataFile = createInputDataFile();
+
+            script.append(" -file ").append(dataFile.getAbsolutePath());
+            appendTaskParameters(script);
             script.append("\n");
 
             writer.write(script.toString());
@@ -88,8 +92,17 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         }
     }
 
-    private void appendTaskParameters(SageLoaderTask sageLoaderTask,
-                                      StringBuilder script) {
+    private File createInputDataFile() throws IOException {
+        final File dataFile = new File(getSGEConfigurationDirectory(), "sampleFileList.txt");
+        try (PrintWriter pw = new PrintWriter(new FileOutputStream(dataFile))) {
+            for (String fileName : sageLoaderTask.getItemList()) {
+                pw.println(fileName);
+            }
+        }
+        return dataFile;
+    }
+
+    private void appendTaskParameters(StringBuilder script) {
         String value;
         for (String name : sageLoaderTask.getScriptArgumentNames()) {
             value = sageLoaderTask.getParameter(name);
@@ -123,6 +136,10 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         task = ProcessDataHelper.getTask(processData);
+        sageLoaderTask = (SageLoaderTask) processData.getItem("SAGE_TASK");
+        if (sageLoaderTask == null) {
+            sageLoaderTask = (SageLoaderTask) task;
+        }
         if (computeDAO == null) {computeDAO = new ComputeDAO(logger);}
         resultFileNode = createResultFileNode();
         // super.init() must be called after the resultFileNode is set or it will throw an Exception
@@ -167,11 +184,12 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             addFileMessage("Output", outputFile);
             addFileMessage("Error", errorFile);
 
-            SageLoaderTask sageLoaderTask = (SageLoaderTask) task;
             // if the item being loaded is an lsm,
             // verify that the sageLoader script actually found the image
-            if (sageLoaderTask.getItem().endsWith(".lsm")) {
-                checkImagesFound(outputFile);
+            for (String inputFile : sageLoaderTask.getItemList()) {
+                if (inputFile.endsWith(".lsm")) {
+                    checkImagesFound(outputFile);
+                }
             }
 
             computeDAO.saveOrUpdate(task);
