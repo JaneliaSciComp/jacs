@@ -1,0 +1,18 @@
+<!--
+	Makes Large-Volume-Viewer compatible sample objects in database, to
+        cover all the directories it finds in standard locations.
+-->
+<process name="Large Volume Sample Discovery Pipeline" processor="queue/lvsDiscovery" startEvent="pending">
+
+	<sequence>
+
+	<!-- Import basic variables from the LargeVolumeSampleDiscovery task
+             This is a place holder.  Eventually, parameters might be supplied.
+        -->
+    	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+    	</operation>
+    	<operation name="Large Volume Sample Discovery Service" processor="org.janelia.it.jacs.compute.service.tiledMicroscope.LargeVolumeSampleDiscoveryService">
+    	</operation>
+    </sequence>
+</process>
+
