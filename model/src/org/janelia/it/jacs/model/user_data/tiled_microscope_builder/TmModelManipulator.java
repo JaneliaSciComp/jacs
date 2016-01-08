@@ -341,7 +341,9 @@ public class TmModelManipulator {
     }    
     
     /**
-     * Moves the annotation, and its tree, from old to new neuron.
+     * Moves the annotation, and its tree, from old to new neuron.  This is a
+     * complete operation, which refreshes from database, and flushes back
+     * to database.
      * 
      * @todo ensure that the new neuron is available at call time.
      * @param annotation this will be moved.
@@ -354,9 +356,30 @@ public class TmModelManipulator {
         if (inMemNewTmNeuron.getId() == inMemOldTmNeuron.getId()) {
             return;
         }
+        
+        log.debug("Moving from old neuron " + System.identityHashCode(inMemOldTmNeuron) + " to " + System.identityHashCode(inMemNewTmNeuron));
 
         TmNeuron oldTmNeuron = refreshFromData(inMemOldTmNeuron);
         TmNeuron newTmNeuron = refreshFromData(inMemNewTmNeuron);
+        log.debug("Refreshed old neuron " + System.identityHashCode(inMemOldTmNeuron) + ", refreshed new neuron " + System.identityHashCode(inMemNewTmNeuron));
+        
+        moveNeuriteInMem(annotation, oldTmNeuron, newTmNeuron);
+        saveNeuronData(newTmNeuron);
+        saveNeuronData(oldTmNeuron);                
+    }
+    
+    /**
+     * Moves the annotation, and its tree, from old to new neuron.  Do
+     * not refresh from database, or save to database.  This is a partial
+     * operation.
+     * 
+     * @todo ensure that the new neuron is available at call time.
+     * @param annotation this will be moved.
+     * @param inMemOldTmNeuron this is the current container of the annotation.
+     * @param inMemNewTmNeuron this will be the container of the annotation.
+     * @throws Exception thrown by called methods.
+     */
+    public void moveNeuriteInMem(TmGeoAnnotation annotation, TmNeuron oldTmNeuron, TmNeuron newTmNeuron) throws Exception {
         long newNeuronId = newTmNeuron.getId();
 
         // Find the root annotation.  Ultimate parent of the annotation.
@@ -365,6 +388,8 @@ public class TmModelManipulator {
             rootAnnotation = oldTmNeuron.getParentOf(rootAnnotation);
         }
 
+        // DEBUG: find out if subtree list is accurate.
+        //List<TmGeoAnnotation> debug = oldTmNeuron.getSubTreeList(rootAnnotation);
         // Move all the geo-annotations from the old to the new neuron.
         Map<Long,TmGeoAnnotation> movedAnnotationIDs = new HashMap<>();
         final Map<Long, TmStructuredTextAnnotation> oldStructuredTextAnnotationMap = oldTmNeuron.getStructuredTextAnnotationMap();
@@ -405,9 +430,6 @@ public class TmModelManipulator {
         rootAnnotation.setParentId(newTmNeuron.getId());
         oldTmNeuron.removeRootAnnotation(rootAnnotation);
         newTmNeuron.addRootAnnotation(rootAnnotation);
-        saveNeuronData(newTmNeuron);
-        saveNeuronData(oldTmNeuron);
-
     }
     
     public List<TmNeuronDescriptor> getNeuronsForWorkspace(TmWorkspace tmWorkspace) throws Exception {

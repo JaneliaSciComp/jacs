@@ -261,7 +261,7 @@ public class TmNeuron implements IsSerializable, Serializable {
 			// For this to happen (below), one of the children of a
 			// annotation would have to be null, for "a" in the method call
 			// becomes "ann" in the argument list.
-			System.out.println("Null annotation in TmNeuron");
+			System.out.println("Null annotation in TmNeuron " + System.identityHashCode(this));
 			new Exception("recursed into null").printStackTrace();
 			return;
 		}
