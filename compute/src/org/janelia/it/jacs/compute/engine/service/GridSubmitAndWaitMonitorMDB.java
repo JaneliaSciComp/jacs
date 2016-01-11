@@ -45,9 +45,9 @@ public class GridSubmitAndWaitMonitorMDB implements Job {
             for (String submissionKey : keySet) {
                 Map<String, Object> submissionData = GridSubmitHelperMap.getInstance().getFromDataMap(submissionKey);
                 if (submissionData==null) {
-                	logger.warn("Missing submission data for "+submissionKey+". Removing zombie process from map.");
+                    logger.warn("Missing submission data for "+submissionKey+". Removing zombie process from map.");
                     GridSubmitHelperMap.getInstance().removeFromDataMap(submissionKey);
-                	continue;
+                    continue;
                 }
                 Process proc = (Process) submissionData.get(GridSubmitHelperMap.PROCESS_OBJECT);
                 if (proc != null) {
@@ -99,7 +99,7 @@ public class GridSubmitAndWaitMonitorMDB implements Job {
         try {
             String queueName = SystemConfigurationProperties.getString("ComputeServer.GridSubmitter.ReturnQueue");
             AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
-            messageInterface.startMessageSession(queueName);
+            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
             ObjectMessage msg = messageInterface.createObjectMessage();
             msg.setObject(gpr);
             messageInterface.sendMessageWithinTransaction(msg);

@@ -292,7 +292,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             log.trace("saveBulkEntityTree(root="+root+", subjectKey="+subjectKey+")");
         }
 
-        final int batchSize = 800;  
+        // There is limit 65,535 (2^16-1) placeholders in MySQL. We use rewriteBatchedStatements=true, 
+        // so we're limited to 65535/9=7281 placeholders before MySQL starts exploding with "too many placeholders" errors.
+        // Ideal batch size as discovered emperically by Konrad, is 500.
+        final int batchSize = 500;  
         
         log.info("Saving bulk entity tree rooted at "+root.getName());
         
@@ -313,10 +316,10 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             conn = getJdbcConnection();
             conn.setAutoCommit(false);
             
-            String entitySql = "insert into entity (id,name,owner_dkey,entity_type,creation_date,updated_date,num_children) values (?,?,?,?,?,?,?)";
+            String entitySql = "insert into entity (id,name,owner_key,entity_type,creation_date,updated_date,num_children) values (?,?,?,?,?,?,?)";
             stmtEntity = conn.prepareStatement(entitySql);
             
-            String edSql = "insert into entityData (id,parent_entity_id,entity_att,value,owner_dkey,creation_date,updated_date,orderIndex,child_entity_id) values (?,?,?,?,?,?,?,?,?)";
+            String edSql = "insert into entityData (id,parent_entity_id,entity_att,value,owner_key,creation_date,updated_date,orderIndex,child_entity_id) values (?,?,?,?,?,?,?,?,?)";
             stmtEd = conn.prepareStatement(edSql);
             
             int idIndex = ids.size()-1;
@@ -326,9 +329,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             
             for(Entity entity : entities) {
             
-                newEntityId = ids.get(idIndex--);
-                entity.setId(newEntityId);
-                
+                newEntityId = entity.getId();
+                if (newEntityId == null) {
+                    newEntityId = ids.get(idIndex--);
+                    entity.setId(newEntityId);
+                }
+
                 stmtEntity.setLong(1, newEntityId);
                 stmtEntity.setString(2, entity.getName());
                 stmtEntity.setString(3, subjectKey);
@@ -349,13 +355,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                 }
                 
                 stmtEntity.setInt(7, entity.getChildren().size());
-                
+
+                entityCount++;
                 stmtEntity.addBatch();
+                
+                if (entityCount >= batchSize) {
+                    stmtEntity.executeBatch();
+                    entityCount = 0;
+                }
                 
                 for(EntityData ed : entity.getEntityData()) {
 
-                    Long newEdId = ids.get(idIndex--);
-                    ed.setId(newEdId);
+                    Long newEdId = ed.getId();
+                    if (newEdId == null) {
+                        newEdId = ids.get(idIndex--);
+                        ed.setId(newEdId);
+                    }
                     
                     stmtEd.setLong(1, newEdId);
                     stmtEd.setLong(2, newEntityId);
@@ -391,22 +406,32 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
                         stmtEd.setObject(9, ed.getChildEntity().getId());   
                     }
                     
+                    edCount++;
                     stmtEd.addBatch();
-                }
-                
-                if (++entityCount % batchSize == 0) {
-                    stmtEntity.executeBatch();
-                }
-                if (++edCount % batchSize == 0) {
-                    stmtEd.executeBatch();
+                    
+                    if (edCount >= batchSize) {
+                        if (entityCount > 0) {
+                            // Serialize any outstanding entities, because they are probably referenced by the eds we're about to serialize
+                            stmtEntity.executeBatch();
+                            entityCount = 0;
+                        }
+                        stmtEd.executeBatch();
+                        edCount = 0;
+                    }
                 }
             }
+
+            if (entityCount > 0) {
+                stmtEntity.executeBatch();
+            }
             
-            stmtEntity.executeBatch();
-            stmtEd.executeBatch();
+            if (edCount > 0) {
+                stmtEd.executeBatch();
+            }
             
             conn.commit();
             
+            // The last entity we process is the root, so now we know the root's id
             log.info("Saved bulk entity tree with root id="+newEntityId);
             Entity saved = getEntityById(newEntityId);
             if (saved==null) {
@@ -415,6 +440,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             return saved;
         }
         catch (Exception e) {
+            try {
+                conn.rollback();
+            }
+            catch (SQLException ex) {
+                log.warn("Error rolling back transaction after exception",e);
+            }
             throw new DaoException(e);
         }
         finally {
@@ -1924,6 +1955,22 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
         
         propagatePermissions(parent, entity, true, grantOwnerPermissions);
+        return ed;
+    }
+
+    public EntityData addNeuronToParentInMemory(Entity parent, Entity entity, Integer index, String attrName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("rapidlyAddNeuronToParent(parent="+parent+", entity="+entity+", index="+index+", attrName="+attrName+")");
+        }
+        if (parent.getId() != null  &&  parent.getId().equals(entity.getId())) {
+        	throw new IllegalArgumentException("Cannot add entity to itself: "+parent.getName());
+        }
+        if (attrName==null) throw new DaoException("Error adding entity child with null attribute name");
+
+        EntityData ed = parent.addChildEntity(entity, attrName);
+        ed.setOrderIndex(index);
+        //saveOrUpdate(ed);
+
         return ed;
     }
 

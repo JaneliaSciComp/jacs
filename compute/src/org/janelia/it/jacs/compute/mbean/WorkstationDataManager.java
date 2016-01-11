@@ -11,6 +11,7 @@ import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
 import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService;
 import org.janelia.it.jacs.compute.service.solr.SolrIndexingService;
+import org.janelia.it.jacs.compute.util.BulkEntityBuilder;
 import org.janelia.it.jacs.compute.util.FileVerificationUtil;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -698,19 +699,41 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 //            
 //            logger.info("Getting nascar icons took "+(System.currentTimeMillis()-start)+" ms");
             
+            
+            BulkEntityBuilder builder = new BulkEntityBuilder("user:rokickik");
+
+            logger.info("Building in-memory model...");
+            long start = System.currentTimeMillis();
+            for(int i=0; i<5000; i++) {
+                builder = builder.entity(EntityConstants.TYPE_FILE, "Test File "+i);
+                
+                for(int j=0; j<100; j++) {
+                    builder = builder.attr(EntityConstants.ATTRIBUTE_FILE_PATH, "File Path "+j);
+                }
+            };
+            long stop = System.currentTimeMillis();
+            logger.info("Done, took "+(stop-start)+" ms");
+            
+            logger.info("Inserting...");
+            
+            start = System.currentTimeMillis();
+            Entity saved = e.saveBulkEntityTree(builder.getRoot());
+            stop = System.currentTimeMillis();
+            
+            logger.info("Done: "+saved.getId()+", took "+(stop-start)/1000+" sec");
 
 			
-            Long root = 1957959676293283929L;
-
-			long start = System.currentTimeMillis();
-			e.grantPermissions("user:nerna", root, "user:rokickik", "r", true);
-			logger.info("grantPermissions('LC21_samples') took "
-					+ (System.currentTimeMillis() - start) + " ms");
-
-			start = System.currentTimeMillis();
-			e.revokePermissions("user:nerna", root, "user:rokickik", true);
-			logger.info("revokePermissions('LC21_samples') took "
-					+ (System.currentTimeMillis() - start) + " ms");
+//            Long root = 1957959676293283929L;
+//
+//			long start = System.currentTimeMillis();
+//			e.grantPermissions("user:nerna", root, "user:rokickik", "r", true);
+//			logger.info("grantPermissions('LC21_samples') took "
+//					+ (System.currentTimeMillis() - start) + " ms");
+//
+//			start = System.currentTimeMillis();
+//			e.revokePermissions("user:nerna", root, "user:rokickik", true);
+//			logger.info("revokePermissions('LC21_samples') took "
+//					+ (System.currentTimeMillis() - start) + " ms");
 
 		} catch (Exception ex) {
             logger.error("Error running runBenchmarks", ex);

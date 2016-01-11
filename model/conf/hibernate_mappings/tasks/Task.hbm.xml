@@ -311,6 +311,9 @@
     <subclass name="org.janelia.it.jacs.model.tasks.validation.ValidationTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="validationTask"/>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.tiledMicroscope.SwcImportTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="swcImportTask"/>
+
     <subclass name="org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="geometricIndexTask"/>
     

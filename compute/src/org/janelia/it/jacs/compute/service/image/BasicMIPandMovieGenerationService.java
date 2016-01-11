@@ -40,7 +40,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
     protected File outputDir;
     protected List<InputImage> inputImages; 
     protected boolean normalizeToFirst;
-    protected String outputs;
+    protected String options;
     
     @Override
     protected void init() throws Exception {
@@ -53,9 +53,9 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         
     	this.inputImages = (List<InputImage>)data.getRequiredItem("INPUT_IMAGES");
         this.normalizeToFirst = data.getItemAsBoolean("NORMALIZE_TO_FIRST_IMAGE");
-        this.outputs = data.getItemAsString("OUTPUTS");
-        if (outputs==null) {
-            this.outputs = "mips:movies:legends";
+        this.options = data.getItemAsString("OPTIONS");
+        if (options==null) {
+            this.options = "mips:movies:legends";
         }
         
         if (inputImages.isEmpty()) {
@@ -116,7 +116,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
             fw.write((chanSpec==null?"":chanSpec) + "\n");
             fw.write((colorSpec==null?"":colorSpec) + "\n");
             fw.write((divSpec==null?"":divSpec) + "\n");
-            fw.write(outputs + "\n");
+            fw.write(options + "\n");
             fw.write((randomPort+configIndex) + "\n");
         }
         catch (IOException e) {
@@ -140,13 +140,15 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         script.append("read CHAN_SPEC\n");
         script.append("read COLOR_SPEC\n");
         script.append("read DIV_SPEC\n");
-        script.append("read OUTPUTS\n");
+        script.append("read OPTIONS\n");
         script.append("read DISPLAY_PORT\n");
         script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
         
         // Start Xvfb
         script.append(Vaa3DHelper.getVaa3DGridCommandPrefix("$DISPLAY_PORT", "1280x1024x24")).append("\n");
 
+        // TODO: use Vaa3DHelper.getScratchDirCreationScript instead
+        
         // Create temp dir so that large temporary avis are not created on the network drive 
         script.append("export TMPDIR=").append(SCRATCH_DIR).append("\n");
         script.append("mkdir -p $TMPDIR\n");
@@ -163,7 +165,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         // Run Fiji macro
         StringBuffer cmd = new StringBuffer();
         cmd.append(FIJI_BIN_PATH).append(" -macro ").append(FIJI_MACRO_PATH).append("/").append(MACRO_NAME);
-        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX_1,$OUTPUT_PREFIX_2,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OUTPUTS");
+        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX_1,$OUTPUT_PREFIX_2,$INPUT_FILE1,$INPUT_FILE2,$LASER,$GAIN,$CHAN_SPEC,$COLOR_SPEC,$DIV_SPEC,$OPTIONS");
         script.append("echo \"Executing:\"\n");
         script.append("echo \""+cmd+"\"\n");
         script.append(cmd).append(" & \n");
@@ -180,8 +182,9 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         script.append("done\n");
         
         // Move everything to the final output directory
-        script.append("cp $TEMP_DIR/*.png $OUTPUT_DIR\n");
-        script.append("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR\n");
+        script.append("cp $TEMP_DIR/*.png $OUTPUT_DIR || true\n");
+        script.append("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR || true\n");
+        script.append("cp $TEMP_DIR/*.properties $OUTPUT_DIR || true\n");
         
         script.append(Vaa3DHelper.getVaa3DGridCommandSuffix()).append("\n");
         
