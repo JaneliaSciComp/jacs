@@ -32,6 +32,7 @@ public class SwcImportTask extends Task {
     transient public static final String PARAM_topLevelFolderName = "top level folder name";
     transient public static final String PARAM_sampleId = "sample id";
     transient public static final String PARAM_userName = "user name";
+    transient public static final String PARAM_workspaceName = "workspace name";
     
     public SwcImportTask() {
         super();
@@ -62,6 +63,9 @@ public class SwcImportTask extends Task {
         }
         if (key.equals(PARAM_userName)) {
             return new TextParameterVO(value, 100);
+        }
+        if (key.equals(PARAM_workspaceName)) {
+            return new TextParameterVO(value, 200);
         }
         // No match
         return null;

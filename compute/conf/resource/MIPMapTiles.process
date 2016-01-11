@@ -28,10 +28,10 @@
                 <input name="TARGET_STACK_FORMAT" />
                 <input name="TARGET_TILE_WIDTH" />
                 <input name="TARGET_TILE_HEIGHT" />
-                <input name="TARGET_MIN_ROW" />
-                <input name="TARGET_MAX_ROW" />
-                <input name="TARGET_MIN_COL" />
-                <input name="TARGET_MAX_COL" />
+                <input name="TARGET_MIN_X" />
+                <input name="TARGET_MAX_X" />
+                <input name="TARGET_MIN_Y" />
+                <input name="TARGET_MAX_Y" />
                 <input name="TARGET_MIN_Z" />
                 <input name="TARGET_MAX_Z" />
                 <input name="ORIENTATION" />
@@ -41,6 +41,7 @@
                 <input name="TARGET_MEDIA_FORMAT" />
                 <input name="TARGET_SKIP_EMPTY_TILES" />
                 <input name="BG_PIXEL_VALUE" />
+                <input name="INTERPOLATION" />
                 <input name="PROCESSING_ACCOUNT" />
 
                 <output name="TARGET_ROOT_URL" />
@@ -67,6 +68,9 @@
                 <input name="SOURCE_WIDTH" />
                 <input name="SOURCE_HEIGHT" />
                 <input name="SOURCE_DEPTH" />
+
+                <input name="ORIENTATION" />
+                <input name="SOURCE_MAGNIFICATION_LEVEL" />
 
                 <input name="TARGET_TILE_WIDTH" />
                 <input name="TARGET_TILE_HEIGHT" />
