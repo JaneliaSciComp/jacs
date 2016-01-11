@@ -27,14 +27,23 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  */
 public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBean {
     
-    public static final String SHARED_PERMISSION = "group:mouselight_common_user";
+    public static final String SHARED_PERMISSION = "group:mouselight";
     // Setting ownership of all created samples, to Jayaram, to avoid breakage
     // due to disagreements between filesystem and Workstation usernames.
     public static final String OWNERSHIP_USER = "chandrashekarj";
     private static final Logger logger = Logger.getLogger(LargeVolumeSampleDiscovery.class);
+    
+    private Notifier notifier;
+    
+    public LargeVolumeSampleDiscovery() {}
+    
+    public LargeVolumeSampleDiscovery(Notifier notifier) {
+        this.notifier = notifier;
+    }
 
     @Override
     public void discoverSamples() {
+        int addedSampleCount = 0;
         try {
             // Need to find out whether samples already exist.
             AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
@@ -99,13 +108,24 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
 
                     entityBean.setOrUpdateValue(ownerSubject, entityId, EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX, micronToVoxString);
                     entityBean.setOrUpdateValue(ownerSubject, entityId, EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX, voxToMicronString);
+                    
+                    addedSampleCount ++;
 
                 }
             }
+            if (notifier != null) {
+                notifier.status(true, String.format("Added %d samples.", addedSampleCount));
+            }
         } catch (Exception ex) {
+            if (notifier != null) {
+                notifier.status(false, "Exception: " + ex.getMessage());
+            }
             ex.printStackTrace();
         }
     }
 
+    public static interface Notifier {
+        void status(boolean success, String reason);
+    }
 }
 
