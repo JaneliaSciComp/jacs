@@ -18,7 +18,7 @@ public class LSMSampleProcessingStatusService extends AbstractEntityService {
 
         Entity sampleEntity = entityBean.getEntityById(sampleId);
         entityBean.setOrUpdateValue(sampleEntity.getId(), EntityConstants.ATTRIBUTE_STATUS, sampleStatus);
-        task.addEvent(new Event("Update status for " + sampleId + " to " + status,
+        task.addEvent(new Event("Update status for " + sampleId + " to " + sampleStatus,
                 new Date(),
                 Event.RUNNING_EVENT));
         computeBean.saveOrUpdateTask(task);
