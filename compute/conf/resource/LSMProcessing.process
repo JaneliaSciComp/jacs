@@ -47,6 +47,11 @@
 
         <sequence forEach="SAMPLE_ENTITY_ID">
 
+            <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleProcessingStatusService">
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="PROCESSING_STATUS" value="Processing"/>
+            </operation>
+
             <include name="Process sample" process="GSPS_CompleteSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="REUSE_PIPELINE_RUNS"/>
@@ -54,6 +59,11 @@
                 <input name="REUSE_PROCESSING"/>
                 <input name="REUSE_ALIGNMENT"/>
             </include>
+
+            <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleProcessingStatusService">
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="PROCESSING_STATUS" value="Complete"/>
+            </operation>
 
         </sequence>
 

@@ -230,12 +230,12 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         
         sampleHelper.createOrUpdateSample(null, slideCode, dataSet, tileGroupList);
     }
-    
-    protected void markDesyncedSamples(Entity dataSet) throws Exception {
+
+    private void markDesyncedSamples(Entity dataSet) throws Exception {
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
         if (dataSetFolder==null) return;
-        
+
         logger.info("Marking desynchronized samples in dataSet: "+dataSet.getName());
 
         // Make sure to fetch fresh samples, so that we have the latest visited flags
@@ -265,8 +265,8 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
         }
     }
-    
-    protected void fixOrderIndices(Entity dataSet) throws Exception {
+
+    private void fixOrderIndices(Entity dataSet) throws Exception {
      
         String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
         Entity dataSetFolder = sampleHelper.getDataSetFolderByIdentifierMap().get(dataSetIdentifier);
