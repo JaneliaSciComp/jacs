@@ -178,16 +178,27 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public TmSample createTiledMicroscopeSample(String user, String sampleName, String pathToRenderFolder) throws DaoException {
+    public TmSample createTiledMicroscopeSample(String subject, String sampleName, String pathToRenderFolder) throws DaoException {
         try {
-            String subjectKey = "user:"+user;
+            // We could pass in a prefixed subject key.
+            String subjectKey = subject;
+            if (! subjectKey.contains(":")) {
+                subjectKey = "user:" + subject;
+            }
             String folderName = "3D Tile Microscope Samples";
             Collection<Entity> folders = annotationDAO.getEntitiesByName(subjectKey, folderName);
-            Entity folder;
+            Entity folder = null;
             if (folders!=null && folders.size()>0) {
-                folder = folders.iterator().next();
+                for (Entity nextFolder: folders) {
+                    if (nextFolder.getOwnerKey().equals(subject)) {
+                        folder = nextFolder;
+                        break;
+                    }
+                }
             }
-            else {
+            if (folder == null) {
+                // Either nothing found in getter, or nothing passed ownership
+                // test.
                 folder = annotationDAO.createFolderInDefaultWorkspace(subjectKey, folderName).getChildEntity();
             }
 
