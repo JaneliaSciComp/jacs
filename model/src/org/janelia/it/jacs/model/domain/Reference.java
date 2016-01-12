@@ -85,4 +85,11 @@ public class Reference {
     public static Reference createFor(DomainObject domainObject) {
         return new Reference(domainObject.getClass().getName(), domainObject.getId());
     }
+    
+    public static Reference createFor(String strRef) {
+        String[] s = strRef.split("#");
+        String className = s[0];
+        Long id = Long.parseLong(s[1]);
+        return new Reference(className, id);
+    }
 }
