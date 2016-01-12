@@ -20,6 +20,7 @@ public class LSMSampleProcessingStatusService extends AbstractEntityService {
 
         Entity sampleEntity = entityBean.getEntityById(sampleId);
         entityBean.setOrUpdateValue(sampleEntity.getId(), EntityConstants.ATTRIBUTE_STATUS, sampleStatus);
+        // retrieve the task because the one is already in a hibernate session and hibernate chokes
         Task currentTask = computeBean.getTaskById(task.getObjectId());
         currentTask.addEvent(new Event("Update status for " + sampleId + " to " + sampleStatus,
                 new Date(),
