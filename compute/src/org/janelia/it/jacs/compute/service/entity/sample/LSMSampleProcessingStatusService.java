@@ -1,9 +1,11 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
+import org.janelia.it.jacs.model.tasks.Task;
 
 import java.util.Date;
 
@@ -18,10 +20,12 @@ public class LSMSampleProcessingStatusService extends AbstractEntityService {
 
         Entity sampleEntity = entityBean.getEntityById(sampleId);
         entityBean.setOrUpdateValue(sampleEntity.getId(), EntityConstants.ATTRIBUTE_STATUS, sampleStatus);
-        task.addEvent(new Event("Update status for " + sampleId + " to " + sampleStatus,
+        Task currentTask = computeBean.getTaskById(task.getObjectId());
+        currentTask.addEvent(new Event("Update status for " + sampleId + " to " + sampleStatus,
                 new Date(),
                 Event.RUNNING_EVENT));
-        computeBean.saveOrUpdateTask(task);
+        task = computeBean.saveOrUpdateTask(currentTask);
+        processData.putItem(IProcessData.TASK, task); // update the task
     }
 
 }

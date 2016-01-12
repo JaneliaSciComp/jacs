@@ -21,7 +21,7 @@ import java.util.Map;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class JsonTask {
 
-    private Long taskId;
+    private String taskId;
     private String taskName;
     private String owner;
     private List<JsonTaskEvent> taskEvents = new ArrayList<>();
@@ -34,7 +34,7 @@ public class JsonTask {
     }
 
     public JsonTask(Task t) {
-        taskId = t.getObjectId();
+        taskId = t.getObjectId().toString();
         taskName = t.getTaskName();
         owner = t.getOwner();
         for (Event e : t.getEvents()) {
@@ -55,7 +55,7 @@ public class JsonTask {
         }
     }
 
-    public Long getTaskId() {
+    public String getTaskId() {
         return taskId;
     }
 

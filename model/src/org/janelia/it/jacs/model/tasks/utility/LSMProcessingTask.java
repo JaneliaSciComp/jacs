@@ -8,7 +8,10 @@ import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.model.vo.ParameterVO;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +23,8 @@ import java.util.List;
  * Date: Oct 3, 2008
  * Time: 10:08:35 AM
  */
+@XmlRootElement(name = "lsmProcessing")
+@XmlAccessorType(XmlAccessType.NONE)
 public class LSMProcessingTask extends Task {
 
     public static final String TASK_NAME = "lsmprocessing";

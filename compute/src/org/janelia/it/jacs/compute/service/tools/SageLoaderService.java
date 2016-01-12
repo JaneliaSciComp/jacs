@@ -244,10 +244,12 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             }
         }
 
-        logger.info("Expected/Processed images: " + expectedImages + "/" + imagesFound);
+        logger.info("Task " + sageLoaderTask.getObjectId() + " expected/Processed images: " +
+                expectedImages + "/" + imagesFound);
         if (imagesFound != expectedImages) {
             final Event lastEvent = sageLoaderTask.getLastEvent();
-            final String errorMessage = "not all Images Found in " + sageLoaderStdOutFile.getAbsolutePath();
+            final String errorMessage = "Task " + sageLoaderTask.getObjectId() +
+                    " not all Images Found in " + sageLoaderStdOutFile.getAbsolutePath();
             if (! Event.ERROR_EVENT.equals(lastEvent.getEventType())) {
                 logger.warn("checkImagesFound: " + errorMessage);
                 final Event invalidOutput = new Event(errorMessage, new Date(), Event.ERROR_EVENT);
