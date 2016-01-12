@@ -369,6 +369,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             workspace.getEntityData().add(sampleEd);
             EntityData versionED = setWorkspaceLatestVersion(workspace);
             workspace.getEntityData().add(versionED);
+            createTiledMicroscopePreferencesInMemory(workspace); 
 
             return workspace;
 
