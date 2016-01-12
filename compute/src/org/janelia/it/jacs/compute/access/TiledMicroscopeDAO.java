@@ -790,6 +790,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 // Make the actual annotation, and save its linkage
                 // through its original node id.
                 TmGeoAnnotation linkedAnnotation = createGeometricAnnotationInMemory(tmNeuron, isRoot, parentAnnotationId, unlinkedAnnotation, idSource);
+                TmGeoAnnotation parentAnnotation = tmNeuron.getParentOf(linkedAnnotation);
+                if (parentAnnotation != null) {
+                    parentAnnotation.addChild(linkedAnnotation);
+                }
                 nodeIdToAnnotationId.put(nodeId, linkedAnnotation.getId());
 
                 log.trace("Node " + nodeId + " at " + linkedAnnotation.toString() + ", has id " + linkedAnnotation.getId()
