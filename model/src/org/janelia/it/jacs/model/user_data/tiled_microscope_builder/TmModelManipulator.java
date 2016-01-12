@@ -59,18 +59,33 @@ public class TmModelManipulator {
      * @throws Exception 
      */
     public TmNeuron createTiledMicroscopeNeuron(TmWorkspace workspace, String name) throws Exception {
+        return createTiledMicroscopeNeuron(workspace, name, null);
+    }
+    
+    /**
+     * Makes a new neuron.
+     * 
+     * @todo may need to add create, update dates + ownerKey
+     * @param workspace will contain this neuron.
+     * @param name of new neuron.
+     * @return that neuron
+     * @throws Exception 
+     */
+    public TmNeuron createTiledMicroscopeNeuron(TmWorkspace workspace, String name, Long precomputedId) throws Exception {
         if (workspace == null || name == null) {
             throw new Exception("Tiled Neuron must be created in a valid workspace.");
         }
 
         final String ownerKey = workspace.getOwnerKey();
         TmNeuron tmNeuron = new TmNeuron();
-        tmNeuron.setId(null);
+        tmNeuron.setId(precomputedId);
         tmNeuron.setOwnerKey(ownerKey);
         tmNeuron.setName(name);
         tmNeuron.setCreationDate(new Date());
         tmNeuron.setWorkspaceId(workspace.getId());
-        saveNeuronData(tmNeuron);
+        if (dataSource != null) {
+            saveNeuronData(tmNeuron);
+        }
         
         return tmNeuron;        
     }
