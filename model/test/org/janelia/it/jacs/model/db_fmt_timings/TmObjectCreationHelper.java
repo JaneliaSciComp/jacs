@@ -97,6 +97,9 @@ public class TmObjectCreationHelper {
             geoAnnotationMap.put(randomId(), geoAnnotation);
         }
         numGeoAnno += NUM_GEO_ANNO;
+
+		// This works because we know there are at least one annotations in the map.
+		data.getRootAnnotations().add(geoAnnotationMap.values().iterator().next());
                 
         final Map<Long, TmStructuredTextAnnotation> structuredTextAnnotationMap = data.getStructuredTextAnnotationMap();
         for (int j = 0; j < NUM_STA; j++) {

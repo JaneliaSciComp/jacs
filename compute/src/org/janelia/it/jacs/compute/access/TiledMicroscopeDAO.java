@@ -209,6 +209,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             throw new ComputeException("Folder " + swcFolder + " either does not exist, is not a directory, or cannot be read.");
         }
         
+        Iterator<Long> idSource = new IdSource();
         Entity workspaceEntity = null;
         TmWorkspace tmWorkspace = null;
         Entity folder = null;
@@ -240,6 +241,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
             log.info("Creating new workspace called " + workspaceName + ", belonging to " + ownerKey + ".");
             workspaceEntity = createTiledMicroscopeWorkspaceInMemory(sampleId, workspaceName, ownerKey);
+			workspaceEntity.setId(idSource.next());
             final TmFromEntityPopulator populator = new TmFromEntityPopulator();
             Entity sampleEntity = annotationDAO.getEntityById(sampleId);
             try {
@@ -290,7 +292,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         Set<File> swcFiles = fileCollector.getFileSet();
 
         int swcCounter = 0;
-        Iterator<Long> idSource = new IdSource();
         log.info("Importing total of " + swcFiles.size() + " SWC files into new workspace.");
         for (File swcFile : swcFiles) {
             if (swcCounter % 1000 == 0) {
