@@ -77,4 +77,9 @@ public abstract class OntologyTerm implements HasIdentifier {
     public String getName() {
         return name;
     }
+    
+    @Override
+    public String toString() {
+        return name;
+    }
 }

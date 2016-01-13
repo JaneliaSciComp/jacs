@@ -452,6 +452,7 @@ public class DomainDAO {
                 collection.save(domainObject);
             }
             else {
+                domainObject.setUpdatedDate(new Date());
                 WriteResult result = collection.update("{_id:#,writers:#}", domainObject.getId(), subjectKey).with(domainObject);
                 if (result.getN()!=1) {
                     throw new IllegalStateException("Updated "+result.getN()+" records instead of one: "+collectionName+"#"+domainObject.getId());

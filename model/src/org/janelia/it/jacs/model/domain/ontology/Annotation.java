@@ -3,6 +3,8 @@ package org.janelia.it.jacs.model.domain.ontology;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -13,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
  */
 @MongoMapped(collectionName="annotation",label="Annotation")
 public class Annotation extends AbstractDomainObject {
-
+    
     @JsonUnwrapped
     private Reference target;
     private OntologyTermReference keyTerm;
@@ -21,6 +23,21 @@ public class Annotation extends AbstractDomainObject {
     private String key;
     private String value;
 
+    public Annotation() {
+    }
+
+    public Annotation(Annotation baseAnnotation) {
+        setName(baseAnnotation.getName());
+        setTarget(baseAnnotation.getTarget());
+        setOwnerKey(baseAnnotation.getOwnerKey());
+        setKey(baseAnnotation.getKey());
+        setKeyTerm(baseAnnotation.getKeyTerm());
+        setValue(baseAnnotation.getValue());
+        setValueTerm(baseAnnotation.getValueTerm());
+        setReaders(baseAnnotation.getReaders());
+        setWriters(baseAnnotation.getWriters());
+    }
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 
     public Reference getTarget() {
