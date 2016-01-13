@@ -65,7 +65,7 @@ public class ProtobufSerializerTest {
         }
     }
 
-	@Test
+	//@Test
 	public void aSmallTest() throws Exception {
 		// Serialize something really simple.
 		java.awt.Dimension d = new java.awt.Dimension(50,90);
@@ -79,7 +79,7 @@ public class ProtobufSerializerTest {
 		Assert.assertEquals("Dimensions do not match.", d, newDimension);		
 	}
 	
-	//@Test
+	@Test
 	public void aLargeTest() throws Exception {
 		List<MockNeuronJsonData> mockNeurons = new MockObjectCreationHelper().createSmallSetOfObjects();
 		final Schema<MockNeuronJsonData> schema = RuntimeSchema.getSchema(MockNeuronJsonData.class); 
