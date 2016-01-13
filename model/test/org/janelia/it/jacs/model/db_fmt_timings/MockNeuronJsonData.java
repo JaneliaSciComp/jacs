@@ -17,17 +17,17 @@ import io.protostuff.Tag;
  * @author fosterl
  */
 public class MockNeuronJsonData implements Serializable {
-    @Tag(51)
+    @Tag(1)
     private long id;
-    @Tag(52)
+    @Tag(2)
     private String name;
-    @Tag(53)
+    @Tag(3)
     private Date createDate;
-    @Tag(54)
+    @Tag(4)
     private List<AnchoredPath> anchoredPaths;
-    @Tag(55)
+    @Tag(5)
     private List<GeoAnnotation> geoAnnotations;
-    @Tag(56)
+    @Tag(6)
     private List<StructuredTextAnnotation> structuredTextAnnotations;
 
     /**
@@ -122,7 +122,11 @@ public class MockNeuronJsonData implements Serializable {
         @Tag(103)
         private double radius;
         @Tag(104)
-        private double x,y,z;
+        private double x;
+        @Tag(105)
+        private double y;
+        @Tag(106)        
+        private double z;
 
         /**
          * @return the id
@@ -209,7 +213,7 @@ public class MockNeuronJsonData implements Serializable {
         }
     }
     
-    public static class StructuredTextAnnotation implements Serializable {
+    public static class StructuredTextAnnotation {
         @Tag(201)
         private long id;
         @Tag(202)
