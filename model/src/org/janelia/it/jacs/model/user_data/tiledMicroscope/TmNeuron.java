@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import io.protostuff.Tag;
 
 import java.io.Serializable;
 import java.util.*;
@@ -32,15 +33,24 @@ public class TmNeuron implements IsSerializable, Serializable {
         PREV_PARALLEL,
     }
 
+    @Tag(1)
     private Long id;
+    @Tag(2)
     private Long workspaceId;
+    @Tag(3)
     private String name;
+    @Tag(4)
     private Date creationDate;
+    @Tag(5)
     private String ownerKey;
+    @Tag(6)
     private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<>();
+    @Tag(7)
     private List<Long> rootAnnotationIds = new ArrayList<>();
+    @Tag(8)
     private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<>();
 
+    @Tag(9)
     private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<>();
 
     public Long getId() {
