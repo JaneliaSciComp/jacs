@@ -516,5 +516,4 @@ public abstract class Task implements Serializable, IsSerializable {
     public void setTaskNote(String taskNote) {
         this.taskNote = taskNote;
     }
-
 }

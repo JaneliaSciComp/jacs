@@ -22,6 +22,7 @@ import java.util.List;
 public class SageLoaderTask extends Task {
 
     private static final String DISPLAY_NAME = "Sage Loader Task";
+    private static final String DEFAULT_JOBNAME = "SageLoader";
     private static final String PARAM_ITEMLIST = "item list";
     private static final String PARAM_LINE = "line";
     private static final String PARAM_CONFIG = "config";
@@ -51,6 +52,7 @@ public class SageLoaderTask extends Task {
                           String lockPath) throws IllegalArgumentException {
         super(new HashSet<Node>(), owner, events, new HashSet<TaskParameter>());
         this.taskName = DISPLAY_NAME;
+        setJobName(DEFAULT_JOBNAME);
         setItemList(ImmutableList.of(item));
         setOptionalParameter(PARAM_LINE, line);
         setPathParameter(PARAM_CONFIG, configPath, true);

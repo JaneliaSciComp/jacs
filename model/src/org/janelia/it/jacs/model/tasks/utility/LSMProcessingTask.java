@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.model.tasks.utility;
 
+import com.google.common.collect.ImmutableSet;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -17,17 +18,16 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * This action can work against directories or single files passed as source
+ * This action is used for processing a list of LSM files.
  * Created by IntelliJ IDEA.
- * User: tsafford
- * Date: Oct 3, 2008
- * Time: 10:08:35 AM
+ * User: cgoina
  */
 @XmlRootElement(name = "lsmProcessing")
 @XmlAccessorType(XmlAccessType.NONE)
 public class LSMProcessingTask extends Task {
 
     public static final String TASK_NAME = "lsmprocessing";
+    public static final String DEFAULT_JOBNAME = "LSMProcessing";
     public static final String DISPLAY_NAME = "LSM Processing Task";
     public static final String PARAM_LSM_NAMES = "lsm names";
     public static final String PARAM_REUSE_PIPELINE_RUNS = "reuse pipeline runs";
@@ -52,6 +52,7 @@ public class LSMProcessingTask extends Task {
         setParameter(PARAM_REUSE_PROCESSING, "true");
         setParameter(PARAM_REUSE_ALIGNMENT, "true");
         setTaskName(TASK_NAME);
+        setJobName(DEFAULT_JOBNAME);
     }
 
     public ParameterVO getParameterVO(String key) throws ParameterException {
@@ -72,7 +73,7 @@ public class LSMProcessingTask extends Task {
     public List<String> getLsmNames() { return listOfStringsFromCsvString(getParameter(PARAM_LSM_NAMES)); }
 
     public void setLsmNames(List<String> lsmNames) {
-        setParameter(PARAM_LSM_NAMES, csvStringFromCollection(lsmNames));
+        setParameter(PARAM_LSM_NAMES, csvStringFromCollection(ImmutableSet.copyOf(lsmNames)));
     }
 
     @XmlElement

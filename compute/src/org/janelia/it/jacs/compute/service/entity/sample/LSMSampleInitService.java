@@ -156,6 +156,14 @@ public class LSMSampleInitService extends AbstractEntityService {
         }
         List<SlideImageGroup> tileGroupList = new ArrayList<>(tileGroups.values());
 
+        // Sort the pairs by their tag name
+        Collections.sort(tileGroupList, new Comparator<SlideImageGroup>() {
+            @Override
+            public int compare(SlideImageGroup o1, SlideImageGroup o2) {
+                return o1.getTag().compareTo(o2.getTag());
+            }
+        });
+
         Entity sampleEntity = sampleHelper.createOrUpdateSample(null, slideCode, dataset, tileGroupList);
         sampleEntityIds.add(sampleEntity.getId().toString());
         return new String[] {lab, line};

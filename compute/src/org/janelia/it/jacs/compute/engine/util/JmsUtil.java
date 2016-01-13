@@ -15,10 +15,7 @@ import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 import javax.ejb.EJBException;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
+import javax.jms.*;
 
 import java.util.Map;
 
@@ -204,16 +201,26 @@ public class JmsUtil {
 
     public static void sendMessageToQueue(AsyncMessageInterface messageInterface, Map<String,String> parameters, String queueName) throws LauncherException {
         try {
-            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
             MapMessage mapMessage = messageInterface.createMapMessage();
-            for ( String paramName: parameters.keySet() ) {
-                mapMessage.setString( paramName, parameters.get( paramName ) );
+            for (String paramName : parameters.keySet()) {
+                mapMessage.setString(paramName, parameters.get(paramName));
             }
-            messageInterface.sendMessageWithinTransaction(mapMessage);
+            sendMessageToQueue(messageInterface, messageInterface.localConnectionType, mapMessage, queueName);
+        } catch (Exception e) {
+            throw new LauncherException(e);
+        }
+    }
+
+    public static void sendMessageToQueue(AsyncMessageInterface messageInterface,
+                                          AsyncMessageInterface.ConnectionType connectionType,
+                                          Message jmsMessage,
+                                          String queueName) throws LauncherException {
+        try {
+            messageInterface.startMessageSession(queueName, connectionType);
+            messageInterface.sendMessageWithinTransaction(jmsMessage);
             messageInterface.commit();
             messageInterface.endMessageSession();
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             // Cannot proceed further
             throw new LauncherException(e);
         }
