@@ -83,10 +83,12 @@ public class Reference {
     }
 
     public static Reference createFor(DomainObject domainObject) {
+        if (domainObject==null) throw new IllegalArgumentException("Null domain object reference");
         return new Reference(domainObject.getClass().getName(), domainObject.getId());
     }
     
     public static Reference createFor(String strRef) {
+        if (strRef==null) throw new IllegalArgumentException("Null string reference");
         String[] s = strRef.split("#");
         String className = s[0];
         Long id = Long.parseLong(s[1]);
