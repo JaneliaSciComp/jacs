@@ -2,10 +2,12 @@
 package org.janelia.it.jacs.compute.api;
 
 
+import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.status.TaskStatus;
 
 import javax.ejb.Local;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,4 +57,6 @@ public interface JobControlBeanLocal {
     public void cancelTask(long taskId);
 
     public void bulkUpdateGridJobInfo(long taskId, Map<String,GridJobStatus.JobState> changedJobStateMap, Map<String,Map<String, String>> changedJobResourceMap);
+
+    public void updateDispatcherJob(DispatcherJob job);
 }

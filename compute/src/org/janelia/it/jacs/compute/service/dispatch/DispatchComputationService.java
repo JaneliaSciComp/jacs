@@ -3,8 +3,6 @@ package org.janelia.it.jacs.compute.service.dispatch;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.it.jacs.compute.access.DispatcherDAO;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.data.ProcessData;
-import org.janelia.it.jacs.compute.engine.launcher.LauncherException;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
@@ -13,9 +11,6 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.tasks.Task;
-
-import javax.jms.Message;
-import java.util.Map;
 
 /**
  * This service creates an entry for a task that needs to be dispatched to a different computation node and
@@ -57,11 +52,16 @@ public class DispatchComputationService implements IService {
         messageInterface.setProviderUrl(SystemConfigurationProperties.getString("AsyncMessageInterface.ProviderURL"));
         String providerUrl = providerUrlTemplate.replace("<host>", job.getDispatchHost());
         messageInterface.setProviderUrl(providerUrl);
-        Message processingMessage = messageInterface.createMapMessage();
-        processingMessage.setLongProperty(IProcessData.PROCESS_ID, job.getDispatchId());
-        JmsUtil.sendMessageToQueue(messageInterface, messageInterface.getRemoteConnectionType(),
-                processingMessage,
-                DISPATCH_REQUEST_QUEUE);
+        try {
+            JmsUtil.sendMessageToQueue(messageInterface, messageInterface.getRemoteConnectionType(),
+                    ImmutableMap.<String, Object>of(
+                            IProcessData.PROCESS_ID, job.getDispatchedTaskId(),
+                            IProcessData.JOB_ID, job.getDispatchId()
+                            ),
+                    DISPATCH_REQUEST_QUEUE);
+        } finally {
+            messageInterface.endMessageSession();
+        }
     }
 
 }

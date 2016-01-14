@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.engine.util;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.DataExtractor;
@@ -201,11 +202,8 @@ public class JmsUtil {
 
     public static void sendMessageToQueue(AsyncMessageInterface messageInterface, Map<String,String> parameters, String queueName) throws LauncherException {
         try {
-            MapMessage mapMessage = messageInterface.createMapMessage();
-            for (String paramName : parameters.keySet()) {
-                mapMessage.setString(paramName, parameters.get(paramName));
-            }
-            sendMessageToQueue(messageInterface, messageInterface.localConnectionType, mapMessage, queueName);
+            sendMessageToQueue(messageInterface, messageInterface.localConnectionType,
+                    ImmutableMap.<String, Object>copyOf(parameters), queueName);
         } catch (Exception e) {
             throw new LauncherException(e);
         }
@@ -213,11 +211,15 @@ public class JmsUtil {
 
     public static void sendMessageToQueue(AsyncMessageInterface messageInterface,
                                           AsyncMessageInterface.ConnectionType connectionType,
-                                          Message jmsMessage,
+                                          Map<String, Object> parameters,
                                           String queueName) throws LauncherException {
         try {
             messageInterface.startMessageSession(queueName, connectionType);
-            messageInterface.sendMessageWithinTransaction(jmsMessage);
+            MapMessage mapMessage = messageInterface.createMapMessage();
+            for (String paramName : parameters.keySet()) {
+                mapMessage.setObject(paramName, parameters.get(paramName));
+            }
+            messageInterface.sendMessageWithinTransaction(mapMessage);
             messageInterface.commit();
             messageInterface.endMessageSession();
         } catch (Throwable e) {

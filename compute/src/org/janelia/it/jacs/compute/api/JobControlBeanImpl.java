@@ -3,11 +3,14 @@ package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
+import org.janelia.it.jacs.compute.access.DispatcherDAO;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
+import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.status.TaskStatus;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
@@ -300,5 +303,15 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
             percentComplete = null;
         }
         return percentComplete;
+    }
+
+    @Override
+    public void updateDispatcherJob(DispatcherJob job) {
+        try {
+            DispatcherDAO dispatcherDao = new DispatcherDAO();
+            dispatcherDao.save(job);
+        } catch (Exception e) {
+            logger.error("Error while trying to update job " + job.getDispatchId());
+        }
     }
 }

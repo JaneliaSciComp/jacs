@@ -12,7 +12,8 @@ public class DispatcherJob implements Serializable {
 
     public static enum Status {
         PENDING,
-        SUBMITTED
+        SUBMITTED,
+        FAILED
     }
 
     // Fields
@@ -23,6 +24,7 @@ public class DispatcherJob implements Serializable {
     private Long dispatchedTaskId;
     private String dispatchHost;
     private Date creationDate = new Date();
+    private int retries = 0;
     private Date dispatchedDate;
 
     public Long getDispatchId() {
@@ -87,6 +89,18 @@ public class DispatcherJob implements Serializable {
 
     public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
+    }
+
+    public int getRetries() {
+        return retries;
+    }
+
+    public void setRetries(int retries) {
+        this.retries = retries;
+    }
+
+    public void incRetries() {
+        ++retries;
     }
 
     public Date getDispatchedDate() {

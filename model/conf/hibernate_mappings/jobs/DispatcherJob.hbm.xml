@@ -52,8 +52,9 @@
         <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
         <property name="dispatchedTaskOwner" type="string" column="dispatched_task_owner" not-null="true" />
         <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
-        <property name="creationDate" type="date" column="creation_date" not-null="true"/>
-        <property name="dispatchedDate" type="date" column="dispatched_date" not-null="false"/>
+        <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
+        <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
+        <property name="retries" type="int" column="retries" not-null="false"/>
     </class>
 
 </hibernate-mapping>

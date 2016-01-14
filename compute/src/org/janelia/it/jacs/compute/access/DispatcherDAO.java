@@ -8,6 +8,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -17,22 +18,16 @@ public class DispatcherDAO {
 
     private SessionFactory sessionFactory;
 
-    public DispatcherDAO() {
-    }
-
-    public DispatcherJob getNextPendingJob(String hostName) {
+    public Iterator<DispatcherJob> getPendingJobsIterator(String hostName, int maxRetries) {
         Query query = getCurrentSession().createQuery("select dj from DispatcherJob dj " +
-                "where dj.dispatchStatus = :status " +
+                "where dj.status = :status " +
+                "and dj.retries < :maxretries " +
                 "and dj.dispatchHost = :hostname " +
                 "order by dj.creationDate");
-        query.setString("status", "PENDING");
+        query.setString("status", DispatcherJob.Status.PENDING.name());
+        query.setInteger("maxretries", maxRetries);
         query.setString("hostname", hostName);
-        List<DispatcherJob> pendingJobs = query.list();
-        if (pendingJobs.size() > 0) {
-            return pendingJobs.get(0);
-        } else {
-            return null;
-        }
+        return query.iterate();
     }
 
     /**
@@ -48,7 +43,7 @@ public class DispatcherDAO {
                 (StringUtils.isBlank(job.getDispatchDiscriminatorValue())
                         ? ""
                         : "and (discriminator_value = :discriminator_value or discriminator_value is null) ") +
-                "order by job_owner is null, discriminator_value is null;");
+                "order by discriminator_value is null, discriminator_value, job_owner is null, job_owner;");
         query.setString("job_owner", job.getDispatchedTaskOwner());
         if (!StringUtils.isBlank(job.getDispatchDiscriminatorValue())) {
             query.setString("discriminator_value", job.getDispatchDiscriminatorValue());
