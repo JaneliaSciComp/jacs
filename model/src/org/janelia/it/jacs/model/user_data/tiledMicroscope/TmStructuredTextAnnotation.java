@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gwt.user.client.rpc.IsSerializable;
+import io.protostuff.Tag;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -16,13 +17,6 @@ import java.io.Serializable;
  *
  */
 public class TmStructuredTextAnnotation implements IsSerializable, Serializable {
-    Long id;
-
-    // parent could be a neuron, workspace, or geometric annotation, and we record
-    //  what it is
-    Long parentId;
-    int parentType;
-
     public final static int GEOMETRIC_ANNOTATION = 1;
     public final static int NEURON = 2;
     public final static int WORKSPACE = 3;
@@ -30,7 +24,19 @@ public class TmStructuredTextAnnotation implements IsSerializable, Serializable 
     // data will be stored in some kind of structured text, initially json;
     //  we record a version number that we will update when we change the format
     public static final int FORMAT_VERSION = 1;
-    String dataString;
+
+	@Tag(1)
+    private Long id;
+
+    // parent could be a neuron, workspace, or geometric annotation, and we record
+    //  what it is
+	@Tag(2)
+    private Long parentId;
+	@Tag(3)
+    private int parentType;
+
+	@Tag(4)
+    private String dataString;
 
 	/** No-args c'tor required for use with Protostuff/protobuf */
 	public TmStructuredTextAnnotation() {		
