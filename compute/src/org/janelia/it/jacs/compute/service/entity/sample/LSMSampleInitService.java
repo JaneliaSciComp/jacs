@@ -55,19 +55,19 @@ public class LSMSampleInitService extends AbstractEntityService {
             }
         }
 
-        Set<String> sampleEntityIds = new LinkedHashSet<>();
+        Set<String> sampleDatasetWithEntityIds = new LinkedHashSet<>();
         List<Task> sageLoadingTasks = new ArrayList<>();
         for (String datasetName : slideGroupsByDataset.keySet()) {
-            prepareSlideImageGroupsForDataset(owner, datasetName, slideGroupsByDataset.get(datasetName), sampleEntityIds, sageLoadingTasks);
+            prepareSlideImageGroupsForDataset(owner, datasetName, slideGroupsByDataset.get(datasetName), sampleDatasetWithEntityIds, sageLoadingTasks);
         }
 
         processData.putItem("SAGE_TASK", sageLoadingTasks);
-        processData.putItem("SAMPLE_ENTITY_ID", ImmutableList.copyOf(sampleEntityIds));
+        processData.putItem("SAMPLE_DATASET_ID_WITH_ENTITY_ID", ImmutableList.copyOf(sampleDatasetWithEntityIds));
     }
 
     private void prepareSlideImageGroupsForDataset(String owner, String datasetName,
                                                    Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
-                                                   Collection<String> sampleEntityIds,
+                                                   Collection<String> sampleDatasetWithEntityIds,
                                                    List<Task> targetTasks) {
         List<Entity> datasets;
         try {
@@ -89,7 +89,7 @@ public class LSMSampleInitService extends AbstractEntityService {
                     Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
                     String[] labAndLine = prepareSlideImageGroupsBySlideCode(dataset, slideCode,
                             slideImages,
-                            sampleEntityIds);
+                            sampleDatasetWithEntityIds);
                     List<String> slideImageNames = ImmutableList.copyOf(Iterables.transform(slideImages, new Function<SlideImage, String>() {
                         @Nullable
                         @Override
@@ -120,7 +120,7 @@ public class LSMSampleInitService extends AbstractEntityService {
     private String[] prepareSlideImageGroupsBySlideCode(Entity dataset,
                                                         String slideCode,
                                                         Collection<SlideImage> slideImages,
-                                                        Collection<String> sampleEntityIds)
+                                                        Collection<String> sampleDatasetWithEntityIds)
             throws Exception {
         Map<String, SlideImageGroup> tileGroups = new LinkedHashMap<>();
 
@@ -165,7 +165,7 @@ public class LSMSampleInitService extends AbstractEntityService {
         });
 
         Entity sampleEntity = sampleHelper.createOrUpdateSample(null, slideCode, dataset, tileGroupList);
-        sampleEntityIds.add(sampleEntity.getId().toString());
+        sampleDatasetWithEntityIds.add(dataset.getId().toString() + ":" + sampleEntity.getId().toString());
         return new String[] {lab, line};
     }
 }

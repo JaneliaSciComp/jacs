@@ -27,13 +27,16 @@ import java.util.List;
 public class LSMProcessingTask extends Task {
 
     public static final String TASK_NAME = "lsmprocessing";
-    public static final String DEFAULT_JOBNAME = "LSMProcessing";
+    public static final String DEFAULT_JOBNAME = "LSMInitProcessing";
     public static final String DISPLAY_NAME = "LSM Processing Task";
     public static final String PARAM_LSM_NAMES = "lsm names";
     public static final String PARAM_REUSE_PIPELINE_RUNS = "reuse pipeline runs";
     public static final String PARAM_REUSE_SUMMARY = "reuse summary";
     public static final String PARAM_REUSE_PROCESSING = "reuse processing";
     public static final String PARAM_REUSE_ALIGNMENT = "reuse alignment";
+    public static final String PARAM_REUSE_POST = "reuse post";
+    public static final String PARAM_RUN_OBJECTIVES = "run objectives";
+
 
     public LSMProcessingTask() {
         super();
@@ -110,5 +113,23 @@ public class LSMProcessingTask extends Task {
 
     public void setReuseAlignment(Boolean val) {
         setParameterAsBoolean(PARAM_REUSE_ALIGNMENT, val);
+    }
+
+    @XmlElement
+    public Boolean getReusePost() {
+        return getParameterAsBoolean(PARAM_REUSE_POST);
+    }
+
+    public void setReusePost(Boolean val) {
+        setParameterAsBoolean(PARAM_REUSE_POST, val);
+    }
+
+    @XmlElement
+    public String getRunObjectives() {
+        return getParameter(PARAM_RUN_OBJECTIVES);
+    }
+
+    public void setRunObjectives(String val) {
+        setParameter(PARAM_RUN_OBJECTIVES, val);
     }
 }
