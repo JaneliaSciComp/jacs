@@ -373,8 +373,10 @@
     <!-- deploys to app server area -->
     <target name="windows-deploy-[your-server]-dev" depends="setup" description="Deploy ear and jars to development server">
         <input message="Please enter server name (i.e. camdev2):" addproperty="server.address" defaultvalue=""/>
-        <input message="Please enter password for ccbuild:" addproperty="server.password" />
-
+        <input message="Please enter password for ${server.address}:" addproperty="server.password"/>
+		<!--		    <handler classname="org.apache.tools.ant.input.SecureInputHandler" />
+		</input>-->
+		
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
                    value="${server.address}.properties"
