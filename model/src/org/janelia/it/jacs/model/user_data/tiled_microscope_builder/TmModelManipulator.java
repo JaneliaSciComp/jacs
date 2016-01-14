@@ -251,8 +251,8 @@ public class TmModelManipulator {
         return annotation;
     }
 	
-	public void updateStructuredTextAnnotation(TmNeuron neuron, TmStructuredTextAnnotation annotation, String jsonString) throws Exception {
-		neuron.getStructuredTextAnnotationMap().put(annotation.getId(), annotation);
+	public void updateStructuredTextAnnotation(TmNeuron neuron, TmGeoAnnotation geoAnnotation, TmStructuredTextAnnotation textAnnotation) throws Exception {
+		neuron.getStructuredTextAnnotationMap().put(geoAnnotation.getId(), textAnnotation);
 	}
 	
 	public void deleteStructuredTextAnnotation(TmNeuron neuron, long annotationId) {

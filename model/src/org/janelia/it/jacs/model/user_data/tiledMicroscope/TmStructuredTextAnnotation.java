@@ -8,6 +8,7 @@ import io.protostuff.Tag;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * this class represents a structured text annotation to be attached to other tiled
@@ -37,6 +38,9 @@ public class TmStructuredTextAnnotation implements IsSerializable, Serializable 
 
 	@Tag(4)
     private String dataString;
+    
+    @Tag(7)
+    private Date noteDate = new Date();
 
 	/** No-args c'tor required for use with Protostuff/protobuf */
 	public TmStructuredTextAnnotation() {		
@@ -108,6 +112,20 @@ public class TmStructuredTextAnnotation implements IsSerializable, Serializable 
 
     public void setDataString(String dataString) {
         this.dataString = dataString;
+    }
+
+    /**
+     * @return the noteDate
+     */
+    public Date getNoteDate() {
+        return noteDate;
+    }
+
+    /**
+     * @param noteDate the noteDate to set
+     */
+    public void setNoteDate(Date noteDate) {
+        this.noteDate = noteDate;
     }
 }
 
