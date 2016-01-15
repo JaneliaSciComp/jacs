@@ -1,26 +1,21 @@
 package org.janelia.it.jacs.compute.wsrest;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.util.*;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.*;
 
-import org.glassfish.jersey.server.ResourceConfig;
-import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.Preference;
-import org.janelia.it.jacs.model.domain.Reference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.jersey.jackson.JacksonFeature;
-
+import org.glassfish.jersey.internal.util.Base64;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.shared.security.LDAPProvider;
+import org.janelia.it.jacs.shared.security.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Preference;
+import org.janelia.it.jacs.model.user_data.UserToolEvent;
+import org.janelia.it.jacs.shared.security.BasicAuthToken;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
@@ -36,8 +31,40 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Context
     SecurityContext securityContext;
 
+    @Context
+    HttpHeaders headers;
+
+    LDAPProvider authenticator;
+
     public UserWorkstationWebService() {
         register(JacksonFeature.class);
+        authenticator = new LDAPProvider();
+    }
+
+    @GET
+    @Path("/login")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Subject loginSubject (@QueryParam("subjectKey") String subjectKey) {
+        // user authentication
+        Token userInfo = getCredentials();
+        if (authenticator.login(userInfo)) {
+            // once user authenticated, check the runAsUser; if not the same as username, make sure they are admin
+
+            // check subjects, if not subject exists for this user and they are in jacsdata, create the account
+        }
+        return null;
+    }
+
+    // provides endpoints to programmatically manage session information
+    // this would normally be handled automatically by RESTful service
+    public void beginSession() {
+        // set up session information (log into Mongo)
+    }
+
+    public void addEventToSession(UserToolEvent event) {
+    }
+
+    public void endSession() {
     }
 
     // mapping using explicit object mapping; TO DO configure jackson integration with jersey
@@ -152,7 +179,7 @@ public class UserWorkstationWebService extends ResourceConfig {
     public ObjectSet addMembers(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.addMembers(query.getSubjectKey(), (ObjectSet)query.getDomainObject(), query.getReferences());
+            return dao.addMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
             log.error("Error occurred adding members to object set" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -184,6 +211,22 @@ public class UserWorkstationWebService extends ResourceConfig {
         }
         catch (Exception e) {
             log.error("Error occurred getting subjects" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GET
+    @Path("/user/subject")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Subject getSubjectByKey(@QueryParam("subjectKey") String subjectKey) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            return dao.getSubjectByKey(subjectKey);
+        }
+        catch (Exception e) {
+            log.error("Error occurred finding subject " + subjectKey + ", " + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -233,6 +276,23 @@ public class UserWorkstationWebService extends ResourceConfig {
             log.error("Error occurred setting permissions" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+
+    private Token getCredentials() {
+        List<String> authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
+        // if no basic auth, return error
+        if (authHeaders == null || authHeaders.size() < 1) {
+            throw new RuntimeException("Not using basic authentication to login");
+        }
+        String encodedBasicAuth = authHeaders.get(0);
+        String base64Credentials = encodedBasicAuth.substring("Basic".length()).trim();
+        String credentials = new String(Base64.decodeAsString(base64Credentials));
+        BasicAuthToken token = new BasicAuthToken();
+        String[] creds = credentials.split(":",2);
+        token.setUsername(creds[0]);
+        token.setPassword(creds[1]);
+        return token;
     }
 
 }
