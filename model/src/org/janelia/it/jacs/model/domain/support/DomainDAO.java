@@ -149,6 +149,13 @@ public class DomainDAO {
     }
 
     /**
+     * Return all the subjects.
+     */
+    public Subject getSubjectByKey(String subjectKey) {
+        return subjectCollection.findOne("{key:#}",subjectKey).as(Subject.class);
+    }
+
+    /**
      * Return all the preferences for a given subject.
      */
     public List<Preference> getPreferences(String subjectKey) {
