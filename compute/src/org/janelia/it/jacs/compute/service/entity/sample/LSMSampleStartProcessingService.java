@@ -63,6 +63,6 @@ public class LSMSampleStartProcessingService extends AbstractEntityService {
         GenericTask processSampleTask = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(),
                 taskParameters, "GSPS_CompleteSamplePipeline", "GSPS_CompleteSamplePipeline");
         processSampleTask.setParentTaskId(task.getObjectId());
-        return computeBean.saveOrUpdateTask(task);
+        return computeBean.saveOrUpdateTask(processSampleTask);
     }
 }

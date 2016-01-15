@@ -40,16 +40,14 @@ public class QueueMessage implements IProcessData {
     public QueueMessage(ObjectMessage msg, boolean construct) throws JMSException {
         if (msg != null) {
             this.objectMsg = msg;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("msg passed to QueueMessage is null!");
         }
         if (construct) {
             objectMap = new HashMap();
             setConstructionParameters();
             // objectMsg.setObject(objectMap);
-        }
-        else {
+        } else {
             objectMap = (HashMap) objectMsg.getObject();
         }
         try {
@@ -57,8 +55,7 @@ public class QueueMessage implements IProcessData {
             // However, if it's a JMS Message received in an onMessage method of an MDB
             // then it will be captured and that's important
             setMessageId(msg.getJMSMessageID());
-        }
-        catch (JMSException e) {
+        } catch (JMSException e) {
             throw new RuntimeException(e);
         }
     }
@@ -76,14 +73,12 @@ public class QueueMessage implements IProcessData {
         try {
             if (mapMsg != null) {
                 obj = mapMsg.getObject(property);
-            }
-            else {
+            } else {
                 if (objectMap != null) {
                     obj = objectMap.get(property);
                 }
             }
-        }
-        catch (Throwable ex) {
+        } catch (Throwable ex) {
             logger.error("Exception thrown while trying to get " + property + " property from message");
             return null;
         }
@@ -98,8 +93,7 @@ public class QueueMessage implements IProcessData {
                     objectMap.put(property, value);
                 }
             }
-        }
-        catch (Throwable ex) {
+        } catch (Throwable ex) {
             logger.error("Exception thrown while trying to get " + property + " property from message");
         }
     }
@@ -145,8 +139,7 @@ public class QueueMessage implements IProcessData {
         try {
             String hostName = InetAddress.getLocalHost().getHostName();
             setStringProperty(SRC_HOST_NAME, hostName);
-        }
-        catch (UnknownHostException ex) {
+        } catch (UnknownHostException ex) {
             setStringProperty(SRC_HOST_NAME, "Unknown");
         }
         String userName = System.getProperty("user.name");
@@ -182,18 +175,16 @@ public class QueueMessage implements IProcessData {
             String valueStr = (String) value;
             // If the value is wrapped in $V{} then we're interested in the value's value in processData
             if (valueStr.startsWith("$V{")) {
-            	String key2 = valueStr.substring(valueStr.indexOf("$V{") + 3, valueStr.length() - 1);
-            	if (key.equals(key2)) {
-            		logger.error("QueueMessage variable refers to itself: "+key);
-            		return null;
-            	}
+                String key2 = valueStr.substring(valueStr.indexOf("$V{") + 3, valueStr.length() - 1);
+                if (key.equals(key2)) {
+                    logger.error("QueueMessage variable refers to itself: "+key);
+                    return null;
+                }
                 return getItem(key2);
-            }
-            else {
+            } else {
                 return valueStr;
             }
-        }
-        else {
+        } else {
             return value;
         }
     }
@@ -284,72 +275,27 @@ public class QueueMessage implements IProcessData {
     }
 
     public Long getLong(String key) {
-    	try {
-    		return (Long)getItem(key);	
-    	}
-    	catch (Throwable t) {
-            logger.error("Exception thrown while trying to get " + key + " property from message");
-            return null;
-    	}
-    }
-
-    public Double getDouble(String key) {
-    	try {
-    		return (Double)getItem(key);	
-    	}
-    	catch (Throwable t) {
-            logger.error("Exception thrown while trying to get " + key + " property from message");
-            return null;
-    	}
-    }
-
-    public Float getFloat(String key) {
-    	try {
-    		return (Float)getItem(key);	
-    	}
-    	catch (Throwable t) {
-            logger.error("Exception thrown while trying to get " + key + " property from message");
-            return null;
-    	}
+        return ItemDataConverter.getItemAsLong(key, getItem(key));
     }
 
     public Integer getInt(String key) {
-    	try {
-    		return (Integer)getItem(key);	
-    	}
-    	catch (Throwable t) {
-            logger.error("Exception thrown while trying to get " + key + " property from message");
-            return null;
-    	}
+        return ItemDataConverter.getItemAsInt(key, getItem(key));
+    }
+
+    public Float getFloat(String key) {
+        return ItemDataConverter.getItemAsFloat(key, getItem(key));
+    }
+
+    public Double getDouble(String key) {
+        return ItemDataConverter.getItemAsDouble(key, getItem(key));
     }
 
     public Boolean getBoolean(String key) {
-    	try {
-            Object itemValue = getItem(key);
-            if (itemValue == null) {
-                return false;
-            } else if (itemValue instanceof String) {
-                return Boolean.valueOf((String) itemValue);
-            } else if (itemValue instanceof Boolean) {
-                return (Boolean) itemValue;
-            } else {
-                return false;
-            }
-    	}
-    	catch (Throwable t) {
-            logger.error("Exception thrown while trying to get " + key + " property from message");
-            return null;
-    	}
+        return ItemDataConverter.getItemAsBoolean(key, getItem(key));
     }
 
     public String getString(String key) {
-    	try {
-    		return (String)getItem(key);	
-    	}
-    	catch (Throwable t) {
-            logger.error("Exception thrown while trying to get " + key + " property from message");
-            return null;
-    	}
+        return ItemDataConverter.getItemAsString(key, getItem(key));
     }
 
     public Set<Map.Entry<String, Object>> entrySet() {
