@@ -395,6 +395,32 @@
         </antcall>
     </target>
 
+    <target name="windows-deploy-[your-server]-secure-dev" depends="setup" description="Deploy ear and jars to development server.  Fails in IntelliJ">
+        <property name="server.address">${user.server.machine}</property>
+
+        <input message="Please enter password for ${user.server.machine}:" addproperty="server.password">
+            <handler type="secure"/>
+        </input>        
+		
+        <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
+        <condition property="deployment-specific.properties.file.name"
+                   value="${user.server.machine}.properties"
+                   else="jacs.properties" >
+            <available file="${jacs.properties.dir}/${server.address}.properties" />
+        </condition>
+
+        <!-- set connection params, and check connection -->
+        <property name="ssh.common.params" value="${ssh.options} ${ssh.password.option} ${server.password} ${user.server.login}@${server.address}"/>
+        <property name="scp.common.params" value="${scp.options} ${ssh.password.option} ${server.password}"/>
+
+        <echo message="Overlay properties file: ${deployment-specific.properties.file.name}" />
+        <antcall target="deploy-jboss-app">
+            <param name="deployment-specific.properties.dir" value="${jacs.properties.dir}"/>
+            <param name="deployment-specific.properties.file" value="${deployment-specific.properties.file.name}"/>
+            <param name="server.username" value="${user.server.login}" />
+        </antcall>
+    </target>
+
     <!-- deploys to app server area -->
     <target name="deploy-[your-server]-dev" depends="setup" description="Deploy ear and jars to development server">
         <!-- set connection params, and check connection -->
