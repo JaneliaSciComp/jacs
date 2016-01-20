@@ -17,7 +17,7 @@ DIR=$(cd "$(dirname "$0")"; pwd)
 . $DIR/common.sh
 
 Vaa3D="$DIR/../../../vaa3d-redhat/vaa3d"
-SyncScript="$DIR/restSync.py"
+SyncScript="/misc/local/jfs/jfs"
 export TMPDIR=""
 
 NUMPARAMS=$#
@@ -32,10 +32,15 @@ fi
 INPUT_FILE=$1
 OUTPUT_FILE=$2
 SAVE_TO_8BIT=$3
-OUTPUT_DIR=$(dirname "${OUTPUT_FILE}")
-WORKING_DIR=`mktemp -d -p $OUTPUT_DIR`
+WORKING_DIR=`mktemp -d -p /dev/shm`
 cd $WORKING_DIR
 
+function cleanWorkingDir {
+    rm -rf $WORKING_DIR
+    echo "~ Cleaned up $WORKING_DIR"
+}
+trap cleanWorkingDir EXIT
+        
 echo "Run Dir: $DIR"
 echo "Working Dir: $WORKING_DIR"
 echo "Input file: $INPUT_FILE"
@@ -49,12 +54,12 @@ INPUT_FILE_EXT=${INPUT_FILE##*.}
 
 if [[ "$INPUT_FILE_EXT" = "$OUTPUT_FILE_EXT" && -z $SAVE_TO_8BIT ]]; then
     # The file is already in the format we're looking for (for example, lsm.bz2)
-    echo "~ Copying $INPUT_FILE to $OUTPUT_FILE"
-    cp "$INPUT_FILE" "$OUTPUT_FILE"
+    echo "~ Rsyncing $INPUT_FILE to $OUTPUT_FILE"
+    rsync -av "$INPUT_FILE" "$OUTPUT_FILE"
 else
     # Decompress input file
     ensureUncompressedFile "$WORKING_DIR" "$INPUT_FILE" INPUT_FILE
-    echo "Uncompressed input file: $INPUT_FILE"
+    echo "Uncompressed input file:" `ls -lh $INPUT_FILE`
     INPUT_FILE_EXT=${INPUT_FILE##*.}
 
     # Check if we need to compress output file
@@ -67,20 +72,23 @@ else
 
     if [[ "$INPUT_FILE_EXT" = "$OUTPUT_FILE_EXT" && -z $SAVE_TO_8BIT ]]; then
         # The file is in the format we're looking for (for example, lsm)
-        echo "~ Copying $INPUT_FILE to $OUTPUT_FILE"
-        cp "$INPUT_FILE" "$OUTPUT_FILE"
+        if [ "$bz2Output" = true ]; then
+            # Bzip it into its final position
+            echo "~ PBzipping $INPUT_FILE to $OUTPUT_FILE.bz2 with $NSLOTS slots"
+            pbzip2 -zc -p$NSLOTS "$INPUT_FILE" > "$OUTPUT_FILE.bz2"
+        else
+            # Rsync it into its final position
+            echo "~ Rsyncing $INPUT_FILE to $OUTPUT_FILE"
+            rsync -av "$INPUT_FILE" "$OUTPUT_FILE"
+        fi
     else
         # Must convert using Vaa3d
         echo "~ Converting $INPUT_FILE to $OUTPUT_FILE"
         $Vaa3D -cmd image-loader -convert$SAVE_TO_8BIT "$INPUT_FILE" "$OUTPUT_FILE"
+        if [ "$bz2Output" = true ]; then
+            echo "~ Compressing output file with pbzip2 with $NSLOTS slots"
+            pbzip2 -p$NSLOTS $OUTPUT_FILE
+        fi
     fi
 
-    if [ "$bz2Output" = true ]; then
-        echo "~ Compressing output file with bzip2"
-        bzip2 $OUTPUT_FILE
-    fi
 fi
-
-echo "~ Removing working directory $WORKING_DIR"
-rm -rf $WORKING_DIR
-

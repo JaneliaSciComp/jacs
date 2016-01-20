@@ -66,7 +66,7 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
         if (entityType.equals(EntityConstants.TYPE_IMAGE_3D) 
                 || entityType.equals(EntityConstants.TYPE_FILE)) {
             String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            // Spare H5J files because they're tiny, and Scality files because they're not taking up filestore space
+            // Spare H5J files because they're tiny
             if (filepath!=null && !filepath.endsWith("h5j")) { 
                 deletePath(filepath);
                 entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);

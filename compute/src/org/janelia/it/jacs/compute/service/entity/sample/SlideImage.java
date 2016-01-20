@@ -16,6 +16,7 @@ public class SlideImage {
     private Long sageId;
     private String slideCode;
     private String imagePath;
+    private String jfsPath;
     private String tileType;
     private String line;
     private String crossBarcode;
@@ -38,9 +39,16 @@ public class SlideImage {
         Map<String,String> properties = new HashMap<>();
         properties.put(EntityConstants.ATTRIBUTE_SAGE_ID, sageId.toString());
         properties.put(EntityConstants.ATTRIBUTE_SLIDE_CODE, slideCode);
-        properties.put(EntityConstants.ATTRIBUTE_FILE_PATH, imagePath);
         properties.put(EntityConstants.ATTRIBUTE_LINE, line);
 
+        if (imagePath != null) {
+        	properties.put(EntityConstants.ATTRIBUTE_FILE_PATH, imagePath);
+        }
+        
+        if (jfsPath != null) {
+        	properties.put(EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
+        }
+        
         if (crossBarcode != null) {
             properties.put(EntityConstants.ATTRIBUTE_CROSS_BARCODE, crossBarcode);
         }
@@ -117,9 +125,20 @@ public class SlideImage {
     }
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
-        this.file = imagePath!=null?new File(imagePath):null;
+        if (imagePath!=null) {
+        	this.file = new File(imagePath);
+        }
     }
-    public String getTileType() {
+    public String getJfsPath() {
+		return jfsPath;
+	}
+	public void setJfsPath(String jfsPath) {
+		this.jfsPath = jfsPath;
+        if (jfsPath!=null) {
+        	this.file = new File(jfsPath);
+        }
+	}
+	public String getTileType() {
         return tileType;
     }
     public void setTileType(String tileType) {

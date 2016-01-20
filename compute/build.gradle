@@ -216,6 +216,7 @@ dependencies {
     ngWarLib group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.2.2'
     ngWarLib group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.22.1'
     ngWarLib group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.1'
+    ngWarLib group: 'org.apache.directory.api', name: 'api-all', version: '1.0.0-M30'
     ngWarLib group: 'com.google.guava', name: 'guava', version: '11.0.2'
     ngWarLib group: 'org.jongo', name: 'jongo', version: '1.2'
     ngWarLib group: 'org.mongodb', name: 'mongo-java-driver', version: '3.0.2'

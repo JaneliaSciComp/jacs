@@ -46,11 +46,24 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Subject loginSubject (@QueryParam("subjectKey") String subjectKey) {
         // user authentication
-        Token userInfo = getCredentials();
+        BasicAuthToken userInfo = (BasicAuthToken)getCredentials();
         if (authenticator.login(userInfo)) {
-            // once user authenticated, check the runAsUser; if not the same as username, make sure they are admin
-
-            // check subjects, if not subject exists for this user and they are in jacsdata, create the account
+            System.out.println ("ASDFASDF");
+            // check subjects, if subject doesn't exist for this user and they are in jacsdata,
+            // create the account
+            DomainDAO dao = WebServiceContext.getDomainManager();
+            try {
+                Subject user = dao.getSubjectByKey("user:" + userInfo.getUsername());
+                if (user==null) {
+                    // create a general workstation account for this user since they authenticate against LDAP
+                    Subject newUser = authenticator.generateSubjectInfo(userInfo.getUsername());
+                    return dao.save(newUser);
+                }
+                return user;
+            } catch (Exception e) {
+                log.error("Error occurred getting default workspace" + e);
+                throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+            }
         }
         return null;
     }

@@ -21,7 +21,7 @@ import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
  */
 public class EnhancedMIPandMovieGenerationService extends BasicMIPandMovieGenerationService {
 
-    protected static final String MACRO_NAME = "Enchanced_MIP_StackAvi.ijm";
+    protected static final String MACRO_NAME = "Enhanced_MIP_StackAvi.ijm";
     
     private String mode;
     
@@ -52,7 +52,7 @@ public class EnhancedMIPandMovieGenerationService extends BasicMIPandMovieGenera
             fw.write((inputFile==null?"":inputFile) + "\n");
             fw.write((chanSpec==null?"":chanSpec) + "\n");
             fw.write((colorSpec==null?"":colorSpec) + "\n");
-            fw.write(outputs + "\n");
+            fw.write(options + "\n");
             fw.write((randomPort+configIndex) + "\n");
         }
         catch (IOException e) {
@@ -73,7 +73,7 @@ public class EnhancedMIPandMovieGenerationService extends BasicMIPandMovieGenera
         script.append("read INPUT_FILE\n");
         script.append("read CHAN_SPEC\n");
         script.append("read COLOR_SPEC\n");
-        script.append("read OUTPUTS\n");
+        script.append("read OPTIONS\n");
         script.append("read DISPLAY_PORT\n");
         script.append("cd "+resultFileNode.getDirectoryPath()).append("\n");
         
@@ -96,7 +96,7 @@ public class EnhancedMIPandMovieGenerationService extends BasicMIPandMovieGenera
         // Run Fiji macro
         StringBuffer cmd = new StringBuffer();
         cmd.append(FIJI_BIN_PATH).append(" -macro ").append(FIJI_MACRO_PATH).append("/").append(MACRO_NAME);
-        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX,$MODE,$INPUT_FILE,$CHAN_SPEC,$COLOR_SPEC,$OUTPUTS");
+        cmd.append(" $TEMP_DIR,$OUTPUT_PREFIX,$MODE,$INPUT_FILE,$CHAN_SPEC,$COLOR_SPEC,$OPTIONS");
         script.append("echo \"Executing:\"\n");
         script.append("echo \""+cmd+"\"\n");
         script.append(cmd).append(" & \n");

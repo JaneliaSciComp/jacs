@@ -5,9 +5,7 @@ import org.apache.log4j.Logger;
 import org.ggf.drmaa.*;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.status.GridJobStatus;
-import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.IOUtils;
-import org.janelia.it.jacs.shared.utils.SystemCall;
 
 import java.io.*;
 import java.util.*;
@@ -33,8 +31,6 @@ public class DrmaaHelper {
     private static final String JAVA_PATH = SystemConfigurationProperties.getString("Java.Path");
     private static final String DRMAA_SUBMITTER_JAR_PATH = SystemConfigurationProperties.getFilePath("Local.Lib.Path", "Drmaa.Submitter.Jar.Name");
     private static final String DRMAA_SUBMITTER_SCRIPT_PATH = SystemConfigurationProperties.getFilePath("Local.Lib.Path", "Drmaa.Submitter.Script.Name");
-    public static final String ROOT_SERVER_DIR_PROP = "ServerRoot.Dir";
-    private static HashSet<String> _projectCodes = new HashSet<>();
     private Map<String, Integer> currentStatusMap = new HashMap<>();
     private String mainJobID;
 
@@ -294,7 +290,7 @@ public class DrmaaHelper {
                     logger.debug(logPrefix + " Job " + jobId + newState);
                 }
                 
-                JobInfo jobInfo = null;
+                JobInfo jobInfo;
                 if (jobStatus == Session.DONE || jobStatus == Session.FAILED) {
                     try {
                         jobInfo = wait(jobId, Session.TIMEOUT_NO_WAIT);
@@ -555,52 +551,5 @@ public class DrmaaHelper {
 
         return shell;
     }
-
-    public boolean isProjectCodeValid(String targetCode) throws Exception {
-        if (_projectCodes.contains(targetCode)) {
-            return true;
-        }
-        else {
-            // try once to update
-            updateProjectCodes();
-            return _projectCodes.contains(targetCode);
-        }
-    }
-
-    public HashSet<String> getProjectCodes() throws Exception {
-        updateProjectCodes();
-        return _projectCodes;
-    }
-
-    private synchronized void updateProjectCodes() throws Exception {
-        // Ask the grid about the project code passed
-        SystemCall call = new SystemCall(logger);
-        String projectCodeFile = SystemConfigurationProperties.getString(ROOT_SERVER_DIR_PROP) +
-                File.separator + "projectCodes.txt."+System.currentTimeMillis();
-        int success = call.emulateCommandLine("qconf -sprjl > " + projectCodeFile, true);
-        if (success != 0) {
-            String errorMsg = "Unable to generate the project code file.";
-            logger.error(errorMsg);
-            throw new IOException(errorMsg);
-        }
-        File projectFile = new File(projectCodeFile);
-        FileUtil.waitForFile(projectCodeFile);
-        // Got the file
-        logger.debug("Project codes size (initial): " + _projectCodes.size());
-        Scanner scanner = new Scanner(projectFile);
-        while (scanner.hasNextLine()) {
-            String tmpCode = scanner.nextLine().trim();
-            if (!_projectCodes.contains(tmpCode)) {
-                _projectCodes.add(tmpCode);
-            }
-        }
-        scanner.close();
-        logger.debug("Project codes size (final): " + _projectCodes.size());
-        boolean deleteSuccess = projectFile.delete();
-        if (!deleteSuccess) {
-            logger.error("Was not able to delete the project code temporary file("+projectCodeFile+").  Continuing anyway...");
-        }
-    }
-
 
 }

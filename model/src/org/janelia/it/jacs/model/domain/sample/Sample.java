@@ -65,6 +65,20 @@ public class Sample extends AbstractDomainObject {
         return objectives.get(objective);
     }
 
+    public PipelineResult findResultById(Long id) {
+        for(String objective : getOrderedObjectives()) {
+            ObjectiveSample objectiveSample = getObjectiveSample(objective);
+            for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
+                for(PipelineResult result : run.getResults()) {
+                    if (result.getId().equals(id)) {
+                        return result;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getAge() {
         return age;

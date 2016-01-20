@@ -133,6 +133,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
         slideImage.setSageId((Long)row.get("image_query_id"));
 		slideImage.setSlideCode((String) row.get("light_imagery_slide_code"));
 		slideImage.setImagePath((String) row.get("image_query_path"));
+		slideImage.setJfsPath((String) row.get("image_query_jfs_path"));
 		slideImage.setTileType((String) row.get("light_imagery_tile"));
 		slideImage.setLine((String) row.get("image_query_line"));
         slideImage.setCrossBarcode((String) row.get("fly_cross_barcode"));
@@ -219,7 +220,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
             
         	tileGroup.addFile(slideImage);
-    		if (!slideImage.getFile().exists()) {
+    		if (slideImage.getJfsPath()==null && !slideImage.getFile().exists()) {
     			logger.warn("File referenced by SAGE does not exist: "+slideImage.getImagePath());
     			return;
     		}

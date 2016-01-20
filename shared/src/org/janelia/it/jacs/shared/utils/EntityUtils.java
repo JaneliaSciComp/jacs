@@ -434,8 +434,10 @@ public class EntityUtils {
     }
     
     public static String getFilePath(Entity entity) {
-    	if (entity == null) return null;
-    	return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	if (entity==null) return null;
+    	String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    	if (filepath==null) return entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
+    	return filepath;
     }
 
     public static String getDefaultImageFilePath(Entity entity) {
@@ -510,13 +512,6 @@ public class EntityUtils {
         }
 
         if (path == null) {
-            path = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SCALITY_BPID);
-            if (path!=null) {
-                path = EntityConstants.SCALITY_PATH_PREFIX+path;
-            }
-        }
-
-        if (path == null) {
             log.debug("  Could not find a path to return");
         }
 
@@ -524,11 +519,11 @@ public class EntityUtils {
     }
     
     public static String getAnyFilePath(Entity entity) {
-    	String filePath = getFilePath(entity);
-    	if (filePath != null) {
-    		return filePath;
+    	String filepath = getDefaultImageFilePath(entity);
+    	if (filepath != null) {
+    		return filepath;
     	}
-    	return getDefaultImageFilePath(entity);
+    	return getDefault3dImageFilePath(entity);
     }
     
     public static Entity findChildWithEntityId(Entity entity, Long entityId) {
@@ -777,6 +772,12 @@ public class EntityUtils {
 				|| EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_SIGNAL_1_MIP_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_SIGNAL_2_MIP_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_SIGNAL_3_MIP_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_SIGNAL_1_REF_MIP_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_SIGNAL_2_REF_MIP_IMAGE.equals(attrName) 
+				|| EntityConstants.ATTRIBUTE_SIGNAL_3_REF_MIP_IMAGE.equals(attrName) 
 				|| EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_INPUT_IMAGE.equals(attrName)
 				|| EntityConstants.ATTRIBUTE_ONTOLOGY_TERM_TYPE_ENUMTEXT_ENUMID.equals(attrName)

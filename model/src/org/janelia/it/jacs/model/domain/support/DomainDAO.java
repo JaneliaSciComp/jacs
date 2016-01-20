@@ -142,6 +142,22 @@ public class DomainDAO {
     }
 
     /**
+     * create a new subject
+     */
+    public Subject save(Subject subject) {
+        if (subject.getId()==null) {
+            subject.setId(getNewId());
+            subjectCollection.insert(subject);
+        }
+        else {
+            subjectCollection.update("{_id:#}", subject.getId()).with(subject);
+        }
+
+        log.info("Saved " + subject.getClass().getName() + "#" + subject.getId());
+        return subject;
+    }
+
+    /**
      * Return all the subjects.
      */
     public List<Subject> getSubjects() {
@@ -459,6 +475,7 @@ public class DomainDAO {
                 collection.save(domainObject);
             }
             else {
+                domainObject.setUpdatedDate(new Date());
                 WriteResult result = collection.update("{_id:#,writers:#}", domainObject.getId(), subjectKey).with(domainObject);
                 if (result.getN()!=1) {
                     throw new IllegalStateException("Updated "+result.getN()+" records instead of one: "+collectionName+"#"+domainObject.getId());

@@ -9,8 +9,6 @@ import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
-import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
-import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -25,6 +23,7 @@ import org.janelia.it.jacs.model.user_data.blast.BlastDatabaseFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultFileNode;
 import org.janelia.it.jacs.model.user_data.blast.BlastResultNode;
 import org.janelia.it.jacs.model.user_data.tools.GenericServiceDefinitionNode;
+import org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants;
 import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -33,37 +32,24 @@ import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
 
+import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.jms.*;
+import javax.jms.Queue;
 import javax.naming.Context;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Hashtable;
-import java.util.Collections;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Date;
-//import java.util.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Resource;
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.MessageProducer;
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
-import org.janelia.it.jacs.shared.annotation.metrics_logging.MetricsLoggingConstants;
+import java.lang.IllegalStateException;
+
+//import java.util.*;
 
 /**
  * This class implements service calls used by remote clients of Compute server.  It also contains service
@@ -175,9 +161,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     @Override
     public UserToolEvent addEventToSessionAsync(UserToolEvent userToolEvent) {
         // save as other override, but talk to MDB.
+        Connection connection = null;
+        javax.jms.Session session = null;
+        MessageProducer producer = null;
         try {
-            Connection connection = connectionFactory.createConnection();
-            javax.jms.Session session = connection.createSession(false, javax.jms.Session.CLIENT_ACKNOWLEDGE);
+            connection = connectionFactory.createConnection();
+            session = connection.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
 
             // Marshalling the event into a message.
             ObjectMessage message = session.createObjectMessage();
@@ -192,14 +181,42 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             message.setObject(userToolEvent);
             
             // Send and complete.
-            MessageProducer producer = session.createProducer(metricsLoggingQueue);
+            producer = session.createProducer(metricsLoggingQueue);
             producer.send(message);
-            producer.close();
             
             return userToolEvent;
-        } catch (JMSException e) {
+        }
+        catch (Throwable th) {
             logger.error("Cannot log event to session: " + (null == userToolEvent ? "null" : userToolEvent.toString()));
-            logger.error("Error: " + e.getMessage());
+            logger.error("Error: " + th.getMessage(),th);
+        }
+        finally {
+            String finalMessage = null;
+            try {
+                if (producer != null)
+                    producer.close();            
+            }
+            catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the producer",ex);
+            }
+            try {
+                if (session != null)
+                    session.close();
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the session",ex);
+            }
+            try {
+                if (connection != null)
+                    connection.close();
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the connection",ex);
+            }
+            if (finalMessage != null) {
+                logger.error("Failure during JMS message tear-down: " + finalMessage);
+            }
         }
         return null;
     }
@@ -710,22 +727,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     }
 
     @Override
-    public void recordProcessSuccess(ProcessDef processDef, Long processId) {
+    public void recordProcessSuccess(String processDefName, Long processId) {
         try {
-            computeDAO.recordProcessSuccess(processDef, processId);
+            computeDAO.recordProcessSuccess(processDefName, processId);
         }
         catch (Exception e) {
-            logger.error("Caught exception updating status of process: " + processDef, e);
+            logger.error("Caught exception updating status of process: " + processDefName, e);
         }
     }
 
     @Override
-    public void recordProcessError(ProcessDef processDef, Long processId, Throwable e) {
+    public void recordProcessError(String processDefName, Long processId, Throwable e) {
         try {
             updateTaskStatus(processId, Event.ERROR_EVENT, e.getMessage());
         }
         catch (Exception ee) {
-            logger.error("Caught exception updating status of process: " + processDef, ee);
+            logger.error("Caught exception updating status of process: " + processDefName, ee);
         }
     }
 
@@ -1025,6 +1042,22 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return returnList;
     }
 
+    /**
+     * Tells whether the path provided is an actual file on the server.
+     * 
+     * @param serverPath putative, existing path.
+     * @param directoryOnly does the path have to be a directory?
+     * @return T if file exists/not directoryOnly; T if exists & directory/directoryOnly.
+     */
+    @Override
+    public boolean isServerPathAvailable( String serverPath, boolean directoryOnly ){
+        File serverFile = new File(serverPath);
+        boolean rtnVal = true;
+        rtnVal &= serverFile.exists();
+        rtnVal &= serverFile.isDirectory() || (! directoryOnly);
+        return rtnVal;
+    }
+
     @Override
     public List<BlastDatabaseFileNode> getBlastDatabases() {
         return (List<BlastDatabaseFileNode>) computeDAO.getBlastDatabases(BlastDatabaseFileNode.class.getSimpleName());
@@ -1073,9 +1106,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return finalResults;
     }
 
+    // todo Remove project code reference
     @Override
     public HashSet<String> getProjectCodes() throws Exception {
-        return new DrmaaHelper(logger).getProjectCodes();
+        return new HashSet<String>();
     }
 
     /**

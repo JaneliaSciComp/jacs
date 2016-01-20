@@ -129,6 +129,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Directory" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

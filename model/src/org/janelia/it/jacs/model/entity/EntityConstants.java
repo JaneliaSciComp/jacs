@@ -8,7 +8,7 @@ package org.janelia.it.jacs.model.entity;
  */
 public class EntityConstants {
 
-    public static final String SCALITY_PATH_PREFIX = "/Scality/";
+    public static final String SCALITY_PATH_PREFIX = "/scality/";
     
     public static final String VALUE_SC_GUID                         = "GUID";
     public static final String VALUE_SC_NAME                         = "Name";
@@ -116,9 +116,15 @@ public class EntityConstants {
     public static final String ATTRIBUTE_DEFAULT_2D_IMAGE                    = "Default 2D Image";
     public static final String ATTRIBUTE_DEFAULT_3D_IMAGE                    = "Default 3D Image";
     public static final String ATTRIBUTE_DEFAULT_FAST_3D_IMAGE               = "Default Fast 3D Image";
+    public static final String ATTRIBUTE_ALL_MIP_IMAGE                       = "All MIP Image";
     public static final String ATTRIBUTE_REFERENCE_MIP_IMAGE                 = "Reference MIP Image";
     public static final String ATTRIBUTE_SIGNAL_MIP_IMAGE                    = "Signal MIP Image";
-    public static final String ATTRIBUTE_ALL_MIP_IMAGE                       = "All MIP Image";
+    public static final String ATTRIBUTE_SIGNAL_1_MIP_IMAGE                  = "Signal 1 MIP Image";
+    public static final String ATTRIBUTE_SIGNAL_2_MIP_IMAGE                  = "Signal 2 MIP Image";
+    public static final String ATTRIBUTE_SIGNAL_3_MIP_IMAGE                  = "Signal 3 MIP Image";
+    public static final String ATTRIBUTE_SIGNAL_1_REF_MIP_IMAGE              = "Signal 1 With Reference MIP Image";
+    public static final String ATTRIBUTE_SIGNAL_2_REF_MIP_IMAGE              = "Signal 2 With Reference MIP Image";
+    public static final String ATTRIBUTE_SIGNAL_3_REF_MIP_IMAGE              = "Signal 3 With Reference MIP Image";
     public static final String ATTRIBUTE_FILE_PATH                           = "File Path";
     public static final String ATTRIBUTE_IMAGE_FORMAT                        = "Image Format";
     public static final String ATTRIBUTE_ONTOLOGY_ELEMENT                    = "Ontology Element";
@@ -169,6 +175,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_MASK_ENTITY_COLLECTION              = "Mask Entity Collection";
     public static final String ATTRIBUTE_VISITED                             = "Visited"; // A tag that marks an entity as having been visited by some pipeline process 
     public static final String ATTRIBUTE_CHANNEL_DYE_NAMES                   = "Channel Dye Names"; // e.g. "Alexa Fluor 488,Alexa Fluor 633,DY-547"
+    public static final String ATTRIBUTE_BRIGHTNESS_COMPENSATION             = "Brightness Compensation"; // e.g. "1.101,1.000,1.023"
     public static final String ATTRIBUTE_CHANNEL_COLORS                      = "Channel Colors"; // e.g. "#7e5200,#ff00ff,#00ff00"
     public static final String ATTRIBUTE_SEARCH_TASK_ID                      = "Search Task Id"; // Id of the search task that created this folder and results
     public static final String ATTRIBUTE_PROPERTY                            = "Property"; // has string "<property>=<value>"
@@ -179,7 +186,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_IS_WARPED_SEPARATION                = "Is Warped Separation";
     public static final String ATTRIBUTE_MICRON_TO_VOXEL_MATRIX              = "Micron to Voxel Matrix";
     public static final String ATTRIBUTE_VOXEL_TO_MICRON_MATRIX              = "Voxel to Micron Matrix";
-    public static final String ATTRIBUTE_SCALITY_BPID                        = "Scality BPID";
+    public static final String ATTRIBUTE_JFS_PATH                            = "JFS Path";
     public static final String ATTRIBUTE_TMOG_DATE                           = "TMOG Date"; // Timestamp indicating when the LSM or Sample was TMOG'd. For Samples, this is the max TMOG date of all the LSMs. 
     public static final String ATTRIBUTE_COMPLETION_DATE                     = "Completion Date"; // Timestamp indicating when the LSM or Sample was first completed.
     
@@ -247,8 +254,12 @@ public class EntityConstants {
     public static final String VALUE_ONTOLOGY_TERM_TYPE_ENUM_TEXT            = "EnumText";
 
     /**
-     * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. This will be removed someday.
+     * @deprecated Use ATTRIBUTE_DEFAULT_2D_IMAGE instead. 
      */
-    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH           = "Default 2D Image File Path";
+    public static final String ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH          = "Default 2D Image File Path";
 
+    /**
+     * @deprecated Use ATTRIBUTE_JFS_PATH instead. This will be removed soon.
+     */
+    public static final String ATTRIBUTE_SCALITY_BPID                        = "Scality BPID";
 }

@@ -119,11 +119,36 @@
             <name>user</name>
             <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Data Set Name (e.g. "Cell Count" or leave empty to run all data sets for the user)</description>
+            <name>dataSetName</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Max Samples (e.g. "10" or leave empty for no max)</description>
+            <name>maxSamples</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
         <description>Retire all the samples which are in "Desync" status for the all users</description>
-        <name>runSampleRetirement</name>
+        <name>runAllSampleRetirement</name>
+        <parameter>
+            <description>Max Samples Per User (e.g. "10" or leave empty for no max)</description>
+            <name>maxSamplesPerUser</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+           <description>Should this run as a test without making any real changes?</description>
+           <name>testRun</name>
+           <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
@@ -147,7 +172,7 @@
     </operation>
     
     <operation>
-        <description>Move the files for the given sample to Scality</description>
+        <description>Synchronize the files for the given sample to Scality</description>
         <name>runSyncSampleToScality</name>
         <parameter>
            <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
@@ -159,10 +184,15 @@
            <name>fileTypes</name>
            <type>java.lang.String</type>
         </parameter>
+        <parameter>
+            <description>Attempt to delete source file after a successful synchronization?</description>
+            <name>deleteSourceFiles</name>
+            <type>java.lang.Boolean</type>
+        </parameter>
     </operation>
     
     <operation>
-        <description>Move the files for the matching samples for a given user to Scality</description>
+        <description>Synchronize the files for the matching samples for a given user to Scality</description>
         <name>runSyncDataSetToScality</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
@@ -178,6 +208,11 @@
            <description>File types to move (comma-delimited list including any of [lsm,pbd])</description>
            <name>fileTypes</name>
            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Attempt to delete source file after a successful synchronization?</description>
+            <name>deleteSourceFiles</name>
+            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
 
@@ -511,16 +546,6 @@
     <operation>
         <description>Repair all neuron separations results</description>
         <name>runRepairSeparationResultsPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-
-    <operation>
-        <description>Restores files which were put into Scality but shouldn't have been</description>
-        <name>runScalityCorrectionService</name>
         <parameter>
             <description>User to run as (e.g. "flylight")</description>
             <name>user</name>

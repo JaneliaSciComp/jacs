@@ -52,6 +52,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 public class SageDAO {
 
     public static final String IMAGE_PROP_PATH = "image_query_path";
+    public static final String IMAGE_PROP_JFS_PATH = "image_query_jfs_path";
     public static final String IMAGE_PROP_LINE_TERM = "image_query_line";
     public static final String LINE_PROP_LINE_TERM = "line_query_line";
     
@@ -358,7 +359,7 @@ public class SageDAO {
             log.trace("getImages(id="+id+")");    
         }
         Session session = getCurrentSession();
-        Query query = session.createQuery("select image from Image image where image.id = :ids ");
+        Query query = session.createQuery("select image from Image image where image.id = :id ");
         query.setInteger("id", id);
         return (Image)query.uniqueResult();
     }
@@ -567,6 +568,7 @@ public class SageDAO {
                 {"id",           "SAGE Id",         "integer",   "Image identifier within SAGE database",   "image_query"},
                 {"name",         "Image Path",      "text",      "Relative path to the image",              "image_query"},
                 {"path",         "Full Image Path", "text",      "Absolute path to the image",              "image_query"},
+                {"jfs_path",     "JFS Path",        "text",      "Path to the image in JFS",                "image_query"},
                 {"line",         "Fly Line",        "text",      "Name of the genetic line",                "image_query"},
                 {"create_date",  "Create Date",     "date_time", "Date when the image was created in SAGE", "image_query"},
                 
@@ -763,16 +765,16 @@ public class SageDAO {
 //            "order by slide_code.value, i.path";
 //
     private static final String ALL_IMAGE_PROPERTY_SQL_1 =
-            "select image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
+            "select image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path, image_vw.jfs_path image_query_jfs_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
             "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, image_vw.created_by light_imagery_created_by, image_vw.create_date image_query_create_date";
 
     private static final String ALL_IMAGE_PROPERTY_SQL_2 =
             " from image_property_vw ip1 " +
-            "inner join (" +
-            "  select i.id, i.line, i.name, i.path, i.family, i.capture_date, i.representative, i.created_by, i.create_date" +
-            "  from image_vw i" +
-            "  inner join image_property_vw ip2 on (ip2.image_id=i.id and ip2.type='data_set' and ip2.value=?)" +
-            "  where i.display=true and i.path is not null" +
+            "inner join ( " +
+            "  select i.id, i.line, i.name, i.path, i.jfs_path, i.family, i.capture_date, i.representative, i.created_by, i.create_date " +
+            "  from image_vw i " +
+            "  inner join image_property_vw ip2 on (ip2.image_id=i.id and ip2.type='data_set' and ip2.value=?) " +
+            "  where i.display=true and (i.path is not null or i.jfs_path is not null) " +
             "  and (i.created_by is null or i.created_by!='"+SageArtifactExportService.CREATED_BY+"') " +
             ") image_vw on ip1.image_id = image_vw.id " +
             "group by image_vw.id ";
@@ -784,7 +786,7 @@ public class SageDAO {
             " from line_property_vw lp1  " +
             "inner join line_vw on lp1.line_id = line_vw.id " +
             "inner join ( " +
-            "  select distinct line from image_data_mv where data_set is not null and display=true and path is not null " +
+            "  select distinct line from image_data_mv where data_set is not null and display=true and (path is not null or jfs_path is not null) " +
             ") image_lines on line_vw.name = image_lines.line  " +
             "where lp1.cv in ('line','light_imagery','fly') " +
             "group by line_vw.id ";

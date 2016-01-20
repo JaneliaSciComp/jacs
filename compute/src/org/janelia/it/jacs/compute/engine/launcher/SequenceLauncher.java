@@ -209,10 +209,11 @@ public class SequenceLauncher extends SeriesLauncher {
      */
     private void recordProcessError(IProcessData processData, ActionDef actionDef, Throwable e) {
         try {
-            if (actionDef.updateProcessStatusOnFailure() && processData.getProcessDef().containsUpdateStatusOnSuccessAction()) {
+            ProcessDef processDef = DefCache.getProcessDef(processData.getProcessDefName());
+            if (actionDef.updateProcessStatusOnFailure() && processDef.containsUpdateStatusOnSuccessAction()) {
                 // SequenceLauncher always rethrows the exception, so it will get logged by someone else
                 //logger.error("Process: " + processData.getProcessDef() +  " failed", e);
-                EJBFactory.getLocalComputeBean().recordProcessError(processData.getProcessDef(), processData.getProcessId(), e);
+                EJBFactory.getLocalComputeBean().recordProcessError(processData.getProcessDefName(), processData.getProcessId(), e);
 
                 // Notify user
                 Task task = ProcessDataHelper.getTask(processData);

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -69,7 +70,7 @@ public class InitSampleAttributesService extends AbstractEntityService {
                             area = lsmArea;
                         }
                         else if (!area.equals(lsmArea)) {
-                            throw new IllegalStateException("No consensus for area in tile '"+tileEntity.getName()+"' on sample "+sampleEntity.getName());
+                            throw new MetadataException("No consensus for area in tile '"+tileEntity.getName()+"' on sample "+sampleEntity.getName());
                         }
                     }
                 }

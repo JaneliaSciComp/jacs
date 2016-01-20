@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.service.mip;
 
+import org.ggf.drmaa.DrmaaException;
+import org.janelia.it.jacs.compute.drmaa.SerializableJobTemplate;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -20,8 +22,8 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MIPMapTilesService.class);
 
-    private static final int DESIRED_PROCESSED_X_TILES = 5; // 5 horizontal tiles
-    private static final int DESIRED_PROCESSED_Y_TILES = 5; // 5 vertical tiles
+    private static final int DESIRED_PROCESSED_X_TILES = 4; // 4 horizontal tiles
+    private static final int DESIRED_PROCESSED_Y_TILES = 4; // 4 vertical tiles
     private static final int DESIRED_PROCESSED_Z_LAYERS = 10; // 10 layers
 
     private Long imageWidth;
@@ -40,15 +42,26 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     private Long sourceDepth;
     private Integer sourceTileWidth;
     private Integer sourceTileHeight;
+
+    private Long targetMinX;
+    private Long targetMinY;
+    private Long targetMinZ;
+    private Long targetMaxX;
+    private Long targetMaxY;
+    private Long targetMaxZ;
     private Integer targetTileWidth;
     private Integer targetTileHeight;
     private Integer sourceScaleLevel;
     private Double sourceXYResolution;
     private Double sourceZResolution;
+    private String orientation;
     private Double targetQuality;
     private String targetType;
     private String targetMediaFormat;
     private Boolean targetSkipEmptyTiles;
+    private Integer bgPixelValue;
+    private String processingAccount;
+    private String interpolation;
 
     @Override
     protected String getGridServicePrefixName() {
@@ -60,6 +73,10 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         sourceRootUrl = processData.getString("SOURCE_ROOT_URL");
+        if (!processData.getBoolean("RETILE_IMAGE")) {
+            LOG.info("No RETILE requested for {}", sourceRootUrl);
+            cancel();
+        }
         sourceStackFormat = processData.getString("SOURCE_STACK_FORMAT");
         targetRootUrl = processData.getString("TARGET_ROOT_URL");
         targetStackFormat = processData.getString("TARGET_STACK_FORMAT");
@@ -70,10 +87,14 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             targetRootUrl = resultFileNode.getDirectoryPath() + "/" + "mipmaptiles";
         }
         extractImageParameters(processData);
+        orientation = processData.getString("ORIENTATION");
         targetQuality = processData.getDouble("TARGET_QUALITY");
         targetType = processData.getString("TARGET_TYPE");
         targetMediaFormat = processData.getString("TARGET_MEDIA_FORMAT");
         targetSkipEmptyTiles = processData.getBoolean("TARGET_SKIP_EMPTY_TILES");
+        bgPixelValue = processData.getInt("BG_PIXEL_VALUE");
+        processingAccount = processData.getString("PROCESSING_ACCOUNT");
+        interpolation = processData.getString("INTERPOLATION");
     }
 
     private void extractImageParameters(IProcessData processData) throws MissingDataException {
@@ -95,6 +116,14 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
         sourceTileWidth = getDimensionWithDefault(processData, "SOURCE_TILE_WIDTH", 256).intValue();
         sourceTileHeight = getDimensionWithDefault(processData, "SOURCE_TILE_HEIGHT", 256).intValue();
+
+        targetMinX = getDimensionWithDefault(processData,"TARGET_MIN_X", 0L).longValue();
+        targetMinY = getDimensionWithDefault(processData, "TARGET_MIN_Y", 0L).longValue();
+        targetMinZ = getDimensionWithDefault(processData, "TARGET_MIN_Z", 0L).longValue();
+
+        targetMaxX = getDimensionWithDefault(processData, "TARGET_MAX_X", sourceWidth).longValue();
+        targetMaxY = getDimensionWithDefault(processData, "TARGET_MAX_Y", sourceHeight).longValue();
+        targetMaxZ = getDimensionWithDefault(processData, "TARGET_MAX_Z", sourceDepth).longValue();
 
         targetTileWidth = getValidDimension(processData, "TARGET_TILE_WIDTH").intValue();
         targetTileHeight = getValidDimension(processData, "TARGET_TILE_HEIGHT").intValue();
@@ -119,28 +148,43 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
     }
 
     @Override
+    protected String getAccount() {
+        if (processingAccount != null && processingAccount.trim().length() > 0) {
+            return processingAccount.trim();
+        } else {
+            return super.getAccount();
+        }
+    }
+
+    @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         writeShellScript(writer);
         int nJobs = 0;
         long processedWidth = sourceTileWidth * DESIRED_PROCESSED_X_TILES;
         long processedHeight = sourceTileHeight * DESIRED_PROCESSED_Y_TILES;
-        long processedDepth = DESIRED_PROCESSED_Z_LAYERS;
-        int xSplits = (int) Math.ceil(sourceWidth.doubleValue() / processedWidth);
-        int ySplits = (int) Math.ceil(sourceHeight.doubleValue() / processedHeight);
-        int zSplits = (int) Math.ceil(sourceDepth.doubleValue() / processedDepth);
+        long processedDepth;
+        if (orientation != null && !"xy".equalsIgnoreCase(orientation) ) {
+            processedDepth = targetTileHeight * DESIRED_PROCESSED_Z_LAYERS;
+        } else {
+            processedDepth = DESIRED_PROCESSED_Z_LAYERS;;
+        }
+
+        int xSplits = (int) Math.ceil((targetMaxX.doubleValue() - targetMinX.doubleValue()) / processedWidth);
+        int ySplits = (int) Math.ceil((targetMaxY.doubleValue() - targetMinY.doubleValue()) / processedHeight);
+        int zSplits = (int) Math.ceil((targetMaxZ.doubleValue() - targetMinZ.doubleValue()) / processedDepth);
 
         for (int z = 0; z < zSplits; z++) {
+            long startZ = targetMinZ + z * processedDepth;
+            long endZ = Math.min(startZ + processedDepth - 1, targetMaxZ);
             for (int y = 0; y < ySplits; y++) {
+                long startY = targetMinY + y * processedHeight;
+                long endY = Math.min(startY + processedHeight - 1, targetMaxY);
                 for (int x = 0; x < xSplits; x++) {
-                    long startX = sourceMinX + x * processedWidth;
-                    long startY = sourceMinY + y * processedHeight;
-                    long startZ = sourceMinZ + z * processedDepth;
-                    long width = Math.min(processedWidth, sourceMinX + sourceWidth - startX);
-                    long height = Math.min(processedHeight, sourceMinY + sourceHeight - startY);
-                    long depth = Math.min(processedDepth, sourceMinZ + sourceDepth - startZ);
+                    long startX = targetMinX + x * processedWidth;
+                    long endX = Math.min(startX + processedWidth - 1, targetMaxX);
                     createConfigurationFile(++nJobs,
                             startX, startY, startZ,
-                            width, height, depth);
+                            endX, endY, endZ);
                 }
             }
         }
@@ -149,12 +193,12 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     private void createConfigurationFile(int configIndex,
                                          long startX, long startY, long startZ,
-                                         long width, long height, long depth) throws ServiceException {
+                                         long endX, long endY, long endZ) throws ServiceException {
         File configFile = new File(
                 getSGEConfigurationDirectory(),
                 getGridServicePrefixName() + "Configuration." + configIndex);
         LOG.debug("Write configFile: {} for region ({}, {}, {}) ({}, {}, {}) ", configFile,
-                startX, startY, startZ, width, height, depth);
+                startX, startY, startZ, endX, endY, endZ);
         try(FileWriter fw = new FileWriter(configFile)) {
             fw.write(sourceRootUrl + "\n");
             writeValueOrNone(sourceStackFormat, fw);
@@ -168,24 +212,27 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             fw.write(sourceTileHeight + "\n");
             writeValueOrNone(sourceXYResolution, fw);
             writeValueOrNone(sourceZResolution, fw);
+            fw.write(sourceMinX + "\n");
+            fw.write(sourceMinY + "\n");
+            fw.write(sourceMinZ + "\n");
+            fw.write(sourceWidth + "\n");
+            fw.write(sourceHeight + "\n");
+            fw.write(sourceDepth + "\n");
             fw.write(startX + "\n");
             fw.write(startY + "\n");
             fw.write(startZ + "\n");
-            fw.write(width + "\n");
-            fw.write(height + "\n");
-            fw.write(depth + "\n");
+            fw.write(endX + "\n");
+            fw.write(endY + "\n");
+            fw.write(endZ + "\n");
             fw.write(targetTileWidth + "\n");
             fw.write(targetTileHeight + "\n");
-            fw.write((startY / targetTileHeight) + "\n");
-            fw.write(((startY + height) / targetTileHeight) + "\n");
-            fw.write((startX / targetTileWidth) + "\n");
-            fw.write(((startX + width) / targetTileWidth) + "\n");
-            fw.write(startZ + "\n");
-            fw.write((startZ + depth - 1) + "\n");
+            writeValueOrNone(orientation, fw);
             writeValueOrNone(targetQuality, fw);
             writeValueOrNone(targetType, fw);
             writeValueOrNone(targetMediaFormat, fw);
             writeValueOrNone(targetSkipEmptyTiles, fw);
+            writeValueOrNone(bgPixelValue, fw);
+            writeValueOrNone(interpolation, fw);
         } catch (IOException e) {
             throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath(),e);
         }
@@ -199,7 +246,12 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 6;
+        return 21;
+    }
+
+    @Override
+    protected int getRequiredSlots() {
+        return 8;
     }
 
     /**
@@ -226,18 +278,21 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
         script.append("read SOURCE_WIDTH\n");
         script.append("read SOURCE_HEIGHT\n");
         script.append("read SOURCE_DEPTH\n");
+        script.append("read TARGET_MIN_X\n");
+        script.append("read TARGET_MIN_Y\n");
+        script.append("read TARGET_MIN_Z\n");
+        script.append("read TARGET_MAX_X\n");
+        script.append("read TARGET_MAX_Y\n");
+        script.append("read TARGET_MAX_Z\n");
         script.append("read TARGET_TILE_WIDTH\n");
         script.append("read TARGET_TILE_HEIGHT\n");
-        script.append("read TARGET_MIN_ROW\n");
-        script.append("read TARGET_MAX_ROW\n");
-        script.append("read TARGET_MIN_COL\n");
-        script.append("read TARGET_MAX_COL\n");
-        script.append("read TARGET_MIN_Z\n");
-        script.append("read TARGET_MAX_Z\n");
+        if (orientation != null) script.append("read ORIENTATION\n");
         if (targetQuality != null) script.append("read TARGET_QUALITY\n");
         if (targetType != null) script.append("read TARGET_TYPE\n");
         if (targetMediaFormat != null) script.append("read TARGET_MEDIA_FORMAT\n");
         if (targetSkipEmptyTiles != null) script.append("read TARGET_SKIP_EMPTY_TILES\n");
+        if (bgPixelValue != null) script.append("read BG_PIXEL_VALUE\n");
+        if (interpolation != null) script.append("read INTERPOLATION\n");
 
         // pass them to the script as environment variables
         script
@@ -261,16 +316,19 @@ public class MIPMapTilesService extends SubmitDrmaaJobService {
             .append("SOURCE_DEPTH=$SOURCE_DEPTH ")
             .append("TARGET_TILE_WIDTH=$TARGET_TILE_WIDTH ")
             .append("TARGET_TILE_HEIGHT=$TARGET_TILE_HEIGHT ")
-            .append("TARGET_MIN_ROW=$TARGET_MIN_ROW ")
-            .append("TARGET_MAX_ROW=$TARGET_MAX_ROW ")
-            .append("TARGET_MIN_COL=$TARGET_MIN_COL ")
-            .append("TARGET_MAX_COL=$TARGET_MAX_COL ")
+            .append("TARGET_MIN_X=$TARGET_MIN_X ")
+            .append("TARGET_MAX_X=$TARGET_MAX_X ")
+            .append("TARGET_MIN_Y=$TARGET_MIN_Y ")
+            .append("TARGET_MAX_Y=$TARGET_MAX_Y ")
             .append("TARGET_MIN_Z=$TARGET_MIN_Z ")
             .append("TARGET_MAX_Z=$TARGET_MAX_Z ")
+            .append("ORIENTATION=$ORIENTATION ")
             .append("TARGET_QUALITY=$TARGET_QUALITY ")
             .append("TARGET_TYPE=$TARGET_TYPE ")
             .append("TARGET_MEDIA_FORMAT=$TARGET_MEDIA_FORMAT ")
             .append("TARGET_SKIP_EMPTY_TILES=$TARGET_SKIP_EMPTY_TILES ")
+            .append("BG_PIXEL_VALUE=$BG_PIXEL_VALUE ")
+            .append("INTERPOLATION=$INTERPOLATION ")
             .append(MIPMapTilesHelper.getMipMapsRetilerCommands()).append('\n');
         writer.write(script.toString());
     }

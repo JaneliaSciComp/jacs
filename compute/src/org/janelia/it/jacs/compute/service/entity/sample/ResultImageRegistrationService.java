@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.service.common.ContextLogger;
+import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
@@ -49,10 +51,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     private List<InputImage> inputImages;
     
 	private Map<Long,Entity> images3d = new HashMap<Long,Entity>();
-	private Map<String,Entity> allMipPrefixMap = new HashMap<String,Entity>();
-	private Map<String,Entity> signalMipPrefixMap = new HashMap<String,Entity>();
-	private Map<String,Entity> refMipPrefixMap = new HashMap<String,Entity>();
-	private Map<String,Entity> moviePrefixMap = new HashMap<String,Entity>();
+	private Map<String,MIPs> mipsPrefixMap = new HashMap<String,MIPs>();
 	
 	public void execute() throws Exception {
 
@@ -78,15 +77,21 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	public void execute(IProcessData processData, Entity pipelineRunEntity, Entity resultEntity, String defaultImageFilename) throws Exception {
 
         this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+        this.contextLogger = new ContextLogger(logger);
         this.task = ProcessDataHelper.getTask(processData);
+        this.contextLogger.appendToLogContext(task);
         this.processData = processData;
+        this.data = new ProcessDataAccessor(processData, contextLogger);
         this.entityBean = EJBFactory.getLocalEntityBean();
         this.computeBean = EJBFactory.getLocalComputeBean();
         this.annotationBean = EJBFactory.getLocalAnnotationBean();
+        this.solrBean = EJBFactory.getLocalSolrBean();
+        
         String ownerName = ProcessDataHelper.getTask(processData).getOwner();
         Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
         this.ownerKey = subject.getKey();
-        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
+        
+        this.entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger, contextLogger);
         this.entityLoader = new EntityBeanEntityLoader(entityBean);
         
     	registerImages(pipelineRunEntity, resultEntity, defaultImageFilename);
@@ -122,10 +127,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	
     	findArtifacts(resultEntity);
     	contextLogger.info("Found "+images3d.size()+" 3d images");
-    	contextLogger.info("Found "+allMipPrefixMap.size()+" all MIPs");
-    	contextLogger.info("Found "+signalMipPrefixMap.size()+" signal MIPs");
-    	contextLogger.info("Found "+refMipPrefixMap.size()+" ref MIPs");
-    	contextLogger.info("Found "+moviePrefixMap.size()+" movies");
+    	contextLogger.info("Found artifacts for "+mipsPrefixMap.size()+" source images");
     	
     	// Ensure all 3d images have their shortcut images correctly set. At the same time, find which of these
     	// 3d images is the default image for this result.
@@ -152,18 +154,8 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 					String prefix = m.group(1);
 
 					contextLogger.debug("Get artifacts with prefix: '"+prefix+"'");
-                    
-					Entity allMip = allMipPrefixMap.get(prefix);
-					Entity signalMip = signalMipPrefixMap.get(prefix);
-					Entity refMip = refMipPrefixMap.get(prefix);
-                    Entity movie = moviePrefixMap.get(prefix);
-	
-                    contextLogger.debug("  allMip="+allMip);
-                    contextLogger.debug("  signalMip="+signalMip);
-                    contextLogger.debug("  refMip="+refMip);
-                    contextLogger.debug("  movie="+movie);
-					
-                    setMIPs(image3d, allMip, signalMip, refMip, movie); 
+					MIPs mips = mipsPrefixMap.get(prefix);
+                    setMIPs(image3d, mips); 
 				}	
 			}
     	}
@@ -222,21 +214,19 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}		
     	else {
     		// Is there a montage?
-    		Entity allMip = getMontage(allMipPrefixMap);
-    		Entity signalMip = getMontage(signalMipPrefixMap);
-    		Entity refMip = getMontage(refMipPrefixMap);
+    		MIPs mips = getMontage(mipsPrefixMap);
 
-    		if (allMip!=null || signalMip!=null || refMip!=null) {
-                Entity defaultMip = allMip==null?signalMip:allMip;
+    		if (mips!=null && (mips.all!=null || mips.signal!=null || mips.reference!=null)) {
+                Entity defaultMip = mips.all==null?mips.signal:mips.all;
     		    contextLogger.info("Applying 2d montages to the result ("+resultEntity.getId()+")");
-	        	entityHelper.set2dImages(resultEntity, defaultMip, allMip, signalMip, refMip);
+	        	entityHelper.set2dImages(resultEntity, defaultMip, mips.all, mips.signal, mips.reference);
 	        	contextLogger.info("Applying 2d montages to the pipeline run ("+pipelineRunEntity.getId()+")");
-	        	entityHelper.set2dImages(pipelineRunEntity, defaultMip, allMip, signalMip, refMip);
+	        	entityHelper.set2dImages(pipelineRunEntity, defaultMip, mips.all, mips.signal, mips.reference);
     		}
     		else {
     		    // No montage found, we need to pick an image, so let's pick the first one alphabetically (this works well for Brain/VNC at least)
 
-    		    List<String> keys = new ArrayList<>(allMipPrefixMap.keySet());
+    		    List<String> keys = new ArrayList<>(mipsPrefixMap.keySet());
     		    if (!keys.isEmpty()) {
     		        Collections.sort(keys, new Comparator<String>() {
     		            @Override
@@ -251,16 +241,14 @@ public class ResultImageRegistrationService extends AbstractEntityService {
         	        
         		    String defaultKey = keys.get(0);
 
-                    allMip = allMipPrefixMap.get(defaultKey);
-                    signalMip = signalMipPrefixMap.get(defaultKey);
-                    refMip = refMipPrefixMap.get(defaultKey);
-                    Entity defaultMip = allMip==null?signalMip:allMip;
+                    mips = mipsPrefixMap.get(defaultKey);
+                    Entity defaultMip = mips.all==null?mips.signal:mips.all;
                     
-                    if (allMip!=null || signalMip!=null || refMip!=null) {
+                    if (mips!=null && (mips.all!=null || mips.signal!=null || mips.reference!=null)) {
                         contextLogger.info("Applying first 2d image to the result ("+resultEntity.getId()+")");
-                        entityHelper.set2dImages(resultEntity, defaultMip, allMip, signalMip, refMip);
+                        entityHelper.set2dImages(resultEntity, defaultMip, mips.all, mips.signal, mips.reference);
                         contextLogger.info("Applying first 2d image to the pipeline run ("+pipelineRunEntity.getId()+")");
-                        entityHelper.set2dImages(pipelineRunEntity, defaultMip, allMip, signalMip, refMip);
+                        entityHelper.set2dImages(pipelineRunEntity, defaultMip, mips.all, mips.signal, mips.reference);
                     }
                     
                     // Apply 2d images to sample
@@ -283,12 +271,12 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 
                             // Set the images on the sub-sample
                             contextLogger.info("Applying first 2d image to the sub-sample ("+sampleEntity.getId()+")");
-                            entityHelper.set2dImages(sampleEntity, defaultMip, allMip, signalMip, refMip);
+                            entityHelper.set2dImages(sampleEntity, defaultMip, mips.all, mips.signal, mips.reference);
                             
                             // Set the top level sample, if this image matches the user's preference for the sample's data set
                             if (sampleEntity!=topLevelSample && sampleShouldUseResultImage(sampleEntity, sampleImageType, default3dImage)) {
                                 contextLogger.info("Applying first 2d image to the top-level sample ("+topLevelSample.getId()+")");
-                                entityHelper.set2dImages(topLevelSample, defaultMip, allMip, signalMip, refMip);
+                                entityHelper.set2dImages(topLevelSample, defaultMip, mips.all, mips.signal, mips.reference);
                             }
                         }
                         
@@ -317,7 +305,7 @@ public class ResultImageRegistrationService extends AbstractEntityService {
     	}
 	}
 	
-	private Entity getMontage(Map<String,Entity> prefixMap) {
+	private MIPs getMontage(Map<String,MIPs> prefixMap) {
     	for(String key : prefixMap.keySet()) {
     		if (key.endsWith("montage")) {
     			return prefixMap.get(key);
@@ -327,34 +315,40 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 	}
 	
 	private void selectAndSetMIPs(Entity imageTile, String keyPattern) throws ComputeException {
-    	Entity allMip = findMatchingEntity(allMipPrefixMap, keyPattern);
-    	Entity signalMip = findMatchingEntity(signalMipPrefixMap, keyPattern);
-    	Entity refMip = findMatchingEntity(refMipPrefixMap, keyPattern);
-    	Entity movie = findMatchingEntity(moviePrefixMap, keyPattern);
-    	setMIPs(imageTile, allMip, signalMip, refMip, movie);
+    	MIPs mips = findMatchingEntity(mipsPrefixMap, keyPattern);
+    	setMIPs(imageTile, mips);
 	}
 
-	private Entity findMatchingEntity(Map<String,Entity> prefixMap, String keyPattern) {
-    	Entity image = null;
+	private MIPs findMatchingEntity(Map<String,MIPs> prefixMap, String keyPattern) {
+		MIPs mips = null;
     	for(String key : prefixMap.keySet()) {
     		if (key.matches(keyPattern)) {
-    			if (image!=null) {
+    			if (mips!=null) {
     				logger.warn("Multiple matches for "+keyPattern+" in prefix map");
     			}
-    			image = prefixMap.get(key);
+    			mips = prefixMap.get(key);
     		}
     	}
-    	return image;
+    	return mips;
 	}
 	
-	private void setMIPs(Entity entity, Entity allMip, Entity signalMip, Entity refMip, Entity movie) throws ComputeException {
-	    if (allMip==null && signalMip==null && refMip==null && movie==null) return;
+	private void setMIPs(Entity entity, MIPs mips) throws ComputeException {
+	    if (mips==null) return;
 	    contextLogger.info("Applying MIP and movies on "+entity.getName()+" (id="+entity.getId()+")");
-        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, signalMip==null?refMip:signalMip);
-        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, allMip);
-        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, signalMip);
-        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, refMip);
-        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, movie);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, mips.signal==null?mips.reference:mips.signal);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE, mips.all);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE, mips.reference);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE, mips.signal);
+        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE, mips.movie);
+        if (EntityConstants.TYPE_LSM_STACK.equals(entity.getEntityTypeName())) {
+        	// These extra single-signal MIPs are only available on LSMs for now
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_1_MIP_IMAGE, mips.signal1);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_2_MIP_IMAGE, mips.signal2);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_3_MIP_IMAGE, mips.signal3);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_1_REF_MIP_IMAGE, mips.refsignal1);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_2_REF_MIP_IMAGE, mips.refsignal2);
+	        entityHelper.setImageIfNecessary(entity, EntityConstants.ATTRIBUTE_SIGNAL_3_REF_MIP_IMAGE, mips.refsignal3);
+        }
 	}
 	
 	/**
@@ -485,20 +479,44 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 				
 				contextLogger.debug("Found artifact: prefix="+prefix+", type="+type+", ext="+ext);
 				
+				MIPs mips = mipsPrefixMap.get(prefix);
+				if (mips==null) {
+					mips = new MIPs();
+					mipsPrefixMap.put(prefix, mips);
+				}
+				
 				if ("png".equals(ext)) {
 					if ("_all".equals(type) || "".equals(type)) {
-						allMipPrefixMap.put(prefix, entity);
+						mips.all = entity;
+					}
+					else if ("_refsignal1".equals(type)) {
+						mips.refsignal1 = entity;
+					}
+					else if ("_refsignal2".equals(type)) {
+						mips.refsignal2 = entity;
+					}
+					else if ("_refsignal3".equals(type)) {
+						mips.refsignal3 = entity;
+					}
+					else if ("_signal1".equals(type)) {
+						mips.signal1 = entity;
+					}
+					else if ("_signal2".equals(type)) {
+						mips.signal2 = entity;
+					}
+					else if ("_signal3".equals(type)) {
+						mips.signal3 = entity;
 					}
 					else if ("_signal".equals(type) || "_sig".equals(type)) {
-						signalMipPrefixMap.put(prefix, entity);
+						mips.signal = entity;
 					}
 					else if ("_reference".equals(type) || "_ref".equals(type)) {
-						refMipPrefixMap.put(prefix, entity);
+						mips.reference = entity;
 					}
 				}
 				else if ("mp4".equals(ext)) {
 					if ("_movie".equals(type) || "_signal".equals(type) || "".equals(type)) {
-						moviePrefixMap.put(prefix, entity);
+						mips.movie = entity;
 					}
 				}
 			}
@@ -519,8 +537,10 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 		if (supportingFiles==null) return null;
 		
         // Should find it here
+        populateChildren(supportingFiles);
 		Entity signalVolume = EntityUtils.findChildWithName(supportingFiles, "ConsolidatedSignal.v3dpbd");
 		if (signalVolume!=null) {
+	        populateChildren(signalVolume);
 		    Entity fast3dImage = signalVolume.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE);
             if (fast3dImage!=null) {
                 return fast3dImage;
@@ -533,5 +553,18 @@ public class ResultImageRegistrationService extends AbstractEntityService {
 
         populateChildren(fastLoad);
 		return EntityUtils.findChildWithName(fastLoad, "ConsolidatedSignal2_25.mp4");
+	}
+	
+	private class MIPs {
+		Entity all;
+		Entity reference;
+		Entity signal;
+		Entity signal1;
+		Entity signal2;
+		Entity signal3;
+		Entity refsignal1;
+		Entity refsignal2;
+		Entity refsignal3;
+		Entity movie;
 	}
 }

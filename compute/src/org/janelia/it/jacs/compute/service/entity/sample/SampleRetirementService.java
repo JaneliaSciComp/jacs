@@ -22,7 +22,9 @@ public class SampleRetirementService extends AbstractEntityService {
 
 	private static final Logger logger = Logger.getLogger(SampleRetirementService.class);
 	private static final String RETIRED_SUFFIX = "-Retired";
-	
+
+    public transient static final String PARAM_testRun = "is test run";
+    
 	// Settings
 	protected boolean isDebug = false;
 
@@ -35,24 +37,37 @@ public class SampleRetirementService extends AbstractEntityService {
     protected int numSamplesRetired;
     protected Entity retiredDataFolder;
     protected Set<Long> retiredIds;
-    protected String dataSetName;
     
     public void execute() throws Exception {
 
-//        if (isDebug) {
-//            logger.info("This is a test run. No entities will be moved or deleted.");
-//        }
-//        else {
-//            logger.info("This is the real thing. Entities will be moved and/or deleted!");
-//        }
+        String testRun = task.getParameter(PARAM_testRun);
+        if (testRun!=null) {
+            isDebug = Boolean.parseBoolean(testRun);    
+        }            
         
-        this.dataSetName = (String) processData.getItem("DATA_SET_NAME");
+        if (isDebug) {
+            logger.info("This is a test run. No samples will be retired.");
+        }
+        else {
+            logger.info("This is the real thing. Samples will be retired!");
+        }
+        
+        String dataSetName = data.getItemAsString("DATA_SET_NAME");
         Long maxSamples = data.getItemAsLong("MAX_SAMPLES");
         
         logger.info("Running sample retirement for "+ownerKey+" (dataSetName="+dataSetName+", maxSamples="+maxSamples+")");
-
-        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
         
+        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+
+        String dataSetIdentifier = null;
+        if (!StringUtils.isEmpty(dataSetName)) {
+            for(Entity dataSet : entityBean.getEntitiesByNameAndTypeName(ownerKey, dataSetName, EntityConstants.TYPE_DATA_SET)) {
+                dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+                break;
+            }
+            sampleHelper.setDataSetNameFilter(dataSetName);
+        }
+
         this.retiredDataFolder = sampleHelper.getRetiredDataFolder();
         this.retiredIds = new HashSet<Long>();
         Entity retiredDataFolder = sampleHelper.getRetiredDataFolder();
@@ -67,7 +82,7 @@ public class SampleRetirementService extends AbstractEntityService {
 
             List<Entity> toRetire = new ArrayList<>();
 			for(Entity sample : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_DESYNC)) {
-                if (dataSetName!=null && !dataSetName.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER))) {
+                if (dataSetIdentifier!=null && !dataSetIdentifier.equals(sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER))) {
                     continue;
                 }
                 if (!sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
@@ -78,6 +93,7 @@ public class SampleRetirementService extends AbstractEntityService {
             }    		
 
 			if (toRetire.isEmpty()) {
+	            logger.info("No desynchronized samples found");
 			    return;
 			}
 			
@@ -156,6 +172,4 @@ public class SampleRetirementService extends AbstractEntityService {
         
         numSamplesRetired++;
     }
-    
-    
 }

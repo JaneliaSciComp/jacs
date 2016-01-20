@@ -7,6 +7,16 @@ public class OntologyTermReference {
 
     public OntologyTermReference() {
     }
+    
+    public OntologyTermReference(Long ontologyId, Long ontologyTermId) {
+        this.ontologyId = ontologyId;
+        this.ontologyTermId = ontologyTermId;
+    }
+    
+    public OntologyTermReference(Ontology ontology, OntologyTerm term) {
+        this.ontologyId = ontology.getId();
+        this.ontologyTermId = term.getId();
+    }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Long getOntologyId() {
