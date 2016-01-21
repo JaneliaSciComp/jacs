@@ -241,8 +241,8 @@ public class SampleTest extends MongoDbTest {
                 lsmMap.put(lsm.getId(), lsm);
             }
             
-            for(String objective : sample.getObjectives().keySet()) {
-                ObjectiveSample osample = sample.getObjectives().get(objective);
+            for(String objective : sample.getOrderedObjectives()) {
+                ObjectiveSample osample = sample.getObjectiveSample(objective);
                 for(SampleTile tile : osample.getTiles()) {
                     for(Reference lsmRef : tile.getLsmReferences()) {
                         LSMImage image = lsmMap.get(lsmRef.getTargetId());
@@ -281,8 +281,8 @@ public class SampleTest extends MongoDbTest {
         }
         for(DomainObject obj : dao.getDomainObjects(subjectKey, treeNode.getChildren())) {
             Sample sample = (Sample)obj;
-            for(String objective : sample.getObjectives().keySet()) {
-                ObjectiveSample osample = sample.getObjectives().get(objective);
+            for(String objective : sample.getOrderedObjectives()) {
+                ObjectiveSample osample = sample.getObjectiveSample(objective);
                 for(SampleTile tile : osample.getTiles()) {
                     for(Reference lsm : tile.getLsmReferences()) {
                     }

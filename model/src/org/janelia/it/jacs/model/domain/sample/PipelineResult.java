@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
@@ -27,7 +29,68 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
     private Date creationDate;
     private List<PipelineResult> results;
     private Map<FileType, String> files;
+    private SamplePipelineRun parentRun;
+    private PipelineResult parentResult;
 
+    @JsonIgnore
+    public SamplePipelineRun getParentRun() {
+        return parentRun;
+    }
+
+    @JsonIgnore
+    void setParentRun(SamplePipelineRun parentRun) {
+        this.parentRun = parentRun;
+    }
+
+    @JsonIgnore
+    public PipelineResult getParentResult() {
+        return parentResult;
+    }
+
+    @JsonIgnore
+    void setParentResult(PipelineResult parentResult) {
+        this.parentResult = parentResult;
+    }
+
+    @JsonIgnore
+    public boolean hasResults() {
+        return results!=null && !results.isEmpty();
+    }
+    
+    @JsonProperty
+    public List<PipelineResult> getResults() {
+        return results==null?null:Collections.unmodifiableList(results);
+    }
+    
+    @JsonProperty
+    public void setResults(List<PipelineResult> results) {
+        for(PipelineResult result : results) {
+            result.setParentRun(parentRun);
+            result.setParentResult(this);
+        }
+        this.results = results;
+    }
+
+    @JsonIgnore
+    public void addResult(PipelineResult result) {
+        if (results==null) {
+            this.results = new ArrayList<>();
+        }
+        result.setParentRun(parentRun);
+        result.setParentResult(this);
+        results.add(result);
+    }
+
+    @JsonIgnore
+    public void removeResult(PipelineResult result) {
+        if (results==null) {
+            return;
+        }
+        result.setParentRun(null);
+        result.setParentResult(null);
+        results.remove(result);
+    }
+    
     @JsonIgnore
     protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
         if (results==null) {
@@ -45,20 +108,6 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
     @JsonIgnore
     public NeuronSeparation getLatestSeparationResult() {
         return (NeuronSeparation) getLatestResultOfType(NeuronSeparation.class);
-    }
-
-    public void addResult(PipelineResult result) {
-        if (results==null) {
-            this.results = new ArrayList<>();
-        }
-        results.add(result);
-    }
-
-    public void removeResult(PipelineResult result) {
-        if (results==null) {
-            return;
-        }
-        results.remove(result);
     }
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
@@ -96,14 +145,6 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
         this.creationDate = creationDate;
     }
 
-    public List<PipelineResult> getResults() {
-        return results;
-    }
-    
-    public void setResults(List<PipelineResult> results) {
-        this.results = results;
-    }
-
     public Map<FileType, String> getFiles() {
         return files;
     }
@@ -111,6 +152,4 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
     public void setFiles(Map<FileType, String> files) {
         this.files = files;
     }
-
-
 }

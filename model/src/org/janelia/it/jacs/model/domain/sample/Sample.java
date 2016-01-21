@@ -10,6 +10,9 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 
  * of data set and slide code. A single sample may include many LSMs. For example, it may include images taken 
@@ -52,19 +55,34 @@ public class Sample extends AbstractDomainObject {
     private String visited;
     
     private Map<String, ObjectiveSample> objectives;
+    
+    public Map<String, ObjectiveSample> getObjectives() {
+        return Collections.unmodifiableMap(objectives);
+    }
 
+    @JsonProperty
+    public void setObjectives(Map<String, ObjectiveSample> objectives) {
+        for(ObjectiveSample objectiveSample : objectives.values()) {
+            objectiveSample.setParent(this);
+        }
+        this.objectives = objectives;
+    }
+
+    @JsonIgnore
     public List<String> getOrderedObjectives() {
         if (objectives==null || objectives.isEmpty()) return null;
         List<String> sortedObjectives = new ArrayList<>(objectives.keySet());
         Collections.sort(sortedObjectives);
-        return sortedObjectives;
+        return Collections.unmodifiableList(sortedObjectives);
     }
-    
+
+    @JsonIgnore
     public ObjectiveSample getObjectiveSample(String objective) {
         if (objectives==null) return null;
         return objectives.get(objective);
     }
 
+    @JsonIgnore
     public PipelineResult findResultById(Long id) {
         for(String objective : getOrderedObjectives()) {
             ObjectiveSample objectiveSample = getObjectiveSample(objective);
@@ -150,13 +168,5 @@ public class Sample extends AbstractDomainObject {
 
     public void setVisited(String visited) {
         this.visited = visited;
-    }
-
-    public Map<String, ObjectiveSample> getObjectives() {
-        return objectives;
-    }
-
-    public void setObjectives(Map<String, ObjectiveSample> objectives) {
-        this.objectives = objectives;
     }
 }

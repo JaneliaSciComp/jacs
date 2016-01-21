@@ -1,10 +1,12 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * A single run of the pipeline on an ObjectiveSample. 
  * 
@@ -19,7 +21,53 @@ public class SamplePipelineRun {
     private Date creationDate;
     private List<PipelineResult> results;
     private PipelineError error;
+    private ObjectiveSample parent;
 
+    @JsonIgnore
+    public ObjectiveSample getParent() {
+        return parent;
+    }
+
+    @JsonIgnore
+    void setParent(ObjectiveSample parent) {
+        this.parent = parent;
+    }
+
+    @JsonIgnore
+    public boolean hasResults() {
+        return results!=null && !results.isEmpty();
+    }
+    
+    @JsonProperty
+    public List<PipelineResult> getResults() {
+        return results==null?null:Collections.unmodifiableList(results);
+    }
+    
+    @JsonProperty
+    public void setResults(List<PipelineResult> results) {
+        for(PipelineResult result : results) {
+            result.setParentRun(this);
+        }
+        this.results = results;
+    }
+
+    @JsonIgnore
+    public void addResult(PipelineResult result) {
+        if (results==null) {
+            this.results = new ArrayList<>();
+        }
+        result.setParentRun(this);
+        results.add(result);
+    }
+
+    @JsonIgnore
+    public void removeResult(PipelineResult result) {
+        if (results==null) {
+            return;
+        }
+        results.remove(result);
+    }
+    
     @JsonIgnore
     protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
         if (results==null) {
@@ -47,20 +95,6 @@ public class SamplePipelineRun {
     @JsonIgnore
     public SampleAlignmentResult getLatestAlignmentResult() {
         return (SampleAlignmentResult) getLatestResultOfType(SampleAlignmentResult.class);
-    }
-
-    public void addResult(PipelineResult result) {
-        if (results==null) {
-            this.results = new ArrayList<>();
-        }
-        results.add(result);
-    }
-
-    public void removeResult(PipelineResult result) {
-        if (results==null) {
-            return;
-        }
-        results.remove(result);
     }
 
     public boolean hasError() {
@@ -95,14 +129,6 @@ public class SamplePipelineRun {
 
     public void setPipelineVersion(Integer pipelineVersion) {
         this.pipelineVersion = pipelineVersion;
-    }
-
-    public List<PipelineResult> getResults() {
-        return results;
-    }
-
-    public void setResults(List<PipelineResult> results) {
-        this.results = results;
     }
 
     public void setCreationDate(Date creationDate) {
