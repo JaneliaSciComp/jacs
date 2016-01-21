@@ -76,7 +76,6 @@ public class LDAPProvider {
             req.setBase(groupDN);
             req.setFilter("(" + groupAttribute + "=" + username + ")");
             SearchCursor searchCursor = connection.search(req);
-
             if (searchCursor.next()) {
                 return true;
             } else return false;
@@ -95,7 +94,7 @@ public class LDAPProvider {
     }
 
     // perform a bind and then check group membership in LDAP group jacsdata
-    public void generateSubjectInfo (String username) throws RuntimeException {
+    public Subject generateSubjectInfo (String username) throws RuntimeException {
         LdapConnection connection = null;
         Subject newUser = new Subject();
         try {
@@ -106,15 +105,16 @@ public class LDAPProvider {
             {
                 Entry entry = cursor.get();
                 newUser.setEmail(entry.get("mail").getString());
-                newUser.setFullName(entry.get("givenName") + " " + entry.get("sn"));
+                newUser.setFullName(entry.get("givenName").getString() + " " + entry.get("sn").getString());
                 HashSet<String> baseGroups = new HashSet<String>();
                 baseGroups.add("group:workstation_users");
                 newUser.setGroups(baseGroups);
                 newUser.setKey("user:" + username);
                 newUser.setName(username);
-
             }
+
             cursor.close();
+            return newUser;
         } catch (LdapException le) {
             throw new RuntimeException ("Problems connecting to LDAP Resource");
         } catch (CursorException e) {
