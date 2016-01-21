@@ -44,11 +44,10 @@ public class UserWorkstationWebService extends ResourceConfig {
     @GET
     @Path("/login")
     @Produces(MediaType.APPLICATION_JSON)
-    public Subject loginSubject (@QueryParam("subjectKey") String subjectKey) {
+    public Subject loginSubject () {
         // user authentication
         BasicAuthToken userInfo = (BasicAuthToken)getCredentials();
         if (authenticator.login(userInfo)) {
-            System.out.println ("ASDFASDF");
             // check subjects, if subject doesn't exist for this user and they are in jacsdata,
             // create the account
             DomainDAO dao = WebServiceContext.getDomainManager();
@@ -61,7 +60,7 @@ public class UserWorkstationWebService extends ResourceConfig {
                 }
                 return user;
             } catch (Exception e) {
-                log.error("Error occurred getting default workspace" + e);
+                log.error("Error occurred authenticating user" + e);
                 throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
             }
         }
@@ -236,6 +235,7 @@ public class UserWorkstationWebService extends ResourceConfig {
     public Subject getSubjectByKey(@QueryParam("subjectKey") String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.info("Made request for subject using key " + subjectKey);
             return dao.getSubjectByKey(subjectKey);
         }
         catch (Exception e) {
