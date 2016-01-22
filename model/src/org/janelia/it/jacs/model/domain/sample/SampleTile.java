@@ -23,7 +23,7 @@ public class SampleTile implements HasFiles {
     @SearchTraversal({Sample.class})
     private List<Reference> lsmReferences;
     private Map<FileType, String> files;
-    private ObjectiveSample parent;
+    private transient ObjectiveSample parent;
 
     @JsonIgnore
     public ObjectiveSample getParent() {

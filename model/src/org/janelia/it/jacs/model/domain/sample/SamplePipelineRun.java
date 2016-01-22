@@ -21,7 +21,7 @@ public class SamplePipelineRun {
     private Date creationDate;
     private List<PipelineResult> results;
     private PipelineError error;
-    private ObjectiveSample parent;
+    private transient ObjectiveSample parent;
 
     @JsonIgnore
     public ObjectiveSample getParent() {

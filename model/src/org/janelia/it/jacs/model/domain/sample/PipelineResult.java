@@ -29,8 +29,8 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
     private Date creationDate;
     private List<PipelineResult> results;
     private Map<FileType, String> files;
-    private SamplePipelineRun parentRun;
-    private PipelineResult parentResult;
+    private transient SamplePipelineRun parentRun;
+    private transient PipelineResult parentResult;
 
     @JsonIgnore
     public SamplePipelineRun getParentRun() {

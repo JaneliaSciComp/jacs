@@ -16,8 +16,19 @@ public class ObjectiveSample {
 
     private List<SampleTile> tiles;
     private List<SamplePipelineRun> pipelineRuns;
-    private Sample parent;
+    private transient String objective;
+    private transient Sample parent;
 
+    @JsonIgnore
+    public String getObjective() {
+        return objective;
+    }
+
+    @JsonIgnore
+    void setObjective(String objective) {
+        this.objective = objective;
+    }
+    
     @JsonIgnore
     public Sample getParent() {
         return parent;

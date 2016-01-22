@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -62,10 +63,31 @@ public class Sample extends AbstractDomainObject {
 
     @JsonProperty
     public void setObjectives(Map<String, ObjectiveSample> objectives) {
-        for(ObjectiveSample objectiveSample : objectives.values()) {
+        for(String objective : objectives.keySet()) {
+            ObjectiveSample objectiveSample = objectives.get(objective);
+            objectiveSample.setObjective(objective);
             objectiveSample.setParent(this);
         }
         this.objectives = objectives;
+    }
+    
+    @JsonIgnore
+    public void addObjectiveSample(String objective, ObjectiveSample objectiveSample) {
+        if (objectives==null) {
+            this.objectives = new HashMap<>();
+        }
+        objectiveSample.setObjective(objective);
+        objectiveSample.setParent(this);
+        objectives.put(objective, objectiveSample);
+    }
+
+    @JsonIgnore
+    public void removeObjectiveSample(String objective, ObjectiveSample objectiveSample) {
+        if (objectives==null) {
+            return;
+        }
+        objectiveSample.setParent(null);
+        objectives.remove(objective);
     }
 
     @JsonIgnore
@@ -86,9 +108,11 @@ public class Sample extends AbstractDomainObject {
     public PipelineResult findResultById(Long id) {
         for(String objective : getOrderedObjectives()) {
             ObjectiveSample objectiveSample = getObjectiveSample(objective);
+            if (!objectiveSample.hasPipelineRuns()) continue;
             for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
+                if (!run.hasResults()) continue;
                 for(PipelineResult result : run.getResults()) {
-                    if (result.getId().equals(id)) {
+                    if (result!=null && result.getId()!=null && result.getId().equals(id)) {
                         return result;
                     }
                 }
