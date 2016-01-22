@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Preference;
@@ -86,7 +87,7 @@ public class DomainDAO {
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
 
-        if (username!=null && password!=null) {
+        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
             MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
             this.m = new MongoClient(new ServerAddress(serverUrl), Arrays.asList(credential));
             log.info("Connected to MongoDB ("+databaseName+"@"+serverUrl+") as user "+username);
