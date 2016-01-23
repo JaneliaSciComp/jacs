@@ -64,6 +64,8 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
     
     @JsonProperty
     public void setResults(List<PipelineResult> results) {
+        if (results==null)
+            return;
         for(PipelineResult result : results) {
             result.setParentRun(parentRun);
             result.setParentResult(this);

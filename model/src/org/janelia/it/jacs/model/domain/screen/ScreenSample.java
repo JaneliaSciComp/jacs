@@ -12,6 +12,7 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @MongoMapped(collectionName="screenSample",label="Screen Sample")
 @SearchType(key="screenSample",label="Screen Sample")
@@ -55,7 +56,13 @@ public class ScreenSample extends AbstractDomainObject implements HasFiles, HasF
         this.patternMasks = patternMasks;
     }
 
+    @JsonIgnore
     public Map<FileType, String> getFiles() {
+        return images;
+    }
+
+    // duplicate of getFiles, but need to fulfill get/set for serialization
+    public Map<FileType, String> getImages() {
         return images;
     }
 

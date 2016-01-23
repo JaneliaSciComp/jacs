@@ -45,6 +45,8 @@ public class SamplePipelineRun {
     
     @JsonProperty
     public void setResults(List<PipelineResult> results) {
+        if (results==null)
+            return;
         for(PipelineResult result : results) {
             result.setParentRun(this);
         }
