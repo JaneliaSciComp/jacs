@@ -170,50 +170,50 @@ public class MongoDbImport extends AnnotationDAO {
 
     public void loadAllEntities() throws DaoException {
 
-//        log.info("Building disk-based SAGE property map");
-//        this.largeOp = new MongoLargeOperations(dao, this);
-//        largeOp.buildSageImagePropMap();
-//
-//        log.info("Building LSM property map");
-//        buildLsmAttributeMap();
-//        
+        log.info("Building disk-based SAGE property map");
+        this.largeOp = new MongoLargeOperations(dao, this);
+        largeOp.buildSageImagePropMap();
+
+        log.info("Building LSM property map");
+        buildLsmAttributeMap();
+        
         log.info("Loading data into MongoDB");
         getSession().setFlushMode(FlushMode.MANUAL);
         
         long startAll = System.currentTimeMillis(); 
-//
-//        log.info("Adding subjects");
-//        loadSubjects();
-//        
-//        log.info("Adding samples");
-//        // TODO: handle deleted (i.e. "hidden") neurons
-//        // TODO: handle curated neurons
-//        // TODO: handle pattern mask results in samples (knappj)
-//        loadSamples();
-//
-//        log.info("Adding data sets");
-//        loadDataSets();
-//        
-//        log.info("Adding fly lines");
-//        loadFlyLines();
-//        
-//        log.info("Adding screen data");
-//        loadScreenData();
-//        
-//        log.info("Adding compartment sets");
-//        loadCompartmentSets();
-//
-//        log.info("Adding alignment boards");
-//        loadAlignmentBoards();
+
+        log.info("Adding subjects");
+        loadSubjects();
+        
+        log.info("Adding samples");
+        // TODO: handle deleted (i.e. "hidden") neurons
+        // TODO: handle curated neurons
+        // TODO: handle pattern mask results in samples (knappj)
+        loadSamples();
+
+        log.info("Adding data sets");
+        loadDataSets();
+        
+        log.info("Adding fly lines");
+        loadFlyLines();
+        
+        log.info("Adding screen data");
+        loadScreenData();
+        
+        log.info("Adding compartment sets");
+        loadCompartmentSets();
+
+        log.info("Adding alignment boards");
+        loadAlignmentBoards();
 
         log.info("Adding folders");
         loadWorkspaces();
 
-//        log.info("Adding ontologies");
-//        loadOntologies(); // must come before loadAnnotations to populate the term maps
-//
-//        log.info("Adding annotations");
-//        loadAnnotations();
+        log.info("Adding ontologies");
+        loadOntologies(); // must come before loadAnnotations to populate the term maps
+
+        log.info("Adding annotations");
+        loadAnnotations();
         
         // TODO: add large image viewer workspaces and associated entities
         
@@ -2121,7 +2121,7 @@ public class MongoDbImport extends AnnotationDAO {
 	    HashSet<Reference> children = new LinkedHashSet<Reference>();
 
 	    // Load folder children
-	    for(String childType : childrenByType.keys()) {
+	    for(String childType : childrenByType.keySet()) {
 	    	Collection<Entity> childEntities = childrenByType.get(childType);
 	    	log.info(indent+"Processing "+childEntities.size()+" children of type "+childType);
 	    	if (EntityConstants.TYPE_FOLDER.equals(childType)) {
@@ -2153,8 +2153,8 @@ public class MongoDbImport extends AnnotationDAO {
 	    		newFolder.setUpdatedDate(folderEntity.getUpdatedDate());
 		    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
 		    	if (objectSet!=null) {
-			    	String colName = DomainUtils.getCollectionName(objectSet.getClassName());
-			    	objectSet.setName(colName+"s");
+//			    	String colName = DomainUtils.getCollectionName(objectSet.getClassName());
+			    	objectSet.setName(childType+"s");
 			    	log.info(indent+"  Generated extra object set: "+objectSet.getName());
 		            objectSetCollection.insert(objectSet);
 	                children.add(getReference(objectSet));
@@ -2201,8 +2201,6 @@ public class MongoDbImport extends AnnotationDAO {
 			// Object set has no members 
 			return objectSet;
 		}
-		
-		objectSet.setClassName(getClassName(setType));
 
 	    // --------------------------------------------------------------------------------
 	    // Preprocess all objects and see if we need to do a bulk mapping
@@ -2225,7 +2223,7 @@ public class MongoDbImport extends AnnotationDAO {
 		    for(Entity entity : entityMembers) {
 		    	Long originalId = entity.getId();
 		    	Entity sample = entity;
-		    	if (translatedEntities.containsKey(originalId)) {
+		    	if (translatedEntities.get(originalId)!=null) {
 		    		sample = translatedEntities.get(originalId);
 		    	}
 	        	if (sample.getName().contains("~")) {
@@ -2252,7 +2250,7 @@ public class MongoDbImport extends AnnotationDAO {
 		}
 		
 	    // --------------------------------------------------------------------------------
-		// 4) Load the members, translating them if necessary
+		// Load the members, translating them one-by-one if necessary
 	    List<Long> memberIds = new ArrayList<Long>();
 	    
 	    String translatedSetType = null;
@@ -2299,17 +2297,22 @@ public class MongoDbImport extends AnnotationDAO {
             }
             memberIds.add(importEntity.getId());
 	    }
+		
+        if (translatedSetType==null) {
+        	log.info(indent+"Set type is null, with "+memberIds.size()+" ids");
+        }
 
         objectSet.setClassName(getClassName(translatedSetType));
         if (!memberIds.isEmpty()) {
             objectSet.setMembers(memberIds);
         }
-		
+        
 		return objectSet;
 	}
     
     private Map<Long,Entity> translateToSample(String indent, List<Entity> entityMembers, String startingType) throws Exception {
-    	
+
+		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
 	    List<Long> originalIds = new ArrayList<Long>();
 	    for(Entity childEntity : entityMembers) {
     		originalIds.add(childEntity.getId());
@@ -2331,8 +2334,14 @@ public class MongoDbImport extends AnnotationDAO {
 			upMapping.add("Result");
 			upMapping.add("Pipeline Run");
 		}
+		else if (EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION.equals(startingType)) {
+			upMapping.add("Neuron Separator Pipeline Result");
+			upMapping.add("Result");
+			upMapping.add("Pipeline Run");
+		}
 		else {
 			log.warn(indent+"  Cannot bulk translate from '"+startingType+"'");
+			return translatedEntities;
 		}
 		upMapping.add("Sample");
 		
@@ -2340,7 +2349,6 @@ public class MongoDbImport extends AnnotationDAO {
 		List<MappedId> mappings = getProjectedResults(null, originalIds, upMapping, downMapping);
 		Map<Long,Entity> mappedEntities = getMappedEntities(mappings);
 		
-		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
         for(MappedId mappedId : mappings) {
         	translatedEntities.put(mappedId.getOriginalId(),  mappedEntities.get(mappedId.getOriginalId()));
         }
