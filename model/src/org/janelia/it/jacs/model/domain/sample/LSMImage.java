@@ -25,6 +25,9 @@ public class LSMImage extends Image {
     @SearchAttribute(key="chandyes_txt",label="Channel Dye Names")
     private String channelDyeNames;
 
+    @SearchAttribute(key="bcomp_txt",label="Brightness Compensation")
+    private String brightnessCompensation;
+    
     // SAGE Terms
 
     @SAGEAttribute(cvName="image_query", termName="id")
@@ -315,7 +318,15 @@ public class LSMImage extends Image {
         this.channelDyeNames = channelDyeNames;
     }
 
-    public Integer getSageId() {
+    public String getBrightnessCompensation() {
+		return brightnessCompensation;
+	}
+
+	public void setBrightnessCompensation(String brightnessCompensation) {
+		this.brightnessCompensation = brightnessCompensation;
+	}
+
+	public Integer getSageId() {
         return sageId;
     }
 

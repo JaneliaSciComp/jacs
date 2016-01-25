@@ -16,10 +16,16 @@ public enum FileType {
     LsmMetadata("LSM Metadata", false, true),
     
     // MIPs and movies
-    AllMip("Signal+Reference MIP", true, false),
+    AllMip("Reference+Signal MIP", true, false),
     SignalMip("Signal MIP", true, false),
+    Signal1Mip("Signal 1 MIP", true, false),
+    Signal2Mip("Signal 2 MIP", true, false),
+    Signal3Mip("Signal 3 MIP", true, false),
     ReferenceMip("Reference MIP", true, false),
-    AllMovie("Signal+Reference Movie", false, false),
+    RefSignal1Mip("Reference+Signal 1 MIP", true, false),
+    RefSignal2Mip("Reference+Signal 2 MIP", true, false),
+    RefSignal3Mip("Reference+Signal 3 MIP", true, false),
+    AllMovie("Reference+Signal Movie", false, false),
     SignalMovie("Signal Movie", false, false),
     ReferenceMovie("Reference Movie", false, false),
     
