@@ -2098,9 +2098,9 @@ public class MongoDbImport extends AnnotationDAO {
         
         if (childrenByType.keySet().size()==1 && EntityUtils.getChildrenOfType(folderEntity, EntityConstants.TYPE_FOLDER).isEmpty()) {
         	// This folder contains only one type of non-Folder object, so we'll consider it an object set
-        	ObjectSet objectSet = getObjectSet(folderEntity, folderEntity.getChildren(), indent);
+        	ObjectSet objectSet = getObjectSet(folderEntity, folderEntity.getOrderedChildren(), indent);
             objectSetCollection.insert(objectSet);
-            log.info(indent+"Generated object set: "+objectSet.getName());
+            log.info(indent+"Generated object set '"+objectSet.getName()+"' with "+objectSet.getNumMembers()+" members");
             loaded.put(objectSet.getId(), objectSet);
             return objectSet;
         }
@@ -2174,7 +2174,7 @@ public class MongoDbImport extends AnnotationDAO {
 			    		}
 			    		else {
 					    	objectSet.setName(setLabel);
-				            
+					    	extraSetCache.put(setLabel, objectSet);
 			    		}
 			    	}
 		    	}
@@ -2300,7 +2300,7 @@ public class MongoDbImport extends AnnotationDAO {
 		
 	    // --------------------------------------------------------------------------------
 		// Load the members, translating them one-by-one if necessary
-	    List<Long> memberIds = new ArrayList<Long>();
+	    Collection<Long> memberIds = new LinkedHashSet<Long>();
 	    
 	    for(Entity childEntity : entityMembers) {
 	    	
@@ -2312,7 +2312,6 @@ public class MongoDbImport extends AnnotationDAO {
         		importEntity = translatedEntity;
         	}
         	else if (TRANSLATE_ENTITIES && getCollectionName(importEntity.getEntityTypeName())==null) {
-        		log.info(indent+"  Did not find translation for "+childEntity.getId());
         		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
         		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
         		// The priority list defines the ordered list of possible entity types to try as ancestors.  
@@ -2334,16 +2333,17 @@ public class MongoDbImport extends AnnotationDAO {
 				continue;
 			}
         
-            String type = getCollectionName(importEntity.getEntityTypeName());
-            if (INSERT_ROGUE_ENTITIES && type!=null) {
+            String collectionName = getCollectionName(translatedSetType);
+            if (INSERT_ROGUE_ENTITIES) {
                 // A minor optimization, since we can only do rogue imports on images
-                if ("image".equals(type)) {
+                if ("image".equals(collectionName)) {
 		            // Attempt imports of rogue entities which map to domain objects, but which have not been loaded by any other part of the import procedure
-		            if (dao.getCollectionByName(type).count("{_id:#}",importEntity.getId())<1) {
+		            if (dao.getCollectionByName(collectionName).count("{_id:#}",importEntity.getId())<1) {
 		            	attemptRogueImport(importEntity, indent);
 		            }
                 }
             }
+            log.info("  Adding "+importEntity.getEntityTypeName()+"#"+importEntity.getId()+" ("+importEntity.getName()+")");
             memberIds.add(importEntity.getId());
 	    }
 		
@@ -2358,7 +2358,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         objectSet.setClassName(className);
         if (!memberIds.isEmpty()) {
-            objectSet.setMembers(memberIds);
+            objectSet.setMembers(new ArrayList<>(memberIds));
         }
         
 		return objectSet;
