@@ -15,6 +15,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -77,6 +78,7 @@ import org.janelia.it.jacs.model.domain.screen.PatternMask;
 import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
@@ -92,6 +94,7 @@ import org.reflections.ReflectionUtils;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.mongodb.WriteConcern;
 
 /**
@@ -166,6 +169,15 @@ public class MongoDbImport extends AnnotationDAO {
         this.compartmentSetCollection = dao.getCollectionByClass(CompartmentSet.class);
         this.alignmentBoardCollection = dao.getCollectionByClass(AlignmentBoard.class);
         this.filterCollection = dao.getCollectionByClass(Filter.class);
+    }
+
+    public void dropDatabase() throws DaoException {
+		try {
+		    dao.getJongo().getDatabase().dropDatabase();
+		}
+		catch (Exception e) {
+			throw new DaoException("Error clearing index with MongoDB",e);
+		}
     }
 
     public void loadAllEntities() throws DaoException {
@@ -378,32 +390,12 @@ public class MongoDbImport extends AnnotationDAO {
                 DataSet dataSet = getDataSetObject(dataSetEntity);
                 dataSetCollection.insert(dataSet);
                 
-                Date now = new Date();
-                Filter filter = new Filter();
-                filter.setName(dataSet.getName());
-                filter.setOwnerKey(dataSet.getOwnerKey());
-                filter.setSearchClass(Sample.class.getName());
-                filter.setCreationDate(now);
-                filter.setUpdatedDate(now);
-                FacetCriteria dataSetCriteria = new FacetCriteria();
-                dataSetCriteria.setAttributeName("dataSet");
-                Set<String> values = new HashSet<>();
-                values.add(dataSet.getIdentifier());
-                dataSetCriteria.setValues(values);
-                filter.addCriteria(dataSetCriteria);
-                filterCollection.insert(filter);
-                
                 // Free memory by releasing the reference to this entire entity tree
                 i.remove();
                 resetSession();
 
-                if (dataSet!=null) {
-                    log.info("  Loading "+dataSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                    loaded++;
-                }
-                else {
-                    log.info("  Failure loading "+dataSetEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
-                }
+                log.info("  Loading "+dataSetEntity.getName()+" ("+dataSetEntity.getOwnerKey()+") took "+(System.currentTimeMillis()-start)+" ms");
+                loaded++;
             }
             catch (Throwable e) {
                 log.error("Error loading dataset "+dataSetEntity.getId(),e);
@@ -2075,6 +2067,12 @@ public class MongoDbImport extends AnnotationDAO {
     
     private DomainObject loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, Map<Long,DomainObject> loaded, String indent) throws Exception {
 
+    	// TODO: should we load these?
+    	
+    	if ("user:jenetta".equals(folderEntity.getOwnerKey())) {
+    		return null;
+    	}
+    	
     	if ("supportingFiles".equals(folderEntity.getName())) {
     		return null;
     	}
@@ -2118,48 +2116,75 @@ public class MongoDbImport extends AnnotationDAO {
         treeNode.setUpdatedDate(folderEntity.getUpdatedDate());
     
 	    // Using a hash here to eliminate duplicates, especially those caused by folders which contain multiple descendants of the same sample
-	    HashSet<Reference> children = new LinkedHashSet<Reference>();
-
-	    // Load folder children
-	    for(String childType : childrenByType.keySet()) {
-	    	Collection<Entity> childEntities = childrenByType.get(childType);
-	    	log.info(indent+"Processing "+childEntities.size()+" children of type "+childType);
-	    	if (EntityConstants.TYPE_FOLDER.equals(childType)) {
-	    		if ("Data Sets".equals(folderEntity.getName())) {
-	    			// Probably a data set folder, let's check...
-	    			Filter dataSetFilter = filterCollection.findOne("{ownerKey:#,name:#}",folderEntity.getOwnerKey(),folderEntity.getName()).as(Filter.class);
-	    			if (dataSetFilter!=null) {
-	    				// Yep, let's use that instead of building a static object set.
-		                children.add(getReference(dataSetFilter));
-		                log.info(indent+"  Added reference to data set filter: "+dataSetFilter.getName());
-		                continue;
-	    			}
-	    		}
-	    		for(Entity childFolder : childEntities) {
-	    			DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, loaded, indent+"  ");
-	    			if (domainObject!=null) {
-		                children.add(getReference(domainObject));
-	    			}
-	    		}
-	    	}
-	    	else {
-	    		// Create new object set for items of this type
-	    		Entity newFolder = new Entity();
-	    		newFolder.setId(dao.getNewId());
-	    		newFolder.setName(childType);
-	    		newFolder.setOwnerKey(folderEntity.getOwnerKey());
-	    		newFolder.setEntityActorPermissions(folderEntity.getEntityActorPermissions());
-	    		newFolder.setCreationDate(folderEntity.getCreationDate());
-	    		newFolder.setUpdatedDate(folderEntity.getUpdatedDate());
-		    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
-		    	if (objectSet!=null) {
-//			    	String colName = DomainUtils.getCollectionName(objectSet.getClassName());
-			    	objectSet.setName(childType+"s");
-			    	log.info(indent+"  Generated extra object set: "+objectSet.getName());
-		            objectSetCollection.insert(objectSet);
-	                children.add(getReference(objectSet));
+	    Set<Reference> children = new LinkedHashSet<Reference>();
+	    Map<String,ObjectSet> extraSetCache = new LinkedHashMap<>();
+	    
+	    if ("Data Sets".equals(folderEntity.getName())) {
+	    	// Create a canned filter for each data set
+	    	Date now = new Date();
+	    	for(DataSet dataSet : dao.getDataSets(folderEntity.getOwnerKey())) {
+                Filter filter = new Filter();
+                filter.setId(dao.getNewId());
+                filter.setName(dataSet.getName());
+                filter.setOwnerKey(dataSet.getOwnerKey());
+                filter.setSearchClass(Sample.class.getName());
+                filter.setCreationDate(now);
+                filter.setUpdatedDate(now);
+                FacetCriteria dataSetCriteria = new FacetCriteria();
+                dataSetCriteria.setAttributeName("dataSet");
+                dataSetCriteria.setValues(Sets.newHashSet(dataSet.getIdentifier()));
+                filter.addCriteria(dataSetCriteria);
+                filterCollection.insert(filter);
+                children.add(getReference(filter));
+                log.info(indent+"  Added canned data set filter: "+filter.getName());
+			}
+		}
+	    else {
+		    // Load folder children
+		    for(String childType : childrenByType.keySet()) {
+		    	Collection<Entity> childEntities = childrenByType.get(childType);
+		    	log.info(indent+"Processing "+childEntities.size()+" children of type "+childType);
+		    	if (EntityConstants.TYPE_FOLDER.equals(childType)) {
+		    		for(Entity childFolder : childEntities) {
+		    			DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, loaded, indent+"  ");
+		    			if (domainObject!=null) {
+			                children.add(getReference(domainObject));
+		    			}
+		    		}
 		    	}
-	    	}
+		    	else {
+		    		// Create new object set for items of this type
+		    		Entity newFolder = new Entity();
+		    		newFolder.setId(dao.getNewId());
+		    		newFolder.setName(childType);
+		    		newFolder.setOwnerKey(folderEntity.getOwnerKey());
+		    		newFolder.setEntityActorPermissions(folderEntity.getEntityActorPermissions());
+		    		newFolder.setCreationDate(folderEntity.getCreationDate());
+		    		newFolder.setUpdatedDate(folderEntity.getUpdatedDate());
+			    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
+			    	if (objectSet!=null) {
+			    		String setLabel = getDomainClassLabel(objectSet.getClassName());
+			    		ObjectSet existingSet = extraSetCache.get(setLabel);
+			    		if (existingSet!=null) {
+			    			if (objectSet.hasMembers()) {
+				    			for(Long memberId : objectSet.getMembers()) {
+				    				existingSet.addMember(memberId);
+				    			}
+			    			}
+			    		}
+			    		else {
+					    	objectSet.setName(setLabel);
+				            
+			    		}
+			    	}
+		    	}
+		    }
+		    
+		    for(ObjectSet objectSet : extraSetCache.values()) {
+		    	log.info(indent+"  Generated extra object set: "+objectSet.getName()+" with "+objectSet.getNumMembers()+" members");
+			    objectSetCollection.insert(objectSet);
+		        children.add(getReference(objectSet));
+		    }
 	    }
 	    
         if (!children.isEmpty()) {
@@ -2204,16 +2229,28 @@ public class MongoDbImport extends AnnotationDAO {
 
 	    // --------------------------------------------------------------------------------
 	    // Preprocess all objects and see if we need to do a bulk mapping
+	    String translatedSetType = null;
 		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
 		
 		if (getCollectionName(setType)==null) {
 			// We don't know this type, attempt mass translation up to sample
 			translatedEntities.putAll(translateToSample(indent, entityMembers, setType));
 			if (!translatedEntities.isEmpty()) {
-				setType = "Sample";
+//				for(Long id : translatedEntities.keySet()) {
+//					Entity translatedEntity = translatedEntities.get(id);
+//					if (translatedEntity==null) {
+//						log.info(indent+"  "+id+" --> null");
+//					}
+//					else {
+//						log.info(indent+"  "+id+" --> "+translatedEntity.getId()+" ("+translatedEntity.getEntityTypeName()+")");
+//					}
+//				}
+				translatedSetType = setType = "Sample";
 			}
 		}
 
+//		log.info(indent+"  setType="+setType+", translatedEntities.size="+translatedEntities.size());
+		
 		// Translate sub-samples into samples
 		if ("Sample".equals(setType)) {
 			// We're at samples, but we may need to go one level higher to the parent sample
@@ -2241,19 +2278,30 @@ public class MongoDbImport extends AnnotationDAO {
 	            for(MappedId mappedId : mappings) {
 	            	Long subsampleId = mappedId.getOriginalId();
 	            	Long originalId = reverseMap.get(subsampleId);
-	            	secondaryTranslatedEntities.put(originalId,  mappedEntities.get(subsampleId));
+	            	secondaryTranslatedEntities.put(originalId,  mappedEntities.get(mappedId.getMappedId()));
 	            }
             	log.info(indent+"  Translated "+subsampleIds.size()+ " sub samples to "+secondaryTranslatedEntities.size()+" parent samples");
-	            translatedEntities.clear();
+            	if (!secondaryTranslatedEntities.isEmpty()) {
+//    				for(Long id : secondaryTranslatedEntities.keySet()) {
+//    					Entity translatedEntity = secondaryTranslatedEntities.get(id);
+//    					if (translatedEntity==null) {
+//    						log.info(indent+"  "+id+" --> null");
+//    					}
+//    					else {
+//    						log.info(indent+"  "+id+" --> "+translatedEntity.getId()+" ("+translatedEntity.getEntityTypeName()+")");
+//    					}
+//    				}
+            		translatedSetType = "Sample";
+    			}
 	            translatedEntities.putAll(secondaryTranslatedEntities);
 			}
 		}
+//		log.info(indent+"  translatedEntities.size="+translatedEntities.size());
 		
 	    // --------------------------------------------------------------------------------
 		// Load the members, translating them one-by-one if necessary
 	    List<Long> memberIds = new ArrayList<Long>();
 	    
-	    String translatedSetType = null;
 	    for(Entity childEntity : entityMembers) {
 	    	
         	Entity importEntity = childEntity;
@@ -2263,7 +2311,8 @@ public class MongoDbImport extends AnnotationDAO {
         		logger.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+importEntity.getEntityTypeName()+"#"+importEntity.getId());
         		importEntity = translatedEntity;
         	}
-        	else if (TRANSLATE_ENTITIES && getCollectionName(setType)==null) {
+        	else if (TRANSLATE_ENTITIES && getCollectionName(importEntity.getEntityTypeName())==null) {
+        		log.info(indent+"  Did not find translation for "+childEntity.getId());
         		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
         		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
         		// The priority list defines the ordered list of possible entity types to try as ancestors.  
@@ -2281,7 +2330,7 @@ public class MongoDbImport extends AnnotationDAO {
 				translatedSetType = importEntity.getEntityTypeName();	
 			}
 			else if (!translatedSetType.equals(importEntity.getEntityTypeName())) {
-				log.warn(indent+"  Ignoring translated entity with type that does not match set ("+childEntity.getEntityTypeName()+"!="+translatedSetType+")");
+				log.warn(indent+"  Ignoring entity with type that does not match set ("+importEntity.getEntityTypeName()+"!="+translatedSetType+")");
 				continue;
 			}
         
@@ -2299,10 +2348,15 @@ public class MongoDbImport extends AnnotationDAO {
 	    }
 		
         if (translatedSetType==null) {
-        	log.info(indent+"Set type is null, with "+memberIds.size()+" ids");
+        	log.info(indent+"  Set type is null, with "+memberIds.size()+" ids");
         }
 
-        objectSet.setClassName(getClassName(translatedSetType));
+        String className = getClassName(translatedSetType);
+        if (className==null) {
+        	log.info(indent+"  Could not find domain class for set type: "+translatedSetType);
+        }
+        
+        objectSet.setClassName(className);
         if (!memberIds.isEmpty()) {
             objectSet.setMembers(memberIds);
         }
@@ -2319,6 +2373,8 @@ public class MongoDbImport extends AnnotationDAO {
 	    }
 	    
 		List<String> upMapping = new ArrayList<String>();
+		List<String> downMapping = new ArrayList<String>();
+		
 		if (EntityConstants.TYPE_IMAGE_TILE.equals(startingType)) {
 			upMapping.add("Supporting Data");
 		}
@@ -2345,12 +2401,11 @@ public class MongoDbImport extends AnnotationDAO {
 		}
 		upMapping.add("Sample");
 		
-		List<String> downMapping = new ArrayList<String>();
 		List<MappedId> mappings = getProjectedResults(null, originalIds, upMapping, downMapping);
 		Map<Long,Entity> mappedEntities = getMappedEntities(mappings);
 		
         for(MappedId mappedId : mappings) {
-        	translatedEntities.put(mappedId.getOriginalId(),  mappedEntities.get(mappedId.getOriginalId()));
+        	translatedEntities.put(mappedId.getOriginalId(), mappedEntities.get(mappedId.getMappedId()));
         }
         if (!translatedEntities.isEmpty()) {
         	log.info(indent+"  Translated "+originalIds.size()+ " "+startingType+"s to "+translatedEntities.size()+" Samples");
@@ -2508,8 +2563,6 @@ public class MongoDbImport extends AnnotationDAO {
     /**
      * Convert non-standard gender values like "Female" into standardized codes like "f". The
      * four standardized codes are "m", "f", "x", and "NO_CONSENSUS" in the case of samples.
-     * @param sageGender
-     * @return
      */
     private String sanitizeGender(String gender) {
         if (gender==null) {
@@ -2536,8 +2589,6 @@ public class MongoDbImport extends AnnotationDAO {
     
     /**
      * Remove stray quotes from a CSV string.
-     * @param res
-     * @return
      */
     private String sanitizeCSV(String res) {
         if (res==null) return res;
@@ -2562,14 +2613,18 @@ public class MongoDbImport extends AnnotationDAO {
         }
         return filepath.replaceFirst(prefix, "");
     }
+        
+    private final Map<String,String> domainLabelCache = new HashMap<>();
     
-    public void dropDatabase() throws DaoException {
-		try {
-		    dao.getJongo().getDatabase().dropDatabase();
-		}
-		catch (Exception e) {
-			throw new DaoException("Error clearing index with MongoDB",e);
-		}
+    private String getDomainClassLabel(String className) {
+    	String label = domainLabelCache.get(className);
+    	if (label!=null) return label;
+    	Class<? extends DomainObject> domainClass = DomainUtils.getObjectClassByName(className);
+    	if (domainClass==null) return className;
+    	MongoMapped annotation = (MongoMapped) domainClass.getAnnotation(MongoMapped.class);
+    	if (annotation==null) return domainClass.getSimpleName();
+    	domainLabelCache.put(className, annotation.label());
+    	return annotation.label();
     }
     
     private class EntityRootComparator implements Comparator<Entity> {
