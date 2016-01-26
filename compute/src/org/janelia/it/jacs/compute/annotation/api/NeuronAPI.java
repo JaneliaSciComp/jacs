@@ -7,9 +7,11 @@
 package org.janelia.it.jacs.compute.annotation.api;
 
 //import javax.annotation.security.RolesAllowed;
+import java.util.Date;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -17,8 +19,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPoint;
+import org.janelia.it.jacs.compute.annotation.to.AnnotationPointCollection;
+import org.apache.log4j.Logger;
 
 /*
 
@@ -27,16 +30,39 @@ Below: a script, sufficient to test initial version of this.
 #!/bin/bash
 FILE=newNeuronPost.txt
 CONTEXT=rest-v1
+SRVR_URL=http://foster-ws:8180
 
-echo \{ \"pointGUID\":9999, \"sampleID\":8888, \"neuronGUID\":9996, \"x\":74000, \"y\":46000, \"z\":17000, \"structureID\":2, \"parentPointGUID\":9997 \} >${FILE}
-curl -H"Content-Type:application/json"  --request POST --data @${FILE} http://foster-ws:8180/${CONTEXT}/NeuronAPI/addPointJSON/9999/
+echo
+echo TESTING COLLECTION ADD
+echo \{ \"guid\":7777, \"name\":\"My First Collection\", \"versionNumber\":3 \} > ${FILE}
+curl -H"Content-Type:application/json"  --request POST --data @${FILE} ${SRVR_URL}/${CONTEXT}/NeuronAPI/addCollection/7777/
+
+echo
+echo TESTING SAMPLE MOD
+curl -H"Content-Type:text/plain"  --request PUT ${SRVR_URL}/${CONTEXT}/NeuronAPI/setCollectionSampleID/7777/?sampleID=1011343133
+
+echo
+echo TESTING POINT ADD
+echo \{ \"pointGUID\":9999, \"collectionGUID\":8888, \"neuronGUID\":9996, \"x\":74000, \"y\":46000, \"z\":17000, \"structureID\":2, \"parentPointGUID\":9997 \} >${FILE}
+curl -H"Content-Type:application/json"  --request POST --data @${FILE} ${SRVR_URL}/${CONTEXT}/NeuronAPI/addPointJSON/9999/
 
 #
-curl -H"Content-Type:text/plain"  --request POST http://foster-ws:8180/${CONTEXT}/NeuronAPI/addPointQP/9999/?pointGUID=9999\&sampleID=8888\&neuronGUID=9996\&x=74000\&y=46000\&z=17000\&structureID=2\&parentPointGUID=9997
+echo
+echo TESTING POINT ADD
+curl -H"Content-Type:text/plain"  --request POST ${SRVR_URL}/${CONTEXT}/NeuronAPI/addPointQP/9999/?pointGUID=9999\&collectionGUID=8888\&neuronGUID=9996\&x=74000\&y=46000\&z=17000\&structureID=2\&parentPointGUID=9997
 
-curl -H"Content-Type:text/plain"  --request DELETE http://foster-ws:8180/rest-v1/NeuronAPI/removePoint/9999/
-curl -H"Content-Type:text/plain"  --request DELETE http://foster-ws:8180/rest-v1/NeuronAPI/removeNeuron/9997/
-curl -H"Content-Type:text/plain"  --request DELETE http://foster-ws:8180/rest-v1/NeuronAPI/removeSample/9996/
+echo
+echo TESTING DELETE POINT
+curl -H"Content-Type:text/plain"  --request DELETE ${SRVR_URL}/${CONTEXT}/NeuronAPI/removePoint/9999/
+
+echo
+echo TESTING DELETE NEURON
+curl -H"Content-Type:text/plain"  --request DELETE ${SRVR_URL}/${CONTEXT}/NeuronAPI/removeNeuron/9997/
+
+echo
+echo TESTING DELETE COLLECTION
+curl -H"Content-Type:text/plain"  --request DELETE ${SRVR_URL}/${CONTEXT}/NeuronAPI/removeCollection/8888/
+echo
 */
 
 /**
@@ -49,8 +75,39 @@ curl -H"Content-Type:text/plain"  --request DELETE http://foster-ws:8180/rest-v1
 @Path("/NeuronAPI")
 public class NeuronAPI {
     private Logger log = Logger.getLogger(NeuronAPI.class);
+
+    @POST
+    @Path("/addCollection/{collectionGUID}")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response addCollection(AnnotationPointCollection collection) {
+        try {
+            if (collection.creationDate == null) {
+                collection.creationDate = new Date();
+            }
+            addCollectionImpl(collection);
+            return Response.ok(new GenericEntity<>("Collection Added", String.class)).build();
+        } catch (Exception ex) {
+            return errorResponse(ex);
+        }
+        
+    }
+
+    @PUT
+    @Path("/setCollectionSampleID/{collectionGUID}")
+    public Response setCollectionSampleID(
+            @PathParam("collectionGUID") Long collectionGUID,
+            @QueryParam("sampleID") Long sampleID) {
+        try {
+            setCollectionSampleIDImpl(sampleID, collectionGUID);
+            return Response.ok(new GenericEntity<>("Collection Updated", String.class)).build();
+        } catch (Exception ex) {
+            return errorResponse(ex);
+        }
+    }
+
     /**
-     * Add a point at x,y,z. Use sample, neuron from LVV/WS. structure ID is 
+     * Add a point at x,y,z. Use collection, neuron from LVV/WS. structure ID is 
      * from SWC specification.
      */
     @POST
@@ -58,13 +115,13 @@ public class NeuronAPI {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     public Response addPointQP(@PathParam("pointGUID") Long pointGUID, 
-                           @QueryParam("sampleID") Long sampleID, 
+                           @QueryParam("collectionGUID") Long collectionGUID, 
                            @QueryParam("neuronGUID") Long neuronGUID, 
                            @QueryParam("x") int x, @QueryParam("y") int y, @QueryParam("z") int z, 
                            @QueryParam("structureID") int structureID,
                            @QueryParam("parentPointGUID") Long parentPointGUID) {
         try {
-            addPointImpl(pointGUID, sampleID, neuronGUID, x, y, z, structureID, parentPointGUID);
+            addPointImpl(pointGUID, collectionGUID, neuronGUID, x, y, z, structureID, parentPointGUID);
             return Response.ok(new GenericEntity<>("Point Added", String.class)).build();
         } catch (Exception ex) {
             return errorResponse(ex);
@@ -72,7 +129,7 @@ public class NeuronAPI {
     }
     
     /**
-     * Add a point at x,y,z.  Use a sample and neuron ID from LVV/WS.
+     * Add a point at x,y,z.  Use a neuron ID from LVV/WS.
      * @param point all info about the point to be added to the neuron.
      */
     @POST
@@ -84,7 +141,7 @@ public class NeuronAPI {
         
         try {
             addPointImpl(
-                    point.pointGUID, point.sampleID, point.neuronGUID, 
+                    point.pointGUID, point.collectionGUID, point.neuronGUID, 
                     point.x, point.y, point.z, 
                     point.structureID,
                     point.parentPointGUID
@@ -124,11 +181,11 @@ public class NeuronAPI {
     @DELETE
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
-    @Path("/removeSample/{sampleID}")
-    public Response removeSample(@PathParam("sampleID") Long sampleID) {
+    @Path("/removeCollection/{collectionGUID}")
+    public Response removeCollection(@PathParam("collectionGUID") Long collectionGUID) {
         try {
-            removeSampleImpl(sampleID);
-            return Response.ok(new GenericEntity<>("Sample Removed", String.class)).build();
+            removeCollectionImpl(collectionGUID);
+            return Response.ok(new GenericEntity<>("Collection Removed", String.class)).build();
         } catch (Exception ex) {
             return errorResponse(ex);
         }
@@ -140,8 +197,17 @@ public class NeuronAPI {
                 .build();
     }
     
-    private void addPointImpl(Long pointGUID, Long sampleID, Long neuronGUID, int x, int y, int z, int structureID, Long parentPointGUID) {
-        log.info(String.format("Adding point: %d,%d,%d under UID %d w/ parent %d.  Adding to neuron %d.", x, y, z, pointGUID, parentPointGUID, neuronGUID));        
+    private void addPointImpl(
+            Long pointGUID, Long collectionGUID, Long neuronGUID, 
+            int x, int y, int z, 
+            int structureID, 
+            Long parentPointGUID) {
+        log.info(String.format(
+                "Adding point: %d,%d,%d under UID %d w/ parent %d.  Adding to neuron %d.  In collection %d.", 
+                x, y, z, 
+                pointGUID, parentPointGUID, 
+                neuronGUID, collectionGUID)
+        );
     }
     
     private void removePointImpl(Long pointGUID) {
@@ -150,7 +216,14 @@ public class NeuronAPI {
     private void removeNeuronImpl(Long neuronGUID) {
         log.info("Removed neuron " + neuronGUID);
     }
-    private void removeSampleImpl(Long sampleID) {
-        log.info("Removed sample " + sampleID);
+    private void removeCollectionImpl(Long collectionGUID) {
+        log.info("Removed collection " + collectionGUID);
     }
+    private void addCollectionImpl(AnnotationPointCollection collection) {
+        log.info(String.format("Creating collection '%s':%d.  Date: %s.", collection.name, collection.guid, collection.creationDate.toString()));
+    }
+    private void setCollectionSampleIDImpl(Long sampleID, Long collectionGUID) {
+        log.info("Setting the sampleID to " + sampleID + " for collection " + collectionGUID);
+    }
+
 }

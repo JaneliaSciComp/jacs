@@ -21,7 +21,7 @@ public class AnnotationPoint {
     // using this API, and generated as unique values.  IDs are obtained
     // from _existing_ objects in JACS database, or some documentation.
     @XmlElement public Long pointGUID;
-    @XmlElement public Long sampleID;
+    @XmlElement public Long collectionGUID;
     @XmlElement public Long neuronGUID;
     @XmlElement public int x;
     @XmlElement public int y;
