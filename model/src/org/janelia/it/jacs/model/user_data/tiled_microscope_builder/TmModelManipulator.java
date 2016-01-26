@@ -252,6 +252,7 @@ public class TmModelManipulator {
     }
 	
 	public void updateStructuredTextAnnotation(TmNeuron neuron, TmStructuredTextAnnotation annotation, String jsonString) throws Exception {
+        annotation.setDataString(jsonString);
 		neuron.getStructuredTextAnnotationMap().put(annotation.getId(), annotation);
 	}
 	

@@ -65,7 +65,7 @@ public class TmStructuredTextAnnotation implements IsSerializable, Serializable 
     public void setData(JsonNode node) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            mapper.writeValueAsString(node);
+            setDataString(mapper.writeValueAsString(node));
         }
         catch (JsonProcessingException e) {
             e.printStackTrace();
