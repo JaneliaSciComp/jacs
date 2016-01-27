@@ -6,7 +6,7 @@
  */
 package org.janelia.it.jacs.model.ontology.types;
 
-import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 
 import java.io.Serializable;
 
@@ -17,12 +17,12 @@ import java.io.Serializable;
  */
 public abstract class OntologyElementType implements Serializable {
     
-    private static String ONTOLOGY_TERM_TYPES_PACKAGE = OntologyElementType.class.getPackage().getName();
+    private static String ONTOLOGY_TERM_TYPES_PACKAGE = OntologyTerm.class.getPackage().getName();
 
-    public static OntologyElementType createTypeByName(String className) {
+    public static OntologyTerm createTypeByName(String className) {
 
         try {
-            return (OntologyElementType)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
+            return (OntologyTerm)Class.forName(ONTOLOGY_TERM_TYPES_PACKAGE+"."+className).newInstance();
         }
         catch (Exception ex) {
             System.err.println("Could not instantiate term type: "+className);
@@ -31,7 +31,7 @@ public abstract class OntologyElementType implements Serializable {
         return null;
     }
 
-    public abstract void init(Entity entity);
+    public abstract void init(OntologyTerm term);
 
     public abstract boolean allowsChildren();
     
