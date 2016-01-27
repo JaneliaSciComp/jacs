@@ -32,7 +32,7 @@ public class Filter extends AbstractDomainObject implements IsParent {
     
     public void addCriteria(Criteria criteria) {
         if (criteriaList==null) {
-            this.criteriaList = new ArrayList<Criteria>();
+            this.criteriaList = new ArrayList<>();
         }
         else if (criteriaList.contains(criteria)) {
             return;

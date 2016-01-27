@@ -53,7 +53,7 @@ public abstract class AbstractDomainObject implements DomainObject {
     @SearchAttribute(key="subjects",label="Subjects",display=false)
     @JsonIgnore
     public Set<String> getSubjectNames() {
-        Set<String> names = new HashSet<String>();
+        Set<String> names = new HashSet<>();
         for(String subjectKey : readers) {
             if (subjectKey==null) continue;
             names.add(DomainUtils.getNameFromSubjectKey(subjectKey));
@@ -71,59 +71,72 @@ public abstract class AbstractDomainObject implements DomainObject {
         return null;
     }
     
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    @Override
     public Long getId() {
         return id;
     }
 
+    @Override
     public void setId(Long id) {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    @Override
     public String getOwnerKey() {
         return ownerKey;
     }
 
+    @Override
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
     }
 
+    @Override
     public Set<String> getReaders() {
         return readers;
     }
 
+    @Override
     public void setReaders(Set<String> readers) {
         this.readers = readers;
     }
 
+    @Override
     public Set<String> getWriters() {
         return writers;
     }
 
+    @Override
     public void setWriters(Set<String> writers) {
         this.writers = writers;
     }
 
+    @Override
     public Date getCreationDate() {
         return creationDate;
     }
 
+    @Override
     public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
     }
 
+    @Override
     public Date getUpdatedDate() {
         return updatedDate;
     }
 
+    @Override
     public void setUpdatedDate(Date updatedDate) {
         this.updatedDate = updatedDate;
     }
