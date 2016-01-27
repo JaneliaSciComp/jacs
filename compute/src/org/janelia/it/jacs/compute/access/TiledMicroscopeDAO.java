@@ -25,6 +25,7 @@ import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
 import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
 import org.janelia.it.jacs.shared.swc.SWCDataConverter;
 import org.janelia.it.jacs.shared.swc.SWCNode;
+import static org.janelia.it.jacs.shared.sample_discovery.SampleDiscoveryConstants.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -185,7 +186,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (! subjectKey.contains(":")) {
                 subjectKey = "user:" + subject;
             }
-            String folderName = "3D Tile Microscope Samples";
+            String folderName = ENTITY_FOLDER_NAME;
             Collection<Entity> folders = annotationDAO.getEntitiesByName(subjectKey, folderName);
             Entity folder = null;
             if (folders!=null && folders.size()>0) {

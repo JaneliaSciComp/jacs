@@ -50,7 +50,7 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
 
             TiledMicroscopeBeanRemote timBean = EJBFactory.getRemoteTiledMicroscopeBean();
             EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
-            SampleDiscovery discovery = new SampleDiscovery();
+            SampleDiscovery discovery = new SampleDiscovery(entityBean);
             Set<File> sampleDirectories = discovery.discover();
             
             // Iterate over all samples, adding them to db.
@@ -66,14 +66,6 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                             logger.info("Sample " + fileLocation + " already known.  Ignoring.");
                             original = false;
                         }
-//                        Set<EntityActorPermission> permissions = entity.getEntityActorPermissions();                        
-//                        for (EntityActorPermission permission: permissions) {
-//                            if ( permission.getSubjectKey().equals(SHARED_PERMISSION)) {
-//                                original = false;
-//                                logger.info("Sample " + fileLocation + " already known.  Ignoring.");
-//                                break;
-//                            }
-//                        }
                     }
                 }
 
