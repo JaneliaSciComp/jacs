@@ -19,9 +19,9 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 @SearchType(key="filter",label="Filter")
 public class Filter extends AbstractDomainObject implements IsParent {
 
-    @SearchAttribute(key="searchType",label="Search Class")
+    @SearchAttribute(key="search_class_txt",label="Search Class")
     private String searchClass;
-    @SearchAttribute(key="searchString",label="Search String")
+    @SearchAttribute(key="search_string_txt",label="Search String")
     private String searchString;
     private List<Criteria> criteriaList;
     private String sort;

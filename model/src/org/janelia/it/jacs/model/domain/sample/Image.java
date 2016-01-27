@@ -88,5 +88,4 @@ public class Image extends AbstractDomainObject implements HasFiles, HasFilepath
     public void setFiles(Map<FileType, String> files) {
         this.files = files;
     }
-
 }

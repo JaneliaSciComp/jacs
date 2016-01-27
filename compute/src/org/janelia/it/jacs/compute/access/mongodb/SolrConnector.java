@@ -160,11 +160,9 @@ public class SolrConnector extends SolrDAO {
 
     	SolrInputDocument doc = existingDoc==null ? new SolrInputDocument() : ClientUtils.toSolrInputDocument(existingDoc);
     	doc.setField("doc_type", SolrDocTypeEnum.DOCUMENT.toString(), 1.0f);
-
-        Class<?> clazz = domainObject.getClass();
-        SearchType searchTypeAnnot = clazz.getAnnotation(SearchType.class);
-        doc.setField("type", searchTypeAnnot.key(), 1.0f);
-        
+    	doc.setField("class", domainObject.getClass().getName(), 1.0f);
+    	doc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
+    	
 		Map<String,Object> attrs = new HashMap<String,Object>();
 		for(Field field : fields) {
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);

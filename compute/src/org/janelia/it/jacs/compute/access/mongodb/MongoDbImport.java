@@ -2123,6 +2123,8 @@ public class MongoDbImport extends AnnotationDAO {
 	    	// Create a canned filter for each data set
 	    	Date now = new Date();
 	    	for(DataSet dataSet : dao.getDataSets(folderEntity.getOwnerKey())) {
+	    		// We only want the data sets owned by this user
+	    		if (!dataSet.getOwnerKey().equals(folderEntity.getOwnerKey())) continue;
                 Filter filter = new Filter();
                 filter.setId(dao.getNewId());
                 filter.setName(dataSet.getName());
