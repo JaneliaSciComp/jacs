@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.largevolume.auto_discovery;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -62,7 +63,11 @@ public class SampleDiscovery {
                 }
             }
         }
-        Set<File> rtnVal = new HashSet<>();        
+        return discover(mouseBrainMicroPrefixes);        
+    }
+
+    public Set<File> discover(String[] mouseBrainMicroPrefixes) throws IOException {
+        Set<File> rtnVal = new HashSet<>();
         for (String prefix: mouseBrainMicroPrefixes) {
             SampleDiscoveryVisitor visitor = new SampleDiscoveryVisitor(prefix);
             visitor.exec();
