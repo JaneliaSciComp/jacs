@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.access.mongodb;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -292,6 +293,10 @@ public class SolrConnector extends SolrDAO {
         if (!isTraversable(field, rootObject)) {
             return;
         }
+
+        if (Modifier.isTransient(field.getModifiers())) {
+        	return;
+        }
         
         if (object instanceof String) {
             addFullTextString(field.getName(), (String)object);
@@ -300,6 +305,7 @@ public class SolrConnector extends SolrDAO {
         
         log.debug(indent+"indexing "+object+"."+field.getName());
 
+        
         Object childObj = ReflectionHelper.getFieldValue(object, field);
         if (childObj==null) return;
         Class<?> childClass = childObj.getClass();

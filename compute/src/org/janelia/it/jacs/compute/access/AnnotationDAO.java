@@ -1384,12 +1384,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         i = 1;
         
         for(String type : upProjection) {
-            sql.append("and e"+i+".entity_type = '"+type+"' \n"); 
+            sql.append("and (e"+i+".entity_type = '"+type+"' || ed"+i+".entity_att = '"+type+"') \n"); 
             i++;
         }
 
         for(String type : downProjection) {
-            sql.append("and e"+i+".entity_type = '"+type+"' \n"); 
+            sql.append("and (e"+i+".entity_type = '"+type+"' || ed"+i+".entity_att = '"+type+"') \n"); 
             i++;
         }
         

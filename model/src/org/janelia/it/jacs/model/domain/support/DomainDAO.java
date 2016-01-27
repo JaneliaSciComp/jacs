@@ -46,6 +46,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
@@ -464,19 +465,19 @@ public class DomainDAO {
         String collectionName = DomainUtils.getCollectionName(domainObject);
         MongoCollection collection = getCollectionByName(collectionName);
         try {
+        	Date now = new Date();
             if (domainObject.getId()==null) {
+            	Set<String> subjects = Sets.newHashSet(subjectKey);
                 domainObject.setId(getNewId());
                 domainObject.setOwnerKey(subjectKey);
-                Set<String> subjects = new HashSet<>();
-                subjects.add(subjectKey);
                 domainObject.setReaders(subjects);
                 domainObject.setWriters(subjects);
-                domainObject.setCreationDate(new Date());
-                domainObject.setUpdatedDate(new Date());
+                domainObject.setCreationDate(now);
+                domainObject.setUpdatedDate(now);
                 collection.save(domainObject);
             }
             else {
-                domainObject.setUpdatedDate(new Date());
+                domainObject.setUpdatedDate(now);
                 WriteResult result = collection.update("{_id:#,writers:#}", domainObject.getId(), subjectKey).with(domainObject);
                 if (result.getN()!=1) {
                     throw new IllegalStateException("Updated "+result.getN()+" records instead of one: "+collectionName+"#"+domainObject.getId());
@@ -490,9 +491,19 @@ public class DomainDAO {
         }
     }
 
+    /**
+     * Saves the given object and returns a saved copy. 
+     * @param subjectKey The subject saving the object. If this is a new object, then this subject becomes the owner of the new object.
+     * @param domainObject The object to be saved. If the id is not set, then a new object is created. 
+     * @return a copy of the saved object
+     * @throws Exception
+     */
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
         log.info("Saving changes to '{}'",domainObject.getName());
         saveImpl(subjectKey, domainObject);
+        // TODO: The only reason this retrieves the saved object is to avoid errors during development where the client incorrectly 
+        // depends on input object being returned. However, i's needlessly inefficient, so once we have remote clients written 
+        // we may want to optimize by just returning domainObject here. 
         return getDomainObject(subjectKey, domainObject);
     }
 
@@ -506,7 +517,7 @@ public class DomainDAO {
             throw new IllegalStateException("Deleted "+result.getN()+" records instead of one: "+collectionName+"#"+domainObject.getId());
         }
 
-        // TODO: remove dependant objects?
+        // TODO: remove dependent objects?
     }
 
     public Ontology reorderTerms(String subjectKey, Long ontologyId, Long parentTermId, int[] order) throws Exception {
@@ -555,11 +566,10 @@ public class DomainDAO {
         if (childTerms.size()!=originalSize) {
             throw new IllegalStateException("Reordered children have new size "+childTerms.size()+" (was "+originalSize+")");
         }
-        else {
-            log.info("Reordering children of ontology term '{}'",parent.getName());
-            saveImpl(subjectKey, ontology);
-            return (Ontology)getDomainObject(subjectKey, ontology);
-        }
+
+        log.info("Reordering children of ontology term '{}'",parent.getName());
+        saveImpl(subjectKey, ontology);
+        return getDomainObject(subjectKey, ontology);
     }
 
     public Ontology addTerms(String subjectKey, Long ontologyId, Long parentTermId, Collection<OntologyTerm> terms, Integer index) throws Exception {
@@ -619,7 +629,7 @@ public class DomainDAO {
         }
         log.info("Removing term '{}' from '{}'",removed.getName(),parent.getName());
         saveImpl(subjectKey, ontology);
-        return (Ontology)getDomainObject(subjectKey, ontology);
+        return getDomainObject(subjectKey, ontology);
     }
 
     public TreeNode reorderChildren(String subjectKey, TreeNode treeNodeArg, int[] order) throws Exception {
@@ -672,11 +682,10 @@ public class DomainDAO {
         if (references.size()!=originalSize) {
             throw new IllegalStateException("Reordered children have new size "+references.size()+" (was "+originalSize+")");
         }
-        else {
-            log.info("Reordering children of tree node '{}'",treeNode.getName());
-            saveImpl(subjectKey, treeNode);
-            return getDomainObject(subjectKey, treeNode);
-        }
+
+        log.info("Reordering children of tree node '{}'",treeNode.getName());
+        saveImpl(subjectKey, treeNode);
+        return getDomainObject(subjectKey, treeNode);
     }
 
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
@@ -939,7 +948,7 @@ public class DomainDAO {
 
     // Copy and pasted from ReflectionUtils in shared module
     private void set(Object obj, String attributeName, Object value) throws Exception {
-        Class[] argTypes = {value.getClass()};
+        Class<?>[] argTypes = {value.getClass()};
         Object[] argValues = {value};
         String methodName = getAccessor("set", attributeName);
         obj.getClass().getMethod(methodName, argTypes).invoke(obj, argValues);
