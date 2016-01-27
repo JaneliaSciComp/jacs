@@ -34,6 +34,10 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
 
     @JsonIgnore
     public SamplePipelineRun getParentRun() {
+        if (parentRun==null && parentResult!=null) {
+            // Populate the parent run, since deserialization won't do it. 
+            parentRun = parentResult.getParentRun();
+        }
         return parentRun;
     }
 

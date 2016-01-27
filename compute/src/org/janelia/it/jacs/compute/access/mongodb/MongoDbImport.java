@@ -2166,17 +2166,22 @@ public class MongoDbImport extends AnnotationDAO {
 			    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
 			    	if (objectSet!=null) {
 			    		String setLabel = getDomainClassLabel(objectSet.getClassName());
-			    		ObjectSet existingSet = extraSetCache.get(setLabel);
-			    		if (existingSet!=null) {
-			    			if (objectSet.hasMembers()) {
-				    			for(Long memberId : objectSet.getMembers()) {
-				    				existingSet.addMember(memberId);
-				    			}
-			    			}
+			    		if (setLabel!=null) {
+    			    		ObjectSet existingSet = extraSetCache.get(setLabel);
+    			    		if (existingSet!=null) {
+    			    			if (objectSet.hasMembers()) {
+    				    			for(Long memberId : objectSet.getMembers()) {
+    				    				existingSet.addMember(memberId);
+    				    			}
+    			    			}
+    			    		}
+    			    		else {
+    					    	objectSet.setName(setLabel);
+    					    	extraSetCache.put(setLabel, objectSet);
+    			    		}
 			    		}
 			    		else {
-					    	objectSet.setName(setLabel);
-					    	extraSetCache.put(setLabel, objectSet);
+			    		    log.warn(indent+"  Discarding "+childEntities.size()+" children of type "+childType);
 			    		}
 			    	}
 		    	}
