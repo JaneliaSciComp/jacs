@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPoint;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPointCollection;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.annotation.to.NeuronBean;
 
 /*
 
@@ -106,6 +107,24 @@ public class NeuronAPI {
             return errorResponse(ex);
         }
     }
+    
+    /**
+     * Adds all points supplied under a single neuron.
+     * @param neuron
+     * @return 
+     */
+    @POST
+    @Path("/addNeuronJSON/{neuronGUID}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response addNeuronJSON(NeuronBean neuron) {
+        try {
+            addNeuronImpl(neuron);
+            return Response.ok(new GenericEntity<>("Neuron Added", String.class)).build();
+        } catch (Exception ex) {
+            return errorResponse(ex);
+        }
+    }
 
     /**
      * Add a point at x,y,z. Use collection, neuron from LVV/WS. structure ID is 
@@ -183,6 +202,12 @@ public class NeuronAPI {
         return Response.serverError()
                 .header("error-message", ex.getMessage())
                 .build();
+    }
+    
+    private void addNeuronImpl(
+            NeuronBean neuron
+    ) throws Exception {
+        annotationCollector.addNeuronImpl(neuron);
     }
     
     private void addPointImpl(

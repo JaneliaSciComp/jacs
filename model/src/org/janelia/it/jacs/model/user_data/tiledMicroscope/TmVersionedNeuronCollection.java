@@ -9,6 +9,7 @@ package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 import Jama.Matrix;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A collection of neurons, complete with a version, owner, etc.
@@ -17,8 +18,11 @@ import java.util.List;
  */
 public class TmVersionedNeuronCollection {
     
+    public static final String ID_TO_TAG_NAME = "id_to_tag";
+    
     public static final String DEFAULT_OWNER_KEY = "group:mouselight";
-
+    public static final String COLLECTIONS_FOLDER_NAME = "3D Tile Annotation Collections";
+    
     private Long id;
     private String name;
     // defaulted owner key.
@@ -26,6 +30,7 @@ public class TmVersionedNeuronCollection {
     private Long sampleID;
     private List<TmNeuron> neuronList;
     private Date createDate;
+    private Map<Long,String> neuronIdVsTag;
 
     private String version;
     
@@ -100,5 +105,19 @@ public class TmVersionedNeuronCollection {
      */
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    /**
+     * @return the neuronIdVsTag
+     */
+    public Map<Long,String> getNeuronIdVsTag() {
+        return neuronIdVsTag;
+    }
+
+    /**
+     * @param neuronIdVsTag the neuronIdVsTag to set
+     */
+    public void setNeuronIdVsTag(Map<Long,String> neuronIdVsTag) {
+        this.neuronIdVsTag = neuronIdVsTag;
     }
 }

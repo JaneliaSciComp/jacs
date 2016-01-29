@@ -23,5 +23,7 @@ public class AnnotationPointCollection {
     @XmlElement public Long sampleID = -1L; // May not be omitted.  Refers to ID in jacs.
     @XmlElement public Date creationDate;
     @XmlElement public String name;
+    @XmlElement public String brain;
+    @XmlElement public String notes = ""; // Optional
     @XmlElement public Integer versionNumber = 1;
 }
