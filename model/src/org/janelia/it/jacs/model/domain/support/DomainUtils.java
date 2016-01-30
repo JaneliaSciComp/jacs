@@ -330,7 +330,7 @@ public class DomainUtils {
      * @param domainObjects
      * @return
      */
-    public static List<Long> getIds(List<DomainObject> domainObjects) {
+    public static List<Long> getIds(List<? extends DomainObject> domainObjects) {
         List<Long> ids = new ArrayList<>();
         for(DomainObject domainObject : domainObjects) {
             ids.add(domainObject.getId());
@@ -343,7 +343,7 @@ public class DomainUtils {
      * @param objects collection of domain objects
      * @return a list of references, one for each domain object
      */
-    public static Collection<Reference> getReferences(Collection<DomainObject> domainObjects) {
+    public static Collection<Reference> getReferences(Collection<? extends DomainObject> domainObjects) {
         Collection<Reference> refs = new ArrayList<>();
         for(DomainObject domainObject : domainObjects) {
             if (domainObject!=null) {
@@ -358,7 +358,7 @@ public class DomainUtils {
      * @param objects collection of domain objects
      * @return a map with the domain objects as values, keyed by reference to each domain object
      */
-    public static Map<Reference, DomainObject> getMapByReference(Collection<DomainObject> objects) {
+    public static Map<Reference, DomainObject> getMapByReference(Collection<? extends DomainObject> objects) {
         Map<Reference, DomainObject> objectMap = new HashMap<>();
         for (DomainObject domainObject : objects) {
             if (domainObject != null) {
