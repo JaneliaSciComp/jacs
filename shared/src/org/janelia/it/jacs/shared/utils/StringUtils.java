@@ -80,6 +80,10 @@ public class StringUtils {
 	    if (o==null) return "";
 	    return o.toString();
 	}
+	
+	public static String abbreviate(String str, int maxLength) {
+	    return org.apache.commons.lang3.StringUtils.abbreviate(str, maxLength);
+	}
 
     /** Prototype color: 91 121 227 must be turned into a 6-digit hex representation. */
     public static String encodeToHex(String colors, Logger logger) {

@@ -422,7 +422,7 @@ public class DomainDAO {
 
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(imageCollection.find("{sampleId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
+        return toList(imageCollection.find("{sample.targetId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
     }
 
     public List<ScreenSample> getScreenSampleByFlyLine(String subjectKey, String flyLine) {

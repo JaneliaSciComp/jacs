@@ -117,13 +117,13 @@ public class MongoDbMaintainer {
         fragmentCollection.ensureIndex("{'sample.targetId':1}");
         fragmentCollection.ensureIndex("{'sample.targetId':1,readers:1}");
 
-        MongoCollection lsmCollection = dao.getCollectionByName("image");
-        ensureDomainIndexes(lsmCollection);
-        lsmCollection.ensureIndex("{sageId:1}");
-        lsmCollection.ensureIndex("{slideCode:1}");
-        lsmCollection.ensureIndex("{filepath:1}");
-        lsmCollection.ensureIndex("{'sample.targetId':1}");
-        lsmCollection.ensureIndex("{'sample.targetId':1,readers:1}");
+        MongoCollection imageCollection = dao.getCollectionByName("image");
+        ensureDomainIndexes(imageCollection);
+        imageCollection.ensureIndex("{sageId:1}");
+        imageCollection.ensureIndex("{slideCode:1}");
+        imageCollection.ensureIndex("{filepath:1}");
+        imageCollection.ensureIndex("{'sample.targetId':1}");
+        imageCollection.ensureIndex("{'sample.targetId':1,readers:1}");
 
         MongoCollection objectSetCollection = dao.getCollectionByName("objectSet");
         ensureDomainIndexes(objectSetCollection);
