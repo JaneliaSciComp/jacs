@@ -251,8 +251,9 @@ public class TmModelManipulator {
         return annotation;
     }
 	
-	public void updateStructuredTextAnnotation(TmNeuron neuron, TmGeoAnnotation geoAnnotation, TmStructuredTextAnnotation textAnnotation) throws Exception {
-		neuron.getStructuredTextAnnotationMap().put(geoAnnotation.getId(), textAnnotation);
+	public void updateStructuredTextAnnotation(TmNeuron neuron, TmStructuredTextAnnotation annotation, String jsonString) throws Exception {
+        annotation.setDataString(jsonString);
+		neuron.getStructuredTextAnnotationMap().put(annotation.getId(), annotation);
 	}
 	
 	public void deleteStructuredTextAnnotation(TmNeuron neuron, long annotationId) {
@@ -390,8 +391,8 @@ public class TmModelManipulator {
      * 
      * @todo ensure that the new neuron is available at call time.
      * @param annotation this will be moved.
-     * @param inMemOldTmNeuron this is the current container of the annotation.
-     * @param inMemNewTmNeuron this will be the container of the annotation.
+     * @param oldTmNeuron this is the current container of the annotation.
+     * @param newTmNeuron this will be the container of the annotation.
      * @throws Exception thrown by called methods.
      */
     public void moveNeuriteInMem(TmGeoAnnotation annotation, TmNeuron oldTmNeuron, TmNeuron newTmNeuron) throws Exception {
