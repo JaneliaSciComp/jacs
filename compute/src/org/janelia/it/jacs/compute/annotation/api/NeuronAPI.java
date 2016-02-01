@@ -10,6 +10,7 @@ package org.janelia.it.jacs.compute.annotation.api;
 import java.util.Date;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -80,7 +81,7 @@ public class NeuronAPI {
 
     @POST
     @Path("/addCollection/{collectionGUID}")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public Response addCollection(AnnotationPointCollection collection) {
         try {
@@ -95,8 +96,10 @@ public class NeuronAPI {
         
     }
 
-    @PUT
+    @GET
     @Path("/setCollectionSampleID/{collectionGUID}")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
     public Response setCollectionSampleID(
             @PathParam("collectionGUID") Long collectionGUID,
             @QueryParam("sampleID") Long sampleID) {
@@ -199,6 +202,8 @@ public class NeuronAPI {
     }
 
     public Response errorResponse(Exception ex) {
+        log.error(ex.getMessage());
+        ex.printStackTrace();
         return Response.serverError()
                 .header("error-message", ex.getMessage())
                 .build();

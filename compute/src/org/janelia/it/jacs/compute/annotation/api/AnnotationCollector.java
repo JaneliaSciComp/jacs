@@ -9,12 +9,14 @@ package org.janelia.it.jacs.compute.annotation.api;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPoint;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPointCollection;
 import org.janelia.it.jacs.compute.annotation.to.NeuronBean;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -134,26 +136,18 @@ public class AnnotationCollector {
 
     public void addCollectionImpl(AnnotationPointCollection collection) throws Exception {
         if (collection.sampleID == -1  ||  collection.guid == null  || collection.name == null) {
-            throw new Exception("Collection ID, Sample ID, name required.");
+            throw new Exception("Collection ID ("+collection.guid+"), Sample ID ("+collection.sampleID+"), name ("+collection.name+") required.");
         }
-        //TmVersionedNeuronCollection tmCollection = new TmVersionedNeuronCollection();
-        //tmCollection.setId(collection.guid);
-        //tmCollection.setName(collection.name);
-        //tmCollection.setSampleID(collection.sampleID);        
-        //tmCollection.setNeuronList(new ArrayList<TmNeuron>());
-        //tmCollection.setNeuronIdVsTag(new HashMap<Long,String>());
-        //Date createDate = new Date();
-        //tmCollection.setCreateDate(createDate);
         
         // NOTE: must first check whether the sample ID exists.  If not, fail.
-        EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
+        EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
         Entity sampleEntity = entityBean.getEntityById(DEFAULT_OWNER_KEY, collection.sampleID);
         if (sampleEntity != null  &&  sampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
             // Must create a new collection object, for the neurons.  That will
             // correspond to a workspace.  Add this to the designated folder.            
             List<Entity> parentFolderEntities =
                     entityBean.getEntitiesByNameAndTypeName(DEFAULT_OWNER_KEY, COLLECTIONS_FOLDER_NAME, EntityConstants.TYPE_FOLDER);
-            if (parentFolderEntities != null  ||  parentFolderEntities.size() > 1) {
+            if (parentFolderEntities != null  &&  parentFolderEntities.size() > 1) {
                 log.warn("Multiple folders called " + COLLECTIONS_FOLDER_NAME + " found for user " + DEFAULT_OWNER_KEY + ".  Possible overuse of this folder name.");
             }
 
@@ -170,8 +164,9 @@ public class AnnotationCollector {
             
             if (parentFolderEntity == null) {
                 // Must make it, and it must belong to the owner, and it must be under the correct folder for the owner.
-                parentFolderEntity = entityBean.createFolderInDefaultWorkspace(DEFAULT_OWNER_KEY, EntityConstants.TYPE_FOLDER).getChildEntity();                
-            }   
+                parentFolderEntity = entityBean.createFolderInDefaultWorkspace(DEFAULT_OWNER_KEY, COLLECTIONS_FOLDER_NAME).getChildEntity();                
+            }
+            log.info("Found or created parent folder.");
             
             // Create new collections object.
             //  It gets all metadata from the incoming collection object.
@@ -181,6 +176,12 @@ public class AnnotationCollector {
             collectionEntity.setEntityTypeName(EntityConstants.TYPE_ANNOTATION_COLLECTION);
             collectionEntity.setCreationDate(new Date());
             collectionEntity.setOwnerKey(DEFAULT_OWNER_KEY);
+            collectionEntity.setEntityData(new HashSet<EntityData>());
+            collectionEntity = entityBean.saveBulkEntityTree(collectionEntity);
+            //collectionEntity = entityBean.saveOrUpdateEntity(collectionEntity); // No owner key.  
+            entityBean.loadLazyEntity(collectionEntity, true);
+            log.info("Created collection entity. " + collectionEntity.getId());
+            
             if (! StringUtils.isEmpty(collection.brain)) {
                 collectionEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COLLECTION_BRAIN_NAME, collection.brain);
             }
@@ -189,14 +190,24 @@ public class AnnotationCollector {
             }
             collectionEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COLLECTION_VERSION, collection.versionNumber + "_" + collectionEntity.getCreationDate().getTime());
             collectionEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COLLECTION_SAMPLE_ID, sampleEntity.getId().toString());
-            entityBean.saveOrUpdateEntity(DEFAULT_OWNER_KEY, collectionEntity);
+            entityBean.saveOrUpdateEntity(collectionEntity);
+            log.info("Added all attributes: brain, notes, version, sample id.");
             
+            // Need to establish parent/child relationship between folder and collection.
+            parentFolderEntity = entityBean.getEntityById(parentFolderEntity.getId());
+            EntityData ed = parentFolderEntity.addChildEntity(collectionEntity);
+            log.info("Added collection to parent folder.");
+            entityBean.saveOrUpdateEntityData(ed);
+            log.info("Set parent/child relationship.");
+            //entityBean.saveOrUpdateEntity(parentFolderEntity);
+
             // Establish a property set under the collection.
             getPropertySetEntity(collectionEntity);
+            log.info("Established props under the new collection entity.");
             //Entity collectionEntity = entityBean.createEntity(DEFAULT_OWNER_KEY, collection.name, EntityConstants.TYPE_ANNOTATION_COLLECTION);
         }
         else {
-            throw new Exception("No such sample " + collection.sampleID + ", cannot create collection.");
+            throw new Exception("No such sample " + collection.sampleID + ", cannot create collection from " + sampleEntity);
         }
         
     }
@@ -271,7 +282,12 @@ public class AnnotationCollector {
         // Workspace (or collection) containing neuron is the entity which
         // 'has' the neuron.  Neuron is an Entity-Data.
         Entity collectionEntity = entityBean.getEntityById(neuron.getOwnerKey(), neuron.getWorkspaceId());
-
+        if (collectionEntity == null) {
+            final String message = "Collection " + neuron.getWorkspaceId() + " not found.  Cannot push neuron.";
+            log.warn(message);
+            throw new Exception(message);
+        }
+        
         // May need to exchange this entity-data for existing one on workspace
         EntityData preExistingEntityData = null;
         if (neuron != null && neuron.getId() != null) {

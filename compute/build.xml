@@ -204,6 +204,8 @@
                 <include name="org/**/wsrest/RestfulWebService.class"/>
                 <include name="org/**/wsrest/computeresources/**/*.class"/>
                 <include name="org/**/wsrest/dataresources/**/*.class"/>
+                <include name="org/**/annotation/api/**/*.class"/>
+                <include name="org/**/annotation/to/**/*.class"/>
             </classes>
             <lib dir="${basedir}/lib/resteasy-2.3.4">
                 <include name="**/*.jar"/>
