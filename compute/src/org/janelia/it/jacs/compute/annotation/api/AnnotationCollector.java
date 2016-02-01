@@ -166,7 +166,7 @@ public class AnnotationCollector {
                 // Must make it, and it must belong to the owner, and it must be under the correct folder for the owner.
                 parentFolderEntity = entityBean.createFolderInDefaultWorkspace(DEFAULT_OWNER_KEY, COLLECTIONS_FOLDER_NAME).getChildEntity();                
             }
-            log.info("Found or created parent folder.");
+            log.debug("Found or created parent folder.");
             
             // Create new collections object.
             //  It gets all metadata from the incoming collection object.
@@ -180,7 +180,7 @@ public class AnnotationCollector {
             collectionEntity = entityBean.saveBulkEntityTree(collectionEntity);
             //collectionEntity = entityBean.saveOrUpdateEntity(collectionEntity); // No owner key.  
             entityBean.loadLazyEntity(collectionEntity, true);
-            log.info("Created collection entity. " + collectionEntity.getId());
+            log.debug("Created collection entity. " + collectionEntity.getId());
             
             if (! StringUtils.isEmpty(collection.brain)) {
                 collectionEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COLLECTION_BRAIN_NAME, collection.brain);
@@ -191,20 +191,18 @@ public class AnnotationCollector {
             collectionEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COLLECTION_VERSION, collection.versionNumber + "_" + collectionEntity.getCreationDate().getTime());
             collectionEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_COLLECTION_SAMPLE_ID, sampleEntity.getId().toString());
             entityBean.saveOrUpdateEntity(collectionEntity);
-            log.info("Added all attributes: brain, notes, version, sample id.");
+            log.debug("Added all attributes: brain, notes, version, sample id.");
             
             // Need to establish parent/child relationship between folder and collection.
             parentFolderEntity = entityBean.getEntityById(parentFolderEntity.getId());
             EntityData ed = parentFolderEntity.addChildEntity(collectionEntity);
-            log.info("Added collection to parent folder.");
+            log.debug("Added collection to parent folder.");
             entityBean.saveOrUpdateEntityData(ed);
-            log.info("Set parent/child relationship.");
-            //entityBean.saveOrUpdateEntity(parentFolderEntity);
+            log.debug("Set parent/child relationship.");
 
             // Establish a property set under the collection.
             getPropertySetEntity(collectionEntity);
-            log.info("Established props under the new collection entity.");
-            //Entity collectionEntity = entityBean.createEntity(DEFAULT_OWNER_KEY, collection.name, EntityConstants.TYPE_ANNOTATION_COLLECTION);
+            log.debug("Established props under the new collection entity.");
         }
         else {
             throw new Exception("No such sample " + collection.sampleID + ", cannot create collection from " + sampleEntity);
