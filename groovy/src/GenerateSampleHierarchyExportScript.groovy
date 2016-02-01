@@ -60,7 +60,7 @@ def exportFiles(JacsUtils f, Entity target, File dir) {
 	}
 	String targetPath = (null==pathTest?jfsTest:pathTest);
 	// This locks it down to v3dpbd files and lsm metadata files exported.  Comment out or change to suit your need.
-	if (!targetPath.endsWith("v3dpbd")&&!targetPath.endsWith("metadata")) {return;}
+	if (!targetPath.endsWith("v3dpbd")&&!targetPath.endsWith("metadata")&&!targetPath.endsWith("mask")&&!targetPath.endsWith("chan")) {return;}
 	File targetFile = new File(targetPath);
 	file.println("/misc/local/jfs/jfs -command read -path "+targetPath+" -file "+dir+File.separator+targetFile.getName());
 }
