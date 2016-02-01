@@ -100,6 +100,7 @@ public class EntityConstants {
     // Tile Microscope 
     public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
     public static final String TYPE_TILE_MICROSCOPE_WORKSPACE        = "Tile Microscope Workspace";
+    public static final String TYPE_ANNOTATION_COLLECTION            = "Tile Microscope Annotation Collection";
     public static final String TYPE_TILE_MICROSCOPE_NEURON           = "Tile Microscope Neuron";
     public static final String TYPE_PROPERTY_SET                     = "Property Set";
     
@@ -212,6 +213,10 @@ public class EntityConstants {
     // TmStructuredTextAnnotation
     // "<id>:<parentId>:<parentType>:<FORMAT_VERSION>:<dataString>"
     public static final String ATTRIBUTE_STRUCTURED_TEXT                     = "Structured Text";
+    public static final String ATTRIBUTE_COLLECTION_BRAIN_NAME               = "Collection Brain Name";
+    public static final String ATTRIBUTE_COLLECTION_VERSION                  = "Collection Version";
+    public static final String ATTRIBUTE_COLLECTION_NOTES                    = "Collection Notes"; 
+    public static final String ATTRIBUTE_COLLECTION_SAMPLE_ID                = "Collection Sample ID";
 
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"

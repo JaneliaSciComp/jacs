@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import io.protostuff.Tag;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,13 +20,16 @@ import java.util.List;
  * Time: 10:14 AM
  */
 public class TmAnchoredPath implements IsSerializable, Serializable {
+    @Tag(1)
     Long id;
 
     // two IDs of the annotations between which the path runs
+    @Tag(2)
     TmAnchoredPathEndpoints endpoints;
 
     // VoxelIndex and Vec3 not available to model, so wing it; these
     //  will be 3-vectors (x, y, z):
+    @Tag(3)
     List<List<Integer>> pointList;
 
     public TmAnchoredPath(Long id, TmAnchoredPathEndpoints endpoints, List<List<Integer>> pointList) throws Exception{

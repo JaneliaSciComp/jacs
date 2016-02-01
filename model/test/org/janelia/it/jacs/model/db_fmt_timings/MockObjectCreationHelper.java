@@ -64,7 +64,7 @@ public class MockObjectCreationHelper {
         
         for (int j = 0; j < NUM_APS; j++) {
             MockNeuronJsonData.AnchoredPath anchoredPath = new MockNeuronJsonData.AnchoredPath();
-            MockNeuronJsonData.AnchoredPath.EndPoints ep = new MockNeuronJsonData.AnchoredPath.EndPoints();
+            MockNeuronJsonData.EndPoints ep = new MockNeuronJsonData.EndPoints();
             ep.setX1(randomX());
             ep.setY1(randomY());
             ep.setZ1(randomZ());

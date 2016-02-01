@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import io.protostuff.Tag;
 
 import java.io.Serializable;
 
@@ -15,7 +16,9 @@ import java.io.Serializable;
  * Time: 12:52 PM
  */
 public class TmAnchoredPathEndpoints implements IsSerializable, Serializable {
+    @Tag(1)
     private Long annotationID1;
+    @Tag(2)
     private Long annotationID2;
 
     public TmAnchoredPathEndpoints(Long annotationID1, Long annotationID2) {

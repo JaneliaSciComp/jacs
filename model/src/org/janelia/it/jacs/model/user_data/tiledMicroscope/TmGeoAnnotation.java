@@ -1,6 +1,7 @@
     package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import io.protostuff.Tag;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,12 +15,22 @@ import java.util.List;
  * Time: 1:23 PM
  */
 public class TmGeoAnnotation implements IsSerializable, Serializable {
+    @Tag(1)
     private Long id;
     // parentID is the neuron (if root annotation) or another TmGeoAnn
+    @Tag(2)
     private Long parentId;
+    @Tag(3)
     private String comment;
+    @Tag(4)
     private Integer index;
-    private Double x, y, z;
+    @Tag(5)
+    private Double x;
+    @Tag(6)
+    private Double y;
+    @Tag(7)
+    private Double z;
+    @Tag(8)
     private Date creationDate;
 
     // child and neuron ID fields only filled in when the annotation is in a neuron!
@@ -28,7 +39,9 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     //  way for the GeoAnn to keep it up-to-date, as it's not involved when operations
     //  are performed on other GeoAnns (creation, deletion, update), so the info
     //  would get stale fast
+    @Tag(9)
     private Long neuronId = null;
+    @Tag(10)
     private List<Long> childIds = new ArrayList<>();;
 
     // implementation note: at one point we stored the parent and child objects,

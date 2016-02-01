@@ -9,6 +9,7 @@ package org.janelia.it.jacs.model.db_fmt_timings;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import io.protostuff.Tag;
 
 /**
  * This "test" will produce a lot of Mock JSon data, sufficient for parse/
@@ -16,9 +17,18 @@ import java.util.List;
  * @author fosterl
  */
 public class MockNeuronJsonData implements Serializable {
+    @Tag(1)
     private long id;
+    @Tag(2)
     private String name;
+    @Tag(3)
     private Date createDate;
+    @Tag(4)
+    private List<AnchoredPath> anchoredPaths;
+    @Tag(5)
+    private List<GeoAnnotation> geoAnnotations;
+    @Tag(6)
+    private List<StructuredTextAnnotation> structuredTextAnnotations;
 
     /**
      * @return the geoAnnotations
@@ -105,10 +115,18 @@ public class MockNeuronJsonData implements Serializable {
     }
 
     public static class GeoAnnotation implements Serializable {
+        @Tag(101)
         private long id;
+        @Tag(102)
         private long parentId;
+        @Tag(103)
         private double radius;
-        private double x,y,z;
+        @Tag(104)
+        private double x;
+        @Tag(105)
+        private double y;
+        @Tag(106)        
+        private double z;
 
         /**
          * @return the id
@@ -195,13 +213,16 @@ public class MockNeuronJsonData implements Serializable {
         }
     }
     
-    private List<GeoAnnotation> geoAnnotations;
-    
-    public static class StructuredTextAnnotation implements Serializable {
+    public static class StructuredTextAnnotation {
+        @Tag(201)
         private long id;
+        @Tag(202)
         private long parentId;
+        @Tag(203)
         private int parentType;
+        @Tag(204)
         private int fmtVersion;
+        @Tag(205)
         private String data;
 
         /**
@@ -275,9 +296,11 @@ public class MockNeuronJsonData implements Serializable {
         }
     }
     
-    private List<StructuredTextAnnotation> structuredTextAnnotations;
-
     public static class AnchoredPath implements Serializable {
+        @Tag(301)
+        private EndPoints endPoints;
+        @Tag(302)
+        private double[][] points;
 
         /**
          * @return the endPoints
@@ -306,101 +329,105 @@ public class MockNeuronJsonData implements Serializable {
         public void setPoints(double[][] points) {
             this.points = points;
         }
-        public static class EndPoints {
-            private double x1;
-            private double y1;
-            private double z1;
-            private double x2;
-            private double y2;
-            private double z2;
-
-            /**
-             * @return the x1
-             */
-            public double getX1() {
-                return x1;
-            }
-
-            /**
-             * @param x1 the x1 to set
-             */
-            public void setX1(double x1) {
-                this.x1 = x1;
-            }
-
-            /**
-             * @return the y1
-             */
-            public double getY1() {
-                return y1;
-            }
-
-            /**
-             * @param y1 the y1 to set
-             */
-            public void setY1(double y1) {
-                this.y1 = y1;
-            }
-
-            /**
-             * @return the z1
-             */
-            public double getZ1() {
-                return z1;
-            }
-
-            /**
-             * @param z1 the z1 to set
-             */
-            public void setZ1(double z1) {
-                this.z1 = z1;
-            }
-
-            /**
-             * @return the x2
-             */
-            public double getX2() {
-                return x2;
-            }
-
-            /**
-             * @param x2 the x2 to set
-             */
-            public void setX2(double x2) {
-                this.x2 = x2;
-            }
-
-            /**
-             * @return the y2
-             */
-            public double getY2() {
-                return y2;
-            }
-
-            /**
-             * @param y2 the y2 to set
-             */
-            public void setY2(double y2) {
-                this.y2 = y2;
-            }
-
-            /**
-             * @return the z2
-             */
-            public double getZ2() {
-                return z2;
-            }
-
-            /**
-             * @param z2 the z2 to set
-             */
-            public void setZ2(double z2) {
-                this.z2 = z2;
-            }
-        }
-        private EndPoints endPoints;
-        private double[][] points;
     }
-    
-    private List<AnchoredPath> anchoredPaths;
+        
+    public static class EndPoints {
+
+        @Tag(1001)
+        private double x1;
+        @Tag(1002)
+        private double y1;
+        @Tag(1003)
+        private double z1;
+        @Tag(1004)
+        private double x2;
+        @Tag(1005)
+        private double y2;
+        @Tag(1006)
+        private double z2;
+
+        /**
+         * @return the x1
+         */
+        public double getX1() {
+            return x1;
+        }
+
+        /**
+         * @param x1 the x1 to set
+         */
+        public void setX1(double x1) {
+            this.x1 = x1;
+        }
+
+        /**
+         * @return the y1
+         */
+        public double getY1() {
+            return y1;
+        }
+
+        /**
+         * @param y1 the y1 to set
+         */
+        public void setY1(double y1) {
+            this.y1 = y1;
+        }
+
+        /**
+         * @return the z1
+         */
+        public double getZ1() {
+            return z1;
+        }
+
+        /**
+         * @param z1 the z1 to set
+         */
+        public void setZ1(double z1) {
+            this.z1 = z1;
+        }
+
+        /**
+         * @return the x2
+         */
+        public double getX2() {
+            return x2;
+        }
+
+        /**
+         * @param x2 the x2 to set
+         */
+        public void setX2(double x2) {
+            this.x2 = x2;
+        }
+
+        /**
+         * @return the y2
+         */
+        public double getY2() {
+            return y2;
+        }
+
+        /**
+         * @param y2 the y2 to set
+         */
+        public void setY2(double y2) {
+            this.y2 = y2;
+        }
+
+        /**
+         * @return the z2
+         */
+        public double getZ2() {
+            return z2;
+        }
+
+        /**
+         * @param z2 the z2 to set
+         */
+        public void setZ2(double z2) {
+            this.z2 = z2;
+        }
+    }
 }
