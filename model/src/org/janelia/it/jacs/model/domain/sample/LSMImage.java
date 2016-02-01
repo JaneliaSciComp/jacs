@@ -106,6 +106,18 @@ public class LSMImage extends Image {
     @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol")
     private String mountingProtocol;
 
+    @SAGEAttribute(cvName="light_imagery", termName="heat_shock_hour")
+    @SearchAttribute(key="heat_shock_hour",label="Head Shock Age Hour")
+    private String heatShockHour;
+
+    @SAGEAttribute(cvName="light_imagery", termName="heat_shock_interval")
+    @SearchAttribute(key="heat_shock_interval",label="Head Shock Age Interval")
+    private String heatShockInterval;
+
+    @SAGEAttribute(cvName="light_imagery", termName="heat_shock_minutes")
+    @SearchAttribute(key="heat_shock_minutes",label="Head Shock Age Minutes")
+    private String heatShockMinutes;
+    
     @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_1_name")
     @SearchAttribute(key="ic1_name_s",label="Illumination Channel #1 Name")
     private String illuminationChannel1Name;
@@ -468,6 +480,30 @@ public class LSMImage extends Image {
 
     public void setFullAge(String fullAge) {
         this.fullAge = fullAge;
+    }
+
+    public String getHeatShockHour() {
+        return heatShockHour;
+    }
+
+    public void setHeatShockHour(String heatShockHour) {
+        this.heatShockHour = heatShockHour;
+    }
+
+    public String getHeatShockInterval() {
+        return heatShockInterval;
+    }
+
+    public void setHeatShockInterval(String heatShockInterval) {
+        this.heatShockInterval = heatShockInterval;
+    }
+
+    public String getHeatShockMinutes() {
+        return heatShockMinutes;
+    }
+
+    public void setHeatShockMinutes(String heatShockMinutes) {
+        this.heatShockMinutes = heatShockMinutes;
     }
 
     public String getMountingProtocol() {
