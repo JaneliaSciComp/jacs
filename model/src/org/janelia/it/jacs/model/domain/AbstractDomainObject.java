@@ -65,11 +65,28 @@ public abstract class AbstractDomainObject implements DomainObject {
     @SearchAttribute(key="type_label",label="Type")
     @JsonIgnore
     public String getType() {
-        MongoMapped mongoAnnot = getClass().getAnnotation(MongoMapped.class);
-        if (mongoAnnot!=null) {
-            return mongoAnnot.label();
+        String label = null;
+        // Look for a @SearchType label
+        Class<?> clazz = this.getClass();
+        while (clazz!=null && label==null) {
+            SearchType searchType = clazz.getAnnotation(SearchType.class);
+            if (searchType!=null) {
+                label = searchType.label();
+            }
+            clazz = clazz.getSuperclass();
         }
-        return null;
+        if (label==null) {
+            // No label found, so look again, this time at @MongoMapped
+            clazz = this.getClass();
+            while (clazz!=null && label==null) {
+                MongoMapped mongoMapped = clazz.getAnnotation(MongoMapped.class);
+                if (mongoMapped!=null) {
+                    label = mongoMapped.label();
+                }
+                clazz = clazz.getSuperclass();
+            }
+        }
+        return label;
     }
     
     @SearchAttribute(key="search_type",label="Search Type",display=false)

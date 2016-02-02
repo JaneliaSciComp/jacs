@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.model.domain.support;
 
+import static org.janelia.it.jacs.model.domain.enums.FileType.LosslessStack;
+import static org.janelia.it.jacs.model.domain.enums.FileType.VisuallyLosslessStack;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -231,7 +234,8 @@ public class DomainUtils {
     }
     
     public static String getFilepath(HasFiles hasFiles, FileType fileType) {
-        
+
+        if (hasFiles==null) return null;
         Map<FileType,String> files = hasFiles.getFiles();
         if (files==null) return null;
         String filepath = files.get(fileType);
@@ -257,6 +261,12 @@ public class DomainUtils {
         urlSb.append(filepath);
         
         return urlSb.length()>0 ? urlSb.toString() : null;
+    }
+    
+    public static String getDefault3dImageFilePath(HasFiles hasFiles) {
+        String path = DomainUtils.getFilepath(hasFiles, LosslessStack);
+        if (path==null) path = DomainUtils.getFilepath(hasFiles, VisuallyLosslessStack);
+        return path;
     }
 
     /**

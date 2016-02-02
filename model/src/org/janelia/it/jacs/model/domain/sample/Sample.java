@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.interfaces.IsParent;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
@@ -26,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @MongoMapped(collectionName="sample",label="Sample")
 @SearchType(key="sample",label="Sample")
-public class Sample extends AbstractDomainObject {
+public class Sample extends AbstractDomainObject implements IsParent {
 
     @SearchAttribute(key="age_txt",label="Age",facet=true)
     private String age;
