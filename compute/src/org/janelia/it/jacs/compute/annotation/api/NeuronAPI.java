@@ -117,7 +117,7 @@ public class NeuronAPI {
      * @return 
      */
     @POST
-    @Path("/addNeuronJSON/{neuronGUID}")
+    @Path("/addNeuronJSON/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public Response addNeuronJSON(NeuronBean neuron) {
