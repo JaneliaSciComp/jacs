@@ -52,18 +52,18 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     //public static final String SOLR_EJB_PROP = "SolrEJB.Name";
     
     private void updateIndex(Long entityId) {
-    	IndexingHelper.updateIndex(entityId);
+    	//IndexingHelper.updateIndex(entityId);
     }
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
     	try {
-    		SolrConnector solrConnector = new SolrConnector();
+    		SolrDAO solrDAO = new SolrDAO(log, true, true);
     		if (clearIndex) {
-    			solrConnector.clearIndex();
+				solrDAO.clearIndex();
     		}
-    		solrConnector.indexAllDocuments();
+			//solrDAO.indexAllEntities();
     	}
-    	catch (UnknownHostException e) {
+    	catch (Exception e) {
             log.error("Error connecting to Mongo",e);
     		throw new ComputeException("Error connecting to Mongo",e);
     	}
@@ -81,7 +81,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     		return entity;
     	}
     	visited.add(entity.getId());
-    	updateIndex(entity.getId());
+    	//updateIndex(entity.getId());
     	for(EntityData ed : entity.getEntityData()) {
     		Entity child = ed.getChildEntity();
     		if (child != null) {

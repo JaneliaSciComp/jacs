@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.wsrest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -14,8 +13,9 @@ import javax.ws.rs.core.SecurityContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
+import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
+import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.ontology.*;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
@@ -40,7 +40,9 @@ public class SemanticsWebService extends ResourceConfig {
     public Annotation createAnnotation(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
+            Annotation newAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(newAnnotation);
+            return newAnnotation;
         } catch (Exception e) {
             log.error("Error occurred creating annotations " + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -54,7 +56,9 @@ public class SemanticsWebService extends ResourceConfig {
     public Annotation updateAnnotation(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
+            Annotation updateAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(updateAnnotation);
+            return updateAnnotation;
         } catch (Exception e) {
             log.error("Error occurred updating annotations" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -84,7 +88,9 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         Reference annotationRef = new Reference (Annotation.class.getName(), new Long(annotationId));
         try {
-            dao.remove(subjectKey, dao.getDomainObject(subjectKey, annotationRef));
+            DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);
+            dao.remove(subjectKey, deleteAnnotation);
+            IndexingHelper.removeFromIndex(deleteAnnotation);
         } catch (Exception e) {
             log.error("Error occurred removing annotations" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -112,9 +118,10 @@ public class SemanticsWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology createOntology(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        System.out.println ("TRACE NONO");
         try {
-            return (Ontology)dao.save(query.getSubjectKey(), query.getDomainObject());
+            Ontology updateOntology = (Ontology)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(updateOntology);
+            return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred creating ontology" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -131,8 +138,8 @@ public class SemanticsWebService extends ResourceConfig {
         Reference ontologyRef = new Reference (Ontology.class.getName(), new Long(ontologyId));
         try {
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);
-            System.out.println (ont);
             dao.remove(subjectKey, ont);
+            IndexingHelper.removeFromIndex(ont);
         } catch (Exception e) {
             log.error("Error occurred removing ontology" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -153,7 +160,9 @@ public class SemanticsWebService extends ResourceConfig {
             for (OntologyTerm term : query.getObjectList()) {
                 terms.add((OntologyTerm)term);
             }
-            return dao.addTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
+            Ontology updateOntology = (Ontology)dao.addTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
+            IndexingHelper.updateIndex(updateOntology);
+            return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred adding ontology terms" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -174,7 +183,9 @@ public class SemanticsWebService extends ResourceConfig {
             for (int i=0; i<order.length; i++) {
                 order[i] = query.getOrdering().get(i);
             }
-            return dao.reorderTerms(query.getSubjectKey(), ontologyId, parentId, order);
+            Ontology updateOntology =  dao.reorderTerms(query.getSubjectKey(), ontologyId, parentId, order);
+            IndexingHelper.updateIndex(updateOntology);
+            return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred reordering ontology" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -192,8 +203,9 @@ public class SemanticsWebService extends ResourceConfig {
                                             @QueryParam("termId") final Long termId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            System.out.println (ontologyId + ":" + parentTermId + ":" + termId);
-            return dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
+            Ontology updateOntology = dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
+            IndexingHelper.updateIndex(updateOntology);
+            return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred removing ontology terms " + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

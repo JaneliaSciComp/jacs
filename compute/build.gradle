@@ -146,7 +146,17 @@ task computeNGWar(dependsOn:classes, type: War) {
         from fileTree(dir: 'build/classes/main').matching {  
            into 'classes'
            include 'org/janelia/it/jacs/compute/wsrest/**'
-           include 'org/janelia/it/jacs/compute/access/**/*'
+           include 'org/janelia/it/jacs/compute/launcher/indexing/**'
+            include 'org/janelia/it/jacs/compute/access/**/*'
+            include 'org/janelia/it/jacs/compute/jtc/**/*'
+            include 'org/janelia/it/jacs/compute/engine/util/**'
+            include 'org/janelia/it/jacs/compute/engine/data/**'
+            include 'org/janelia/it/jacs/compute/engine/def/**'
+            include 'org/janelia/it/jacs/compute/engine/launcher/**'
+            include 'org/janelia/it/jacs/compute/engine/service/ServiceException.class'
+            include 'org/janelia/it/jacs/compute/engine/service/ValidServiceException.class'
+            include 'org/janelia/it/jacs/compute/service/common/**/*'
+            include 'org/janelia/it/jacs/compute/drmaa/**'
             include 'org/janelia/it/jacs/compute/api/ComputeException.class'
            include 'org/janelia/it/jacs/compute/util/**/*'
         }
@@ -166,6 +176,7 @@ task computeNGWar(dependsOn:classes, type: War) {
         from fileTree ('conf').matching {
             into 'classes'
             include 'c3p0-nosql.json'
+            include 'ehcache2-jacs.xml'
         }
     }  
 
@@ -211,6 +222,7 @@ dependencies {
     compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet-core', version: '2.19'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.2.2'
     compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.1'
+    compile group: 'org.jboss', name: 'jboss-remote-naming', version: '2.0.0.Final'
     ngWarLib group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet-core', version: '2.19'
     ngWarLib group: 'org.glassfish.jersey.connectors', name: 'jersey-apache-connector', version: '2.19'
     ngWarLib group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.2.2'
@@ -223,6 +235,17 @@ dependencies {
     ngWarLib group: 'org.hibernate', name: 'hibernate-core', version: '3.3.2.GA'
     ngWarLib group: 'org.reflections', name: 'reflections', version: '0.9.8'
     ngWarLib group: 'com.google.gwt', name: 'gwt-user', version: '2.7.0'
+    ngWarLib group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
+    ngWarLib group: 'org.apache.solr', name: 'solr-solrj', version: '3.5.0'
+    ngWarLib group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
+    ngWarLib group: 'net.sf.ehcache', name: 'ehcache-core', version: '2.5.1'
+    ngWarLib group: 'org.quartz-scheduler', name: 'quartz', version: '2.2.1'
+    ngWarLib group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.7'
+    ngWarLib group: 'org.jboss', name: 'jboss-remote-naming', version: '2.0.0.Final'
+    ngWarLib group: 'org.jboss.xnio', name: 'xnio-nio', version: '3.2.1.Final'
+    ngWarLib group: 'org.hornetq', name: 'hornetq-jms-client', version: '2.4.5.Final'
+    ngWarLib group: 'org.hornetq', name: 'hornetq-core-client', version: '2.4.5.Final'
+
 }
 
 artifacts {

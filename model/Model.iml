@@ -50,8 +50,20 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="JUnit-4.11" level="project" />
-    <orderEntry type="library" name="MongoDB" level="project" />
     <orderEntry type="library" name="Jama-1.0.3" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../common/MongoDB" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/../common/MongoDB" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/../common/MongoDB" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/../common/MongoDB" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

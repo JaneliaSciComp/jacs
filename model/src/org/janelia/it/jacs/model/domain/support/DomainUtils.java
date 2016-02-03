@@ -360,9 +360,11 @@ public class DomainUtils {
      */
     public static Map<Reference, DomainObject> getMapByReference(Collection<? extends DomainObject> objects) {
         Map<Reference, DomainObject> objectMap = new HashMap<>();
-        for (DomainObject domainObject : objects) {
-            if (domainObject != null) {
-                objectMap.put(Reference.createFor(domainObject), domainObject);
+        if (objects!=null) {
+            for (DomainObject domainObject : objects) {
+                if (domainObject != null) {
+                    objectMap.put(Reference.createFor(domainObject), domainObject);
+                }
             }
         }
         return objectMap;

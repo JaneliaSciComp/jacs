@@ -7,6 +7,7 @@ import javax.ws.rs.core.*;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.internal.util.Base64;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.shared.security.LDAPProvider;
 import org.janelia.it.jacs.shared.security.Token;
 import org.slf4j.Logger;
@@ -61,6 +62,7 @@ public class UserWorkstationWebService extends ResourceConfig {
                 return user;
             } catch (Exception e) {
                 log.error("Error occurred authenticating user" + e);
+                e.printStackTrace();
                 throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
             }
         }
@@ -113,7 +115,9 @@ public class UserWorkstationWebService extends ResourceConfig {
     public TreeNode createTreeNode(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return (TreeNode)dao.save(query.getSubjectKey(), query.getDomainObject());
+            TreeNode updatedNode = (TreeNode)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(updatedNode);
+            return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred creating tree node" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -126,14 +130,15 @@ public class UserWorkstationWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode reorderTreeNode(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-
         try {
             List<Integer> orderList = query.getOrdering();
             int[] order = new int[orderList.size()];
             for (int i=0; i<orderList.size(); i++) {
                 order[i] = orderList.get(i).intValue();
             }
-            return dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
+            TreeNode updatedNode = (TreeNode)dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
+            IndexingHelper.updateIndex(updatedNode);
+            return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred reordering Tree Node" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -147,7 +152,9 @@ public class UserWorkstationWebService extends ResourceConfig {
     public TreeNode addChildren(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
+            TreeNode updatedNode = (TreeNode)dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
+            IndexingHelper.updateIndex(updatedNode);
+            return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred add children to tree node " + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -162,7 +169,9 @@ public class UserWorkstationWebService extends ResourceConfig {
     public TreeNode removeChildren(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
+            TreeNode updatedNode = (TreeNode)dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
+            IndexingHelper.updateIndex(updatedNode);
+            return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred removing children from tree node " + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -177,7 +186,9 @@ public class UserWorkstationWebService extends ResourceConfig {
     public ObjectSet createObjectSet(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return (ObjectSet)dao.save(query.getSubjectKey(), query.getDomainObject());
+            ObjectSet updatedObjectSet = (ObjectSet)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(updatedObjectSet);
+            return updatedObjectSet;
         } catch (Exception e) {
             log.error("Error occurred creating object set" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -191,7 +202,9 @@ public class UserWorkstationWebService extends ResourceConfig {
     public ObjectSet addMembers(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.addMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
+            ObjectSet updatedObjectSet = (ObjectSet)dao.addMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
+            IndexingHelper.updateIndex(updatedObjectSet);
+            return updatedObjectSet;
         } catch (Exception e) {
             log.error("Error occurred adding members to object set" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -205,7 +218,9 @@ public class UserWorkstationWebService extends ResourceConfig {
     public ObjectSet removeMembers(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            return dao.removeMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
+            ObjectSet updatedObjectSet = (ObjectSet) dao.removeMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
+            IndexingHelper.updateIndex(updatedObjectSet);
+            return updatedObjectSet;
         } catch (Exception e) {
             log.error("Error occurred removing members from Object Set" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

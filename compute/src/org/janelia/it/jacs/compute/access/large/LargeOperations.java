@@ -288,15 +288,15 @@ public class LargeOperations {
      * @throws DaoException
      */
     public void buildSageImagePropMap() throws DaoException {
-    	
+
     	SageDAO sage = new SageDAO(logger);
     	Connection conn = null;
-    	
+
     	try {
     		conn = annotationDAO.getJdbcConnection();
 
             logger.info("Building property map for all lines");
-            
+
             ResultSetIterator lineIterator = null;
             Map<String, Map<String,Object>> lineMap = new HashMap<>();
             try {
@@ -315,28 +315,28 @@ public class LargeOperations {
             finally {
                 if (lineIterator!=null) lineIterator.close();
             }
-            
+
             logger.info("Retrieved properties for "+lineMap.size()+" lines");
-            
+
             logger.info("Building property map for all SAGE images");
 
             int i = 0;
 	    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-	    		
+
 	    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 //	    		if (!dataSetIdentifier.startsWith("dolanm")) continue;
-	    		
+
 	    		logger.info("  Building property map for all SAGE images in Data Set '"+dataSetIdentifier+"'");
 
 	        	ResultSetIterator iterator = null;
-	        	
+
 	        	try {
                     iterator = sage.getAllImagePropertiesByDataSet(dataSetIdentifier);
 	        		while (iterator.hasNext()) {
 						Map<String,Object> imageProperties = iterator.next();
-	            		
+
 	            		Map<String,Object> allProps = new HashMap<>(imageProperties);
-                        
+
                         String line = (String)imageProperties.get(SageDAO.IMAGE_PROP_LINE_TERM);
                         if (line!=null) {
                             Map<String,Object> lineProperties = lineMap.get(line);
@@ -344,7 +344,7 @@ public class LargeOperations {
                                 allProps.putAll(lineProperties);
                             }
                         }
-                        
+
 						associateImageProperties(conn, allProps);
 						i++;
 	            	}
@@ -359,23 +359,23 @@ public class LargeOperations {
 	            	if (iterator!=null) iterator.close();
 	            }
 	    	}
-	    	
+
             logger.info("Retrieved properties for "+i+" images");
-	    	
+
     	}
     	catch (ComputeException e) {
     		throw new DaoException(e);
     	}
     	finally {
 	    	try {
-	            if (conn!=null) conn.close(); 
+	            if (conn!=null) conn.close();
 	    	}
 	    	catch (SQLException e) {
                 logger.warn("Error closing JDBC connection",e);
 	    	}
     	}
     }
-    
+
     protected void associateImageProperties(Connection conn, Map<String,Object> imageProps) throws DaoException {
     	String imagePath = (String)imageProps.get(SageDAO.IMAGE_PROP_PATH);
     	String jfsPath = (String)imageProps.get(SageDAO.IMAGE_PROP_JFS_PATH);

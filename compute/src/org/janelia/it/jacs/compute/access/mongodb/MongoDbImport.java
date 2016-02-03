@@ -31,7 +31,6 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -141,7 +140,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection filterCollection;
     
     // Load state
-    private MongoLargeOperations largeOp;
+    private LargeOperations largeOp;
     private String genderConsensus = null;
     private Map<String,String> lsmJsonFiles = new HashMap<String,String>();
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
@@ -183,7 +182,7 @@ public class MongoDbImport extends AnnotationDAO {
     public void loadAllEntities() throws DaoException {
 
         log.info("Building disk-based SAGE property map");
-        this.largeOp = new MongoLargeOperations(dao, this);
+        this.largeOp = new LargeOperations(this);
         largeOp.buildSageImagePropMap();
 
         log.info("Building LSM property map");

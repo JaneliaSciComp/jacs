@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public abstract class AbstractDomainObject implements DomainObject {
+public abstract class AbstractDomainObject implements DomainObject,Serializable {
     
     @MongoId
     @JsonProperty(value="_id")

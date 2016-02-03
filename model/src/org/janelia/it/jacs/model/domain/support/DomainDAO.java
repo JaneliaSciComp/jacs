@@ -86,7 +86,6 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
-
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
             MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
             this.m = new MongoClient(new ServerAddress(serverUrl), Arrays.asList(credential));
@@ -398,7 +397,7 @@ public class DomainDAO {
             targetIds.add(reference.getTargetId());
         }
 
-        return toList(annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}",targetIds,subjects).as(Annotation.class));
+        return toList(annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}", targetIds, subjects).as(Annotation.class));
     }
 
     public Workspace getDefaultWorkspace(String subjectKey) {
@@ -442,12 +441,12 @@ public class DomainDAO {
 
     public List<ScreenSample> getScreenSamples(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(screenSampleCollection.find("{readers:{$in:#}}",subjectKey,subjects).as(ScreenSample.class));
+        return toList(screenSampleCollection.find("{readers:{$in:#}}", subjectKey, subjects).as(ScreenSample.class));
     }
 
     public List<PatternMask> getPatternMasks(String subjectKey, Long screenSampleId) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(patternMaskCollection.find("{screenSampleId:#,readers:{$in:#}}",screenSampleId,subjects).as(PatternMask.class));
+        return toList(patternMaskCollection.find("{screenSampleId:#,readers:{$in:#}}", screenSampleId, subjects).as(PatternMask.class));
     }
 
     public TreeNode getTreeNodeById(String subjectKey, Long id) {
@@ -456,8 +455,12 @@ public class DomainDAO {
     }
 
     public TreeNode getParentTreeNodes(String subjectKey, Long id) {
-        Set<String> subjects = getSubjectSet(subjectKey);
-        return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}",id,subjects).as(TreeNode.class);
+        Set<String> subjects = subjectKey == null ? null : getSubjectSet(subjectKey);
+        if (subjects == null) {
+            return treeNodeCollection.findOne("{'children.targetId':#}", id).as(TreeNode.class);
+        } else {
+            return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}", id, subjects).as(TreeNode.class);
+        }
     }
 
     private <T extends DomainObject> T saveImpl(String subjectKey, T domainObject) throws Exception {

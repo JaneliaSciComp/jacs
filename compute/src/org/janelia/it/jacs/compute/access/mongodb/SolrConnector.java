@@ -1,9 +1,11 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,9 +17,19 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.StreamingUpdateSolrServer;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.SolrInputField;
+import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
@@ -33,7 +45,9 @@ import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
+import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
@@ -49,19 +63,28 @@ import com.mongodb.DBCursor;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SolrConnector extends SolrDAO {
+public class SolrConnector {
 
     private static final Logger log = Logger.getLogger(SolrConnector.class);
-
-    private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-    private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
-    private static String MONGO_USERNAME = SystemConfigurationProperties.getString("MongoDB.Username");
-    private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
     
     protected static final String JANELIA_MODEL_PACKAGE = "org.janelia.it.jacs.model.domain";
-    protected static final int SOLR_LOADER_BATCH_SIZE = 5000;
-    protected static final int SOLR_LOADER_COMMIT_SIZE = 10000;
-    
+	protected static final int MAX_ID_LIST_SIZE = 200;
+
+	protected static final int SOLR_LOADER_BATCH_SIZE = 20000;
+	protected static final int SOLR_LOADER_COMMIT_SIZE = 200000;
+	protected static final int SOLR_LOADER_QUEUE_SIZE = 100;
+	protected static final int SOLR_LOADER_THREAD_COUNT = 2;
+
+	protected static final String SOLR_SERVER_URL = SystemConfigurationProperties.getString("Solr.ServerURL");
+	protected static final String SOLR_MAIN_CORE = SystemConfigurationProperties.getString("Solr.MainCore");
+	protected static final String SOLR_BUILD_CORE = SystemConfigurationProperties.getString("Solr.BuildCore");
+
+	protected final boolean useBuildCore;
+	protected final boolean streamingUpdates;
+
+	protected SolrServer solr;
+	protected LargeOperations largeOp;
+
     private DomainDAO dao;
     
     // Caches
@@ -70,11 +93,36 @@ public class SolrConnector extends SolrDAO {
     // Current indexing context
     private Set<SimpleAnnotation> annotations = new HashSet<SimpleAnnotation>();
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
-    
-    public SolrConnector() throws UnknownHostException {
-    	super(log, true, true);
-		this.dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
+
+    public SolrConnector(DomainDAO dao) throws UnknownHostException {
+		this.useBuildCore = true;
+		this.dao = dao;
+		this.streamingUpdates = true;
+		largeOp = new LargeOperations();
     }
+
+	protected void init() throws DaoException {
+		if (solr==null) {
+			try {
+				if (streamingUpdates) {
+					solr = new StreamingUpdateSolrServer(SOLR_SERVER_URL+(useBuildCore?SOLR_BUILD_CORE:SOLR_MAIN_CORE), SOLR_LOADER_QUEUE_SIZE, SOLR_LOADER_THREAD_COUNT);
+				}
+				else {
+					solr = new CommonsHttpSolrServer(SOLR_SERVER_URL+(useBuildCore?SOLR_BUILD_CORE:SOLR_MAIN_CORE));
+				}
+				solr.ping();
+			}
+			catch (MalformedURLException e) {
+				throw new RuntimeException("Illegal Solr.ServerURL value in system properties: "+SOLR_SERVER_URL);
+			}
+			catch (IOException e) {
+				throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
+			}
+			catch (SolrServerException e) {
+				throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
+			}
+		}
+	}
     
 	public void indexAllDocuments() throws DaoException {
 		
@@ -85,7 +133,7 @@ public class SolrConnector extends SolrDAO {
     	}
     	
     	log.info("Building disk-based entity maps");
-    	this.largeOp = new MongoLargeOperations(dao, this);
+    	this.largeOp = new LargeOperations();
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
 
@@ -227,7 +275,90 @@ public class SolrConnector extends SolrDAO {
             }
         }
 		
+
 		return doc;
+	}
+
+
+	public void removeDocuments(List<DomainObject> domainObjects) throws DaoException {
+        // Get all Solr documents
+		if (log.isTraceEnabled()) {
+			log.trace("removeDocuments(domainObj.size="+domainObjects.size()+")");
+		}
+
+		// Get all Solr documents
+		try {
+			init();
+			int currSize = 0;
+			StringBuffer sqBuf = new StringBuffer();
+			for(DomainObject domainObject : domainObjects) {
+				if (currSize>=MAX_ID_LIST_SIZE) {
+					solr.deleteByQuery(sqBuf.toString());
+					sqBuf = new StringBuffer();
+					currSize = 0;
+				}
+
+				if (sqBuf.length()>0) sqBuf.append(" OR ");
+				sqBuf.append("id:"+domainObject.getId());
+				currSize++;
+			}
+
+			if (currSize>0) {
+				log.info("RRRRR" + sqBuf.toString());
+				solr.deleteByQuery(sqBuf.toString());
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			throw new DaoException("Error removing documents with SOLR",e);
+		}
+		commit();
+	}
+
+	public void updateIndices(List<DomainObject> domainObjects) throws DaoException {
+		log.trace("updateIndex(domainObj.size="+domainObjects.size()+")");
+
+		// Get all Solr documents
+		List<Long> domainObjIds = new ArrayList<>();
+		for (DomainObject domainObject : domainObjects) {
+			domainObjIds.add(domainObject.getId());
+		}
+		Map<Long,SolrDocument> solrDocMap = search(domainObjIds);
+
+		// Create updated Solr documents
+		List<SolrInputDocument> inputDocs = new ArrayList<>();
+		for (DomainObject domainObject : domainObjects) {
+			SolrInputDocument inputDoc = null;
+			SolrDocument existingDoc = solrDocMap.get(domainObject.getId());
+			Class clazz = domainObject.getClass();
+			Set<Field> fields = ReflectionUtils.getAllFields(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
+			Set<Method> methods = ReflectionUtils.getAllMethods(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
+
+			if (existingDoc!=null) {
+				// generate ancestor list
+				Set<Long> ancestorIds = new HashSet<Long>();
+				TreeNode treeNode = null;
+				DomainObject testObj = domainObject;
+				int depth = 0;
+				while (depth<10 && (treeNode=dao.getParentTreeNodes(null, testObj.getId()))!=null) {
+					ancestorIds.add(treeNode.getId());
+					testObj = treeNode;
+					depth++;
+				}
+				inputDoc = createDocument(existingDoc, domainObject, fields, methods, ancestorIds);
+			}
+			else {
+				inputDoc = createDocument(null, domainObject, fields, methods, null);
+			}
+
+			inputDocs.add(inputDoc);
+
+			log.info("Updating index for " + domainObject.getName() + " (id=" + domainObject.getId() + ") ");
+		}
+
+		// Index the entire batch
+		index(inputDocs);
+		commit();
 	}
 		
 	/**
@@ -380,7 +511,7 @@ public class SolrConnector extends SolrDAO {
 	 */
     private void findStrings(Set<String> visited, DomainObject rootObject, Object object, Field field, Collection<?> collection, String indent) throws Exception {
         
-        log.debug(indent+"indexing collection "+object+"."+field.getName());
+        log.debug(indent + "indexing collection " + object + "." + field.getName());
         
         for(Object collectionObject : collection) {
             if (collectionObject==null) {
@@ -415,6 +546,244 @@ public class SolrConnector extends SolrDAO {
 		}
 		
 		fullTextStrings.put(key, value);
+	}
+
+	protected void index(List<SolrInputDocument> docs) throws DaoException {
+		init();
+		if (docs==null||docs.isEmpty()) return;
+		try {
+			solr.add(docs);
+		}
+		catch (Exception e) {
+			throw new DaoException("Error indexing with SOLR",e);
+		}
+	}
+
+	protected void swapBuildCore() throws Exception {
+		CoreAdminRequest car = new CoreAdminRequest();
+		car.setCoreName(SOLR_BUILD_CORE);
+		car.setOtherCoreName(SOLR_MAIN_CORE);
+		car.setAction(CoreAdminParams.CoreAdminAction.SWAP);
+		car.process(new CommonsHttpSolrServer(SOLR_SERVER_URL));
+	}
+
+	protected List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
+
+		String dt = SolrDocTypeEnum.SAGE_TERM.toString();
+
+		int id = 0;
+		List<SolrInputDocument> docs = new ArrayList<>();
+		for(SageTerm term : terms) {
+			SolrInputDocument doc = new SolrInputDocument();
+			doc.addField("id", dt+"_"+id, 1.0f);
+			doc.addField("doc_type", dt, 1.0f);
+			doc.addField("name", term.getName(), 1.0f);
+			doc.addField("data_type_t", term.getDataType(), 1.0f);
+			doc.addField("definition_t", term.getDefinition(), 1.0f);
+			doc.addField("display_name_t", term.getDisplayName(), 1.0f);
+			doc.addField("cv_t", term.getCv(), 1.0f);
+			docs.add(doc);
+			id++;
+		}
+		return docs;
+	}
+
+	/**
+	 * Commit any outstanding changes to the index.
+	 * @throws DaoException
+	 */
+	public void commit() throws DaoException {
+		if (log.isTraceEnabled()) {
+			log.trace("commit()");
+		}
+
+		init();
+		try {
+			solr.commit();
+		}
+		catch (Exception e) {
+			throw new DaoException("Error commiting index with SOLR",e);
+		}
+	}
+
+	/**
+	 * Clear the entire index and commit.
+	 * @throws DaoException
+	 */
+	public void clearIndex() throws DaoException {
+		if (log.isTraceEnabled()) {
+			log.trace("clearIndex()");
+		}
+
+		init();
+		try {
+			log.info("Clearing SOLR index");
+			solr.deleteByQuery("*:*");
+			solr.commit();
+		}
+		catch (Exception e) {
+			throw new DaoException("Error clearing index with SOLR",e);
+		}
+	}
+
+	/**
+	 * Optimize the index (this is a very expensive operation, especially if the index is large!)
+	 * @throws DaoException
+	 */
+	public void optimize() throws DaoException {
+		if (log.isTraceEnabled()) {
+			log.trace("optimize()");
+		}
+
+		init();
+		try {
+			log.info("Optimizing SOLR index");
+			solr.optimize();
+		}
+		catch (Exception e) {
+			throw new DaoException("Error optimizing index with SOLR",e);
+		}
+	}
+
+	/**
+	 * Run the given query against the index.
+	 * @param query
+	 * @return
+	 * @throws DaoException
+	 */
+	public QueryResponse search(SolrQuery query) throws DaoException {
+		if (log.isTraceEnabled()) {
+			log.trace("search(query="+query.getQuery()+")");
+		}
+
+		init();
+		try {
+			log.debug("Running SOLR query: "+query);
+			return solr.query(query);
+		}
+		catch (Exception e) {
+			throw new DaoException("Error searching with SOLR",e);
+		}
+	}
+
+	/**
+	 * Runs a special id query against the index, breaking it up into several queries if necessary.
+	 * @param domainObjectIds
+	 * @return
+	 * @throws DaoException
+	 */
+	public Map<Long,SolrDocument> search(List<Long> domainObjectIds) throws DaoException {
+		if (log.isTraceEnabled()) {
+			log.trace("search(entityIds.size="+domainObjectIds.size()+")");
+		}
+
+		init();
+		Map<Long,SolrDocument> docMap = new HashMap<>();
+		try {
+			int currSize = 0;
+			StringBuffer sqBuf = new StringBuffer();
+			for(Long entityId : domainObjectIds) {
+
+				if (currSize>=MAX_ID_LIST_SIZE) {
+					SolrQuery query = new SolrQuery(sqBuf.toString());
+					query.setRows(currSize);
+					QueryResponse qr = search(query);
+					Iterator<SolrDocument> i = qr.getResults().iterator();
+					while (i.hasNext()) {
+						SolrDocument doc = i.next();
+						docMap.put(new Long(doc.get("id").toString()), doc);
+					}
+					sqBuf = new StringBuffer();
+					currSize = 0;
+				}
+
+				if (sqBuf.length()>0) sqBuf.append(" OR ");
+				sqBuf.append("id:"+entityId);
+				currSize++;
+			}
+
+			if (currSize>0) {
+				SolrQuery query = new SolrQuery(sqBuf.toString());
+				query.setRows(currSize);
+				QueryResponse qr = search(query);
+				Iterator<SolrDocument> i = qr.getResults().iterator();
+				while (i.hasNext()) {
+					SolrDocument doc = i.next();
+					docMap.put(new Long(doc.get("id").toString()), doc);
+				}
+			}
+
+			return docMap;
+		}
+		catch (Exception e) {
+			throw new DaoException("Error searching with SOLR",e);
+		}
+	}
+
+	/**
+	 * Update the document for the given entity to add a new ancestor (usually a new parent).
+	 * @param domainObjectId
+	 * @param newAncestorId
+	 * @throws DaoException
+	 */
+	public void addNewAncestor(Long domainObjectId, Long newAncestorId) throws DaoException {
+		if (log.isTraceEnabled()) {
+			log.trace("addNewAncestor(entityId="+domainObjectId+", newAncestorId="+newAncestorId+")");
+		}
+
+		List<Long> entityIds = new ArrayList<>();
+		entityIds.add(domainObjectId);
+		addNewAncestor(entityIds, newAncestorId);
+	}
+
+	/**
+	 * Update the documents for all of the given entities and add the same new ancestor (usually a new parent) to
+	 * each one.
+	 * @param domainObjectIds
+	 * @param newAncestorId
+	 * @throws DaoException
+	 */
+	public void addNewAncestor(List<Long> domainObjectIds, Long newAncestorId) throws DaoException {
+		if (log.isTraceEnabled()) {
+			log.trace("addNewAncestor(entityIds.size="+domainObjectIds.size()+", newAncestorId="+newAncestorId+")");
+		}
+
+		// Get all Solr documents
+		Map<Long,SolrDocument> solrDocMap = search(domainObjectIds);
+
+		log.info("Adding new ancestor to "+domainObjectIds.size()+" entities. Found "+solrDocMap.size()+" documents.");
+
+		// Create updated Solr documents
+		List<SolrInputDocument> inputDocs = new ArrayList<>();
+		for(SolrDocument existingDoc : solrDocMap.values()) {
+			SolrInputDocument inputDoc = ClientUtils.toSolrInputDocument(existingDoc);
+
+			Collection<Long> ancestorIds = null;
+
+			SolrInputField field = inputDoc.getField("ancestor_ids");
+			if (field==null) {
+				ancestorIds = new ArrayList<>();
+			}
+			else {
+				ancestorIds = (Collection<Long>)field.getValue();
+				if (ancestorIds==null) {
+					ancestorIds = new ArrayList<>();
+				}
+			}
+
+			ancestorIds.add(newAncestorId);
+
+			inputDoc.removeField("ancestor_ids");
+			inputDoc.addField("ancestor_ids", ancestorIds, 0.2f);
+
+			inputDocs.add(inputDoc);
+			log.info("Updating index for "+inputDoc.getFieldValue("name")+" (id="+inputDoc.getFieldValue("id")+"), adding ancestor "+newAncestorId);
+		}
+
+		// Index the entire batch
+
+		index(inputDocs);
+		commit();
 	}
 
 }

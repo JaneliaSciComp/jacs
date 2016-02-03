@@ -7,73 +7,49 @@ import java.util.Map;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by schauderd on 8/8/15.
  */
 @javax.servlet.annotation.WebListener
 public class WebServiceContext implements ServletContextListener  {
-    private static DomainDAO domainManager;
+    private static final Logger log = LoggerFactory.getLogger(DataViewsWebService.class);
+
+    private static DomainDAO mongo;
+    private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
+    private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
+    private static String MONGO_USERNAME = SystemConfigurationProperties.getString("MongoDB.Username");
+    private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
-        try {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Object> config = (Map<String,Object>)mapper.readValue(new File(classLoader.getResource("c3p0-nosql.json").getFile()), Map.class);
+        init();
+    }
 
-            // load providers
-            Map<String, Object> mongoConfig = (Map<String,Object>)config.get("mongo");
-            if (mongoConfig != null) {
-                if (mongoConfig.containsKey("connection")) {
-                    Map<String, Object> connectionInfo = (Map<String, Object>) mongoConfig.get("connection");
-
-                    String host = (String) connectionInfo.get("host");
-                    String db = (String) connectionInfo.get("db");
-                    //String username = (String) connectionInfo.get("flylight");
-                    //String password = (String) connectionInfo.get("flylight");
-
-                    domainManager = new DomainDAO(host, db);
-                }
+    public static void init() {
+        if (WebServiceContext.mongo==null) {
+            try {
+                WebServiceContext.mongo = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
+            } catch (IOException e) {
+                log.error("Couldn't initialize database connection for RESTful services", e);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     public static DomainDAO getDomainManager() {
-        if (domainManager==null) {
-            try {
-                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-                ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> config = (Map<String,Object>)mapper.readValue(classLoader.getResourceAsStream("c3p0-nosql.json"), Map.class);
-
-                // load providers
-                Map<String, Object> mongoConfig = (Map<String,Object>)config.get("mongodb");
-                if (mongoConfig != null) {
-                    if (mongoConfig.containsKey("connection")) {
-                        Map<String, Object> connectionInfo = (Map<String, Object>) mongoConfig.get("connection");
-
-                        String host = (String) connectionInfo.get("host");
-                        String db = (String) connectionInfo.get("dbname");
-                        String username = (String) connectionInfo.get("username");
-                        String password = (String) connectionInfo.get("password");
-
-                        domainManager = new DomainDAO(host, db, null, null);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return domainManager;
+        init();
+        return WebServiceContext.mongo;
     }
 
-    public static void setDomainManager(DomainDAO domainManager) {
-        WebServiceContext.domainManager = domainManager;
+    public static void setDomainManager(DomainDAO mongo) {
+        WebServiceContext.mongo = mongo;
     }
 
     @Override

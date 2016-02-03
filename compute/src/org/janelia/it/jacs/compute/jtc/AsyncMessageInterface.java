@@ -27,6 +27,7 @@ import javax.naming.NamingException;
 import org.apache.log4j.Logger;
 
 import com.thoughtworks.xstream.XStream;
+import org.jboss.naming.remote.client.InitialContextFactory;
 
 public class AsyncMessageInterface {
     private String localConnectionFactoryProperty = "AsyncMessageInterface.LocalConnectionFactory";
@@ -155,6 +156,7 @@ public class AsyncMessageInterface {
         if (logger.isDebugEnabled()) {
         	logger.debug("Sending message within transaction with size: "+getMessageSizeInBytes(message));
         }
+        logger.info("Sending message within transaction");
         sender.send(message);
     }
 
@@ -388,10 +390,10 @@ public class AsyncMessageInterface {
             throws NamingException, JMSException {
         Context ctx = getInitialContext();
         QueueConnectionFactory conFactory =
-                (QueueConnectionFactory) ctx.lookup(connectionType.connectionFactory);
+                (QueueConnectionFactory) ctx.lookup("jms/RemoteConnectionFactory");
         connection = conFactory.createQueueConnection();
         session = connection.createQueueSession(startTransaction, QueueSession.AUTO_ACKNOWLEDGE);
-        Queue queue = (Queue) ctx.lookup(queueName);
+        Queue queue = (Queue) ctx.lookup("jms/" + queueName);
         sender = session.createSender(queue);
         connection.start();
     }
@@ -408,9 +410,8 @@ public class AsyncMessageInterface {
 
     private Context getInitialContext() throws NamingException {
         Properties env = new Properties();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
-        env.put(Context.PROVIDER_URL, providerUrl);
-        env.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
+        env.put(Context.INITIAL_CONTEXT_FACTORY, org.jboss.naming.remote.client.InitialContextFactory.class.getName());
+        env.put(Context.PROVIDER_URL,"http-remoting://localhost:8080");
         return new InitialContext(env);
     }
 

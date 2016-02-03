@@ -92,7 +92,7 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
     Subdirectories can be specified below the property e.g. java.io.tmpdir/one
 
     -->
-    <diskStore path="/data/jacsCache"/>
+    <diskStore path="/opt/data/jacsCache"/>
 
     <!--
     TransactionManagerLookup configuration

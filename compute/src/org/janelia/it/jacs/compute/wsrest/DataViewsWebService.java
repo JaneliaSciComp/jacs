@@ -11,11 +11,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
@@ -69,6 +69,8 @@ public class DataViewsWebService extends ResourceConfig {
                 updateObj = dao.updateProperty(query.getSubjectKey(), query.getObjectType(), objIds.get(0),
                         query.getPropertyName(), query.getPropertyValue());
             }
+            IndexingHelper.updateIndex(updateObj);
+
             return updateObj;
 
         } catch (Exception e) {
@@ -100,6 +102,7 @@ public class DataViewsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             DataSet newDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(newDataSet);
             return newDataSet;
         } catch (Exception e) {
             log.error("Error occurred creating DataSet " + e);
@@ -114,8 +117,9 @@ public class DataViewsWebService extends ResourceConfig {
     public DataSet updateDataSet(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            DataSet newDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
-            return newDataSet;
+            DataSet updateDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(updateDataSet);
+            return updateDataSet;
         } catch (Exception e) {
             log.error("Error occurred updating data set " + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -131,7 +135,9 @@ public class DataViewsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         Reference dataSetRef = new Reference (Annotation.class.getName(), new Long(dataSetId));
         try {
-            dao.remove(subjectKey, dao.getDomainObject(subjectKey, dataSetRef));
+            DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
+            dao.remove(subjectKey, domainObj);
+            IndexingHelper.removeFromIndex(domainObj);
         } catch (Exception e) {
             log.error("Error occurred removing dataset" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -146,6 +152,7 @@ public class DataViewsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(newFilter);
             return newFilter;
         } catch (Exception e) {
             log.error("Error occurred creating Search Filter " + e);
@@ -160,8 +167,9 @@ public class DataViewsWebService extends ResourceConfig {
     public Filter updateFilter(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
-            return newFilter;
+            Filter updateFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
+            IndexingHelper.updateIndex(updateFilter);
+            return updateFilter;
         } catch (Exception e) {
             log.error("Error occurred updating search filter " + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
