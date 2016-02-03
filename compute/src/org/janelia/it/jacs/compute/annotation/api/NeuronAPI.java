@@ -8,6 +8,8 @@ package org.janelia.it.jacs.compute.annotation.api;
 
 //import javax.annotation.security.RolesAllowed;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

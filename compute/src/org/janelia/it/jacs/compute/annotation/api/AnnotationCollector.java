@@ -8,8 +8,10 @@ package org.janelia.it.jacs.compute.annotation.api;
 
 import Jama.Matrix;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPoint;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPointCollection;
@@ -17,6 +19,7 @@ import org.janelia.it.jacs.compute.annotation.to.NeuronBean;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.model.IdSource;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -37,6 +40,9 @@ import sun.misc.BASE64Encoder;
 public class AnnotationCollector {
     private Logger log = Logger.getLogger(AnnotationCollector.class);
     private final TmProtobufExchanger exchanger = new TmProtobufExchanger();
+    private static final Long MINIMUM_GUID = 1000000000000000000L;
+    
+    private IdSource idSource = new IdSource();
     
     public AnnotationCollector() {
     }
@@ -44,6 +50,9 @@ public class AnnotationCollector {
     public void addNeuronImpl(
             NeuronBean neuron
     ) throws Exception {
+        // Any 'GUID' for a point, which is smaller than this, will be mapped to
+        // a newly 'generated' GUID for internal storage.  Apply this to points.
+        Map<Long, Long> extIdToGUID = new HashMap<>();
         // Need to establish the containing of this neuron.
         EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
         Entity collectionEntity = entityBean.getEntityById(DEFAULT_OWNER_KEY, neuron.collectionGUID);
@@ -88,7 +97,7 @@ public class AnnotationCollector {
             Matrix pointAsVoxel = micronToVoxMatrix.times( pointAsMicron );
             
             TmGeoAnnotation annotation = buildTmGeoAnnotation(
-                    point.pointGUID, point.neuronGUID, point.parentPointGUID, 
+                    exchangeGUID(point.pointGUID, extIdToGUID), point.neuronGUID, exchangeGUID(point.parentPointGUID, extIdToGUID), 
                     pointAsVoxel.get(0, 0), pointAsVoxel.get(1, 0), pointAsVoxel.get(2, 0)
             );
             if (point.parentPointGUID == null  ||  point.parentPointGUID == -1) {
@@ -97,12 +106,12 @@ public class AnnotationCollector {
             }
             else {
                 // Not a root.
-                TmGeoAnnotation parent = tmNeuron.getGeoAnnotationMap().get(point.parentPointGUID);
+                TmGeoAnnotation parent = tmNeuron.getGeoAnnotationMap().get(exchangeGUID(point.parentPointGUID, extIdToGUID));
                 if (parent != null) {
                     parent.addChild(annotation);
                 }
             }
-            tmNeuron.getGeoAnnotationMap().put(point.pointGUID, annotation);
+            tmNeuron.getGeoAnnotationMap().put(exchangeGUID(point.pointGUID, extIdToGUID), annotation);
         }
         
         tmNeuron = pushNeuron(tmNeuron);
@@ -120,6 +129,7 @@ public class AnnotationCollector {
 
     }
 
+    /** @deprecated */
     public void addPointImpl(
             Long pointGUID, Long collectionGUID, Long neuronGUID,
             int x, int y, int z,
@@ -386,6 +396,31 @@ public class AnnotationCollector {
 
     private boolean idGiven(TmNeuron neuron) {
         return neuron.getId() != null  &&  neuron.getId() != -1;
+    }
+    
+    /**
+     * Ensure we have a new, internal GUID version of the external GUID.
+     * 
+     * @param id given by REST call.
+     * @param extIdToGUID mapping to generated GUIDs.
+     * @return internal version of this ID.
+     */
+    private Long exchangeGUID( Long id, Map<Long, Long> extIdToGUID ) {
+        Long rtnVal = -1L;
+        if (id == -1L) {
+            rtnVal = id;
+        }
+        else if (id > MINIMUM_GUID) {
+            rtnVal = id;
+        }
+        else if (extIdToGUID.containsKey(id)) {
+            rtnVal = extIdToGUID.get(id);
+        }
+        else {
+            rtnVal = idSource.next();
+            extIdToGUID.put(id, rtnVal);
+        }
+        return rtnVal;
     }
     
     private TmGeoAnnotation buildTmGeoAnnotation(Long pointGUID, Long neuronGUID, Long parentPointGUID, double x, double y, double z) {
