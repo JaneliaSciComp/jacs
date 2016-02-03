@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.model.domain.support;
 
+import static org.janelia.it.jacs.model.domain.enums.FileType.LosslessStack;
+import static org.janelia.it.jacs.model.domain.enums.FileType.VisuallyLosslessStack;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +29,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.reflections.Reflections;
@@ -201,6 +205,19 @@ public class DomainUtils {
         }
         return subjectKey.substring(0, subjectKey.indexOf(':'));
     }
+
+    public static boolean equals(DomainObject o1, DomainObject o2) {
+        if (o1==null || o2==null) return false;
+        if (o1.getId()==null || o2.getId()==null) return false;
+        return o1.getId().equals(o2.getId());
+    }
+
+    public static boolean equals(PipelineResult o1, PipelineResult o2) {
+        if (o1==null || o2==null) return false;
+        if (o1.getId()==null || o2.getId()==null) return false;
+        return o1.getId().equals(o2.getId());
+    }
+    
     
     /**
      * Returns a string uniquely identifying the object instance. 
@@ -217,7 +234,8 @@ public class DomainUtils {
     }
     
     public static String getFilepath(HasFiles hasFiles, FileType fileType) {
-        
+
+        if (hasFiles==null) return null;
         Map<FileType,String> files = hasFiles.getFiles();
         if (files==null) return null;
         String filepath = files.get(fileType);
@@ -243,6 +261,12 @@ public class DomainUtils {
         urlSb.append(filepath);
         
         return urlSb.length()>0 ? urlSb.toString() : null;
+    }
+    
+    public static String getDefault3dImageFilePath(HasFiles hasFiles) {
+        String path = DomainUtils.getFilepath(hasFiles, LosslessStack);
+        if (path==null) path = DomainUtils.getFilepath(hasFiles, VisuallyLosslessStack);
+        return path;
     }
 
     /**

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.jongo.marshall.jackson.oid.MongoId;
@@ -62,9 +63,36 @@ public abstract class AbstractDomainObject implements DomainObject,Serializable 
         return names;
     }
 
-    @SearchAttribute(key="search_type",label="Search Type",display=false)
+    @SearchAttribute(key="type_label",label="Type")
     @JsonIgnore
     public String getType() {
+        String label = null;
+        // Look for a @SearchType label
+        Class<?> clazz = this.getClass();
+        while (clazz!=null && label==null) {
+            SearchType searchType = clazz.getAnnotation(SearchType.class);
+            if (searchType!=null) {
+                label = searchType.label();
+            }
+            clazz = clazz.getSuperclass();
+        }
+        if (label==null) {
+            // No label found, so look again, this time at @MongoMapped
+            clazz = this.getClass();
+            while (clazz!=null && label==null) {
+                MongoMapped mongoMapped = clazz.getAnnotation(MongoMapped.class);
+                if (mongoMapped!=null) {
+                    label = mongoMapped.label();
+                }
+                clazz = clazz.getSuperclass();
+            }
+        }
+        return label;
+    }
+    
+    @SearchAttribute(key="search_type",label="Search Type",display=false)
+    @JsonIgnore
+    public String getSearchType() {
     	SearchType searchTypeAnnot = getClass().getAnnotation(SearchType.class);
         if (searchTypeAnnot!=null) {
             return searchTypeAnnot.key();

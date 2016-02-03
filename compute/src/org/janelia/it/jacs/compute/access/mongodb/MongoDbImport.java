@@ -2163,7 +2163,7 @@ public class MongoDbImport extends AnnotationDAO {
 		    		newFolder.setCreationDate(folderEntity.getCreationDate());
 		    		newFolder.setUpdatedDate(folderEntity.getUpdatedDate());
 			    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
-			    	if (objectSet!=null) {
+			    	if (objectSet!=null) {			    	    
 			    		String setLabel = getDomainClassLabel(objectSet.getClassName());
 			    		if (setLabel!=null) {
     			    		ObjectSet existingSet = extraSetCache.get(setLabel);
@@ -2623,14 +2623,22 @@ public class MongoDbImport extends AnnotationDAO {
     private final Map<String,String> domainLabelCache = new HashMap<>();
     
     private String getDomainClassLabel(String className) {
-    	String label = domainLabelCache.get(className);
+    	
+        String label = domainLabelCache.get(className);
     	if (label!=null) return label;
     	Class<? extends DomainObject> domainClass = DomainUtils.getObjectClassByName(className);
     	if (domainClass==null) return className;
-    	MongoMapped annotation = (MongoMapped) domainClass.getAnnotation(MongoMapped.class);
-    	if (annotation==null) return domainClass.getSimpleName();
-    	domainLabelCache.put(className, annotation.label());
-    	return annotation.label();
+    	
+        MongoMapped mongoAnnot = null;
+        Class<?> clazz = this.getClass();
+        while (clazz!=null && mongoAnnot==null) {
+            mongoAnnot = clazz.getAnnotation(MongoMapped.class);
+            clazz = clazz.getSuperclass();
+        }
+
+    	if (mongoAnnot==null) return domainClass.getSimpleName();
+    	domainLabelCache.put(className, mongoAnnot.label());
+    	return mongoAnnot.label();
     }
     
     private class EntityRootComparator implements Comparator<Entity> {
