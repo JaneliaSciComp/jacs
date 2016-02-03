@@ -42,4 +42,6 @@ public interface DomainObject extends HasIdentifier {
     public Date getUpdatedDate();
 
     public void setUpdatedDate(Date updatedDate);
+    
+    public String getType();
 }
