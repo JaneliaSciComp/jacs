@@ -18,7 +18,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class NeuronBean {
     @XmlElement public AnnotationPoint[] points;
     @XmlElement public String name;    
-    @XmlElement public Long id;
+    @XmlElement public Long id = -1L;  // Omissible.
     @XmlElement public Long collectionGUID;
     @XmlElement public Long sampleID;
     // id vs tag will wind up in a map on the TmVersionedNeuronCollection.
