@@ -6,6 +6,7 @@
 
 package org.janelia.it.jacs.compute.annotation.api;
 
+import Jama.Matrix;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmVersionedNeuronCollection;
 import static org.janelia.it.jacs.model.user_data.tiledMicroscope.TmVersionedNeuronCollection.*;
 import org.janelia.it.jacs.model.user_data.tiled_microscope_protobuf.TmProtobufExchanger;
+import org.janelia.it.jacs.model.util.MatrixUtilities;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import sun.misc.BASE64Encoder;
 
@@ -56,10 +58,38 @@ public class AnnotationCollector {
         tmNeuron.setOwnerKey(DEFAULT_OWNER_KEY);
         tmNeuron.setCreationDate(new Date());
         tmNeuron.setName(neuron.name);
+                        
+        // Need info from sample, to properly convert the points.
+        Entity sampleEntity = entityBean.getEntityById(neuron.sampleID);
+        entityBean.loadLazyEntity(sampleEntity, true);
+        Matrix micronToVoxMatrix = null;
+        // Externally, we have microns.  Internally, we store as voxels.
+        for (EntityData sed: sampleEntity.getEntityData()) {
+            if (sed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX)) {
+                String voxelMatrixStr = sed.getValue();
+                micronToVoxMatrix = MatrixUtilities.deserializeMatrix(voxelMatrixStr, EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX);
+                break;
+            }
+        }
+        if (micronToVoxMatrix == null) {
+            throw new Exception("Failed to find conversion matrix from sample " + neuron.sampleID);
+        }
         
         for (AnnotationPoint point: neuron.points) {
+            // Convert to internal representation.
+            Matrix pointAsMicron = new Matrix( 
+                new double[] {
+                    point.x,
+                    point.y,
+                    point.z,
+                    1.0
+                }, 4 
+            );
+            Matrix pointAsVoxel = micronToVoxMatrix.times( pointAsMicron );
+            
             TmGeoAnnotation annotation = buildTmGeoAnnotation(
-                    point.pointGUID, point.neuronGUID, point.parentPointGUID, point.x, point.y, point.z
+                    point.pointGUID, point.neuronGUID, point.parentPointGUID, 
+                    pointAsVoxel.get(0, 0), pointAsVoxel.get(1, 0), pointAsVoxel.get(2, 0)
             );
             if (point.parentPointGUID == null  ||  point.parentPointGUID == -1) {
                 // This is a root.
@@ -83,7 +113,7 @@ public class AnnotationCollector {
             collectionEntity = entityBean.getEntityAndChildren(DEFAULT_OWNER_KEY, collectionEntity.getId());
             Entity propertySetEntity = getPropertySetEntity(collectionEntity);
             propertySetEntity.setValueByAttributeName(
-                    EntityConstants.ATTRIBUTE_PROPERTY + "_" + neuronName, neuron.tag
+                    EntityConstants.ATTRIBUTE_PROPERTY, neuronName + "=" + neuron.tag
             );
             entityBean.saveOrUpdateEntity(propertySetEntity);
         }
@@ -358,16 +388,16 @@ public class AnnotationCollector {
         return neuron.getId() != null  &&  neuron.getId() != -1;
     }
     
-    private TmGeoAnnotation buildTmGeoAnnotation(Long pointGUID, Long neuronGUID, Long parentPointGUID, int x, int y, int z) {
+    private TmGeoAnnotation buildTmGeoAnnotation(Long pointGUID, Long neuronGUID, Long parentPointGUID, double x, double y, double z) {
         TmGeoAnnotation annotation = new TmGeoAnnotation();
         annotation.setId(pointGUID);
         annotation.setCreationDate(new Date());
         annotation.setIndex(1);
         annotation.setNeuronId(neuronGUID);
         annotation.setParentId(parentPointGUID);
-        annotation.setX((double) x);
-        annotation.setY((double) y);
-        annotation.setZ((double) z);
+        annotation.setX(x);
+        annotation.setY(y);
+        annotation.setZ(z);
         return annotation;
     }
     
