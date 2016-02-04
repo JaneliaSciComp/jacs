@@ -69,6 +69,7 @@ public interface IProcessData {
     public static final String ORIGINAL_MESSAGE_ID = "ORIGINAL_MESSAGE_ID";
     public static final String MESSAGE_ID = "MESSAGE_ID";
     public static final String PROCESSING_EXCEPTION = "PROCESSING_EXCEPTION";
+    public static final String QUEUE_OVERRIDE = "QUEUE_OVERRIDE";
 
 
 }
