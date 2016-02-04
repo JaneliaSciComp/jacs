@@ -625,8 +625,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 	private String findExistingJson(final String lsmName) throws Exception {
 		final StringHolder stringHolder = new StringHolder();
         EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
-                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN).reverse()
-                .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT).reverse()
+                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
+                .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
                 .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA).first()
                 .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
                 .run(new EntityVisitor() {
