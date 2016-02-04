@@ -21,6 +21,9 @@ public class TmAnchoredPathEndpoints implements IsSerializable, Serializable {
     @Tag(2)
     private Long annotationID2;
 
+    // needed by protobuf
+    public TmAnchoredPathEndpoints() {}
+
     public TmAnchoredPathEndpoints(Long annotationID1, Long annotationID2) {
         setAnnotations(annotationID1, annotationID2);
     }
@@ -29,6 +32,9 @@ public class TmAnchoredPathEndpoints implements IsSerializable, Serializable {
         setAnnotations(annotation1.getId(), annotation2.getId());
     }
 
+    /**
+     * equality implies the pair of IDs are the same in any order
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -39,19 +45,42 @@ public class TmAnchoredPathEndpoints implements IsSerializable, Serializable {
             return false;
         }
 
-        return (annotationID1.equals(((TmAnchoredPathEndpoints) o).getAnnotationID1()) &&
-                annotationID2.equals(((TmAnchoredPathEndpoints) o).getAnnotationID2()));
+        return (getFirstAnnotationID().equals(((TmAnchoredPathEndpoints) o).getFirstAnnotationID()) &&
+                getSecondAnnotationID().equals(((TmAnchoredPathEndpoints) o).getSecondAnnotationID()));
     }
 
+    /**
+     * hash is independent of the order of the two IDs
+     */
     @Override
     public int hashCode() {
         // taken from Joshua Bloch's Effective Java Ch. 3 item 9
         // (widely quoted on the Internet):
-        int result = (int) (annotationID1 ^ (annotationID1 >>> 32));
-        result = 31 * result + (int) (annotationID2 ^ (annotationID2 >>> 32));
+        int result = (int) (getFirstAnnotationID() ^ (getFirstAnnotationID() >>> 32));
+        result = 31 * result + (int) (getSecondAnnotationID() ^ (getSecondAnnotationID() >>> 32));
         return result;
     }
 
+    /**
+     * returns annotation ID with lesser ID number
+     */
+    public Long getFirstAnnotationID() {
+        return Math.min(annotationID1, annotationID2);
+    }
+
+    /**
+     * return annotation ID with greater ID number
+     */
+    public Long getSecondAnnotationID() {
+        return Math.max(annotationID1, annotationID2);
+    }
+
+    public void setAnnotations(Long annotationID1, Long annotationID2) {
+        this.annotationID1 = annotationID1;
+        this.annotationID2 = annotationID2;
+    }
+
+    // protobuf needs getters/setters on all fields
     public Long getAnnotationID1() {
         return annotationID1;
     }
@@ -60,14 +89,12 @@ public class TmAnchoredPathEndpoints implements IsSerializable, Serializable {
         return annotationID2;
     }
 
-    public void setAnnotations(Long annotationID1, Long annotationID2) {
-        if (annotationID2 < annotationID1) {
-            this.annotationID1 = annotationID2;
-            this.annotationID2 = annotationID1;
-        } else {
-            this.annotationID1 = annotationID1;
-            this.annotationID2 = annotationID2;
-        }
+    public void setAnnotationID1(Long annotationID1) {
+        this.annotationID1 = annotationID1;
+    }
+
+    public void setAnnotationID2(Long annotationID2) {
+        this.annotationID2 = annotationID2;
     }
 
 }

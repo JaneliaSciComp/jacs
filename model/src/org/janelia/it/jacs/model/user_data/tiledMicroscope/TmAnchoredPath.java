@@ -4,7 +4,6 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 import io.protostuff.Tag;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -32,6 +31,9 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
     @Tag(3)
     List<List<Integer>> pointList;
 
+    // needed by protobuf:
+    public TmAnchoredPath() {}
+
     public TmAnchoredPath(Long id, TmAnchoredPathEndpoints endpoints, List<List<Integer>> pointList) throws Exception{
         this.id = id;
         this.endpoints = endpoints;
@@ -40,7 +42,7 @@ public class TmAnchoredPath implements IsSerializable, Serializable {
 
     public String toString() {
         if (endpoints != null) {
-            return String.format("<path between %d, %d>", endpoints.getAnnotationID1(), endpoints.getAnnotationID2());
+            return String.format("<path between %d, %d>", endpoints.getFirstAnnotationID(), endpoints.getSecondAnnotationID());
         } else {
             return "<uninitialized path>";
         }
