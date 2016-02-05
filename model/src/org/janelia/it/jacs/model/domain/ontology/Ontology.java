@@ -25,6 +25,11 @@ public class Ontology extends OntologyTerm implements DomainObject {
         return "Ontology";
     }
 
+    @Override
+    public String getType() {
+        return "Ontology"; // this must match the MongoMapped.label above
+    }
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getOwnerKey() {
         return ownerKey;
