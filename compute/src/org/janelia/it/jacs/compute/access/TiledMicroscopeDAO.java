@@ -121,9 +121,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             workspaceEntity.getEntityData().add(sampleEd);
 
             Entity sampleEntity = annotationDAO.getEntityById(brainSampleId);
-            EntityData wsVersionEd = setWorkspaceLatestVersion(workspaceEntity);
-            annotationDAO.saveOrUpdate(wsVersionEd);
-            workspaceEntity.getEntityData().add(wsVersionEd);
+            setWorkspaceLatestVersion(workspaceEntity);
 
             annotationDAO.saveOrUpdate(workspaceEntity);
             // back to user
@@ -368,8 +366,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             sampleEd.setParentEntity(workspace);
             sampleEd.setValue(brainSampleId.toString());
             workspace.getEntityData().add(sampleEd);
-            EntityData versionED = setWorkspaceLatestVersion(workspace);
-            workspace.getEntityData().add(versionED);
+            setWorkspaceLatestVersion(workspace);
             createTiledMicroscopePreferencesInMemory(workspace);
 
             return workspace;
@@ -1188,7 +1185,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             Collections.sort(descriptorList, new Comparator<TmWorkspaceDescriptor>() {
                 @Override
                 public int compare(TmWorkspaceDescriptor a,
-                        TmWorkspaceDescriptor b) {
+                                   TmWorkspaceDescriptor b) {
                     if (a.getId() < b.getId()) {
                         return 1;
                     } else {
@@ -1791,6 +1788,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
         for (EntityData ed : toDelete) {
             annotationDAO.deleteEntityData(ed);
+            workspaceEntity.getEntityData().remove(ed);
         }
 
         EntityData wsVersionEd = new EntityData();
@@ -1799,52 +1797,14 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
         wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + version);
         wsVersionEd.setParentEntity(workspaceEntity);
+        workspaceEntity.getEntityData().add(wsVersionEd);
         annotationDAO.saveOrUpdateEntityData(wsVersionEd);
+        annotationDAO.saveOrUpdateEntity(workspaceEntity);
         return wsVersionEd;
     }
 
     private String threadSafeTempGeoValue() {
         return TMP_GEO_VALUE + Thread.currentThread().getName();
-    }
-
-    private boolean isConverted(TmNeuron neuron) {
-        Long id = neuron.getId();
-        Entity neuronEntity = annotationDAO.getEntityById(id);
-        EntityData versionEd = neuronEntity.getEntityDataByAttributeName(VERSION_ATTRIBUTE);
-        return versionEd != null && TmWorkspace.Version.PB_1.toString().equals(versionEd.getValue());
-    }
-
-    /**
-     * This is needed in case an all-digit-run string needs to be replaced in a
-     * string. There is some possibility that the target string will hold an
-     * all-digit string identical, except longer than the one to find.
-     *
-     * @param targetString replace in this.
-     * @param oldDigitString what to replace.
-     * @param newDigitString what to replace it with.
-     * @return
-     */
-    private String digitSafeReplace(String targetString, String oldDigitString, String newDigitString) {
-        int nextPos = 0;
-        int pos = -1;
-        boolean replaced = false;
-        while (-1 != (pos = targetString.indexOf(oldDigitString, nextPos))) {
-            // Do the string replacement, being careful about any
-            // (however remote) possibility of encountering a
-            // string-match that is longer than the search-string.
-            nextPos = pos + oldDigitString.length() + 1;
-            if ((pos == 0 || !Character.isDigit(targetString.charAt(pos - 1))
-                    && (nextPos >= targetString.length() || !Character.isDigit(targetString.charAt(nextPos))))) {
-                targetString = targetString.substring(0, pos) + newDigitString + targetString.substring(nextPos);
-                replaced = true;
-                break;
-            }
-        }
-        if (replaced) {
-            return targetString;
-        } else {
-            return null;
-        }
     }
 
 }
