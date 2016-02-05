@@ -424,6 +424,22 @@ public class DomainUtils {
         return null;
     }
 
+    public static OntologyTerm findTerm(OntologyTerm term, String name) {
+        if (name==null) return null;
+        if (term.getName()!=null && term.getName().equals(name)) {
+            return term;
+        }
+        if (term.getTerms()!=null) {
+            for(OntologyTerm child : term.getTerms()) {
+                OntologyTerm found = findTerm(child, name);
+                if (found!=null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+    
     /**
      * There are better ways of deep cloning, but this is easier for now. 
      */

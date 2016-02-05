@@ -250,6 +250,7 @@ public class DomainDAO {
     /**
      * Retrieve a refresh copy of the given domain object from the database. 
      */
+    @SuppressWarnings("unchecked")
     public <T extends DomainObject> T getDomainObject(String subjectKey, T domainObject) {
         return (T)getDomainObject(subjectKey, domainObject.getClass(), domainObject.getId());
     }
@@ -257,11 +258,40 @@ public class DomainDAO {
     /**
      * Get the domain object referenced by the collection name and id. 
      */
+    @SuppressWarnings("unchecked")
     public <T extends DomainObject> T getDomainObject(String subjectKey, Class<T> domainClass, Long id) {
         Reference reference = new Reference(domainClass.getName(), id);
         return (T)getDomainObject(subjectKey, reference);
     }
 
+    /**
+     * Get the domain object by name.
+     */
+    public <T extends DomainObject> List<T> getDomainObjectsByName(String subjectKey, Class<T> domainClass, String name) {
+
+        if (domainClass==null) {
+            return null;
+        }
+
+        long start = System.currentTimeMillis();
+        log.trace("getDomainObjects(subjectKey={},className="+domainClass.getName()+",name="+name+")");
+
+        Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
+
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCursor<T> cursor = null;
+        if (subjects == null) {
+            cursor = getCollectionByName(collectionName).find("{name:#}", name).as(domainClass);
+        }
+        else {
+            cursor = getCollectionByName(collectionName).find("{name:#,readers:{$in:#}}", name, subjects).as(domainClass);
+        }
+
+        List<T> list = toList(cursor);
+        log.trace("Getting "+list.size()+" "+collectionName+" objects took "+(System.currentTimeMillis()-start)+" ms");
+        return list;
+    }
+    
     /**
      * Get the domain object referenced by the given Reference.
      */
