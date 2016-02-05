@@ -44,6 +44,9 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     @Tag(10)
     private List<Long> childIds = new ArrayList<>();;
 
+    @Tag(11)
+    private Double radius;
+
     // implementation note: at one point we stored the parent and child objects,
     //  but serializing them for calling remote server routines caused the
     //  whole tree to get walked recursively, overflowing the stack; so
@@ -167,6 +170,20 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public boolean isLink() {
         return !isRoot() && getChildIds().size() == 1;
+    }
+
+    /**
+     * @return the radius
+     */
+    public Double getRadius() {
+        return radius;
+    }
+
+    /**
+     * @param radius the radius to set
+     */
+    public void setRadius(Double radius) {
+        this.radius = radius;
     }
 
 }

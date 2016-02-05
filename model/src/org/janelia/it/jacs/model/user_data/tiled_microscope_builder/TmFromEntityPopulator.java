@@ -223,7 +223,6 @@ public class TmFromEntityPopulator {
 
         Map<Long, TmStructuredTextAnnotation> textAnnotationMap = tmNeuron.getStructuredTextAnnotationMap();
         Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = tmNeuron.getAnchoredPathMap();
-        List<TmGeoAnnotation> rootAnnotations = tmNeuron.getRootAnnotations();
         Map<Long, TmGeoAnnotation> geoAnnotationMap = tmNeuron.getGeoAnnotationMap();
 
         // First step is to take all those entity data and put them into the
@@ -234,7 +233,7 @@ public class TmFromEntityPopulator {
                     || edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
                 TmGeoAnnotation ga = createTmGeoAnnotation(ed);
                 if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                    rootAnnotations.add(ga);
+                    tmNeuron.addRootAnnotation(ga);
                 }
                 geoAnnotationMap.put(ga.getId(), ga);
                 ga.setNeuronId(id);

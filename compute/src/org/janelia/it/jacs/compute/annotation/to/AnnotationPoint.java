@@ -26,6 +26,7 @@ public class AnnotationPoint {
     @XmlElement public int x;
     @XmlElement public int y;
     @XmlElement public int z;
+    @XmlElement public Double radius = -1.0;  // Omissible
     @XmlElement public int structureID;
     @XmlElement public Long parentPointGUID;
 }

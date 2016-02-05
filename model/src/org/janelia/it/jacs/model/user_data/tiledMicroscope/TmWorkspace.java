@@ -20,6 +20,7 @@ public class TmWorkspace implements IsSerializable, Serializable {
 
     public enum Version {
         PB_1,             // Version 1 of the Protobuf-Encoded Neuron.
+        ENTITY_PB_TRANSITION, // Frozen in transition.
         ENTITY_4          // Latest Workstation version, before Protobuf.
     }
 

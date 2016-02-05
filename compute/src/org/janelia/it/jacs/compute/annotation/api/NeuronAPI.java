@@ -47,7 +47,7 @@ curl -H"Content-Type:text/plain"  --request PUT ${SRVR_URL}/${CONTEXT}/NeuronAPI
 
 echo
 echo TESTING POINT ADD
-echo \{ \"pointGUID\":9999, \"collectionGUID\":8888, \"neuronGUID\":9996, \"x\":74000, \"y\":46000, \"z\":17000, \"structureID\":2, \"parentPointGUID\":9997 \} >${FILE}
+echo \{ \"pointGUID\":9999, \"collectionGUID\":8888, \"neuronGUID\":9996, \"x\":74000, \"y\":46000, \"z\":17000, \"radius\":-1.0, \"structureID\":2, \"parentPointGUID\":9997 \} >${FILE}
 curl -H"Content-Type:application/json"  --request POST --data @${FILE} ${SRVR_URL}/${CONTEXT}/NeuronAPI/addPointJSON/9999/
 
 #
@@ -143,10 +143,11 @@ public class NeuronAPI {
                            @QueryParam("collectionGUID") Long collectionGUID, 
                            @QueryParam("neuronGUID") Long neuronGUID, 
                            @QueryParam("x") int x, @QueryParam("y") int y, @QueryParam("z") int z, 
+                           @QueryParam("radius") Double radius,
                            @QueryParam("structureID") int structureID,
                            @QueryParam("parentPointGUID") Long parentPointGUID) {
         try {
-            addPointImpl(pointGUID, collectionGUID, neuronGUID, x, y, z, structureID, parentPointGUID);
+            addPointImpl(pointGUID, collectionGUID, neuronGUID, x, y, z, radius, structureID, parentPointGUID);
             return Response.ok(new GenericEntity<>("Point Added", String.class)).build();
         } catch (Exception ex) {
             return errorResponse(ex);
@@ -167,7 +168,8 @@ public class NeuronAPI {
         try {
             addPointImpl(
                     point.pointGUID, point.collectionGUID, point.neuronGUID, 
-                    point.x, point.y, point.z, 
+                    point.x, point.y, point.z,
+                    point.radius,
                     point.structureID,
                     point.parentPointGUID
             );
@@ -220,6 +222,7 @@ public class NeuronAPI {
     private void addPointImpl(
             Long pointGUID, Long collectionGUID, Long neuronGUID, 
             int x, int y, int z, 
+            Double radius,
             int structureID, 
             Long parentPointGUID) throws Exception {
         log.info(String.format(
@@ -228,7 +231,7 @@ public class NeuronAPI {
                 pointGUID, parentPointGUID, 
                 neuronGUID, collectionGUID)
         );
-        annotationCollector.addPointImpl(pointGUID, collectionGUID, neuronGUID, x,y,z, structureID, collectionGUID);
+        annotationCollector.addPointImpl(pointGUID, collectionGUID, neuronGUID, x,y,z, radius, structureID, collectionGUID);
     }
     
     private void removeNeuronImpl(Long neuronGUID) throws Exception {

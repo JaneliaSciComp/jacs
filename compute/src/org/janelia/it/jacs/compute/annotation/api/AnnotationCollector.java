@@ -98,7 +98,7 @@ public class AnnotationCollector {
             
             TmGeoAnnotation annotation = buildTmGeoAnnotation(
                     exchangeGUID(point.pointGUID, extIdToGUID), point.neuronGUID, exchangeGUID(point.parentPointGUID, extIdToGUID), 
-                    pointAsVoxel.get(0, 0), pointAsVoxel.get(1, 0), pointAsVoxel.get(2, 0)
+                    pointAsVoxel.get(0, 0), pointAsVoxel.get(1, 0), pointAsVoxel.get(2, 0), point.radius
             );
             if (point.parentPointGUID == null  ||  point.parentPointGUID == -1) {
                 // This is a root.
@@ -133,6 +133,7 @@ public class AnnotationCollector {
     public void addPointImpl(
             Long pointGUID, Long collectionGUID, Long neuronGUID,
             int x, int y, int z,
+            Double radius,
             int structureID,
             Long parentPointGUID) throws Exception {        
         TmNeuron tmNeuron = fetchNeuron(collectionGUID, neuronGUID); // Get neuron from DB.
@@ -140,7 +141,7 @@ public class AnnotationCollector {
             log.info("Creating neuron " + neuronGUID);
             tmNeuron = createNeuron(neuronGUID, collectionGUID);
         }
-        TmGeoAnnotation annotation = buildTmGeoAnnotation(pointGUID, neuronGUID, parentPointGUID, x, y, z);
+        TmGeoAnnotation annotation = buildTmGeoAnnotation(pointGUID, neuronGUID, parentPointGUID, x, y, z, radius);
         if (parentPointGUID == null  ||  parentPointGUID == -1) {
             // This is a root.
             log.info("Adding annotation as root.");
@@ -279,6 +280,72 @@ public class AnnotationCollector {
         }
     }
 
+    public TmNeuron pushNeuron(TmNeuron neuron) throws Exception {
+
+        EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
+        // Workspace (or collection) containing neuron is the entity which
+        // 'has' the neuron.  Neuron is an Entity-Data.
+        Entity collectionEntity = entityBean.getEntityById(neuron.getOwnerKey(), neuron.getWorkspaceId());
+        if (collectionEntity == null) {
+            final String message = "Collection " + neuron.getWorkspaceId() + " not found.  Cannot push neuron.";
+            log.warn(message);
+            throw new Exception(message);
+        }
+
+        // May need to exchange this entity-data for existing one on workspace
+        boolean rePushRequired = true;
+        EntityData preExistingEntityData = null;
+        if (neuron != null && idGiven(neuron)) {
+            for (EntityData edata : collectionEntity.getEntityData()) {
+                log.debug("Comparing neuron " + neuron.getId() + " to entity data " + edata.getId() + ".");
+                if (edata.getId() == null) {
+                    log.warn("No id in entity data. " + edata);
+                } else if (edata.getId().equals(neuron.getId())) {
+                    preExistingEntityData = edata;
+                    break;
+                }
+            }
+        }
+
+        // Must now create a new entity data
+        EntityData entityData = new EntityData();
+        entityData.setOwnerKey(neuron.getOwnerKey());
+        entityData.setCreationDate(neuron.getCreationDate());
+        entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_PROTOBUF_NEURON);
+        if (idGiven(neuron)) {
+            entityData.setId(neuron.getId());
+            rePushRequired = false;
+        }
+        entityData.setParentEntity(collectionEntity);
+
+        // save back.
+        log.info("Saving back the neuron " + entityData.getId());
+        EntityData savedEntityData = entityBean.saveOrUpdateEntityData(entityData);
+        if (preExistingEntityData != null) {
+            log.info("Removing old entitydata for id " + preExistingEntityData.getId());
+            collectionEntity.getEntityData().remove(preExistingEntityData);
+        }
+        log.info("Adding neuron to its collection.");
+        collectionEntity.getEntityData().add(savedEntityData);
+        log.info("Saved back the neuron " + entityData.getId());
+        //collectionEntity.getEntityData().add(savedEntityData);
+
+        if (rePushRequired) {
+            log.info("Re-saving neuron with neuron id embedded in geo annotations.");
+            // Now that the neuron has been db-dipped, we can get its ID, and 
+            // push that into all points.
+            Long id = savedEntityData.getId();
+            for (TmGeoAnnotation anno : neuron.getGeoAnnotationMap().values()) {
+                anno.setNeuronId(id);
+            }
+            // Need to make serializable version of the data.
+            createEntityData(entityData, neuron);
+            entityBean.saveOrUpdateEntityData(entityData);
+        }
+
+        return neuron;
+    }
+
     private TmNeuron createNeuron(Long id, Long collectionGUID) throws Exception {
         TmNeuron neuron = new TmNeuron();
         neuron.setId(id);
@@ -317,72 +384,6 @@ public class AnnotationCollector {
         return rtnVal;
     }
     
-    private TmNeuron pushNeuron(TmNeuron neuron) throws Exception {
-        
-        EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
-        // Workspace (or collection) containing neuron is the entity which
-        // 'has' the neuron.  Neuron is an Entity-Data.
-        Entity collectionEntity = entityBean.getEntityById(neuron.getOwnerKey(), neuron.getWorkspaceId());
-        if (collectionEntity == null) {
-            final String message = "Collection " + neuron.getWorkspaceId() + " not found.  Cannot push neuron.";
-            log.warn(message);
-            throw new Exception(message);
-        }
-        
-        // May need to exchange this entity-data for existing one on workspace
-        boolean rePushRequired = true;
-        EntityData preExistingEntityData = null;
-        if (neuron != null  &&  idGiven(neuron)) {
-            for (EntityData edata : collectionEntity.getEntityData()) {
-                log.debug("Comparing neuron "+neuron.getId()+" to entity data "+edata.getId()+".");
-                if (edata.getId() == null) {
-                    log.warn("No id in entity data. "+edata);
-                } else if (edata.getId().equals(neuron.getId())) {
-                    preExistingEntityData = edata;
-                    break;
-                }
-            }
-        }
-
-        // Must now create a new entity data
-        EntityData entityData = new EntityData();
-        entityData.setOwnerKey(neuron.getOwnerKey());
-        entityData.setCreationDate(neuron.getCreationDate());
-        entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_PROTOBUF_NEURON);
-        if (idGiven(neuron)) {
-            entityData.setId(neuron.getId());
-            rePushRequired = false;
-        }
-        entityData.setParentEntity(collectionEntity);
-        
-        // save back.
-        log.info("Saving back the neuron " + entityData.getId());
-        EntityData savedEntityData = entityBean.saveOrUpdateEntityData(entityData);
-        if (preExistingEntityData != null) {
-            log.info("Removing old entitydata for id " + preExistingEntityData.getId());
-            collectionEntity.getEntityData().remove(preExistingEntityData);
-        }
-        log.info("Adding neuron to its collection.");
-        collectionEntity.getEntityData().add(savedEntityData);
-        log.info("Saved back the neuron " + entityData.getId());
-        //collectionEntity.getEntityData().add(savedEntityData);
-        
-        if (rePushRequired) {
-            log.info("Re-saving neuron with neuron id embedded in geo annotations.");
-            // Now that the neuron has been db-dipped, we can get its ID, and 
-            // push that into all points.
-            Long id = savedEntityData.getId();
-            for (TmGeoAnnotation anno : neuron.getGeoAnnotationMap().values()) {
-                anno.setNeuronId(id);
-            }
-            // Need to make serializable version of the data.
-            createEntityData(entityData, neuron);
-            entityBean.saveOrUpdateEntityData(entityData);
-        }
-                
-        return neuron;
-    }
-
     private void createEntityData(EntityData entityData, TmNeuron neuron) throws Exception {
         byte[] serializableBytes = exchanger.serializeNeuron(neuron);
         // Encoding on the client side for convenience: the save-or-update
@@ -423,7 +424,7 @@ public class AnnotationCollector {
         return rtnVal;
     }
     
-    private TmGeoAnnotation buildTmGeoAnnotation(Long pointGUID, Long neuronGUID, Long parentPointGUID, double x, double y, double z) {
+    private TmGeoAnnotation buildTmGeoAnnotation(Long pointGUID, Long neuronGUID, Long parentPointGUID, double x, double y, double z, Double radius) {
         TmGeoAnnotation annotation = new TmGeoAnnotation();
         annotation.setId(pointGUID);
         annotation.setCreationDate(new Date());
@@ -433,6 +434,7 @@ public class AnnotationCollector {
         annotation.setX(x);
         annotation.setY(y);
         annotation.setZ(z);
+        annotation.setRadius(radius);
         return annotation;
     }
     

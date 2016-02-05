@@ -17,6 +17,7 @@ import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
 import org.janelia.it.jacs.shared.swc.SWCData;
 import org.janelia.it.jacs.compute.access.util.FileByTypeCollector;
+import org.janelia.it.jacs.compute.annotation.api.AnnotationCollector;
 import org.janelia.it.jacs.model.IdSource;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -38,12 +39,13 @@ import sun.misc.BASE64Encoder;
  */
 
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
-
+    
     private AnnotationDAO annotationDAO;
     private ComputeDAO computeDAO;
     
     private TmFromEntityPopulator tmFactory = new TmFromEntityPopulator();
 
+    public static final String VERSION_ATTRIBUTE = "Version";
     private final static String TMP_GEO_VALUE = "@@@ new geo value string @@@";
     private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
     private final static String BASE_PATH_PROP = "SWC.Import.BaseDir";
@@ -428,6 +430,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                         internalPoint[0], internalPoint[1], internalPoint[2],
                         null, new Date()
                 );
+                unserializedAnnotation.setRadius(node.getRadius());
                 unserializedAnnotation.setNeuronId(neuron.getId());
                 annotations.put(node.getIndex(), unserializedAnnotation);
 
@@ -1536,6 +1539,41 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 workspaceEntity = annotationDAO.getEntityById(workspaceId);
                 workspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, wsVersion);
             }
+            
+            // Move workspace to modern version.
+            if (TmWorkspace.Version.ENTITY_4 == wsVersion  ||  TmWorkspace.Version.ENTITY_PB_TRANSITION == wsVersion) {
+                // Advance version to the intermediate.
+                setWorkspaceIntermediateVersion(workspaceEntity);
+                annotationDAO.saveOrUpdateEntity(workspaceEntity);
+
+                // Need to 1st update neurons, and then advance version to PB.
+                //   Get something to build the neurons' entity datas.
+                AnnotationCollector collector = new AnnotationCollector();
+                TmPreferences prefs = workspace.getPreferences();
+                String colorMapPref = prefs.getProperty("annotation-neuron-styles");
+                for (TmNeuron neuron: workspace.getNeuronList()) {
+                    if (! isConverted(neuron)) {
+                        // Must pre-sanitize the neuron IDs.
+                        neuron.setId(-1L);
+                        for (TmGeoAnnotation anno : neuron.getGeoAnnotationMap().values()) {
+                            anno.setNeuronId(-1L);
+                        }
+                        neuron.setWorkspaceId(workspaceId);
+                        neuron.setOwnerKey(workspaceEntity.getOwnerKey());
+                        neuron.setCreationDate(new Date());
+                        collector.pushNeuron(neuron);
+                        markConverted(neuron);
+                    }
+                }
+                
+                // In event of some error, it is possible only part of the 
+                // neurons handled above will have been converted. Hence they
+                // are being marked with the version, post-convert.
+                setWorkspaceLatestVersion(workspaceEntity);
+                annotationDAO.saveOrUpdateEntity(workspaceEntity);
+            
+            }
+            
             return workspace;
         } catch (Exception e) {
             e.printStackTrace();
@@ -1569,6 +1607,14 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             e.printStackTrace();
             throw new DaoException(e);
         }
+    }
+
+    public EntityData setWorkspaceLatestVersion(Entity workspaceEntity) {
+        return changeWorkspaceVersion(workspaceEntity, TmWorkspace.Version.PB_1);
+    }
+
+    public EntityData setWorkspaceIntermediateVersion(Entity workspaceEntity) {
+        return changeWorkspaceVersion(workspaceEntity, TmWorkspace.Version.ENTITY_PB_TRANSITION);
     }
 
     /**
@@ -1669,14 +1715,12 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return geoAnnotation;
     }
 
-    public EntityData setWorkspaceLatestVersion(Entity workspaceEntity) {
-        // declare the workspace compatibility.  All new WS's at time of
-        // writing, shall be ProtoBuf version 1.
+    private EntityData changeWorkspaceVersion(Entity workspaceEntity, TmWorkspace.Version version) {
         EntityData wsVersionEd = new EntityData();
         wsVersionEd.setOwnerKey(workspaceEntity.getOwnerKey());
         wsVersionEd.setCreationDate(new Date());
         wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
-        wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + TmWorkspace.Version.PB_1);
+        wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + version);
         wsVersionEd.setParentEntity(workspaceEntity);
         return wsVersionEd;
     }
@@ -1685,4 +1729,20 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return TMP_GEO_VALUE + Thread.currentThread().getName();
     }
 
+    private boolean isConverted(TmNeuron neuron) {
+        Long id = neuron.getId();
+        Entity neuronEntity = annotationDAO.getEntityById(id);
+        EntityData versionEd = neuronEntity.getEntityDataByAttributeName(VERSION_ATTRIBUTE);
+        return versionEd != null  &&  TmWorkspace.Version.PB_1.toString().equals(versionEd.getValue());
+    }
+    
+    private void markConverted(TmNeuron neuron) throws Exception {
+        EntityData versionEd = new EntityData();
+        Entity neuronEntity = annotationDAO.getEntityById(neuron.getId());
+        versionEd.setOwnerKey(neuron.getOwnerKey());
+        versionEd.setParentEntity(neuronEntity);
+        versionEd.setValue(TmWorkspace.Version.PB_1.toString());
+        versionEd.setEntityAttrName(VERSION_ATTRIBUTE);
+        annotationDAO.saveOrUpdateEntityData(versionEd);
+    }
 }

@@ -236,6 +236,7 @@ public class SWCDataConverter {
                                 xcenter,
                                 ycenter,
                                 zcenter,
+                                -1.0,
                                 parentIndex
                         );
                         nodeList.add(autoNode);
@@ -273,6 +274,7 @@ public class SWCDataConverter {
                         xcenter,
                         ycenter,
                         zcenter,
+                        subAnn.getRadius(),
                         parentIndex
                 );
                 nodeList.add(manualNode);                
@@ -318,6 +320,7 @@ public class SWCDataConverter {
                                 xcenter,
                                 ycenter, 
                                 zcenter,
+                                ann.getRadius(),
                                 parentIndex
                         )
                 );
@@ -361,6 +364,7 @@ public class SWCDataConverter {
             double xcenter,
             double ycenter,
             double zcenter,
+            double radius,
             int parentIndex) {
         double[] externalArr = null;
         if (exchanger != null) {
@@ -386,7 +390,7 @@ public class SWCDataConverter {
                 externalArr[0] - xcenter,
                 externalArr[1] - ycenter,
                 externalArr[2] - zcenter,
-                1.0,    // radius, which we don't have right now
+                radius,
                 parentIndex
         );
     }
