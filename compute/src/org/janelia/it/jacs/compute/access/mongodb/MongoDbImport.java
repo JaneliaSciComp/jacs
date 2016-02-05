@@ -635,11 +635,11 @@ public class MongoDbImport extends AnnotationDAO {
         
         sample.setTiles(tiles);
         
-        List<SamplePipelineRun> runs = new ArrayList<SamplePipelineRun>();
+        List<SamplePipelineRun> runs = new ArrayList<>();
         for(Entity runEntity : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
             populateChildren(runEntity);
             
-            List<PipelineResult> results = new ArrayList<PipelineResult>();
+            List<PipelineResult> results = new ArrayList<>();
             
             for(Entity resultEntity : EntityUtils.getChildrenForAttribute(runEntity, EntityConstants.ATTRIBUTE_RESULT)) {
                 populateChildren(resultEntity);
@@ -673,7 +673,7 @@ public class MongoDbImport extends AnnotationDAO {
                 }
                 else if (resultEntity.getEntityTypeName().equals(EntityConstants.TYPE_ALIGNMENT_RESULT)) {
                     
-                    Map<String,PipelineResult> nsResultMap = new HashMap<String,PipelineResult>();
+                    Map<String,PipelineResult> nsResultMap = new HashMap<>();
                     for(Entity separationEntity : EntityUtils.getChildrenOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
                         String objective = separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
                         
@@ -683,7 +683,7 @@ public class MongoDbImport extends AnnotationDAO {
                     }
                     
                     Entity verifyMovie = null;
-                    List<Entity> resultImages = new ArrayList<Entity>();
+                    List<Entity> resultImages = new ArrayList<>();
                     
                     Entity resultSupportingData = EntityUtils.getSupportingData(resultEntity);
                     populateChildren(resultSupportingData);
@@ -693,28 +693,23 @@ public class MongoDbImport extends AnnotationDAO {
                             if (!resultFile.getName().startsWith("Aligned")) continue;
                             resultImages.add(resultFile);
                         }
-                        else if (resultFile.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                        else if (resultFile.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
                             verifyMovie = resultEntity;
                         }
                     }
                     
                     for(Entity imageEntity : resultImages) {
-                        Entity movieEntity = null;
                         String objective = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-                        if (resultImages.size()==1 || "63x".equals(objective) || "".equals(objective)) {
-                            movieEntity = verifyMovie;
-                        }
-
                         PipelineResult ns = nsResultMap.get(objective);
                         if (ns==null) {
                             ns = nsResultMap.get("");
                         }
-                        List<PipelineResult> sprResults = new ArrayList<PipelineResult>();
+                        List<PipelineResult> sprResults = new ArrayList<>();
                         if (ns!=null) {
                             sprResults.add(ns);
                         }
                         
-                        SampleAlignmentResult alignmentResult = getAlignmentResult(resultEntity, imageEntity, movieEntity);
+                        SampleAlignmentResult alignmentResult = getAlignmentResult(resultEntity, imageEntity, verifyMovie);
                         if (imageEntity.getName().contains("VNC")) {
                             alignmentResult.setAnatomicalArea("VNC");    
                         }
@@ -728,8 +723,7 @@ public class MongoDbImport extends AnnotationDAO {
                         
                         results.add(alignmentResult);
                     }
-                }
-                
+                }    
             }
             
             SamplePipelineRun run = new SamplePipelineRun();
