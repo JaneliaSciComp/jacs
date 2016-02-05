@@ -1,8 +1,6 @@
 package org.janelia.it.jacs.compute.wsrest;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -10,7 +8,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.response.FacetField;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.ModifiableSolrParams;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -18,6 +22,7 @@ import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.shared.solr.*;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
@@ -50,7 +55,7 @@ public class DataViewsWebService extends ResourceConfig {
             }
             return detailObjects;
         } catch (Exception e) {
-            log.error("Error occurred processing Object Details " + e);
+            log.error("Error occurred processing Object Details ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -74,7 +79,7 @@ public class DataViewsWebService extends ResourceConfig {
             return updateObj;
 
         } catch (Exception e) {
-            log.error("Error occurred processing Domain Object Update Property " + e);
+            log.error("Error occurred processing Domain Object Update Property ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -89,7 +94,7 @@ public class DataViewsWebService extends ResourceConfig {
             Collection<DataSet> dataSets = dao.getDataSets(subjectKey);
             return new ArrayList<DataSet>(dataSets);
         } catch (Exception e) {
-            log.error("Error occurred getting datasets" + e);
+            log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -105,7 +110,7 @@ public class DataViewsWebService extends ResourceConfig {
             IndexingHelper.updateIndex(newDataSet);
             return newDataSet;
         } catch (Exception e) {
-            log.error("Error occurred creating DataSet " + e);
+            log.error("Error occurred creating DataSet ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -121,7 +126,7 @@ public class DataViewsWebService extends ResourceConfig {
             IndexingHelper.updateIndex(updateDataSet);
             return updateDataSet;
         } catch (Exception e) {
-            log.error("Error occurred updating data set " + e);
+            log.error("Error occurred updating data set ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -139,7 +144,7 @@ public class DataViewsWebService extends ResourceConfig {
             dao.remove(subjectKey, domainObj);
             IndexingHelper.removeFromIndex(domainObj);
         } catch (Exception e) {
-            log.error("Error occurred removing dataset" + e);
+            log.error("Error occurred removing dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -155,7 +160,7 @@ public class DataViewsWebService extends ResourceConfig {
             IndexingHelper.updateIndex(newFilter);
             return newFilter;
         } catch (Exception e) {
-            log.error("Error occurred creating Search Filter " + e);
+            log.error("Error occurred creating Search Filter ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -171,7 +176,38 @@ public class DataViewsWebService extends ResourceConfig {
             IndexingHelper.updateIndex(updateFilter);
             return updateFilter;
         } catch (Exception e) {
-            log.error("Error occurred updating search filter " + e);
+            log.error("Error occurred updating search filter ",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @POST
+    @Path("/search")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public SolrJsonResults searchSolrIndices(SolrParams queryParams) {
+        SolrConnector solr = WebServiceContext.getSolr();
+        try {
+            SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
+            QueryResponse response = solr.search(query);
+            SolrJsonResults sjr = new SolrJsonResults();
+            Map<String,List<FacetValue>> facetValues = new HashMap<>();
+            for (final FacetField ff : response.getFacetFields()) {
+                log.debug("Facet {}",ff.getName());
+                List<FacetValue> favetValues = new ArrayList<>();
+                if (ff.getValues()!=null) {
+                    for (final FacetField.Count count : ff.getValues()) {
+                        favetValues.add(new FacetValue(count.getName(),count.getCount()));
+                        log.debug("  Value: {} (count={})",count.getName(),count.getCount());
+                    }
+                }
+                facetValues.put(ff.getName(), favetValues);
+            }
+            sjr.setFacetValues(facetValues);
+            sjr.setResults(response.getResults());
+            return sjr;
+        } catch (Exception e) {
+            log.error("Error occurred executing search against SOLR",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

@@ -217,6 +217,27 @@ public class SolrQueryBuilder {
         return query.toString();
     }
 
+    public static SolrParams serializeSolrQuery(SolrQuery query) {
+        SolrParams queryParams = new SolrParams();
+        queryParams.setQuery(query.getQuery());
+        queryParams.setSortField(query.getSortField());
+        queryParams.setFilterQueries(query.getFilterQueries());
+        queryParams.setFacetField(query.getFacetFields());
+        return queryParams;
+    }
+
+    public static SolrQuery deSerializeSolrQuery(SolrParams queryParams) {
+        SolrQuery query = new SolrQuery();
+        query.setQuery(queryParams.getQuery());
+        query.set(queryParams.getSortField());
+        query.setFilterQueries(queryParams.getFilterQueries());
+        String[] facetFields = queryParams.getFacetField();
+        for (int i=0; i<facetFields.length; i++) {
+             query.addFacetField(facetFields[i]);
+        }
+        return query;
+    }
+
     /**
      * Returns a SOLR-style field query for the given field containing the given values. Also tags the
      * field so that it can be excluded in facets on other fields.

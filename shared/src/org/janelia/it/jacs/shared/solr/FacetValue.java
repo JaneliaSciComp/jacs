@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.browser.model.search;
+package org.janelia.it.jacs.shared.solr;
 
 /**
  * The count for a facet value. 

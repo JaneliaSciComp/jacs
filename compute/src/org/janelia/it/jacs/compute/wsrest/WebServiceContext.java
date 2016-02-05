@@ -23,6 +23,7 @@ public class WebServiceContext implements ServletContextListener  {
     private static final Logger log = LoggerFactory.getLogger(DataViewsWebService.class);
 
     private static DomainDAO mongo;
+    private static SolrConnector solr;
     private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
     private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
     private static String MONGO_USERNAME = SystemConfigurationProperties.getString("MongoDB.Username");
@@ -41,15 +42,31 @@ public class WebServiceContext implements ServletContextListener  {
                 log.error("Couldn't initialize database connection for RESTful services", e);
             }
         }
+        if (WebServiceContext.solr==null) {
+            try {
+                WebServiceContext.solr = new SolrConnector(WebServiceContext.mongo);
+            } catch (IOException e) {
+                log.error("Couldn't initialize solr server connection", e);
+            }
+        }
     }
 
     public static DomainDAO getDomainManager() {
         init();
-        return WebServiceContext.mongo;
+        return mongo;
     }
 
     public static void setDomainManager(DomainDAO mongo) {
         WebServiceContext.mongo = mongo;
+    }
+
+    public static SolrConnector getSolr() {
+        init();
+        return solr;
+    }
+
+    public static void setSolr(SolrConnector solr) {
+        WebServiceContext.solr = solr;
     }
 
     @Override
