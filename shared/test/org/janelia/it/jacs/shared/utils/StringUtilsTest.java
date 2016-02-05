@@ -21,6 +21,8 @@ public class StringUtilsTest extends TestCase {
     private static final String ZEROS_EXAMPLE = "0 0 0";
     private static final String ZEROS_RESULT = "000000";
 
+    public static final String COLOR_TABLE_STRING = "annotation-neuron-styles={\"2232632564906983592\":{\"color\":[204,0,0],\"visibility\":true}}";
+
     public void setUp() {}
 
     public void tearDown() {}
@@ -51,5 +53,17 @@ public class StringUtilsTest extends TestCase {
     public void testJustName() {
         String justName = StringUtils.getIteratedName("myfile.swc", 1);
         assertEquals( "New name invalid.", "myfile_1.swc", justName );
+    }
+    
+    public void testDigitSafeReplace() {
+        String rtnVal = StringUtils.digitSafeReplace("[11111,1111,111]", "1111", "111");
+        System.out.println(rtnVal);
+
+        String modified = StringUtils.digitSafeReplace(COLOR_TABLE_STRING, "2232632564906983592", "2953896094652362322");
+        System.out.println(modified);
+
+        assertNotNull( "Failed to digit-safe-replace " + COLOR_TABLE_STRING );
+        assertNotNull( "Failed to digit-safe-replace.", rtnVal);
+        assertEquals( "Not expected value", "[11111,111,111]", rtnVal );
     }
 }

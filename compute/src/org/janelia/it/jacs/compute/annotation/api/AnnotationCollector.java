@@ -339,8 +339,10 @@ public class AnnotationCollector {
                 anno.setNeuronId(id);
             }
             // Need to make serializable version of the data.
+            neuron.setId(id);
             createEntityData(entityData, neuron);
-            entityBean.saveOrUpdateEntityData(entityData);
+            EntityData savedEd = entityBean.saveOrUpdateEntityData(entityData);
+            neuron.setId(id);
         }
 
         return neuron;
