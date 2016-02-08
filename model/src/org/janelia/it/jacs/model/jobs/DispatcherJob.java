@@ -18,7 +18,7 @@ public class DispatcherJob implements Serializable {
 
     // Fields
     private Long dispatchId;
-    private String dispatchDiscriminatorValue;
+    private String processDefnName;
     private Status dispatchStatus = Status.PENDING;
     private String dispatchedTaskOwner;
     private Long dispatchedTaskId;
@@ -35,12 +35,12 @@ public class DispatcherJob implements Serializable {
         this.dispatchId = dispatchId;
     }
 
-    public String getDispatchDiscriminatorValue() {
-        return dispatchDiscriminatorValue;
+    public String getProcessDefnName() {
+        return processDefnName;
     }
 
-    public void setDispatchDiscriminatorValue(String dispatchDiscriminatorValue) {
-        this.dispatchDiscriminatorValue = dispatchDiscriminatorValue;
+    public void setProcessDefnName(String processDefnName) {
+        this.processDefnName = processDefnName;
     }
 
     public Status getDispatchStatus() {

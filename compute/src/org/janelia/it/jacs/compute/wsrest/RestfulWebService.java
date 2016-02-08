@@ -357,7 +357,7 @@ public class RestfulWebService {
             }
             lsmProcessingParams.setOwner(owner);
             lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingParams);
-            remoteComputeBean.submitJob("DispatchComputation", lsmProcessingTask.getObjectId());
+            remoteComputeBean.dispatchJob(lsmProcessingTask.getJobName(), lsmProcessingTask.getObjectId());
         } catch (IllegalArgumentException e) {
             logger.error("Illegal argument", e);
             Response response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);

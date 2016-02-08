@@ -47,7 +47,7 @@
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
 
-        <property name="dispatchDiscriminatorValue" type="string" column="dispatch_discriminator_value" not-null="false"/>
+        <property name="processDefnName" type="string" column="process_defn_name" not-null="false"/>
         <property name="status" type="string" column="dispatch_status" not-null="true" />
         <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
         <property name="dispatchedTaskOwner" type="string" column="dispatched_task_owner" not-null="true" />

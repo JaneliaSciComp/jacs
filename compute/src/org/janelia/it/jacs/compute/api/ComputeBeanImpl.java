@@ -8,10 +8,12 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.DispatcherDAO;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
@@ -74,13 +76,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 
     protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
-    
+
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
-    
+
     private ComputeDAO computeDAO = new ComputeDAO(logger);
     private SubjectDAO subjectDAO = new SubjectDAO(logger);
-    
+    private DispatcherDAO dispatcherDAO = new DispatcherDAO();
+
     @Resource(mappedName = MetricsLoggingConstants.QUEUE)
     private Queue metricsLoggingQueue;
     
@@ -445,6 +448,20 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public void submitJobs(String processDefName, List<Long> taskIds) {
         ProcessManager processManager = new ProcessManager();
         processManager.launch(processDefName, taskIds);
+    }
+
+    @Override
+    public Long dispatchJob(String processDefName, long taskId) {
+        Task task = getTaskById(taskId);
+
+        DispatcherJob job = new DispatcherJob();
+        job.setDispatchedTaskId(task.getObjectId());
+        job.setProcessDefnName(processDefName);
+        job.setDispatchedTaskOwner(task.getOwner());
+        job.setDispatchHost(null);
+        dispatcherDAO.save(job);
+
+        return job.getDispatchId();
     }
 
     @Override

@@ -27,7 +27,7 @@ import java.util.List;
 public class LSMProcessingTask extends Task {
 
     public static final String TASK_NAME = "lsmprocessing";
-    public static final String DEFAULT_JOBNAME = "LSMInitProcessing";
+    public static final String DEFAULT_JOBNAME = "LSMProcessing";
     public static final String DISPLAY_NAME = "LSM Processing Task";
     public static final String PARAM_LSM_NAMES = "lsm names";
     public static final String PARAM_REUSE_PIPELINE_RUNS = "reuse pipeline runs";
