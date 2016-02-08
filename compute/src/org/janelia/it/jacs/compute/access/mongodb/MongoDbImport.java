@@ -676,7 +676,6 @@ public class MongoDbImport extends AnnotationDAO {
                     Map<String,PipelineResult> nsResultMap = new HashMap<>();
                     for(Entity separationEntity : EntityUtils.getChildrenOfType(resultEntity, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
                         String objective = separationEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-                        
                         if (StringUtils.isEmpty(objective)) objective = "";
                         NeuronSeparation ns = getNeuronSeparation(parentSampleEntity, separationEntity);
                         if (ns!=null) nsResultMap.put(objective,ns);
@@ -694,16 +693,18 @@ public class MongoDbImport extends AnnotationDAO {
                             resultImages.add(resultFile);
                         }
                         else if (resultFile.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
-                            verifyMovie = resultEntity;
+                            verifyMovie = resultFile;
                         }
+                    }
+                    
+                    if (resultImages.isEmpty()) {
+                        resultImages.add(resultEntity);
                     }
                     
                     for(Entity imageEntity : resultImages) {
                         String objective = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+                        if (StringUtils.isEmpty(objective)) objective = "";
                         PipelineResult ns = nsResultMap.get(objective);
-                        if (ns==null) {
-                            ns = nsResultMap.get("");
-                        }
                         List<PipelineResult> sprResults = new ArrayList<>();
                         if (ns!=null) {
                             sprResults.add(ns);
@@ -756,15 +757,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         populateChildren(imageEntity);
         
-        if (imageEntity.getName().endsWith("h5j")) {
-            addStack(imageEntity, files, FileType.VisuallyLosslessStack, result);
-            addStack(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE), files, FileType.LosslessStack, result);
-        }
-        else {
-            addStack(imageEntity, files, FileType.LosslessStack, result);
-            addStack(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE), files, FileType.VisuallyLosslessStack, result);
-        }
-        
+        // Add the MIPs and movies
         addImage(files,FileType.ReferenceMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
         addImage(files,FileType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
         addImage(files,FileType.AllMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE)));
@@ -774,7 +767,22 @@ public class MongoDbImport extends AnnotationDAO {
         addImage(files,FileType.RefSignal1Mip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_1_REF_MIP_IMAGE)));
         addImage(files,FileType.RefSignal2Mip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_2_REF_MIP_IMAGE)));
         addImage(files,FileType.RefSignal3Mip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_3_REF_MIP_IMAGE)));
-        addImage(files,FileType.FastStack,getRelativeFilename(result,getFilepath(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE))));           
+        addImage(files,FileType.FastStack,getRelativeFilename(result,getFilepath(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE))));
+        
+        if (files.isEmpty()) {
+            // This is a special case where no explicit MIPs have been defined. Let's assume that the default 2d image is a signal MIP.
+            addImage(files,FileType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        }
+
+        // Add the stack
+        if (imageEntity.getName().endsWith("h5j")) {
+            addStack(imageEntity, files, FileType.VisuallyLosslessStack, result);
+            addStack(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE), files, FileType.LosslessStack, result);
+        }
+        else {
+            addStack(imageEntity, files, FileType.LosslessStack, result);
+            addStack(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_SLIGHTLY_LOSSY_IMAGE), files, FileType.VisuallyLosslessStack, result);
+        }
     }
     
     private void addStack(Entity imageEntity, Map<FileType,String> files, FileType type, HasFilepath result) {
@@ -1085,7 +1093,7 @@ public class MongoDbImport extends AnnotationDAO {
     private LSMImage getLSMImage(Entity sampleEntity, Entity lsmEntity) throws Exception {
 
         LSMImage lsm = (LSMImage)getImage(lsmEntity);
-        // An LSM file must have a stack file path
+        // An LSM file must have a lossless stack
         String filepath = lsm.getFiles().get(FileType.LosslessStack);
         if (filepath==null) {
             log.warn("    LSM cannot be imported because it has no filepath: "+lsmEntity.getId());
@@ -1100,10 +1108,7 @@ public class MongoDbImport extends AnnotationDAO {
             addImage(files,FileType.LsmMetadata,jsonFilepath);
         }
         
-        addImage(files,FileType.AllMip,getRelativeFilename(lsm,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALL_MIP_IMAGE)));
-        addImage(files,FileType.ReferenceMip,getRelativeFilename(lsm,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
-        addImage(files,FileType.SignalMip,getRelativeFilename(lsm,lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE)));
-        
+        // Add movies, based on the MIP filenames
         String allMip = files.get(FileType.AllMip);
         if (allMip!=null) {
         	files.put(FileType.AllMovie,allMip.replace("png", "mp4"));
@@ -2158,7 +2163,7 @@ public class MongoDbImport extends AnnotationDAO {
 		    		newFolder.setUpdatedDate(folderEntity.getUpdatedDate());
 			    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
 			    	if (objectSet!=null) {			    	    
-			    		String setLabel = getDomainClassLabel(objectSet.getClassName());
+			    		String setLabel = objectSet.getType();
 			    		if (setLabel!=null) {
     			    		ObjectSet existingSet = extraSetCache.get(setLabel);
     			    		if (existingSet!=null) {
@@ -2343,7 +2348,7 @@ public class MongoDbImport extends AnnotationDAO {
 		            }
                 }
             }
-            log.info("  Adding "+importEntity.getEntityTypeName()+"#"+importEntity.getId()+" ("+importEntity.getName()+")");
+            log.trace(indent+"  Adding "+importEntity.getEntityTypeName()+"#"+importEntity.getId()+" ("+importEntity.getName()+")");
             memberIds.add(importEntity.getId());
 	    }
 		
@@ -2615,25 +2620,6 @@ public class MongoDbImport extends AnnotationDAO {
     }
         
     private final Map<String,String> domainLabelCache = new HashMap<>();
-    
-    private String getDomainClassLabel(String className) {
-    	
-        String label = domainLabelCache.get(className);
-    	if (label!=null) return label;
-    	Class<? extends DomainObject> domainClass = DomainUtils.getObjectClassByName(className);
-    	if (domainClass==null) return className;
-    	
-        MongoMapped mongoAnnot = null;
-        Class<?> clazz = this.getClass();
-        while (clazz!=null && mongoAnnot==null) {
-            mongoAnnot = clazz.getAnnotation(MongoMapped.class);
-            clazz = clazz.getSuperclass();
-        }
-
-    	if (mongoAnnot==null) return domainClass.getSimpleName();
-    	domainLabelCache.put(className, mongoAnnot.label());
-    	return mongoAnnot.label();
-    }
     
     private class EntityRootComparator implements Comparator<Entity> {
         private String owner;
