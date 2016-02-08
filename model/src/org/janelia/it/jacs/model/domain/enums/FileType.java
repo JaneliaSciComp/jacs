@@ -15,16 +15,18 @@ public enum FileType {
     // Metadata files
     LsmMetadata("LSM Metadata", false, true),
     
-    // MIPs and movies
-    AllMip("Reference+Signal MIP", true, false),
+    // Maximum Intensity Projections (MIPs) 
     SignalMip("Signal MIP", true, false),
     Signal1Mip("Signal 1 MIP", true, false),
     Signal2Mip("Signal 2 MIP", true, false),
     Signal3Mip("Signal 3 MIP", true, false),
     ReferenceMip("Reference MIP", true, false),
+    AllMip("Reference+Signal MIP", true, false),
     RefSignal1Mip("Reference+Signal 1 MIP", true, false),
     RefSignal2Mip("Reference+Signal 2 MIP", true, false),
     RefSignal3Mip("Reference+Signal 3 MIP", true, false),
+    
+    // Movies
     AllMovie("Reference+Signal Movie", false, false),
     SignalMovie("Signal Movie", false, false),
     ReferenceMovie("Reference Movie", false, false),
@@ -36,11 +38,11 @@ public enum FileType {
     HeatmapStack("Heatmap Stack", false, false),
     HeatmapMip("Heatmap MIP", true, false),
     
-    // Mask/chan
+    // Mask/Chan
     MaskFile("Mask File", false, false),
     ChanFile("Chan File", false, false),
     
-    // Cell counting
+    // Cell Counting Results
     CellCountPlan("Cell Counting Plan", false, true),
     CellCountReport("Cell Counting Report", false, true),
     CellCountStack("Cell Counting Stack", false, false),
