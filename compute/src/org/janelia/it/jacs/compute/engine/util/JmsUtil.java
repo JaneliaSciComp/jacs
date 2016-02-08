@@ -170,7 +170,17 @@ public class JmsUtil {
     public static QueueMessage sendMessageToQueue(AsyncMessageInterface messageInterface, IProcessData processData, Queue replyToQueue) throws LauncherException {
         try {
             ActionDef actionToProcess = processData.getActionToProcess();
-            messageInterface.startMessageSession(getQueueName(actionToProcess), messageInterface.localConnectionType);
+            // Check if we have a overriding queue preference in the process data
+            String queueName = processData.getString(IProcessData.QUEUE_OVERRIDE);
+            if (queueName==null) {
+            	// Just use the queue specified in the action definition
+            	queueName = getQueueName(actionToProcess);
+            	logger.info("Using default queue: "+queueName);
+            }
+            else {
+            	logger.info("Overridding queue to: "+queueName);
+            }
+            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
             ObjectMessage jmsMessage = messageInterface.createObjectMessage();
             if (replyToQueue != null) {
                 jmsMessage.setJMSReplyTo(replyToQueue);

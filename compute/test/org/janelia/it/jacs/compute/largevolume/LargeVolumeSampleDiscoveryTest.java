@@ -28,6 +28,7 @@ public class LargeVolumeSampleDiscoveryTest {
         String[] paths = new String[] {
                     "/groups/mousebrainmicro/mousebrainmicro/",
                     "/nobackup/mousebrainmicro/",
+                    "/nobackup2/mouselight/",
                     "/tier2/mousebrainmicro/mousebrainmicro/",
                     "/tier2/mousebrainmicro-nb/"
         };
