@@ -6,7 +6,9 @@
 
 package org.janelia.it.jacs.model.util;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,7 +35,7 @@ public class ThreadUtils {
         executorService.shutdown();
         boolean completed = executorService.awaitTermination(awaitMin, TimeUnit.MINUTES);
         if (! completed) {
-            throw new Exception("One or more operations were not completed as of shutdown.  More time than "+awaitMin+"min may be needed.");
+            throw new Exception("One or more operations were not completed as of shutdown.  More time than "+awaitMin+" min may be needed.");
         }
 
         for (Future<Void> future : callbacks) {
@@ -56,4 +58,28 @@ public class ThreadUtils {
         return executorService;
     }
 
-}
+    /**
+     * Makes predictable, traceable thread names.
+     *
+     * @author fosterl
+     */
+    public static class CustomNamedThreadFactory implements ThreadFactory {
+
+        private static Map<String, Integer> _threadNameMap = new HashMap<>();
+        private String prefix;
+
+        public CustomNamedThreadFactory(String prefix) {
+            this.prefix = prefix;
+            _threadNameMap.put(prefix, 1);
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            final Integer threadNumber = _threadNameMap.get(prefix);
+            t.setName(prefix + "-" + threadNumber);
+            _threadNameMap.put(prefix, threadNumber + 1);
+            return t;
+        }
+
+    }}

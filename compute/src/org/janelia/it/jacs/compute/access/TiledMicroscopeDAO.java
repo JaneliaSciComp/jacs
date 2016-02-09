@@ -6,6 +6,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import org.apache.log4j.Logger;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -19,6 +22,8 @@ import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 import org.janelia.it.jacs.shared.swc.SWCData;
 import org.janelia.it.jacs.compute.access.util.FileByTypeCollector;
 import org.janelia.it.jacs.compute.annotation.api.AnnotationCollector;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.IdSource;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -26,6 +31,8 @@ import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntity
 import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmModelManipulator;
 import org.janelia.it.jacs.model.user_data.tiled_microscope_protobuf.TmProtobufExchanger;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
+import org.janelia.it.jacs.model.util.ThreadUtils;
+import org.janelia.it.jacs.model.util.ThreadUtils.CustomNamedThreadFactory;
 import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
 import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
 import org.janelia.it.jacs.shared.swc.SWCDataConverter;
@@ -1520,7 +1527,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
-    public TmWorkspace loadWorkspace(Long workspaceId) throws DaoException {
+    public TmWorkspace loadWorkspace(final Long workspaceId) throws DaoException {
         try {
             Long sampleID = null;
             Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
@@ -1602,8 +1609,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 prefs = workspace.getPreferences();
 
                 // Loop through, saving neurons as PROTOBUF, and mapping of old/new ids.
-                Map<Long, Long> oldToNew = new HashMap<>();
-                AnnotationCollector collector = new AnnotationCollector();
+                final Map<Long, Long> oldToNew = Collections.synchronizedMap(new HashMap<Long,Long>());
+                final AnnotationCollector collector = new AnnotationCollector();
+                final EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
+
                 for (TmNeuron neuron : workspace.getNeuronList()) {
                     // Must pre-sanitize the neuron IDs.
                     Long oldNeuronID = neuron.getId();
@@ -1614,7 +1623,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     neuron.setWorkspaceId(workspaceId);
                     neuron.setOwnerKey(workspaceEntity.getOwnerKey());
                     neuron.setCreationDate(new Date());
-                    neuron = collector.pushNeuron(neuron);
+                    neuron = collector.pushGuaranteedNewNeuron(workspaceEntity, neuron, entityBean);
                     oldToNew.put(oldNeuronID, neuron.getId());
                 }
 
@@ -1645,6 +1654,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 // are being marked with the version, post-convert.
                 setWorkspaceLatestVersion(workspaceEntity);
                 annotationDAO.saveOrUpdateEntity(workspaceEntity);
+                log.info("Conversion completed for workspace " + workspaceId + " " + workspace.getName());
 
             }
 
