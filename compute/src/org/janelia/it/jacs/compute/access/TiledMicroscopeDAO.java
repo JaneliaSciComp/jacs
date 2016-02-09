@@ -192,132 +192,146 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      * @throws ComputeException thrown as wrapper for any exceptions.
      */
     public void importSWCFolder(String swcFolderLoc, String ownerKey, Long sampleId, String workspaceNameParam) throws ComputeException {
-        //this.combinedCreateNeuronTime = 0L;
-        //this.combinedGeoLinkTime = 0L;
-        //this.combinedNodeIterTime = 0L;
-        //this.combinedReadTime = 0L;
+        try {
+            File swcFolder = new File(swcFolderLoc);
+            if (!swcFolder.isAbsolute()) {
+                String basePathstring = SystemConfigurationProperties.getString(BASE_PATH_PROP);
+                File basePath = new File(basePathstring);
+                swcFolder = new File(basePath, swcFolderLoc);
+            }
 
-        File swcFolder = new File(swcFolderLoc);
-        if (!swcFolder.isAbsolute()) {
-            String basePathstring = SystemConfigurationProperties.getString(BASE_PATH_PROP);
-            File basePath = new File(basePathstring);
-            swcFolder = new File(basePath, swcFolderLoc);
-        }
+            if (!swcFolder.exists() || !swcFolder.canRead() || !swcFolder.isDirectory()) {
+                throw new ComputeException("Folder " + swcFolder + " either does not exist, is not a directory, or cannot be read.");
+            }
 
-        if (!swcFolder.exists() || !swcFolder.canRead() || !swcFolder.isDirectory()) {
-            throw new ComputeException("Folder " + swcFolder + " either does not exist, is not a directory, or cannot be read.");
-        }
-
-        Iterator<Long> idSource = new IdSource();
-        Entity workspaceEntity = null;
-        TmWorkspace tmWorkspace = null;
-        Entity folder = null;
-        if (sampleId == null) {
-            throw new ComputeException("Cannot apply SWC neurons without either valid workspace or sample ID.");
-        } else {
-            // Ensure there is a workspaces folder, and then
-            // create a new workspace within that folder.
-            String folderName = WORKSPACES_FOLDER_NAME;
-            Collection<Entity> folders = annotationDAO.getEntitiesByName(ownerKey, folderName);
-            if (folders != null && folders.size() > 0) {
-                for (Entity nextFolder : folders) {
-                    // Some users can have multiple different workspaces
-                    // folders, owing to sharing, etc.
-                    if (nextFolder.getOwnerKey().equals(ownerKey)) {
-                        folder = nextFolder;
-                        break;
+            Iterator<Long> idSource = new IdSource();
+            Entity workspaceEntity = null;
+            TmWorkspace tmWorkspace = null;
+            Entity folder = null;
+            if (sampleId == null) {
+                throw new ComputeException("Cannot apply SWC neurons without either valid workspace or sample ID.");
+            } else {
+                // Ensure there is a workspaces folder, and then
+                // create a new workspace within that folder.
+                String folderName = WORKSPACES_FOLDER_NAME;
+                Collection<Entity> folders = annotationDAO.getEntitiesByName(ownerKey, folderName);
+                if (folders != null && folders.size() > 0) {
+                    for (Entity nextFolder : folders) {
+                        // Some users can have multiple different workspaces
+                        // folders, owing to sharing, etc.
+                        if (nextFolder.getOwnerKey().equals(ownerKey)) {
+                            folder = nextFolder;
+                            break;
+                        }
                     }
+                } else {
+                    folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
                 }
-            } else {
-                folder = annotationDAO.createFolderInDefaultWorkspace(ownerKey, folderName).getChildEntity();
+                String workspaceName = null;
+                if (workspaceNameParam == null || workspaceNameParam.length() == 0) {
+                    workspaceName = swcFolder.getName();
+                } else {
+                    workspaceName = workspaceNameParam.trim();
+                }
+                log.info("Creating new workspace called " + workspaceName + ", belonging to " + ownerKey + ".");
+                workspaceEntity = createTiledMicroscopeWorkspaceInMemory(sampleId, workspaceName, ownerKey);
+//                changeWorkspaceVersion(workspaceEntity, TmWorkspace.Version.PB_1, false);
+                // Sometimes, the workspace entity will have been written back, bestowing an ID upon it.
+                if (workspaceEntity.getId() == null  ||  workspaceEntity.getId() == -1) {
+                    workspaceEntity.setId(idSource.next());
+                }
+                final TmFromEntityPopulator populator = new TmFromEntityPopulator();
+                Entity sampleEntity = annotationDAO.getEntityById(sampleId);
+                try {
+                    tmWorkspace = populator.loadWorkspace(workspaceEntity, sampleEntity);
+                } catch (Exception ex) {
+                    throw new ComputeException(ex);
+                }
             }
-            String workspaceName = null;
-            if (workspaceNameParam == null || workspaceNameParam.length() == 0) {
-                workspaceName = swcFolder.getName();
-            } else {
-                workspaceName = workspaceNameParam.trim();
-            }
-            log.info("Creating new workspace called " + workspaceName + ", belonging to " + ownerKey + ".");
-            workspaceEntity = createTiledMicroscopeWorkspaceInMemory(sampleId, workspaceName, ownerKey);
-            workspaceEntity.setId(idSource.next());
-            final TmFromEntityPopulator populator = new TmFromEntityPopulator();
+
+            SWCDataConverter swcDataConverter = new SWCDataConverter();
             Entity sampleEntity = annotationDAO.getEntityById(sampleId);
+            if (!sampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
+                throw new ComputeException("Sample ID given is not sample type.  Instead, " + sampleId + " is a " + sampleEntity.getEntityTypeName());
+            }
+            String sampleBasePath = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            if (sampleBasePath == null) {
+                throw new ComputeException("Failed to find a base file path for " + sampleId);
+            }
+
+            CoordinateToRawTransform coordToRawTransform = this.getTransform(sampleBasePath);
+            double[] storedScale = coordToRawTransform.getScale();
+            int[] storedOrigin = coordToRawTransform.getOrigin();
+            double[] scale = new double[storedScale.length];
+            int[] origin = new int[storedOrigin.length];
+
+            for (int i = 0; i < scale.length; i++) {
+                origin[i] = (int) (storedOrigin[i] / storedScale[i]);
+                scale[i] = storedScale[i] / 1000.0;
+            }
+
+            Matrix micronToVox = MatrixUtilities.buildMicronToVox(scale, origin);
+            log.info("Computed micronToVox of ");
+            micronToVox.print(4, 4);
+            Matrix voxToMicron = MatrixUtilities.buildVoxToMicron(scale, origin);
+            log.info("Computed voxToMicron of ");
+            voxToMicron.print(4, 4);
+            ImportExportSWCExchanger exchanger = new MatrixDrivenSWCExchanger(micronToVox, voxToMicron);
+            swcDataConverter.setSWCExchanger(exchanger);
+
+            // Collect all files for processing.
+            FileByTypeCollector fileCollector = new FileByTypeCollector(swcFolder.getAbsolutePath(), ".swc", 3);
             try {
-                tmWorkspace = populator.loadWorkspace(workspaceEntity, sampleEntity);
+                fileCollector.exec();
+            } catch (IOException ioe) {
+                log.error("IO Exception " + ioe + " during directory walk.");
+                throw new ComputeException(ioe);
+            }
+            Set<File> swcFiles = fileCollector.getFileSet();
+
+            int swcCounter = 0;
+            log.info("Importing total of " + swcFiles.size() + " SWC files into new workspace.");
+            for (File swcFile : swcFiles) {
+                if (swcCounter % 1000 == 0) {
+                    log.info("Importing SWC file number: " + swcCounter + " into memory.");
+                }
+                long precomputedNeuronId = idSource.next();
+                importSWCFile(swcFile, tmWorkspace, swcDataConverter, ownerKey, precomputedNeuronId, idSource);
+                swcCounter++;
+            }
+            log.info("Final SWC file imported into workspace.");
+
+            // Now need to serialize our in-memory model, to the database.
+            log.info("Begin: saving SWC folder " + swcFolderLoc + " to database.");
+            // Need to bulk up the tree, before saving its bulk.
+            try {
+                addProtobufNeuronEntityDatas(workspaceEntity, tmWorkspace);
             } catch (Exception ex) {
                 throw new ComputeException(ex);
             }
-        }
 
-        SWCDataConverter swcDataConverter = new SWCDataConverter();
-        Entity sampleEntity = annotationDAO.getEntityById(sampleId);
-        if (!sampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
-            throw new ComputeException("Sample ID given is not sample type.  Instead, " + sampleId + " is a " + sampleEntity.getEntityTypeName());
-        }
-        String sampleBasePath = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        if (sampleBasePath == null) {
-            throw new ComputeException("Failed to find a base file path for " + sampleId);
-        }
+            // Set the latest workspace version.
+            EntityData wsVersionEd = new EntityData();
+            wsVersionEd.setOwnerKey(workspaceEntity.getOwnerKey());
+            wsVersionEd.setCreationDate(new Date());
+            wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
+            wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + TmWorkspace.Version.PB_1);
+            wsVersionEd.setParentEntity(workspaceEntity);
+            workspaceEntity.getEntityData().add(wsVersionEd);
 
-        CoordinateToRawTransform coordToRawTransform = this.getTransform(sampleBasePath);
-        double[] storedScale = coordToRawTransform.getScale();
-        int[] storedOrigin = coordToRawTransform.getOrigin();
-        double[] scale = new double[storedScale.length];
-        int[] origin = new int[storedOrigin.length];
+            workspaceEntity = annotationDAO.saveBulkEntityTree(workspaceEntity);
+            log.info("Completed: saving SWC folder " + swcFolderLoc + " to database.");
 
-        for (int i = 0; i < scale.length; i++) {
-            origin[i] = (int) (storedOrigin[i] / storedScale[i]);
-            scale[i] = storedScale[i] / 1000.0;
-        }
+            // Cleanup: attach the workspace to its proper parent folder.
+            Entity parentEntity = folder;
+            EntityData ed = parentEntity.addChildEntity(workspaceEntity);
+            annotationDAO.saveOrUpdate(ed);
+            annotationDAO.saveOrUpdate(parentEntity);
 
-        Matrix micronToVox = MatrixUtilities.buildMicronToVox(scale, origin);
-        log.info("Computed micronToVox of ");
-        micronToVox.print(4, 4);
-        Matrix voxToMicron = MatrixUtilities.buildVoxToMicron(scale, origin);
-        log.info("Computed voxToMicron of ");
-        voxToMicron.print(4, 4);
-        ImportExportSWCExchanger exchanger = new MatrixDrivenSWCExchanger(micronToVox, voxToMicron);
-        swcDataConverter.setSWCExchanger(exchanger);
-
-        // Collect all files for processing.
-        FileByTypeCollector fileCollector = new FileByTypeCollector(swcFolder.getAbsolutePath(), ".swc", 3);
-        try {
-            fileCollector.exec();
-        } catch (IOException ioe) {
-            log.error("IO Exception " + ioe + " during directory walk.");
-            throw new ComputeException(ioe);
-        }
-        Set<File> swcFiles = fileCollector.getFileSet();
-
-        int swcCounter = 0;
-        log.info("Importing total of " + swcFiles.size() + " SWC files into new workspace.");
-        for (File swcFile : swcFiles) {
-            if (swcCounter % 1000 == 0) {
-                log.info("Importing SWC file number: " + swcCounter + " into memory.");
-            }
-            long precomputedNeuronId = idSource.next();
-            importSWCFile(swcFile, tmWorkspace, swcDataConverter, ownerKey, precomputedNeuronId, idSource);
-            swcCounter++;
-        }
-        log.info("Final SWC file imported into workspace.");
-
-        // Now need to serialize our in-memory model, to the database.
-        log.info("Begin: saving SWC folder " + swcFolderLoc + " to database.");
-        // Need to bulk up the tree, before saving its bulk.
-        try {
-            addProtobufNeuronEntityDatas(workspaceEntity, tmWorkspace);
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new ComputeException(ex);
         }
-
-        annotationDAO.saveBulkEntityTree(workspaceEntity);
-        log.info("Completed: saving SWC folder " + swcFolderLoc + " to database.");
-
-        // Cleanup: attach the workspace to its proper parent folder.
-        Entity parentEntity = folder;
-        EntityData ed = parentEntity.addChildEntity(workspaceEntity);
-        annotationDAO.saveOrUpdate(ed);
-        annotationDAO.saveOrUpdate(parentEntity);
 
     }
 
@@ -366,7 +380,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             sampleEd.setParentEntity(workspace);
             sampleEd.setValue(brainSampleId.toString());
             workspace.getEntityData().add(sampleEd);
-            setWorkspaceLatestVersion(workspace);
             createTiledMicroscopePreferencesInMemory(workspace);
 
             return workspace;
@@ -1775,32 +1788,48 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return geoAnnotation;
     }
 
-    private EntityData changeWorkspaceVersion(Entity workspaceEntity, TmWorkspace.Version version) throws DaoException {
-        // Eliminate any previous version value(s).
-        List<EntityData> toDelete = new ArrayList<>();
+    private EntityData changeWorkspaceVersion(Entity workspaceEntity, TmWorkspace.Version version, boolean saveWsEntity) throws DaoException {
+        // Eliminate any excessive previous version value(s).
+        // This is to cleanup any tagalong leftovers.
+        List<EntityData> existingVersionEds = new ArrayList<>();
         for (EntityData ed : workspaceEntity.getEntityData()) {
             if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
                 String propValue = ed.getValue();
                 if (propValue.startsWith(TmWorkspace.WS_VERSION_PROP)) {
-                    toDelete.add(ed);
+                    existingVersionEds.add(ed);
                 }
             }
         }
-        for (EntityData ed : toDelete) {
-            annotationDAO.deleteEntityData(ed);
-            workspaceEntity.getEntityData().remove(ed);
+        if (existingVersionEds.size() > 1) {
+            for (EntityData ed : existingVersionEds) {
+                annotationDAO.deleteEntityData(ed);
+                workspaceEntity.getEntityData().remove(ed);
+            }
+        }
+        EntityData wsVersionEd;
+        if (existingVersionEds.size() == 1) {
+            wsVersionEd = existingVersionEds.get(0);
+        }
+        else {
+            wsVersionEd = new EntityData();
+            wsVersionEd.setOwnerKey(workspaceEntity.getOwnerKey());
+            wsVersionEd.setCreationDate(new Date());
+            wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
+            wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + version);
+            wsVersionEd.setParentEntity(workspaceEntity);
+            workspaceEntity.getEntityData().add(wsVersionEd);
         }
 
-        EntityData wsVersionEd = new EntityData();
-        wsVersionEd.setOwnerKey(workspaceEntity.getOwnerKey());
-        wsVersionEd.setCreationDate(new Date());
-        wsVersionEd.setEntityAttrName(EntityConstants.ATTRIBUTE_PROPERTY);
-        wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + version);
-        wsVersionEd.setParentEntity(workspaceEntity);
-        workspaceEntity.getEntityData().add(wsVersionEd);
         annotationDAO.saveOrUpdateEntityData(wsVersionEd);
-        annotationDAO.saveOrUpdateEntity(workspaceEntity);
+        if (saveWsEntity) {
+            annotationDAO.saveOrUpdateEntity(workspaceEntity);
+
+        }
         return wsVersionEd;
+    }
+
+    private EntityData changeWorkspaceVersion(Entity workspaceEntity, TmWorkspace.Version version) throws DaoException {
+        return changeWorkspaceVersion(workspaceEntity, version, true);
     }
 
     private String threadSafeTempGeoValue() {
