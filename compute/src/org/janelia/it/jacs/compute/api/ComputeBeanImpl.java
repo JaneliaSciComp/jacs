@@ -458,6 +458,7 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         job.setDispatchedTaskId(task.getObjectId());
         job.setProcessDefnName(processDefName);
         job.setDispatchedTaskOwner(task.getOwner());
+        job.setRetries(0);
         job.setDispatchHost(null);
         dispatcherDAO.save(job);
 

@@ -59,4 +59,6 @@ public interface JobControlBeanLocal {
     public void bulkUpdateGridJobInfo(long taskId, Map<String,GridJobStatus.JobState> changedJobStateMap, Map<String,Map<String, String>> changedJobResourceMap);
 
     public void updateDispatcherJob(DispatcherJob job);
+
+    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int prefetchSize);
 }

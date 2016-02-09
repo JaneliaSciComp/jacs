@@ -470,7 +470,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             }
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, processName, taskParameters);
-        } 
+        }
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
         }

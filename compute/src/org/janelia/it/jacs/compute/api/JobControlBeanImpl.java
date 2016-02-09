@@ -18,6 +18,7 @@ import org.jboss.ejb3.StrictMaxPool;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.ejb.TransactionManagement;
 import javax.jms.Message;
 import java.util.*;
 
@@ -28,6 +29,7 @@ import java.util.*;
  * Time: 11:39:22 AM
  */
 @Stateless(name = "JobControlEJB")
+@TransactionManagement
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 @PoolClass(value = StrictMaxPool.class, maxSize = 20, timeout = 10000)
@@ -35,7 +37,6 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     private Logger logger = Logger.getLogger(this.getClass());
 
     public JobControlBeanImpl() {
-
     }
 
     public List<TaskStatus> getActiveTasks() {
@@ -141,7 +142,6 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 //        ProcessManager processManager = new ProcessManager();
 //        processManager.launch("CancelTask",taskId);
         // Put a message with the task ID on queue/CancelJob
-
 
         try {
             AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
@@ -313,5 +313,11 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
         } catch (Exception e) {
             logger.error("Error while trying to update job " + job.getDispatchId());
         }
+    }
+
+    @Override
+    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int prefetchSize) {
+        DispatcherDAO dispatcherDao = new DispatcherDAO();
+        return dispatcherDao.nextPendingJobs(hostName, maxRetries, prefetchSize);
     }
 }

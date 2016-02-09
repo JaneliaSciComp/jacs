@@ -41,7 +41,7 @@
            select-before-update="false"
            polymorphism="implicit"
            lazy="true"
-            >
+           optimistic-lock="all">
 
         <id name="dispatchId" column="dispatch_id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
@@ -54,7 +54,7 @@
         <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
         <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
         <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
-        <property name="retries" type="int" column="retries" not-null="false"/>
+        <property name="retries" type="int" column="retries"/>
     </class>
 
 </hibernate-mapping>

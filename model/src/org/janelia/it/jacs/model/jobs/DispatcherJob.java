@@ -12,6 +12,7 @@ public class DispatcherJob implements Serializable {
 
     public static enum Status {
         PENDING,
+        IN_PROGRESS,
         SUBMITTED,
         FAILED
     }

@@ -24,13 +24,14 @@ import java.util.HashSet;
  * Updates the status of a sample.
  */
 public class LSMSampleStartProcessingService extends AbstractEntityService {
+    private static final String SAMPLE_PROCESSING_JOBNAME = "GSPS_CompleteSamplePipeline";
 
     public void execute() throws Exception {
         String datasetIdWithsampleId = processData.getString("SAMPLE_DATASET_ID_WITH_ENTITY_ID");
         String sampleId = Iterables.get(Splitter.on(':').split(datasetIdWithsampleId),1);
         Entity sampleEntity = entityBean.getEntityById(sampleId);
         Task processSampleTask = createTask(sampleEntity);
-        computeBean.submitJob("DispatchComputation", processSampleTask.getObjectId());
+        computeBean.dispatchJob(SAMPLE_PROCESSING_JOBNAME, processSampleTask.getObjectId());
     }
 
     private Task createTask(Entity sample) throws DaoException {
@@ -61,7 +62,7 @@ public class LSMSampleStartProcessingService extends AbstractEntityService {
             taskParameters.add(new TaskParameter("run objectives", runObjectives, null));
         }
         GenericTask processSampleTask = new GenericTask(new HashSet<Node>(), sample.getOwnerKey(), new ArrayList<Event>(),
-                taskParameters, "GSPS_CompleteSamplePipeline", "GSPS_CompleteSamplePipeline");
+                taskParameters, SAMPLE_PROCESSING_JOBNAME, SAMPLE_PROCESSING_JOBNAME);
         processSampleTask.setParentTaskId(task.getObjectId());
         return computeBean.saveOrUpdateTask(processSampleTask);
     }

@@ -21,23 +21,22 @@ public class EJBFactory {
     private static final String PROVIDER_URL = "jnp://" + SystemConfigurationProperties.getString("computeserver.ejb.service");
     private static final String INITIAL_CONTEXT_FACTORY = "org.jnp.interfaces.NamingContextFactory";
     private static final String URL_PKG_PREFIXES = "org.jboss.naming:org.jnp.interfaces";
-    private static final String LOCAL_ANNOTATION_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("AnnotationEJB.Name") + "/local";
-    private static final String REMOTE_ANNOTATION_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("AnnotationEJB.Name") + "/remote";
-    private static final String LOCAL_COMPUTE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("ComputeEJB.Name") + "/local";
-    private static final String REMOTE_COMPUTE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("ComputeEJB.Name") + "/remote";
-    private static final String LOCAL_ENTITY_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("EntityEJB.Name") + "/local";
-    private static final String REMOTE_ENTITY_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("EntityEJB.Name") + "/remote";
-    private static final String LOCAL_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/local";
-    private static final String REMOTE_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/remote";
-    private static final String LOCAL_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/local";
-    private static final String REMOTE_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/remote";
-//    private static final String LOCAL_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/local";
-//    private static final String REMOTE_GENOME_CONTEXT_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("GenomeContextEJB.Name") + "/remote";
-    private static final String LOCAL_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/local";
-    private static final String REMOTE_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/remote";
-    private static final String LOCAL_TILED_MICROSCOPE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("TiledMicroscopeEJB.Name") + "/local";
-    private static final String REMOTE_TILED_MICROSCOPE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("TiledMicroscopeEJB.Name") + "/remote";
     private static Properties icProperties = new Properties();
+
+    public static final String LOCAL_ANNOTATION_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("AnnotationEJB.Name") + "/local";
+    public static final String REMOTE_ANNOTATION_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("AnnotationEJB.Name") + "/remote";
+    public static final String LOCAL_COMPUTE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("ComputeEJB.Name") + "/local";
+    public static final String REMOTE_COMPUTE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("ComputeEJB.Name") + "/remote";
+    public static final String LOCAL_ENTITY_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("EntityEJB.Name") + "/local";
+    public static final String REMOTE_ENTITY_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("EntityEJB.Name") + "/remote";
+    public static final String LOCAL_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/local";
+    public static final String REMOTE_SEARCH_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SearchEJB.Name") + "/remote";
+    public static final String LOCAL_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/local";
+    public static final String REMOTE_SOLR_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("SolrEJB.Name") + "/remote";
+    public static final String LOCAL_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/local";
+    public static final String REMOTE_JOB_CONTROL_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("JobControlEJB.Name") + "/remote";
+    public static final String LOCAL_TILED_MICROSCOPE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("TiledMicroscopeEJB.Name") + "/local";
+    public static final String REMOTE_TILED_MICROSCOPE_JNDI_NAME = "compute/" + SystemConfigurationProperties.getString("TiledMicroscopeEJB.Name") + "/remote";
 
     static {
         icProperties.put(Context.PROVIDER_URL, PROVIDER_URL);
