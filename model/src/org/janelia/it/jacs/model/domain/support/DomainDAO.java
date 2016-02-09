@@ -263,34 +263,6 @@ public class DomainDAO {
         Reference reference = new Reference(domainClass.getName(), id);
         return (T)getDomainObject(subjectKey, reference);
     }
-
-    /**
-     * Get the domain object by name.
-     */
-    public <T extends DomainObject> List<T> getDomainObjectsByName(String subjectKey, Class<T> domainClass, String name) {
-
-        if (domainClass==null) {
-            return null;
-        }
-
-        long start = System.currentTimeMillis();
-        log.trace("getDomainObjects(subjectKey={},className="+domainClass.getName()+",name="+name+")");
-
-        Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
-
-        String collectionName = DomainUtils.getCollectionName(domainClass);
-        MongoCursor<T> cursor = null;
-        if (subjects == null) {
-            cursor = getCollectionByName(collectionName).find("{name:#}", name).as(domainClass);
-        }
-        else {
-            cursor = getCollectionByName(collectionName).find("{name:#,readers:{$in:#}}", name, subjects).as(domainClass);
-        }
-
-        List<T> list = toList(cursor);
-        log.trace("Getting "+list.size()+" "+collectionName+" objects took "+(System.currentTimeMillis()-start)+" ms");
-        return list;
-    }
     
     /**
      * Get the domain object referenced by the given Reference.
@@ -356,7 +328,7 @@ public class DomainDAO {
         String collectionName = DomainUtils.getCollectionName(domainClass);
         MongoCursor<T> cursor = null;
         if (ids==null) {
-            if (subjects == null) {
+            if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
                 cursor = getCollectionByName(collectionName).find().as(domainClass);
             }
             else {
@@ -364,7 +336,7 @@ public class DomainDAO {
             }
         }
         else {
-            if (subjects == null) {
+            if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
                 cursor = getCollectionByName(collectionName).find("{_id:{$in:#}}", ids).as(domainClass);
             }
             else {
@@ -390,7 +362,7 @@ public class DomainDAO {
         String collectionName = DomainUtils.getCollectionName(reverseRef.getReferringClassName());
 
         MongoCursor<? extends DomainObject> cursor = null;
-        if (subjects==null) {
+        if (subjects==null || subjects.contains(Subject.ADMIN_KEY)) {
             cursor = getCollectionByName(collectionName).find("{'"+reverseRef.getReferenceAttr()+"':#}", reverseRef.getReferenceId()).as(clazz);
         }
         else {
@@ -405,18 +377,36 @@ public class DomainDAO {
         return list;
     }
 
-    public List<Annotation> getAnnotations(String subjectKey, Reference reference) {
+    /**
+     * Get the domain object by name.
+     */
+    public <T extends DomainObject> List<T> getDomainObjectsByName(String subjectKey, Class<T> domainClass, String name) {
+
+        if (domainClass==null) {
+            return null;
+        }
+
+        long start = System.currentTimeMillis();
+        log.trace("getDomainObjects(subjectKey={},className="+domainClass.getName()+",name="+name+")");
+
         Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
 
-        MongoCursor<Annotation> cursor = null;
-        if (subjects==null) {
-            cursor = annotationCollection.find("{targetId:#}",reference.getTargetId()).as(Annotation.class);
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCursor<T> cursor = null;
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            cursor = getCollectionByName(collectionName).find("{name:#}", name).as(domainClass);
         }
         else {
-            cursor = annotationCollection.find("{targetId:#,readers:{$in:#}}",reference.getTargetId(),subjects).as(Annotation.class);
+            cursor = getCollectionByName(collectionName).find("{name:#,readers:{$in:#}}", name, subjects).as(domainClass);
         }
 
-        return toList(cursor);
+        List<T> list = toList(cursor);
+        log.trace("Getting "+list.size()+" "+collectionName+" objects took "+(System.currentTimeMillis()-start)+" ms");
+        return list;
+    }
+
+    public List<Annotation> getAnnotations(String subjectKey, Reference reference) {
+        return getAnnotations(subjectKey, Arrays.asList(reference));
     }
 
     public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
@@ -427,7 +417,15 @@ public class DomainDAO {
             targetIds.add(reference.getTargetId());
         }
 
-        return toList(annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}", targetIds, subjects).as(Annotation.class));
+        MongoCursor<Annotation> cursor = null;
+        if (subjects==null || subjects.contains(Subject.ADMIN_KEY)) {
+            cursor = annotationCollection.find("{targetId:{$in:#}}",targetIds).as(Annotation.class);
+        }
+        else {
+            cursor = annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}",targetIds, subjects).as(Annotation.class);
+        }
+
+        return toList(cursor);
     }
 
     public Workspace getDefaultWorkspace(String subjectKey) {
