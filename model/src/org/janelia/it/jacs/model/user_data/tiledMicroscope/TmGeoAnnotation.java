@@ -42,7 +42,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     @Tag(9)
     private Long neuronId = null;
     @Tag(10)
-    private List<Long> childIds = new ArrayList<>();;
+    private List<Long> childIds = new ArrayList<>();
 
     @Tag(11)
     private Double radius;

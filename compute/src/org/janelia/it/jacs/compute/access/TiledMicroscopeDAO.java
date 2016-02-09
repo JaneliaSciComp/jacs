@@ -1771,16 +1771,17 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      * @throws Exception
      */
     private TmGeoAnnotation createGeometricAnnotationInMemory(TmNeuron neuron, boolean isRoot, Long parentAnnotationId, TmGeoAnnotation unserializedAnno, Iterator<Long> idSource) throws Exception {
-        return createGeometricAnnotationInMemory(neuron, isRoot, parentAnnotationId, 0, unserializedAnno.getX(), unserializedAnno.getY(), unserializedAnno.getZ(), unserializedAnno.getComment(), neuron.getId(), idSource);
+        return createGeometricAnnotationInMemory(neuron, isRoot, parentAnnotationId, 0, unserializedAnno.getX(), unserializedAnno.getY(), unserializedAnno.getZ(), unserializedAnno.getRadius(), unserializedAnno.getComment(), neuron.getId(), idSource);
     }
 
     private TmGeoAnnotation createGeometricAnnotationInMemory(
-            TmNeuron tmNeuron, boolean isRoot, Long parentAnnotationId, int index, double x, double y, double z, String comment, Long neuronId, Iterator<Long> idSource) throws DaoException, Exception {
+            TmNeuron tmNeuron, boolean isRoot, Long parentAnnotationId, int index, double x, double y, double z, double radius, String comment, Long neuronId, Iterator<Long> idSource) throws DaoException, Exception {
 
         long generatedId = idSource.next();
         TmGeoAnnotation geoAnnotation = new TmGeoAnnotation(generatedId, comment, x, y, z, parentAnnotationId, new Date());
         geoAnnotation.setNeuronId(neuronId);
         geoAnnotation.setIndex(index);
+        geoAnnotation.setRadius(radius);
         tmNeuron.getGeoAnnotationMap().put(geoAnnotation.getId(), geoAnnotation);
         if (isRoot) {
             tmNeuron.addRootAnnotation(geoAnnotation);

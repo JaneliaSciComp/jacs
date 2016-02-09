@@ -52,7 +52,7 @@ public class TmNeuron implements IsSerializable, Serializable {
 
     @Tag(9)
     private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<>();
-
+    
     public Long getId() {
         return id;
     }
