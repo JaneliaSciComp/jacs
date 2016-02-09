@@ -463,21 +463,6 @@ public class TmModelManipulator {
         return descriptorList;
     }    
 
-    /**
-     * Given the neuron containing the path, and the path itself, remove the
-     * path from the neuron.
-     * 
-     * @param oldTmNeuron container.
-     * @param path content to remove.
-     * @throws Exception 
-     */
-    public void deleteAnchoredPath(TmNeuron oldTmNeuron, TmAnchoredPath path) throws Exception {
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
-        // Remove the anchor path from its containing neuron        
-        tmNeuron.getAnchoredPathMap().remove(path.getEndpoints());
-        saveNeuronData(tmNeuron);
-    }
-    
     private static final String UNREMOVE_NEURON_WARN_FMT = "Attempted to remove neuron %d that was not in workspace %d.";
     public void deleteNeuron(TmWorkspace tmWorkspace, TmNeuron tmNeuron) throws Exception {
         boolean wasRemoved = tmWorkspace.getNeuronList().remove(tmNeuron);
