@@ -6,8 +6,6 @@ import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.jongo.marshall.jackson.oid.MongoId;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 /**
  * A user or group in the Workstation system. 
  *
@@ -15,6 +13,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  */
 @MongoMapped(collectionName="subject",label="Subject")
 public class Subject implements HasIdentifier {
+    
+    public static final String ADMIN_KEY = "group:admin";
+    public static final String USERS_KEY = "group:workstation_users";
     
     @MongoId
     private Long id;

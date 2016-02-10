@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.model.domain.support;
 
-import static org.janelia.it.jacs.model.domain.enums.FileType.LosslessStack;
-import static org.janelia.it.jacs.model.domain.enums.FileType.VisuallyLosslessStack;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +21,7 @@ import org.janelia.it.jacs.model.domain.gui.search.criteria.Criteria;
 import org.janelia.it.jacs.model.domain.gui.search.criteria.DateRangeCriteria;
 import org.janelia.it.jacs.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria;
+import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
@@ -40,8 +38,10 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Ordering;
 
 /**
@@ -58,18 +58,11 @@ public class DomainUtils {
 
     private static final BiMap<String, Class<? extends DomainObject>> typeClasses = HashBiMap.create();
     private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.<Class<? extends DomainObject>, Class<? extends DomainObject>>create();
-
+    private static final List<Class<? extends DomainObject>> searchClasses = new ArrayList<>();
+    private static final Map<String,String> searchTypeToClassName = new HashMap<>();
+    
     static {
         registerAnnotatedClasses();
-        typeClasses.put("sample", org.janelia.it.jacs.model.domain.sample.Sample.class);
-        typeClasses.put("fragment", org.janelia.it.jacs.model.domain.sample.NeuronFragment.class);
-        typeClasses.put("treeNode", org.janelia.it.jacs.model.domain.workspace.TreeNode.class);
-        typeClasses.put("workspace", org.janelia.it.jacs.model.domain.workspace.Workspace.class);
-        typeClasses.put("objectSet", org.janelia.it.jacs.model.domain.workspace.ObjectSet.class);
-        typeClasses.put("patternMask", org.janelia.it.jacs.model.domain.screen.PatternMask.class);
-        typeClasses.put("filter", org.janelia.it.jacs.model.domain.gui.search.Filter.class);
-        typeClasses.put("annotation", org.janelia.it.jacs.model.domain.ontology.Annotation.class);
-        typeClasses.put("ontology", org.janelia.it.jacs.model.domain.ontology.Ontology.class);
     }
 
     /**
@@ -98,6 +91,21 @@ public class DomainUtils {
             catch (Exception e) {
                 log.error("Error registering annotated domain object classes", e);
             }
+        }
+        for(Class<?> searchClass : reflections.getTypesAnnotatedWith(SearchType.class)) {
+            searchClasses.add((Class<? extends DomainObject>)searchClass);
+        }
+        Collections.sort(searchClasses, new Comparator<Class<?>>() {
+            @Override
+            public int compare(Class<?> o1, Class<?> o2) {
+                final String l1 = o1.getAnnotation(SearchType.class).label();
+                final String l2 = o2.getAnnotation(SearchType.class).label();
+                return l1.compareTo(l2);
+            }
+        });  
+        for(Class<?> searchClazz : searchClasses) {
+            String searchTypeKey = searchClazz.getAnnotation(SearchType.class).key();
+            searchTypeToClassName.put(searchTypeKey, searchClazz.getName());
         }
     }
 
@@ -181,7 +189,15 @@ public class DomainUtils {
         }
         return (Class<? extends DomainObject>)clazz;
     }
-    
+
+    public static List<Class<? extends DomainObject>> getSearchClasses() {
+        return searchClasses;
+    }
+
+    public static String getClassNameForSearchType(String type) {
+        return searchTypeToClassName.get(type);
+    }
+
     /**
      * Returns the subject name part of a given subject key. For example, for "group:flylight", this returns "flylight".
      * @param subjectKey
@@ -264,11 +280,33 @@ public class DomainUtils {
     }
     
     public static String getDefault3dImageFilePath(HasFiles hasFiles) {
-        String path = DomainUtils.getFilepath(hasFiles, LosslessStack);
-        if (path==null) path = DomainUtils.getFilepath(hasFiles, VisuallyLosslessStack);
+        String path = DomainUtils.getFilepath(hasFiles, FileType.LosslessStack);
+        if (path==null) path = DomainUtils.getFilepath(hasFiles, FileType.VisuallyLosslessStack);
         return path;
     }
 
+    public static Multiset<String> get2dTypeNames(HasFileGroups hasGroups) {
+        Multiset<String> countedTypeNames = LinkedHashMultiset.create();
+        for(String groupKey : hasGroups.getGroupKeys()) {
+            HasFiles hasFiles = hasGroups.getGroup(groupKey);
+            if (hasFiles.getFiles()!=null) {
+                countedTypeNames.addAll(get2dTypeNames(hasFiles));
+            }
+        }
+        return countedTypeNames;
+    }
+    
+    public static Multiset<String> get2dTypeNames(HasFiles hasFiles) {
+        Multiset<String> countedTypeNames = LinkedHashMultiset.create();
+        if (hasFiles.getFiles()!=null) {
+            for(FileType fileType : hasFiles.getFiles().keySet()) {
+                if (!fileType.is2dImage()) continue;
+                countedTypeNames.add(fileType.name());
+            }
+        }
+        return countedTypeNames;
+    }
+    
     /**
      * Return true if the given tree node has the specified domain object as a child. 
      * @param treeNode
