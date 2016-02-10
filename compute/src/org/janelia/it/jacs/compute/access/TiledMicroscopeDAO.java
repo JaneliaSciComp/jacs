@@ -1600,7 +1600,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 TmPreferences prefs = workspace.getPreferences();
                 String abandonedColorMapPref = prefs.getProperty(NEURON_STYLES_PREF);
                 String oldColorMapPref = prefs.getProperty(OLD_NEURON_STYLES_PREF);
-                if (oldColorMapPref == null) {
+                if (oldColorMapPref == null  &&  abandonedColorMapPref != null) {
                     oldColorMapPref = abandonedColorMapPref;
                     this.createOrUpdateWorkspacePreference(workspaceId, OLD_NEURON_STYLES_PREF, oldColorMapPref);
                 }
@@ -1820,6 +1820,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         EntityData wsVersionEd;
         if (existingVersionEds.size() == 1) {
             wsVersionEd = existingVersionEds.get(0);
+            wsVersionEd.setValue(TmWorkspace.WS_VERSION_PROP + "=" + version);
         }
         else {
             wsVersionEd = new EntityData();
