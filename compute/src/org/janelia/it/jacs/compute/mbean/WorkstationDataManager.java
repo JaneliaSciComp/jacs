@@ -280,7 +280,7 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public void runFlyScreenPipeline(String user, Boolean refresh) {
         try {
             String topLevelFolderName = FlyScreenDiscoveryService.SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME;
-            String inputDirList = "/nobackup/jacs/jacsData/filestore/system/ScreenStaging";
+            String inputDirList = "/nrs/jacs/jacsData/filestore/system/ScreenStaging";
             Task task = new FileDiscoveryTask(new HashSet<Node>(),
                     user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
                     inputDirList, topLevelFolderName, refresh);
