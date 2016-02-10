@@ -1603,10 +1603,8 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 if (oldColorMapPref == null  &&  abandonedColorMapPref != null) {
                     oldColorMapPref = abandonedColorMapPref;
                     this.createOrUpdateWorkspacePreference(workspaceId, OLD_NEURON_STYLES_PREF, oldColorMapPref);
+                    refreshPrefsInDomainObject(workspaceEntity, workspace);
                 }
-
-                // Refresh.
-                prefs = workspace.getPreferences();
 
                 // Loop through, saving neurons as PROTOBUF, and mapping of old/new ids.
                 final Map<Long, Long> oldToNew = Collections.synchronizedMap(new HashMap<Long,Long>());
@@ -1647,6 +1645,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
                     // Save back the prefs map.
                     this.createOrUpdateWorkspacePreference(workspaceId, NEURON_STYLES_PREF, newColorMapPref);
+                    refreshPrefsInDomainObject(workspaceEntity, workspace);
                 }
 
                 // In event of some error, it is possible only part of the 
@@ -1842,6 +1841,18 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     private EntityData changeWorkspaceVersion(Entity workspaceEntity, TmWorkspace.Version version) throws DaoException {
         return changeWorkspaceVersion(workspaceEntity, version, true);
+    }
+
+    private void refreshPrefsInDomainObject(Entity workspaceEntity, TmWorkspace workspace) throws Exception {
+        TmPreferences prefs;
+        // Refresh preferences in the domain object.
+        for (Entity child : workspaceEntity.getChildren()) {
+            if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                prefs = tmFactory.createTmPreferences(child);
+                workspace.setPreferences(prefs);
+                break;
+            }
+        }
     }
 
     private String threadSafeTempGeoValue() {
