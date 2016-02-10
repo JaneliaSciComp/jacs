@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Interval extends OntologyTerm {
 
     private Long lowerBound;
@@ -20,6 +22,7 @@ public class Interval extends OntologyTerm {
         return true;
     }
 
+    @JsonIgnore
     public String getTypeName() {
         return "Interval";
     }

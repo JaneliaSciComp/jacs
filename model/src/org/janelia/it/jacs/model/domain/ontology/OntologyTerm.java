@@ -88,8 +88,10 @@ public abstract class OntologyTerm implements HasIdentifier {
 
     @JsonProperty
     public void setTerms(List<OntologyTerm> terms) {
-        for(OntologyTerm term : terms) {
-            term.setParent(this);
+        if (terms!=null) {
+            for (OntologyTerm term : terms) {
+                term.setParent(this);
+            }
         }
         this.terms = terms;
     }

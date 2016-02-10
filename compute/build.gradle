@@ -240,11 +240,11 @@ dependencies {
     ngWarLib group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
     ngWarLib group: 'net.sf.ehcache', name: 'ehcache-core', version: '2.5.1'
     ngWarLib group: 'org.quartz-scheduler', name: 'quartz', version: '2.2.1'
-    ngWarLib group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.7'
-    ngWarLib group: 'org.jboss', name: 'jboss-remote-naming', version: '2.0.0.Final'
-    ngWarLib group: 'org.jboss.xnio', name: 'xnio-nio', version: '3.2.1.Final'
-    ngWarLib group: 'org.hornetq', name: 'hornetq-jms-client', version: '2.4.5.Final'
-    ngWarLib group: 'org.hornetq', name: 'hornetq-core-client', version: '2.4.5.Final'
+   // ngWarLib group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.7'
+   // ngWarLib group: 'org.jboss', name: 'jboss-remote-naming', version: '2.0.0.Final'
+   // ngWarLib group: 'org.jboss.xnio', name: 'xnio-nio', version: '3.2.1.Final'
+   // ngWarLib group: 'org.hornetq', name: 'hornetq-jms-client', version: '2.4.5.Final'
+   // ngWarLib group: 'org.hornetq', name: 'hornetq-core-client', version: '2.4.5.Final'
 
 }
 

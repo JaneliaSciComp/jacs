@@ -40,6 +40,7 @@ public class UserWorkstationWebService extends ResourceConfig {
     public UserWorkstationWebService() {
         register(JacksonFeature.class);
         authenticator = new LDAPProvider();
+        authenticator.init();
     }
 
     @GET

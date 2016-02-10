@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @MongoMapped(collectionName="ontology",label="Ontology")
 public class Ontology extends OntologyTerm implements DomainObject {
@@ -21,11 +22,13 @@ public class Ontology extends OntologyTerm implements DomainObject {
     }
 
     @Override
+    @JsonIgnore
     public String getTypeName() {
         return "Ontology";
     }
 
     @Override
+    @JsonIgnore
     public String getType() {
         return "Ontology"; // this must match the MongoMapped.label above
     }
