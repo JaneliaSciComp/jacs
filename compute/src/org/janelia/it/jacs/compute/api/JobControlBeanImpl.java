@@ -3,11 +3,14 @@ package org.janelia.it.jacs.compute.api;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
+import org.janelia.it.jacs.compute.access.DispatcherDAO;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
 import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
+import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.status.TaskStatus;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
@@ -15,6 +18,7 @@ import org.jboss.ejb3.StrictMaxPool;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.ejb.TransactionManagement;
 import javax.jms.Message;
 import java.util.*;
 
@@ -25,6 +29,7 @@ import java.util.*;
  * Time: 11:39:22 AM
  */
 @Stateless(name = "JobControlEJB")
+@TransactionManagement
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 @PoolClass(value = StrictMaxPool.class, maxSize = 20, timeout = 10000)
@@ -32,7 +37,6 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     private Logger logger = Logger.getLogger(this.getClass());
 
     public JobControlBeanImpl() {
-
     }
 
     public List<TaskStatus> getActiveTasks() {
@@ -138,7 +142,6 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 //        ProcessManager processManager = new ProcessManager();
 //        processManager.launch("CancelTask",taskId);
         // Put a message with the task ID on queue/CancelJob
-
 
         try {
             AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
@@ -300,5 +303,25 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
             percentComplete = null;
         }
         return percentComplete;
+    }
+
+    @Override
+    public void updateDispatcherJob(DispatcherJob job) {
+        try {
+            DispatcherDAO dispatcherDao = new DispatcherDAO();
+            if (job.getDispatchStatus() == DispatcherJob.Status.SUBMITTED) {
+                dispatcherDao.archive(job);
+            } else {
+                dispatcherDao.save(job);
+            }
+        } catch (Exception e) {
+            logger.error("Error while trying to update job " + job.getDispatchId());
+        }
+    }
+
+    @Override
+    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int prefetchSize) {
+        DispatcherDAO dispatcherDao = new DispatcherDAO();
+        return dispatcherDao.nextPendingJobs(hostName, maxRetries, prefetchSize);
     }
 }

@@ -69,23 +69,23 @@ public class SynchronousExecutionService implements IService {
         	
         	ProcessDef processDef = DefCache.getProcessDef(processDefName);
 
-    		// Every process file we have has a <sequence> as a root, so we run that here
-        	// so that the things in the <process> like updateProcessStatus are not triggered.
-        	// Otherwise if there are multiple pipelines, the first one may end the task. 
-        	for(ActionDef actionDef : processDef.getChildActionDefs()) {
+            // Every process file we have has a <sequence> as a root, so we run that here
+            // so that the things in the <process> like updateProcessStatus are not triggered.
+            // Otherwise if there are multiple pipelines, the first one may end the task.
+            for(ActionDef actionDef : processDef.getChildActionDefs()) {
                 processData.setActionToProcess(actionDef);
                 switch (actionDef.getActionType()) {
                     case SEQUENCE:
-                		SequenceDef sequenceDef = (SequenceDef)actionDef;
+                        SequenceDef sequenceDef = (SequenceDef)actionDef;
                         logger.info("Launching "+processDefName);
                         ILauncher launcher = ProcessorFactory.createLauncherForSeries(sequenceDef);
                         launcher.launch(sequenceDef, processData);
                         break;
                     default:
-            			logger.warn("Skipping action definiton which is not a sequence: "+actionDef.getName()+" ("+actionDef.getClass().getName()+")");
+                        logger.warn("Skipping action definiton which is not a sequence: "+actionDef.getName()+" ("+actionDef.getClass().getName()+")");
                 }
-        	}
-        	
+            }
+
         } 
         catch (Exception e) {
             throw new ServiceException(e);

@@ -9,8 +9,4 @@ Paste this into the jboss-4.2.3.GA/server/default/conf/jboss-service.xml file to
      <attribute name="StoreFactoryClassName">
        org.jboss.services.binding.XMLServicesStoreFactory
      </attribute>
-   </mbean>
-
-
-
-
+ </mbean>

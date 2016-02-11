@@ -15,6 +15,7 @@ public class SlideImage {
     
     private Long sageId;
     private String slideCode;
+    private String imageName;
     private String imagePath;
     private String jfsPath;
     private String tileType;
@@ -34,6 +35,8 @@ public class SlideImage {
     private String vtLine;
     private String tmogDate;
     private File file;
+    private String datasetName;
+    private String lab;
 	
     public Map<String,String> getProperties() {
         Map<String,String> properties = new HashMap<>();
@@ -120,6 +123,8 @@ public class SlideImage {
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
     }
+    public String getImageName() { return imageName; }
+    public void setImageName(String imageName) { this.imageName = imageName; }
     public String getImagePath() {
         return imagePath;
     }
@@ -240,5 +245,8 @@ public class SlideImage {
     public void setTmogDate(String tmogDate) {
         this.tmogDate = tmogDate;
     }
-    
+    public String getDatasetName() { return datasetName; }
+    public void setDatasetName(String datasetName) { this.datasetName = datasetName; }
+    public String getLab() { return lab; }
+    public void setLab(String lab) { this.lab = lab; }
 }

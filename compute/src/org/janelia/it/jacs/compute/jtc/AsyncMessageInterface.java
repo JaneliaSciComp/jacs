@@ -557,7 +557,7 @@ public class AsyncMessageInterface {
         }
     }
 
-    private static class ConnectionType {
+    public static class ConnectionType {
         private String connectionType;
         private String connectionFactory;
 

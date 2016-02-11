@@ -90,7 +90,7 @@ public class SampleRetirementService extends AbstractEntityService {
                     continue;
                 }
 				toRetire.add(sample);
-            }    		
+            }
 
 			if (toRetire.isEmpty()) {
 	            logger.info("No desynchronized samples found");

@@ -1,9 +1,9 @@
 <!-- 
-	Discover samples in SAGE, add them into the database and run the configured pipeline for each one.
+    Discover samples in SAGE, add them into the database and run the configured pipeline for each one.
 -->
 <process name="User Data Set Pipelines" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
-	<sequence>
-	
+    <sequence>
+
         <input name="RUN_MODE"/>
         <input name="REUSE_PIPELINE_RUNS"/>
         <input name="REUSE_SUMMARY"/>
@@ -11,9 +11,9 @@
         <input name="REUSE_ALIGNMENT"/>
         <input name="DATA_SET_NAME"/>
         <input name="RUN_SAMPLE_DISCOVERY"/>
-        
-	    <!-- Import variables from the task -->
-	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+
+        <!-- Import variables from the task -->
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="RUN_MODE"/>
             <input name="REUSE_PIPELINE_RUNS"/>
@@ -31,15 +31,15 @@
                 <entry key="data set name" value="DATA_SET_NAME"/>
                 <entry key="run sample discovery" value="RUN_SAMPLE_DISCOVERY"/>
             </input>
-	        <output name="RUN_MODE"/>
+            <output name="RUN_MODE"/>
             <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_SUMMARY"/>
-	        <output name="REUSE_PROCESSING"/>
+            <output name="REUSE_PROCESSING"/>
             <output name="REUSE_ALIGNMENT"/>
             <output name="DATA_SET_NAME"/>
             <output name="RUN_SAMPLE_DISCOVERY"/>
-	    </operation>
-	    
+        </operation>
+
         <!-- By default, reuse whatever is possible to reuse -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
@@ -61,7 +61,7 @@
             <output name="REUSE_ALIGNMENT"/>
             <output name="RUN_SAMPLE_DISCOVERY"/>
         </operation>
-	    
+
         <sequence if="RUN_SAMPLE_DISCOVERY=true">
                 
             <!-- Automatically retire samples if there are only a few --> 
@@ -70,25 +70,25 @@
                 <input name="MAX_SAMPLES" value="5"/>
             </operation>
         
-    	    <!-- Discover samples in Sage and load them into the database as Entities -->
-    		<operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageDataSetDiscoveryService">
-    	        <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
+            <!-- Discover samples in Sage and load them into the database as Entities -->
+            <operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageDataSetDiscoveryService">
+                <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
                 <input name="DATA_SET_NAME"/>
-    		</operation>
+            </operation>
                 
         </sequence>
-		
-	    <!-- Find all the Sample Entities in the database -->
-		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
-			<input name="RUN_MODE"/>
-			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
+
+        <!-- Find all the Sample Entities in the database -->
+        <operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
+            <input name="RUN_MODE"/>
+            <input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
             <input name="DATA_SET_NAME"/>
-			<output name="SAMPLE_ENTITY_ID"/>
-		</operation>
-		
-	    <!-- Process each Sample Entity -->
+            <output name="SAMPLE_ENTITY_ID"/>
+        </operation>
+
+        <!-- Process each Sample Entity -->
         <sequence forEach="SAMPLE_ENTITY_ID">
-    
+
             <include name="Process sample" process="GSPS_CompleteSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="REUSE_PIPELINE_RUNS"/>
@@ -96,8 +96,8 @@
                 <input name="REUSE_PROCESSING"/>
                 <input name="REUSE_ALIGNMENT"/>
             </include>
-            
-	    </sequence>
+
+        </sequence>
 
     </sequence>
 </process>

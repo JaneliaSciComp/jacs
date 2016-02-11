@@ -30,7 +30,7 @@ public class ResultSetIterator implements Iterator<Map<String,Object>> {
         try {
             final ResultSetMetaData md = rs.getMetaData();
             final int columnCount = md.getColumnCount();
-            orderedColumnLabels = new ArrayList<String>(columnCount);
+            orderedColumnLabels = new ArrayList<>(columnCount);
             for (int i = 1; i <= columnCount; i++) {
                 orderedColumnLabels.add(md.getColumnLabel(i));
             }

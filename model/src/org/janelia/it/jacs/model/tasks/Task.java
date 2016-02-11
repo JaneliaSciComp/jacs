@@ -21,28 +21,28 @@ import java.util.*;
 public abstract class Task implements Serializable, IsSerializable {
 
     transient public static final String PARAM_project = "project";
-	
+
     // The parameter below copies all the results to a location of the user's choosing
     // Could this be a gridFtp dir someday? Maybe we allow that to happen by default?
     transient public static final String PARAM_finalOutputDirectory = "finalOutputDirectory";
 
     // Fields
-	@XmlAttribute(name="guid")
+    @XmlAttribute(name="guid")
     private Long objectId;
 
-	@XmlAttribute(name="parentTaskGuid")
+    @XmlAttribute(name="parentTaskGuid")
     private Long parentTaskId;
 
-	@XmlAttribute
+    @XmlAttribute
     protected String taskName;
 
-	@XmlAttribute
+    @XmlAttribute
     private String jobName = "";
 
-	@XmlAttribute
+    @XmlAttribute
     private boolean taskDeleted;
 
-	@XmlTransient
+    @XmlTransient
     private Set<Node> inputNodes = new HashSet<Node>();
 
     @XmlElementWrapper(name = "outNodes")
@@ -51,16 +51,16 @@ public abstract class Task implements Serializable, IsSerializable {
     )
     private Set<Node> outputNodes = new HashSet<Node>();
 
-	@XmlAttribute
+    @XmlAttribute
     private String owner = "";
 
-	@XmlTransient
+    @XmlTransient
     private List<Event> events = new ArrayList<Event>();
 
     @XmlTransient
     private Set<TaskParameter> taskParameterSet = new HashSet<TaskParameter>();
 
-	@XmlTransient
+    @XmlTransient
     private Set<TaskMessage> messages = new HashSet<TaskMessage>();
 
     @XmlElement
@@ -121,7 +121,7 @@ public abstract class Task implements Serializable, IsSerializable {
     }
 
     public void setOwner(String owner) {
-    	this.owner = owner.contains(":") ? owner.split(":")[1] : owner;
+        this.owner = owner.contains(":") ? owner.split(":")[1] : owner;
     }
 
     public List<Event> getEvents() {
@@ -516,5 +516,4 @@ public abstract class Task implements Serializable, IsSerializable {
     public void setTaskNote(String taskNote) {
         this.taskNote = taskNote;
     }
-
 }

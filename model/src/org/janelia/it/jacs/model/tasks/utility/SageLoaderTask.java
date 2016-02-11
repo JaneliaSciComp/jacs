@@ -1,6 +1,8 @@
 
 package org.janelia.it.jacs.model.tasks.utility;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -20,7 +22,8 @@ import java.util.List;
 public class SageLoaderTask extends Task {
 
     private static final String DISPLAY_NAME = "Sage Loader Task";
-    private static final String PARAM_ITEM = "item";
+    private static final String DEFAULT_JOBNAME = "SageLoader";
+    private static final String PARAM_ITEMLIST = "item list";
     private static final String PARAM_LINE = "line";
     private static final String PARAM_CONFIG = "config";
     private static final String PARAM_GRAMMAR = "grammar";
@@ -29,7 +32,7 @@ public class SageLoaderTask extends Task {
     private static final String PARAM_LOCK = "lock";
 
     private static final String[] SCRIPT_ARGUMENT_NAMES = {
-            PARAM_ITEM, PARAM_LINE, PARAM_CONFIG, PARAM_GRAMMAR, PARAM_LAB, PARAM_LOCK
+            PARAM_LINE, PARAM_CONFIG, PARAM_GRAMMAR, PARAM_LAB, PARAM_LOCK
     };
     private static final String[] SCRIPT_FLAG_NAMES = { PARAM_DEBUG };
 
@@ -49,7 +52,28 @@ public class SageLoaderTask extends Task {
                           String lockPath) throws IllegalArgumentException {
         super(new HashSet<Node>(), owner, events, new HashSet<TaskParameter>());
         this.taskName = DISPLAY_NAME;
-        setItem(item);
+        setJobName(DEFAULT_JOBNAME);
+        setItemList(ImmutableList.of(item));
+        setOptionalParameter(PARAM_LINE, line);
+        setPathParameter(PARAM_CONFIG, configPath, true);
+        setPathParameter(PARAM_GRAMMAR, grammarPath, true);
+        setRequiredParameter(PARAM_LAB, lab);
+        setOptionalParameter(PARAM_DEBUG, debug);
+        setPathParameter(PARAM_LOCK, lockPath, false);
+    }
+
+    public SageLoaderTask(String owner,
+                          List<Event> events,
+                          List<String> items,
+                          String line,
+                          String configPath,
+                          String grammarPath,
+                          String lab,
+                          String debug,
+                          String lockPath) throws IllegalArgumentException {
+        super(new HashSet<Node>(), owner, events, new HashSet<TaskParameter>());
+        this.taskName = DISPLAY_NAME;
+        setItemList(items);
         setOptionalParameter(PARAM_LINE, line);
         setPathParameter(PARAM_CONFIG, configPath, true);
         setPathParameter(PARAM_GRAMMAR, grammarPath, true);
@@ -70,10 +94,6 @@ public class SageLoaderTask extends Task {
 
     public String getDisplayName() {
         return DISPLAY_NAME;
-    }
-
-    public String getItem() {
-        return getParameter(PARAM_ITEM);
     }
 
     public String[] getScriptArgumentNames() {
@@ -137,14 +157,13 @@ public class SageLoaderTask extends Task {
         }
     }
 
-    private void setItem(String value) throws IllegalArgumentException {
-        final String name = PARAM_ITEM;
-        final String trimmedValue = getTrimmedValue(name, value, true);
-        if (trimmedValue.contains("\\")) {
-            throw new IllegalArgumentException(name + " parameter '" + trimmedValue + "' contains invalid characters");
-        } else {
-            setParameter(name, trimmedValue);
-        }
+    private void setItemList(List<String> values) throws IllegalArgumentException {
+        final String name = PARAM_ITEMLIST;
+        setParameter(PARAM_ITEMLIST, Joiner.on(',').skipNulls().join(values));
+    }
+
+    public List<String> getItemList() {
+        return listOfStringsFromCsvString(getParameter(PARAM_ITEMLIST));
     }
 
     private boolean isDefined(String value) {
