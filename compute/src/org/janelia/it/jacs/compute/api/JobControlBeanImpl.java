@@ -309,7 +309,11 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     public void updateDispatcherJob(DispatcherJob job) {
         try {
             DispatcherDAO dispatcherDao = new DispatcherDAO();
-            dispatcherDao.save(job);
+            if (job.getDispatchStatus() == DispatcherJob.Status.SUBMITTED) {
+                dispatcherDao.archive(job);
+            } else {
+                dispatcherDao.save(job);
+            }
         } catch (Exception e) {
             logger.error("Error while trying to update job " + job.getDispatchId());
         }

@@ -41,12 +41,12 @@
            select-before-update="false"
            polymorphism="implicit"
            lazy="true"
-           optimistic-lock="all">
+           optimistic-lock="version">
 
         <id name="dispatchId" column="dispatch_id" type="java.lang.Long">
             <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
         </id>
-
+        <version name="retries" type="integer" column="retries"/>
         <property name="processDefnName" type="string" column="process_defn_name" not-null="false"/>
         <property name="status" type="string" column="dispatch_status" not-null="true" />
         <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
@@ -54,7 +54,50 @@
         <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
         <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
         <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
-        <property name="retries" type="int" column="retries"/>
+    </class>
+
+    <class name="org.janelia.it.jacs.model.jobs.DispatcherJob" table="dispatcher_job"
+           entity-name="dispatcher_job"
+           mutable="true"
+           dynamic-update="true"
+           dynamic-insert="true"
+           select-before-update="false"
+           polymorphism="implicit"
+           lazy="true"
+           optimistic-lock="version">
+
+        <id name="dispatchId" column="dispatch_id" type="java.lang.Long">
+            <generator class="org.janelia.it.jacs.model.TimebasedIdentifierGenerator" />
+        </id>
+        <version name="retries" type="integer" column="retries"/>
+        <property name="processDefnName" type="string" column="process_defn_name" not-null="false"/>
+        <property name="status" type="string" column="dispatch_status" not-null="true" />
+        <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
+        <property name="dispatchedTaskOwner" type="string" column="dispatched_task_owner" not-null="true" />
+        <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
+        <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
+        <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
+    </class>
+
+    <class name="org.janelia.it.jacs.model.jobs.DispatcherJob" table="dispatcher_job_archive"
+           entity-name="archived_dispatcher_job"
+           mutable="true"
+           dynamic-update="true"
+           dynamic-insert="true"
+           select-before-update="false"
+           polymorphism="implicit"
+           lazy="true"
+           optimistic-lock="version">
+
+        <id name="dispatchId" column="dispatch_id" type="java.lang.Long"/>
+        <property name="processDefnName" type="string" column="process_defn_name" not-null="false"/>
+        <property name="status" type="string" column="dispatch_status" not-null="true" />
+        <property name="dispatchedTaskId" type="java.lang.Long" column="dispatched_task_id" not-null="true" />
+        <property name="dispatchedTaskOwner" type="string" column="dispatched_task_owner" not-null="true" />
+        <property name="dispatchHost" type="string" column="dispatch_host" not-null="false"/>
+        <property name="creationDate" type="timestamp" column="creation_date" not-null="true"/>
+        <property name="dispatchedDate" type="timestamp" column="dispatched_date" not-null="false"/>
+        <property name="retries" type="integer" column="retries"/>
     </class>
 
 </hibernate-mapping>
