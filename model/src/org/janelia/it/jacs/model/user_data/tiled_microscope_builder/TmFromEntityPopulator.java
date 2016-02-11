@@ -29,15 +29,25 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  * @author fosterl
  */
 public class TmFromEntityPopulator {
-    public TmWorkspace loadWorkspace(Entity entity, Entity sampleEntity, TmWorkspace.Version wsVersion) throws Exception {
+    /**
+     * Load the workspace entity, and create a model object.
+     * 
+     * @param entity a workspace
+     * @param sampleEntity a sample, referenced by workspace
+     * @param prefsEntity optimizing cached value, to shorten load time.
+     * @param wsVersion what level of workspace is this?
+     * @return populated workspace model object.
+     * @throws Exception thrown by any called method.
+     */
+    public TmWorkspace loadWorkspace(Entity entity, Entity sampleEntity, Entity prefsEntity, TmWorkspace.Version wsVersion) throws Exception {
         TmWorkspace rtnVal = new TmWorkspace();
         rtnVal.setWorkspaceVersion(wsVersion);
-        populateFromEntity(entity, sampleEntity, rtnVal);
+        populateFromEntity(entity, sampleEntity, prefsEntity, rtnVal);
         return rtnVal;
     }
     
-    public TmWorkspace loadWorkspace(Entity entity, Entity sampleEntity) throws Exception {
-        return loadWorkspace(entity, sampleEntity, TmWorkspace.Version.PB_1);
+    public TmWorkspace loadWorkspace(Entity entity, Entity sampleEntity, Entity prefsEntity) throws Exception {
+        return loadWorkspace(entity, sampleEntity, prefsEntity, TmWorkspace.Version.PB_1);
     }
     
     public TmNeuron loadNeuron(Entity entity) throws Exception, TmConnectivityException {
@@ -175,7 +185,7 @@ public class TmFromEntityPopulator {
         return rtnVal;
     }
 
-    private void populateFromEntity(Entity entity, Entity sampleEntity, TmWorkspace workspace) throws Exception {
+    private void populateFromEntity(Entity entity, Entity sampleEntity, Entity prefsEntity, TmWorkspace workspace) throws Exception {
         if (entity.getEntityTypeName() == null || !entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE)) {
             throw new Exception("Entity type must be=" + EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE);
         }
@@ -186,14 +196,28 @@ public class TmFromEntityPopulator {
         // This avoids loading old-style, entity-based neurons, unless the
         // workspace is from the previous workstation version.        
         List<TmNeuron> neuronList = new ArrayList<>();
-        for (Entity child : entity.getChildren()) {
-            if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)
-                &&  (!workspace.getVersion().equals(TmWorkspace.Version.PB_1))) {
-                neuronList.add(loadNeuron(child));
-            } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
-                workspace.setPreferences(createTmPreferences(child));
+        // This pair of sys-outs shows that 
+        // loading entity children on obsoleted workspaces takes most of
+        // the load time. 
+        //  System.out.println(new java.util.Date() + " starting getChildren()");
+        boolean mustTraverseChildren = (!workspace.getVersion().equals(TmWorkspace.Version.PB_1))  ||  prefsEntity == null;
+        if (mustTraverseChildren) {
+            // Need to look at all child entities, anyway.
+            for (Entity child : entity.getChildren()) {
+                if (child.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)
+                        && mustTraverseChildren) {
+                    neuronList.add(loadNeuron(child));
+                } else if (child.getEntityTypeName().equals(EntityConstants.TYPE_PROPERTY_SET)) {
+                    workspace.setPreferences(createTmPreferences(child));
+                }
             }
         }
+        else {
+            // Need only look at the preference child entity.
+            workspace.setPreferences(createTmPreferences(prefsEntity));
+        }
+        
+        // System.out.println(new java.util.Date() + " ending getChildren()");
         workspace.setNeuronList(neuronList);
 
         if (sampleEntity != null) {

@@ -6,9 +6,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import org.apache.log4j.Logger;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
@@ -132,7 +129,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
             annotationDAO.saveOrUpdate(workspaceEntity);
             // back to user
-            TmWorkspace tmWorkspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity);
+            TmWorkspace tmWorkspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, null);
             tmWorkspace.setPreferences(preferences);
             return tmWorkspace;
 
@@ -250,7 +247,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 final TmFromEntityPopulator populator = new TmFromEntityPopulator();
                 Entity sampleEntity = annotationDAO.getEntityById(sampleId);
                 try {
-                    tmWorkspace = populator.loadWorkspace(workspaceEntity, sampleEntity);
+                    tmWorkspace = populator.loadWorkspace(workspaceEntity, sampleEntity, null);
                 } catch (Exception ex) {
                     throw new ComputeException(ex);
                 }
@@ -1555,8 +1552,17 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             // see notes in TmNeuron() on the connectivity retry scheme
             TmWorkspace workspace = null;
             boolean connectivityException;
+            List<Long> propSetEntityIds = annotationDAO.getChildEntityIdsByType(workspaceEntity.getId(), EntityConstants.TYPE_PROPERTY_SET);
+            Entity prefsEntity = null;
+            if (propSetEntityIds.size() > 1) {
+                log.warn("More than one property set on workspace " + workspace.getId() + " keeping only first.");
+            }
+            for (Long propSetEntityId: propSetEntityIds) {
+                prefsEntity = annotationDAO.getEntityById(propSetEntityId);
+                break;
+            }
             try {
-                workspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, wsVersion);
+                workspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, prefsEntity, wsVersion);
                 connectivityException = false;
             } catch (TmConnectivityException e) {
                 e.printStackTrace();
@@ -1565,7 +1571,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             if (connectivityException) {
                 fixConnectivityWorkspace(workspaceId);
                 workspaceEntity = annotationDAO.getEntityById(workspaceId);
-                workspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, wsVersion);
+                workspace = tmFactory.loadWorkspace(workspaceEntity, sampleEntity, prefsEntity, wsVersion);
             }
 
             // Move workspace to modern version.

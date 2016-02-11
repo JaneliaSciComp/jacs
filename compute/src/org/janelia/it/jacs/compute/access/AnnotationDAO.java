@@ -1893,6 +1893,50 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             throw new DaoException(e);
         }
     }
+
+    public List<Long> getChildEntityIdsByType(Long parentId, String entityTypeName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getChildEntityIdsByType(parentId=" + parentId + "entityTypeName=" + entityTypeName + ")");
+        }
+        try {
+            Connection conn = null;
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            List<Long> resultIdList=new ArrayList<>();
+            try {
+                conn = getJdbcConnection();
+                String sql =
+                        "select e.id, e.entity_type from entity e, entityData edlink, entity parent \n" +
+                                "where edlink.parent_entity_id=? and edlink.parent_entity_id=parent.id and edlink.child_entity_id=e.id and e.entity_type=? \n" +
+                                "order by e.id asc"
+                ;
+                stmt = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                stmt.setLong(1, parentId);
+                stmt.setString(2, entityTypeName);
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Long id = rs.getBigDecimal(1).longValue();
+                    resultIdList.add(id);
+                }
+            }
+            catch (SQLException e) {
+                throw new DaoException(e);
+            }
+            finally {
+                try {
+                    if (rs!=null) rs.close();
+                    if (stmt!=null) stmt.close();
+                    if (conn!=null) conn.close();
+                }
+                catch (Exception e) {
+                    log.warn("Error closing JDBC connection",e);
+                }
+            }
+            return resultIdList;
+        } catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
     
     public List<Long> getAllEntityIdsByType(String entityTypeName) throws DaoException {
         if (log.isTraceEnabled()) {
@@ -3459,7 +3503,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 	/**
 	 * Removes all annotations in the given session and then returns them.
-	 * @param userLogin
+	 * @param subjectKey
 	 * @param sessionId
 	 * @return
 	 * @throws DaoException
