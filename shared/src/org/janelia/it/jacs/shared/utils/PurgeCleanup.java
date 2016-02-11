@@ -61,7 +61,7 @@ public class PurgeCleanup {
                 }
                 // Now update the stats
                 // Force the path to the current filestore
-                tmpFilePath = "/nobackup/jacs/jacsData/filestore/"+tmpFilePath;
+                tmpFilePath = "/nrs/jacs/jacsData/filestore/"+tmpFilePath;
                 File tmpFile = new File(tmpFilePath);
                 try {
                     handleFile(tmpFile, tmpAccount);

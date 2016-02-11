@@ -1,14 +1,7 @@
 package org.janelia.it.jacs.compute.service.fileDiscovery;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -21,8 +14,7 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
+import java.util.*;
 
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
@@ -70,7 +62,7 @@ public class SageDataSetDiscoveryService extends AbstractEntityService {
             }
         }
 
-        logger.info("Processed "+sageRowsProcessed+" rows for "+ownerKey+", created "+sampleHelper.getNumSamplesCreated()+
+        logger.info("Processed "+sageRowsProcessed+" rows for "+ownerKey+" ("+dataSetName+"), created "+sampleHelper.getNumSamplesCreated()+
         		" samples, updated "+sampleHelper.getNumSamplesUpdated()+
         		" samples, marked "+sampleHelper.getNumSamplesReprocessed()+
         		" samples for reprocessing, marked "+samplesMarkedDesync+

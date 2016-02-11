@@ -28,7 +28,7 @@ then
     exit
 fi
 
-SEPDIR=$1 # e.g. /nobackup/jacs/jacsData/filestore/.../separate
+SEPDIR=$1 # e.g. /nrs/jacs/jacsData/filestore/.../separate
 
 LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3draw"
 SIGNAL_FILE="$SEPDIR/ConsolidatedSignal.v3draw"
