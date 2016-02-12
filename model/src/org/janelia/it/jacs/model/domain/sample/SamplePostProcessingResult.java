@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * Post-processing that is run on the tile images and (if relevant) the stitched image.
  * 
@@ -21,11 +22,13 @@ public class SamplePostProcessingResult extends PipelineResult implements HasFil
 	private Map<String,FileGroup> groups = new HashMap<>();
 
 	@Override
+	@JsonIgnore
 	public Set<String> getGroupKeys() {
 		return groups.keySet();
 	}
 
     @Override
+	@JsonIgnore
 	public FileGroup getGroup(String key) {
 		return groups.get(key);
 	}

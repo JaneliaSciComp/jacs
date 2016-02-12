@@ -28,7 +28,7 @@ public class ObjectiveSample {
     void setObjective(String objective) {
         this.objective = objective;
     }
-    
+
     @JsonIgnore
     public Sample getParent() {
         return parent;
@@ -43,8 +43,7 @@ public class ObjectiveSample {
     public boolean hasPipelineRuns() {
         return pipelineRuns!=null && !pipelineRuns.isEmpty();
     }
-    
-    @JsonIgnore
+
     public List<SamplePipelineRun> getPipelineRuns() {
         for(SamplePipelineRun pipelineRun : pipelineRuns) {
             pipelineRun.setParent(this);
@@ -52,7 +51,6 @@ public class ObjectiveSample {
         return pipelineRuns==null?null:Collections.unmodifiableList(pipelineRuns);
     }
 
-    @JsonProperty
     public void setPipelineRuns(List<SamplePipelineRun> pipelineRuns) {
         this.pipelineRuns = pipelineRuns;
     }
@@ -74,7 +72,7 @@ public class ObjectiveSample {
         pipelineRun.setParent(null);
         pipelineRuns.remove(pipelineRun);
     }
-    
+
     @JsonIgnore
     public SamplePipelineRun getLatestRun() {
         if (pipelineRuns == null) {
@@ -86,7 +84,6 @@ public class ObjectiveSample {
         return getPipelineRuns().get(pipelineRuns.size() - 1);
     }
 
-    @JsonIgnore
     public List<SampleTile> getTiles() {
         for(SampleTile tile : tiles) {
             tile.setParent(this);
@@ -94,7 +91,6 @@ public class ObjectiveSample {
         return Collections.unmodifiableList(tiles);
     }
 
-    @JsonProperty
     public void setTiles(List<SampleTile> tiles) {
         this.tiles = tiles;
     }
