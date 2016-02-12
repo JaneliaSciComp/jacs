@@ -1906,8 +1906,8 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             try {
                 conn = getJdbcConnection();
                 String sql =
-                        "select e.id, e.entity_type from entity e, entityData edlink, entity parent \n" +
-                                "where edlink.parent_entity_id=? and edlink.parent_entity_id=parent.id and edlink.child_entity_id=e.id and e.entity_type=? \n" +
+                        "select e.id, e.entity_type from entity e, entityData edlink " +
+                                "where edlink.parent_entity_id=? and edlink.child_entity_id=e.id and e.entity_type=? " +
                                 "order by e.id asc"
                 ;
                 stmt = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
