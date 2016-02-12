@@ -90,10 +90,14 @@ public class LSMImage extends Image {
     @SearchAttribute(key="driver_txt",label="Driver")
     private String driver;
 
-    @SAGEAttribute(cvName="light_imagery", termName="effector")
+    @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector/Reporter")
     private String effector;
 
+    @SAGEAttribute(cvName="fly", termName="cross_barcode")
+    @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
+    private Integer crossBarcode;
+    
     @SAGEAttribute(cvName="light_imagery", termName="gender")
     @SearchAttribute(key="gender_s",label="Gender",facet=true)
     private String gender;
@@ -283,6 +287,10 @@ public class LSMImage extends Image {
     private Integer flycoreId;
 
     @SAGEAttribute(cvName="line", termName="flycore_lab")
+    @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
+    private String flycoreAlias;
+
+    @SAGEAttribute(cvName="line", termName="flycore_alias")
     @SearchAttribute(key="fclab_s",label="Fly Core Lab Id")
     private String flycoreLabId;
     
@@ -297,14 +305,17 @@ public class LSMImage extends Image {
     @SAGEAttribute(cvName="line", termName="flycore_project")
     @SearchAttribute(key="fcproj_txt",label="Fly Core Project")
     private String flycoreProject;
+
+    @SAGEAttribute(cvName="line", termName="flycore_project_subcat")
+    @SearchAttribute(key="fcsubcat_txt",label="Fly Core Subcategory")
+    private String flycorePSubcategory;
     
     @SAGEAttribute(cvName="line", termName="hide")
     @SearchAttribute(key="linehide_txt",label="Hide Line?",display=false)
     private String lineHide;
 
-    
+
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
     
     public Reference getSample() {
         return sample;
@@ -331,14 +342,14 @@ public class LSMImage extends Image {
     }
 
     public String getBrightnessCompensation() {
-		return brightnessCompensation;
-	}
+        return brightnessCompensation;
+    }
 
-	public void setBrightnessCompensation(String brightnessCompensation) {
-		this.brightnessCompensation = brightnessCompensation;
-	}
+    public void setBrightnessCompensation(String brightnessCompensation) {
+        this.brightnessCompensation = brightnessCompensation;
+    }
 
-	public Integer getSageId() {
+    public Integer getSageId() {
         return sageId;
     }
 
@@ -466,6 +477,14 @@ public class LSMImage extends Image {
         this.effector = effector;
     }
 
+    public Integer getCrossBarcode() {
+        return crossBarcode;
+    }
+
+    public void setCrossBarcode(Integer crossBarcode) {
+        this.crossBarcode = crossBarcode;
+    }
+
     public String getGender() {
         return gender;
     }
@@ -480,6 +499,14 @@ public class LSMImage extends Image {
 
     public void setFullAge(String fullAge) {
         this.fullAge = fullAge;
+    }
+
+    public String getMountingProtocol() {
+        return mountingProtocol;
+    }
+
+    public void setMountingProtocol(String mountingProtocol) {
+        this.mountingProtocol = mountingProtocol;
     }
 
     public String getHeatShockHour() {
@@ -504,14 +531,6 @@ public class LSMImage extends Image {
 
     public void setHeatShockMinutes(String heatShockMinutes) {
         this.heatShockMinutes = heatShockMinutes;
-    }
-
-    public String getMountingProtocol() {
-        return mountingProtocol;
-    }
-
-    public void setMountingProtocol(String mountingProtocol) {
-        this.mountingProtocol = mountingProtocol;
     }
 
     public String getIlluminationChannel1Name() {
@@ -842,6 +861,14 @@ public class LSMImage extends Image {
         this.flycoreId = flycoreId;
     }
 
+    public String getFlycoreAlias() {
+        return flycoreAlias;
+    }
+
+    public void setFlycoreAlias(String flycoreAlias) {
+        this.flycoreAlias = flycoreAlias;
+    }
+
     public String getFlycoreLabId() {
         return flycoreLabId;
     }
@@ -872,6 +899,14 @@ public class LSMImage extends Image {
 
     public void setFlycoreProject(String flycoreProject) {
         this.flycoreProject = flycoreProject;
+    }
+
+    public String getFlycorePSubcategory() {
+        return flycorePSubcategory;
+    }
+
+    public void setFlycorePSubcategory(String flycorePSubcategory) {
+        this.flycorePSubcategory = flycorePSubcategory;
     }
 
     public String getLineHide() {
