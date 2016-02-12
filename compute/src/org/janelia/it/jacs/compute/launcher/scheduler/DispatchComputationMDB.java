@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.launcher.scheduler;
 
 import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.model.jobs.DispatcherJob;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jboss.annotation.ejb.ResourceAdapter;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
@@ -31,11 +32,13 @@ public class DispatchComputationMDB implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         int prefetchSize = dispatchSettings.getPrefetchSize();
-        if (prefetchSize <= 0) {
-            LOG.debug("Skip dispatching any jobs");
+        String processingNodeId = dispatchSettings.getCurrentProcessingId();
+        if (prefetchSize <= 0 || StringUtils.isBlank(processingNodeId)) {
+            LOG.debug("Job dispatcher is disabled.");
+            // dispatcher is disabled
             return;
         }
-        String processingNodeId = dispatchSettings.getCurrentProcessingId();
+        LOG.debug("Look for queued jobs.");
         int maxRetries = dispatchSettings.getMaxRetries();
         ComputeBeanLocal computeBean = (ComputeBeanLocal) mdctx.lookup(EJBFactory.LOCAL_COMPUTE_JNDI_NAME);
         JobControlBeanLocal jobBean = (JobControlBeanLocal) mdctx.lookup(EJBFactory.LOCAL_JOB_CONTROL_JNDI_NAME);
@@ -51,8 +54,7 @@ public class DispatchComputationMDB implements Job {
                 LOG.info("Job {} submission failed", job.getDispatchId(), e);
             }
         }
-        LOG.info("Completed dispatching currently queued jobs.");
-        LOG.info("Waking to dispatch queued jobs.");
+        LOG.debug("Completed dispatching currently queued jobs.");
     }
 
     private void updateJob(JobControlBeanLocal jobBean, DispatcherJob job) {
