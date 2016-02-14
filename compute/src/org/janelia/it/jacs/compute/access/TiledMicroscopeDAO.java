@@ -28,8 +28,6 @@ import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmFromEntity
 import org.janelia.it.jacs.model.user_data.tiled_microscope_builder.TmModelManipulator;
 import org.janelia.it.jacs.model.user_data.tiled_microscope_protobuf.TmProtobufExchanger;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
-import org.janelia.it.jacs.model.util.ThreadUtils;
-import org.janelia.it.jacs.model.util.ThreadUtils.CustomNamedThreadFactory;
 import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
 import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
 import org.janelia.it.jacs.shared.swc.SWCDataConverter;
@@ -1658,6 +1656,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 // neurons handled above will have been converted. Hence they
                 // are being marked with the version, post-convert.
                 setWorkspaceLatestVersion(workspaceEntity);
+				workspace.setWorkspaceVersion(TmWorkspace.Version.PB_1);
                 annotationDAO.saveOrUpdateEntity(workspaceEntity);
                 log.info("Conversion completed for workspace " + workspaceId + " " + workspace.getName());
 

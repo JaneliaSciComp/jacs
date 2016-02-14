@@ -17,6 +17,7 @@ import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanLocal;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuronPBUpdateNode;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
@@ -56,6 +57,10 @@ public class TmNeuronPBUpdateService extends AbstractEntityService {
             TiledMicroscopeBeanLocal tmEJB = EJBFactory.getLocalTiledMicroscopeBean();
 			//TODO: make an alternative EJB method that accepts the task ID from the task object known here.
 			TmWorkspace workspace = tmEJB.loadWorkspace(workspaceId);
+			EntityBeanLocal entityEJB = EJBFactory.getLocalEntityBean();
+			// Reload the workspace.  Build it same way as above.
+			workspace = tmEJB.loadWorkspace(workspaceId);
+
 			// Validate converted workspace.
 			TmWorkspace.Version wsVersion = workspace.getVersion();
 			if (wsVersion != TmWorkspace.Version.PB_1) {
@@ -63,8 +68,6 @@ public class TmNeuronPBUpdateService extends AbstractEntityService {
 			}
 			else {
 				// Check neurons counts between old and new.
-				List<TmNeuron> neurons = workspace.getNeuronList();
-				EntityBeanLocal entityEJB = EJBFactory.getLocalEntityBean();
 				Entity workspaceEntity = entityEJB.getEntityById(workspaceId);
 				entityEJB.loadLazyEntity(workspaceEntity, false);
 				Set<Entity> children = workspaceEntity.getChildren();
@@ -74,10 +77,16 @@ public class TmNeuronPBUpdateService extends AbstractEntityService {
 						expectedNeuronCount ++;
 					}
 				}
-				if (expectedNeuronCount != neurons.size()) {
+				int edNeuronCount = 0;
+			    for (EntityData ed: workspaceEntity.getEntityData()) {
+					if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROTOBUF_NEURON)) {
+						edNeuronCount ++;
+					}
+				}
+				if (expectedNeuronCount != edNeuronCount) {
 					logger.error("Conversion failed.  Workspace " + workspaceId 
 					    + " had " + expectedNeuronCount 
-						+ " entity neurons.  It now has " + neurons.size() 
+						+ " entity neurons.  It now has " + edNeuronCount 
 						+ " converted, entity-data neurons.");
 				}
 			}
