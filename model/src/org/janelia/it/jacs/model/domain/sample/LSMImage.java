@@ -35,7 +35,7 @@ public class LSMImage extends Image {
     private Integer sageId;
 
     @SAGEAttribute(cvName="image_query", termName="line")
-    @SearchAttribute(key="line_txt",label="Fly Line")    
+    @SearchAttribute(key="line_txt",label="Line")    
     private String line;
 
     @SAGEAttribute(cvName="light_imagery", termName="representative")
