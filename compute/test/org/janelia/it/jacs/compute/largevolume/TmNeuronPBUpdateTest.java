@@ -47,7 +47,7 @@ public class TmNeuronPBUpdateTest {
 		 2238557338787120007
 		 2238557380528833415
 		 2238557427538592647
-			*/
+        */
 		String workspaceIdStr = "2238556687109718919";
 		//2238556639701500807";
 		//2238556632118199175";
@@ -72,29 +72,6 @@ public class TmNeuronPBUpdateTest {
 		}
 		task = computeBean.saveOrUpdateTask(task);
 		computeBean.submitJob(task.getJobName(), task.getObjectId());
-		/*
-		 public Task submitJob(String processDefName, String displayName) throws Exception {
-		 HashSet<TaskParameter> taskParameters = new HashSet<>();
-		 return submitJob(processDefName, displayName, taskParameters);
-		 }
-
-		 public Task submitJob(String processDefName, String displayName, HashSet<TaskParameter> parameters) throws Exception {
-		 GenericTask task = new GenericTask(new HashSet<Node>(), SessionMgr.getSubjectKey(), new ArrayList<Event>(),
-		 parameters, processDefName, displayName);
-		 return submitJob(task);
-		 }
-
-		 private Task submitJob(GenericTask genericTask) throws Exception {
-		 Task task = saveOrUpdateTask(genericTask);
-		 submitJob(task.getTaskName(), task);
-		 return task;
-		 }
-
-		 public TaskRequest submitJob(String processDefName, Task task) throws Exception {
-		 FacadeManager.getFacadeManager().getComputeFacade().submitJob(processDefName, task.getObjectId());
-		 return new TaskRequest(new TaskFilter(task.getJobName(), task.getObjectId()));
-		 }
-		*/
 	}
 
 }
