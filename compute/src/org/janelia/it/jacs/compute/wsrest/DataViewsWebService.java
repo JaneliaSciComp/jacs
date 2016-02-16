@@ -8,6 +8,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -18,10 +20,13 @@ import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.shared.solr.*;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -56,6 +61,46 @@ public class DataViewsWebService extends ResourceConfig {
             return detailObjects;
         } catch (Exception e) {
             log.error("Error occurred processing Object Details ",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/domainobject/name")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<DomainObject> getObjectsByName(@QueryParam("subjectKey") final String subjectKey,
+                                               @QueryParam("name") final String name,
+                                               @QueryParam("domainClass") final String domainClass) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        Class clazz = DomainUtils.getObjectClassByName(domainClass);
+        try {
+            return dao.getDomainObjectsByName(subjectKey, clazz, name);
+        } catch (Exception e) {
+            log.error("Error occurred retrieving domain objects using name" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/domainobject/reverseLookup")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<DomainObject> getObjectsByReverseRef(@QueryParam("subjectKey") final String subjectKey,
+                               @QueryParam("referenceId") final Long referenceId,
+                               @QueryParam("count") final Long count,
+                               @QueryParam("referenceAttr") final String referenceAttr,
+                               @QueryParam("referenceClass") final String referenceClass) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        ReverseReference reverseRef = new ReverseReference();
+        reverseRef.setCount(count);
+        reverseRef.setReferenceAttr(referenceAttr);
+        reverseRef.setReferenceId(referenceId);
+        reverseRef.setReferringClassName(referenceClass);
+        try {
+            return dao.getDomainObjects(subjectKey, reverseRef);
+        } catch (Exception e) {
+            log.error("Error occurred retrieving domain objects using reverse ref" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -177,6 +222,22 @@ public class DataViewsWebService extends ResourceConfig {
             return updateFilter;
         } catch (Exception e) {
             log.error("Error occurred updating search filter ",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/sample/lsms")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<LSMImage> getLsmsForSample(@QueryParam("subjectKey") final String subjectKey,
+                                           @QueryParam("sampleId") final Long sampleId) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
+            return new ArrayList<LSMImage>(lsms);
+        } catch (Exception e) {
+            log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
