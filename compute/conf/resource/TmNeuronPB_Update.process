@@ -1,10 +1,9 @@
 <!--
-	Loads SWC file contents as neurons, adds them to a new workspace, and associates the workspace with the sample given.
+	Converts all TmNeurons in a Large Volume Viewer workspace, from neuron-as-Entity, to neuron-as-EntityData/protobuf.
 -->
-<process name="SWC Import Pipeline" processor="queue/swcImport" startEvent="pending">
+<process name="Neuron PB Update Conversion" processor="queue/tmNeuronUpdate" startEvent="pending">
 
-	<sequence>
-
+    <sequence>
 	<!-- Import basic variables from the TmNeuronPBUpdateTask
 
     	     This service receives instructions below on which key:value pairs to transfer from task parameters
