@@ -1658,7 +1658,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 setWorkspaceLatestVersion(workspaceEntity);
 				workspace.setWorkspaceVersion(TmWorkspace.Version.PB_1);
                 annotationDAO.saveOrUpdateEntity(workspaceEntity);
-                log.info("Conversion completed for workspace " + workspaceId + " " + workspace.getName());
+                log.info("Conversion completed for workspace " + workspaceId + " '" + workspace.getName() + "'.");
 
             }
 

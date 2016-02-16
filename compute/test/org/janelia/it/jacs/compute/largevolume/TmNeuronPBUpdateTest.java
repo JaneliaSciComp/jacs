@@ -29,9 +29,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 public class TmNeuronPBUpdateTest {
 	public static void main(String[] args) throws Exception {
 		// This can be any unconverted workspace.
-		/*		 
- 		 2238556729870648199
- 		 2238556769146110855
+		/*		  		  		 
 		 2238556804587979655
 		 2238556844924601223
 		 2238556889711379335
@@ -48,7 +46,9 @@ public class TmNeuronPBUpdateTest {
 		 2238557380528833415
 		 2238557427538592647
         */
-		String workspaceIdStr = "2238556687109718919";
+		String workspaceIdStr = "2238556769146110855";
+        //2238556729870648199";
+        //2238556687109718919";
 		//2238556639701500807";
 		//2238556632118199175";
 		//2235226784322814120";
