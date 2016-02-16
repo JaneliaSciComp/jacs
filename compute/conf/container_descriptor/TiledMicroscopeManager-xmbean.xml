@@ -17,6 +17,11 @@
     </operation>
 
     <operation>
+        <description>Convert all TmWorkspace TmNeurons to PROTOBUF-serialized Objects</description>
+        <name>convertAllTmWorkspaceToProtobuf</name>
+    </operation>
+
+    <operation>
         <description>Test creation and usages of Tiled Microscope Entities</description>
         <name>test</name>
     </operation>
