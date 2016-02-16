@@ -91,7 +91,7 @@ public class LSMImage extends Image {
     private String driver;
 
     @SAGEAttribute(cvName="fly", termName="effector")
-    @SearchAttribute(key="effector_txt",label="Effector/Reporter")
+    @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
 
     @SAGEAttribute(cvName="fly", termName="cross_barcode")
