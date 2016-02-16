@@ -171,7 +171,7 @@ public class StringUtils {
      * @param targetString replace in this.
      * @param oldDigitString what to replace.
      * @param newDigitString what to replace it with.
-     * @return
+     * @return new version of target string.
      */
     public static String digitSafeReplace(String targetString, String oldDigitString, String newDigitString) {
         if (targetString == null) {
@@ -179,7 +179,6 @@ public class StringUtils {
         }
         int nextPos = 0;
         int pos = -1;
-        boolean replaced = false;
         while (-1 != (pos = targetString.indexOf(oldDigitString, nextPos))) {
             // Do the string replacement, being careful about any
             // (however remote) possibility of encountering a
@@ -188,15 +187,10 @@ public class StringUtils {
             if ((pos == 0 || !Character.isDigit(targetString.charAt(pos - 1))
                     && (nextPos >= targetString.length() || !Character.isDigit(targetString.charAt(nextPos))))) {
                 targetString = targetString.substring(0, pos) + newDigitString + targetString.substring(nextPos);
-                replaced = true;
                 break;
             }
         }
-        if (replaced) {
-            return targetString;
-        } else {
-            return null;
-        }
+        return targetString;
     }
     
 }
