@@ -1,7 +1,7 @@
 <!--
 	Converts all TmNeurons in a Large Volume Viewer workspace, from neuron-as-Entity, to neuron-as-EntityData/protobuf.
 -->
-<process name="Neuron PB Update Conversion" processor="queue/tmNeuronUpdate" startEvent="pending">
+<process name="TmNeuron Protobuf Update" processor="queue/tmNeuronUpdate" startEvent="pending">
 
     <sequence>
 	<!-- Import basic variables from the TmNeuronPBUpdateTask
