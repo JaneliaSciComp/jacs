@@ -25,6 +25,9 @@
 <server>
 
     <mbean code="org.janelia.it.jacs.compute.mbean.ComputeStartup" name="ComputeServer:service=ComputeStartup"/>
+    <mbean code="org.janelia.it.jacs.compute.launcher.scheduler.DispatchSettings" name="ComputeServer:service=JobDispatcherSettings">
+        <depends>jboss:service=Naming</depends>
+    </mbean>
     <mbean code="org.janelia.it.jacs.compute.mbean.BlastTest" name="ComputeServer:service=BlastTest"/>
     <!--<mbean code="org.janelia.it.jacs.compute.mbean.HmmerTest" name="ComputeServer:service=HmmerTest"/>-->
     <!--<mbean code="org.janelia.it.jacs.compute.mbean.ReversePsiBlastTest" name="ComputeServer:service=ReversePsiBlastTest"/>-->
