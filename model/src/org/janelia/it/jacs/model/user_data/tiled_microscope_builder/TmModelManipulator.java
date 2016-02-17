@@ -430,7 +430,7 @@ public class TmModelManipulator {
         for (TmAnchoredPathEndpoints endpoints : oldTmNeuron.getAnchoredPathMap().keySet()) {
             // both endpoints are necessarily in the same neurite, so only need
             //  to test one:
-            if (movedAnnotationIDs.containsKey(endpoints.getAnnotationID1())) {
+            if (movedAnnotationIDs.containsKey(endpoints.getFirstAnnotationID())) {
                 TmAnchoredPath anchoredPath = oldNeuronAnchoredPathMap.remove(endpoints);
                 newNeuronAnchoredPathMap.put(endpoints, anchoredPath);
             }
@@ -463,21 +463,6 @@ public class TmModelManipulator {
         return descriptorList;
     }    
 
-    /**
-     * Given the neuron containing the path, and the path itself, remove the
-     * path from the neuron.
-     * 
-     * @param oldTmNeuron container.
-     * @param path content to remove.
-     * @throws Exception 
-     */
-    public void deleteAnchoredPath(TmNeuron oldTmNeuron, TmAnchoredPath path) throws Exception {
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
-        // Remove the anchor path from its containing neuron        
-        tmNeuron.getAnchoredPathMap().remove(path.getEndpoints());
-        saveNeuronData(tmNeuron);
-    }
-    
     private static final String UNREMOVE_NEURON_WARN_FMT = "Attempted to remove neuron %d that was not in workspace %d.";
     public void deleteNeuron(TmWorkspace tmWorkspace, TmNeuron tmNeuron) throws Exception {
         boolean wasRemoved = tmWorkspace.getNeuronList().remove(tmNeuron);
@@ -556,8 +541,8 @@ public class TmModelManipulator {
         // Check whether the end points are actually known to this neuron.
         final List<TmAnchoredPathEndpoints> toRemoveEP = new ArrayList<>();
         for (TmAnchoredPathEndpoints endPoint: tmNeuron.getAnchoredPathMap().keySet()) {
-            if (tmNeuron.getGeoAnnotationMap().get(endPoint.getAnnotationID1()) == null  ||
-                tmNeuron.getGeoAnnotationMap().get(endPoint.getAnnotationID2()) == null) {
+            if (tmNeuron.getGeoAnnotationMap().get(endPoint.getFirstAnnotationID()) == null  ||
+                tmNeuron.getGeoAnnotationMap().get(endPoint.getSecondAnnotationID()) == null) {
                 // Must discard this point.
                 toRemoveEP.add(endPoint);
                 errorResults

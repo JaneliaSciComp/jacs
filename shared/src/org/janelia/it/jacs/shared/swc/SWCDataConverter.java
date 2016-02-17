@@ -204,7 +204,7 @@ public class SWCDataConverter {
         Map<Long,TmAnchoredPathEndpoints> startToEndPoints = new HashMap<>();
         Map<Long,Integer> subAnnIdToIndex = new HashMap<>();
         for (TmAnchoredPathEndpoints endPoints : anchoredPathMap.keySet()) {
-            startToEndPoints.put(endPoints.getAnnotationID2(), endPoints);
+            startToEndPoints.put(endPoints.getSecondAnnotationID(), endPoints);
         }
 
         int currentIndex = 1;
@@ -218,8 +218,8 @@ public class SWCDataConverter {
                     final TmAnchoredPathEndpoints endpoints = startToEndPoints.get( subAnn.getId() );
                     // Make a node for each path member.
                     TmAnchoredPath anchoredPath = anchoredPathMap.get( endpoints );
-                    if ( subAnnIdToIndex.get( endpoints.getAnnotationID1() ) != null ) {
-                        parentIndex = subAnnIdToIndex.get( endpoints.getAnnotationID1() );
+                    if ( subAnnIdToIndex.get( endpoints.getFirstAnnotationID() ) != null ) {
+                        parentIndex = subAnnIdToIndex.get( endpoints.getFirstAnnotationID() );
                     }
 
                     for (int inListNodeNum = anchoredPath.getPointList().size() - 2; inListNodeNum > 0 ; inListNodeNum--) {

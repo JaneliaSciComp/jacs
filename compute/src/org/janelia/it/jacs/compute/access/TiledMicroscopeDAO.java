@@ -1150,7 +1150,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             for (TmAnchoredPathEndpoints endpoints : oldNeuron.getAnchoredPathMap().keySet()) {
                 // both endpoints are necessarily in the same neurite, so only need
                 //  to test one:
-                if (movedAnnotationIDs.contains(endpoints.getAnnotationID1())) {
+                if (movedAnnotationIDs.contains(endpoints.getFirstAnnotationID())) {
                     EntityData ed = (EntityData) computeDAO.genericLoad(EntityData.class,
                             oldNeuron.getAnchoredPathMap().get(endpoints).getId());
                     ed.setParentEntity(newNeuronEntity);
