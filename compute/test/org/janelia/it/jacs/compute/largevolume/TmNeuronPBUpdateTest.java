@@ -23,6 +23,8 @@ import org.janelia.it.jacs.model.user_data.Node;
 /**
  * Creates and initiates a task for moving TmNeuron definitions from Entity
  * to serialized-protobuf EntityData.
+ * 
+ * Test works.  At some point, it will become impossible to create source workspaces for this code.  When that happens, this test can be deprecated.
  *
  * @author Leslie L Foster
  */
@@ -30,23 +32,9 @@ public class TmNeuronPBUpdateTest {
 	public static void main(String[] args) throws Exception {
 		// This can be any unconverted workspace.
 		/*		  		  		 
-		 2238556804587979655
-		 2238556844924601223
-		 2238556889711379335
-		 2238556943146812295
-		 2238556988264940423
-		 2238557031063618439
-		 2238557075917505415
-		 2238557124034560903
-		 2238557168712287111
-		 2238557211070563207
-		 2238557248961905543
-		 2238557289906701191
-		 2238557338787120007
-		 2238557380528833415
-		 2238557427538592647
         */
-		String workspaceIdStr = "2238556769146110855";
+		String workspaceIdStr = "2131469675383488657";
+        //2238556769146110855
         //2238556729870648199";
         //2238556687109718919";
 		//2238556639701500807";
