@@ -14,6 +14,8 @@ public class SolrParams {
     private String[] filterQueries;
     private String[] facetField;
     private int facetMinCount;
+    private Integer start;
+    private Integer rows;
     private List<String> fields = new ArrayList<String>();
 
     public SolrParams() {
@@ -51,5 +53,21 @@ public class SolrParams {
 
     public void setFacetField(String[] facetField) {
         this.facetField = facetField;
+    }
+
+    public Integer getStart() {
+        return start;
+    }
+
+    public void setStart(Integer start) {
+        this.start = start;
+    }
+
+    public Integer getRows() {
+        return rows;
+    }
+
+    public void setRows(Integer rows) {
+        this.rows = rows;
     }
 }

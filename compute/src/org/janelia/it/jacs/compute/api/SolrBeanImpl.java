@@ -148,7 +148,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     
 	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException {
 		SolrDAO solrDAO = new SolrDAO(log, false, false);
-		
+		System.out.println (query);
 		QueryResponse response = solrDAO.search(query);
 		List<Entity> resultList = null;
 		if (mapToEntities) {

@@ -222,16 +222,9 @@
                 <include name="org/**/wsrest/WebServiceContext.class"/>
                 <include name="org/**/access/**/*.class"/>
                 <include name="org/**/api/ComputeException.class"/>
-                <include name="org/**/drmaa/**/*.class"/>
-                <include name="org/**/jtc/**/*.class"/>
-                <include name="org/**/compute/engine/util/**/*.class"/>
-                <include name="org/**/compute/engine/data/**/*.class"/>
-                <include name="org/**/compute/engine/def/**/*.class"/>
-                <include name="org/**/compute/engine/launcher/**/*.class"/>
                 <include name="org/**/compute/engine/service/ServiceException.class"/>
                 <include name="org/**/compute/engine/service/ValidServiceException.class"/>
-                <include name="org/**/compute/service/common/**/*.class"/>
-                <include name="org/**/compute/launcher/indexing/**/*.class"/>
+                <include name="org/**/compute/launcher/indexing/IndexingHelper.class"/>
                 <include name="org/**/compute/util/**/*.class"/>
                 <include name="org/**/shared/**/*.class"/>
                 <include name="org/**/model/**/*.class"/>

@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.wsrest;
 
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import javax.ws.rs.*;
@@ -246,23 +248,27 @@ public class DataViewsWebService extends ResourceConfig {
     @Path("/search")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public SolrJsonResults searchSolrIndices(SolrParams queryParams) {
+    public SolrJsonResults searchSolrIndices(String queryParams) {
         SolrConnector solr = WebServiceContext.getSolr();
         try {
-            SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
+            // SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
+            SolrQuery query = new SolrQuery();
+            query.setQuery(URLDecoder.decode(queryParams, "UTF-8"));
             QueryResponse response = solr.search(query);
             SolrJsonResults sjr = new SolrJsonResults();
             Map<String,List<FacetValue>> facetValues = new HashMap<>();
-            for (final FacetField ff : response.getFacetFields()) {
-                log.debug("Facet {}",ff.getName());
-                List<FacetValue> favetValues = new ArrayList<>();
-                if (ff.getValues()!=null) {
-                    for (final FacetField.Count count : ff.getValues()) {
-                        favetValues.add(new FacetValue(count.getName(),count.getCount()));
-                        log.debug("  Value: {} (count={})",count.getName(),count.getCount());
+            if (response.getFacetFields()!=null) {
+                for (final FacetField ff : response.getFacetFields()) {
+                    log.info("Facet {}", ff.getName());
+                    List<FacetValue> favetValues = new ArrayList<>();
+                    if (ff.getValues() != null) {
+                        for (final FacetField.Count count : ff.getValues()) {
+                            favetValues.add(new FacetValue(count.getName(), count.getCount()));
+                            log.info("  Value: {} (count={})", count.getName(), count.getCount());
+                        }
                     }
+                    facetValues.put(ff.getName(), favetValues);
                 }
-                facetValues.put(ff.getName(), favetValues);
             }
             sjr.setFacetValues(facetValues);
             sjr.setResults(response.getResults());

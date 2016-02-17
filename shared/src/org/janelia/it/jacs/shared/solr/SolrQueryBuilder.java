@@ -223,6 +223,8 @@ public class SolrQueryBuilder {
         queryParams.setSortField(query.getSortField());
         queryParams.setFilterQueries(query.getFilterQueries());
         queryParams.setFacetField(query.getFacetFields());
+        queryParams.setRows(query.getRows());
+        queryParams.setStart(query.getStart());
         return queryParams;
     }
 
@@ -235,6 +237,8 @@ public class SolrQueryBuilder {
         for (int i=0; i<facetFields.length; i++) {
              query.addFacetField(facetFields[i]);
         }
+        query.setStart(queryParams.getStart());
+        query.setRows(queryParams.getRows());
         return query;
     }
 
