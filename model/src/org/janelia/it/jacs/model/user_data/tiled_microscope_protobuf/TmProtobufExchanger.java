@@ -23,7 +23,17 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
  */
 @ThreadSafe
 public class TmProtobufExchanger {
-    private final Schema<TmNeuron> schema = RuntimeSchema.getSchema(TmNeuron.class); 
+    private Schema<TmNeuron> schema = null;
+    
+    public TmProtobufExchanger() {
+        try {
+            schema = RuntimeSchema.getSchema(TmNeuron.class);
+        } catch (Exception ex) {
+            if (schema == null) {
+                throw new RuntimeException("Failed to get schema for " + TmNeuron.class.getCanonicalName());
+            }
+        }
+    }
 
     /**
      * Use protobuf mechanism to turn an array of raw data into a fully
