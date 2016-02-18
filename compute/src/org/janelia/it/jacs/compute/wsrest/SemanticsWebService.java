@@ -41,7 +41,7 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Annotation newAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(newAnnotation);
+            IndexingHelper.sendReindexingMessage(newAnnotation);
             return newAnnotation;
         } catch (Exception e) {
             log.error("Error occurred creating annotations " + e);
@@ -57,7 +57,7 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Annotation updateAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(updateAnnotation);
+            IndexingHelper.sendReindexingMessage(updateAnnotation);
             return updateAnnotation;
         } catch (Exception e) {
             log.error("Error occurred updating annotations" + e);
@@ -90,7 +90,7 @@ public class SemanticsWebService extends ResourceConfig {
         try {
             DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);
             dao.remove(subjectKey, deleteAnnotation);
-            IndexingHelper.removeFromIndex(deleteAnnotation);
+            IndexingHelper.sendRemoveFromIndexMessage(deleteAnnotation);
         } catch (Exception e) {
             log.error("Error occurred removing annotations" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -120,7 +120,7 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Ontology updateOntology = (Ontology)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(updateOntology);
+            IndexingHelper.sendReindexingMessage(updateOntology);
             return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred creating ontology" + e);
@@ -139,7 +139,7 @@ public class SemanticsWebService extends ResourceConfig {
         try {
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);
             dao.remove(subjectKey, ont);
-            IndexingHelper.removeFromIndex(ont);
+            IndexingHelper.sendRemoveFromIndexMessage(ont);
         } catch (Exception e) {
             log.error("Error occurred removing ontology" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -161,7 +161,7 @@ public class SemanticsWebService extends ResourceConfig {
                 terms.add((OntologyTerm)term);
             }
             Ontology updateOntology = (Ontology)dao.addTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
-            IndexingHelper.updateIndex(updateOntology);
+            IndexingHelper.sendReindexingMessage(updateOntology);
             return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred adding ontology terms" + e);
@@ -184,7 +184,6 @@ public class SemanticsWebService extends ResourceConfig {
                 order[i] = query.getOrdering().get(i);
             }
             Ontology updateOntology =  dao.reorderTerms(query.getSubjectKey(), ontologyId, parentId, order);
-            IndexingHelper.updateIndex(updateOntology);
             return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred reordering ontology" + e);
@@ -204,7 +203,7 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Ontology updateOntology = dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
-            IndexingHelper.updateIndex(updateOntology);
+            IndexingHelper.sendReindexingMessage(updateOntology);
             return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred removing ontology terms " + e);

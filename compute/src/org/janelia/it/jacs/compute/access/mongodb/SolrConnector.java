@@ -95,7 +95,7 @@ public class SolrConnector {
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
 
     public SolrConnector(DomainDAO dao) throws UnknownHostException {
-		this.useBuildCore = true;
+		this.useBuildCore = false;
 		this.dao = dao;
 		this.streamingUpdates = true;
 		largeOp = new LargeOperations();
@@ -662,6 +662,7 @@ public class SolrConnector {
 			return solr.query(query);
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 			throw new DaoException("Error searching with SOLR",e);
 		}
 	}

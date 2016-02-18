@@ -1,9 +1,7 @@
 package org.janelia.it.jacs.shared.solr;
 
-import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.common.SolrDocumentList;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +11,7 @@ import java.util.Map;
 public class SolrJsonResults {
     private SolrDocumentList results;
     private Map<String,List<FacetValue>> facetValues;
+    private Long numFound;
 
     public SolrDocumentList getResults() {
         return results;
@@ -27,6 +26,14 @@ public class SolrJsonResults {
     }
 
     public void setFacetValues(Map<String, List<FacetValue>> facetFields) {
-        this.facetValues = facetValues;
+        this.facetValues = facetFields;
+    }
+
+    public Long getNumFound() {
+        return numFound;
+    }
+
+    public void setNumFound(Long numFound) {
+        this.numFound = numFound;
     }
 }

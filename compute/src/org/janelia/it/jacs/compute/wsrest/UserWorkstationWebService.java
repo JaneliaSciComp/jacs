@@ -117,7 +117,7 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             TreeNode updatedNode = (TreeNode)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(updatedNode);
+            IndexingHelper.sendReindexingMessage(updatedNode);
             return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred creating tree node" + e);
@@ -138,7 +138,6 @@ public class UserWorkstationWebService extends ResourceConfig {
                 order[i] = orderList.get(i).intValue();
             }
             TreeNode updatedNode = (TreeNode)dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
-            IndexingHelper.updateIndex(updatedNode);
             return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred reordering Tree Node" + e);
@@ -154,7 +153,10 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             TreeNode updatedNode = (TreeNode)dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
-            IndexingHelper.updateIndex(updatedNode);
+            List<DomainObject> children = dao.getDomainObjects(query.getSubjectKey(),query.getReferences());
+            for (DomainObject child: children) {
+                IndexingHelper.sendAddAncestorMessage(child.getId(), updatedNode.getId());
+            }
             return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred add children to tree node " + e);
@@ -171,7 +173,11 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             TreeNode updatedNode = (TreeNode)dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
-            IndexingHelper.updateIndex(updatedNode);
+            IndexingHelper.sendReindexingMessage(updatedNode);
+            List<DomainObject> children = dao.getDomainObjects(query.getSubjectKey(),query.getReferences());
+            for (DomainObject child: children) {
+                IndexingHelper.sendReindexingMessage(child);
+            }
             return updatedNode;
         } catch (Exception e) {
             log.error("Error occurred removing children from tree node " + e);
@@ -188,7 +194,7 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             ObjectSet updatedObjectSet = (ObjectSet)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(updatedObjectSet);
+            IndexingHelper.sendReindexingMessage(updatedObjectSet);
             return updatedObjectSet;
         } catch (Exception e) {
             log.error("Error occurred creating object set" + e);
@@ -204,7 +210,10 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             ObjectSet updatedObjectSet = (ObjectSet)dao.addMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
-            IndexingHelper.updateIndex(updatedObjectSet);
+            List<DomainObject> children = dao.getDomainObjects(query.getSubjectKey(),query.getReferences());
+            for (DomainObject child: children) {
+                IndexingHelper.sendAddAncestorMessage(child.getId(), updatedObjectSet.getId());
+            }
             return updatedObjectSet;
         } catch (Exception e) {
             log.error("Error occurred adding members to object set" + e);
@@ -220,7 +229,11 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             ObjectSet updatedObjectSet = (ObjectSet) dao.removeMembers(query.getSubjectKey(), (ObjectSet) query.getDomainObject(), query.getReferences());
-            IndexingHelper.updateIndex(updatedObjectSet);
+            IndexingHelper.sendReindexingMessage(updatedObjectSet);
+            List<DomainObject> children = dao.getDomainObjects(query.getSubjectKey(),query.getReferences());
+            for (DomainObject child: children) {
+                IndexingHelper.sendReindexingMessage(child);
+            }
             return updatedObjectSet;
         } catch (Exception e) {
             log.error("Error occurred removing members from Object Set" + e);

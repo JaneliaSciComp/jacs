@@ -121,7 +121,7 @@ public class DataViewsWebService extends ResourceConfig {
                 updateObj = dao.updateProperty(query.getSubjectKey(), query.getObjectType(), objIds.get(0),
                         query.getPropertyName(), query.getPropertyValue());
             }
-            IndexingHelper.updateIndex(updateObj);
+            IndexingHelper.sendReindexingMessage(updateObj);
 
             return updateObj;
 
@@ -154,7 +154,7 @@ public class DataViewsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             DataSet newDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(newDataSet);
+            IndexingHelper.sendReindexingMessage(newDataSet);
             return newDataSet;
         } catch (Exception e) {
             log.error("Error occurred creating DataSet ",e);
@@ -170,7 +170,7 @@ public class DataViewsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             DataSet updateDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(updateDataSet);
+            IndexingHelper.sendReindexingMessage(updateDataSet);
             return updateDataSet;
         } catch (Exception e) {
             log.error("Error occurred updating data set ",e);
@@ -189,7 +189,7 @@ public class DataViewsWebService extends ResourceConfig {
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
             dao.remove(subjectKey, domainObj);
-            IndexingHelper.removeFromIndex(domainObj);
+            IndexingHelper.sendRemoveFromIndexMessage(domainObj);
         } catch (Exception e) {
             log.error("Error occurred removing dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -204,7 +204,7 @@ public class DataViewsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(newFilter);
+            IndexingHelper.sendReindexingMessage(newFilter);
             return newFilter;
         } catch (Exception e) {
             log.error("Error occurred creating Search Filter ",e);
@@ -220,7 +220,7 @@ public class DataViewsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Filter updateFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.updateIndex(updateFilter);
+            IndexingHelper.sendReindexingMessage(updateFilter);
             return updateFilter;
         } catch (Exception e) {
             log.error("Error occurred updating search filter ",e);
@@ -248,14 +248,13 @@ public class DataViewsWebService extends ResourceConfig {
     @Path("/search")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public SolrJsonResults searchSolrIndices(String queryParams) {
+    public SolrJsonResults searchSolrIndices(SolrParams queryParams) {
         SolrConnector solr = WebServiceContext.getSolr();
         try {
-            // SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
-            SolrQuery query = new SolrQuery();
-            query.setQuery(URLDecoder.decode(queryParams, "UTF-8"));
+            SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
             QueryResponse response = solr.search(query);
             SolrJsonResults sjr = new SolrJsonResults();
+            log.info("Number documents found:" + Long.toString(response.getResults().getNumFound()));
             Map<String,List<FacetValue>> facetValues = new HashMap<>();
             if (response.getFacetFields()!=null) {
                 for (final FacetField ff : response.getFacetFields()) {
@@ -270,8 +269,10 @@ public class DataViewsWebService extends ResourceConfig {
                     facetValues.put(ff.getName(), favetValues);
                 }
             }
+
             sjr.setFacetValues(facetValues);
             sjr.setResults(response.getResults());
+            sjr.setNumFound(response.getResults().getNumFound());
             return sjr;
         } catch (Exception e) {
             log.error("Error occurred executing search against SOLR",e);

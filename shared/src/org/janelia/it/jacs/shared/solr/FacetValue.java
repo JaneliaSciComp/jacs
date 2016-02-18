@@ -6,12 +6,24 @@ package org.janelia.it.jacs.shared.solr;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class FacetValue {
-    
-    private final String value;
-    private final long count;
+    private String value;
+    private long count;
+
+    public FacetValue() {
+
+    }
 
     public FacetValue(String value, long count) {
         this.value = value;
+        this.count = count;
+    }
+
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public void setCount(long count) {
         this.count = count;
     }
 
