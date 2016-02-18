@@ -22,6 +22,7 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobService;
 import org.janelia.it.jacs.compute.service.common.grid.submit.WaitForJobException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.status.GridJobStatus;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
@@ -572,7 +573,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
         if (numBytes > 0) {
         	String note = numBytes+" bytes of output were written to stderr files in dir="+configDir.getAbsolutePath();
-            EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(), note);
+            EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(), note); // TODO: remove the task note, since we're recording this in task status now?
+            EJBFactory.getLocalComputeBean().updateTaskStatus(task.getObjectId(), Event.RUNNING_EVENT, note);
             return true;
         }
         return false;
