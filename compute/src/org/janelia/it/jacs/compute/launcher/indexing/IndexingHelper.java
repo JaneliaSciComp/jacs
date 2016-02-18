@@ -74,4 +74,11 @@ public class IndexingHelper {
 		}
 	}
 
+	public static void updateIndex(Long entityId) {
+		throw new UnsupportedOperationException("Entity indexing not supported");
+	}
+
+	public static void updateIndexAddAncestor(Long entityId, Long ancestorID) {
+		throw new UnsupportedOperationException("Entity indexing not supported");
+	}
 }
