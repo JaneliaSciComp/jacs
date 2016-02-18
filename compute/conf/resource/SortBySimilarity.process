@@ -15,15 +15,16 @@
 	    
 	    <operation name="Create Temporary Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
 		    <input name="NAME" value="Temp"/>
-	        <output name="RESULT_FILE_NODE"/>
-	        <output name="RESULT_FILE_NODE_ID"/>
+            <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE_ID"/>
 	    </operation>
 	    
 	    <sequence name="Compute Similarity" startEvent="running">
 	    
 	        <operation name="Prepare Inputs" processor="org.janelia.it.jacs.compute.service.entity.SortBySimilarityService">
 	            <input name="MODE" value="SETUP"/>
-	            <input name="RESULT_FILE_NODE"/>
+	            <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
 	            <input name="TARGET_STACK_ID"/>
 	            <input name="FOLDER_ID"/>
 	            <output name="TARGET_STACK_FILEPATH"/>
@@ -34,7 +35,7 @@
 	        <sequence name="Compute Similarity" waitForAsync="true">
 	            <operation name="Compute Similarity" processor="queue/gridSubmitAndWait">
 	                <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DSimilarityService"/>
-	                <input name="RESULT_FILE_NODE"/>
+	                <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
 	                <input name="TARGET_STACK_FILEPATH"/>
 	                <input name="INPUT_LIST_FILEPATH"/>
 	                <input name="OUTPUT_LIST_FILEPATH"/>
@@ -54,13 +55,12 @@
     	</sequence>
         
         <sequence name="Clean up temporary files" startEvent="postprocess">
-        
-		    <!-- Trash temporary file node -->
-		    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-		        <input name="RESULT_FILE_NODE_ID"/>
-		        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
-		    </operation>
-		    
+            
+            <!-- Trash temporary file node -->
+            <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+                <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
+            </operation>
+            
     	</sequence>
 	    
     </sequence>

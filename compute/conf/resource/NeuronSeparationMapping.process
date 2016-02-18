@@ -24,16 +24,16 @@
         <!-- Create a result node -->
         <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Temp"/>
-            <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE_ID"/>
+            <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE_ID"/>
         </operation>
 
         <!-- Generate the mapping and move it into the new separation -->
         <sequence name="Generate mapping" waitForAsync="true">
             <operation name="Generate mapping" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronMappingGridService"/>
-                <input name="RESULT_FILE_NODE"/>
+                <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="SEPARATION_ID_1"/>
                 <input name="SEPARATION_ID_2"/>
             </operation>
@@ -42,6 +42,11 @@
         <!-- Update the new separation to include the mapping file -->
         <operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSeparationDiscoveryService">
             <input name="RESULT_ENTITY_ID" value="$V{SEPARATION_ID_2}"/>
+        </operation>
+        
+        <!-- Trash temporary file node -->
+        <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+            <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
         </operation>
         
     </sequence>
