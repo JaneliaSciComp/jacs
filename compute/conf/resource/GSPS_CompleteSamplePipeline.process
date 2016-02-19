@@ -49,7 +49,7 @@
             <input name="REUSE_POST"/>
             <input name="REUSE_ALIGNMENT"/>
             <input name="PROCESS_VARIABLE_MAP">
-                <entry key="REUSE_PIPELINE_RUNS" value="true"/>
+                <entry key="REUSE_PIPELINE_RUNS" value="false"/>
                 <entry key="REUSE_SUMMARY" value="true"/>
                 <entry key="REUSE_PROCESSING" value="true"/>
                 <entry key="REUSE_POST" value="true"/>
