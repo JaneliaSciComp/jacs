@@ -321,7 +321,7 @@ public class LargeOperations {
             logger.info("Building property map for all SAGE images");
 
             int i = 0;
-	    	for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
 
 	    		String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 //	    		if (!dataSetIdentifier.startsWith("dolanm")) continue;

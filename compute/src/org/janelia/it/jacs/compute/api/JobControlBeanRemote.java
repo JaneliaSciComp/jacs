@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.compute.api;
 
 
+import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.status.TaskStatus;
 
@@ -56,4 +57,7 @@ public interface JobControlBeanRemote {
 
     public void cleanUpJobStatus(long taskId) throws RemoteException;
 
+    public void updateDispatcherJob(DispatcherJob job) throws RemoteException;
+
+    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int prefetchSize) throws RemoteException;
 }

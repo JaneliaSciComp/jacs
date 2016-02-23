@@ -1,9 +1,9 @@
 <!-- 
-	Run all of the pipelines associated with all of the Data Sets that the given Sample is a part of.
+    Run all of the pipelines associated with all of the Data Sets that the given Sample is a part of.
 -->
 <process name="GSPS Complete Sample Pipeline" processor="queue/shortPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
-	<sequence>
-	
+    <sequence>
+
         <input name="SAMPLE_ENTITY_ID"/>
         <input name="REUSE_PIPELINE_RUNS"/>
         <input name="REUSE_SUMMARY"/>
@@ -11,7 +11,7 @@
         <input name="REUSE_POST"/>
         <input name="REUSE_ALIGNMENT"/>
         <input name="RUN_OBJECTIVES"/>
-	    
+
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
@@ -61,31 +61,31 @@
             <output name="REUSE_POST"/>
             <output name="REUSE_ALIGNMENT"/>
         </operation>
-        
-	    <!-- Get the list of data sets which the sample is a part of -->
-	    <operation name="Get Sample Data Sets" processor="org.janelia.it.jacs.compute.service.entity.sample.GetSampleDataSetsService">
-			<input name="SAMPLE_ENTITY_ID"/>
-			<output name="DATA_SET_IDENTIFIER"/>
-		</operation>
-	
+
+        <!-- Get the list of data sets which the sample is a part of -->
+        <operation name="Get Sample Data Sets" processor="org.janelia.it.jacs.compute.service.entity.sample.GetSampleDataSetsService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <output name="DATA_SET_IDENTIFIER"/>
+        </operation>
+
         <sequence forEach="DATA_SET_IDENTIFIER">
-		
-		    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-		    <operation name="Get Pipelines" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelinesForDataSetService">
-				<input name="DATA_SET_IDENTIFIER"/>
-				<input name="SAMPLE_ENTITY_ID"/>
-				<input name="REUSE_PIPELINE_RUNS"/>
-				<output name="PIPELINE_PROCESS_NAME"/>
-			</operation>
-			
-	        <sequence forEach="PIPELINE_PROCESS_NAME">
-					
-				<!-- Spawn a new task to process the Sample	-->
-		        <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
-		            <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
-		            <input name="DISPLAY_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
-		            <input name="PARAMETER_1_KEY" value="sample entity id"/>
-		            <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
+
+            <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
+            <operation name="Get Pipelines" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelinesForDataSetService">
+                <input name="DATA_SET_IDENTIFIER"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="REUSE_PIPELINE_RUNS"/>
+                <output name="PIPELINE_PROCESS_NAME"/>
+            </operation>
+
+            <sequence forEach="PIPELINE_PROCESS_NAME">
+
+                <!-- Spawn a new task to process the Sample -->
+                <operation name="Process Sample Subtask" processor="org.janelia.it.jacs.compute.service.common.SubTaskExecutionService">
+                    <input name="PROCESS_DEF_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
+                    <input name="DISPLAY_NAME" value="$V{PIPELINE_PROCESS_NAME}"/>
+                    <input name="PARAMETER_1_KEY" value="sample entity id"/>
+                    <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
                     <input name="PARAMETER_2_KEY" value="reuse pipeline runs"/>
                     <input name="PARAMETER_2_VALUE" value="$V{REUSE_PIPELINE_RUNS}"/>
                     <input name="PARAMETER_3_KEY" value="reuse summary"/>
@@ -98,11 +98,11 @@
                     <input name="PARAMETER_6_VALUE" value="$V{REUSE_ALIGNMENT}"/>
                     <input name="PARAMETER_7_KEY" value="run objectives"/>
                     <input name="PARAMETER_7_VALUE" value="$V{RUN_OBJECTIVES}"/>
-		        </operation>
-			        
-	    	</sequence>
-		        
-    	</sequence>
-		
+                </operation>
+
+            </sequence>
+
+        </sequence>
+
     </sequence>
 </process>

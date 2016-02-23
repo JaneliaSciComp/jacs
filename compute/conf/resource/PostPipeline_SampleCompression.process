@@ -44,7 +44,7 @@
         
         <!-- Init variables with default values if they have not yet been initialized -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
-            <input name="OVERRIDE" value="false"/>
+            <input name="OVERRIDE" value="true"/>
             <input name="SEPARATION_EXCLUDE"/>
             <input name="COMPRESSION_TYPE"/>
             <input name="PROCESS_VARIABLE_MAP">
@@ -64,6 +64,7 @@
                 <input name="OUTPUT_TYPE" value="v3dpbd"/>
                 <input name="DELETE_INPUTS" value="true"/>
                 <input name="RECORD_MODE" value="UPDATE"/>
+                <input name="EXCLUDE_FILES" value=""/>
             </include>
             
         </sequence>
@@ -77,6 +78,7 @@
                 <input name="OUTPUT_TYPE" value="v3dpbd"/>
                 <input name="DELETE_INPUTS" value="true"/>
                 <input name="RECORD_MODE" value="UPDATE"/>
+                <input name="EXCLUDE_FILES" value=""/>
             </include>
             
             <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
@@ -100,6 +102,7 @@
                 <input name="OUTPUT_TYPE" value="v3dpbd"/>
                 <input name="DELETE_INPUTS" value="true"/>
                 <input name="RECORD_MODE" value="UPDATE"/>
+                <input name="EXCLUDE_FILES" value=""/>
             </include>
             
             <!-- Create h5j files from v3dpbd files, and add them as children of the v3dpbd entities -->
@@ -132,6 +135,7 @@
                 <input name="OUTPUT_TYPE" value="v3dpbd"/>
                 <input name="DELETE_INPUTS" value="true"/>
                 <input name="RECORD_MODE" value="UPDATE"/>
+                <input name="EXCLUDE_FILES" value=""/>
             </include>
             
             <!-- Create h5j files from v3dpbd files, replace the v3dpbd entities, and delete the v3dpbd files -->

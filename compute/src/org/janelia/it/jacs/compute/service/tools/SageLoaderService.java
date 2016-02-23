@@ -1,4 +1,3 @@
-
 package org.janelia.it.jacs.compute.service.tools;
 
 import org.janelia.it.jacs.compute.access.ComputeDAO;
@@ -24,6 +23,8 @@ import java.util.regex.Pattern;
 
 public class SageLoaderService extends SubmitDrmaaJobService {
 
+    private SageLoaderTask sageLoaderTask;
+
     protected String getGridServicePrefixName() {
         return "sageLoader";
     }
@@ -45,7 +46,6 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     private void createShellScript(FileWriter writer)
             throws IOException, ParameterException {
         try {
-            SageLoaderTask sageLoaderTask = (SageLoaderTask) task;
             final String perlModulePath = SystemConfigurationProperties.getString("Sage.Perllib");
             final String perlBinPath = SystemConfigurationProperties.getString("Perl.Path");
             final String cmdPrefix =
@@ -67,7 +67,10 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             }
 
             script.append(" -user jacs");
-            appendTaskParameters(sageLoaderTask, script);
+            final File dataFile = createInputDataFile();
+
+            script.append(" -file ").append(dataFile.getAbsolutePath());
+            appendTaskParameters(script);
             script.append("\n");
 
             writer.write(script.toString());
@@ -88,8 +91,17 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         }
     }
 
-    private void appendTaskParameters(SageLoaderTask sageLoaderTask,
-                                      StringBuilder script) {
+    private File createInputDataFile() throws IOException {
+        final File dataFile = new File(getSGEConfigurationDirectory(), "sampleFileList.txt");
+        try (PrintWriter pw = new PrintWriter(new FileOutputStream(dataFile))) {
+            for (String fileName : sageLoaderTask.getItemList()) {
+                pw.println(fileName);
+            }
+        }
+        return dataFile;
+    }
+
+    private void appendTaskParameters(StringBuilder script) {
         String value;
         for (String name : sageLoaderTask.getScriptArgumentNames()) {
             value = sageLoaderTask.getParameter(name);
@@ -123,6 +135,10 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
         task = ProcessDataHelper.getTask(processData);
+        sageLoaderTask = (SageLoaderTask) processData.getItem("SAGE_TASK");
+        if (sageLoaderTask == null) {
+            sageLoaderTask = (SageLoaderTask) task;
+        }
         if (computeDAO == null) {computeDAO = new ComputeDAO(logger);}
         resultFileNode = createResultFileNode();
         // super.init() must be called after the resultFileNode is set or it will throw an Exception
@@ -132,13 +148,13 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     private SageLoaderResultNode createResultFileNode() throws Exception {
         SageLoaderResultNode resultFileNode;
 
-        // Check if we already have a result node for this task
-        if (task == null) {
+        // Check if we already have a result node for this sageLoaderTask
+        if (sageLoaderTask == null) {
             logger.info("task is null - therefore createResultFileNode() returning null result node");
             return null;
         }
-        logger.info("Checking to see if there is already a result node for task=" + task.getObjectId());
-        Set<Node> outputNodes = task.getOutputNodes();
+        logger.info("Checking to see if there is already a result node for task=" + sageLoaderTask.getObjectId());
+        Set<Node> outputNodes = sageLoaderTask.getOutputNodes();
         for (Node node : outputNodes) {
             if (node instanceof SageLoaderResultNode) {
                 return (SageLoaderResultNode) node;
@@ -146,8 +162,8 @@ public class SageLoaderService extends SubmitDrmaaJobService {
         }
 
         // Create new node
-        resultFileNode = new SageLoaderResultNode(task.getOwner(), task,
-                "SageLoaderResultNode", "SageLoaderResultNode for task " + task.getObjectId(),
+        resultFileNode = new SageLoaderResultNode(sageLoaderTask.getOwner(), sageLoaderTask,
+                "SageLoaderResultNode", "SageLoaderResultNode for task " + sageLoaderTask.getObjectId(),
                 Node.VISIBILITY_PRIVATE, null);
         computeDAO.saveOrUpdate(resultFileNode);
 
@@ -160,39 +176,50 @@ public class SageLoaderService extends SubmitDrmaaJobService {
     public void postProcess() throws MissingDataException {
         try {
             // reload task from database to avoid Hibernate errors on save
-            task = computeDAO.getTaskById(task.getObjectId());
+            sageLoaderTask = (SageLoaderTask) computeDAO.getTaskById(sageLoaderTask.getObjectId());
+            if (sageLoaderTask.getParentTaskId() != null) {
+                task = computeDAO.getTaskById(sageLoaderTask.getParentTaskId());
+            } else {
+                task = sageLoaderTask;
+            }
 
             final File outputFile = getFile(getSGEOutputDirectory(), "Output");
             final File errorFile = getFile(getSGEErrorDirectory(), "Error");
             addFileMessage("Output", outputFile);
             addFileMessage("Error", errorFile);
 
-            SageLoaderTask sageLoaderTask = (SageLoaderTask) task;
             // if the item being loaded is an lsm,
             // verify that the sageLoader script actually found the image
-            if (sageLoaderTask.getItem().endsWith(".lsm")) {
-                checkImagesFound(outputFile);
+            int expectedImages = 0;
+            for (String inputFile : sageLoaderTask.getItemList()) {
+                if (inputFile.endsWith(".lsm")) {
+                    expectedImages++;
+                }
+            }
+            if (expectedImages > 0) {
+                checkImagesFound(outputFile, expectedImages);
             }
 
-            computeDAO.saveOrUpdate(task);
-            logger.info("postProcess: saved output messages for " + task);
+            computeDAO.saveOrUpdate(sageLoaderTask);
+            if (sageLoaderTask != task) {
+                computeDAO.saveOrUpdate(task);
+            }
+            logger.info("postProcess: saved output messages for " + sageLoaderTask);
         } catch (DaoException e) {
-            logger.error("failed to save output messages for " + task, e);
+            logger.error("failed to save output messages for " + sageLoaderTask, e);
         }
     }
 
-    private void addFileMessage(String context,
-                                File file) {
+    private void addFileMessage(String context, File file) {
         if (file.exists()) {
             final long size = file.length();
             if (size > 0) {
-                task.addMessage(context + " file: " + file.getAbsolutePath());
+                sageLoaderTask.addMessage(context + " file: " + file.getAbsolutePath());
             }
         }
     }
 
-    private File getFile(String directoryName,
-                         String name) {
+    private File getFile(String directoryName, String name) {
         final File directory = new File(directoryName);
         return new File(directory, getGridServicePrefixName() + name + ".1");
     }
@@ -204,8 +231,9 @@ public class SageLoaderService extends SubmitDrmaaJobService {
      * and adds an error event to this task if an image was not found.
      *
      * @param  sageLoaderStdOutFile  standard output from sageLoader script.
+     * @param expectedImages - number of expected images.
      */
-    private void checkImagesFound(File sageLoaderStdOutFile) {
+    private void checkImagesFound(File sageLoaderStdOutFile, int expectedImages) {
 
         int imagesFound = 0;
 
@@ -216,16 +244,26 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             }
         }
 
-        if (imagesFound == 0) {
-            final Event lastEvent = task.getLastEvent();
-            final String errorMessage = "no Images Found in " + sageLoaderStdOutFile.getAbsolutePath();
+        logger.info("Task " + sageLoaderTask.getObjectId() + " expected/Processed images: " +
+                expectedImages + "/" + imagesFound);
+        if (imagesFound != expectedImages) {
+            final Event lastEvent = sageLoaderTask.getLastEvent();
+            final String errorMessage = "Task " + sageLoaderTask.getObjectId() +
+                    " not all Images Found in " + sageLoaderStdOutFile.getAbsolutePath();
             if (! Event.ERROR_EVENT.equals(lastEvent.getEventType())) {
-                logger.info("checkImagesFound: " + errorMessage);
+                logger.warn("checkImagesFound: " + errorMessage);
                 final Event invalidOutput = new Event(errorMessage, new Date(), Event.ERROR_EVENT);
-                task.addEvent(invalidOutput);
+                sageLoaderTask.addEvent(invalidOutput);
+            }
+            if (task != sageLoaderTask) {
+                task.addEvent(new Event(errorMessage, new Date(), Event.SUBTASKERROR_EVENT));
+            }
+        } else {
+            if (task != sageLoaderTask) {
+                final Event processedOutput = new Event("Processed " + imagesFound + " images", new Date(), Event.SUBTASKCOMPLETED_EVENT);
+                task.addEvent(processedOutput);
             }
         }
-
     }
 
     private int getImagesFound(File file) {

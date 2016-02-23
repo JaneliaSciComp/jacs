@@ -146,11 +146,11 @@ public class ScalityMigrationService extends SubmitDrmaaJobService {
 
 
 //    public static void main(String[] args) {
-//        String errorBase = "/nobackup/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/sge_error/scalityMigrationError.";
-//        String outputBase = "/nobackup/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/sge_output/scalityMigrationOutput.";
+//        String errorBase = "/nrs/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/sge_error/scalityMigrationError.";
+//        String outputBase = "/nrs/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/sge_output/scalityMigrationOutput.";
 //
 //        // Error Appending
-//        try (FileWriter writer = new FileWriter("/nobackup/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/errors.log")){
+//        try (FileWriter writer = new FileWriter("/nrs/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/errors.log")){
 //            for (int i = 0; i < 26415; i++) {
 //                File tmpFile = new File(errorBase+i);
 //                if (tmpFile.exists()) {
@@ -172,7 +172,7 @@ public class ScalityMigrationService extends SubmitDrmaaJobService {
 //            e.printStackTrace();
 //        }
 //        // Output Appending
-//        try (FileWriter writer = new FileWriter("/nobackup/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/output.log")){
+//        try (FileWriter writer = new FileWriter("/nrs/jacs/jacsData/filestore/system/ScalityMigrationResult/177/674/2196450647841177674/output.log")){
 //            for (int i = 0; i < 26415; i++) {
 //                File tmpFile = new File(outputBase+i);
 //                if (tmpFile.exists()) {

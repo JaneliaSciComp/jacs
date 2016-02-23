@@ -50,7 +50,7 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
 
             TiledMicroscopeBeanRemote timBean = EJBFactory.getRemoteTiledMicroscopeBean();
             EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
-            SampleDiscovery discovery = new SampleDiscovery();
+            SampleDiscovery discovery = new SampleDiscovery(entityBean);
             Set<File> sampleDirectories = discovery.discover();
             
             // Iterate over all samples, adding them to db.
@@ -62,13 +62,9 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                 boolean original = true;
                 for ( Entity entity: entities ) {
                     if (entity.getEntityTypeName().equals(EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE)) {
-                        Set<EntityActorPermission> permissions = entity.getEntityActorPermissions();
-                        for (EntityActorPermission permission: permissions) {
-                            if ( permission.getSubjectKey().equals(SHARED_PERMISSION)) {
-                                original = false;
-                                logger.info("Sample " + fileLocation + " already known.  Ignoring.");
-                                break;
-                            }
+                        if (entity.getOwnerKey().equals(SHARED_PERMISSION)) {
+                            logger.info("Sample " + fileLocation + " already known.  Ignoring.");
+                            original = false;
                         }
                     }
                 }
@@ -87,12 +83,13 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
                     final String userName = ownerAttributeView.getOwner().getName();
                     logger.info("Found sample belonging to " + userName + ".  Adding " + sample.getName());
                     TmSample tmSample = timBean.createTiledMicroscopeSample(
-                            OWNERSHIP_USER, sample.getName(), fileLocation
+                            SHARED_PERMISSION, sample.getName(), fileLocation
                     );
                     Long entityId = tmSample.getId();  // Happens to be the entity id of the wrapped entity.
 
-                    String ownerSubject = "user:" + OWNERSHIP_USER;
-                    entityBean.grantPermissions( ownerSubject, entityId, SHARED_PERMISSION, "r", true);
+                    //String ownerSubject = "user:" + OWNERSHIP_USER;
+                    String ownerSubject = SHARED_PERMISSION;
+                    //entityBean.grantPermissions( ownerSubject, entityId, SHARED_PERMISSION, "r", true);
                     
                     // Now, apply conversion matrices to the sample.
                     int[] origin = new int[3];

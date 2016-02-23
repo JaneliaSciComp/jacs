@@ -206,7 +206,7 @@ public class SampleHelper extends EntityHelper {
         return sample;
     }
     
-    protected Entity getOrCreateSample(String slideCode, Entity dataSet, String channelSpec, String objective, 
+    private Entity getOrCreateSample(String slideCode, Entity dataSet, String channelSpec, String objective,
             Collection<SlideImageGroup> tileGroupList, Entity parentSample, boolean setLsmAttributes) throws Exception {
 
         boolean sampleDirty = false;

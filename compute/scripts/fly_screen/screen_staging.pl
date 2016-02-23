@@ -3,7 +3,7 @@
 use strict;
 
 my $archiveScreenDir = "/archive/flylight_archive/screen/SecData/registrations";
-my $stagingDir = "/nobackup/jacs/jacsData/filestore/system/ScreenStaging";
+my $stagingDir = "/nrs/jacs/jacsData/filestore/system/ScreenStaging";
 my $v3d = "/home/murphys/vaa3d/v3d/vaa3d";
 
 my @dateBasedDirArr;

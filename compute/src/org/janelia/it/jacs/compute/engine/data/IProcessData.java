@@ -61,6 +61,7 @@ public interface IProcessData {
     public static final String PROCESS_ID = "PROCESS_ID";
     public static final String TASK = "TASK";
     public static final String USER_NAME = "USER_NAME";
+    public static final String JOB_ID = "JOB_ID";
     public static final String JOB_NAME = "JOB_NAME";
     public static final String PROCESSED_SUCCESSFULLY = "PROCESSED_SUCCESSFULLY";
     public static final String ACTION_TO_PROCESS = "ACTION_TO_PROCESS";   // FOR JMS QUEUE
@@ -69,6 +70,7 @@ public interface IProcessData {
     public static final String ORIGINAL_MESSAGE_ID = "ORIGINAL_MESSAGE_ID";
     public static final String MESSAGE_ID = "MESSAGE_ID";
     public static final String PROCESSING_EXCEPTION = "PROCESSING_EXCEPTION";
+    public static final String QUEUE_OVERRIDE = "QUEUE_OVERRIDE";
 
 
 }
