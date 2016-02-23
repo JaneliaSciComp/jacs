@@ -761,19 +761,16 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             StringBuilder sb = new StringBuilder();
             Throwable x = e;
             while (x!=null) {
-            	
-            	StackTraceElement[] stacktrace = x.getStackTrace();
-            	if (stacktrace!=null && stacktrace.length>0) {
-            		if (sb.length()>0) sb.append("\n");
-            		sb.append(stacktrace[0].toString());
-            		if (stacktrace.length>1) {
-            			sb.append("\n").append("    at ").append(stacktrace[1].toString());
-            		}
-            	}
-            	
-                x = e.getCause();
+            	if (e!=x) sb.append("Caused by: ");
+            	sb.append(x.getClass().getName()).append(": ").append(x.getMessage()).append("\n");
+                for (StackTraceElement element : x.getStackTrace()) {
+                	sb.append("\tat ");
+                    sb.append(element.toString()).append("\n");
+                    break;
+                }
+                x = x.getCause();
             }
-            
+        	
             updateTaskStatus(processId, Event.ERROR_EVENT, sb.toString());
         }
         catch (Exception ee) {
