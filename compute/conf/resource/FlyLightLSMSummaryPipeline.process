@@ -88,7 +88,7 @@
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
                     <input name="SAMPLE_ENTITY_ID"/>
                     <input name="SAMPLE_AREA"/>
-                    <input name="RESULT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE"/>
                     <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 </operation>
             </sequence>
@@ -118,7 +118,7 @@
             <sequence name="Create LSM Summary Artifacts" waitForAsync="true">
                 <operation name="Create LSM Summary Artifacts" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.image.BasicMIPandMovieGenerationService"/>
-                    <input name="RESULT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE"/>
                     <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                     <input name="INPUT_IMAGES"/>
                     <input name="NORMALIZE_TO_FIRST_IMAGE" value="false"/>
@@ -131,7 +131,7 @@
                 <operation name="Create LSM Montages" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.MontageService"/>
                     <input name="INPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
-                    <input name="RESULT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE"/>
                 </operation>
             </sequence>
 
