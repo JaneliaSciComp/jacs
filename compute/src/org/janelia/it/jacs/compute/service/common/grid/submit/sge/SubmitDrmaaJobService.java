@@ -573,8 +573,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
         if (numBytes > 0) {
         	String note = numBytes+" bytes of output were written to stderr files in dir="+configDir.getAbsolutePath();
-            EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(), note); // TODO: remove the task note, since we're recording this in task status now?
-            EJBFactory.getLocalComputeBean().updateTaskStatus(task.getObjectId(), Event.RUNNING_EVENT, note);
+            EJBFactory.getLocalComputeBean().addTaskNote(task.getObjectId(), note);
             return true;
         }
         return false;
