@@ -23,15 +23,16 @@
 			    <!-- Create a result node for this grid run -->
 			    <operation name="Create Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
 				    <input name="NAME" value="Temp"/>
-			        <output name="RESULT_FILE_NODE"/>
-			        <output name="RESULT_FILE_NODE_ID"/>
+                    <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+                    <output name="TEMP_FILE_NODE"/>
+                    <output name="TEMP_FILE_NODE_ID"/>
 			    </operation>
 			    
 			    <!-- Generate fast load artifacts for all the separations in the list -->
 		        <sequence name="Fast Load Artifacts" waitForAsync="true">
 				    <operation name="Fast Load Artifacts" processor="queue/gridSubmitAndWait">
 				        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.FastLoadArtifactPipelineGridService"/>
-						<input name="RESULT_FILE_NODE"/>
+						<input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
 						<input name="FILE_PATHS"/>
 						<output name="FASTLOAD_PATHS"/>
 						<output name="ARCHIVE_FILE_PATHS"/>
@@ -53,12 +54,10 @@
 					<input name="SEPARATION_LIST" value="$V{ENTITY_LIST}"/>
 			    </operation>
 				        
-			    <!-- Trash temporary file node
+			    <!-- Trash temporary file node -->
 			    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-			        <input name="RESULT_FILE_NODE_ID"/>
-			        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+			        <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
 			    </operation>
-	     		-->
 	     
     		</sequence>	
 		

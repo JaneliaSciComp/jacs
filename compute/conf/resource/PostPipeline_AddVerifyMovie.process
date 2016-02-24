@@ -16,22 +16,22 @@
         <!-- Create a result node for this grid run -->
         <operation name="Create Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Temp"/>
-            <output name="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE_ID"/>
+            <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE_ID"/>
         </operation>
 	    
         <sequence name="Add Verify Movie" waitForAsync="true">
             <operation name="Add Verify Movie" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.align.AddVerifyMoviePostService"/>
-                <input name="RESULT_FILE_NODE"/>
+                <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="SAMPLE_ENTITY_ID"/>
             </operation>
         </sequence>
                 
         <!-- Trash temporary file node -->
         <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-            <input name="RESULT_FILE_NODE_ID"/>
-            <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+            <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
         </operation>
  
     </sequence>

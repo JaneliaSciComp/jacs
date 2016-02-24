@@ -757,7 +757,21 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     @Override
     public void recordProcessError(String processDefName, Long processId, Throwable e) {
         try {
-            updateTaskStatus(processId, Event.ERROR_EVENT, e.getMessage());
+
+            StringBuilder sb = new StringBuilder();
+            Throwable x = e;
+            while (x!=null) {
+            	if (e!=x) sb.append("Caused by: ");
+            	sb.append(x.getClass().getName()).append(": ").append(x.getMessage()).append("\n");
+                for (StackTraceElement element : x.getStackTrace()) {
+                	sb.append("\tat ");
+                    sb.append(element.toString()).append("\n");
+                    break;
+                }
+                x = x.getCause();
+            }
+        	
+            updateTaskStatus(processId, Event.ERROR_EVENT, sb.toString());
         }
         catch (Exception ee) {
             logger.error("Caught exception updating status of process: " + processDefName, ee);
