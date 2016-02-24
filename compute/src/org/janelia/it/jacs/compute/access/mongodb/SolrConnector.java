@@ -24,18 +24,15 @@ import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.impl.StreamingUpdateSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.large.LargeOperations;
 import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -83,9 +80,8 @@ public class SolrConnector {
 	protected final boolean streamingUpdates;
 
 	protected SolrServer solr;
-	protected LargeOperations largeOp;
-
-    private DomainDAO dao;
+	protected MongoLargeOperations largeOp;
+	protected DomainDAO dao;
     
     // Caches
     Map<Class<?>, List<Field>> classFields = new HashMap<Class<?>,List<Field>>();
@@ -98,7 +94,6 @@ public class SolrConnector {
 		this.useBuildCore = false;
 		this.dao = dao;
 		this.streamingUpdates = true;
-		largeOp = new LargeOperations();
     }
 
 	protected void init() throws DaoException {
@@ -133,7 +128,7 @@ public class SolrConnector {
     	}
     	
     	log.info("Building disk-based entity maps");
-    	this.largeOp = new LargeOperations();
+    	this.largeOp = new MongoLargeOperations(dao);
     	largeOp.buildAncestorMap();
     	largeOp.buildAnnotationMap();
 
@@ -175,7 +170,7 @@ public class SolrConnector {
             		}
 				}
 				
-	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, domainObject.getId());
+	        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(MongoLargeOperations.ANCESTOR_MAP, domainObject.getId());
 	        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
 	        	docs.add(createDocument(null, domainObject, fields, methods, ancestors));
 
@@ -380,7 +375,7 @@ public class SolrConnector {
                 return;
             }
             visited.add(key);
-            Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, id);
+            Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>)largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, id);
             if (objectAnnotations!=null) {
                 annotations.addAll(objectAnnotations);
             }

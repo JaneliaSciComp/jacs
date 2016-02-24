@@ -1,5 +1,16 @@
 package org.janelia.it.jacs.compute.access.solr;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -15,27 +26,19 @@ import org.apache.solr.common.SolrInputField;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrUtils;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.net.MalformedURLException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
 /**
  * Data access to the SOLR indexes.
+ * 
+ * @deprecated can probably be deleted
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -56,7 +59,7 @@ public class SolrDAO extends AnnotationDAO {
 	protected final boolean streamingUpdates;
 	
 	protected SolrServer solr;
-	protected LargeOperations largeOp;    
+//	protected LargeOperations largeOp;    
     protected Map<String, SageTerm> sageVocab;
     protected Set<SageTerm> usedSageVocab;
     
@@ -94,130 +97,130 @@ public class SolrDAO extends AnnotationDAO {
     	}
     }
         
-    public void indexAllEntities(Map<String, SageTerm> sageVocab) throws DaoException {
-        if (log.isTraceEnabled()) {
-            log.trace("indexAllEntities(sageVocab.size="+sageVocab.size()+")");
-        }
-    	
-    	if (!useBuildCore || !streamingUpdates) {
-    		throw new IllegalStateException("indexAllEntities called on SolrDAO which has useBuildCore=false or streamingUpdates=false");
-    	}
-    	
-    	this.sageVocab = sageVocab;
-    	this.usedSageVocab = new HashSet<>();
-
-    	log.info("Building disk-based entity maps");
-    	this.largeOp = new LargeOperations(this);
-    	largeOp.buildAnnotationMap();
-    	largeOp.buildSageImagePropMap();
-    	largeOp.buildAncestorMap();
-    	
-    	log.info("Getting entities");
-    	
-    	Map<Long,SimpleEntity> entityMap = new HashMap<>();
-        int i = 0;
-    	Connection conn = null;
-    	PreparedStatement stmt = null;
-    	ResultSet rs = null;
-    	try {
-	        conn = getJdbcConnection();
-	        
-	        StringBuffer sql = new StringBuffer();
-	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, e.entity_type, e.owner_key, ed.entity_att, ed.value, ed.child_entity_id, p.subject_key ");
-	        sql.append("from entity e ");
-	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
-	        sql.append("left outer join entity_actor_permission p on p.entity_id = e.id ");
-	        sql.append("where e.entity_type != ? ");
-	        
-	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-	        stmt.setFetchSize(Integer.MIN_VALUE);
-	        stmt.setString(1, EntityConstants.TYPE_ANNOTATION);
-	        
-			rs = stmt.executeQuery();
-	    	log.info("    Processing results");
-			while (rs.next()) {
-				Long entityId = rs.getBigDecimal(1).longValue();
-				SimpleEntity entity = entityMap.get(entityId);
-				if (entity==null) {
-					if (i>0) {
-		            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
-		                    List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
-		                    entityMap.clear();
-		            		log.info("    Adding "+docs.size()+" docs (i="+i+")");
-		            		index(docs);
-		            	}
-	            		if (i%SOLR_LOADER_COMMIT_SIZE==0) {
-	            	    	log.info("    Committing SOLR index");
-	            			commit();
-	            		}
-					}
-					
-					i++;
-					entity = new SimpleEntity();
-					entityMap.put(entityId, entity);
-					entity.setId(entityId);
-					entity.setName(rs.getString(2));
-					entity.setCreationDate(rs.getDate(3));
-					entity.setUpdatedDate(rs.getDate(4));
-					entity.setEntityTypeName(rs.getString(5));
-					String ownerKey = rs.getString(6);
-					entity.setOwnerKey(ownerKey);
-					entity.getSubjectKeys().add(ownerKey);
-				}
-
-				String key = rs.getString(7);
-				String value = rs.getString(8);
-				BigDecimal childIdBD = rs.getBigDecimal(9);
-				String subjectKey = rs.getString(10);
-				
-				if (key!=null && value!=null) {
-					entity.getAttributes().add(new KeyValuePair(key, value));
-				}
-				
-				if (childIdBD != null) {
-					entity.getChildIds().add(childIdBD.longValue());
-				}
-				
-				if (subjectKey!=null) {
-					entity.getSubjectKeys().add(subjectKey);
-				}
-			}
-
-        	if (!entityMap.isEmpty()) {
-                List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
-        		log.info("    Adding "+docs.size()+" docs (i="+i+")");
-        		index(docs);
-        	}
-    	}
-    	catch (SQLException e) {
-    		throw new DaoException(e);
-    	}
-        finally {
-        	try {
-        		if (rs!=null) rs.close();
-        		if (stmt!=null) stmt.close();
-        		if (conn!=null) conn.close();
-        	}
-            catch (Throwable e) {
-        		log.warn("Error closing JDBC connection. Ignoring error.",e);
-            }
-        }
-
-        try {
-        	log.info("Indexing Sage vocabularies");
-        	
-        	index(createSageDocs(usedSageVocab));
-        	
-    		commit();
-    		optimize();
-        	log.info("Completed indexing "+i+" entities");
-            swapBuildCore();
-            log.info("Build core swapped to main core. The new index is now live.");
-        }
-        catch (Exception e) {
-        	throw new DaoException(e);
-        }
-    }
+//    public void indexAllEntities(Map<String, SageTerm> sageVocab) throws DaoException {
+//        if (log.isTraceEnabled()) {
+//            log.trace("indexAllEntities(sageVocab.size="+sageVocab.size()+")");
+//        }
+//    	
+//    	if (!useBuildCore || !streamingUpdates) {
+//    		throw new IllegalStateException("indexAllEntities called on SolrDAO which has useBuildCore=false or streamingUpdates=false");
+//    	}
+//    	
+//    	this.sageVocab = sageVocab;
+//    	this.usedSageVocab = new HashSet<>();
+//
+//    	log.info("Building disk-based entity maps");
+//    	this.largeOp = new LargeOperations(this);
+//    	largeOp.buildAnnotationMap();
+//    	largeOp.buildSageImagePropMap();
+//    	largeOp.buildAncestorMap();
+//    	
+//    	log.info("Getting entities");
+//    	
+//    	Map<Long,SimpleEntity> entityMap = new HashMap<>();
+//        int i = 0;
+//    	Connection conn = null;
+//    	PreparedStatement stmt = null;
+//    	ResultSet rs = null;
+//    	try {
+//	        conn = getJdbcConnection();
+//	        
+//	        StringBuffer sql = new StringBuffer();
+//	        sql.append("select e.id, e.name, e.creation_date, e.updated_date, e.entity_type, e.owner_key, ed.entity_att, ed.value, ed.child_entity_id, p.subject_key ");
+//	        sql.append("from entity e ");
+//	        sql.append("left outer join entityData ed on e.id=ed.parent_entity_id ");
+//	        sql.append("left outer join entity_actor_permission p on p.entity_id = e.id ");
+//	        sql.append("where e.entity_type != ? ");
+//	        
+//	        stmt = conn.prepareStatement(sql.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+//	        stmt.setFetchSize(Integer.MIN_VALUE);
+//	        stmt.setString(1, EntityConstants.TYPE_ANNOTATION);
+//	        
+//			rs = stmt.executeQuery();
+//	    	log.info("    Processing results");
+//			while (rs.next()) {
+//				Long entityId = rs.getBigDecimal(1).longValue();
+//				SimpleEntity entity = entityMap.get(entityId);
+//				if (entity==null) {
+//					if (i>0) {
+//		            	if (i%SOLR_LOADER_BATCH_SIZE==0) {
+//		                    List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
+//		                    entityMap.clear();
+//		            		log.info("    Adding "+docs.size()+" docs (i="+i+")");
+//		            		index(docs);
+//		            	}
+//	            		if (i%SOLR_LOADER_COMMIT_SIZE==0) {
+//	            	    	log.info("    Committing SOLR index");
+//	            			commit();
+//	            		}
+//					}
+//					
+//					i++;
+//					entity = new SimpleEntity();
+//					entityMap.put(entityId, entity);
+//					entity.setId(entityId);
+//					entity.setName(rs.getString(2));
+//					entity.setCreationDate(rs.getDate(3));
+//					entity.setUpdatedDate(rs.getDate(4));
+//					entity.setEntityTypeName(rs.getString(5));
+//					String ownerKey = rs.getString(6);
+//					entity.setOwnerKey(ownerKey);
+//					entity.getSubjectKeys().add(ownerKey);
+//				}
+//
+//				String key = rs.getString(7);
+//				String value = rs.getString(8);
+//				BigDecimal childIdBD = rs.getBigDecimal(9);
+//				String subjectKey = rs.getString(10);
+//				
+//				if (key!=null && value!=null) {
+//					entity.getAttributes().add(new KeyValuePair(key, value));
+//				}
+//				
+//				if (childIdBD != null) {
+//					entity.getChildIds().add(childIdBD.longValue());
+//				}
+//				
+//				if (subjectKey!=null) {
+//					entity.getSubjectKeys().add(subjectKey);
+//				}
+//			}
+//
+//        	if (!entityMap.isEmpty()) {
+//                List<SolrInputDocument> docs = createEntityDocs(entityMap.values());
+//        		log.info("    Adding "+docs.size()+" docs (i="+i+")");
+//        		index(docs);
+//        	}
+//    	}
+//    	catch (SQLException e) {
+//    		throw new DaoException(e);
+//    	}
+//        finally {
+//        	try {
+//        		if (rs!=null) rs.close();
+//        		if (stmt!=null) stmt.close();
+//        		if (conn!=null) conn.close();
+//        	}
+//            catch (Throwable e) {
+//        		log.warn("Error closing JDBC connection. Ignoring error.",e);
+//            }
+//        }
+//
+//        try {
+//        	log.info("Indexing Sage vocabularies");
+//        	
+//        	index(createSageDocs(usedSageVocab));
+//        	
+//    		commit();
+//    		optimize();
+//        	log.info("Completed indexing "+i+" entities");
+//            swapBuildCore();
+//            log.info("Build core swapped to main core. The new index is now live.");
+//        }
+//        catch (Exception e) {
+//        	throw new DaoException(e);
+//        }
+//    }
 
     public void updateIndex(Entity entity) throws DaoException {
         if (log.isTraceEnabled()) {
@@ -338,23 +341,23 @@ public class SolrDAO extends AnnotationDAO {
         return docs;
     }
     
-    private List<SolrInputDocument> createEntityDocs(Collection<SimpleEntity> entities) {
-    	
-        List<SolrInputDocument> docs = new ArrayList<>();
-        for(SimpleEntity se : entities) {
-        	
-        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, se.getId());
-
-        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, se.getId());
-        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
-        	
-        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, se.getId());
-        	
-        	SolrInputDocument doc = createDoc(se, annotations, ancestors, sageProps);
-        	docs.add(doc);
-        }
-        return docs;
-    }
+//    private List<SolrInputDocument> createEntityDocs(Collection<SimpleEntity> entities) {
+//    	
+//        List<SolrInputDocument> docs = new ArrayList<>();
+//        for(SimpleEntity se : entities) {
+//        	
+//        	Set<SimpleAnnotation> annotations = (Set<SimpleAnnotation>)largeOp.getValue(LargeOperations.ANNOTATION_MAP, se.getId());
+//
+//        	AncestorSet ancestorSet = (AncestorSet)largeOp.getValue(LargeOperations.ANCESTOR_MAP, se.getId());
+//        	Set<Long> ancestors = ancestorSet==null ? null : ancestorSet.getAncestors(); 
+//        	
+//        	Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, se.getId());
+//        	
+//        	SolrInputDocument doc = createDoc(se, annotations, ancestors, sageProps);
+//        	docs.add(doc);
+//        }
+//        return docs;
+//    }
     
     private SolrInputDocument createDoc(SimpleEntity entity, Set<SimpleAnnotation> annotations, Set<Long> ancestorIds, Map<String,Object> sageProps) {
     	return createDoc(null, entity, annotations, ancestorIds, sageProps);

@@ -2,9 +2,15 @@ package org.janelia.it.jacs.compute.service.fly;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.janelia.it.jacs.compute.access.large.LargeOperations;
+import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -38,14 +44,14 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
     	
     	logger.info("Caching sample names and masks");
     	
-    	LargeOperations largeOp = new LargeOperations();
+    	MongoLargeOperations largeOp = new MongoLargeOperations();
     	Map<Long,String> sampleNameMap = new HashMap<Long,String>();
     	
     	for(Entity sample : entityBean.getUserEntitiesByTypeName(null, EntityConstants.TYPE_SCREEN_SAMPLE)) {
     		sampleNameMap.put(sample.getId(), sample.getName());
     		Map<Long,String> masks = getSampleMaskImages(sample);      
     		for(Long maskId : masks.keySet()) {
-    			largeOp.putValue(LargeOperations.SCREEN_SCORE_MAP, maskId, sample.getName());
+    			largeOp.putValue(MongoLargeOperations.SCREEN_SCORE_MAP, maskId, sample.getName());
     		}
     	}
     	
@@ -108,7 +114,7 @@ public class ScreenScoresExportService extends ScreenScoresLoadingService {
         		for(String entityId : annotMap.keySet()) {
         			
         			Long maskId = new Long(entityId);
-        			String sampleName = (String)largeOp.getValue(LargeOperations.SCREEN_SCORE_MAP, maskId);
+        			String sampleName = (String)largeOp.getValue(MongoLargeOperations.SCREEN_SCORE_MAP, maskId);
         			logger.info("      Processing maskId="+entityId+" "+sampleName);
         			
 					String maaIntensity = null;

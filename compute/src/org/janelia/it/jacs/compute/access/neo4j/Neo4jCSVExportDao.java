@@ -8,12 +8,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.large.LargeOperations;
+import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -31,7 +37,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
 
     private String outputDir = "/home/rokickik/dev/neo4j-batch-import/fw";
     
-    protected LargeOperations largeOp;
+    protected MongoLargeOperations largeOp;
 
     protected static final String REFNODE_COMMON_ROOTS = "COMMON_ROOTS";
     protected static final String REFNODE_SUBJECTS = "SUBJECTS";
@@ -57,7 +63,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
 
     public Neo4jCSVExportDao(Logger _logger) {
         super(_logger);
-        this.largeOp = new LargeOperations(this);
+        this.largeOp = new MongoLargeOperations();
     }
     
     public void dropDatabase() throws DaoException {
@@ -115,7 +121,7 @@ public class Neo4jCSVExportDao extends AnnotationDAO {
             writeCols(entityRelsCsvWriter, "entity_id:long:entity", "entity_id:long:entity", "type:string", "entity_data_id:long", "creation_date:string", "updated_date:string", "owner_key:string", "order_index:long");
             
             log.info("Clearing Neo4j id cache...");
-            largeOp.clearCache(LargeOperations.NEO4J_MAP);
+            largeOp.clearCache(MongoLargeOperations.NEO4J_MAP);
 
             log.info("Exporting database into: " + outputDir);
 

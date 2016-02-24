@@ -16,10 +16,17 @@ import org.apache.log4j.Logger;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.access.large.LargeOperations;
-import org.janelia.it.jacs.model.entity.*;
+import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.DynamicLabel;
+import org.neo4j.graphdb.DynamicRelationshipType;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.kernel.DefaultFileSystemAbstraction;
@@ -41,7 +48,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
     private String loadDatabaseDir = "/home/rokickik/dev/neo4j-community-2.0.0-M03/data/load.db";
     private FileSystemAbstraction fileSystem;
 
-    protected LargeOperations largeOp;
+    protected MongoLargeOperations largeOp;
     protected BatchInserter inserter;
     protected Label commonRootLabel;
     protected Label entityLabel;
@@ -58,13 +65,13 @@ public class Neo4jBatchDAO extends AnnotationDAO {
     public Neo4jBatchDAO(Logger _logger) {
         super(_logger);
         this.fileSystem = new DefaultFileSystemAbstraction();
-        this.largeOp = new LargeOperations(this);
+        this.largeOp = new MongoLargeOperations();
     }
 
     public void loadAllEntities() throws DaoException {
 
         log.info("Clearing Neo4j id cache...");
-        largeOp.clearCache(LargeOperations.NEO4J_MAP);
+        largeOp.clearCache(MongoLargeOperations.NEO4J_MAP);
 
         log.info("Loading new database into: " + loadDatabaseDir);
 
@@ -247,7 +254,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         Entity entity = ed.getChildEntity();
         if (entity == null) return null;
 
-        Long neoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, entity.getId());
+        Long neoId = (Long) largeOp.getValue(MongoLargeOperations.NEO4J_MAP, entity.getId());
         if (neoId != null) {
             loadRelationship(parentNeoId, neoId, ed);
             return neoId;
@@ -270,7 +277,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
                 inserter.setNodeLabels(neoId, entityLabel, entityTypeLabel, commonRootLabel);
             }
             
-            largeOp.putValue(LargeOperations.NEO4J_MAP, entity.getId(), neoId);
+            largeOp.putValue(MongoLargeOperations.NEO4J_MAP, entity.getId(), neoId);
             return neoId;
             
         }
@@ -296,7 +303,7 @@ public class Neo4jBatchDAO extends AnnotationDAO {
     private void loadAnnotation(Long annotationId, String annotationName, Long targetId, String key, String value, 
             Long keyId, Long valueId, String ownerKey, Date creationDate, Date updatedDate) {
              
-        Long targetNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, targetId);
+        Long targetNeoId = (Long) largeOp.getValue(MongoLargeOperations.NEO4J_MAP, targetId);
 
         log.info("loadAnnotation " + annotationId + " (with targetId=" + targetNeoId + ")");
         
@@ -317,12 +324,12 @@ public class Neo4jBatchDAO extends AnnotationDAO {
         inserter.createRelationship(annotationNeoId, targetNeoId, target_rel, new HashMap<String, Object>());
         
         if (keyId!=null) {
-            Long keyNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, keyId);
+            Long keyNeoId = (Long) largeOp.getValue(MongoLargeOperations.NEO4J_MAP, keyId);
             inserter.createRelationship(annotationNeoId, keyNeoId, key_term_rel, new HashMap<String, Object>());
         }
         
         if (valueId!=null) {
-            Long valueNeoId = (Long) largeOp.getValue(LargeOperations.NEO4J_MAP, valueId);
+            Long valueNeoId = (Long) largeOp.getValue(MongoLargeOperations.NEO4J_MAP, valueId);
             inserter.createRelationship(annotationNeoId, valueNeoId, value_term_rel, new HashMap<String, Object>());
         }
     }

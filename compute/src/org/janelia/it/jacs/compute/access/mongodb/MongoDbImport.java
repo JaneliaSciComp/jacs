@@ -30,10 +30,9 @@ import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
-import org.janelia.it.jacs.compute.access.large.LargeOperations;
+import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -77,7 +76,6 @@ import org.janelia.it.jacs.model.domain.screen.PatternMask;
 import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
@@ -104,11 +102,6 @@ import com.mongodb.WriteConcern;
 public class MongoDbImport extends AnnotationDAO {
 
     private static final Logger logger = Logger.getLogger(MongoDbImport.class);
-
-    private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-    private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
-    private static String MONGO_USERNAME = SystemConfigurationProperties.getString("MongoDB.Username");
-    private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
 
 	protected static final int INSERTION_BATCH_SIZE = 1000;
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
@@ -140,7 +133,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected MongoCollection filterCollection;
     
     // Load state
-    private LargeOperations largeOp;
+    private MongoLargeOperations largeOp;
     private String genderConsensus = null;
     private Map<String,String> lsmJsonFiles = new HashMap<String,String>();
     protected Map<Long,Long> ontologyTermIdToOntologyId = new HashMap<Long,Long>();
@@ -149,7 +142,7 @@ public class MongoDbImport extends AnnotationDAO {
         super(logger);
         
         this.subjectDao = new SubjectDAO(log);
-		this.dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
+		this.dao = DomainDAOManager.getInstance().getDao();
     	dao.getMongo().setWriteConcern(WriteConcern.UNACKNOWLEDGED);
     	
     	this.subjectCollection = dao.getCollectionByClass(Subject.class);
@@ -182,7 +175,7 @@ public class MongoDbImport extends AnnotationDAO {
     public void loadAllEntities() throws DaoException {
 
         log.info("Building disk-based SAGE property map");
-        this.largeOp = new LargeOperations(this);
+        this.largeOp = new MongoLargeOperations(dao);
         largeOp.buildSageImagePropMap();
 
         log.info("Building LSM property map");
@@ -463,9 +456,9 @@ public class MongoDbImport extends AnnotationDAO {
     private void loadSamples(String subjectKey) throws Exception {
         long start = System.currentTimeMillis();
         Deque<Entity> samples = new LinkedList<Entity>(getUserEntitiesByTypeName(subjectKey, EntityConstants.TYPE_SAMPLE));
-        log.info("Got "+samples.size()+" samples for "+subjectKey);
-        resetSession();
         if (!samples.isEmpty()) {
+            log.info("Got "+samples.size()+" samples for "+subjectKey);
+            resetSession();
             int loaded = loadSamples(samples);
             log.info("Loading " + loaded + " samples for " + subjectKey + " took "
                     + (System.currentTimeMillis() - start) + " ms");
@@ -883,18 +876,18 @@ public class MongoDbImport extends AnnotationDAO {
                 String childName = child.getName();
                 String childFilepath = getFilepath(child);
 
-                int d = childName.indexOf('.');
+                int d = childName.lastIndexOf('.');
                 String name = childName.substring(0, d);
                 String ext = childName.substring(d+1);
                 
                 FileType fileType = null;
 
                 String key = null;
-                if ("lsm.json".equals(ext)) {
+                if (childName.endsWith(".lsm.json")) {
                 	key = name;
                 	fileType = FileType.LsmMetadata;
                 }
-                else if ("lsm.metadata".equals(ext)) {
+                else if (childName.endsWith(".lsm.metadata")) {
                     // Ignore, to get rid of the old-style Perl metadata files
                     continue;
                 }
@@ -1149,7 +1142,7 @@ public class MongoDbImport extends AnnotationDAO {
             lsm.setSageId(Integer.parseInt(sageId));
         }
 
-        Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(LargeOperations.SAGE_IMAGEPROP_MAP, sageId);
+        Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(MongoLargeOperations.SAGE_IMAGEPROP_MAP, sageId);
         if (sageProps==null) {
             log.warn("    Cannot find LSM#"+lsm.getId()+" in SAGE, with SAGE Id "+sageId);
         }

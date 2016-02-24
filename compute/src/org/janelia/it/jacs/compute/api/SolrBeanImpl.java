@@ -2,10 +2,8 @@ package org.janelia.it.jacs.compute.api;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -17,13 +15,12 @@ import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -65,11 +62,11 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
     	try {
-    		SolrDAO solrDAO = new SolrDAO(log, true, true);
+    	    SolrConnector solr = new SolrConnector(DomainDAOManager.getInstance().getDao());
     		if (clearIndex) {
-				solrDAO.clearIndex();
+    		    solr.clearIndex();
     		}
-			//solrDAO.indexAllEntities();
+    		solr.indexAllDocuments();
     	}
     	catch (Exception e) {
             log.error("Error connecting to Mongo",e);
@@ -78,25 +75,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     }
 
     public void indexAllEntitiesInTree(Long entityId) throws ComputeException {
-    	AnnotationDAO annotationDAO = new AnnotationDAO(log);
-    	Entity root = annotationDAO.getEntityById(entityId);
-    	indexAllEntitiesInTree(root, new HashSet<Long>());
-    }
-
-    private Entity indexAllEntitiesInTree(Entity entity, Set<Long> visited) {
-    	if (entity == null) return null;
-    	if (visited.contains(entity.getId())) {
-    		return entity;
-    	}
-    	visited.add(entity.getId());
-    	//updateIndex(entity.getId());
-    	for(EntityData ed : entity.getEntityData()) {
-    		Entity child = ed.getChildEntity();
-    		if (child != null) {
-    			indexAllEntitiesInTree(child, visited);
-    		}
-    	}
-    	return entity;
+    	throw new UnsupportedOperationException("No longer supported");
     }
     
     // TODO: move this to its own bean, or rename this one
