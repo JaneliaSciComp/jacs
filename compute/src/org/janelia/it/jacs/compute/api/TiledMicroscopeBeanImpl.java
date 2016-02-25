@@ -252,7 +252,7 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         try {
             return _tiledMicroscopeDAO.loadWorkspace(workspaceId);
         } catch (Exception e) {
-            String errorString="Error calling loadWorkspace in DAO layer: " + e.getMessage();
+            String errorString="Workspace " + workspaceId + ".  Error calling loadWorkspace in DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }
