@@ -40,7 +40,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 	private static Logger logger = Logger.getLogger(IndexingManagerImpl.class);
 
 	private DedupingDelayQueue<WorkItem> queue;
-	private DedupingDelayQueue<WorkItem> removalQueue;
+	private DedupingDelayQueue<Long> removalQueue;
 	private ConcurrentSkipListMap<Long, DedupingDelayQueue<Long>> ancestorQueues;
 	
 	private SolrConnector solr;
@@ -55,7 +55,10 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 					if (domainObjs.isEmpty()) return;
 					List<DomainObject> domainObjList = new ArrayList<>();
 					for (WorkItem item: domainObjs) {
-						domainObjList.add(dao.getDomainObject(null, DomainUtils.getObjectClassByName(item.clazz), item.domainObjectId));
+						DomainObject domainObj = dao.getDomainObject(null, DomainUtils.getObjectClassByName(item.clazz), item.domainObjectId);
+						if (domainObj!=null) {
+							domainObjList.add(domainObj);
+						}
 					}
 					solr.updateIndices(domainObjList);
 				} 
@@ -66,23 +69,19 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 		};
 		queue.setWorkItemDelay(3000); // Wait 3 seconds before indexing anything, to limit duplicates
 
-		this.removalQueue = new DedupingDelayQueue<WorkItem>() {
+		this.removalQueue = new DedupingDelayQueue<Long>() {
 			@Override
-			public void process(List<WorkItem> domainObjs) {
+			public void process(List<Long> domainObjs) {
 				try {
 					if (domainObjs.isEmpty()) return;
-					List<DomainObject> domainObjList = new ArrayList<>();
-					for (WorkItem item: domainObjs) {
-						domainObjList.add(dao.getDomainObject(null, DomainUtils.getObjectClassByName(item.clazz), item.domainObjectId));
-					}
-					solr.removeDocuments(domainObjList);
+					solr.removeDocuments(domainObjs);
 				}
 				catch (Throwable e) {
 					logger.error("Error removing documents from index", e);
 				}
 			}
 		};
-		queue.setWorkItemDelay(3000); // Wait 3 seconds before indexing anything, to limit duplicates
+		removalQueue.setWorkItemDelay(3000); // Wait 3 seconds before indexing anything, to limit duplicates
 		
 		this.ancestorQueues = new ConcurrentSkipListMap<Long, DedupingDelayQueue<Long>>();
 	}
@@ -103,11 +102,9 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 		queue.addWorkItem(wi);
 	}
 
-	public void scheduleRemoval(Long domainObjId, String clazz) {
-		WorkItem wi = new WorkItem();
-		wi.clazz = clazz;
-		wi.domainObjectId = domainObjId;
-		removalQueue.addWorkItem(wi);
+	public void scheduleRemoval(Long domainObjId) {
+		logger.debug("Scheduling removal of item " + domainObjId);
+		removalQueue.addWorkItem(domainObjId);
 	}
 
 	public void scheduleAddNewAncestor(final Long domainObjId, final Long newAncestorId) {
@@ -122,7 +119,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 						try {
 							logger.info("Processing "+objectIds.size()+" ancestor adds");
 							if (objectIds.isEmpty()) return;
-							solr.addNewAncestor(objectIds, newAncestorId);
+							//solr.addNewAncestor(objectIds, newAncestorId);
 						}
 						catch (Throwable e) {
 							logger.error("Error adding new ancestor", e);
@@ -157,7 +154,12 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 		if (numIndexed>0) {
 			logger.info("Indexing batch complete. Num distinct ids queued: "+numQueued+", Num processed in this batch: "+numIndexed);
 		}
-		
+
+		numIndexed = removalQueue.process(MAX_BATCH_SIZE);
+		if (numIndexed>0) {
+			logger.info("Removal batch complete. Num processed in this batch: "+numIndexed);
+		}
+
 		synchronized (ancestorQueues) {
 			if (!ancestorQueues.isEmpty()) {
 				Long ancestorId = ancestorQueues.firstKey();

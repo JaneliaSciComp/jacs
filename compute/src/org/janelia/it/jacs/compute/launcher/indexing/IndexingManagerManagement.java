@@ -20,7 +20,7 @@ public interface IndexingManagerManagement {
 
 	public void scheduleIndexing(Long domainObjectId, String clazz);
 
-	public void scheduleRemoval(Long domainObjectId, String clazz);
+	public void scheduleRemoval(Long domainObjectId);
 
 	public void scheduleAddNewAncestor(Long domainObjectId, Long newAncestorId);
 	

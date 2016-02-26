@@ -173,7 +173,6 @@ public class UserWorkstationWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             TreeNode updatedNode = (TreeNode)dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
-            IndexingHelper.sendReindexingMessage(updatedNode);
             List<DomainObject> children = dao.getDomainObjects(query.getSubjectKey(),query.getReferences());
             for (DomainObject child: children) {
                 IndexingHelper.sendReindexingMessage(child);

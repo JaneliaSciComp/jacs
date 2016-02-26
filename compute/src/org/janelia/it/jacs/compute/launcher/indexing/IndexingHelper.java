@@ -15,7 +15,6 @@ import javax.jms.ObjectMessage;
 public class IndexingHelper {
 
 	private static final Boolean ENABLE_INDEXING = SystemConfigurationProperties.getBoolean("Solr.EnableIndexing");
-
 	private static final String queueName = "queue/indexing";
 
 	private static Logger logger = Logger.getLogger(IndexingHelper.class);
@@ -23,6 +22,7 @@ public class IndexingHelper {
 	public static void sendReindexingMessage(DomainObject domainObj) {
 		if (!ENABLE_INDEXING) return;
 		try {
+			logger.info("Sending message for reindexing Object " + domainObj.getId());
 			AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
 			messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
 			ObjectMessage message = messageInterface.createObjectMessage();
@@ -38,27 +38,29 @@ public class IndexingHelper {
 		}
 	}
 
-	public static void sendRemoveFromIndexMessage(DomainObject domainObj) {
+	public static void sendRemoveFromIndexMessage(Long domainObjId) {
 		if (!ENABLE_INDEXING) return;
 		try {
+			logger.info("Sending message for removing Object " + domainObjId);
 			AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
 			messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
 			ObjectMessage message = messageInterface.createObjectMessage();
-			message.setLongProperty("OBJECT_ID", domainObj.getId());
-			message.setStringProperty("OBJECT_CLASS", domainObj.getClass().getName());
+			message.setLongProperty("OBJECT_ID", domainObjId);
+			message.setStringProperty("OBJECT_CLASS", domainObjId.getClass().getName());
 			message.setStringProperty("OPERATION", "REMOVE");
 			messageInterface.sendMessageWithinTransaction(message);
 			messageInterface.commit();
 			messageInterface.endMessageSession();
 		}
 		catch (Exception e) {
-			logger.error("Error sending remove from index message for "+domainObj.getId(),e);
+			logger.error("Error sending remove from index message for "+ domainObjId,e);
 		}
 	}
 
 	public static void sendAddAncestorMessage(Long domainObjId, Long newAncestorId) {
 		if (!ENABLE_INDEXING) return;
 		try {
+			logger.info("Sending message for add ancestor " + newAncestorId + " to " + domainObjId);
 			AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
 			messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
 			ObjectMessage message = messageInterface.createObjectMessage();

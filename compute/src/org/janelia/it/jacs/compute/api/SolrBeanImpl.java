@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.api;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,12 +21,12 @@ import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;
-import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrResults;
@@ -51,9 +50,18 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	
     //public static final String SOLR_EJB_PROP = "SolrEJB.Name";
     
-    private void updateIndex(Long entityId) {
-    	//IndexingHelper.updateIndex(entityId);
+    public void updateIndex(DomainObject domainObj) {
+		log.info("AAAAAAAAAAAAAAA");
+		IndexingHelper.sendReindexingMessage(domainObj);
     }
+
+	public void removeFromIndex(Long domainObjId) {
+		IndexingHelper.sendRemoveFromIndexMessage(domainObjId);
+	}
+
+	public void addAncestorToIndex(Long domainObjId, Long ancestorId) {
+		IndexingHelper.sendAddAncestorMessage(domainObjId, ancestorId);
+	}
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
     	try {

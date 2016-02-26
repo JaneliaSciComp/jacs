@@ -29,6 +29,8 @@ import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.solr.*;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -103,6 +105,48 @@ public class DataViewsWebService extends ResourceConfig {
             return dao.getDomainObjects(subjectKey, reverseRef);
         } catch (Exception e) {
             log.error("Error occurred retrieving domain objects using reverse ref" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @POST
+    @Path("/domainobject/references")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Reference> getContainerReferences(DomainQuery query) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            return dao.getContainerReferences(query.getDomainObject());
+        } catch (Exception e) {
+            log.error("Error occurred getting treenode/objectset references",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @POST
+    @Path("/domainobject/remove")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public void removeDomainObject(DomainQuery query) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            for (Reference objectRef : query.getReferences()) {
+                // first check that it is an objectset or treeNode
+                Class<? extends DomainObject> objClass = DomainUtils.getObjectClassByName(objectRef.getTargetClassName());
+                if (objClass==TreeNode.class || objClass==ObjectSet.class) {
+                    String subjectKey = query.getSubjectKey();
+                    DomainObject domainObj = dao.getDomainObject(subjectKey, objectRef);
+                    // check whether this subject has permissions to write to this object
+                    if (domainObj.getWriters().contains(subjectKey)) {
+                        IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
+                        dao.remove(subjectKey, domainObj);
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            log.error("Error occurred removing object references",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -188,8 +232,8 @@ public class DataViewsWebService extends ResourceConfig {
         Reference dataSetRef = new Reference (Annotation.class.getName(), new Long(dataSetId));
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
+            IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
             dao.remove(subjectKey, domainObj);
-            IndexingHelper.sendRemoveFromIndexMessage(domainObj);
         } catch (Exception e) {
             log.error("Error occurred removing dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

@@ -175,7 +175,7 @@ public class DomainDAO {
      * Return all the preferences for a given subject.
      */
     public List<Preference> getPreferences(String subjectKey) {
-        return toList(preferenceCollection.find("{subjectKey:#}",subjectKey).as(Preference.class));
+        return toList(preferenceCollection.find("{subjectKey:#}", subjectKey).as(Preference.class));
     }
 
     /**
@@ -197,6 +197,33 @@ public class DomainDAO {
 
         log.info("Saved " + preference.getClass().getName() + "#" + preference.getId());
         return preference;
+    }
+
+    /**
+     * Check whether the DomainObject has any ancestor references in TreeNode and ObjectSet.
+     * @param domainObject
+     * @return boolean
+     * @throws Exception
+     */
+    public List<Reference> getContainerReferences(DomainObject domainObject) throws Exception {
+
+        log.info("Checking to see whether  " + domainObject.getId() + " has any parent references");
+        if (domainObject.getId()==null) {
+            return null;
+        }
+
+        List<Reference> refList = new ArrayList<>();
+        MongoCursor<TreeNode> treeCursor = treeNodeCollection.find("{children.targetId:#}", domainObject.getId()).as(TreeNode.class);
+        for(TreeNode item : treeCursor) {
+            Reference newRef = new Reference(item.getClass().getName(), item.getId());
+            refList.add(newRef);
+        }
+        MongoCursor<ObjectSet> objSetCursor = objectSetCollection.find("{children.targetId:#}", domainObject.getId()).as(ObjectSet.class);
+        for(ObjectSet item : objSetCursor) {
+            Reference newRef = new Reference(item.getClass().getName(), item.getId());
+            refList.add(newRef);
+        }
+        return refList;
     }
 
     /**

@@ -89,8 +89,8 @@ public class SemanticsWebService extends ResourceConfig {
         Reference annotationRef = new Reference (Annotation.class.getName(), new Long(annotationId));
         try {
             DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);
+            IndexingHelper.sendRemoveFromIndexMessage(deleteAnnotation.getId());
             dao.remove(subjectKey, deleteAnnotation);
-            IndexingHelper.sendRemoveFromIndexMessage(deleteAnnotation);
         } catch (Exception e) {
             log.error("Error occurred removing annotations" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -138,8 +138,8 @@ public class SemanticsWebService extends ResourceConfig {
         Reference ontologyRef = new Reference (Ontology.class.getName(), new Long(ontologyId));
         try {
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);
+            IndexingHelper.sendRemoveFromIndexMessage(ont.getId());
             dao.remove(subjectKey, ont);
-            IndexingHelper.sendRemoveFromIndexMessage(ont);
         } catch (Exception e) {
             log.error("Error occurred removing ontology" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

@@ -213,6 +213,7 @@ public class SolrConnector {
     	
 		Map<String,Object> attrs = new HashMap<String,Object>();
 		for(Field field : fields) {
+			log.info("FIELD NAME " + field.getName());
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			try {
 				Object value = ReflectionHelper.getFieldValue(domainObject, field.getName());	
@@ -280,18 +281,16 @@ public class SolrConnector {
 	}
 
 
-	public void removeDocuments(List<DomainObject> domainObjects) throws DaoException {
+	public void removeDocuments(List<Long> domainObjIds) throws DaoException {
         // Get all Solr documents
-		if (log.isTraceEnabled()) {
-			log.trace("removeDocuments(domainObj.size="+domainObjects.size()+")");
-		}
+		log.info ("removeDocuments(domainObj.size="+domainObjIds.size()+")");
 
 		// Get all Solr documents
 		try {
 			init();
 			int currSize = 0;
 			StringBuffer sqBuf = new StringBuffer();
-			for(DomainObject domainObject : domainObjects) {
+			for(Long domainObjId : domainObjIds) {
 				if (currSize>=MAX_ID_LIST_SIZE) {
 					solr.deleteByQuery(sqBuf.toString());
 					sqBuf = new StringBuffer();
@@ -299,12 +298,11 @@ public class SolrConnector {
 				}
 
 				if (sqBuf.length()>0) sqBuf.append(" OR ");
-				sqBuf.append("id:"+domainObject.getId());
+				sqBuf.append("id:"+domainObjId);
 				currSize++;
 			}
 
 			if (currSize>0) {
-				log.info("RRRRR" + sqBuf.toString());
 				solr.deleteByQuery(sqBuf.toString());
 			}
 		}
@@ -312,6 +310,7 @@ public class SolrConnector {
 			e.printStackTrace();
 			throw new DaoException("Error removing documents with SOLR",e);
 		}
+
 		commit();
 	}
 
@@ -352,7 +351,6 @@ public class SolrConnector {
 			}
 
 			inputDocs.add(inputDoc);
-
 			log.info("Updating index for " + domainObject.getName() + " (id=" + domainObject.getId() + ") ");
 		}
 
@@ -732,9 +730,9 @@ public class SolrConnector {
 			log.trace("addNewAncestor(entityId="+domainObjectId+", newAncestorId="+newAncestorId+")");
 		}
 
-		List<Long> entityIds = new ArrayList<>();
-		entityIds.add(domainObjectId);
-		addNewAncestor(entityIds, newAncestorId);
+		List<Long> domainObjectIds = new ArrayList<>();
+		domainObjectIds.add(domainObjectId);
+		addNewAncestor(domainObjectIds, newAncestorId);
 	}
 
 	/**

@@ -35,15 +35,15 @@ public class IndexingMDB implements MessageListener {
 	public void onMessage(Message message) {
         try {
     		Long objectId = message.getLongProperty("OBJECT_ID");
-			String operation = message.getStringProperty("OBJECT_CLASS");
-			String objectClazz = message.getStringProperty("OPERATION");
+			String operation = message.getStringProperty("OPERATION");
 			if (operation==null || operation.equals("UPDATE")) {
+				String objectClazz = message.getStringProperty("OBJECT_CLASS");
 				indexingManager.scheduleIndexing(objectId, objectClazz);
 			} else if (operation.equals("ANCESTOR")) {
 				Long newAncestorId = message.getLongProperty("NEW_ANCESTOR_ID");
     			indexingManager.scheduleAddNewAncestor(objectId, (Long)newAncestorId);
-    		} else {
-				indexingManager.scheduleRemoval(objectId, objectClazz);
+    		} else if (operation.equals("REMOVE")) {
+				indexingManager.scheduleRemoval(objectId);
 			}
         }
         catch (Exception e) {
