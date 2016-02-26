@@ -48,7 +48,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 					if (domainObjs.isEmpty()) return;
 					List<DomainObject> domainObjList = new ArrayList<>();
 					for (WorkItem item: domainObjs) {
-						DomainObject domainObj = dao.getDomainObject(null, DomainUtils.getObjectClassByName(item.clazz), item.domainObjectId);
+						DomainObject domainObj = dao.getDomainObject(null, DomainUtils.getObjectClassByName(item.className), item.domainObjectId);
 						if (domainObj!=null) {
 							domainObjList.add(domainObj);
 						}
