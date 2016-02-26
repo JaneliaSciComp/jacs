@@ -41,16 +41,16 @@
         <!-- Create a result node -->
         <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Temp"/>
-            <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE_ID"/>
+            <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE_ID"/>
         </operation>
         
         <!-- Copy the files to archive -->
         <sequence name="Wait Async" waitForAsync="true">
             <operation name="Copy files" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.sample.SyncSampleToScalityGridService"/>
-                <input name="RESULT_FILE_NODE"/>
+                <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="FILE_TYPES"/>
                 <input name="DELETE_SOURCE_FILES"/>
@@ -58,9 +58,9 @@
             </operation>
         </sequence>
         
-        <!-- We're done with the node -->
-        <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-            <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+        <!-- Trash temporary file node -->
+        <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+            <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
         </operation>
      
     </sequence>

@@ -42,9 +42,8 @@
             <!-- Create a result node for this group -->
             <operation name="Create Summary Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
                 <input name="NAME" value="Summary"/>
-                <input name="OUTPUT_VAR_NAME" value="SUMMARY_RESULT_FILE_NODE"/>
-                <output name="SUMMARY_RESULT_FILE_NODE"/>
-                <output name="SUMMARY_RESULT_FILE_NODE_ID"/>
+                <output name="RESULT_FILE_NODE"/>
+                <output name="RESULT_FILE_NODE_ID"/>
             </operation>
             
             <!-- Create temporary place for the LSMs -->
@@ -58,7 +57,7 @@
             <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
             <sequence name="Wait Async" waitForAsync="true">
                 <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
-                    <input name="MERGE_RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="MERGE_RESULT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                     <input name="SAMPLE_ENTITY_ID"/>
                     <output name="SAMPLE_AREA"/>
                 </operation>
@@ -89,14 +88,14 @@
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.entity.CreateLsmMetadataFilesService"/>
                     <input name="SAMPLE_ENTITY_ID"/>
                     <input name="SAMPLE_AREA"/>
-                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
-                    <input name="OUTPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE"/>
+                    <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 </operation>
             </sequence>
             
             <!-- Load the metadata files into the database -->
             <operation name="Discover Metadata Files" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSummaryResultsDiscoveryService">
-                <input name="ROOT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
                 <input name="RESULT_ENTITY_NAME" value="LSM Summary Result"/>
                 <input name="SAMPLE_ENTITY_ID"/>
@@ -119,8 +118,8 @@
             <sequence name="Create LSM Summary Artifacts" waitForAsync="true">
                 <operation name="Create LSM Summary Artifacts" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.image.BasicMIPandMovieGenerationService"/>
-                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
-                    <input name="OUTPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE"/>
+                    <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                     <input name="INPUT_IMAGES"/>
                     <input name="NORMALIZE_TO_FIRST_IMAGE" value="false"/>
                     <input name="OPTIONS" value="mips:movies:legends:bcomp"/>
@@ -131,8 +130,8 @@
             <sequence name="Create LSM Montages" waitForAsync="true">
                 <operation name="Create LSM Montages" processor="queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.MontageService"/>
-                    <input name="INPUT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
-                    <input name="RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                    <input name="INPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                    <input name="RESULT_FILE_NODE"/>
                 </operation>
             </sequence>
 
@@ -143,7 +142,7 @@
            
             <!-- Load the MIPs and movies into the database -->
             <operation name="Discover Summary Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalSummaryResultsDiscoveryService">
-                <input name="ROOT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
+                <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 <input name="RESULT_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>
             </operation>
