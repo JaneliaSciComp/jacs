@@ -196,20 +196,20 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Adding subjects");
         loadSubjects();
+
+        log.info("Adding data sets");
+        loadDataSets();
+
+        log.info("Adding fly lines");
+        loadFlyLines();
         
         log.info("Adding samples");
         // TODO: handle deleted (i.e. "hidden") neurons
         // TODO: handle curated neurons
         // TODO: handle pattern mask results in samples (knappj)
         loadSamples();
-
-        log.info("Adding data sets");
-        loadDataSets();
         
-        log.info("Adding fly lines");
-        loadFlyLines();
-        
-        log.info("Adding screen data");
+        log.info("Adding screen samples");
         loadScreenData();
         
         log.info("Adding compartment sets");
@@ -1497,6 +1497,7 @@ public class MongoDbImport extends AnnotationDAO {
             addImage(images,FileType.AllMip,getRelativeFilename(alignmentResult,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
         }
         alignmentResult.setFiles(images);
+        run.addResult(alignmentResult);
         
         // Pattern and Mask annotation results 
         
@@ -1515,8 +1516,6 @@ public class MongoDbImport extends AnnotationDAO {
                 addMasks(run, maskAnnotationEntity.getName(), maskUpdateEntity);  
             }            
         }
-
-        run.addResult(alignmentResult);
         
         objectiveSamples.put(SCREEN_OBJECTIVE, os);
         screenSample.setObjectives(objectiveSamples); 
