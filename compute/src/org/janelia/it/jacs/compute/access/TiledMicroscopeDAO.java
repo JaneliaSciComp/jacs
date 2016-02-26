@@ -1602,6 +1602,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
                 // Get the old color map prefs, if they exist.  Write back if needed.
                 TmPreferences prefs = workspace.getPreferences();
+                if (prefs == null) {
+                    log.info("No preferences object found in workspace " + workspaceEntity.getId() + " " + workspaceEntity.getName() + " adding empty prefs object.");
+                    prefs = new TmPreferences();
+                    workspace.setPreferences(prefs);
+                }
                 String abandonedColorMapPref = prefs.getProperty(NEURON_STYLES_PREF);
                 String oldColorMapPref = prefs.getProperty(OLD_NEURON_STYLES_PREF);
                 if (oldColorMapPref == null  &&  abandonedColorMapPref != null) {
@@ -1664,6 +1669,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
             return workspace;
         } catch (Exception e) {
+            log.error(e.getMessage() + " on workspace " + workspaceId);
             e.printStackTrace();
             throw new DaoException(e);
         }

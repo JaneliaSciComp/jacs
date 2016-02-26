@@ -10,6 +10,7 @@ import Jama.Matrix;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -29,6 +30,7 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  * @author fosterl
  */
 public class TmFromEntityPopulator {
+    private static final Logger log = Logger.getLogger(TmFromEntityPopulator.class);
     /**
      * Load the workspace entity, and create a model object.
      * 
@@ -279,6 +281,7 @@ public class TmFromEntityPopulator {
             if (!parentId.equals(id)) {
                 TmGeoAnnotation parent = geoAnnotationMap.get(parentId);
                 if (parent == null) {
+                    log.error("Should evaluate " + tmNeuron.getWorkspaceId() + " workspace.  One or more neurons are not properly parented.");
                     throw new TmConnectivityException(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
                 }
                 parent.addChild(ga);
