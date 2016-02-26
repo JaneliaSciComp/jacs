@@ -9,18 +9,15 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.util.DedupingDelayQueue;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.entity.Entity;
 import org.jboss.annotation.ejb.Management;
 import org.jboss.annotation.ejb.Service;
 import org.jboss.annotation.ejb.TransactionTimeout;
-
 
 /**
  * The indexing manager is a singleton service responsible for keeping track of entities to be indexed, and then
@@ -33,10 +30,6 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 public class IndexingManagerImpl implements IndexingManagerManagement {
 
 	private static final int MAX_BATCH_SIZE = 10000;
-	private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-	private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
-	private static String MONGO_USERNAME = SystemConfigurationProperties.getString("MongoDB.Username");
-	private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
 	private static Logger logger = Logger.getLogger(IndexingManagerImpl.class);
 
 	private DedupingDelayQueue<WorkItem> queue;
@@ -97,7 +90,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 
 	public void scheduleIndexing(Long domainObjId, String clazz) {
 		WorkItem wi = new WorkItem();
-		wi.clazz = clazz;
+		wi.className = clazz;
 		wi.domainObjectId = domainObjId;
 		queue.addWorkItem(wi);
 	}
@@ -142,13 +135,17 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 			}
 			this.processing = true;
 		}
+		
+		dao = DomainDAOManager.getInstance().getDao();
+		
 		try {
-			dao =  new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
-			solr = new SolrConnector(dao);
+			solr = new SolrConnector(dao, false, false);
 		}
 		catch (UnknownHostException e) {
-			e.printStackTrace();
+			logger.error("Error connecting to SOLR",e);
+            return 0;
 		}
+		
 		int numQueued = queue.getQueueSize();
 		int numIndexed = queue.process(MAX_BATCH_SIZE);
 		if (numIndexed>0) {
@@ -184,7 +181,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 
 	public class WorkItem {
 		public Long domainObjectId;
-		public String clazz;
+		public String className;
 
 	}
 }

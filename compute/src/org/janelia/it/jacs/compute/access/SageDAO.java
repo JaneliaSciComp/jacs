@@ -443,6 +443,16 @@ public class SageDAO {
         return (Image)query.uniqueResult();
     }
 
+    public Image getImageByNameLike(String imageName) {
+        if (log.isTraceEnabled()) {
+            log.trace("getImageByName(imageName="+imageName+")");    
+        }
+        Session session = getCurrentSession();
+        Query query = session.createQuery("select image from Image image where image.name like :name ");
+        query.setString("name", imageName);
+        return (Image)query.uniqueResult();
+    }
+    
     public SecondaryImage getSecondaryImageByName(String imageName) {
         if (log.isTraceEnabled()) {
             log.trace("getSecondaryImageByName(imageName="+imageName+")");    

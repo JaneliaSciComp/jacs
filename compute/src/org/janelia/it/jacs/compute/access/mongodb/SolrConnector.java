@@ -89,11 +89,11 @@ public class SolrConnector {
     // Current indexing context
     private Set<SimpleAnnotation> annotations = new HashSet<SimpleAnnotation>();
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
-
-    public SolrConnector(DomainDAO dao) throws UnknownHostException {
-		this.useBuildCore = false;
-		this.dao = dao;
-		this.streamingUpdates = true;
+    
+    public SolrConnector(DomainDAO dao, boolean useBuildCore, boolean streamingUpdates) throws UnknownHostException {
+        this.dao = dao;
+        this.useBuildCore = useBuildCore;
+		this.streamingUpdates = streamingUpdates;
     }
 
 	protected void init() throws DaoException {

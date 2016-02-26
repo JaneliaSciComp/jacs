@@ -29,8 +29,6 @@ import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
-import org.janelia.it.jacs.model.domain.screen.PatternMask;
-import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
@@ -75,9 +73,7 @@ public class DomainDAO {
     protected MongoCollection imageCollection;
     protected MongoCollection objectSetCollection;
     protected MongoCollection ontologyCollection;
-    protected MongoCollection patternMaskCollection;
     protected MongoCollection sampleCollection;
-    protected MongoCollection screenSampleCollection;
     protected MongoCollection subjectCollection;
     protected MongoCollection treeNodeCollection;
 
@@ -111,9 +107,7 @@ public class DomainDAO {
         this.imageCollection = getCollectionByClass(Image.class);
         this.objectSetCollection = getCollectionByClass(ObjectSet.class);
         this.ontologyCollection = getCollectionByClass(Ontology.class);
-        this.patternMaskCollection = getCollectionByClass(PatternMask.class);
         this.sampleCollection = getCollectionByClass(Sample.class);
-        this.screenSampleCollection = getCollectionByClass(ScreenSample.class);
         this.subjectCollection = getCollectionByClass(Subject.class);
         this.treeNodeCollection = getCollectionByClass(TreeNode.class);
         this.preferenceCollection = getCollectionByClass(Preference.class);
@@ -479,11 +473,6 @@ public class DomainDAO {
         return toList(imageCollection.find("{sample.targetId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
     }
 
-    public List<ScreenSample> getScreenSampleByFlyLine(String subjectKey, String flyLine) {
-        Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(screenSampleCollection.find("{flyLine:{$regex:#},readers:{$in:#}}",flyLine+".*", subjects).as(ScreenSample.class));
-    }
-
     public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}",sampleId,subjects).as(NeuronFragment.class));
@@ -492,16 +481,6 @@ public class DomainDAO {
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return toList(fragmentCollection.find("{separationId:#,readers:{$in:#}}",separationId,subjects).as(NeuronFragment.class));
-    }
-
-    public List<ScreenSample> getScreenSamples(String subjectKey) {
-        Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(screenSampleCollection.find("{readers:{$in:#}}", subjectKey, subjects).as(ScreenSample.class));
-    }
-
-    public List<PatternMask> getPatternMasks(String subjectKey, Long screenSampleId) {
-        Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(patternMaskCollection.find("{screenSampleId:#,readers:{$in:#}}", screenSampleId, subjects).as(PatternMask.class));
     }
 
     public TreeNode getTreeNodeById(String subjectKey, Long id) {
@@ -995,10 +974,6 @@ public class DomainDAO {
                 WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}",ids,subjectKey).multi().with(withClause,keys);
                 log.info("Updated permissions on {} lsms",wr2.getN());
 
-            }
-            else if ("screenSample".equals(collectionName)) {
-                log.info("Changing permissions on all patternMasks associated with screen samples: {}",logIds);
-                patternMaskCollection.update("{screenSampleId:{$in:#},writers:#}",ids,subjectKey).multi().with(withClause,keys);
             }
         }
     }

@@ -6,6 +6,8 @@ import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +31,7 @@ import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.api.support.MappedId;
@@ -67,13 +70,13 @@ import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
 import org.janelia.it.jacs.model.domain.sample.SampleCellCountingResult;
+import org.janelia.it.jacs.model.domain.sample.SamplePatternAnnotationNormalizedResult;
+import org.janelia.it.jacs.model.domain.sample.SamplePatternAnnotationResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
-import org.janelia.it.jacs.model.domain.screen.PatternMask;
-import org.janelia.it.jacs.model.domain.screen.ScreenSample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
@@ -111,26 +114,32 @@ public class MongoDbImport extends AnnotationDAO {
 	
     private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE };
 
-    protected DomainDAO dao;
-	protected SubjectDAO subjectDao;
+    private static final String SCREEN_OBJECTIVE = "20x";
+    private static final String SCREEN_CHAN_SPEC = "src";
+    private static final String SCREEN_ALIGNMENT_RESULT_NAME = "JBA Alignment";
+    private static final String SCREEN_ALIGNMENT_SPACE = "Unified 20x Alignment Space";
+    private static final String SCREEN_DEFAULT_DATA_SET = "flylight_gen1_gal4";
+    private static final NumberFormat ALIGNMENT_SCORE_FORMATTER = new DecimalFormat("#0.00000");    
+    
+    protected final DomainDAO dao;
+	protected final SubjectDAO subjectDao;
+	protected final SageDAO sageDao;
 	
 	// Cached collections
-	protected MongoCollection subjectCollection;
-	protected MongoCollection preferenceCollection;
-    protected MongoCollection treeNodeCollection;
-    protected MongoCollection objectSetCollection;
-    protected MongoCollection dataSetCollection;
-	protected MongoCollection sampleCollection;
-    protected MongoCollection screenSampleCollection;
-    protected MongoCollection patternMaskCollection;
-    protected MongoCollection flyLineCollection;
-    protected MongoCollection imageCollection;
-    protected MongoCollection fragmentCollection;
-    protected MongoCollection annotationCollection;
-    protected MongoCollection ontologyCollection;
-    protected MongoCollection compartmentSetCollection;
-    protected MongoCollection alignmentBoardCollection;
-    protected MongoCollection filterCollection;
+	protected final MongoCollection subjectCollection;
+	protected final MongoCollection preferenceCollection;
+    protected final MongoCollection treeNodeCollection;
+    protected final MongoCollection objectSetCollection;
+    protected final MongoCollection dataSetCollection;
+	protected final MongoCollection sampleCollection;
+    protected final MongoCollection flyLineCollection;
+    protected final MongoCollection imageCollection;
+    protected final MongoCollection fragmentCollection;
+    protected final MongoCollection annotationCollection;
+    protected final MongoCollection ontologyCollection;
+    protected final MongoCollection compartmentSetCollection;
+    protected final MongoCollection alignmentBoardCollection;
+    protected final MongoCollection filterCollection;
     
     // Load state
     private MongoLargeOperations largeOp;
@@ -142,6 +151,7 @@ public class MongoDbImport extends AnnotationDAO {
         super(logger);
         
         this.subjectDao = new SubjectDAO(log);
+        this.sageDao = new SageDAO(log);
 		this.dao = DomainDAOManager.getInstance().getDao();
     	dao.getMongo().setWriteConcern(WriteConcern.UNACKNOWLEDGED);
     	
@@ -151,8 +161,6 @@ public class MongoDbImport extends AnnotationDAO {
     	this.objectSetCollection = dao.getCollectionByClass(ObjectSet.class);
     	this.dataSetCollection = dao.getCollectionByClass(DataSet.class);
     	this.sampleCollection = dao.getCollectionByClass(Sample.class);
-    	this.screenSampleCollection = dao.getCollectionByClass(ScreenSample.class);
-    	this.patternMaskCollection = dao.getCollectionByClass(PatternMask.class);
     	this.flyLineCollection = dao.getCollectionByClass(FlyLine.class);
         this.imageCollection = dao.getCollectionByClass(Image.class);
         this.fragmentCollection = dao.getCollectionByClass(NeuronFragment.class);
@@ -1086,13 +1094,6 @@ public class MongoDbImport extends AnnotationDAO {
     private LSMImage getLSMImage(Entity sampleEntity, Entity lsmEntity) throws Exception {
 
         LSMImage lsm = (LSMImage)getImage(lsmEntity);
-        // An LSM file must have a lossless stack
-        String filepath = lsm.getFiles().get(FileType.LosslessStack);
-        if (filepath==null) {
-            log.warn("    LSM cannot be imported because it has no filepath: "+lsmEntity.getId());
-            return null;
-        }
-        
         Map<FileType, String> files = lsm.getFiles();
         
         String name = ArchiveUtils.getDecompressedFilepath(lsm.getName());
@@ -1116,37 +1117,33 @@ public class MongoDbImport extends AnnotationDAO {
         }
         
         if (sampleEntity!=null) lsm.setSample(getReference(sampleEntity));
-        lsm.setAge(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_AGE));
-        lsm.setAnatomicalArea(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
+        
+        // Populate attributes that we can't get from SAGE
         lsm.setChannelColors(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
         lsm.setChannelDyeNames(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES));
         lsm.setBrightnessCompensation(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_BRIGHTNESS_COMPENSATION));
-        lsm.setChanSpec(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
-        lsm.setEffector(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR));
-        lsm.setLine(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE));
-        lsm.setMountingProtocol(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL));
-        lsm.setTissueOrientation(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION));
-        lsm.setObjective(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
-        lsm.setSlideCode(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
         
-        lsm.setGender(sanitizeGender(lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_GENDER)));
-        if (genderConsensus==null) {
-        	genderConsensus = lsm.getGender();
-        }
-        else if (!genderConsensus.equals(lsm.getGender())) {
-        	genderConsensus = NO_CONSENSUS_VALUE;
-        }
-        
-        String sageId = lsmEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID);
-        if (sageId!=null) {
-            lsm.setSageId(Integer.parseInt(sageId));
-        }
-
-        Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(MongoLargeOperations.SAGE_IMAGEPROP_MAP, sageId);
+        // Populate SAGE attributes
+        Map<String,Object> sageProps = (Map<String,Object>)largeOp.getValue(MongoLargeOperations.SAGE_IMAGEPROP_MAP, name);
         if (sageProps==null) {
-            log.warn("    Cannot find LSM#"+lsm.getId()+" in SAGE, with SAGE Id "+sageId);
+            log.warn("    Cannot find LSM#"+lsm.getId()+" in SAGE with name: "+name);
         }
         else {
+            
+            // Use the current path from SAGE
+            String path = (String)sageProps.get("image_query_path");
+            if (path!=null) {
+                lsm.setFilepath(path);
+            }
+            
+            // Use JFS path if available
+            String jfsPath = (String)sageProps.get("image_query_jfs_path");
+            if (jfsPath!=null) {
+                lsm.setFilepath(jfsPath);
+            }
+            
+            addImage(files,FileType.LosslessStack,lsm.getFilepath());
+            
             for(String key : lsmSageAttrs.keySet()) {
                 try {
                     LsmSageAttribute attr = lsmSageAttrs.get(key);
@@ -1196,6 +1193,32 @@ public class MongoDbImport extends AnnotationDAO {
                     log.error("Error setting SAGE attribute value "+key+" for LSM#"+lsm.getId(),e);
                 }
             }
+        }
+
+        if (lsm.getFilepath()==null) {
+            log.warn("    LSM cannot be imported because it has no filepath: "+lsmEntity.getId());
+            return null;
+        }
+        
+        if (lsm.getVoxelSizeX()!=null) {
+            String opticalRes = lsm.getVoxelSizeX()+"x"+lsm.getVoxelSizeY()+"x"+lsm.getVoxelSizeZ();
+            lsm.setOpticalResolution(opticalRes);
+        }
+        
+        if (lsm.getDimensionX()!=null) {
+            String imageSize = lsm.getDimensionX()+"x"+lsm.getDimensionY()+"x"+lsm.getDimensionZ();
+            lsm.setImageSize(imageSize);
+        }
+        
+        if (lsm.getGender()!=null) {
+            lsm.setGender(sanitizeGender(lsm.getGender()));
+        }
+        
+        if (genderConsensus==null) {
+            genderConsensus = lsm.getGender();
+        }
+        else if (!genderConsensus.equals(lsm.getGender())) {
+            genderConsensus = NO_CONSENSUS_VALUE;
         }
         
         return lsm;
@@ -1316,7 +1339,7 @@ public class MongoDbImport extends AnnotationDAO {
                 // Free memory 
                 i.remove();
                 resetSession();
-                log.info("  Loading "+loaded+" screen samples took "+(System.currentTimeMillis()-start)+" ms");
+                log.info("  Loading "+loaded+" screen samples for "+flyLine+" took "+(System.currentTimeMillis()-start)+" ms");
             }
             catch (Exception e) {
                 log.error("Error loading screen samples for fly line " + flyLine.getName(), e);
@@ -1332,9 +1355,9 @@ public class MongoDbImport extends AnnotationDAO {
             
             try {
                 long start = System.currentTimeMillis();
-                ScreenSample screenSample = getScreenSampleObject(flyLineEntity, screenSampleEntity);
+                Sample screenSample = getScreenSampleObject(flyLineEntity, screenSampleEntity);
                 if (screenSample!=null) {
-                    screenSampleCollection.insert(screenSample);
+                    sampleCollection.insert(screenSample);
                 }
                 if (screenSample!=null) {
                     log.info("  Loading "+screenSampleEntity.getName()+" took "+(System.currentTimeMillis()-start)+" ms");
@@ -1352,7 +1375,7 @@ public class MongoDbImport extends AnnotationDAO {
         return loaded;
     }
     
-    private ScreenSample getScreenSampleObject(Entity flyLineEntity, Entity screenSampleEntity) throws Exception {
+    private Sample getScreenSampleObject(Entity flyLineEntity, Entity screenSampleEntity) throws Exception {
         
         if (screenSampleEntity.getEntityData()==null) {
             log.warn("  Cannot process screen sample with null entityData: "+screenSampleEntity.getId());
@@ -1361,7 +1384,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         populateChildren(screenSampleEntity);
         
-        ScreenSample screenSample = new ScreenSample();
+        Sample screenSample = new Sample();
                 
         screenSample.setId(screenSampleEntity.getId());
         screenSample.setName(screenSampleEntity.getName());
@@ -1370,62 +1393,170 @@ public class MongoDbImport extends AnnotationDAO {
         screenSample.setWriters(getSubjectKeysWithPermission(screenSampleEntity, "w"));
         screenSample.setCreationDate(screenSampleEntity.getCreationDate());
         screenSample.setUpdatedDate(screenSampleEntity.getUpdatedDate());
-        screenSample.setName(screenSampleEntity.getName());
-        screenSample.setFlyLine(flyLineEntity.getName());
+        screenSample.setChanSpec(SCREEN_CHAN_SPEC);
+        screenSample.setLine(flyLineEntity.getName());
+        screenSample.setStatus(EntityConstants.VALUE_COMPLETE);
         
-        List<PatternMask> masks = new ArrayList<PatternMask>();
+        Map<String, ObjectiveSample> objectiveSamples = new HashMap<String, ObjectiveSample>();
+        ObjectiveSample os = new ObjectiveSample();
+
+        List<Reference> lsmReferences = new ArrayList<Reference>();
+    
+        Entity lsmEntity = new Entity();
+        lsmEntity.setId(dao.getNewId());
+        lsmEntity.setEntityTypeName(EntityConstants.TYPE_LSM_STACK);
+        lsmEntity.setName(screenSample.getName()+".lsm.bz2");
+        lsmEntity.setOwnerKey(screenSampleEntity.getOwnerKey());
+        lsmEntity.setCreationDate(screenSampleEntity.getCreationDate());
+        lsmEntity.setUpdatedDate(screenSampleEntity.getUpdatedDate());
+        lsmEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_LINE, flyLineEntity.getName());
+        lsmEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE, SCREEN_OBJECTIVE);
+        
+        // Mock up some fake entities so we can reuse the getLSMImage loading procedure
+        Entity sampleEntity = new Entity();
+        sampleEntity.setId(screenSampleEntity.getId());
+        sampleEntity.setEntityTypeName(EntityConstants.TYPE_SAMPLE);
+        
+        // Put the LSM into Mongo
+        LSMImage lsmImage = getLSMImage(sampleEntity, lsmEntity);
+        
+        if (lsmImage!=null) {
+            if (lsmImage.getDataSet()==null) {
+                logger.info("    Setting default data set for screen LSM "+lsmImage.getId());
+                lsmImage.setDataSet(SCREEN_DEFAULT_DATA_SET);
+            }
+            
+            List<LSMImage> lsmImages = new ArrayList<LSMImage>();
+            lsmImages.add(lsmImage);
+            imageCollection.insert(lsmImages.toArray());
+            
+            // Reference it in the sample
+            lsmReferences.add(getReference(lsmEntity));
+            
+            // Propagate properties to sample
+            screenSample.setAge(lsmImage.getAge());
+            screenSample.setEffector(lsmImage.getEffector());
+            screenSample.setGender(lsmImage.getGender());
+            screenSample.setDataSet(lsmImage.getDataSet());
+        }
+        else {
+            logger.info("    Setting default data set for screen sample "+screenSample.getId());
+            screenSample.setDataSet(SCREEN_DEFAULT_DATA_SET);
+        }
+        
+        // Even though the chacrm image family has VNC images, we can assume brain here because the screen data in the Workstation is just brains. 
+        SampleTile tile = new SampleTile();
+        tile.setName("brain");
+        tile.setAnatomicalArea("Brain");
+        tile.setLsmReferences(lsmReferences);
+        
+        List<SampleTile> tiles = new ArrayList<SampleTile>();
+        tiles.add(tile);
+        os.setTiles(tiles);
+        
+        SamplePipelineRun run = new SamplePipelineRun();
+        run.setId(dao.getNewId());
+        run.setName("Screen Sample Pipeline");
+        run.setCreationDate(screenSampleEntity.getCreationDate());
+        run.setPipelineProcess("FlyLightScreen");
+        run.setPipelineVersion(1);
+
+        List<SamplePipelineRun> runs = new ArrayList<>();
+        runs.add(run);
+        os.setPipelineRuns(runs);
+
+        // Alignment result 
+        
+        Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
+        
+        SampleAlignmentResult alignmentResult = new SampleAlignmentResult();
+        alignmentResult.setId(alignedStack.getId());
+        alignmentResult.setName(SCREEN_ALIGNMENT_RESULT_NAME);
+        alignmentResult.setCreationDate(alignedStack.getCreationDate());
+        alignmentResult.setAlignmentSpace(SCREEN_ALIGNMENT_SPACE);
+        alignmentResult.setChannelSpec(SCREEN_CHAN_SPEC);
+        alignmentResult.setFilepath(new File(getFilepath(alignedStack)).getParent());
+        alignmentResult.setObjective(SCREEN_OBJECTIVE);
+        
+        Map<AlignmentScoreType,String> scores = new HashMap<AlignmentScoreType,String>();
+        String qmScore = alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
+        if (!StringUtils.isEmpty(qmScore)) {
+            scores.put(AlignmentScoreType.ModelViolation,qmScore);
+        } 
+        String incScore = alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
+        if (!StringUtils.isEmpty(incScore)) {
+            scores.put(AlignmentScoreType.Inconsistency,incScore);
+            scores.put(AlignmentScoreType.Qi,ALIGNMENT_SCORE_FORMATTER.format(1-Double.parseDouble(incScore)));
+        }
+
+        if (!scores.isEmpty()) alignmentResult.setScores(scores);
+        
+        Map<FileType,String> images = new HashMap<FileType,String>();
+        if (alignedStack!=null) {
+            addImage(images,FileType.LosslessStack,getRelativeFilename(alignmentResult,getFilepath(alignedStack)));
+            addImage(images,FileType.AllMip,getRelativeFilename(alignmentResult,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+        }
+        alignmentResult.setFiles(images);
+        
+        // Pattern and Mask annotation results 
         
         Entity patternAnnotationEntity = EntityUtils.findChildWithNameAndType(screenSampleEntity, "Pattern Annotation", EntityConstants.TYPE_FOLDER);
         if (patternAnnotationEntity==null) {
             log.warn("Cannot process screen sample with no pattern annotation folder: "+screenSampleEntity.getId());
             return null;
-        }
+        };
         
-        String paFilepath = getFilepath(patternAnnotationEntity);
-        screenSample.setFilepath(paFilepath.replaceFirst("patternAnnotation", ""));
-        
-        addMasks(screenSample, patternAnnotationEntity, masks);
+        addMasks(run, patternAnnotationEntity.getName(), patternAnnotationEntity);
         
         Entity maskAnnotationEntity = EntityUtils.findChildWithNameAndType(screenSampleEntity, "Mask Annotation", EntityConstants.TYPE_FOLDER);
         if (maskAnnotationEntity!=null) {
             populateChildren(maskAnnotationEntity);
             for(Entity maskUpdateEntity : EntityUtils.getChildrenOfType(maskAnnotationEntity, EntityConstants.TYPE_FOLDER)) {
-                addMasks(screenSample, maskUpdateEntity, masks);   
+                addMasks(run, maskAnnotationEntity.getName(), maskUpdateEntity);  
             }            
         }
-        
-        patternMaskCollection.insert(masks.toArray());
 
-        Map<FileType,String> images = new HashMap<FileType,String>();
-        Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
-        if (alignedStack!=null) {
-            addImage(images,FileType.LosslessStack,getRelativeFilename(screenSample,getFilepath(alignedStack)));
-            addImage(images,FileType.AllMip,getRelativeFilename(screenSample,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
-        }
-        Entity heatmap = EntityUtils.findChildWithName(patternAnnotationEntity, "Heatmap");
-        if (heatmap!=null) {
-            addImage(images,FileType.HeatmapStack,getRelativeFilename(screenSample,getFilepath(heatmap)));
-            addImage(images,FileType.HeatmapMip,getRelativeFilename(screenSample,heatmap.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
-        }
-        screenSample.setImages(images);
+        run.addResult(alignmentResult);
         
-        ReverseReference masksRef = new ReverseReference();
-        masksRef.setCount(new Long(masks.size()));
-        masksRef.setReferringClassName(PatternMask.class.getName());
-        masksRef.setReferenceAttr("screenSample.targetId");
-        masksRef.setReferenceId(screenSample.getId());
-        screenSample.setPatternMasks(masksRef);
+        objectiveSamples.put(SCREEN_OBJECTIVE, os);
+        screenSample.setObjectives(objectiveSamples); 
         
         return screenSample;
     }
+    
+    private void addMasks(SamplePipelineRun run, String namePrefix, Entity patternMaskFolderEntity) throws Exception {
 
-    private void addMasks(ScreenSample screenSample, Entity patternMaskFolderEntity, List<PatternMask> masks) throws Exception {
-
-        populateChildren(patternMaskFolderEntity);
+        String nameSuffix = patternMaskFolderEntity.equals(namePrefix) ? "" : " - "+patternMaskFolderEntity.getName();
         
+        SamplePatternAnnotationResult paResult = new SamplePatternAnnotationResult();
+        paResult.setId(patternMaskFolderEntity.getId());
+        paResult.setName(namePrefix+nameSuffix);
+        paResult.setCreationDate(patternMaskFolderEntity.getCreationDate());
+        addMasks(patternMaskFolderEntity, paResult);
+        run.addResult(paResult);
+        
+        Entity normalizedEntity = EntityUtils.findChildWithNameAndType(patternMaskFolderEntity, "normalized", EntityConstants.TYPE_FOLDER);
+        if (normalizedEntity!=null) {
+
+            SamplePatternAnnotationNormalizedResult paNormResult = new SamplePatternAnnotationNormalizedResult();
+            paNormResult.setId(normalizedEntity.getId());
+            paNormResult.setName(namePrefix+" (Normalized)"+nameSuffix);
+            paNormResult.setCreationDate(patternMaskFolderEntity.getCreationDate());
+            addMasks(normalizedEntity, paNormResult);
+            run.addResult(paNormResult);
+            
+        }
+    }
+
+    private void addMasks(Entity patternAnnotationEntity, SamplePatternAnnotationResult result) throws Exception {
+
+        
+        populateChildren(patternAnnotationEntity);
+        
+        // TODO: do something with these scores, since they're no longer present as annotations. Are they needed?
         Map<Long,Integer> intensityMap = new HashMap<Long,Integer>();
         Map<Long,Integer> distributionMap = new HashMap<Long,Integer>();
-        for(Entity annotation : getAnnotationsForChildren(patternMaskFolderEntity.getOwnerKey(), patternMaskFolderEntity.getId())) {
+        for(Entity annotation : getAnnotationsForChildren(patternAnnotationEntity.getOwnerKey(), patternAnnotationEntity.getId())) {
             String value = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_ONTOLOGY_VALUE_TERM);
             if (value.length()!=2) continue;
             String targetIdStr = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
@@ -1441,46 +1572,32 @@ public class MongoDbImport extends AnnotationDAO {
             }
         }
         
-        String maskSetName = patternMaskFolderEntity.getName().replaceAll("\\s+", "");
-        
-        for(Entity maskEntity : EntityUtils.getChildrenOfType(patternMaskFolderEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
-            if (maskEntity.getName().equals("Heatmap")) continue;
-            PatternMask mask = getPatternMaskObject(screenSample, maskEntity, maskSetName, intensityMap.get(maskEntity.getId()), distributionMap.get(maskEntity.getId()));
-            masks.add(mask);
-        }
+        for(Entity maskEntity : EntityUtils.getChildrenOfType(patternAnnotationEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
 
-        Entity normalizedEntity = EntityUtils.findChildWithNameAndType(patternMaskFolderEntity, "normalized", EntityConstants.TYPE_FOLDER);
-        if (normalizedEntity!=null) {
-            addMasks(screenSample, normalizedEntity, masks);
+            String paFilepath = getFilepath(patternAnnotationEntity);
+
+            String default2dImageFilepath = maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
+            if (default2dImageFilepath==null) {
+                default2dImageFilepath = maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+            }
+            
+            if (maskEntity.getName().equals("Heatmap")) {
+                result.setFilepath(paFilepath);
+                Map<FileType,String> images = new HashMap<FileType,String>();
+                addImage(images,FileType.LosslessStack,getRelativeFilename(result,getFilepath(maskEntity)));
+                addImage(images,FileType.AllMip,getRelativeFilename(result,default2dImageFilepath));
+                result.setFiles(images);
+            }
+            else {
+                FileGroup group = new FileGroup();
+                group.setFilepath(paFilepath);
+                Map<FileType,String> images = new HashMap<FileType,String>();
+                addImage(images,FileType.LosslessStack,getRelativeFilename(group,getFilepath(maskEntity)));
+                addImage(images,FileType.AllMip,getRelativeFilename(group,default2dImageFilepath));
+                group.setFiles(images);
+                result.getGroups().put(maskEntity.getName().replaceAll(" normalized", ""), group);
+            }
         }
-    }
-    
-    private PatternMask getPatternMaskObject(ScreenSample screenSample, Entity maskEntity, String maskSetName, Integer intensity, Integer distribution) throws Exception {
-        PatternMask mask = new PatternMask();
-        mask.setId(maskEntity.getId());
-        mask.setScreenSample(getReference(screenSample));
-        mask.setName(maskEntity.getName());
-        mask.setOwnerKey(maskEntity.getOwnerKey());
-        mask.setReaders(getSubjectKeysWithPermission(maskEntity, "r"));
-        mask.setWriters(getSubjectKeysWithPermission(maskEntity, "w"));
-        mask.setCreationDate(maskEntity.getCreationDate());
-        mask.setUpdatedDate(maskEntity.getUpdatedDate());
-        mask.setFilepath(screenSample.getFilepath());
-        mask.setMaskSetName(maskSetName);
-        mask.setIntensityScore(intensity);
-        mask.setDistributionScore(distribution);
-        mask.setNormalized("normalized".equals(maskSetName));
-        
-        String default2dImageFilepath = maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
-        if (default2dImageFilepath==null) {
-        	default2dImageFilepath = maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-        }
-        
-        Map<FileType,String> images = new HashMap<FileType,String>();
-        addImage(images,FileType.LosslessStack,getRelativeFilename(mask,getFilepath(maskEntity)));
-        addImage(images,FileType.AllMip,getRelativeFilename(mask,default2dImageFilepath));
-        mask.setImages(images);
-        return mask;
     }
     
     
@@ -2483,6 +2600,10 @@ public class MongoDbImport extends AnnotationDAO {
     private Reference getReference(DomainObject domainObject) {
     	return new Reference(domainObject.getClass().getName(),domainObject.getId());
     }
+    
+    private Reference getReference(Class<? extends DomainObject> clazz, Long id) {
+        return new Reference(clazz.getName(),id);
+    }
 
     private Set<String> getDefaultSubjectKeys(String subjectKey) {
         Set<String> subjectKeys = new HashSet<String>();
@@ -2523,10 +2644,10 @@ public class MongoDbImport extends AnnotationDAO {
             return Ontology.class;
         }
         else if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(entityType)) {
-            return ScreenSample.class;
+            return Sample.class;
         }
         else if (EntityConstants.TYPE_ALIGNED_BRAIN_STACK.equals(entityType)) {
-            return PatternMask.class;
+            return Sample.class;
         }
         else if (EntityConstants.TYPE_FLY_LINE.equals(entityType)) {
             return FlyLine.class;

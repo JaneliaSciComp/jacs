@@ -62,7 +62,7 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
     public void indexAllEntities(boolean clearIndex) throws ComputeException {
     	try {
-    	    SolrConnector solr = new SolrConnector(DomainDAOManager.getInstance().getDao());
+    	    SolrConnector solr = new SolrConnector(DomainDAOManager.getInstance().getDao(), true, true);
     		if (clearIndex) {
     		    solr.clearIndex();
     		}

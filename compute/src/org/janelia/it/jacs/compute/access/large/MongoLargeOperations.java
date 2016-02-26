@@ -191,7 +191,6 @@ public class MongoLargeOperations {
         SageDAO sage = new SageDAO(log);
 
         try {
-
             log.info("Building property map for all lines");
 
             ResultSetIterator lineIterator = null;
@@ -222,6 +221,7 @@ public class MongoLargeOperations {
 
                 String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
 //                if (!dataSetIdentifier.startsWith("dolanm")) continue;
+//                if (!dataSetIdentifier.startsWith("flylight")) continue;
 
                 log.info("  Building property map for all SAGE images in Data Set '"+dataSetIdentifier+"'");
 
@@ -266,8 +266,9 @@ public class MongoLargeOperations {
     }
 
     protected void associateImageProperties(Map<String,Object> imageProps) throws DaoException {
-        String sageId = imageProps.get("image_query_id").toString();
-        putValue(SAGE_IMAGEPROP_MAP, sageId, imageProps);
+        String name = imageProps.get("image_query_name").toString();
+        name = name.substring(name.lastIndexOf('/')+1); // Get just the filename
+        putValue(SAGE_IMAGEPROP_MAP, name, imageProps);
     }
     
     public Object getValue(String cacheName, Object key) {
