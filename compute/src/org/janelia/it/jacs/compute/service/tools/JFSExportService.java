@@ -135,6 +135,6 @@ public class JFSExportService extends SubmitDrmaaJobService {
         script.append("read TARGET").append(index).append("\n");
     }
     private void runTarget(StringBuilder script, int index) {
-        script.append("TARGET").append(index).append("\n");
+        script.append("$TARGET").append(index).append("\n");
     }
 }
