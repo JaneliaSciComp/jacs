@@ -49,7 +49,6 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
     //public static final String SOLR_EJB_PROP = "SolrEJB.Name";
     
     public void updateIndex(DomainObject domainObj) {
-		log.info("AAAAAAAAAAAAAAA");
 		IndexingHelper.sendReindexingMessage(domainObj);
     }
 

@@ -288,6 +288,7 @@ public class DomainUtils {
     public static Multiset<String> get2dTypeNames(HasFileGroups hasGroups) {
         Multiset<String> countedTypeNames = LinkedHashMultiset.create();
         for(String groupKey : hasGroups.getGroupKeys()) {
+            log.debug("Checking group {}",groupKey);
             HasFiles hasFiles = hasGroups.getGroup(groupKey);
             if (hasFiles.getFiles()!=null) {
                 countedTypeNames.addAll(get2dTypeNames(hasFiles));
@@ -301,6 +302,7 @@ public class DomainUtils {
         if (hasFiles.getFiles()!=null) {
             for(FileType fileType : hasFiles.getFiles().keySet()) {
                 if (!fileType.is2dImage()) continue;
+                log.debug("  Adding {}",fileType.name());
                 countedTypeNames.add(fileType.name());
             }
         }

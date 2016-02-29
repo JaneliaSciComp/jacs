@@ -118,6 +118,7 @@ public class MongoDbImport extends AnnotationDAO {
     private static final String SCREEN_CHAN_SPEC = "src";
     private static final String SCREEN_ALIGNMENT_RESULT_NAME = "JBA Alignment";
     private static final String SCREEN_ALIGNMENT_SPACE = "Unified 20x Alignment Space";
+    private static final String SCREEN_ANATOMICAL_AREA = "Brain";
     private static final String SCREEN_DEFAULT_DATA_SET = "flylight_gen1_gal4";
     private static final NumberFormat ALIGNMENT_SCORE_FORMATTER = new DecimalFormat("#0.00000");    
     
@@ -481,7 +482,7 @@ public class MongoDbImport extends AnnotationDAO {
             // Skip sub-samples
             if (sampleEntity.getName().contains("~")) continue;
             // Skip retired samples
-            if (sampleEntity.getName().endsWith("-Retired")) continue;
+            //if (sampleEntity.getName().endsWith("-Retired")) continue;
             
             try {
                 long start = System.currentTimeMillis();
@@ -1334,7 +1335,7 @@ public class MongoDbImport extends AnnotationDAO {
             try {
                 long start = System.currentTimeMillis();
                 populateChildren(flyLine);
-                Deque<Entity> screenSamples = new LinkedList<Entity>(EntityUtils.getChildrenOfType(flyLine, EntityConstants.TYPE_SCREEN_SAMPLE));
+                Deque<Entity> screenSamples = new LinkedList<Entity>(EntityUtils.getChildrenForAttribute(flyLine, EntityConstants.ATTRIBUTE_ENTITY));
                 int loaded = loadScreenSamples(flyLine, screenSamples);
                 // Free memory 
                 i.remove();
@@ -1352,6 +1353,7 @@ public class MongoDbImport extends AnnotationDAO {
         int loaded = 0;
         for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
             Entity screenSampleEntity = i.next();
+            if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(screenSampleEntity.getEntityTypeName())) continue;
             
             try {
                 long start = System.currentTimeMillis();
@@ -1426,9 +1428,7 @@ public class MongoDbImport extends AnnotationDAO {
                 lsmImage.setDataSet(SCREEN_DEFAULT_DATA_SET);
             }
             
-            List<LSMImage> lsmImages = new ArrayList<LSMImage>();
-            lsmImages.add(lsmImage);
-            imageCollection.insert(lsmImages.toArray());
+            imageCollection.insert(lsmImage);
             
             // Reference it in the sample
             lsmReferences.add(getReference(lsmEntity));
@@ -1447,7 +1447,7 @@ public class MongoDbImport extends AnnotationDAO {
         // Even though the chacrm image family has VNC images, we can assume brain here because the screen data in the Workstation is just brains. 
         SampleTile tile = new SampleTile();
         tile.setName("brain");
-        tile.setAnatomicalArea("Brain");
+        tile.setAnatomicalArea(SCREEN_ANATOMICAL_AREA);
         tile.setLsmReferences(lsmReferences);
         
         List<SampleTile> tiles = new ArrayList<SampleTile>();
@@ -1477,6 +1477,7 @@ public class MongoDbImport extends AnnotationDAO {
         alignmentResult.setChannelSpec(SCREEN_CHAN_SPEC);
         alignmentResult.setFilepath(new File(getFilepath(alignedStack)).getParent());
         alignmentResult.setObjective(SCREEN_OBJECTIVE);
+        alignmentResult.setAnatomicalArea(SCREEN_ANATOMICAL_AREA);
         
         Map<AlignmentScoreType,String> scores = new HashMap<AlignmentScoreType,String>();
         String qmScore = alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
@@ -1525,7 +1526,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private void addMasks(SamplePipelineRun run, String namePrefix, Entity patternMaskFolderEntity) throws Exception {
 
-        String nameSuffix = patternMaskFolderEntity.equals(namePrefix) ? "" : " - "+patternMaskFolderEntity.getName();
+        String nameSuffix = patternMaskFolderEntity.getName().equals(namePrefix) ? "" : " - "+patternMaskFolderEntity.getName();
         
         SamplePatternAnnotationResult paResult = new SamplePatternAnnotationResult();
         paResult.setId(patternMaskFolderEntity.getId());
@@ -1536,10 +1537,9 @@ public class MongoDbImport extends AnnotationDAO {
         
         Entity normalizedEntity = EntityUtils.findChildWithNameAndType(patternMaskFolderEntity, "normalized", EntityConstants.TYPE_FOLDER);
         if (normalizedEntity!=null) {
-
             SamplePatternAnnotationNormalizedResult paNormResult = new SamplePatternAnnotationNormalizedResult();
             paNormResult.setId(normalizedEntity.getId());
-            paNormResult.setName(namePrefix+" (Normalized)"+nameSuffix);
+            paNormResult.setName(namePrefix+nameSuffix+" - Normalized");
             paNormResult.setCreationDate(patternMaskFolderEntity.getCreationDate());
             addMasks(normalizedEntity, paNormResult);
             run.addResult(paNormResult);
@@ -2420,23 +2420,27 @@ public class MongoDbImport extends AnnotationDAO {
 	    	
         	Entity importEntity = childEntity;
         	Entity translatedEntity = translatedEntities.get(childEntity.getId());
+        	
         	if (translatedEntity!=null) {
         		// already translated this above
         		logger.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+importEntity.getEntityTypeName()+"#"+importEntity.getId());
         		importEntity = translatedEntity;
         	}
-        	else if (TRANSLATE_ENTITIES && getCollectionName(importEntity.getEntityTypeName())==null) {
-        		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
-        		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
-        		// The priority list defines the ordered list of possible entity types to try as ancestors.  
-        		for (String entityType : entityTranslationPriority) {
-        			Entity ancestor = getAncestorWithType(childEntity.getOwnerKey(), importEntity.getId(), entityType);
-                	if (ancestor!=null) {
-                		logger.info(indent+"  Will reference "+entityType+"#"+ancestor.getId()+" instead of unknown "+importEntity.getEntityTypeName()+"#"+importEntity.getId());                		
-                        importEntity = ancestor;
-                		break;
-                	}
-        		}
+        	else if (TRANSLATE_ENTITIES) {
+                String importCollection = getCollectionName(importEntity.getEntityTypeName());
+        	    if ((importCollection==null || "image".equals(importCollection))) {
+            		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
+            		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
+            		// The priority list defines the ordered list of possible entity types to try as ancestors.  
+            		for (String entityType : entityTranslationPriority) {
+            			Entity ancestor = getAncestorWithType(childEntity.getOwnerKey(), importEntity.getId(), entityType);
+                    	if (ancestor!=null) {
+                    		logger.info(indent+"  Will reference "+entityType+"#"+ancestor.getId()+" instead of unknown "+importEntity.getEntityTypeName()+"#"+importEntity.getId());                		
+                            importEntity = ancestor;
+                    		break;
+                    	}
+            		}
+        	    }
         	}
 
 			if (translatedSetType==null) {
