@@ -268,7 +268,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("cd $WORKING_DIR\n");
         
         // If the file is an LSM, ensure that it is compressed before uploading
-        script.append("FILE_STUB=`basename $FILE_PATH`\n");
+        script.append("FILE_STUB=`basename \"$FILE_PATH\"`\n");
         script.append("FILE_EXT=${FILE_STUB##*.}\n");
         script.append("if [[ \"$FILE_EXT\" = \"lsm\" ]]; then\n");
         script.append("  WORKING_FILE=$WORKING_DIR/$FILE_STUB.bz2\n");

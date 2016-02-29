@@ -625,6 +625,22 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    /**
+     * Method to point to a file of jfs commands and extract them.
+     * Example file exists in /nrs/jacs/jacsData/saffordt/jfsonly.sh
+     *
+     */
+    public void jfsExportService(String filePath) {
+        try {
+            JFSExportTask exportTask = new JFSExportTask("system", new ArrayList<Event>(), filePath);
+            exportTask = (JFSExportTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(exportTask);
+            EJBFactory.getLocalComputeBean().submitJob("JFSExport", exportTask.getObjectId());
+        }
+        catch (DaoException | RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void visuallyLosslessCorrectionService(String filePath, String debug) {
         try {
@@ -687,7 +703,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab1115.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolffta02232016.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);
