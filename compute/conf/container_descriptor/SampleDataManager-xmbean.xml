@@ -569,6 +569,16 @@
     </operation>
 
     <operation>
+        <description>JFS Bulk export utility</description>
+        <name>jfsExportService</name>
+        <parameter>
+            <description>Path to the file with command lines</description>
+            <name>filePath</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
         <description>Fixing h5j's to have padding</description>
         <name>visuallyLosslessCorrectionService</name>
         <parameter>
