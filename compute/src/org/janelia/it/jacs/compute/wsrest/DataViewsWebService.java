@@ -302,12 +302,12 @@ public class DataViewsWebService extends ResourceConfig {
             Map<String,List<FacetValue>> facetValues = new HashMap<>();
             if (response.getFacetFields()!=null) {
                 for (final FacetField ff : response.getFacetFields()) {
-                    log.info("Facet {}", ff.getName());
+                    log.debug("Facet {}", ff.getName());
                     List<FacetValue> favetValues = new ArrayList<>();
                     if (ff.getValues() != null) {
                         for (final FacetField.Count count : ff.getValues()) {
                             favetValues.add(new FacetValue(count.getName(), count.getCount()));
-                            log.info("  Value: {} (count={})", count.getName(), count.getCount());
+                            log.debug("  Value: {} (count={})", count.getName(), count.getCount());
                         }
                     }
                     facetValues.put(ff.getName(), favetValues);

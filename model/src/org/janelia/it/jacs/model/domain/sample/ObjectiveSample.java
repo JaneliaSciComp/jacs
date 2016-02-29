@@ -84,6 +84,22 @@ public class ObjectiveSample {
         return getPipelineRuns().get(pipelineRuns.size() - 1);
     }
 
+    @JsonIgnore
+    public SamplePipelineRun getLatestSuccessfulRun() {
+        if (pipelineRuns == null) {
+            return null;
+        }
+        if (pipelineRuns.isEmpty()) {
+            return null;
+        }
+        List<SamplePipelineRun> reversed = new ArrayList<>(getPipelineRuns());
+        Collections.reverse(reversed);
+        for(SamplePipelineRun run : reversed) {
+            if (!run.hasError()) return run;
+        }
+        return null;
+    }
+    
     public List<SampleTile> getTiles() {
         for(SampleTile tile : tiles) {
             tile.setParent(this);
