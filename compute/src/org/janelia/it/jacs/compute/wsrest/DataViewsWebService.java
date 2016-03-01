@@ -302,12 +302,10 @@ public class DataViewsWebService extends ResourceConfig {
             Map<String,List<FacetValue>> facetValues = new HashMap<>();
             if (response.getFacetFields()!=null) {
                 for (final FacetField ff : response.getFacetFields()) {
-                    log.info("Facet {}", ff.getName());
                     List<FacetValue> favetValues = new ArrayList<>();
                     if (ff.getValues() != null) {
                         for (final FacetField.Count count : ff.getValues()) {
                             favetValues.add(new FacetValue(count.getName(), count.getCount()));
-                            log.info("  Value: {} (count={})", count.getName(), count.getCount());
                         }
                     }
                     facetValues.put(ff.getName(), favetValues);
@@ -315,7 +313,11 @@ public class DataViewsWebService extends ResourceConfig {
             }
 
             sjr.setFacetValues(facetValues);
-            sjr.setResults(response.getResults());
+            SolrDocumentList results = response.getResults();
+            if (query.getSortField()!=null && query.getSortField().endsWith("asc")) {
+                Collections.reverse(results);
+            }
+            sjr.setResults(results);
             sjr.setNumFound(response.getResults().getNumFound());
             return sjr;
         } catch (Exception e) {

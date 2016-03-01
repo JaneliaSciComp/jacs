@@ -3,6 +3,8 @@ package org.janelia.it.jacs.shared.solr;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -13,6 +15,7 @@ import java.util.*;
  */
 public class SolrQueryBuilder {
 
+    private static final Logger log = LoggerFactory.getLogger(SolrQueryBuilder.class);
     private String searchString;
     private String auxString;
     private String auxAnnotationQueryString;
@@ -231,7 +234,11 @@ public class SolrQueryBuilder {
     public static SolrQuery deSerializeSolrQuery(SolrParams queryParams) {
         SolrQuery query = new SolrQuery();
         query.setQuery(queryParams.getQuery());
-        query.set(queryParams.getSortField());
+        if (queryParams.getSortField()!=null) {
+            String[] sortParams = queryParams.getSortField().split(" ");
+            ORDER sortOrder = (sortParams[1].equals("asc")?ORDER.asc:ORDER.desc);
+            query.setSortField(sortParams[0],sortOrder);
+        }
         query.setFilterQueries(queryParams.getFilterQueries());
         String[] facetFields = queryParams.getFacetField();
         for (int i=0; i<facetFields.length; i++) {
