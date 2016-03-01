@@ -1626,6 +1626,9 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     neuron.setId(null);
                     for (TmGeoAnnotation anno : neuron.getGeoAnnotationMap().values()) {
                         anno.setNeuronId(-1L);
+                        if (anno.getParentId().equals(oldNeuronID)  ||  !neuron.getGeoAnnotationMap().keySet().contains(anno.getParentId())) {
+                            anno.setParentId(-1L);
+                        }
                     }
                     neuron.setWorkspaceId(workspaceId);
                     neuron.setOwnerKey(workspaceEntity.getOwnerKey());

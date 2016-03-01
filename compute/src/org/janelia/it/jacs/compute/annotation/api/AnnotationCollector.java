@@ -369,6 +369,9 @@ public class AnnotationCollector {
         Long id = savedEntityData.getId();
         for (TmGeoAnnotation anno : neuron.getGeoAnnotationMap().values()) {
             anno.setNeuronId(id);
+            if (anno.getParentId().equals(-1L)) {
+                anno.setParentId(id);
+            }
         }
         // Need to make serializable version of the data.
         neuron.setId(id);
