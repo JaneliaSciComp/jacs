@@ -44,15 +44,15 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     private Boolean representative;
     
     @SAGEAttribute(cvName="light_imagery", termName="age")
-    @SearchAttribute(key="age_txt",label="Age",facet=true)
+    @SearchAttribute(key="age_s",label="Age",facet=true)
     private String age;
 
     @SAGEAttribute(cvName="light_imagery", termName="annotated_by")
-    @SearchAttribute(key="annotatedby_txt",label="Annotated By",facet=true)
+    @SearchAttribute(key="annotatedby_s",label="Annotated By",facet=true)
     private String annotatedBy;
 
     @SAGEAttribute(cvName="light_imagery", termName="area")
-    @SearchAttribute(key="area_txt",label="Anatomical Area",facet=true)
+    @SearchAttribute(key="area_s",label="Anatomical Area",facet=true)
     private String anatomicalArea;
 
     @SAGEAttribute(cvName="light_imagery", termName="bc_correction1")
@@ -156,7 +156,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     private String createdBy;
 
     @SAGEAttribute(cvName="light_imagery", termName="data_set")
-    @SearchAttribute(key="data_set_txt",label="Data Set",facet=true)
+    @SearchAttribute(key="data_set_s",label="Data Set",facet=true)
     private String dataSet;
 
     @SAGEAttribute(cvName="light_imagery", termName="imaging_project")

@@ -29,13 +29,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @SearchType(key="sample",label="Sample")
 public class Sample extends AbstractDomainObject implements IsParent {
 
-    @SearchAttribute(key="age_txt",label="Age",facet=true)
+    @SearchAttribute(key="age_s",label="Age",facet=true)
     private String age;
     
     @SearchAttribute(key="chan_spec_s",label="Channel Specification",facet=true)
     private String chanSpec;
     
-    @SearchAttribute(key="data_set_txt",label="Data Set",facet=true)
+    @SearchAttribute(key="data_set_s",label="Data Set",facet=true)
     private String dataSet;
     
     @SearchAttribute(key="effector_txt",label="Effector")
