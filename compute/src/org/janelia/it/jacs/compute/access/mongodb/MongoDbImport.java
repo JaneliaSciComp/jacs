@@ -79,7 +79,9 @@ import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
@@ -2271,8 +2273,8 @@ public class MongoDbImport extends AnnotationDAO {
 		    		newFolder.setCreationDate(folderEntity.getCreationDate());
 		    		newFolder.setUpdatedDate(folderEntity.getUpdatedDate());
 			    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
-			    	if (objectSet!=null) {			    	    
-			    		String setLabel = objectSet.getType();
+			    	if (objectSet!=null) {
+			    		String setLabel = getObjectSetMemberType(objectSet);
 			    		if (setLabel!=null) {
     			    		ObjectSet existingSet = extraSetCache.get(setLabel);
     			    		if (existingSet!=null) {
@@ -2311,6 +2313,31 @@ public class MongoDbImport extends AnnotationDAO {
         return treeNode;
     }
 
+    public String getObjectSetMemberType(ObjectSet objectSet) {
+        String label = null;
+        // Look for a @SearchType label
+        Class<?> clazz = DomainUtils.getObjectClassByName(objectSet.getClassName());
+        while (clazz!=null && label==null) {
+            SearchType searchType = clazz.getAnnotation(SearchType.class);
+            if (searchType!=null) {
+                label = searchType.label();
+            }
+            clazz = clazz.getSuperclass();
+        }
+        if (label==null) {
+            // No label found, so look again, this time at @MongoMapped
+            clazz = this.getClass();
+            while (clazz!=null && label==null) {
+                MongoMapped mongoMapped = clazz.getAnnotation(MongoMapped.class);
+                if (mongoMapped!=null) {
+                    label = mongoMapped.label();
+                }
+                clazz = clazz.getSuperclass();
+            }
+        }
+        return label;
+    }
+    
     private ObjectSet getObjectSet(Entity folderEntity, Collection<Entity> items, String indent) throws Exception {
 		ObjectSet objectSet = new ObjectSet();
 		objectSet.setId(folderEntity.getId());
