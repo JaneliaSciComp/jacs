@@ -297,7 +297,6 @@ public class DataViewsWebService extends ResourceConfig {
         try {
             SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
             QueryResponse response = solr.search(query);
-            SolrJsonResults sjr = new SolrJsonResults();
             log.info("Number documents found:" + Long.toString(response.getResults().getNumFound()));
             Map<String,List<FacetValue>> facetValues = new HashMap<>();
             if (response.getFacetFields()!=null) {
@@ -312,14 +311,13 @@ public class DataViewsWebService extends ResourceConfig {
                 }
             }
 
-            sjr.setFacetValues(facetValues);
             SolrDocumentList results = response.getResults();
             if (query.getSortField()!=null && query.getSortField().endsWith("asc")) {
                 Collections.reverse(results);
             }
-            sjr.setResults(results);
-            sjr.setNumFound(response.getResults().getNumFound());
-            return sjr;
+
+            return new SolrJsonResults(results, facetValues, response.getResults().getNumFound());
+
         } catch (Exception e) {
             log.error("Error occurred executing search against SOLR",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
