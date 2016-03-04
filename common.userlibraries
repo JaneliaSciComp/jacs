@@ -8,7 +8,6 @@
         <archive path="/common/Apache-Commons/commons-fileupload-1.2.jar"/>
         <archive path="/common/Apache-Commons/commons-collections-2.1.1.jar"/>
         <archive path="/common/Apache-Commons/commons-codec-1.3.jar"/>
-        <archive path="/common/Apache-Commons/log4j-1.2.15.jar"/>
         <archive path="/common/Apache-Commons/commons-lang3-3.3.2.jar"/>
     </library>
     <library name="Axis" systemlibrary="false">
