@@ -13,6 +13,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
 import scala.collection.mutable.StringBuilder;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -137,4 +138,57 @@ public class JFSExportService extends SubmitDrmaaJobService {
     private void runTarget(StringBuilder script, int index) {
         script.append("$TARGET").append(index).append("\n");
     }
+
+//    public static void main(String[] args) {
+//        try {
+//            FileWriter writer = new FileWriter(new File("/groups/jacs/jacsDev/saffordt/symlink__2240583447523360913.sh"));
+//            String basename = "/nrs/jacs/jacsData/saffordt/download/drive/20160219_VND_for_Myers_group/";
+//            Scanner scanner = new Scanner(new File("/groups/jacs/jacsDev/saffordt/export_2240583447523360913.sh.nrs.txt"));
+//            HashMap<String,String> sampleMap = new HashMap<>();
+//            int totalFileCount = 0;
+//            int skipCount=0;
+//            while (scanner.hasNextLine()) {
+//                String tmpLine = scanner.nextLine();
+//                if (tmpLine.contains("jfs")) {
+//                    totalFileCount++;
+//                    String tmpFileKey = tmpLine.substring(tmpLine.lastIndexOf(basename)+basename.length()).trim();
+//                    String tmpSample = tmpFileKey.substring(tmpFileKey.indexOf("/")+1);
+//                    if (sampleMap.containsKey(tmpSample)) {
+//                        int backticks = tmpFileKey.split("/").length-1;
+//                        String formattedbackticks = "";
+//                        for (int i = 0; i < backticks; i++) {
+//                            formattedbackticks+="../";
+//                        }
+//                        if (!sampleMap.get(tmpSample).contains(tmpFileKey)) {
+//                            String tmpSymlink = "ln -sf "+formattedbackticks+sampleMap.get(tmpSample)+" "+basename+tmpFileKey;
+//                            System.out.println("Already have sample "+tmpSample+". Making a symlink ("+tmpSymlink+")");
+//                            // Now write the symlink to a file for processing...
+//                            writer.write(tmpSymlink+"\n");
+//                        }
+//                        else {
+//                            System.out.println("Cannot have a link reference itself: "+sampleMap.get(tmpSample)+":"+tmpFileKey);
+//                            skipCount++;
+//                        }
+//                    }
+//                    else {
+//                        sampleMap.put(tmpSample, tmpFileKey);
+//                    }
+//                }
+//            }
+//            writer.close();
+//            scanner.close();
+//            System.out.println("\nThere are "+totalFileCount+" files.");
+//            System.out.println("There are "+sampleMap.keySet().size()+" unique files.");
+//            System.out.println("Prevented "+skipCount+" references to themselves.");
+//        }
+//        catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
+
+
 }
