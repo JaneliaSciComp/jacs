@@ -39,6 +39,7 @@
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/build" />
+      <excludeFolder url="file://$MODULE_DIR$/build_eclipse" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -194,7 +195,7 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library>
-         <CLASSES>
+        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/xstream/xstream-1.4.8.jar!/" />
         </CLASSES>
         <JAVADOC />
