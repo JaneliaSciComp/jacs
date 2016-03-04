@@ -10,10 +10,14 @@ import java.util.Map;
  */
 public class SolrJsonResults {
     
-    private final SolrDocumentList results;
-    private final Map<String,List<FacetValue>> facetValues;
-    private final long numFound;
+    private SolrDocumentList results;
+    private Map<String,List<FacetValue>> facetValues;
+    private long numFound = 0;
 
+    // For Jackson deserialization
+    public SolrJsonResults() {
+    }
+    
     public SolrJsonResults(SolrDocumentList results, Map<String, List<FacetValue>> facetValues, long numFound) {
         this.results = results;
         this.facetValues = facetValues;
@@ -23,12 +27,19 @@ public class SolrJsonResults {
     public SolrDocumentList getResults() {
         return results;
     }
-
-    public Map<String,List<FacetValue>> getFacetValues() {
+    public void setResults(SolrDocumentList results) {
+        this.results = results;
+    }
+    public Map<String, List<FacetValue>> getFacetValues() {
         return facetValues;
     }
-
+    public void setFacetValues(Map<String, List<FacetValue>> facetValues) {
+        this.facetValues = facetValues;
+    }
     public long getNumFound() {
         return numFound;
+    }
+    public void setNumFound(long numFound) {
+        this.numFound = numFound;
     }
 }
