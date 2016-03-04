@@ -82,13 +82,19 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
+        
+        List<ServerAddress> members = new ArrayList<>();
+        for(String serverMember : serverUrl.split(",")) {
+            members.add(new ServerAddress(serverMember));
+        }
+        
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
             MongoCredential credential = MongoCredential.createMongoCRCredential(username, databaseName, password.toCharArray());
-            this.m = new MongoClient(new ServerAddress(serverUrl), Arrays.asList(credential));
+            this.m = new MongoClient(members, Arrays.asList(credential));
             log.info("Connected to MongoDB ("+databaseName+"@"+serverUrl+") as user "+username);
         }
         else {
-            this.m = new MongoClient(serverUrl);
+            this.m = new MongoClient(members);
             log.info("Connected to MongoDB ("+databaseName+"@"+serverUrl+")");
         }
 
