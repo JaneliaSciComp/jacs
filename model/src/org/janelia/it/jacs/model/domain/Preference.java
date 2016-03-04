@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.jongo.marshall.jackson.oid.MongoId;
 
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  */
 @MongoMapped(collectionName="preference",label="User Preference")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public class Preference {
+public class Preference implements HasIdentifier {
     
     @MongoId
     private Long id;
