@@ -291,17 +291,12 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse existing pipeline runs</description>
-            <name>reusePipelineRuns</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
             <description>Reuse previous summary results</description>
             <name>reuseSummary</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -311,7 +306,7 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -332,17 +327,12 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse existing pipeline runs</description>
-            <name>reusePipelineRuns</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
             <description>Reuse previous summary results</description>
             <name>reuseSummary</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -352,7 +342,7 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -372,17 +362,12 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse existing pipeline runs</description>
-            <name>reusePipelineRuns</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
             <description>Reuse previous summary results</description>
             <name>reuseSummary</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -392,7 +377,7 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -578,6 +563,16 @@
         <name>scalityMigrationService</name>
         <parameter>
             <description>Path to the file with object id's</description>
+            <name>filePath</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
+        <description>JFS Bulk export utility</description>
+        <name>jfsExportService</name>
+        <parameter>
+            <description>Path to the file with command lines</description>
             <name>filePath</name>
             <type>java.lang.String</type>
         </parameter>

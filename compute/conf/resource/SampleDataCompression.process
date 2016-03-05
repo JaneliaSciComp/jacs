@@ -70,8 +70,9 @@
 		    <!-- Create a result node for this group -->
 		    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
 			    <input name="NAME" value="Temp"/>
-		        <output name="RESULT_FILE_NODE"/>
-		        <output name="RESULT_FILE_NODE_ID"/>
+                <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+                <output name="TEMP_FILE_NODE"/>
+                <output name="TEMP_FILE_NODE_ID"/>
 		    </operation>
 		    
 		    <!-- Create the output file list -->
@@ -90,7 +91,7 @@
 		        <operation name="RAW Conversion to PBD" processor="queue/gridSubmitAndWait">
 		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
 				    <input name="IGNORE_ERRORS" value="true"/>
-		    		<input name="RESULT_FILE_NODE"/>
+		    		<input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
 				    <input name="INPUT_PATH_LIST"/>
 				    <input name="OUTPUT_PATH_LIST"/>
 			    </operation>
@@ -109,10 +110,10 @@
                 <input name="DELETE_INPUTS"/>
 			</operation>
 		
-		    <!-- Trash temporary file node -->
-		    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-		        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
-		    </operation>
+            <!-- Trash temporary file node -->
+            <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+                <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
+            </operation>
 		
 		</sequence>        
 		    
