@@ -6,11 +6,8 @@
 
 package org.janelia.it.jacs.model.user_data.tiled_microscope_builder;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.IdSource;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPath;
@@ -601,5 +598,92 @@ public class TmModelManipulator {
     private void deleteNeuronData(TmNeuron neuron) throws Exception {
         dataSource.deleteEntityData(neuron);
     }
-    
+
+
+
+    /**
+     * Given a collection of annotations, under a common neuron, make
+     * annotations for each in the database, preserving the linkages implied in
+     * the "value" target of the map provided.
+     *
+     * @param annotations map of node offset id vs "unserialized" annotation.
+     * @param nodeParentLinkage map of node offset id vs parent node offset id.
+     */
+    public void addLinkedGeometricAnnotationsInMemory(
+            Map<Integer, Integer> nodeParentLinkage,
+            Map<Integer, TmGeoAnnotation> annotations,
+            TmNeuron tmNeuron,
+            Iterator<Long> idSource) {
+        Long neuronId = tmNeuron.getId();
+        int putativeRootCount = 0;
+        // Cache to avoid re-fetch.
+        Map<Integer, Long> nodeIdToAnnotationId = new HashMap<>();
+        // Ensure the order of progression through nodes matches node IDs.
+        Set<Integer> sortedKeys = new TreeSet<>(annotations.keySet());
+        for (Integer nodeId : sortedKeys) {
+            boolean isRoot = false;
+            TmGeoAnnotation unlinkedAnnotation = annotations.get(nodeId);
+
+            // Establish node linkage.
+            Integer parentIndex = nodeParentLinkage.get(nodeId);
+            Long parentAnnotationId = null;
+            if (parentIndex != null && parentIndex != -1) {
+                // NOTE: unless the annotation has been processed as
+                // below, prior to now, the parent ID will be null.
+                parentAnnotationId = nodeIdToAnnotationId.get(parentIndex);
+                if (parentAnnotationId == null) {
+                    parentAnnotationId = neuronId;
+                }
+            } else {
+                putativeRootCount++;
+                parentAnnotationId = neuronId;
+                isRoot = true;
+            }
+
+            // Make the actual annotation, and save its linkage
+            // through its original node id.
+            TmGeoAnnotation linkedAnnotation = createGeometricAnnotationInMemory(tmNeuron, isRoot, parentAnnotationId, unlinkedAnnotation, idSource);
+            TmGeoAnnotation parentAnnotation = tmNeuron.getParentOf(linkedAnnotation);
+            if (parentAnnotation != null) {
+                parentAnnotation.addChild(linkedAnnotation);
+            }
+            nodeIdToAnnotationId.put(nodeId, linkedAnnotation.getId());
+
+            log.trace("Node " + nodeId + " at " + linkedAnnotation.toString() + ", has id " + linkedAnnotation.getId()
+                    + ", has parent " + linkedAnnotation.getParentId() + ", under neuron " + linkedAnnotation.getNeuronId());
+        }
+
+        if (putativeRootCount > 1) {
+            log.warn("Number of nodes with neuron as parent is " + putativeRootCount);
+        }
+    }
+
+    public void addLinkedGeometricAnnotationsInMemory(
+            Map<Integer, Integer> nodeParentLinkage,
+            Map<Integer, TmGeoAnnotation> annotations,
+            TmNeuron tmNeuron) {
+        addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, tmNeuron, idSource);
+    }
+
+    private TmGeoAnnotation createGeometricAnnotationInMemory(TmNeuron neuron, boolean isRoot, Long parentAnnotationId, TmGeoAnnotation unserializedAnno, Iterator<Long> idSource) {
+        return createGeometricAnnotationInMemory(neuron, isRoot, parentAnnotationId, 0, unserializedAnno.getX(), unserializedAnno.getY(), unserializedAnno.getZ(), unserializedAnno.getRadius(), unserializedAnno.getComment(), neuron.getId(), idSource);
+    }
+
+    private TmGeoAnnotation createGeometricAnnotationInMemory(
+            TmNeuron tmNeuron, boolean isRoot, Long parentAnnotationId, int index, double x, double y, double z, double radius, String comment, Long neuronId, Iterator<Long> idSource) {
+
+        long generatedId = idSource.next();
+        TmGeoAnnotation geoAnnotation = new TmGeoAnnotation(generatedId, comment, x, y, z, parentAnnotationId, new Date());
+        geoAnnotation.setNeuronId(neuronId);
+        geoAnnotation.setIndex(index);
+        geoAnnotation.setRadius(radius);
+        tmNeuron.getGeoAnnotationMap().put(geoAnnotation.getId(), geoAnnotation);
+        if (isRoot) {
+            tmNeuron.addRootAnnotation(geoAnnotation);
+        }
+        return geoAnnotation;
+    }
+
+
+
 }
