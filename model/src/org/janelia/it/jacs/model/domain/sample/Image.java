@@ -29,11 +29,11 @@ public class Image extends AbstractDomainObject implements HasFiles, HasFilepath
     @SearchAttribute(key="optical_res_s",label="Optical Resolution")
     private String opticalResolution;
 
-    @SearchAttribute(key="objective_s",label="Objective", facet=true)
+    @SearchAttribute(key="objective_txt",label="Objective", facet="objective_s")
     private String objective;
 
     @SAGEAttribute(cvName="light_imagery", termName="channels")
-    @SearchAttribute(key="num_channels_i",label="Num Channels", facet=true)
+    @SearchAttribute(key="num_channels_i",label="Num Channels", facet="num_channels_i")
     private Integer numChannels;
     
     private Map<FileType, String> files;
