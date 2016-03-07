@@ -448,10 +448,10 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
             //combinedNodeIterTime += (System.nanoTime() - startNodeIter) /1000;
 
-            // Fire off the bulk update.  The "un-serialized" or
-            // db-unknown annotations could be swapped for "blessed" versions.
             //long startGeoLink = System.nanoTime();
-            addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuron, idSource);
+
+            TmModelManipulator neuronManager = new TmModelManipulator(null);
+            neuronManager.addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuron);
             //combinedGeoLinkTime += (System.nanoTime() - startGeoLink) / 1000;
             tmWorkspace.getNeuronList().add(neuron);
         } catch (Exception ex) {
@@ -751,71 +751,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
                 log.trace("Node " + nodeId + " at " + serializedAnnotation.toString() + ", has id " + serializedAnnotation.getId()
                         + ", has parent " + serializedAnnotation.getParentId() + ", under neuron " + serializedAnnotation.getNeuronId());
-            }
-
-            if (putativeRootCount > 1) {
-                log.warn("Number of nodes with neuron as parent is " + putativeRootCount);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new DaoException(e);
-        }
-
-    }
-
-    /**
-     * Given a collection of annotations, under a common neuron, make
-     * annotations for each in the database, preserving the linkages implied in
-     * the "value" target of the map provided.
-     *
-     * @param annotations map of node offset id vs "unserialized" annotation.
-     * @param nodeParentLinkage map of node offset id vs parent node offset id.
-     * @throws DaoException
-     */
-    public void addLinkedGeometricAnnotationsInMemory(
-            Map<Integer, Integer> nodeParentLinkage,
-            Map<Integer, TmGeoAnnotation> annotations,
-            TmNeuron tmNeuron,
-            Iterator<Long> idSource
-    ) throws DaoException {
-        Long neuronId = tmNeuron.getId();
-        try {
-            int putativeRootCount = 0;
-            // Cache to avoid re-fetch.
-            Map<Integer, Long> nodeIdToAnnotationId = new HashMap<>();
-            // Ensure the order of progression through nodes matches node IDs.
-            Set<Integer> sortedKeys = new TreeSet<>(annotations.keySet());
-            for (Integer nodeId : sortedKeys) {
-                boolean isRoot = false;
-                TmGeoAnnotation unlinkedAnnotation = annotations.get(nodeId);
-
-                // Establish node linkage.
-                Integer parentIndex = nodeParentLinkage.get(nodeId);
-                Long parentAnnotationId = null;
-                if (parentIndex != null && parentIndex != -1) {
-                    // NOTE: unless the annotation has been processed as
-                    // below, prior to now, the parent ID will be null.                    
-                    parentAnnotationId = nodeIdToAnnotationId.get(parentIndex);
-                    if (parentAnnotationId == null) {
-                        parentAnnotationId = neuronId;
-                    }
-                } else {
-                    putativeRootCount++;
-                    parentAnnotationId = neuronId;
-                    isRoot = true;
-                }
-
-                // Make the actual annotation, and save its linkage
-                // through its original node id.
-                TmGeoAnnotation linkedAnnotation = createGeometricAnnotationInMemory(tmNeuron, isRoot, parentAnnotationId, unlinkedAnnotation, idSource);
-                TmGeoAnnotation parentAnnotation = tmNeuron.getParentOf(linkedAnnotation);
-                if (parentAnnotation != null) {
-                    parentAnnotation.addChild(linkedAnnotation);
-                }
-                nodeIdToAnnotationId.put(nodeId, linkedAnnotation.getId());
-
-                log.trace("Node " + nodeId + " at " + linkedAnnotation.toString() + ", has id " + linkedAnnotation.getId()
-                        + ", has parent " + linkedAnnotation.getParentId() + ", under neuron " + linkedAnnotation.getNeuronId());
             }
 
             if (putativeRootCount > 1) {
