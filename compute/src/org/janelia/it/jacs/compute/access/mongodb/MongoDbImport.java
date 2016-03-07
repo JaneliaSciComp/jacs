@@ -2087,7 +2087,16 @@ public class MongoDbImport extends AnnotationDAO {
     
     /* TREE NODES (WORKSPACES, FOLDERS, VIEWS) */
     
+    private Map<String,String> dataSetLookup = new HashMap<String,String>();
+    
     private void loadWorkspaces() throws DaoException {
+        
+        for(Entity dataSetEntity : getEntitiesByTypeName(null, EntityConstants.TYPE_DATA_SET)) {
+            String key = dataSetEntity.getOwnerKey()+"/"+dataSetEntity.getName();
+            String identifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+            dataSetLookup.put(key,identifier);
+        }
+        
         Map<Long,DomainObject> visited = new HashMap<Long,DomainObject>();
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
@@ -2230,22 +2239,10 @@ public class MongoDbImport extends AnnotationDAO {
 	    
 	    if ("Data Sets".equals(folderEntity.getName())) {
 	    	// Create a canned filter for each data set
-	    	Date now = new Date();
 	    	for(DataSet dataSet : dao.getDataSets(folderEntity.getOwnerKey())) {
 	    		// We only want the data sets owned by this user
 	    		if (!dataSet.getOwnerKey().equals(folderEntity.getOwnerKey())) continue;
-                Filter filter = new Filter();
-                filter.setId(dao.getNewId());
-                filter.setName(dataSet.getName());
-                filter.setOwnerKey(dataSet.getOwnerKey());
-                filter.setSearchClass(Sample.class.getName());
-                filter.setCreationDate(now);
-                filter.setUpdatedDate(now);
-                FacetCriteria dataSetCriteria = new FacetCriteria();
-                dataSetCriteria.setAttributeName("dataSet");
-                dataSetCriteria.setValues(Sets.newHashSet(dataSet.getIdentifier()));
-                filter.addCriteria(dataSetCriteria);
-                filterCollection.insert(filter);
+	    		Filter filter = getDataSetFilter(dataSet.getName(), dataSet.getOwnerKey(), dataSet.getIdentifier());
                 children.add(getReference(filter));
                 log.info(indent+"  Added canned data set filter: "+filter.getName());
 			}
@@ -2257,10 +2254,20 @@ public class MongoDbImport extends AnnotationDAO {
 		    	log.info(indent+"Processing "+childEntities.size()+" children of type "+childType);
 		    	if (EntityConstants.TYPE_FOLDER.equals(childType)) {
 		    		for(Entity childFolder : childEntities) {
-		    			DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, loaded, indent+"  ");
-		    			if (domainObject!=null) {
-			                children.add(getReference(domainObject));
-		    			}
+	                    String dataSetKey = childFolder.getOwnerKey()+"/"+childFolder.getName();
+	                    String dataSetIdentifier = dataSetLookup.get(dataSetKey);
+	                    if (dataSetIdentifier!=null) {
+	                        // This looks like a reference to a data set. Important: the new filter is owned by the parent owner
+	                        Filter filter = getDataSetFilter(childFolder.getName(), folderEntity.getOwnerKey(), dataSetIdentifier);
+	                        children.add(getReference(filter));
+	                        log.info(indent+"  Added canned data set filter: "+filter.getName()+" to data set owned by "+childFolder.getOwnerKey());
+	                    }
+	                    else {
+    		    			DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, loaded, indent+"  ");
+    		    			if (domainObject!=null) {
+    			                children.add(getReference(domainObject));
+    		    			}
+	                    }
 		    		}
 		    	}
 		    	else {
@@ -2311,6 +2318,23 @@ public class MongoDbImport extends AnnotationDAO {
         log.info(indent+"Created tree node: "+treeNode.getName());
         loaded.put(treeNode.getId(), treeNode);
         return treeNode;
+    }
+    
+    private Filter getDataSetFilter(String name, String ownerKey, String dataSetIdentifier) {
+        Date now = new Date();
+        Filter filter = new Filter();
+        filter.setId(dao.getNewId());
+        filter.setName(name);
+        filter.setOwnerKey(ownerKey); // Important: the new filter is owned by the parent owner
+        filter.setSearchClass(Sample.class.getName());
+        filter.setCreationDate(now);
+        filter.setUpdatedDate(now);
+        FacetCriteria dataSetCriteria = new FacetCriteria();
+        dataSetCriteria.setAttributeName("dataSet");
+        dataSetCriteria.setValues(Sets.newHashSet(dataSetIdentifier));
+        filter.addCriteria(dataSetCriteria);
+        filterCollection.insert(filter);
+        return filter;
     }
 
     public String getObjectSetMemberType(ObjectSet objectSet) {
