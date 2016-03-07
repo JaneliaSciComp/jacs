@@ -191,4 +191,52 @@ public class JFSExportService extends SubmitDrmaaJobService {
 //    }
 
 
+//    public static void main(String[] args) {
+//        try {
+//            Scanner scanner = new Scanner(new File("/nrs/jacs/jacsData/saffordt/validateFiles.txt.AOTUv4"));
+//            PrintWriter writer = new PrintWriter(new File("/nrs/jacs/jacsData/saffordt/validateFiles.txt.AOTUv4.missing"));
+//            int success=0,failure=0;
+//            while (scanner.hasNextLine()){
+//                String tmpLine = scanner.nextLine();
+//                String tmpfilename = tmpLine.substring(tmpLine.indexOf("-file")+5).trim();
+//                File testFile = new File(tmpfilename);
+//                if (testFile.exists() && testFile.length()>0) {
+//                    success++;
+//                }
+//                else {
+//                    System.out.println("Missing file: "+tmpfilename);
+//                    writer.append(tmpLine).append("\n");
+//                    failure++;
+//                }
+//            }
+//            writer.close();
+//            writer.flush();
+//            System.out.println("Success: "+success);
+//            System.out.println("Failure: "+failure);
+//        }
+//        catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+//    public static void main(String[] args) {
+//        try {
+//            Scanner scanner = new Scanner(new File("/nrs/jacs/jacsData/saffordt/resyncFiles.AOTUv4"));
+//            PrintWriter writer = new PrintWriter(new File("/nrs/jacs/jacsData/saffordt/resyncFiles.AOTUv4.sh"));
+//            while (scanner.hasNextLine()){
+//                String tmpLine = scanner.nextLine();
+//                String tmpfilename = tmpLine.substring(tmpLine.indexOf("-file")+5).trim();
+//                String tmpdestination = tmpfilename.replace("/nrs/jacs/jacsData/saffordt/download/drive/20160219_VND_for_Myers_group/AOTUv4/",
+//                                                            "/Volumes/Lee\\ Lab\\ Drive\\ 1/20160219_VND_for_Myers_group/AOTUv4/");
+//                String tmpCmd = "rsync -av "+tmpfilename+" "+tmpdestination;
+//                writer.append(tmpCmd).append("\n");
+//            }
+//            writer.close();
+//            writer.flush();
+//        }
+//        catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
 }

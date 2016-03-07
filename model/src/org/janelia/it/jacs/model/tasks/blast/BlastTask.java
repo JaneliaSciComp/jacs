@@ -29,7 +29,7 @@ public abstract class BlastTask extends Task implements IBlastOutputFormatTask {
     public static final String FORMAT_TAB_WITH_HEADER = "tabh"; // ncbi -m9 output format option (tab with comment lines)
 
     // Base-level default values - these are the same for all flavors of Blast
-    transient public static final String formatTypesCsv_DEFAULT = "xml,btab";
+    transient public static final String formatTypesCsv_DEFAULT = "xml,tab";
     transient public static final Long evalue_DEFAULT = (long) 1;
     transient public static final String filter_DEFAULT = "T";
     transient public static final Long gapOpenCost_DEFAULT = (long) -1;
