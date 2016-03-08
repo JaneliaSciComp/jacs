@@ -14,13 +14,17 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPath;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmAnchoredPathEndpoints;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
-import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuronDescriptor;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmStructuredTextAnnotation;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
 
 /**
  * Manages the relationships, additions and deletions from Tiled Microscope
  * data, based at a Workspace.
+ *
+ * Implementation note: be careful regarding neuron persistance!  Some methods
+ * in this class persist neurons, and others do not (letting the calling
+ * routine persist).  You should only persist neurons exactly once, after all
+ * operations are complete.
  *
  * @author fosterl
  */
@@ -445,21 +449,6 @@ public class TmModelManipulator {
         newTmNeuron.addRootAnnotation(rootAnnotation);
     }
     
-    public List<TmNeuronDescriptor> getNeuronsForWorkspace(TmWorkspace tmWorkspace) throws Exception {
-        // Validate sample
-        if (tmWorkspace == null) {
-            throw new Exception("Neurons must be parented with valid Workspace Id");
-        }
-        List<TmNeuronDescriptor> descriptorList = new ArrayList<>();
-        for (TmNeuron tmNeuron: tmWorkspace.getNeuronList()) {
-            TmNeuronDescriptor descriptor = new TmNeuronDescriptor(
-                    tmNeuron.getId(), tmNeuron.getName(), tmNeuron.getGeoAnnotationMap().size() + tmNeuron.getRootAnnotationCount()
-            );
-            descriptorList.add(descriptor);
-        }
-        return descriptorList;
-    }    
-
     private static final String UNREMOVE_NEURON_WARN_FMT = "Attempted to remove neuron %d that was not in workspace %d.";
     public void deleteNeuron(TmWorkspace tmWorkspace, TmNeuron tmNeuron) throws Exception {
         boolean wasRemoved = tmWorkspace.getNeuronList().remove(tmNeuron);
@@ -476,33 +465,6 @@ public class TmModelManipulator {
         return dataSource.refreshFromEntityData(neuron);
     }
 
-    private static final String UNREMOVE_GEO_ANNO_WARN_FMT = "Attempted to remove geo-annotation %d that was not in neuron %d.";
-    public void deleteGeometricAnnotation(TmNeuron oldTmNeuron, TmGeoAnnotation tmAnno) throws Exception {
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
-        TmGeoAnnotation removedAnno = tmNeuron.getGeoAnnotationMap().remove(tmAnno.getId());
-        if (removedAnno != null) {
-            // Only removed, if it actually existed in the list.
-            tmNeuron.removeRootAnnotation(tmAnno);
-            saveNeuronData(tmNeuron);
-        }
-        else {
-            log.warn(String.format(UNREMOVE_GEO_ANNO_WARN_FMT, tmAnno.getId(), tmNeuron.getId()));
-        }
-    }
-
-    private static final String UNREMOVE_TEX_ANNO_WARN_FMT = "Attempted to remove structured-text-annotation %d that was not in neuron %d.";
-    public void deleteStructuredText(TmNeuron oldTmNeuron, TmStructuredTextAnnotation tmStrucTextAnno) throws Exception {
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
-        
-        TmStructuredTextAnnotation removedAnno = tmNeuron.getStructuredTextAnnotationMap().remove(tmStrucTextAnno.getId());
-        if (removedAnno != null) {
-           saveNeuronData(tmNeuron);
-        }
-        else {
-            log.warn(String.format(UNREMOVE_TEX_ANNO_WARN_FMT, tmStrucTextAnno.getId(), tmNeuron.getId()));
-        }
-    }        
-    
     public void saveNeuronData(TmNeuron neuron) throws Exception {
         dataSource.saveNeuron(neuron);
     }
@@ -587,19 +549,9 @@ public class TmModelManipulator {
         
     }
 
-// RESERVE JUDGEMENT
-//    public void addLinkedGeometricAnnotations(
-//            Map<Integer, Integer> nodeParentLinkage,
-//            Map<Integer, TmGeoAnnotation> annotations
-//    ) throws Exception {
-//        
-//    }
-    
     private void deleteNeuronData(TmNeuron neuron) throws Exception {
         dataSource.deleteEntityData(neuron);
     }
-
-
 
     /**
      * Given a collection of annotations, under a common neuron, make
@@ -683,7 +635,5 @@ public class TmModelManipulator {
         }
         return geoAnnotation;
     }
-
-
 
 }
