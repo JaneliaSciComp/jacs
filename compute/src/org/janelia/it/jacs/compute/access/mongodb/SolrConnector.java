@@ -46,6 +46,7 @@ import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
@@ -212,7 +213,10 @@ public class SolrConnector {
 			try {
 				Object value = ReflectionHelper.getFieldValue(domainObject, field.getName());	
 				if (value != null) {
-					attrs.put(searchAttributeAnnot.key(), value);
+                    attrs.put(searchAttributeAnnot.key(), value);
+                    if (!StringUtils.isEmpty(searchAttributeAnnot.facet())) {
+                        attrs.put(searchAttributeAnnot.facet(), value);
+                    }
 				}
 			}
 			catch (NoSuchFieldException e) {
@@ -226,6 +230,9 @@ public class SolrConnector {
                 Object value = method.invoke(domainObject);  
                 if (value != null) {
                     attrs.put(searchAttributeAnnot.key(), value);
+                    if (!StringUtils.isEmpty(searchAttributeAnnot.facet())) {
+                        attrs.put(searchAttributeAnnot.facet(), value);
+                    }
                 } 
             }
             catch (InvocationTargetException | IllegalAccessException e) {
@@ -270,7 +277,6 @@ public class SolrConnector {
             }
         }
 		
-
 		return doc;
 	}
 

@@ -15,6 +15,6 @@ import java.lang.annotation.Target;
 public @interface SearchAttribute {
     String key();
     String label();
-    boolean facet() default false;
+    String facet() default "";
     boolean display() default true;
 }

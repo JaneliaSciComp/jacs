@@ -46,7 +46,7 @@ public abstract class AbstractDomainObject implements DomainObject,Serializable 
     @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     private Date updatedDate;
 
-    @SearchAttribute(key="owner",label="Owner",facet=true)
+    @SearchAttribute(key="owner",label="Owner",facet="owner_s")
     @JsonIgnore
     public String getOwnerName() {
         return DomainUtils.getNameFromSubjectKey(ownerKey);

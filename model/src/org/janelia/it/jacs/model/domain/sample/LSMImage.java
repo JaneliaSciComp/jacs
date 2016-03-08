@@ -44,15 +44,15 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     private Boolean representative;
     
     @SAGEAttribute(cvName="light_imagery", termName="age")
-    @SearchAttribute(key="age_s",label="Age",facet=true)
+    @SearchAttribute(key="age_txt",label="Age",facet="age_s")
     private String age;
 
     @SAGEAttribute(cvName="light_imagery", termName="annotated_by")
-    @SearchAttribute(key="annotatedby_s",label="Annotated By",facet=true)
+    @SearchAttribute(key="annotatedby_txt",label="Annotated By",facet="annotatedby_s")
     private String annotatedBy;
 
     @SAGEAttribute(cvName="light_imagery", termName="area")
-    @SearchAttribute(key="area_s",label="Anatomical Area",facet=true)
+    @SearchAttribute(key="area_txt",label="Anatomical Area",facet="area_s")
     private String anatomicalArea;
 
     @SAGEAttribute(cvName="light_imagery", termName="bc_correction1")
@@ -72,7 +72,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     private Date captureDate;
 
     @SAGEAttribute(cvName="light_imagery", termName="channel_spec")
-    @SearchAttribute(key="chanspec_s",label="Channel Specification",facet=true)
+    @SearchAttribute(key="chanspec_txt",label="Channel Specification",facet="chanspec_s")
     private String chanSpec;
 
     @SAGEAttribute(cvName="light_imagery", termName="lsm_detection_channel_1_detector_gain")
@@ -100,7 +100,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     private Integer crossBarcode;
     
     @SAGEAttribute(cvName="light_imagery", termName="gender")
-    @SearchAttribute(key="gender_s",label="Gender",facet=true)
+    @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
     private String gender;
 
     @SAGEAttribute(cvName="light_imagery", termName="full_age")
@@ -152,11 +152,11 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     private String imageFamily;
 
     @SAGEAttribute(cvName="light_imagery", termName="created_by")
-    @SearchAttribute(key="created_by_s",label="Imager",facet=true)
+    @SearchAttribute(key="created_by_txt",label="Imager",facet="created_by_s")
     private String createdBy;
 
     @SAGEAttribute(cvName="light_imagery", termName="data_set")
-    @SearchAttribute(key="data_set_s",label="Data Set",facet=true)
+    @SearchAttribute(key="data_set_txt",label="Data Set",facet="data_set_s")
     private String dataSet;
 
     @SAGEAttribute(cvName="light_imagery", termName="imaging_project")
