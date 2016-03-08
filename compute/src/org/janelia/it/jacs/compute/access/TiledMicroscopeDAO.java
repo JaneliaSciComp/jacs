@@ -45,7 +45,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     private TmFromEntityPopulator tmFactory = new TmFromEntityPopulator();
 
     public static final String VERSION_ATTRIBUTE = "Version";
-    private final static String TMP_GEO_VALUE = "@@@ new geo value string @@@";
     private final static String WORKSPACES_FOLDER_NAME = "Workspaces";
     private final static String BASE_PATH_PROP = "SWC.Import.BaseDir";
     public static final String OLD_NEURON_STYLES_PREF = "old-annotation-neuron-styles";
