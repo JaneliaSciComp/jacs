@@ -724,7 +724,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     }
                     log.trace("MARK3: ending 1x neuron fetch");
                 }
-                if (neuronId != nextNeuronId) {
+                if (!neuronId.equals(nextNeuronId)) {
                     throw new Exception("Do not mix neuron-parents in a batch of annotations.  Found these two mixed: " + neuronId + "," + nextNeuronId);
                 }
 
