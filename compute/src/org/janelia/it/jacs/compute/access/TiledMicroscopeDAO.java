@@ -937,7 +937,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 annotationDAO.saveOrUpdateEntity(workspaceEntity);
                 log.info("Conversion completed for workspace " + workspaceId + " '" + workspace.getName() + "'.");
 
-            }
+            } // end if we need to update workspace from pre-protobuf version
 
             return workspace;
         } catch (Exception e) {
