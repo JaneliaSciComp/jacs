@@ -40,6 +40,7 @@ public class SemanticsWebService extends ResourceConfig {
     public Annotation createAnnotation(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("createAnnotation({})",query);
             Annotation newAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
             IndexingHelper.sendReindexingMessage(newAnnotation);
             return newAnnotation;
@@ -56,6 +57,7 @@ public class SemanticsWebService extends ResourceConfig {
     public Annotation updateAnnotation(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("updateAnnotation({})",query);
             Annotation updateAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
             IndexingHelper.sendReindexingMessage(updateAnnotation);
             return updateAnnotation;
@@ -72,6 +74,7 @@ public class SemanticsWebService extends ResourceConfig {
     public List<Annotation> getAnnotations(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("getAnnotations({})",query);
             List<Annotation> annotations = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
             return annotations;
         } catch (Exception e) {
@@ -88,6 +91,7 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         Reference annotationRef = new Reference (Annotation.class.getName(), new Long(annotationId));
         try {
+            log.debug("removeAnnotations({},{})",subjectKey,annotationId);
             DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);
             IndexingHelper.sendRemoveFromIndexMessage(deleteAnnotation.getId());
             dao.remove(subjectKey, deleteAnnotation);
@@ -104,6 +108,7 @@ public class SemanticsWebService extends ResourceConfig {
     public List<Ontology> getOntologies(@QueryParam("subjectKey") final String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("getOntologies({})",subjectKey);
             Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
             return new ArrayList<Ontology>(ontologies);
         } catch (Exception e) {
@@ -119,6 +124,7 @@ public class SemanticsWebService extends ResourceConfig {
     public Ontology createOntology(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("createOntology({})",query);
             Ontology updateOntology = (Ontology)dao.save(query.getSubjectKey(), query.getDomainObject());
             IndexingHelper.sendReindexingMessage(updateOntology);
             return updateOntology;
@@ -137,6 +143,7 @@ public class SemanticsWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         Reference ontologyRef = new Reference (Ontology.class.getName(), new Long(ontologyId));
         try {
+            log.debug("removeOntology({},{})",subjectKey,ontologyId);
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);
             IndexingHelper.sendRemoveFromIndexMessage(ont.getId());
             dao.remove(subjectKey, ont);
@@ -153,6 +160,7 @@ public class SemanticsWebService extends ResourceConfig {
     public Ontology addTermsToOntology(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("addTermsToOntology({})",query);
             List<Long> objectIds = query.getObjectIds();
             Long ontologyId = objectIds.get(0);
             Long parentId = objectIds.get(1);
@@ -176,6 +184,7 @@ public class SemanticsWebService extends ResourceConfig {
     public Ontology reorderOntology(DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("reorderOntology({})",query);
             List<Long> objectIds = query.getObjectIds();
             Long ontologyId = objectIds.get(0);
             Long parentId = objectIds.get(1);
@@ -202,6 +211,7 @@ public class SemanticsWebService extends ResourceConfig {
                                             @QueryParam("termId") final Long termId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
+            log.debug("removeTermsFromOntology({},{},{},{})",subjectKey,ontologyId,parentTermId,termId);
             Ontology updateOntology = dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
             IndexingHelper.sendReindexingMessage(updateOntology);
             return updateOntology;

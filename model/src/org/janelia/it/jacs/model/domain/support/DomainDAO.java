@@ -507,7 +507,7 @@ public class DomainDAO {
         String collectionName = DomainUtils.getCollectionName(domainObject);
         MongoCollection collection = getCollectionByName(collectionName);
         try {
-        	Date now = new Date();
+            Date now = new Date();
             if (domainObject.getId()==null) {
             	Set<String> subjects = Sets.newHashSet(subjectKey);
                 domainObject.setId(getNewId());
@@ -541,7 +541,6 @@ public class DomainDAO {
      * @throws Exception
      */
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
-        log.info("Saving changes to '{}'",domainObject.getName());
         saveImpl(subjectKey, domainObject);
         // TODO: The only reason this retrieves the saved object is to avoid errors during development where the client incorrectly 
         // depends on input object being returned. However, i's needlessly inefficient, so once we have remote clients written 

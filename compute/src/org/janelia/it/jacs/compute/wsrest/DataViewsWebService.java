@@ -1,22 +1,31 @@
 package org.janelia.it.jacs.compute.wsrest;
 
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
-import org.apache.solr.common.params.ModifiableSolrParams;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -31,9 +40,11 @@ import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.shared.solr.*;
+import org.janelia.it.jacs.shared.solr.FacetValue;
+import org.janelia.it.jacs.shared.solr.SolrJsonResults;
+import org.janelia.it.jacs.shared.solr.SolrParams;
+import org.janelia.it.jacs.shared.solr.SolrQueryBuilder;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
-import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -297,7 +308,6 @@ public class DataViewsWebService extends ResourceConfig {
         try {
             SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
             QueryResponse response = solr.search(query);
-            log.info("Number documents found:" + Long.toString(response.getResults().getNumFound()));
             Map<String,List<FacetValue>> facetValues = new HashMap<>();
             if (response.getFacetFields()!=null) {
                 for (final FacetField ff : response.getFacetFields()) {
@@ -312,10 +322,11 @@ public class DataViewsWebService extends ResourceConfig {
             }
 
             SolrDocumentList results = response.getResults();
-            if (query.getSortField()!=null && query.getSortField().endsWith("asc")) {
-                Collections.reverse(results);
-            }
-
+            log.debug("searchSolrIndices called with {} and found {} results",queryParams,results.getNumFound());
+            // TODO: why this reverse? 
+//            if (query.getSortField()!=null && query.getSortField().endsWith("asc")) {
+//                Collections.reverse(results);
+//            }
             return new SolrJsonResults(results, facetValues, response.getResults().getNumFound());
 
         } catch (Exception e) {

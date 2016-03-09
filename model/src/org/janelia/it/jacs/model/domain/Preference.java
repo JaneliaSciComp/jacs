@@ -73,4 +73,10 @@ public class Preference implements HasIdentifier {
     public void setValue(String value) {
         this.value = value;
     }
+
+    @Override
+    public String toString() {
+        return "Preference [id=" + id + ", subjectKey=" + subjectKey + ", category=" + category + ", key=" + key + ", value=" + value + "]";
+    }
+    
 }
