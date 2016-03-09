@@ -20,6 +20,11 @@ public class SWCDataConverter {
     private static final int SWC_Y = 1;
     private static final int SWC_Z = 2;
 
+    // SWC data can't have a null radius, so we have to choose something;
+    //  1.0 is about as innocuous a value as you can choose; plus, we
+    //  were already using it implicitly before we handled radii explicitly
+    private static final double DEFAULT_RADIUS = 1.0;
+
     private ImportExportSWCExchanger exchanger;
     
     public void setSWCExchanger( ImportExportSWCExchanger exchanger ) {
@@ -264,7 +269,11 @@ public class SWCDataConverter {
                     }
                 }
                 
-                // Make the node for manual reference now.                
+                // Make the node for manual reference now.
+                double radius = DEFAULT_RADIUS;
+                if (subAnn.getRadius() != null) {
+                    radius = subAnn.getRadius();
+                }
                 SWCNode manualNode = createSWCNode(
                         currentIndex++,
                         getSegmentType(subAnn),
@@ -274,7 +283,7 @@ public class SWCDataConverter {
                         xcenter,
                         ycenter,
                         zcenter,
-                        subAnn.getRadius(),
+                        radius,
                         parentIndex
                 );
                 nodeList.add(manualNode);                
@@ -310,6 +319,10 @@ public class SWCDataConverter {
                 }
                 SWCNode.SegmentType segmentType = getSegmentType(ann);
 
+                double radius = DEFAULT_RADIUS;
+                if (ann.getRadius() != null) {
+                    radius = ann.getRadius();
+                }
                 nodeList.add(
                         createSWCNode(
                                 currentIndex,
@@ -320,7 +333,7 @@ public class SWCDataConverter {
                                 xcenter,
                                 ycenter, 
                                 zcenter,
-                                ann.getRadius(),
+                                radius,
                                 parentIndex
                         )
                 );
