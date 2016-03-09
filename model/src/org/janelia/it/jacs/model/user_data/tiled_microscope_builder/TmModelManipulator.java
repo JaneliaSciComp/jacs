@@ -428,14 +428,20 @@ public class TmModelManipulator {
         //  move the path as well
         Map<TmAnchoredPathEndpoints,TmAnchoredPath> oldNeuronAnchoredPathMap = oldTmNeuron.getAnchoredPathMap();
         Map<TmAnchoredPathEndpoints,TmAnchoredPath> newNeuronAnchoredPathMap = newTmNeuron.getAnchoredPathMap();
-        for (TmAnchoredPathEndpoints endpoints : oldTmNeuron.getAnchoredPathMap().keySet()) {
+
+        Iterator<TmAnchoredPathEndpoints> iter = oldNeuronAnchoredPathMap.keySet().iterator();
+        while(iter.hasNext()) {
+            TmAnchoredPathEndpoints endpoints = iter.next();
             // both endpoints are necessarily in the same neurite, so only need
             //  to test one:
             if (movedAnnotationIDs.containsKey(endpoints.getFirstAnnotationID())) {
-                TmAnchoredPath anchoredPath = oldNeuronAnchoredPathMap.remove(endpoints);
+                TmAnchoredPath anchoredPath = oldNeuronAnchoredPathMap.get(endpoints);
+                iter.remove();
+                // TmAnchoredPath anchoredPath = oldNeuronAnchoredPathMap.remove(endpoints);
                 newNeuronAnchoredPathMap.put(endpoints, anchoredPath);
             }
         }
+
 
         // Need to remove all these annotations from the old map, after
         // iteration through the map above, to avoid concurrent modification.
