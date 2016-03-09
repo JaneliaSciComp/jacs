@@ -475,13 +475,6 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            diskSpoolBufferSizeMB="50"
             />
             
-    <cache name="neo4jMapCache"
-           maxEntriesLocalHeap="100"
-           eternal="true"
-           overflowToDisk="true"
-           diskSpoolBufferSizeMB="50"
-            />
-            
     <cache name="sageImagePropCache"
            maxEntriesLocalHeap="100"
            eternal="true"

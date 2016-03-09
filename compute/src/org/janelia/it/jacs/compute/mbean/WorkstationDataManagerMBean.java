@@ -15,8 +15,7 @@ public interface WorkstationDataManagerMBean {
 	public void runScreenScoresExport(String user, String outputFilepath);
 	public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath);
 	
-	// Alternative databases (not currently used)
-	public void runNeo4jSync(Boolean clearDb);
+	// ETL
 	public void runMongoDbSync(Boolean clearDb);
 	
 	// SOLR Indexing

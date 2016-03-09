@@ -20,7 +20,6 @@ import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
-import org.janelia.it.jacs.compute.access.neo4j.Neo4jCSVExportDao;
 import org.janelia.it.jacs.compute.access.solr.SolrDAO;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -117,22 +116,6 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
         }
     }
 
-    // TODO: move this to its own bean, or rename this one
-    public void neo4jAllEntities(boolean clearDb) throws ComputeException {
-    	try {
-//    		Neo4jBatchDAO neo4jDAO = new Neo4jBatchDAO(_logger);
-    		Neo4jCSVExportDao neo4jDAO = new Neo4jCSVExportDao(log);
-    		if (clearDb) {
-    			neo4jDAO.dropDatabase();
-    		}
-    		neo4jDAO.loadAllEntities();
-    	}
-    	catch (DaoException e) {
-            log.error("Error indexing all entities",e);
-    		throw new ComputeException("Error indexing all entities",e);
-    	}
-    }
-    
 	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException {
 		SolrDAO solrDAO = new SolrDAO(log, false, false);
 		System.out.println (query);
