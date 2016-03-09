@@ -166,20 +166,47 @@ if (mode=="mcfo" || mode=="polarity") {
 // Process reference channel
 print("Processing reference channel");
 selectWindow("reference");
-title = getTitle();
 performHistogramStretching();
 run("Divide...", "value=2 stack");
 run("8-bit");
-rename(title);
 
 if (merge_name!="") {
-    print("Merging channels: "+merge_name);
-    run("Merge Channels...", merge_name+" ignore");
-    // Sometimes the merge creates a composite image, this will fix it
-    getDimensions(width, height, channels, slices, frames);
-    if (channels == 2) {
-        run("RGB Color", "slices");
+    if (numChannels == 2) {
+        // Only one signal channel, so Merge Channels may fail. This workaround:
+        selectWindow("signal1");
+        if (startsWith(merge_name,"c1")) {
+            run("Red");
+        }
+        else if (startsWith(merge_name,"c2")) {
+            run("Green");
+        }
+        else if (startsWith(merge_name,"c3")) {
+            run("Blue");
+        }
+        else if (startsWith(merge_name,"c4")) {
+            run("Grays");
+        }
+        else if (startsWith(merge_name,"c5")) {
+            run("Cyan");
+        }
+        else if (startsWith(merge_name,"c6")) {
+            run("Magenta");
+        }
+        else if (startsWith(merge_name,"c7")) {
+            run("Yellow");
+        }
+        run("RGB Color");
         rename("RGB");
+    }
+    else {
+        print("Merging channels: "+merge_name);
+        run("Merge Channels...", merge_name+" ignore");
+        // Sometimes the merge creates a composite image, this will fix it
+        getDimensions(width, height, channels, slices, frames);
+        if (channels == 2) {
+            run("RGB Color", "slices");
+            rename("RGB");
+        }
     }
 }
 
