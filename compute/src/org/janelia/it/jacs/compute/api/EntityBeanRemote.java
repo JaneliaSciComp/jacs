@@ -24,6 +24,7 @@ import org.janelia.it.jacs.model.entity.EntityType;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Deprecated
 @Remote
 public interface EntityBeanRemote {
     

@@ -38,6 +38,7 @@ import org.jboss.ejb3.StrictMaxPool;
 
 import com.google.common.collect.ComparisonChain;
 
+@Deprecated
 @Stateless(name = "AnnotationEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
@@ -270,15 +271,16 @@ public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRe
     }
 
     public long getNumDescendantsAnnotated(Long entityId) throws ComputeException {
-        try {
-			SolrDAO solrDAO = new SolrDAO(_logger, false, false);
-			SolrQuery query = new SolrQuery("(id:"+entityId+" OR ancestor_ids:"+entityId+") AND all_annotations:*");
-			return solrDAO.search(query).getResults().getNumFound();
-	    }
-	    catch (DaoException e) {
-	    	_logger.error("Error getting number of annotations: "+entityId, e);
-	    	throw new ComputeException("Error getting number of annotations: "+entityId, e);
-	    }
+        throw new UnsupportedOperationException("This operation is no longer supported. Use the SolrConnector.");
+//        try {
+//			SolrDAO solrDAO = new SolrDAO(_logger, false, false);
+//			SolrQuery query = new SolrQuery("(id:"+entityId+" OR ancestor_ids:"+entityId+") AND all_annotations:*");
+//			return solrDAO.search(query).getResults().getNumFound();
+//	    }
+//	    catch (DaoException e) {
+//	    	_logger.error("Error getting number of annotations: "+entityId, e);
+//	    	throw new ComputeException("Error getting number of annotations: "+entityId, e);
+//	    }
     }
 
     @Override

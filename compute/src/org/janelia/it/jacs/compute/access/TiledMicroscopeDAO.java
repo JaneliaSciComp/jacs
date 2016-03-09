@@ -33,7 +33,6 @@ import static org.janelia.it.jacs.shared.sample_discovery.SampleDiscoveryConstan
  * Date: 4/30/13
  * Time: 12:57 PM
  */
-
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
     AnnotationDAO annotationDAO;

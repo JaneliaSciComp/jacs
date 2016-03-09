@@ -62,6 +62,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
+@Deprecated
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
 	/** Batch fetch size for JDBC result sets */
