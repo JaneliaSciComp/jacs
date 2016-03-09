@@ -38,7 +38,7 @@ public abstract class BlastTask extends Task implements IBlastOutputFormatTask {
     transient public static final Long blastnMismatchPenalty_DEFAULT = (long) -3;
     transient public static final Long blastnMatchReward_DEFAULT = (long) 1;
     transient public static final Long databaseDescriptions_DEFAULT = (long) 250;
-    transient public static final Long databaseAlignments_DEFAULT = (long) 250;
+    transient public static final Long databaseAlignments_DEFAULT = (long) 25; // Was 250 default
     transient public static final Boolean believeDefline_DEFAULT = Boolean.FALSE;
     transient public static final String matrix_DEFAULT = "BLOSUM62";
     transient public static final Double databaseSize_DEFAULT = 0.0;
