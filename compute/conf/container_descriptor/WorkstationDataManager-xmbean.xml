@@ -92,16 +92,6 @@
     </operation>
     
     <operation>
-        <description>Synchronize Neo4j to the database</description>
-        <name>runNeo4jSync</name>
-        <parameter>
-           <description>Clear the Neo4j database first?</description>
-           <name>clearDb</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Synchronize the MongoDb to the database</description>
         <name>runMongoDbSync</name>
         <parameter>

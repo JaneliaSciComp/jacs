@@ -124,19 +124,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runNeo4jSync(Boolean clearDb) {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null));
-            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
-                    taskParameters, "neo4jSync", "Neo4j Sync");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("Neo4jSync", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
     public void runMongoDbSync(Boolean clearDb) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<>();

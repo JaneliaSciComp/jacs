@@ -39,7 +39,6 @@ public class MongoLargeOperations {
     
 	public static final String ANNOTATION_MAP = "annotationMapCache";
 	public static final String ANCESTOR_MAP = "ancestorMapCache";
-    public static final String NEO4J_MAP = "neo4jMapCache";
     public static final String SAGE_IMAGEPROP_MAP = "sageImagePropCache";
     public static final String SCREEN_SCORE_MAP = "screenScoreCache";
 	
@@ -59,7 +58,6 @@ public class MongoLargeOperations {
                 manager = new CacheManager(getClass().getResource("/ehcache2-jacs.xml"));
                 caches.put(ANNOTATION_MAP, manager.getCache(ANNOTATION_MAP));
                 caches.put(ANCESTOR_MAP, manager.getCache(ANCESTOR_MAP));
-                caches.put(NEO4J_MAP, manager.getCache(NEO4J_MAP));
                 caches.put(SAGE_IMAGEPROP_MAP, manager.getCache(SAGE_IMAGEPROP_MAP));
                 caches.put(SCREEN_SCORE_MAP, manager.getCache(SCREEN_SCORE_MAP));
             }
