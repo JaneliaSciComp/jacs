@@ -23,7 +23,9 @@ public class SWCDataConverter {
     // SWC data can't have a null radius, so we have to choose something;
     //  1.0 is about as innocuous a value as you can choose; plus, we
     //  were already using it implicitly before we handled radii explicitly
-    private static final double DEFAULT_RADIUS = 1.0;
+    // we have a potentially different radius for automatically traced paths, too
+    private static final double DEFAULT_POINT_RADIUS = 1.0;
+    private static final double DEFAULT_PATH_RADIUS = 1.0;
 
     private ImportExportSWCExchanger exchanger;
     
@@ -241,7 +243,7 @@ public class SWCDataConverter {
                                 xcenter,
                                 ycenter,
                                 zcenter,
-                                -1.0,
+                                DEFAULT_PATH_RADIUS,
                                 parentIndex
                         );
                         nodeList.add(autoNode);
@@ -270,7 +272,7 @@ public class SWCDataConverter {
                 }
                 
                 // Make the node for manual reference now.
-                double radius = DEFAULT_RADIUS;
+                double radius = DEFAULT_POINT_RADIUS;
                 if (subAnn.getRadius() != null) {
                     radius = subAnn.getRadius();
                 }
@@ -319,7 +321,7 @@ public class SWCDataConverter {
                 }
                 SWCNode.SegmentType segmentType = getSegmentType(ann);
 
-                double radius = DEFAULT_RADIUS;
+                double radius = DEFAULT_POINT_RADIUS;
                 if (ann.getRadius() != null) {
                     radius = ann.getRadius();
                 }
