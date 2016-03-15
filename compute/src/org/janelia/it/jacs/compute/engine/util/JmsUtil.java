@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.engine.util;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.DataExtractor;
@@ -15,10 +16,7 @@ import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
 import javax.ejb.EJBException;
-import javax.jms.JMSException;
-import javax.jms.MapMessage;
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
+import javax.jms.*;
 
 import java.util.Map;
 
@@ -170,7 +168,17 @@ public class JmsUtil {
     public static QueueMessage sendMessageToQueue(AsyncMessageInterface messageInterface, IProcessData processData, Queue replyToQueue) throws LauncherException {
         try {
             ActionDef actionToProcess = processData.getActionToProcess();
-            messageInterface.startMessageSession(getQueueName(actionToProcess), messageInterface.localConnectionType);
+            // Check if we have a overriding queue preference in the process data
+            String queueName = processData.getString(IProcessData.QUEUE_OVERRIDE);
+            if (queueName==null) {
+            	// Just use the queue specified in the action definition
+            	queueName = getQueueName(actionToProcess);
+            	logger.info("Using default queue: "+queueName);
+            }
+            else {
+            	logger.info("Overridding queue to: "+queueName);
+            }
+            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
             ObjectMessage jmsMessage = messageInterface.createObjectMessage();
             if (replyToQueue != null) {
                 jmsMessage.setJMSReplyTo(replyToQueue);
@@ -194,16 +202,27 @@ public class JmsUtil {
 
     public static void sendMessageToQueue(AsyncMessageInterface messageInterface, Map<String,String> parameters, String queueName) throws LauncherException {
         try {
-            messageInterface.startMessageSession(queueName, messageInterface.localConnectionType);
+            sendMessageToQueue(messageInterface, messageInterface.localConnectionType,
+                    ImmutableMap.<String, Object>copyOf(parameters), queueName);
+        } catch (Exception e) {
+            throw new LauncherException(e);
+        }
+    }
+
+    public static void sendMessageToQueue(AsyncMessageInterface messageInterface,
+                                          AsyncMessageInterface.ConnectionType connectionType,
+                                          Map<String, Object> parameters,
+                                          String queueName) throws LauncherException {
+        try {
+            messageInterface.startMessageSession(queueName, connectionType);
             MapMessage mapMessage = messageInterface.createMapMessage();
-            for ( String paramName: parameters.keySet() ) {
-                mapMessage.setString( paramName, parameters.get( paramName ) );
+            for (String paramName : parameters.keySet()) {
+                mapMessage.setObject(paramName, parameters.get(paramName));
             }
             messageInterface.sendMessageWithinTransaction(mapMessage);
             messageInterface.commit();
             messageInterface.endMessageSession();
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             // Cannot proceed further
             throw new LauncherException(e);
         }

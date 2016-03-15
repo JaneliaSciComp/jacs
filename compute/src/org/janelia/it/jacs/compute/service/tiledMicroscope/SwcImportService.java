@@ -16,7 +16,7 @@ import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanLocal;
 import org.janelia.it.jacs.model.tasks.Event;
 
 /**
- * Validation proceeds from here.
+ * SWC Import proceeds from here.
  *
  * Created by fosterl on 6/17/14.
  */

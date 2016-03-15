@@ -15,6 +15,10 @@ public class StringUtils {
 		return s==null || "".equals(s);
 	}
 
+    public static boolean isBlank(String s) {
+        return s==null || "".equals(s.trim());
+    }
+
 	public static boolean areAllEmpty(Collection<String> strings) {
 	    for (String s : strings) {
 	        if (!isEmpty(s)) {

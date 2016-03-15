@@ -401,14 +401,13 @@ public class EntityBeanImpl implements EntityBeanLocal, EntityBeanRemote {
     public boolean deleteEntityTreeById(String subjectKey, Long entityId, boolean unlinkMultipleParents) throws ComputeException {
         try {
             Entity currEntity = getEntityById(subjectKey, entityId);
-            if (currEntity==null) {
-                throw new Exception("Entity not found: "+entityId);
+            if (currEntity != null) {
+                if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
+                    throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
+                }
+                _annotationDAO.deleteEntityTree(subjectKey, currEntity, unlinkMultipleParents);
+                _logger.info(subjectKey+" deleted entity tree "+entityId);
             }
-            if (subjectKey!=null && !EntityUtils.hasWriteAccess(currEntity, _annotationDAO.getSubjectKeys(subjectKey))) {
-                throw new ComputeException("Subject "+subjectKey+" cannot change "+entityId);
-            }
-            _annotationDAO.deleteEntityTree(subjectKey, currEntity, unlinkMultipleParents);
-            _logger.info(subjectKey+" deleted entity tree "+entityId);
             return true;
         }
         catch (Exception e) {

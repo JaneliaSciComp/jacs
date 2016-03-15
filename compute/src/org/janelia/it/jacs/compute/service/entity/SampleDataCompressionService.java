@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.janelia.it.jacs.compute.access.scality.ScalityDAO;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.util.FileUtils;
@@ -123,10 +122,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
             if (entity == null) {
                 throw new IllegalArgumentException("Entity not found: "+rootEntityId);
-            }
-            
-            if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
-                throw new IllegalArgumentException("Entity is not a sample: "+rootEntityId);
             }
             
             Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
@@ -556,17 +551,9 @@ public class SampleDataCompressionService extends AbstractEntityService {
         }
         
         if (!isDebug) {
-        	// TODO: use JFS to delete the path
             if (filepath.startsWith(EntityConstants.SCALITY_PATH_PREFIX)) {
-//            	String bpid = filepath.replaceFirst(EntityConstants.SCALITY_PATH_PREFIX,"");
-//            	ScalityDAO scality = new ScalityDAO();
-//                try {
-//                	scality.delete(bpid);
-//                    contextLogger.info("Deleted old Scality object: "+bpid);
-//                }
-//                catch (Exception e) {
-//                	logger.info("Error deleting Scality object "+bpid+"",e);
-//                }
+            	// TODO: use JFS to delete the path
+            	contextLogger.warn("Deletion from Scality is not yet implemented! This file should be deleted: "+filepath);
             }
             else {
                 File file = new File(filepath);

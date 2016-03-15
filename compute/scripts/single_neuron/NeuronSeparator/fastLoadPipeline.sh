@@ -29,8 +29,8 @@ then
 fi
 
 MV_SIZES=( 25 50 100 ) # subsample sizes, in millions of voxels
-SEPDIR=$1 # e.g. /nobackup/jacs/jacsData/filestore/.../separate
-INPUT_FILE=$2 # e.g. /nobackup/jacs/jacsData/filestore/.../stitched-1679282762445488226.v3draw
+SEPDIR=$1 # e.g. /nrs/jacs/jacsData/filestore/.../separate
+INPUT_FILE=$2 # e.g. /nrs/jacs/jacsData/filestore/.../stitched-1679282762445488226.v3draw
 
 REF_FILE="$SEPDIR/Reference.v3draw"
 LABEL_FILE="$SEPDIR/ConsolidatedLabel.v3draw"

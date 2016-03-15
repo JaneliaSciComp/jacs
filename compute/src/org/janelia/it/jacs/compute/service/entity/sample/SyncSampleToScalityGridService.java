@@ -3,10 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -136,9 +133,10 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                     .childrenOfType(EntityConstants.TYPE_LSM_STACK)
                     .run(new EntityVisitor() {
                 public void visit(Entity entity) throws Exception {
-                    String completionDateStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
-                    if (null!=completionDateStr) {
-                        DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
+                    //String completionDateStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
+                    Date creationDate = entity.getCreationDate();
+                    if (null!=creationDate) {
+                        DateTime completionDate = new DateTime(creationDate);
                         if (cutoffDate.isAfter(completionDate)) {
                             addToEntitiesToMove(entity);
                         }
@@ -147,7 +145,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
                         }
                     }
                     else {
-                    	logger.info("LSM has not been completed, so it can't be moved: "+entity.getId());
+                    	logger.error("LSM does not have a creation date, so it can't be moved: "+entity.getId());
                     }
                 }
             });
@@ -270,7 +268,7 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         script.append("cd $WORKING_DIR\n");
         
         // If the file is an LSM, ensure that it is compressed before uploading
-        script.append("FILE_STUB=`basename $FILE_PATH`\n");
+        script.append("FILE_STUB=`basename \"$FILE_PATH\"`\n");
         script.append("FILE_EXT=${FILE_STUB##*.}\n");
         script.append("if [[ \"$FILE_EXT\" = \"lsm\" ]]; then\n");
         script.append("  WORKING_FILE=$WORKING_DIR/$FILE_STUB.bz2\n");

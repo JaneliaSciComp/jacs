@@ -33,9 +33,13 @@ import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
 import org.janelia.it.jacs.shared.swc.SWCDataConverter;
 import org.janelia.it.jacs.shared.swc.SWCNode;
 import sun.misc.BASE64Encoder;
+import static org.janelia.it.jacs.shared.sample_discovery.SampleDiscoveryConstants.*;
 
 /**
- * Created with IntelliJ IDEA. User: murphys Date: 4/30/13 Time: 12:57 PM
+ * Created with IntelliJ IDEA.
+ * User: murphys
+ * Date: 4/30/13
+ * Time: 12:57 PM
  */
 public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
@@ -71,7 +75,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, EntityConstants.ATTRIBUTE_ANCHORED_PATH);
             annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE);
             annotationDAO.createNewEntityAttr(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON, EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE);
-
+            
             log.debug("Creating PropertySet entity");
             annotationDAO.createNewEntityType(EntityConstants.TYPE_PROPERTY_SET);
             annotationDAO.createNewEntityAttr(EntityConstants.TYPE_PROPERTY_SET, EntityConstants.ATTRIBUTE_PROPERTY);
@@ -172,8 +176,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
      *
      * @param swcFolderLoc where is the server-accessible folder?
      * @param ownerKey winds up owning it all.
-     * @param sampleId required, to find the base path, optionally can get from
-     * workspace.
+     * @param sampleId required, to find the base path, optionally can get from workspace.
      * @param workspaceNameParam optional, may be left blank or null.
      * @throws ComputeException thrown as wrapper for any exceptions.
      */
@@ -446,11 +449,11 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     /**
      * This creates a neuron in a way suitable for server-side-only use:
      * bypassing some of the ownership safeguards.
-     *
+     * 
      * @param workspace neuron shall exist here.
      * @param name final name of neuron.
      * @return the neuron model.
-     * @throws DaoException
+     * @throws DaoException 
      */
     private TmNeuron createTmNeuronInMemory(TmWorkspace workspace, String name, Long precomputedId) throws DaoException {
         try {
@@ -734,7 +737,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         ArrayList<EntityData> linkList = new ArrayList<>();
         ArrayList<EntityData> rootList = new ArrayList<>();
         Entity neuronEntity = annotationDAO.getEntityById(neuronID);
-        for (EntityData ed : neuronEntity.getEntityData()) {
+        for (EntityData ed: neuronEntity.getEntityData()) {
             String attributeName = ed.getEntityAttrName();
             if (attributeName.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE)) {
                 parentSet.add(ed.getId());
@@ -746,7 +749,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
 
         // check roots: are they children of the neuron?
-        for (EntityData ed : rootList) {
+        for (EntityData ed: rootList) {
             TmGeoAnnotation annotation;
             try {
                 annotation = tmFactory.createTmGeoAnnotation(ed);
@@ -929,7 +932,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     refreshPrefsInDomainObject(workspaceEntity, workspace);
                 }
 
-                // In event of some error, it is possible only part of the 
+                // In event of some error, it is possible only part of the
                 // neurons handled above will have been converted. Hence they
                 // are being marked with the version, post-convert.
                 setWorkspaceLatestVersion(workspaceEntity);

@@ -44,7 +44,9 @@ public class JFSUtils {
             sb.append(entity.getName());
         }
         else if (EntityConstants.TYPE_LSM_STACK.equals(entity.getEntityTypeName())) {
-        	String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        	String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).trim();
+            // Spaces in PBID's are not allowed.
+            filepath = filepath.replace(" ","_");
         	filepath = filepath.substring(1);
         	filepath = filepath.substring(filepath.indexOf('/'));
         	sb.append(JFS_LSM_STORE);

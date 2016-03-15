@@ -248,7 +248,9 @@ public class EntityConstants {
     public static final String ATTRIBUTE_PIPELINE_PROCESS                    = "Pipeline Process";
     public static final String ATTRIBUTE_SAGE_SYNC                           = "SAGE Sync";
     public static final String ATTRIBUTE_SAGE_ID                             = "SAGE Id";
-    
+    public static final String ATTRIBUTE_SAGE_CONFIG_PATH                    = "SAGE Config Path";
+    public static final String ATTRIBUTE_SAGE_GRAMMAR_PATH                   = "SAGE Grammar Path";
+
     // Error Attributes
     public static final String ATTRIBUTE_DESCRIPTION                         = "Description";
     public static final String ATTRIBUTE_CLASSIFICATION                      = "Classification";

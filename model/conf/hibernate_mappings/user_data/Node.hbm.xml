@@ -787,13 +787,6 @@
                       select-before-update="false">
             </subclass>
             
-			<!-- Temporary use.  During an intermediate phase, this node will be used to track updates of LargeVolumeViewer TM Neurons. LLF, 2/13/2016 -->
-			<subclass name="org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuronPBUpdateNode" discriminator-value="TmNeuronUpdateNode"
-					  dynamic-update="true"
-					  dynamic-insert="true"
-					  select-before-update="false">
-			</subclass>
-            
             <!--<subclass name="org.janelia.it.jacs.model.user_data.reversePsiBlast.ReversePsiBlastDatabaseNode" discriminator-value="ReversePsiBlastDatabaseNode"-->
                       <!--dynamic-update="true"-->
                       <!--dynamic-insert="true"-->

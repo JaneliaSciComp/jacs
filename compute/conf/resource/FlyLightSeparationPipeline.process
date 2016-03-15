@@ -90,7 +90,16 @@
                 
             </sequence>
         </sequence>
-	    
+    
+        <!-- Compress all the v3draw files to v3dpbd, because the Neuron Annotator can't read v3draw anymore. -->
+        <include name="Compress v3draw files to v3dpbd" process="SampleDataCompression">
+            <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
+            <input name="INPUT_TYPE" value="v3draw"/>
+            <input name="OUTPUT_TYPE" value="v3dpbd"/>
+            <input name="DELETE_INPUTS" value="true"/>
+            <input name="RECORD_MODE" value="UPDATE"/>
+            <input name="EXCLUDE_FILES" value="tile-*,stitched-*,Align*"/>
+        </include>
 	    
     </sequence>
     

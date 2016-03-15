@@ -45,11 +45,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
     private void addExtraParams(HashSet<TaskParameter> taskParameters, String extraParams) throws Exception {
         if (StringUtils.isEmpty(extraParams)) return;
         for (String extraParam : extraParams.split(",")) {
-        	String[] p = extraParam.split("=");
-        	if (p.length!=2) {
-        		throw new Exception("Unable to parse extra parameter: "+extraParam);
-        	}
-        	taskParameters.add(new TaskParameter(p[0], p[1], null));
+            String[] p = extraParam.split("=");
+            if (p.length!=2) {
+                throw new Exception("Unable to parse extra parameter: "+extraParam);
+            }
+            taskParameters.add(new TaskParameter(p[0], p[1], null));
         }
     }
     
@@ -325,7 +325,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing data set pipelines for "+subjectKey);
-                String ret = runUserDataSetPipelines(subjectKey, null, true, runMode, reuseSummary, reuseProcessing, reusePost, reuseAlignment, true, force);
+                String ret = runUserDataSetPipelines(subjectKey, null, true, runMode, reuseSummary, reuseProcessing, reusePost, reuseAlignment, force);
                 if (sb.length()>0) sb.append(",\n");
                 sb.append(subjectKey).append(": ").append(ret);
             }
@@ -337,54 +337,51 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
+    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
         try {
             String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("run mode", runMode, null));
+	            HashSet<TaskParameter> taskParameters = new HashSet<>();
+	            taskParameters.add(new TaskParameter("run mode", runMode, null));
             if (runSampleDiscovery!=null) {
-            	taskParameters.add(new TaskParameter("run sample discovery", runSampleDiscovery.toString(), null));
-            }
-            if (reusePipelineRuns!=null) {
-            	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
+                taskParameters.add(new TaskParameter("run sample discovery", runSampleDiscovery.toString(), null));
             }
             if (reuseSummary!=null) {
                 taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
             }
             if (reuseProcessing!=null) {
-            	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+                taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
             }
             if (reusePost!=null) {
                 taskParameters.add(new TaskParameter("reuse post", reusePost.toString(), null));
             }
             if (reuseAlignment!=null) {
-            	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+                taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             }
             if ((dataSetName != null) && (dataSetName.trim().length() > 0)) {
                 taskParameters.add(new TaskParameter("data set name", dataSetName, null));
             }
             if (!force) {
-		        Task task = EJBFactory.getLocalComputeBean().getMostRecentTaskWithNameAndParameters(user, processName, taskParameters);
-		        if (task!=null) {
-		        	log.info("Checking most recent similar task: "+task.getObjectId());
-		            if (!task.isDone()) {
-		            	log.info("Pipeline is still running (last event: "+task.getLastEvent().getEventType()+"). Skipping run.");
-		                return "Error: pipeline is already running";
-		            }
-		            List<Task> childTasks = EJBFactory.getLocalComputeBean().getChildTasksByParentTaskId(task.getObjectId());
-		            boolean allDone = true;
-		            for(Task subtask : childTasks) {
-		                if (!subtask.isDone()) {
-		                    allDone = false;
-		                    break;
-		                }
-		            }
-		            if (!allDone) {
-		            	log.info("One of the subtasks is not done, skipping run.");
-		                return "Error: pipeline subtasks are still running";
-		            }
-		        }
+                Task task = EJBFactory.getLocalComputeBean().getMostRecentTaskWithNameAndParameters(user, processName, taskParameters);
+                if (task!=null) {
+                    log.info("Checking most recent similar task: "+task.getObjectId());
+                    if (!task.isDone()) {
+                        log.info("Pipeline is still running (last event: "+task.getLastEvent().getEventType()+"). Skipping run.");
+                        return "Error: pipeline is already running";
+                    }
+                    List<Task> childTasks = EJBFactory.getLocalComputeBean().getChildTasksByParentTaskId(task.getObjectId());
+                    boolean allDone = true;
+                    for(Task subtask : childTasks) {
+                        if (!subtask.isDone()) {
+                            allDone = false;
+                            break;
+                        }
+                    }
+                    if (!allDone) {
+                        log.info("One of the subtasks is not done, skipping run.");
+                        return "Error: pipeline subtasks are still running";
+                    }
+                }
             }
             saveAndRunTask(user, processName, displayName, taskParameters);
             return "Success";
@@ -395,7 +392,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
+    public void runSampleFolder(String folderId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
@@ -403,11 +400,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    runSampleFolder(child.getId().toString(), reusePipelineRuns, reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
+                    runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reusePipelineRuns, reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
+                    runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
                 else {
@@ -419,27 +416,24 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
+    public void runSamplePipelines(String sampleId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
-            if (reusePipelineRuns!=null) {
-            	taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
-            }
+            taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
             if (reuseSummary!=null) {
                 taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
             }
             if (reuseProcessing!=null) {
-            	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+                taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
             }
             if (reusePost!=null) {
                 taskParameters.add(new TaskParameter("reuse post", reusePost.toString(), null));
             }
             if (reuseAlignment!=null) {
-            	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+                taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             }
             addExtraParams(taskParameters, extraParams);
             saveAndRunTask(sample.getOwnerKey(), processName, processName, taskParameters);
@@ -460,17 +454,17 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
             }
             if (reuseProcessing!=null) {
-            	taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
+                taskParameters.add(new TaskParameter("reuse processing", reuseProcessing.toString(), null));
             }
             if (reusePost!=null) {
                 taskParameters.add(new TaskParameter("reuse post", reusePost.toString(), null));
             }
             if (reuseAlignment!=null) {
-            	taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
+                taskParameters.add(new TaskParameter("reuse alignment", reuseAlignment.toString(), null));
             }
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, processName, taskParameters);
-        } 
+        }
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
         }
@@ -631,6 +625,22 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    /**
+     * Method to point to a file of jfs commands and extract them.
+     * Example file exists in /nrs/jacs/jacsData/saffordt/jfsonly.sh
+     *
+     */
+    public void jfsExportService(String filePath) {
+        try {
+            JFSExportTask exportTask = new JFSExportTask("system", new ArrayList<Event>(), filePath);
+            exportTask = (JFSExportTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(exportTask);
+            EJBFactory.getLocalComputeBean().submitJob("JFSExport", exportTask.getObjectId());
+        }
+        catch (DaoException | RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void visuallyLosslessCorrectionService(String filePath, String debug) {
         try {
@@ -693,7 +703,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab1115.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft03042016.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);
@@ -754,13 +764,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSageArtifactExport() {
         try {
-        	for(Entity releaseEntity : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE_RELEASE)) {
-	            String processName = "SageArtifactExport";
-	            String displayName = "Sage Artifact Export";
-	            HashSet<TaskParameter> taskParameters = new HashSet<>();
-	            taskParameters.add(new TaskParameter("release entity id", releaseEntity.getId().toString(), null)); 
-	            saveAndRunTask(releaseEntity.getOwnerKey(), processName, displayName, taskParameters);
-        	}
+            for(Entity releaseEntity : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+                String processName = "SageArtifactExport";
+                String displayName = "Sage Artifact Export";
+                HashSet<TaskParameter> taskParameters = new HashSet<>();
+                taskParameters.add(new TaskParameter("release entity id", releaseEntity.getId().toString(), null)); 
+                saveAndRunTask(releaseEntity.getOwnerKey(), processName, displayName, taskParameters);
+            }
         } 
         catch (Exception ex) {
             log.error("Error running SAGE Artifact Export", ex);

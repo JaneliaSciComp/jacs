@@ -52,10 +52,11 @@ public interface ComputeBeanRemote {
     public List<Subject> getSubjects() throws ComputeException;
     public List<User> getUsers() throws ComputeException;
 	public List<Group> getGroups() throws ComputeException;
-	
+
 	public void removePreferenceCategory(String categoryName) throws DaoException;
     public Event saveEvent(Long taskId, String eventType, String description, Date timestamp) throws DaoException;
     public void submitJob(String processDefName,long taskId) throws RemoteException; //Note: Used by Blast API
+    public Long dispatchJob(String processDefName, long taskId) throws RemoteException;
     public Long submitJob(String processDefName,Map<String, Object> processConfiguration) throws RemoteException; // Note: Used by test
     public void submitJobs(String processDefName, List<Long> taskIds) throws RemoteException; //Note: Used by test
     public Long getBlastHitCountByTaskId(Long taskId) throws RemoteException, DaoException;
@@ -122,6 +123,7 @@ public interface ComputeBeanRemote {
     
     public UserToolEvent addEventToSession(UserToolEvent userToolEvent);
     public UserToolEvent addEventToSessionAsync(UserToolEvent userToolEvent);
+    public void addEventsToSessionAsync(UserToolEvent[] userToolEvents);
 
     /**
      * @deprecated

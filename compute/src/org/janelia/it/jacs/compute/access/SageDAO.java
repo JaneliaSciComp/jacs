@@ -32,7 +32,9 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
+import org.janelia.it.jacs.compute.service.entity.sample.SlideImage;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Experiment;
 import org.janelia.it.jacs.model.sage.Image;
@@ -42,6 +44,7 @@ import org.janelia.it.jacs.model.sage.Observation;
 import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
+import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -145,33 +148,129 @@ public class SageDAO {
     }
 
     /**
-     * Returns all the images in a given data set, with their "core" properties as columns.
-     * The client must call close() on the returned iterator when finished with it. 
-     * @return Iterator over the JDBC result set. 
-     * @throws DaoException
+     * Retrieve the Sage image by the LSM path
+     * @param lsmPath
+     * @return
      */
-//    public ResultSetIterator getImagesByDataSet(String dataSetName) throws DaoException {
-//
-//        Connection connection = null;
-//        PreparedStatement pStatement = null;
-//        ResultSet resultSet = null;
-//
-//        try {
-//            connection = getJdbcConnection();
-//            pStatement = connection.prepareStatement(CORE_IMAGE_PROPERTY_SQL);
-//            pStatement.setString(1, dataSetName);
-//            pStatement.setFetchSize(Integer.MIN_VALUE);
-//
-//            resultSet = pStatement.executeQuery();
-//
-//        }
-//        catch (SQLException e) {
-//            ResultSetIterator.close(resultSet, pStatement, connection, log);
-//            throw new DaoException("Error querying SAGE", e);
-//        }
-//
-//        return new ResultSetIterator(connection, pStatement, resultSet);
-//    }
+    public SlideImage getSlideImageByOwnerAndLSMName(String lsmName) throws DaoException {
+
+        String sql = "select " +
+                    COMMON_IMAGE_VW_ATTR + "," +
+                    "line_vw.lab as image_lab_name " +
+                    "from image_vw " +
+                    "join image image_t on image_t.id = image_vw.id " +
+                    "join line_vw on line_vw.id = image_t.line_id " +
+                    "where image_vw.name = ? ";
+        log.debug("GetSlideImageByLSMName: " + sql + "(" + lsmName + ")");
+        SlideImage slideImage = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = getJdbcConnection();
+            pstmt = conn.prepareStatement(sql);
+            int fieldIndex = 1;
+            pstmt.setString(fieldIndex++, lsmName);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                slideImage = new SlideImage();
+                slideImage.setSageId(rs.getLong("image_query_id"));
+                slideImage.setImageName(rs.getString("image_query_name"));
+                slideImage.setImagePath(rs.getString("image_query_path"));
+                slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
+                slideImage.setLine(rs.getString("image_query_line"));
+                slideImage.setLab(rs.getString("image_lab_name"));
+                Date createDate = rs.getTimestamp("image_query_create_date");
+                if (createDate!=null) {
+                    String tmogDate = ISO8601Utils.format(createDate);
+                    if (tmogDate!=null) {
+                        slideImage.setTmogDate(tmogDate);
+                    }
+                }
+            }
+            rs.close();
+            rs = null;
+            pstmt.close();
+            pstmt = null;
+            if (slideImage != null) {
+                fillImageProperties(slideImage, conn);
+            }
+        } catch (SQLException sqle) {
+            throw new DaoException(sqle);
+        } finally {
+            ResultSetIterator.close(rs, pstmt, conn, log);
+        }
+        return slideImage;
+    }
+
+    private void fillImageProperties(SlideImage slideImage, Connection conn) throws DaoException {
+        String sql = "select " +
+                "ip.cv, ip.type, ip.value " +
+                "from image_property_vw ip " +
+                "where ip.image_id = ? ";
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = getJdbcConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, slideImage.getSageId());
+            rs = pstmt.executeQuery();
+            Map<String, Object> data = new HashMap<>();
+            while (rs.next()) {
+                String cv = rs.getString("cv");
+                String type = rs.getString("type");
+                Object value = rs.getObject("value");
+                // prefix every type with the controlled vocabulary except the data_set type
+                String key = "data_set".equals(type) ? type : cv + "_" + type;
+                data.put(key, value);
+            }
+            slideImage.setDatasetName((String) data.get("data_set"));
+            slideImage.setSlideCode((String) data.get("light_imagery_slide_code"));
+            slideImage.setTileType((String) data.get("light_imagery_tile"));
+            slideImage.setCrossBarcode((String) data.get("fly_cross_barcode"));
+            slideImage.setChannelSpec((String) data.get("light_imagery_channel_spec"));
+            slideImage.setGender((String) data.get("light_imagery_gender"));
+            slideImage.setArea((String) data.get("light_imagery_area"));
+            slideImage.setAge((String) data.get("light_imagery_age"));
+            slideImage.setChannels((String) data.get("light_imagery_channels"));
+            slideImage.setMountingProtocol((String) data.get("light_imagery_mounting_protocol"));
+            slideImage.setTissueOrientation((String) data.get("light_imagery_tissue_orientation"));
+            slideImage.setVtLine((String) data.get("light_imagery_vt_line"));
+            slideImage.setEffector((String)data.get("fly_effector"));
+            String objectiveStr = (String) data.get("light_imagery_objective");
+            if (objectiveStr!=null) {
+                if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_10X.getName());
+                }
+                else if (objectiveStr.contains(Objective.OBJECTIVE_20X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_20X.getName());
+                }
+                else if (objectiveStr.contains(Objective.OBJECTIVE_40X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_40X.getName());
+                }
+                else if (objectiveStr.contains(Objective.OBJECTIVE_63X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_63X.getName());
+                }
+            }
+            String voxelSizeX = (String) data.get("light_imagery_voxel_size_x");
+            String voxelSizeY = (String) data.get("light_imagery_voxel_size_y");
+            String voxelSizeZ = (String) data.get("light_imagery_voxel_size_z");
+            if (voxelSizeX!=null && voxelSizeY!=null && voxelSizeZ!=null) {
+                slideImage.setOpticalRes(voxelSizeX,voxelSizeY,voxelSizeZ);
+            }
+            String imageSizeX = (String) data.get("light_imagery_dimension_x");
+            String imageSizeY = (String) data.get("light_imagery_dimension_y");
+            String imageSizeZ = (String) data.get("light_imagery_dimension_z");
+            if (imageSizeX!=null && imageSizeY!=null && imageSizeZ!=null) {
+                slideImage.setPixelRes(imageSizeX,imageSizeY,imageSizeZ);
+            }
+        } catch (SQLException sqle) {
+            throw new DaoException(sqle);
+        } finally {
+            ResultSetIterator.close(rs, pstmt, null, log);
+        }
+
+    }
 
     /**
      * Returns all the images in a given data set, with ALL their non-null properties as columns.
@@ -187,8 +286,8 @@ public class SageDAO {
 
         try {
             connection = getJdbcConnection();
-            final List<String> propertyTypeNames = getImagePropertyTypes(dataSetName, connection);
-            final String sql = buildImagePropertySql(propertyTypeNames);
+            final List<String> propertyTypeNames = getImagePropertyTypesByDataSet(dataSetName, connection);
+            final String sql = buildImagePropertySqlByDatasetName(propertyTypeNames);
 
             pStatement = connection.prepareStatement(sql);
             pStatement.setFetchSize(Integer.MIN_VALUE);
@@ -599,8 +698,8 @@ public class SageDAO {
      * @throws SQLException
      *   if list query fails.
      */
-    private List<String> getImagePropertyTypes(String dataSet,
-                                               Connection connection) throws SQLException {
+    private List<String> getImagePropertyTypesByDataSet(String dataSet,
+                                                        Connection connection) throws SQLException {
         List<String> list = new ArrayList<>(256);
 
         final String sql = "select distinct ip1.cv,ip1.type from image_property_vw ip1 " +
@@ -628,7 +727,7 @@ public class SageDAO {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("getImagePropertyTypes: returning " + list);
+            log.debug("getImagePropertyTypesByDataSet: returning " + list);
         }
 
         return list;
@@ -677,21 +776,21 @@ public class SageDAO {
      *
      * @return dynamically built SQL statement for the specified property type names.
      */
-    private String buildImagePropertySql(List<String> propertyTypeNames) {
+    private String buildImagePropertySqlByDatasetName(List<String> propertyTypeNames) {
         StringBuilder sql = new StringBuilder(2048);
 
-        sql.append(ALL_IMAGE_PROPERTY_SQL_1);
+        sql.append("select ");
+        sql.append(COMMON_IMAGE_VW_ATTR);
         sql.append(buildPropertySql(propertyTypeNames, "ip1"));
-
-        sql.append(ALL_IMAGE_PROPERTY_SQL_2);
+        sql.append(IMAGE_PROPERTY_SQL_JOIN);
 
         if (log.isDebugEnabled()) {
-            log.debug("buildImagePropertySql: returning \"" + sql + "\"");
+            log.debug("buildImagePropertySqlByDatasetName: returning \"" + sql + "\"");
         }
 
         return sql.toString();
     }
-    
+
     /**
      *
      * @param  propertyTypeNames names of line properties to include in query.
@@ -732,43 +831,13 @@ public class SageDAO {
         return sql.toString();
     }
 
-//    private static final String CORE_IMAGE_PROPERTY_SQL =
-//            "select i.id id, slide_code.value slide_code, i.path path, tile.value tile, line.name line, " +
-//            "channel_spec.value channel_spec, gender.value gender, age.value age, effector.value effector, " +
-//            "area.value area, channels.value channels, mounting_protocol.value mounting_protocol, tissue_orientation.value tissue_orientation, objective.value objective, " +
-//            "voxel_size_x.value voxel_size_x, voxel_size_y.value voxel_size_y, voxel_size_z.value voxel_size_z, " +
-//            "dimension_x.value dimension_x, dimension_y.value dimension_y, dimension_z.value dimension_z, cross_barcode.value cross_barcode " +
-//            "from image i " +
-//            "join line line on i.line_id = line.id " +
-//            "join image_property_vw slide_code on i.id = slide_code.image_id and slide_code.type = 'slide_code' " +
-//            "join image_property_vw data_set on i.id = data_set.image_id and data_set.type = 'data_set' " +
-//            "left outer join image_property_vw tile on i.id = tile.image_id and tile.type = 'tile' " +
-//            "left outer join image_property_vw channel_spec on i.id = channel_spec.image_id and channel_spec.type = 'channel_spec' " +
-//            "left outer join image_property_vw gender on i.id = gender.image_id and gender.type = 'gender' " +
-//            "left outer join image_property_vw age on i.id = age.image_id and age.type = 'age' " +
-//            "left outer join image_property_vw effector on i.id = effector.image_id and effector.type = 'effector' " +
-//            "left outer join image_property_vw area on i.id = area.image_id and area.type = 'area' " +
-//            "left outer join image_property_vw channels on i.id = channels.image_id and channels.type = 'channels' " +
-//            "left outer join image_property_vw mounting_protocol on i.id = mounting_protocol.image_id and mounting_protocol.type = 'mounting_protocol' " +
-//            "left outer join image_property_vw tissue_orientation on i.id = tissue_orientation.image_id and tissue_orientation.type = 'tissue_orientation' " +
-//            "left outer join image_property_vw objective on i.id = objective.image_id and objective.type = 'objective' " +
-//            "left outer join image_property_vw voxel_size_x on i.id = voxel_size_x.image_id and voxel_size_x.type = 'voxel_size_x' " +
-//            "left outer join image_property_vw voxel_size_y on i.id = voxel_size_y.image_id and voxel_size_y.type = 'voxel_size_y' " +
-//            "left outer join image_property_vw voxel_size_z on i.id = voxel_size_z.image_id and voxel_size_z.type = 'voxel_size_z' " +
-//            "left outer join image_property_vw dimension_x on i.id = dimension_x.image_id and dimension_x.type = 'dimension_x' " +
-//            "left outer join image_property_vw dimension_y on i.id = dimension_y.image_id and dimension_y.type = 'dimension_y' " +
-//            "left outer join image_property_vw dimension_z on i.id = dimension_z.image_id and dimension_z.type = 'dimension_z' " +
-//            "left outer join image_property_vw cross_barcode on i.id = cross_barcode.image_id and cross_barcode.type = 'cross_barcode' " +
-//            "where i.display=true and i.path is not null " +
-//            "and data_set.value=? " +
-//            "and i.created_by!='"+SageArtifactExportService.CREATED_BY+"' " +
-//            "order by slide_code.value, i.path";
-//
-    private static final String ALL_IMAGE_PROPERTY_SQL_1 =
-            "select image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path, image_vw.jfs_path image_query_jfs_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
-            "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, image_vw.created_by light_imagery_created_by, image_vw.create_date image_query_create_date";
+    private static final String COMMON_IMAGE_VW_ATTR =
+                "image_vw.id image_query_id, image_vw.name image_query_name, image_vw.path image_query_path," +
+                "image_vw.jfs_path image_query_jfs_path, image_vw.line image_query_line, image_vw.family light_imagery_family, " +
+                "image_vw.capture_date light_imagery_capture_date, image_vw.representative light_imagery_representative, " +
+                "image_vw.created_by light_imagery_created_by, image_vw.create_date image_query_create_date";
 
-    private static final String ALL_IMAGE_PROPERTY_SQL_2 =
+    private static final String IMAGE_PROPERTY_SQL_JOIN =
             " from image_property_vw ip1 " +
             "inner join ( " +
             "  select i.id, i.line, i.name, i.path, i.jfs_path, i.family, i.capture_date, i.representative, i.created_by, i.create_date " +
@@ -790,5 +859,5 @@ public class SageDAO {
             ") image_lines on line_vw.name = image_lines.line  " +
             "where lp1.cv in ('line','light_imagery','fly') " +
             "group by line_vw.id ";
-            
+
 }

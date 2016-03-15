@@ -8,10 +8,12 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.DispatcherDAO;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
@@ -74,13 +76,14 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
 
     protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
-    
+
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
-    
+
     private ComputeDAO computeDAO = new ComputeDAO(logger);
     private SubjectDAO subjectDAO = new SubjectDAO(logger);
-    
+    private DispatcherDAO dispatcherDAO = new DispatcherDAO();
+
     @Resource(mappedName = MetricsLoggingConstants.QUEUE)
     private Queue metricsLoggingQueue;
     
@@ -219,6 +222,71 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             }
         }
         return null;
+    }
+
+    /**
+     * Multiple-message version of asynchronous tool event logging.
+     * @param userToolEvents list of all events to be batch-recorded.
+     */
+    @Override
+    public void addEventsToSessionAsync(UserToolEvent[] userToolEvents) {
+        // save as other override, but talk to MDB.
+        Connection connection = null;
+        javax.jms.Session session = null;
+        MessageProducer producer = null;
+        try {
+            connection = connectionFactory.createConnection();
+            session = connection.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
+
+            // Marshalling the event into a message.
+            ObjectMessage message = session.createObjectMessage();
+            if (message == null) {
+                logger.error("Session returned null message.");
+                return;
+            } else if (userToolEvents == null) {
+                logger.error("Cannot log null message.");
+                return;
+            }
+            message.setObject(userToolEvents);
+
+            // Send and complete.
+            producer = session.createProducer(metricsLoggingQueue);
+            producer.send(message);
+
+            return;
+        } catch (Throwable th) {
+            logger.error("Cannot log batched events to session.");
+            logger.error("Error: " + th.getMessage(), th);
+        } finally {
+            String finalMessage = null;
+            try {
+                if (producer != null) {
+                    producer.close();
+                }
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the producer", ex);
+            }
+            try {
+                if (session != null) {
+                    session.close();
+                }
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the session", ex);
+            }
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the connection", ex);
+            }
+            if (finalMessage != null) {
+                logger.error("Failure during JMS message tear-down: " + finalMessage);
+            }
+        }
     }
 
     @Override
@@ -445,6 +513,21 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     public void submitJobs(String processDefName, List<Long> taskIds) {
         ProcessManager processManager = new ProcessManager();
         processManager.launch(processDefName, taskIds);
+    }
+
+    @Override
+    public Long dispatchJob(String processDefName, long taskId) {
+        Task task = getTaskById(taskId);
+
+        DispatcherJob job = new DispatcherJob();
+        job.setDispatchedTaskId(task.getObjectId());
+        job.setProcessDefnName(processDefName);
+        job.setDispatchedTaskOwner(task.getOwner());
+        job.setRetries(0);
+        job.setDispatchHost(null);
+        dispatcherDAO.save(job);
+
+        return job.getDispatchId();
     }
 
     @Override
@@ -739,7 +822,21 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     @Override
     public void recordProcessError(String processDefName, Long processId, Throwable e) {
         try {
-            updateTaskStatus(processId, Event.ERROR_EVENT, e.getMessage());
+
+            StringBuilder sb = new StringBuilder();
+            Throwable x = e;
+            while (x!=null) {
+            	if (e!=x) sb.append("Caused by: ");
+            	sb.append(x.getClass().getName()).append(": ").append(x.getMessage()).append("\n");
+                for (StackTraceElement element : x.getStackTrace()) {
+                	sb.append("\tat ");
+                    sb.append(element.toString()).append("\n");
+                    break;
+                }
+                x = x.getCause();
+            }
+        	
+            updateTaskStatus(processId, Event.ERROR_EVENT, sb.toString());
         }
         catch (Exception ee) {
             logger.error("Caught exception updating status of process: " + processDefName, ee);

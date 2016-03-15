@@ -300,6 +300,10 @@
               discriminator-value="scalityMigrationTask">
     </subclass>
 
+    <subclass name="org.janelia.it.jacs.model.tasks.utility.JFSExportTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="jfsExportTask">
+    </subclass>
+
     <subclass name="org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="vlCorrectionTask">
     </subclass>
@@ -316,7 +320,11 @@
 
     <subclass name="org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask" extends="org.janelia.it.jacs.model.tasks.Task"
               discriminator-value="geometricIndexTask"/>
-    
+
+    <subclass name="org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask" extends="org.janelia.it.jacs.model.tasks.Task"
+              discriminator-value="lsmProcessingTask">
+    </subclass>
+
     <class name="Event"
            table="task_event">
         <composite-id>

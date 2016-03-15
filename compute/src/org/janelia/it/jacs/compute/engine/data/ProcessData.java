@@ -122,113 +122,27 @@ public class ProcessData implements IProcessData {
     }
 
     public Long getLong(String key) {
-        Object itemValue = getItem(key);
-        if (itemValue == null) {
-            return null;
-        }
-        else if (itemValue instanceof Long) {
-            return (Long) itemValue;
-        }
-        else if (itemValue instanceof String) {
-            try {
-                return Long.parseLong((String) itemValue);
-            }
-            catch (NumberFormatException e) {
-                throw new IllegalArgumentException(key + " property is not a long");
-            }
-        }
-        else {
-            throw new IllegalArgumentException(key + " property is not a long");
-        }
+        return ItemDataConverter.getItemAsLong(key, getItem(key));
     }
 
     public Integer getInt(String key) {
-        Object itemValue = getItem(key);
-        if (itemValue == null) {
-            return null;
-        }
-        else if (itemValue instanceof Integer) {
-            return (Integer) itemValue;
-        }
-        else if (itemValue instanceof String) {
-            try {
-                return Integer.parseInt((String) itemValue);
-            }
-            catch (NumberFormatException e) {
-                throw new IllegalArgumentException(key + " property is not an int");
-            }
-        }
-        else {
-            throw new IllegalArgumentException(key + " property is not an int");
-        }
+        return ItemDataConverter.getItemAsInt(key, getItem(key));
     }
 
     public Float getFloat(String key) {
-        Object itemValue = getItem(key);
-        if (itemValue == null) {
-            return null;
-        }
-        else if (itemValue instanceof Float) {
-            return (Float) itemValue;
-        }
-        else if (itemValue instanceof String) {
-            try {
-                return Float.parseFloat((String) itemValue);
-            }
-            catch (NumberFormatException e) {
-                throw new IllegalArgumentException(key + " property is not a float");
-            }
-        }
-        else {
-            throw new IllegalArgumentException(key + " property is not a float");
-        }
+        return ItemDataConverter.getItemAsFloat(key, getItem(key));
     }
 
     public Double getDouble(String key) {
-        Object itemValue = getItem(key);
-        if (itemValue == null) {
-            return null;
-        }
-        else if (itemValue instanceof Double) {
-            return (Double) itemValue;
-        }
-        else if (itemValue instanceof String) {
-            try {
-                return Double.parseDouble((String) itemValue);
-            }
-            catch (NumberFormatException e) {
-                throw new IllegalArgumentException(key + " property is not a double");
-            }
-        }
-        else {
-            throw new IllegalArgumentException(key + " property is not a double");
-        }
+        return ItemDataConverter.getItemAsDouble(key, getItem(key));
     }
 
     public Boolean getBoolean(String key) {
-        Object itemValue = getItem(key);
-        if (itemValue == null) {
-            return false;
-        }
-        else if (itemValue instanceof String) {
-            return Boolean.valueOf((String) itemValue);
-        }
-        else {
-            throw new IllegalArgumentException(key + " property is not a boolean");
-        }
+        return ItemDataConverter.getItemAsBoolean(key, getItem(key));
     }
 
     public String getString(String key) {
-        Object obj = getItem(key);
-        if (obj == null) {
-            return null;
-        }
-        else if (obj instanceof String) {
-            return (String) obj;
-        }
-        else {
-            throw new IllegalArgumentException(key + " property value is not a String");
-        }
+        return ItemDataConverter.getItemAsString(key, getItem(key));
     }
 
     public void copyFrom(Map<String, Object> processConfiguration) {

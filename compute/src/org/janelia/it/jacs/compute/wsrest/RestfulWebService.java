@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.wsrest;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,10 +37,12 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.model.entity.json.JsonRelease;
 import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
+import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.status.CurrentTaskStatus;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
@@ -326,45 +329,51 @@ public class RestfulWebService {
     /**
      * Create and launch pipeline processing tasks for the samples associated with a list of lsm files.
      *
-     * NOTE: This is a placeholder API that does nothing at the moment.
-     *       It should ultimately subsume the sageLoader API.
+     * @param  owner id of the person or system submitting this request
      *
-     * @param  owner     id of the person or system submitting this request
-     *                   (must have write access to the data set).
-     *
-     * @param  dataSet   data set for the sample(s) to be removed.
-     *
-     * @param  lsmPaths  list of lsm file paths for which SAGE data has recently been created or changed.
+     * @param lsmProcessingParams input parameters encapsulated in a LSMProcessingTask
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    @Path("owner/{owner}/dataSet/{dataSet}/lsmPipelines")
+    @Path("owner/{owner}/lsmPipelines")
     public Response launchLsmPipelines(
             @PathParam("owner")String owner,
-            @PathParam("dataSet")String dataSet,
-            List<String> lsmPaths) {
+            LSMProcessingTask lsmProcessingParams) {
 
         final String context = "launchLsmPipelines: ";
+        LSMProcessingTask lsmProcessingTask;
+        try {
+            final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
 
-        logger.info(context +"entry, owner=" + owner + ", dataSet=" + dataSet + ", lsmPaths=" + lsmPaths);
-
-        // TODO: derive/pull indexer parameters (configPath, grammar, lab) for data set
-
-        // TODO: pull current sample data from SAGE for specified lsms
-
-        // TODO: find all existing samples for specified lsms
-
-        // TODO: sort samples into new, changed, and unchanged sets
-
-        // TODO: for each changed sample, schedule processing job (retire, remove, index new lsms, rerun pipelines, ...)
-
-        // TODO: for each new sample, schedule processing job (index lsms, run pipelines, ...)
-
-        // TODO: for each scheduled job, add link to response for status checking
-
-        return Response.status(Response.Status.OK).entity("{\"result\": \"TBD\"}").build();
+            if (owner == null) {
+                throw new IllegalArgumentException("owner parameter is not defined");
+            } else {
+                final User user = remoteComputeBean.getUserByNameOrKey(owner);
+                if (user == null) {
+                    throw new IllegalArgumentException("invalid owner parameter '" + owner + "' specified");
+                }
+            }
+            lsmProcessingParams.setOwner(owner);
+            lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingParams);
+            remoteComputeBean.dispatchJob(lsmProcessingTask.getJobName(), lsmProcessingTask.getObjectId());
+        } catch (IllegalArgumentException e) {
+            logger.error("Illegal argument", e);
+            Response response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
+            return response;
+        } catch (RemoteException | ComputeException e) {
+            logger.error("LSM Processing exception", e);
+            Response response = getErrorResponse(context,
+                    Response.Status.INTERNAL_SERVER_ERROR,
+                    "failed to run lsm processing for " + owner + ":" + lsmProcessingParams,
+                    e);
+            return response;
+        }
+        return Response
+                .status(Response.Status.CREATED)
+                .entity(new JsonTask(lsmProcessingTask))
+                .build();
     }
 
     /**

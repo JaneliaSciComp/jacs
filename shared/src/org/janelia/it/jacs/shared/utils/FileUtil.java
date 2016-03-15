@@ -932,6 +932,8 @@ public class FileUtil {
      * Locks the file for read and write as other threads might be accessing it at the same time.  Lock can be released
      * either by close the file or releasing FileLock
      *
+     * This does not work on nrs (Qumulo "file system")
+     *
      * @param fileToLock
      * @param fileToLockPath used for logging only
      * @param maxRetryCount

@@ -104,6 +104,9 @@
                         <input name="DISPLAY_NAME" value="Input Sample Regeneration"/>
                         <input name="PARAMETER_1_KEY" value="sample entity id"/>
                         <input name="PARAMETER_1_VALUE" value="$V{REGENERATE_SAMPLE_ID}"/>
+                        <input name="PROCESS_DATA_MAP">
+                            <entry key="QUEUE_OVERRIDE" value="queue/sampleSecondaryPipelineLauncher"/>
+                        </input>
                         <input name="TASK_PARAMETER_MAP">
                             <entry key="alignment algorithms" value=""/>
                             <entry key="alignment algorithm parameters" value=""/>
