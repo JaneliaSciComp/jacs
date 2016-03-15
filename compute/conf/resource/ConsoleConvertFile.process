@@ -31,7 +31,7 @@
             <operation name="Convert files" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
                 <input name="IGNORE_ERRORS" value="true"/>
-                <input name="RESULT_FILE_NODE"/>
+                <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="OUTPUT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="INPUT_PATH_1" value="$V{FILE_PATH}"/>
                 <input name="OUTPUT_EXTENSION"/>
