@@ -71,14 +71,14 @@ public class SamplePipelineRun {
     }
     
     @JsonIgnore
-    protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
+    public <T extends PipelineResult> T getLatestResultOfType(Class<T> type) {
         if (results==null) {
             return null;
         }
         for (int i = results.size()-1; i>=0; i--) {
             PipelineResult result = results.get(i);
             if (type==null || type.isAssignableFrom(result.getClass())) {
-                return result;
+                return (T)result;
             }
         }
         return null;
@@ -91,14 +91,38 @@ public class SamplePipelineRun {
 
     @JsonIgnore
     public SampleProcessingResult getLatestProcessingResult() {
-        return (SampleProcessingResult) getLatestResultOfType(SampleProcessingResult.class);
+        return getLatestResultOfType(SampleProcessingResult.class);
     }
 
     @JsonIgnore
     public SampleAlignmentResult getLatestAlignmentResult() {
-        return (SampleAlignmentResult) getLatestResultOfType(SampleAlignmentResult.class);
+        return getLatestResultOfType(SampleAlignmentResult.class);
     }
 
+    @JsonIgnore
+    public <T extends PipelineResult> List<T> getResultsOfType(Class<T> type) {
+        List<T> filteredResults = new ArrayList<>();
+        if (results==null) {
+            return filteredResults;
+        }
+        for (PipelineResult result : results) {
+            if (type==null || type.isAssignableFrom(result.getClass())) {
+                filteredResults.add((T)result);
+            }
+        }
+        return null;
+    }
+    
+    @JsonIgnore
+    public List<SampleProcessingResult> getSampleProcessingResults() {
+        return getResultsOfType(SampleProcessingResult.class);
+    }
+
+    @JsonIgnore
+    public List<SampleAlignmentResult> getAlignmentResults() {
+        return getResultsOfType(SampleAlignmentResult.class);
+    }
+    
     public boolean hasError() {
         return error!=null;
     }
