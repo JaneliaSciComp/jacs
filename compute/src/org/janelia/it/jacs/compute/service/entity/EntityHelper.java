@@ -410,6 +410,10 @@ public class EntityHelper {
         setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_OBJECT_PEARSON_COEFFICIENT, value);
     }
 
+    public void setOtsunaObjectPearsonCoeff(Entity entity, String value) throws Exception {
+        setAttributeIfNecessary(entity, EntityConstants.ATTRIBUTE_ALIGNMENT_OTSUNA_OBJECT_PEARSON_COEFFICIENT, value);
+    }
+
     private void setAttributeIfNecessary(Entity entity, String attributeName, String value) throws Exception {
         if (entity==null || StringUtils.isEmpty(value)) return;
         EntityData currEd = entity.getEntityDataByAttributeName(attributeName);

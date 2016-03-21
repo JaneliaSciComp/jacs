@@ -160,6 +160,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS       = "Alignment Board User Settings";
     public static final String ATTRIBUTE_ALIGNMENT_OVERLAP_COEFFICIENT       = "Alignment Overlap Coefficient";
     public static final String ATTRIBUTE_ALIGNMENT_OBJECT_PEARSON_COEFFICIENT= "Alignment Object Pearson Coefficient";
+    public static final String ATTRIBUTE_ALIGNMENT_OTSUNA_OBJECT_PEARSON_COEFFICIENT= "Alignment Otsuna Object Pearson Coefficient";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";

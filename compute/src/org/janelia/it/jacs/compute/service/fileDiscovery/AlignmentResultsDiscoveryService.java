@@ -112,6 +112,7 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     String scoresQiCsv = properties.getProperty("alignment.quality.score.qi"); // The three comma-delimited scores from QiScore.csv 
                     String overlapCoeff  = properties.getProperty("alignment.overlap.coefficient");
                     String objectPearsonCoeff = properties.getProperty("alignment.object.pearson.coefficient");
+                    String otsunaObjectPearsonCoefficient=properties.getProperty("alignment.otsuna.object.pearson.coefficient");
 
                     String channelSpec;
                 	int numChannels = Integer.parseInt(channels);
@@ -145,6 +146,11 @@ public class AlignmentResultsDiscoveryService extends SupportingFilesDiscoverySe
                     if (!StringUtils.isEmpty(objectPearsonCoeff)) {
                         String formattedObjectPearsonCoeff = dfScore.format(Double.parseDouble(objectPearsonCoeff));
                         helper.setObjectPearsonCoeff(stackEntity, formattedObjectPearsonCoeff);
+                    }
+
+                    if (!StringUtils.isEmpty(otsunaObjectPearsonCoefficient)) {
+                        String formattedOtsunaObjectPearsonCoeff = dfScore.format(Double.parseDouble(otsunaObjectPearsonCoefficient));
+                        helper.setOtsunaObjectPearsonCoeff(stackEntity, formattedOtsunaObjectPearsonCoeff);
                     }
 
                     // Derive all Qi and inconsistency (1-Qi) scores
