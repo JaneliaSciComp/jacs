@@ -107,15 +107,6 @@
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../common/MySQL/mysql-connector-java-5.1.22-bin.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="TEST">
-      <library>
-        <CLASSES>
           <root url="file://$MODULE_DIR$/../shared/conf" />
         </CLASSES>
         <JAVADOC />
