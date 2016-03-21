@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;

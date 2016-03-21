@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;

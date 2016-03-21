@@ -2,7 +2,7 @@ package org.janelia.it.jacs.compute.service.align;
 
 import java.util.List;
 
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 
 /**

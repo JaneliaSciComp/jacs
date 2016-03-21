@@ -15,6 +15,8 @@ import javax.annotation.Nullable;
 
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
 import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;

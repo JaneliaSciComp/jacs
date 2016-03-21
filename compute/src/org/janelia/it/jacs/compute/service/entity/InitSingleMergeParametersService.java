@@ -3,7 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 
 /**

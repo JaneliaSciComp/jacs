@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.entity.sample;
+package org.janelia.it.jacs.compute.service.domain.model;
 
 import java.util.Map;
 

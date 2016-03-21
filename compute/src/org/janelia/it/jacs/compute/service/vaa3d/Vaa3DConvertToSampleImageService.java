@@ -20,7 +20,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.EntityException;
 import org.janelia.it.jacs.compute.service.exceptions.LSMMetadataException;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataConsensusException;
