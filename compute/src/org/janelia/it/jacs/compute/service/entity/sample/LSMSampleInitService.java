@@ -13,11 +13,10 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
-import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -28,13 +27,12 @@ import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 
 /**
  * Discovers the SAGE samples associated with the given LSM and processes the corresponding samples.
  */
-public class LSMSampleInitService extends AbstractDomainService {
+public class LSMSampleInitService extends AbstractEntityService {
 
     private SampleHelper sampleHelper;
     private String owner;

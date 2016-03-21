@@ -10,7 +10,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.domain.EntityHelperNG;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -81,7 +81,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected Date createDate;
     protected String mode=MODE_UNDEFINED;
     protected Task task;
-    protected EntityHelperNG entityHelper;
+    protected EntityHelper entityHelper;
     protected String sessionName;
     protected String visibility;
     protected IProcessData processData;
@@ -148,7 +148,7 @@ public class MaskSampleAnnotationService  implements IService {
     protected void refreshEntityBeans() throws Exception {
         entityBean = EJBFactory.getLocalEntityBean();
         computeBean = EJBFactory.getLocalComputeBean();
-        entityHelper = new EntityHelperNG(entityBean, computeBean, ownerKey, logger); // can't be in constructor or will timeout
+        entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger); // can't be in constructor or will timeout
     }
 
 

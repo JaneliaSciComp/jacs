@@ -12,10 +12,9 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.domain.EntityHelperNG;
+import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 import org.janelia.it.jacs.model.user_data.Subject;
@@ -30,7 +29,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
 public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
 
 	protected Entity sampleEntity;
-	protected EntityHelperNG entityHelper;
+	protected EntityHelper entityHelper;
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -47,7 +46,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            entityHelper = new EntityHelperNG(entityBean, computeBean, ownerKey, logger);
+            entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
             Entity separationResultEntity = entityBean.getEntityTree(Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
