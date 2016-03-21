@@ -20,6 +20,13 @@ public class SWCDataConverter {
     private static final int SWC_Y = 1;
     private static final int SWC_Z = 2;
 
+    // SWC data can't have a null radius, so we have to choose something;
+    //  1.0 is about as innocuous a value as you can choose; plus, we
+    //  were already using it implicitly before we handled radii explicitly
+    // we have a potentially different radius for automatically traced paths, too
+    private static final double DEFAULT_POINT_RADIUS = 1.0;
+    private static final double DEFAULT_PATH_RADIUS = 1.0;
+
     private ImportExportSWCExchanger exchanger;
     
     public void setSWCExchanger( ImportExportSWCExchanger exchanger ) {
@@ -204,7 +211,7 @@ public class SWCDataConverter {
         Map<Long,TmAnchoredPathEndpoints> startToEndPoints = new HashMap<>();
         Map<Long,Integer> subAnnIdToIndex = new HashMap<>();
         for (TmAnchoredPathEndpoints endPoints : anchoredPathMap.keySet()) {
-            startToEndPoints.put(endPoints.getAnnotationID2(), endPoints);
+            startToEndPoints.put(endPoints.getSecondAnnotationID(), endPoints);
         }
 
         int currentIndex = 1;
@@ -218,8 +225,8 @@ public class SWCDataConverter {
                     final TmAnchoredPathEndpoints endpoints = startToEndPoints.get( subAnn.getId() );
                     // Make a node for each path member.
                     TmAnchoredPath anchoredPath = anchoredPathMap.get( endpoints );
-                    if ( subAnnIdToIndex.get( endpoints.getAnnotationID1() ) != null ) {
-                        parentIndex = subAnnIdToIndex.get( endpoints.getAnnotationID1() );
+                    if ( subAnnIdToIndex.get( endpoints.getFirstAnnotationID() ) != null ) {
+                        parentIndex = subAnnIdToIndex.get( endpoints.getFirstAnnotationID() );
                     }
 
                     for (int inListNodeNum = anchoredPath.getPointList().size() - 2; inListNodeNum > 0 ; inListNodeNum--) {
@@ -236,6 +243,7 @@ public class SWCDataConverter {
                                 xcenter,
                                 ycenter,
                                 zcenter,
+                                DEFAULT_PATH_RADIUS,
                                 parentIndex
                         );
                         nodeList.add(autoNode);
@@ -263,7 +271,11 @@ public class SWCDataConverter {
                     }
                 }
                 
-                // Make the node for manual reference now.                
+                // Make the node for manual reference now.
+                double radius = DEFAULT_POINT_RADIUS;
+                if (subAnn.getRadius() != null) {
+                    radius = subAnn.getRadius();
+                }
                 SWCNode manualNode = createSWCNode(
                         currentIndex++,
                         getSegmentType(subAnn),
@@ -273,6 +285,7 @@ public class SWCDataConverter {
                         xcenter,
                         ycenter,
                         zcenter,
+                        radius,
                         parentIndex
                 );
                 nodeList.add(manualNode);                
@@ -308,6 +321,10 @@ public class SWCDataConverter {
                 }
                 SWCNode.SegmentType segmentType = getSegmentType(ann);
 
+                double radius = DEFAULT_POINT_RADIUS;
+                if (ann.getRadius() != null) {
+                    radius = ann.getRadius();
+                }
                 nodeList.add(
                         createSWCNode(
                                 currentIndex,
@@ -318,6 +335,7 @@ public class SWCDataConverter {
                                 xcenter,
                                 ycenter, 
                                 zcenter,
+                                radius,
                                 parentIndex
                         )
                 );
@@ -361,6 +379,7 @@ public class SWCDataConverter {
             double xcenter,
             double ycenter,
             double zcenter,
+            double radius,
             int parentIndex) {
         double[] externalArr = null;
         if (exchanger != null) {
@@ -386,7 +405,7 @@ public class SWCDataConverter {
                 externalArr[0] - xcenter,
                 externalArr[1] - ycenter,
                 externalArr[2] - zcenter,
-                1.0,    // radius, which we don't have right now
+                radius,
                 parentIndex
         );
     }

@@ -1,7 +1,7 @@
     package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
-import org.janelia.it.jacs.model.entity.EntityData;
+import io.protostuff.Tag;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,13 +15,23 @@ import java.util.List;
  * Time: 1:23 PM
  */
 public class TmGeoAnnotation implements IsSerializable, Serializable {
-    Long id;
+    @Tag(1)
+    private Long id;
     // parentID is the neuron (if root annotation) or another TmGeoAnn
-    Long parentId;
-    String comment;
-    Integer index;
-    Double x, y, z;
-    Date creationDate;
+    @Tag(2)
+    private Long parentId;
+    @Tag(3)
+    private String comment;
+    @Tag(4)
+    private Integer index;
+    @Tag(5)
+    private Double x;
+    @Tag(6)
+    private Double y;
+    @Tag(7)
+    private Double z;
+    @Tag(8)
+    private Date creationDate;
 
     // child and neuron ID fields only filled in when the annotation is in a neuron!
     //  they are null otherwise
@@ -29,8 +39,13 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     //  way for the GeoAnn to keep it up-to-date, as it's not involved when operations
     //  are performed on other GeoAnns (creation, deletion, update), so the info
     //  would get stale fast
-    Long neuronId = null;
-    List<Long> childIds = new ArrayList<>();;
+    @Tag(9)
+    private Long neuronId = null;
+    @Tag(10)
+    private List<Long> childIds = new ArrayList<>();
+
+    @Tag(11)
+    private Double radius;
 
     // implementation note: at one point we stored the parent and child objects,
     //  but serializing them for calling remote server routines caused the
@@ -51,38 +66,10 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         return id + ":" + parentId + ":" + index + ":" + x.toString() + "," + y.toString() + "," + z.toString() + ":" + comment;
     }
 
-    public TmGeoAnnotation(EntityData data) throws Exception {
-        // format expected: <id>:<parentId>:<index>:<x,y,z>:<comment>
-        String geoString = data.getValue();
-        String[] fields=geoString.split(":", -1);
-        if (fields.length < 5) {
-            throw new Exception("Could not parse geoString="+geoString);
-        }
-        id=new Long(fields[0]);
-        parentId=new Long(fields[1]);
-        index=new Integer(fields[2]);
-        String coordinateString=fields[3];
-        String[] cArr=coordinateString.split(",");
-        x=new Double(cArr[0].trim());
-        y=new Double(cArr[1].trim());
-        z=new Double(cArr[2].trim());
-
-        if (fields.length > 5) {
-            // comment field had a : in it; reassemble:
-            // (I'd like to use Guava Joiner here, but it's not happy for some reason)
-            StringBuilder builder = new StringBuilder();
-            builder.append(fields[4]);
-            for (int i = 5; i < fields.length; i++ ) {
-                builder.append(":");
-                builder.append(fields[i]);
-            }
-            comment = builder.toString();
-        } else {
-            comment=fields[4];
-        }
-        creationDate = data.getCreationDate();
+    public TmGeoAnnotation() {        
     }
-
+    
+    @Override
     public String toString() {
         //return String.format("ann id %d", id);
         // return String.format("(%.1f, %.1f, %.1f)", x, y, z);
@@ -183,6 +170,20 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public boolean isLink() {
         return !isRoot() && getChildIds().size() == 1;
+    }
+
+    /**
+     * @return the radius
+     */
+    public Double getRadius() {
+        return radius;
+    }
+
+    /**
+     * @param radius the radius to set
+     */
+    public void setRadius(Double radius) {
+        this.radius = radius;
     }
 
 }
