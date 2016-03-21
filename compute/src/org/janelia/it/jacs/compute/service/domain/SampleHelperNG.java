@@ -597,7 +597,7 @@ public class SampleHelperNG extends EntityHelperNG {
     }
 
     /**
-     * Create and return an LSM Stack entity based on the given SAGE image data.
+     * Create and return a new sample tile based on the given SAGE image data.
      * @return
      * @throws Exception
      */
@@ -659,7 +659,7 @@ public class SampleHelperNG extends EntityHelperNG {
             	return ChanSpecUtils.createChanSpec(numChannels, refIndex+1);    
             }
             catch (NumberFormatException e) {
-                logger.warn("Could not parse Num Channels ('"+numChannels+"') on LSM entity with id="+lsm.getId());
+                logger.warn("Could not parse Num Channels ('"+numChannels+"') on LSM with id="+lsm.getId());
             }
         }
         
@@ -713,7 +713,7 @@ public class SampleHelperNG extends EntityHelperNG {
     }
     
     /**
-     * Go through a sample area's LSM supporting files and look for an entity attribute with a given name. If a consensus
+     * Go through a sample area's LSM supporting files and look for an attribute with a given name. If a consensus
      * can be reached across all the LSM's in the area then return that consensus. Otherwise log a warning and return null.
      * @param attrName
      * @return
@@ -726,7 +726,7 @@ public class SampleHelperNG extends EntityHelperNG {
     }
 
     /**
-     * Go through a set of sample areas' LSM supporting files and look for an entity attribute with a given name. If a consensus
+     * Go through a set of sample areas' LSM supporting files and look for an attribute with a given name. If a consensus
      * can be reached across all the LSM's in the area then return that consensus. Otherwise log a warning and return null.
      * @param attrName
      * @return
@@ -1001,7 +1001,7 @@ public class SampleHelperNG extends EntityHelperNG {
                 continue;
             }
             else if ("properties".equals(ext)) {
-                // Ignore, properties should already be entity attributes
+                // Ignore properties files here, they should be specifically processed, not sucked into a file group
                 continue;
             }
             else {

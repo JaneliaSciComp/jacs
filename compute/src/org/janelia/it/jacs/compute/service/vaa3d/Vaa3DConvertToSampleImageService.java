@@ -15,14 +15,17 @@ import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.EntityException;
 import org.janelia.it.jacs.compute.service.exceptions.LSMMetadataException;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataConsensusException;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -36,6 +39,7 @@ import org.janelia.it.jacs.model.entity.cv.MergeAlgorithm;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
@@ -59,8 +63,9 @@ import com.google.common.collect.Multimap;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
+public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
 
+    private static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
 	private static final int START_DISPLAY_PORT = 890;
     private static final String CONFIG_PREFIX = "convertConfiguration.";
     
@@ -89,6 +94,16 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     @Override
     protected String getGridServicePrefixName() {
         return "convert";
+    }
+
+    @Override
+    protected int getRequiredMemoryInGB() {
+        return 32;
+    }
+    
+    @Override
+    public int getJobTimeoutSeconds() {
+        return TIMEOUT_SECONDS;
     }
     
     @Override
@@ -610,6 +625,25 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                 catch (Exception e) {
                     throw new LSMMetadataException("Error parsing LSM metadata file: "+jsonFile,e);
                 }
+            }
+        }
+    }
+    
+    @Override
+    public void postProcess() throws MissingDataException {
+
+        FileNode parentNode = ProcessDataHelper.getResultFileNode(processData);
+        File file = new File(parentNode.getDirectoryPath());
+        
+        File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
+        if (coreFiles.length > 0) {
+            throw new MissingGridResultException(file.getAbsolutePath(), "Bulk merge core dumped");
+        }
+
+        for(MergedLsmPair mergedLsmPair : sampleArea.getMergedLsmPairs()) {
+            File outputFile = new File(mergedLsmPair.getMergedFilepath());
+            if (!outputFile.exists()) {
+                throw new MissingGridResultException(file.getAbsolutePath(), "Missing merge output "+outputFile.getAbsolutePath());
             }
         }
     }
