@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
+import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -21,11 +22,15 @@ import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
 import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.ontology.Category;
+import org.janelia.it.jacs.model.domain.ontology.EnumItem;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
+import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
@@ -68,6 +73,7 @@ public class DomainDAO {
     protected MongoCollection annotationCollection;
     protected MongoCollection compartmentSetCollection;
     protected MongoCollection dataSetCollection;
+    protected MongoCollection releaseCollection;
     protected MongoCollection flyLineCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection imageCollection;
@@ -108,6 +114,7 @@ public class DomainDAO {
         this.annotationCollection = getCollectionByClass(Annotation.class);
         this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
         this.dataSetCollection = getCollectionByClass(DataSet.class);
+        this.releaseCollection = getCollectionByClass(LineRelease.class);
         this.flyLineCollection = getCollectionByClass(FlyLine.class);
         this.fragmentCollection = getCollectionByClass(NeuronFragment.class);
         this.imageCollection = getCollectionByClass(Image.class);
@@ -142,7 +149,7 @@ public class DomainDAO {
     }
 
     /**
-     * create a new subject
+     * Save the given subject.
      */
     public Subject save(Subject subject) {
         if (subject.getId()==null) {
@@ -299,6 +306,23 @@ public class DomainDAO {
         return objs.isEmpty()?null:objs.get(0);
     }
 
+    public <T extends DomainObject> List<T> getDomainObjectsAs(List<Reference> references, Class<T> clazz) {
+        return getDomainObjectsAs(null, references, clazz);
+    }
+
+    public <T extends DomainObject> List<T> getDomainObjectsAs(String subjectKey, List<Reference> references, Class<T> clazz) {
+        List<T> list = new ArrayList<>();
+        for(DomainObject object : getDomainObjects(subjectKey, references)) {
+            if (clazz.isAssignableFrom(object.getClass())) {
+                list.add((T)object);
+            }
+            else {
+                throw new IllegalArgumentException("Referenced object is "+object.getClass().getSimpleName()+" not "+clazz.getSimpleName());
+            }
+        }
+        return list;
+    }
+    
     /**
      * Get the domain objects referenced by the given list of References.
      */
@@ -338,6 +362,10 @@ public class DomainDAO {
         return getDomainObjects(subjectKey, clazz, ids);
     }
 
+    public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, Class<T> domainClass) {
+        return getDomainObjects(subjectKey, domainClass, null);
+    }
+    
     /**
      * Get the domain objects in the given collection name with the specified ids.
      */
@@ -432,6 +460,34 @@ public class DomainDAO {
         return list;
     }
 
+    /**
+     * Get domain objects of a given type with a given specified property value.
+     */
+    public <T extends DomainObject> List<T> getDomainObjectsWithProperty(String subjectKey, Class<T> domainClass, String propName, String propValue) {
+
+        if (domainClass==null) {
+            return null;
+        }
+
+        long start = System.currentTimeMillis();
+        log.trace("getDomainObjects(subjectKey={},className="+domainClass.getName()+",propName="+propName+",propValue="+propValue+")");
+
+        Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
+
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCursor<T> cursor = null;
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            cursor = getCollectionByName(collectionName).find("{"+propName+":#}", propValue).as(domainClass);
+        }
+        else {
+            cursor = getCollectionByName(collectionName).find("{"+propName+":#,readers:{$in:#}}", propValue, subjects).as(domainClass);
+        }
+
+        List<T> list = toList(cursor);
+        log.trace("Getting "+list.size()+" "+collectionName+" objects took "+(System.currentTimeMillis()-start)+" ms");
+        return list;
+    }
+    
     public List<Annotation> getAnnotations(String subjectKey, Reference reference) {
         return getAnnotations(subjectKey, Arrays.asList(reference));
     }
@@ -459,26 +515,132 @@ public class DomainDAO {
         return treeNodeCollection.findOne("{class:#,ownerKey:#}",Workspace.class.getName(),subjectKey).as(Workspace.class);
     }
 
-    public Collection<Workspace> getWorkspaces(String subjectKey) {
+    public List<Workspace> getWorkspaces(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return toList(treeNodeCollection.find("{class:#,readers:{$in:#}}", Workspace.class.getName(), subjects).as(Workspace.class));
     }
 
-    public Collection<Ontology> getOntologies(String subjectKey) {
+    public List<Ontology> getOntologies(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return toList(ontologyCollection.find("{readers:{$in:#}}",subjects).as(Ontology.class));
     }
+    
+    public OntologyTerm getErrorOntologyCategory() {
+        List<Ontology> ontologies = getDomainObjectsByName(DomainConstants.GENERAL_USER_GROUP_KEY, Ontology.class, DomainConstants.ERROR_ONTOLOGY_NAME);
+        if (ontologies.size()>1) {
+            log.warn("Multiple error ontologies detected. Please ensure that "+DomainConstants.GENERAL_USER_GROUP_KEY+" only owns a single ontology with name "+DomainConstants.ERROR_ONTOLOGY_NAME);
+        }
+        for (Ontology ontology : ontologies) {
+            OntologyTerm term = DomainUtils.findTerm(ontology, DomainConstants.ERROR_ONTOLOGY_CATEGORY);
+            if (term instanceof Category) {
+                return term;
+            }
+        }
+        throw new IllegalStateException("Error ontology category could not be found");
+    }
+    
+    public Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, Object value) throws Exception {
+        
+        Ontology ontology = getDomainObject(subjectKey, Ontology.class, ontologyTermReference.getOntologyId());
+        OntologyTerm ontologyTerm = DomainUtils.findTerm(ontology, ontologyTermReference.getOntologyTermId());
+        
+        OntologyTerm keyTerm = ontologyTerm;
+        OntologyTerm valueTerm = null;
+        String keyString = keyTerm.getName();
+        String valueString = value == null ? null : value.toString();
 
-    public Collection<DataSet> getDataSets(String subjectKey) {
+        if (keyTerm instanceof EnumItem) {
+            keyTerm = ontologyTerm.getParent();
+            valueTerm = ontologyTerm;
+            keyString = keyTerm.getName();
+            valueString = valueTerm.getName();
+        }
+
+        final Annotation annotation = new Annotation();
+        annotation.setKey(keyString);
+        annotation.setValue(valueString);
+        annotation.setTarget(target);
+        
+        annotation.setKeyTerm(new OntologyTermReference(ontology, keyTerm));
+        if (valueTerm!=null) {
+            annotation.setValueTerm(new OntologyTermReference(ontology, valueTerm));
+        }
+        
+        String tag = (annotation.getValue()==null ? annotation.getKey() : 
+                     annotation.getKey() + " = " + annotation.getValue());
+        annotation.setName(tag);
+
+        Annotation savedAnnotation = save(annotation);
+        log.info("Saved annotation as " + savedAnnotation.getId());
+        
+        // TODO: auto-share annotation based on auto-share template (this logic is currently in the client)
+        
+        return savedAnnotation;
+    }
+    
+    public List<DataSet> getDataSets(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return toList(dataSetCollection.find("{readers:{$in:#}}",subjects).as(DataSet.class));
     }
 
-    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long id) {
+    public DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(imageCollection.find("{sample.targetId:#,readers:{$in:#}}",id, subjects).as(LSMImage.class));
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            return dataSetCollection.findOne("{identifier:#}",dataSetIdentifier).as(DataSet.class);
+        }
+        else {
+            return dataSetCollection.findOne("{readers:{$in:#},identifier:#}",subjects,dataSetIdentifier).as(DataSet.class);    
+        }
+    }
+    
+    public List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
+        return getDomainObjectsWithProperty(subjectKey, Sample.class, "dataSet", dataSetIdentifier);
     }
 
+    public Sample getSampleBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+
+        long start = System.currentTimeMillis();
+        log.trace("getSampleBySlideCode(subjectKey={},dataSetIdentifier={},slideCode={})",subjectKey,dataSetIdentifier,slideCode);
+
+        Set<String> subjects = subjectKey==null?null:getSubjectSet(subjectKey);
+
+        String collectionName = DomainUtils.getCollectionName(Sample.class);
+        MongoCursor<Sample> cursor = null;
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            cursor = getCollectionByName(collectionName).find("{dataSet:#,slideCode:#}", dataSetIdentifier, slideCode).as(Sample.class);
+        }
+        else {
+            cursor = getCollectionByName(collectionName).find("{dataSet:#,slideCode:#,readers:{$in:#}}", dataSetIdentifier, slideCode, subjects).as(Sample.class);
+        }
+
+        List<Sample> list = toList(cursor);
+        log.trace("Getting "+list.size()+" Sample objects took "+(System.currentTimeMillis()-start)+" ms");
+        if (list.size()>1) {
+            log.warn("More than one sample for dataSet/slideCode "+dataSetIdentifier+"/"+slideCode);
+        }
+        return list.isEmpty()?null:list.get(0);
+    }
+    
+    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            return toList(imageCollection.find("{sample.targetId:#}",sampleId).as(LSMImage.class));
+        }
+        else {
+            return toList(imageCollection.find("{sample.targetId:#,readers:{$in:#}}",sampleId, subjects).as(LSMImage.class));
+        }
+    }
+
+    public LSMImage getLsmBySageId(String subjectKey, Integer sageId) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
+            return imageCollection.findOne("{sageId:#}",sageId).as(LSMImage.class);
+        }
+        else {
+            return imageCollection.findOne("{sageId:#,readers:{$in:#}}",sageId, subjects).as(LSMImage.class);
+        }
+    }
+    
     public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}",sampleId,subjects).as(NeuronFragment.class));
@@ -503,6 +665,13 @@ public class DomainDAO {
         }
     }
 
+    public <T extends DomainObject> T save(T domainObject) throws Exception {
+        if (domainObject.getOwnerKey()==null) {
+            throw new IllegalArgumentException("Domain object must contain owner key in order to use the bare version of save");
+        }
+        return saveImpl(domainObject.getOwnerKey(), domainObject);
+    }
+    
     private <T extends DomainObject> T saveImpl(String subjectKey, T domainObject) throws Exception {
         String collectionName = DomainUtils.getCollectionName(domainObject);
         MongoCollection collection = getCollectionByName(collectionName);
@@ -543,7 +712,7 @@ public class DomainDAO {
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
         saveImpl(subjectKey, domainObject);
         // TODO: The only reason this retrieves the saved object is to avoid errors during development where the client incorrectly 
-        // depends on input object being returned. However, i's needlessly inefficient, so once we have remote clients written 
+        // depends on input object being returned. However, it's needlessly inefficient, so once we have remote clients written 
         // we may want to optimize by just returning domainObject here. 
         return getDomainObject(subjectKey, domainObject);
     }
@@ -729,6 +898,10 @@ public class DomainDAO {
         return getDomainObject(subjectKey, treeNode);
     }
 
+    public List<DomainObject> getChildren(String subjectKey, TreeNode treeNode) {
+        return getDomainObjects(subjectKey, treeNode.getChildren());
+    }
+
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
         if (references==null) {
             throw new IllegalArgumentException("Cannot add null children");
@@ -820,6 +993,14 @@ public class DomainDAO {
         return getDomainObject(subjectKey, treeNode);
     }
 
+    public List<DomainObject> getMembers(String subjectKey, ObjectSet objectSet) {
+        return getDomainObjects(subjectKey, objectSet.getClassName(), objectSet.getMembers());
+    }
+    
+    public <T extends DomainObject> List<T> getMembersAs(String subjectKey, ObjectSet objectSet, Class<T> clazz) {
+        return getDomainObjects(subjectKey, clazz, objectSet.getMembers());
+    }
+    
     public ObjectSet addMembers(String subjectKey, ObjectSet objectSetArg, Collection<Reference> references) throws Exception {
         if (references==null) {
             throw new IllegalArgumentException("Cannot add null members");
@@ -869,7 +1050,11 @@ public class DomainDAO {
         return getDomainObject(subjectKey, objectSet);
     }
 
-    public DomainObject updateProperty(String subjectKey, String className, Long id, String propName, String propValue) {
+    public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) {
+        return (T)updateProperty(subjectKey, clazz.getName(), id, propName, propValue);
+    }
+    
+    public DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) {
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(className);
         DomainObject domainObject = getDomainObject(subjectKey, clazz, id);
         try {
@@ -887,6 +1072,15 @@ public class DomainDAO {
         return getDomainObject(subjectKey, domainObject);
     }
 
+    public <T extends DomainObject>  void deleteProperty(String ownerKey, Class<T> clazz, String propName) {
+        String collectionName = DomainUtils.getCollectionName(clazz);
+        MongoCollection collection = getCollectionByName(collectionName);
+        WriteResult wr = collection.update("{ownerKey:#}",ownerKey).with("{$unset: {"+propName+":#, updatedDate:#}}","");
+        if (wr.getN()!=1) {
+            log.warn("Could not delete property "+collectionName+"."+propName);
+        }
+    }
+    
     public void changePermissions(String subjectKey, String className, Long id, String granteeKey, String rights, boolean grant) throws Exception {
         changePermissions(subjectKey, className, Arrays.asList(id), granteeKey, rights, grant);
     }

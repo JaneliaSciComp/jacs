@@ -1,13 +1,11 @@
 package org.janelia.it.jacs.compute.service.align;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.entity.cv.Objective;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * A configured aligner which takes additional parameters to align the 63x image to a whole brain 20x image.
@@ -22,39 +20,27 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     	alignedAreas.addAll(sampleAreas);
 
     	// Ignore sample areas, and get the sample pair (20x/63x)
-    	Entity sample = sampleEntity;
-        if (Objective.OBJECTIVE_63X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
-            // Already within the 63x sample, we need the parent
-            Entity parentSample = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-            if (parentSample==null) {
-                throw new IllegalStateException("Parent sample is null for 63x sample: "+sampleEntity.getId());
-            }
-            sample = parentSample;
-        }
-        
-        entityLoader.populateChildren(sample);
-        
-        final List<Entity> sampleList = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
-        contextLogger.info("initParameters: found " + sampleList.size() + " objective samples for entity " + sample);
 
-        for(Entity objectiveSample : sampleList) {
+        contextLogger.info("initParameters: found " + sample.getObjectiveSamples().size() + " objective samples for entity " + sample);
+
+        for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
             
-            String objective = objectiveSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+            String objective = objectiveSample.getObjective();
             if (Objective.OBJECTIVE_20X.getName().equals(objective)) {
-                contextLogger.info("Found 20x sub-sample: "+objectiveSample.getName());
-                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
+                contextLogger.info("Found 20x objective for: "+sample.getName());
+                SampleProcessingResult result = getLatestResultOfType(objectiveSample, BRAIN_AREA);
                 if (result==null) {
                     // In some cases there is no "Brain" area, let's try to find anything we can use
-                    result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
+                    result = getLatestResultOfType(objectiveSample, null);
                 }
                 input2 = buildInputFromResult("second input (20x stack)", result, objectiveSample, objective);
             }
             else if (Objective.OBJECTIVE_63X.getName().equals(objective)) {
-                contextLogger.info("Found 63x sub-sample: "+objectiveSample.getName());
-                Entity result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, BRAIN_AREA);
+                contextLogger.info("Found 63x objective for: "+sample.getName());
+                SampleProcessingResult result = getLatestResultOfType(objectiveSample, BRAIN_AREA);
                 if (result==null) {
                     // In some cases there is no "Brain" area, let's try to find anything we can use
-                    result = getLatestResultOfType(objectiveSample, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, null);
+                    result = getLatestResultOfType(objectiveSample, null);
                 }
                 input1 = buildInputFromResult("first input (63x stack)", result, objectiveSample, objective);
             }
@@ -70,33 +56,17 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     	// Do nothing, since we build our consensus values while populating the inputs
     }
 
-    private AlignmentInputFile buildInputFromResult(String inputType, Entity sampleProcessingResult, Entity objectiveSample, String objective) throws Exception {
+    private AlignmentInputFile buildInputFromResult(String inputType, SampleProcessingResult result, ObjectiveSample objectiveSample, String objective) throws Exception {
 
-        if (sampleProcessingResult==null) return null;
-        AlignmentInputFile inputFile = null;
-
-        final Entity image = sampleProcessingResult.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-        if (image != null) {
-            inputFile = new AlignmentInputFile();
-            inputFile.setPropertiesFromEntity(image);
-            inputFile.setSampleId(objectiveSample.getId());
-            inputFile.setObjective(objective);
-            entityLoader.populateChildren(image);
-        	String losslessPath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_LOSSLESS_IMAGE);
-        	if (losslessPath!=null) {
-        	    // Use lossless path, if available
-        	    inputFile.setFilepath(losslessPath);
-        	}
-            
-            if (warpNeurons) {
-                inputFile.setInputSeparationFilename(getConsolidatedLabel(sampleProcessingResult));
-            }
-            //logInputFound(inputType, inputFile);
-        } 
-        else {
-            contextLogger.error("Could not find default 3d image for result " + sampleProcessingResult +
-                                " (id=" + sampleProcessingResult.getId() + ")");
+        if (result==null) return null;
+        AlignmentInputFile inputFile = new AlignmentInputFile();
+        inputFile.setPropertiesFromEntity(result);
+        inputFile.setSampleId(sample.getId());
+        inputFile.setObjective(objective);        
+        if (warpNeurons) {
+            inputFile.setInputSeparationFilename(getConsolidatedLabel(result));
         }
+        logInputFound(inputType, inputFile);
         
         return inputFile;
     }

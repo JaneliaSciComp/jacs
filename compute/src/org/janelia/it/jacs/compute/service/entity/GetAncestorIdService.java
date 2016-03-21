@@ -8,7 +8,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetAncestorIdService extends AbstractEntityService {
+public class GetAncestorIdService extends AbstractDomainService {
 
 	@Override 
     public void execute() throws Exception {

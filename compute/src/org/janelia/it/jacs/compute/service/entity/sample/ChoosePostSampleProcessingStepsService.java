@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -17,10 +19,17 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ChoosePostSampleProcessingStepsService extends AbstractEntityService {
+public class ChoosePostSampleProcessingStepsService extends AbstractDomainService {
 
+    private SampleHelperNG sampleHelper;
+    private ObjectiveSample objectiveSample;
+    
     public void execute() throws Exception {
 
+        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        Sample sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        
         final List<String> alignAlgorithms = data.getItemAsCsvStringList("ALIGNMENT_ALGORITHMS");
         final List<String> alignAlgorithmParams = data.getItemAsCsvStringList("ALIGNMENT_ALGORITHM_PARAMS");
         final List<String> alignAlgorithmResultNames = data.getItemAsCsvStringList("ALIGNMENT_ALGORITHM_RESULT_NAMES");
@@ -74,7 +83,7 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
     private boolean skipAlignment() {
 
         boolean skipAlignment = false;
-
+        
         final String skipAlignmentTileFilter = data.getItemAsString("SKIP_ALIGNMENT_TILE_FILTER");
         if (! StringUtils.isEmpty(skipAlignmentTileFilter)) {
             final Pattern skipTileNamePattern = Pattern.compile(skipAlignmentTileFilter);
@@ -84,25 +93,19 @@ public class ChoosePostSampleProcessingStepsService extends AbstractEntityServic
             if (sampleAreas != null) {
                 String tileName;
                 for (AnatomicalArea area : sampleAreas) {
-                	try {
-	                	List<Entity> tiles = entityBean.getEntitiesById(area.getTileIds());
-	                    for (Entity tile : tiles) {
-	                        tileName = tile.getName();
-	                        final Matcher m = skipTileNamePattern.matcher(tileName);
-	                        if (m.matches()) {
-	                            skipAlignment = true;
-	                            contextLogger.info("skipping alignment because SAMPLE_AREAS contains tile '" +
-	                                               tileName + "'");
-	                            break;
-	                        }
-	                    }
-	                    if (skipAlignment) {
-	                        break;
-	                    }
-                	}
-                	catch (ComputeException e) {
-                		logger.error("Error checking skip alignment tile filter for area "+area.getName(),e);
-                	}
+            	    for(SampleTile tile : sampleHelper.getTiles(objectiveSample, area.getTileNames())) {
+                        tileName = tile.getName();
+                        final Matcher m = skipTileNamePattern.matcher(tileName);
+                        if (m.matches()) {
+                            skipAlignment = true;
+                            contextLogger.info("skipping alignment because SAMPLE_AREAS contains tile '" +
+                                               tileName + "'");
+                            break;
+                        }
+                    }
+                    if (skipAlignment) {
+                        break;
+                    }
                 }
             }
         }

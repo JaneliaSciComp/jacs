@@ -12,7 +12,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InitVariablesFromEntityService extends AbstractEntityService {
+public class InitVariablesFromEntityService extends AbstractDomainService {
 
     public void execute() throws Exception {
         

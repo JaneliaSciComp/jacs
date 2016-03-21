@@ -11,6 +11,8 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 public class PipelineError implements HasFilepath {
 
     private String filepath;
+    private String classification;
+    private String description;
 
     public String getFilepath() {
         return filepath;
@@ -19,4 +21,21 @@ public class PipelineError implements HasFilepath {
     public void setFilepath(String filepath) {
         this.filepath = filepath;
     }
+
+    public String getClassification() {
+        return classification;
+    }
+
+    public void setClassification(String classification) {
+        this.classification = classification;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
 }

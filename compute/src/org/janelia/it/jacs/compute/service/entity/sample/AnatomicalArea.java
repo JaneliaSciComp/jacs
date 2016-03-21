@@ -13,25 +13,35 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
  */
 public class AnatomicalArea implements Serializable {
 
+    private Long sampleId;
+    private String objective;
     private String name;
-    private List<Long> tileIds = new ArrayList<Long>();
+    private List<String> tileNames = new ArrayList<>();
     private List<MergedLsmPair> mergedLsmPairs;
-    private String stitchedFilename;
+    private String stitchedFilepath;
 
-    public AnatomicalArea(String name) {
-        this.name = name;
+    public AnatomicalArea(Long sampleId, String objective, String anatomicalArea) {
+        this.name = anatomicalArea;
     }
 
-    public void addTileId(Long imageTileId) {
-        tileIds.add(imageTileId);
+    public Long getSampleId() {
+        return sampleId;
+    }
+
+    public String getObjective() {
+        return objective;
+    }
+
+    public void addTileName(String imageTileId) {
+        tileNames.add(imageTileId);
     }
 
     public String getName() {
         return name;
     }
 
-    public List<Long> getTileIds() {
-        return tileIds;
+    public List<String> getTileNames() {
+        return tileNames;
     }
 
     public List<MergedLsmPair> getMergedLsmPairs() {
@@ -42,19 +52,19 @@ public class AnatomicalArea implements Serializable {
         this.mergedLsmPairs = mergedLsmPairs;
     }
 
-    public String getStitchedFilename() {
-        return stitchedFilename;
+    public String getStitchedFilepath() {
+        return stitchedFilepath;
     }
 
-    public void setStitchedFilename(String stitchedFilename) {
-        this.stitchedFilename = stitchedFilename;
+    public void setStitchedFilepath(String stitchedFilepath) {
+        this.stitchedFilepath = stitchedFilepath;
     }
 
     @Override
     public String toString() {
         return "AnatomicalArea{" +
                 "name='" + name + '\'' +
-                ", tileIds=" + tileIds +
+                ", tileIds=" + tileNames +
                 '}';
     }
 }

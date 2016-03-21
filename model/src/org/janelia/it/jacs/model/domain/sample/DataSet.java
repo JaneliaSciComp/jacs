@@ -17,7 +17,7 @@ public class DataSet extends AbstractDomainObject {
     private String identifier;
     private String sampleNamePattern;
     private SampleImageType sampleImageType;
-    private Boolean sageSync;
+    private boolean sageSync;
     private List<String> pipelineProcesses;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
@@ -45,11 +45,11 @@ public class DataSet extends AbstractDomainObject {
         this.sampleImageType = sampleImageType;
     }
 
-    public Boolean getSageSync() {
+    public boolean isSageSync() {
         return sageSync;
     }
 
-    public void setSageSync(Boolean sageSync) {
+    public void setSageSync(boolean sageSync) {
         this.sageSync = sageSync;
     }
 

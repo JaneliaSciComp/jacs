@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -11,7 +11,7 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleDebuggerService extends AbstractEntityService {
+public class SampleDebuggerService extends AbstractDomainService {
 
 	private static final Logger logger = Logger.getLogger(SampleDebuggerService.class);
 

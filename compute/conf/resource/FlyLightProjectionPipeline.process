@@ -35,6 +35,7 @@
 
             <include name="20x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_20X_ID}"/>
+                <input name="OBJECTIVE" value="20x"/>
                 <input name="PIPELINE_NAME" value="Projection Pipeline 20x"/>
                 <input name="MERGE_ALGORITHMS" value="$V{20X_MERGE_ALGORITHMS}"/>
                 <input name="STITCH_ALGORITHMS" value=""/>
@@ -50,6 +51,7 @@
             
             <include name="63x Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_63X_ID}"/>
+                <input name="OBJECTIVE" value="63x"/>
                 <input name="PIPELINE_NAME" value="Projection Pipeline 63x"/>
                 <input name="MERGE_ALGORITHMS" value="FLYLIGHT_ORDERED"/>
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>

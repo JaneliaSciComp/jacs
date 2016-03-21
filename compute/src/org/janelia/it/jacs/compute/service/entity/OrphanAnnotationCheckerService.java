@@ -9,7 +9,7 @@ import org.janelia.it.jacs.model.entity.Entity;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class OrphanAnnotationCheckerService extends AbstractEntityService {
+public class OrphanAnnotationCheckerService extends AbstractDomainService {
 
     public transient static final String PARAM_deleteAnnotationsMissingTargets = "remove annotations missing targets";
     public transient static final String PARAM_deleteAnnotationsMissingTerms = "remove annotations missing terms";

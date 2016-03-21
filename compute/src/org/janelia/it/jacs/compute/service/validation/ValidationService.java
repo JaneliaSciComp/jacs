@@ -5,7 +5,7 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.mbean.Validator;
 import org.janelia.it.jacs.compute.process_result_validation.content_checker.engine.ValidationEngine;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -24,7 +24,7 @@ import java.util.List;
  * Created by fosterl on 6/17/14.
  */
 @SuppressWarnings("unused")
-public class ValidationService extends AbstractEntityService {
+public class ValidationService extends AbstractDomainService {
     private Logger logger = Logger.getLogger(ValidationService.class);
 
     private Boolean nodebug;

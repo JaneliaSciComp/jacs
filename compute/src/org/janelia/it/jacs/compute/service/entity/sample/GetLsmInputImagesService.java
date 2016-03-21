@@ -4,14 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.compute.util.FijiColor;
 import org.janelia.it.jacs.compute.util.FileUtils;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -20,7 +19,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetLsmInputImagesService extends AbstractEntityService {
+public class GetLsmInputImagesService extends AbstractDomainService {
 
     public void execute() throws Exception {
 
@@ -42,12 +41,12 @@ public class GetLsmInputImagesService extends AbstractEntityService {
     
     private InputImage getInputImage(Long lsmId, String filepath) throws ComputeException {
 
-        Entity lsm = entityBean.getEntityById(lsmId);
+        LSMImage lsm = domainDao.getDomainObject(ownerKey, LSMImage.class, lsmId);
 
         String prefix = FileUtils.getFilePrefix(filepath);
-        String chanSpec = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        String chanColors = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
-        String area = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+        String chanSpec = lsm.getChanSpec();
+        String chanColors = lsm.getChannelColors();
+        String area = lsm.getAnatomicalArea();
         
         if (chanSpec==null) {
             throw new ComputeException("Channel specification attribute is null for LSM id="+lsmId);

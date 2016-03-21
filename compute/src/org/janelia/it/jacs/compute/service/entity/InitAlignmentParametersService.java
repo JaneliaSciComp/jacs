@@ -9,7 +9,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InitAlignmentParametersService extends AbstractEntityService {
+public class InitAlignmentParametersService extends AbstractDomainService {
 
 	@Override 
     public void execute() throws Exception {

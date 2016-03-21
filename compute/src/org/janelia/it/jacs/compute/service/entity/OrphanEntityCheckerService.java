@@ -9,7 +9,7 @@ import org.janelia.it.jacs.model.entity.Entity;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class OrphanEntityCheckerService extends AbstractEntityService {
+public class OrphanEntityCheckerService extends AbstractDomainService {
 
     public transient static final String PARAM_deleteOrphanEntityTrees = "remove orphan entity trees";
     

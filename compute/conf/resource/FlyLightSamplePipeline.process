@@ -5,7 +5,8 @@
  <process name="FlyLight Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
 	<sequence name="Main">
 
-        <input name="SAMPLE_ENTITY_ID"/>                 <!-- The GUID of the Sample to process --> 
+        <input name="SAMPLE_ENTITY_ID"/>                 <!-- The GUID of the Sample to process -->
+        <input name="OBJECTIVE"/>                        <!-- The objective to process -->  
         <input name="PIPELINE_NAME"/>                    <!-- The name of the pipeline being run --> 
         <input name="PIPELINE_PROCESS"/>                 <!-- The name of the process file being run  --> 
         <input name="MERGE_ALGORITHMS"/>                 <!-- Comma-delimited list of merging algorithms to use (see MergeAlgorithm enum) --> 
@@ -29,14 +30,17 @@
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="OBJECTIVE"/>
             <input name="PIPELINE_NAME"/>
             <input name="PIPELINE_PROCESS"/>
             <input name="TASK_PARAMETER_MAP">
                 <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
+                <entry key="objective" value="OBJECTIVE"/>
                 <entry key="pipeline name" value="PIPELINE_NAME"/>
                 <entry key="pipeline process" value="PIPELINE_PROCESS"/>
             </input>
             <output name="SAMPLE_ENTITY_ID"/>
+            <output name="OBJECTIVE"/>
             <output name="PIPELINE_NAME"/>
             <output name="PIPELINE_PROCESS"/>
         </operation>
@@ -123,13 +127,14 @@
             
             <!-- Set the sample status -->
             <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
-                <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+                <input name="SAMPLE_ENTITY_ID"/>
                 <input name="STATUS" value="Processing"/>
             </operation>
     
             <!-- Create a pipeline run -->
             <operation name="Create Pipeline Run" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="PIPELINE_NAME"/>
                 <input name="PIPELINE_PROCESS"/>
                 <output name="PIPELINE_RUN_ENTITY_ID"/>
@@ -139,6 +144,7 @@
             <include name="Summary" process="FlyLightLSMSummaryPipeline" startEvent="running">
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="REUSE_SUMMARY"/>
                 <input name="CHANNEL_DYE_SPEC"/>
                 <output name="SUMMARY_RESULT_FILE_NODE"/>
@@ -149,6 +155,7 @@
         <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
         <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="OBJECTIVE"/>
             <output name="SAMPLE_AREAS"/>
             <output name="SAMPLE_AREA"/>
         </operation>
@@ -158,6 +165,7 @@
             <!-- Decide which types of processing will be run -->
             <operation name="Choose Sample Area Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSampleAreaPipelineStepsService">
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="SAMPLE_AREA"/>
                 <input name="MERGE_ALGORITHMS"/>
                 <input name="STITCH_ALGORITHMS"/>
@@ -176,6 +184,7 @@
                 <!-- Reuse sample processing from previous pipeline run -->
                 <operation name="Reuse Sample Processing Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.ReuseSampleProcessingResultService">
                     <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
                     <input name="SAMPLE_AREA"/>
                     <output name="SAMPLE_AREA"/>
@@ -192,13 +201,6 @@
                         <input name="BEAN_PROPERTY_1" value="stitchedFilename"/>
                         <input name="PROCESS_VARIABLE_1" value="DEFAULT_IMAGE_FILENAME"/>
                         <output name="DEFAULT_IMAGE_FILENAME"/>
-                    </operation>
-                    
-                    <!-- Register MIP images -->
-                    <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-                        <input name="RESULT_ENTITY_ID"/>
-                        <input name="DEFAULT_IMAGE_FILENAME"/>
-                        <input name="PIPELINE_RUN_ENTITY_ID"/>
                     </operation>
                     
                 </sequence>
@@ -224,6 +226,7 @@
     			        <input name="MERGE_RESULT_FILE_NODE"/>
     			        <input name="STITCH_RESULT_FILE_NODE"/>
     					<input name="SAMPLE_ENTITY_ID"/>
+                        <input name="OBJECTIVE"/>
                         <input name="SAMPLE_AREA"/>
     					<input name="RUN_STITCH"/>
     					<output name="SAMPLE_AREA"/>
@@ -288,6 +291,7 @@
                         <input name="METADATA_RESULT_FILE_NODE" value="$V{SUMMARY_RESULT_FILE_NODE}"/>
                         <input name="RUN_MERGE"/>
                         <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="OBJECTIVE"/>
                         <input name="SAMPLE_AREA"/>
                         <input name="CHANNEL_DYE_SPEC"/>
                         <input name="OUTPUT_CHANNEL_ORDER"/>
@@ -358,31 +362,6 @@
                 
                 <!-- Generate and register MIPs only if we're persisting results -->
                 <sequence if="PERSIST=true">
-                    
-                    <!-- The following commented code is an alternative to the MIPGenerationService. It uses Fiji to generate 
-                         nice-looking MIPs and movies. Unfortunately, these MIPs do not match the color scheme used by the Neuron Annotator, 
-                         since the Neuron Separator works by duplicating signal channels when there are less than three, which turns green into cyan, etc. 
-                         In the future we will likely want to use this alternative method in order to have consistently-generated MIPs everywhere, 
-                         but for now it would create too much confusion. 
-                         
-                    <operation name="Get Tile List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetInputImagesService">
-                        <input name="STACK_FILENAMES"/>
-                        <input name="CHANNEL_SPEC"/>
-                        <output name="INPUT_IMAGES"/>
-                    </operation>
-                    
-                    <sequence name="Create Tile Summary Artifacts" waitForAsync="true">
-                        <operation name="Create Tile Summary Artifacts" processor="queue/gridSubmitAndWait">
-                            <input name="iservice" value="org.janelia.it.jacs.compute.service.image.BasicMIPandMovieGenerationService"/>
-                            <input name="RESULT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
-                            <input name="OUTPUT_FILE_NODE" value="$V{MIPS_RESULT_FILE_NODE}"/>
-                            <input name="INPUT_IMAGES"/>
-                            <input name="NORMALIZE_TO_FIRST_IMAGE" value="false"/>
-                            <input name="OUTPUTS" value="mips:movies"/>
-                        </operation>
-                    </sequence>
-                    
-                    -->
                      
             	    <!-- Generate MIP for the stitched file -->
                     <sequence name="Generate sample MIPs" waitForAsync="true">
@@ -398,60 +377,34 @@
             	    <!-- Load the sample analysis results into the database -->
             		<operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SampleProcessingResultsDiscoveryService">
             			<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
-            			<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
-            			<input name="RESULT_ENTITY_TYPE" value="Sample Processing Result"/>
             			<input name="RESULT_ENTITY_NAME" value="$V{SAMPLE_PROCESSING_RESULTS_NAME}"/>
             			<input name="SAMPLE_ENTITY_ID"/>
+                        <input name="OBJECTIVE"/>
+                        <input name="PIPELINE_RUN_ENTITY_ID"/>
             			<input name="CHANNEL_SPEC"/>
             			<input name="SAMPLE_AREA"/>
             			<input name="LSM_CHANNEL_MAPPING"/>
             			<output name="RESULT_ENTITY_ID"/>
             	    </operation>
-                	                    
-            	    <!-- Register MIP images -->
-            		<operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-            			<input name="PIPELINE_RUN_ENTITY_ID"/>
-            			<input name="RESULT_ENTITY_ID"/>
-            			<input name="DEFAULT_IMAGE_FILENAME"/>
-            			<output name="DEFAULT_IMAGE_ID"/>
-            	    </operation>
         		
-            		<!-- Run analyses on unaligned results, if there are signal channels to analyze -->
-                    <sequence if="SIGNAL_CHANNELS is not empty">
+                    <sequence if="RUN_ANALYSIS=true">
+                        <sequence forEach="ANALYSIS_ALGORITHM">
+                                
+                            <!-- Get analysis parameters -->
+                            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+                                <input name="ANALYSIS_ALGORITHM"/>
+                                <output name="ANALYSIS_PIPELINE_NAME"/>
+                            </operation>
                     
-                        <sequence if="RUN_ANALYSIS=true">
-                            <sequence forEach="ANALYSIS_ALGORITHM">
-                                    
-                                <!-- Decide what pipeline to run -->
-                                <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
-                                    <input name="ANALYSIS_ALGORITHM"/>
-                                    <input name="RESULT_ENTITY_ID"/>
-                                    <input name="SAMPLE_ENTITY_ID"/>
-                                    <output name="OUTPUT_FILENAME"/>
-                                    <output name="ANALYSIS_PIPELINE_NAME"/>
-                                    <output name="OPTICAL_RESOLUTION"/>
-                                    <output name="PIXEL_RESOLUTION"/>
-                                    <output name="OBJECTIVE"/>
-                                    <output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
-                                </operation>
-                                
-                                <!-- Run neuron separation on prealigned data -->
-                                <include process="FlyLightSeparationPipeline" name="Unaligned neuron separation" startEvent="running">
-                                    <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
-                                    <input name="SAMPLE_ENTITY_ID"/>
-                                    <input name="INPUT_FILENAME" value="$V{OUTPUT_FILENAME}"/>
-                                    <input name="INPUT_IMAGE_ID" value="$V{DEFAULT_IMAGE_ID}"/>
-                                    <input name="SIGNAL_CHANNELS"/>
-                                    <input name="REFERENCE_CHANNEL"/>
-                                    <input name="OPTICAL_RESOLUTION"/>
-                                    <input name="PIXEL_RESOLUTION"/>
-                                    <input name="OBJECTIVE"/>
-                                    <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
-                                </include>
-                                
-                            </sequence>
+                            <!-- Run neuron separation on prealigned data -->
+                            <include process="FlyLightSeparationPipeline" name="Unaligned neuron separation" startEvent="running">
+                                <input name="SAMPLE_ENTITY_ID"/>
+                                <input name="OBJECTIVE"/>
+                                <input name="PIPELINE_RUN_ENTITY_ID"/>
+                                <input name="ROOT_ENTITY_ID" value="${RESULT_ENTITY_ID}"/>
+                            </include>
+                            
                         </sequence>
-                        
                     </sequence>
                 
                 </sequence>
@@ -468,6 +421,7 @@
                 <input name="SAMPLE_AREAS"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="REUSE_POST"/>
                 <input name="OUTPUT_COLOR_SPEC"/>
                 <input name="IMAGE_TYPE"/>
@@ -483,6 +437,7 @@
         <!-- Decide which types of processing will be run -->
         <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
             <input name="SAMPLE_ENTITY_ID"/>
+            <input name="OBJECTIVE"/>
             <input name="SAMPLE_AREAS"/>
             <input name="ALIGNMENT_ALGORITHMS"/>
             <input name="ALIGNMENT_ALGORITHM_PARAMS"/>
@@ -503,6 +458,7 @@
                     <include name="Alignment" process="FlyLightAlignmentPipeline" startEvent="running">
                         <input name="PIPELINE_RUN_ENTITY_ID"/>
                         <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="OBJECTIVE"/>
                         <input name="SAMPLE_AREAS"/>
                         <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
                         <input name="RUN_ANALYSIS"/>
@@ -523,16 +479,10 @@
                 <input name="ROOT_ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
                 <input name="COMPRESSION_TYPE" value="Visually Lossless"/>
             </include>
-            
-            <!-- Move all generated files to archive
-            <include name="Move sample to archive" process="SyncSampleToArchive">
-                <input name="SAMPLE_ENTITY_ID"/>
-            </include>
-            -->
              
             <!-- Set our status -->
             <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
-                <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+                <input name="SAMPLE_ENTITY_ID"/>
                 <input name="STATUS" value="Complete"/>
             </operation>
             
@@ -546,13 +496,15 @@
 	    
             <!-- Set our status -->
             <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
-                <input name="ENTITY_ID" value="$V{SAMPLE_ENTITY_ID}"/>
+                <input name="SAMPLE_ENTITY_ID"/>
                 <input name="STATUS" value="Error"/>
             </operation>
             
 		    <!-- Log the exception into the Pipeline Run -->
 			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
-				<input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
+				<input name="PIPELINE_RUN_ENTITY_ID"/>
 				<input name="RESULT_FILE_NODE"/>
 				<input name="PROCESSING_EXCEPTION"/>
 		    </operation>

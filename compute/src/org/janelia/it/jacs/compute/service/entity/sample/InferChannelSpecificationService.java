@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -15,7 +15,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InferChannelSpecificationService extends AbstractEntityService {
+public class InferChannelSpecificationService extends AbstractDomainService {
 
     private String channelDyeSpec;
     private Set<String> referenceDyes = new HashSet<>();

@@ -22,7 +22,7 @@ import org.janelia.it.jacs.compute.service.activeData.scanner.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.*;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
 
@@ -30,7 +30,7 @@ import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
  *
  * @author murphys
  */
-public class GeometricIndexService extends AbstractEntityService {
+public class GeometricIndexService extends AbstractDomainService {
     
     private static final Logger logger = Logger.getLogger(GeometricIndexService.class);
     public static final long MAX_SERVICE_TIME_MS = 1000 * 60 * 60 * 24; // 24 hours

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,23 +14,26 @@ import java.util.regex.Pattern;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainGridService;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
-import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.compute.util.JFSUtils;
+import org.janelia.it.jacs.compute.util.ScalityEntity;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
-import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
@@ -43,7 +47,7 @@ import org.joda.time.Period;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SyncSampleToScalityGridService extends AbstractEntityGridService {
+public class SyncSampleToScalityGridService extends AbstractDomainGridService {
 
     private static final String COMPLETION_TOKEN = "Synchronization script ran to completion";
     private static final String CONFIG_PREFIX = "scalityConfiguration.";
@@ -60,9 +64,9 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     private static final String JFS_CMD = 
             SystemConfigurationProperties.getString("JFS.CommandLineUtil");
         
-    private Entity sampleEntity;
-    private Set<Long> seenEntityIds = new HashSet<>();
-    private List<Entity> entitiesToMove = new ArrayList<>();
+    private Sample sample;
+    private List<ScalityEntity> entitiesToMove = new ArrayList<>();
+    
     private boolean deleteSourceFiles = false;
     private Set<Pattern> exclusions = new HashSet<>();
 
@@ -90,128 +94,122 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         
         this.deleteSourceFiles = data.getItemAsBoolean("DELETE_SOURCE_FILES");
         
-        Long sampleEntityId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
-        sampleEntity = entityBean.getEntityById(sampleEntityId);
-        if (sampleEntity == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
+        Long sampleId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
+        sample = domainDao.getDomainObject(ownerKey, Sample.class, sampleId);
+        if (sample == null) {
+            throw new IllegalArgumentException("Sample not found with id="+sampleId);
         }
         
-        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
-            throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
-        }
-        
-        logger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
+        logger.info("Retrieved sample: "+sample.getName()+" (id="+sampleId+")");
 
         String fileTypesStr = data.getRequiredItemAsString("FILE_TYPES");
         List<String> fileTypes = Task.listOfStringsFromCsvString(fileTypesStr);
         
-        processSample(sampleEntity, fileTypes);
+        processSample(sample, fileTypes);
 
         if (entitiesToMove.isEmpty()) {
-            logger.info("No entities to process, aborting.");
+            logger.info("No samples to process, aborting.");
             cancel();
             return;
         }
     }
-	
-    private void processSample(Entity sample, List<String> fileTypes) throws Exception {
+
+    private void processSample(Sample sample, List<String> fileTypes) throws Exception {
+        logger.info("Searching "+sample.getId()+" for files to move...");
+        for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+            processSample(sample, objectiveSample, fileTypes);
+        }
+    }
+    
+    private void processSample(Sample sample, ObjectiveSample objectiveSample, List<String> fileTypes) throws Exception {
 
         Set<String> types = new HashSet<>(fileTypes);
         
-        entityLoader.populateChildren(sample);
-        List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, "Sample");
-        if (!childSamples.isEmpty()) {
-            for(Entity childSample : childSamples) {
-                processSample(childSample, fileTypes);
-            }
-            return;
-        }
-
         if (types.remove("lsm")) {
-            logger.info("Searching "+sample.getId()+" for LSM files to move...");
             final DateTime cutoffDate = new DateTime().minus(Period.months(1));
-            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
-                    .childOfType(EntityConstants.TYPE_SUPPORTING_DATA)
-                    .childrenOfType(EntityConstants.TYPE_IMAGE_TILE)
-                    .childrenOfType(EntityConstants.TYPE_LSM_STACK)
-                    .run(new EntityVisitor() {
-                public void visit(Entity entity) throws Exception {
-                    String completionDateStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
-                    if (null!=completionDateStr) {
-                        DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
-                        if (cutoffDate.isAfter(completionDate)) {
-                            addToEntitiesToMove(entity);
+            
+            for(SampleTile tile : objectiveSample.getTiles()) {
+                for(DomainObject domainObject : domainDao.getDomainObjects(ownerKey, tile.getLsmReferences())) {
+                    LSMImage lsmImage = (LSMImage)domainObject;
+                    Date completionDate = lsmImage.getCompletionDate();
+                    if (null!=completionDate) {
+                        if (cutoffDate.isAfter(new DateTime(completionDate))) {
+
+                            String filepath = DomainUtils.getFilepath(lsmImage, FileType.LosslessStack);
+                            
+                            if (filepath==null) {
+                                logger.warn("LSM should be moved but has no filepath: "+lsmImage);
+                                return;
+                            }
+
+                            File file = new File(filepath);
+                            
+                            if (isExcluded(file.getName())) {
+                                logger.debug("Excluding file: "+file);
+                                return;
+                            }
+                            
+                            if (!file.exists()) {
+                                logger.warn("Filepath does not exist: "+file);
+                                return;
+                            }
+
+                            logger.info("Will synchronize file for LSM: "+lsmImage.getId());
+                            ScalityEntity entity = new ScalityLsmEntity(JFSUtils.JFS_LSM_STORE, lsmImage.getId(), lsmImage.getName(), filepath, lsmImage);
+                            entitiesToMove.add(entity);
+                            
                         }
                         else {
-                        	logger.info("LSM is too recent to move: "+entity.getId());
+                            logger.info("LSM is too recent to move: "+lsmImage.getId());
                         }
                     }
                     else {
-                    	logger.info("LSM has not been completed, so it can't be moved: "+entity.getId());
+                        logger.info("LSM has not been completed, so it can't be moved: "+lsmImage.getId());
                     }
                 }
-            });
+            }
         }
         
         if (types.remove("pbd")) {
-            logger.info("Searching "+sample.getId()+" for PBD files to move...");
-            EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sample)
-                    .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
-                    .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
-                    .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA)
-                    .childrenOfType(EntityConstants.TYPE_IMAGE_3D)
-                    .descendants()
-                    .run(new EntityVisitor() {
-                public void visit(Entity entity) throws Exception {
-                    String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            
+
+            for(SamplePipelineRun pipelineRun : objectiveSample.getPipelineRuns()) {
+                for(PipelineResult result : pipelineRun.getResults()) {
+                    String filepath = DomainUtils.getFilepath(result, FileType.LosslessStack);
                     if (filepath==null) {
+                        logger.warn("Result should be moved but has no filepath: "+result.getId());
                         return;
                     }
                     if (!filepath.endsWith(".v3dpbd")) {
                         return;
                     }
                     if (!filepath.startsWith(JACS_DATA_DIR) && !filepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
-                        logger.warn("Entity has path outside of filestore: "+entity.getId());
+                        logger.warn("Result has path outside of filestore: "+result.getId());
                         return;
                     }
-                    addToEntitiesToMove(entity);
+
+                    File file = new File(filepath);
+                    
+                    if (isExcluded(file.getName())) {
+                        logger.debug("Excluding file: "+file);
+                        return;
+                    }
+                    
+                    if (!file.exists()) {
+                        logger.warn("Filepath does not exist: "+file);
+                        return;
+                    }
+
+                    logger.info("Will synchronize file for result: "+result.getId());
+                    ScalityEntity entity = new ScalityPbdEntity(JFSUtils.JFS_PBD_STORE, result.getId(), result.getName(), filepath, result);
+                    entitiesToMove.add(entity);
                 }
-            });   
+            }
         }
         
         if (!types.isEmpty()) {
             throw new IllegalArgumentException("Illegal file types: "+types);
         }
-    }
-
-    private void addToEntitiesToMove(Entity entity) {
-
-    	if (seenEntityIds.contains(entity.getId())) {
-    		return;
-    	}
-    	seenEntityIds.add(entity.getId());
-    	
-        String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        
-        if (filepath==null) {
-            logger.warn("Entity should be moved but has no filepath: "+entity.getId());
-            return;
-        }
-
-        File file = new File(filepath);
-        
-        if (isExcluded(file.getName())) {
-            logger.debug("Excluding file: "+entity.getId());
-            return;
-        }
-        
-        if (!file.exists()) {
-            logger.warn("Entity has filepath which does not exist: "+entity.getId());
-            return;
-        }
-
-        logger.info("Will synchronized file for entity: "+entity.getId());
-        entitiesToMove.add(entity);
     }
     
 	private boolean isExcluded(String filename) {		
@@ -227,20 +225,20 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         int configIndex = 1;
-        for(Entity entity : entitiesToMove) {
+        for(ScalityEntity entity : entitiesToMove) {
             writeInstanceFile(entity, configIndex++);
         }
         setJobIncrementStop(configIndex-1);
         createShellScript(writer);
     }
     
-    private void writeInstanceFile(Entity entity, int configIndex) throws Exception {
-		String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    
+    private void writeInstanceFile(ScalityEntity entity, int configIndex) throws Exception {
 		String jfsPath = JFSUtils.getScalityPathFromEntity(entity);
         File configFile = new File(getSGEConfigurationDirectory(), CONFIG_PREFIX+configIndex);
         FileWriter fw = new FileWriter(configFile);
         try {
-        	fw.write(filepath + "\n");
+        	fw.write(entity.getFilepath() + "\n");
         	fw.write(jfsPath + "\n");
         }
         catch (IOException e) {
@@ -359,87 +357,98 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
         }
         
         // Update all entities that were transferred correctly
+        boolean sampleDirty = false;
     	int i=0;
-    	for(Entity entity : entitiesToMove) {
+    	for(ScalityEntity entity : entitiesToMove) {
     		if (hasError[i++]) {
     			logger.warn("Error synchronizing entity "+entity.getName()+" (id="+entity.getId()+")");
     		}
     		else {
-                String oldFilepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+                String oldFilepath = entity.getFilepath();
                 String jfsPath = JFSUtils.getScalityPathFromEntity(entity);
                 String webdavUrl = JFSUtils.getWebdavUrlForJFSPath(jfsPath);
                 File file = new File(oldFilepath);
                 Long bytes = null;
 
-                if (oldFilepath.endsWith(".lsm")) {
-                	// The LSM was compressed by this pipeline, so we need to add the correct extension everywhere
-                    jfsPath += ".bz2";
-                    webdavUrl += ".bz2";
-                    bytes = file.length();
+                if (entity instanceof ScalityLsmEntity) {
+                    ScalityLsmEntity lsmEntity = (ScalityLsmEntity)entity;
+                    LSMImage lsm = lsmEntity.getImage();
+                    
+                    // The LSM was compressed by this pipeline, so we need to add the correct extension everywhere
+                    if (oldFilepath.endsWith(".lsm")) {
+                        jfsPath += ".bz2";
+                        webdavUrl += ".bz2";
+                        bytes = file.length();
+                        lsm.setName(entity.getName()+".bz2");
+                    }
+                    
+                    // Update LSM
+                    lsm.setFilepath(jfsPath);
+                    lsm.getFiles().put(FileType.LosslessStack, jfsPath);
+                    try {
+                        domainDao.save(lsm.getOwnerKey(), lsm);
+                    }
+                    catch (Exception e) {
+                        logger.error("Error updating LSM id="+lsm.getId(),e);
+                        throw new MissingDataException("Could not update LSM, database may be in an inconsistent state!");
+                    }
+
+                    // Update SAGE if necessary
+                    if (lsm.getSageId()!=null) {
+                        try {
+                            if (!jfsPath.endsWith(".lsm.bz2")) {
+                                logger.warn("Expected lsm.bz2 extension on LSM: "+jfsPath);
+                            }
+                            Image image = sage.getImage(lsm.getSageId());
+                            image.setPath(null);
+                            image.setJfsPath(jfsPath);
+                            image.setUrl(webdavUrl);
+                            sage.saveImage(image);
+                            logger.info("Updated SAGE image "+image.getId());
+                            if (bytes!=null) {
+                                sage.setImageProperty(image, propertyFilesize, bytes.toString());
+                                logger.info("Updated bytes to "+bytes+" for image "+image.getId());
+                            }
+                        }
+                        catch (Exception e) {
+                            logger.error("Error updating SAGE image "+lsm.getSageId(),e);
+                            throw new MissingDataException("Could not update SAGE, it may be in an inconsistent state!");
+                        }
+                    }
+                    
+                }
+                else if (entity instanceof ScalityPbdEntity) {
+                    ScalityPbdEntity pbdEntity = (ScalityPbdEntity)entity;
+                    PipelineResult result = pbdEntity.getResult();
+
+                    // Update result
+                    result.getFiles().put(FileType.LosslessStack, jfsPath);
+                    sampleDirty = true;
                 }
                 
                 logger.info("Synchronized "+entity.getId()+" to "+jfsPath);
-                
-                try {
-                    if (oldFilepath.endsWith(".lsm")) {
-	                    // Set the new name on all duplicate LSM entities 
-	                    for(Entity duplicate : entityBean.getEntitiesByNameAndTypeName(entity.getOwnerKey(), entity.getName(), entity.getEntityTypeName())) {
-		                    // Update the entity name 
-	                    	duplicate.setName(entity.getName()+".bz2");
-		                    entityBean.saveOrUpdateEntity(duplicate);
-	                    }
-	                    // Update in-memory entity, just in case
-                    	entity.setName(entity.getName()+".bz2");
-                    }
-
-        			entityBean.setOrUpdateValue(entity.getId(), EntityConstants.ATTRIBUTE_JFS_PATH, jfsPath);
-    			    entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
-    			    int numUpdated = entityBean.bulkUpdateEntityDataValue(oldFilepath, jfsPath);
-                    if (numUpdated>0) {
-                    	logger.info("Updated "+numUpdated+" entity data values to "+jfsPath);
-                    }
-
-        			if (deleteSourceFiles) {
-        				try {
-        					FileUtils.forceDelete(file);
-	        			    logger.info("Deleted "+oldFilepath);
-        				}
-        				catch (IOException e) {
-        					// Log "unable to delete file" message so that they can be parsed later and the files deleted
-	                        logger.info(e.getMessage());
-        				}
-                    }
+            
+    			if (deleteSourceFiles) {
+    				try {
+    					FileUtils.forceDelete(file);
+        			    logger.info("Deleted "+oldFilepath);
+    				}
+    				catch (IOException e) {
+    					// Log "unable to delete file" message so that they can be parsed later and the files deleted
+                        logger.info(e.getMessage());
+    				}
                 }
-                catch (Exception e) {
-                	logger.error("Error updating entity id="+entity.getId(),e);
-                    throw new MissingDataException("Could not update entities, database may be in an inconsistent state!");
-                }
-
-    			// Update SAGE if necessary
-                String sageIdStr = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_ID);
-    			if (sageIdStr!=null) {
-	                try {
-        				if (!jfsPath.endsWith(".lsm.bz2")) {
-        					logger.warn("Expected lsm.bz2 extension on LSM: "+jfsPath);
-        				}
-        				
-        		        Image image = sage.getImage(new Integer(sageIdStr));
-        		        image.setPath(null);
-	        		    image.setJfsPath(jfsPath);
-        		        image.setUrl(webdavUrl);
-        		        sage.saveImage(image);
-        		        logger.info("Updated SAGE image "+image.getId());
-        		        if (bytes!=null) {
-        		        	sage.setImageProperty(image, propertyFilesize, bytes.toString());
-        		        	logger.info("Updated bytes to "+bytes+" for image "+image.getId());
-        		        }
-	                }
-	                catch (Exception e) {
-	                	logger.error("Error updating SAGE image "+sageIdStr,e);
-	                    throw new MissingDataException("Could not update SAGE, it may be in an inconsistent state!");
-	                }
-    			}
     		}	
+    	}
+    	
+    	if (sampleDirty) {
+    	    try {
+    	        domainDao.save(sample.getOwnerKey(), sample);
+    	    }
+    	    catch (Exception e) {
+                logger.error("Error updating entity id="+sample.getId(),e);
+                throw new MissingDataException("Could not update sample, database may be in an inconsistent state!");
+    	    }
     	}
 	}
 
@@ -460,5 +469,33 @@ public class SyncSampleToScalityGridService extends AbstractEntityGridService {
     	catch (Exception e) {
             throw new IllegalStateException("Error getting term: "+termName+" in CV "+cvName,e);
     	}
+    }
+    
+    private class ScalityLsmEntity extends ScalityEntity {
+        
+        private LSMImage image;
+
+        public ScalityLsmEntity(String store, Long id, String name, String filepath, LSMImage image) {
+            super(store, id, name, filepath);
+            this.image = image;
+        }
+
+        public LSMImage getImage() {
+            return image;
+        }
+    }
+    
+    private class ScalityPbdEntity extends ScalityEntity {
+        
+        private PipelineResult result;
+
+        public ScalityPbdEntity(String store, Long id, String name, String filepath, PipelineResult result) {
+            super(store, id, name, filepath);
+            this.result = result;
+        }
+
+        public PipelineResult getResult() {
+            return result;
+        }
     }
 }

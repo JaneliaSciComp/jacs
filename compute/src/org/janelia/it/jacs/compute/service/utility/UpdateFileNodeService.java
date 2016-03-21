@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 
 /**
  * Update file nodes and entities with new file paths.
@@ -17,7 +17,7 @@ import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class UpdateFileNodeService extends AbstractEntityService {
+public class UpdateFileNodeService extends AbstractDomainService {
 
 	protected Logger logger = Logger.getLogger(UpdateFileNodeService.class);
 	

@@ -101,10 +101,18 @@ if [ -s $INPUT_FILE ]; then
     mv *.nsp $OUTDIR
     mv *.pbd $OUTDIR
     mv *.txt $OUTDIR
-    mv $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3draw
-    mv ConsolidatedSignal.v3draw $OUTDIR
-    mv Reference.v3draw $OUTDIR
-
+    
+    echo "~ Compressing final output to: $OUTDIR"
+    $Vaa3D -cmd image-loader -convert $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3dpbd
+    $Vaa3D -cmd image-loader -convert ConsolidatedSignal.v3draw $OUTDIR/ConsolidatedSignal.v3dpbd
+    $Vaa3D -cmd image-loader -convert Reference.v3draw $OUTDIR/Reference.v3dpbd
+    
+    EXT=${CONSOLIDATED_LABEL#*.}
+    if [ $EXT == "v3draw" ]; then
+        echo "~ Compressing consolidated label to PBD format"
+        $Vaa3D -cmd image-loader -convert "$CONSOLIDATED_LABEL" "$OUTDIR/ConsolidatedLabel.v3dpbd"
+        rm $CONSOLIDATED_LABEL
+    fi
 fi
 
 if ls core* &> /dev/null; then

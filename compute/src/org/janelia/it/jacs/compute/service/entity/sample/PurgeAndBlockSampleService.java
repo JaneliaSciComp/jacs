@@ -1,24 +1,29 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Purge large files owned by the given sample and block further processing on it.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class PurgeAndBlockSampleService extends AbstractEntityService {
+public class PurgeAndBlockSampleService extends AbstractDomainService {
 
     protected static final String JACS_DATA_DIR =
         SystemConfigurationProperties.getString("JacsData.Dir.Linux");
@@ -27,57 +32,48 @@ public class PurgeAndBlockSampleService extends AbstractEntityService {
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
     public void execute() throws Exception {
-        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
-
-        final String sampleEntityIdStr = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger);
+        String sampleEntityIdStr = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
         
-        List<Entity> samples = new ArrayList<Entity>();
+        List<Sample> samples = new ArrayList<>();
         for(String oneSampleEntityIdStr : Task.listOfStringsFromCsvString(sampleEntityIdStr)) {
-            final Entity sampleEntity = entityBean.getEntityById(oneSampleEntityIdStr);
+            final Sample sampleEntity = domainDao.getDomainObject(ownerKey, Sample.class, new Long(oneSampleEntityIdStr));
             if (sampleEntity==null) {
                 throw new IllegalArgumentException("Sample does not exist: "+oneSampleEntityIdStr);
-            }
-            if (!sampleEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
-                throw new IllegalArgumentException("Not a sample: "+oneSampleEntityIdStr);
             }
             samples.add(sampleEntity);
         }
         
-        for(Entity sample : samples) {
-            sample.setValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_BLOCKED);
-            entityBean.saveOrUpdateEntity(ownerKey, sample);
-            sampleHelper.putInCorrectDataSetFolder(sample);
-            entityBean.loadLazyEntity(sample, true);
-            removeLargeImageFiles(sample, new HashSet<Long>());
+        for(Sample sample : samples) {
+            sample.setStatus(EntityConstants.VALUE_BLOCKED);
+            sampleHelper.saveSample(sample);
+            removeLargeImageFiles(sample);
         }
     }
     
-    private void removeLargeImageFiles(Entity entity, Set<Long> visited) throws Exception {
-        
-        if (visited.contains(entity.getId())) return;
-        visited.add(entity.getId());
-
-        for(Entity child : entity.getChildren()) {
-            removeLargeImageFiles(child, visited);
-        }
-        
-        String entityType = entity.getEntityTypeName();
-        
-        if (entityType.equals(EntityConstants.TYPE_IMAGE_3D) 
-                || entityType.equals(EntityConstants.TYPE_FILE)) {
-            String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            // Spare H5J files because they're tiny
-            if (filepath!=null && !filepath.endsWith("h5j")) { 
-                deletePath(filepath);
-                entityHelper.removeEntityDataForAttributeName(entity, EntityConstants.ATTRIBUTE_FILE_PATH);
+    private void removeLargeImageFiles(Sample sample) throws Exception {
+        for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+            for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
+                for(PipelineResult result : run.getResults()) {
+                    String filepath = DomainUtils.getFilepath(result, FileType.LosslessStack);
+                    deletePath(filepath);
+                    DomainUtils.setFilepath(result, FileType.LosslessStack, null);
+                    for(NeuronSeparation separation : result.getResultsOfType(NeuronSeparation.class)) {
+                        // TODO: need a better way of clearing out separations, now that we don't have the files in the database
+                        String separationFilepath = separation.getFilepath();
+                        File sepArchivePath = new File(separationFilepath, "archive");
+                        File sepFastLoadPath = new File(separationFilepath, "fastLoad");
+                        File consolidatedLabelPath = new File(separationFilepath, "ConsolidatedLabel.v3dpbd");
+                        File consolidatedSignalPath = new File(separationFilepath, "ConsolidatedSignal.v3dpbd");
+                        File referencePath = new File(separationFilepath, "Reference.v3dpbd");
+                        deletePath(sepArchivePath.getAbsolutePath());
+                        deletePath(sepFastLoadPath.getAbsolutePath());
+                        deletePath(consolidatedLabelPath.getAbsolutePath());
+                        deletePath(consolidatedSignalPath.getAbsolutePath());
+                        deletePath(referencePath.getAbsolutePath());
+                    }
+                }
             }
-        }
-        else if (entityType.equals(EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT)) {
-            String filepath = entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            File sepArchivePath = new File(filepath, "archive");
-            File sepFastLoadPath = new File(filepath, "fastLoad");
-            deletePath(sepArchivePath.getAbsolutePath());
-            deletePath(sepFastLoadPath.getAbsolutePath());
         }
     }
     

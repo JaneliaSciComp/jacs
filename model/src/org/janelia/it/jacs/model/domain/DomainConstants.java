@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.browser.model;
+package org.janelia.it.jacs.model.domain;
 
 /**
  * A place for constants.
@@ -20,18 +20,23 @@ public class DomainConstants {
     public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS_AND_PBD = "Visually Lossless and PBD";
     public static final String VALUE_COMPRESSION_VISUALLY_LOSSLESS = "Visually Lossless";
 
+    public static final String NAME_DEFAULT_WORKSPACE                = "Default Workspace";
+    public static final String NAME_SHARED_DATA                      = "Shared Data";
+    public static final String NAME_SPLIT_PICKING                    = "Split Picking";
+    public static final String NAME_DATA_SETS                        = "Data Sets";
+    public static final String NAME_FLY_LINE_RELEASES                = "Fly Line Releases";
+    public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
+    public static final String NAME_RETIRED_DATA                     = "Retired Data";
+    public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
+    public static final String NAME_SEARCH_RESULTS                   = "Search Results";
+    
     public static final String PREFERENCE_CATEGORY_SAMPLE_RESULT = "SampleResult";
     public static final String PREFERENCE_CATEGORY_IMAGE_TYPE = "ImageType";
     public static final String PREFERENCE_VALUE_LATEST = "Latest";
     public static final String PREFERENCE_CATEGORY_TABLE_COLUMNS = "TableColumns";
 
-    public static final String DATASET_NAME = "Name";
-    public static final String DATASET_PIPELINE_PROCESS = "Pipeline Process";
-    public static final String DATASET_SAMPLE_NAME = "Sample Name Pattern";
-    public static final String DATASET_SAGE_SYNC = "SAGE Sync";
-    public static final String DATASET_IDENTIFIER = "Data Set Identifier";
-
     public static final String GENERAL_USER_GROUP_KEY = "group:workstation_users";
+    
     public static final String ERROR_ONTOLOGY_NAME = "Image Evaluation";
     public static final String ERROR_ONTOLOGY_CATEGORY = "Report";
 

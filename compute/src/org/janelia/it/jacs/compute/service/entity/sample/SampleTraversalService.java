@@ -1,16 +1,15 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
-
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.DomainConstants;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.tasks.Task;
 
 /**
  * Returns all the samples for the task owner which match the parameters. Parameters must be provided in the ProcessData:
@@ -24,7 +23,7 @@ import java.util.Set;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleTraversalService extends AbstractEntityService {
+public class SampleTraversalService extends AbstractDomainService {
 
 	public static final String RUN_MODE_NONE = "NONE";
 	public static final String RUN_MODE_ALL = "ALL";
@@ -32,8 +31,6 @@ public class SampleTraversalService extends AbstractEntityService {
 	public static final String RUN_MODE_ERROR = "ERROR";
 	public static final String RUN_MODE_MARKED = "MARKED";
 
-    protected boolean includeParentSamples = false;
-    protected boolean includeChildSamples = true;
     protected boolean includeAllSamples = false;
     protected boolean includeNewSamples = false;
     protected boolean includeErrorSamples = false;
@@ -53,30 +50,6 @@ public class SampleTraversalService extends AbstractEntityService {
 
         logger.info("Traversing samples owned by "+ownerKey+", with rules:");
         
-        String parentOrChildren = (String) processData.getItem("PARENT_OR_CHILDREN");
-        logger.info("    parentOrChildren="+parentOrChildren);
-        
-        if (parentOrChildren==null) {
-            parentOrChildren = "parent";
-        }
-
-        switch (parentOrChildren) {
-            case "parent":
-                includeChildSamples = false;
-                includeParentSamples = true;
-                break;
-            case "children":
-                includeChildSamples = true;
-                includeParentSamples = false;
-                break;
-            case "both":
-                includeChildSamples = true;
-                includeParentSamples = true;
-                break;
-            default:
-                throw new IllegalArgumentException("Unrecognized value for PARENT_OR_CHILDREN:" + parentOrChildren);
-        }
-
         List<Object> outObjects = new ArrayList<>();
         
         String dataSetName = (String) processData.getItem("DATA_SET_NAME");
@@ -110,161 +83,87 @@ public class SampleTraversalService extends AbstractEntityService {
             }
         }
     
-        List<Entity> entities;
+        List<Sample> samples;
         if (dataSetName == null) {
-            entities = entityBean.getUserEntitiesByTypeName(ownerKey, EntityConstants.TYPE_SAMPLE);
+            samples = domainDao.getDomainObjects(ownerKey, Sample.class);
         } 
         else {
-            List<Entity> dataSets = entityBean.getUserEntitiesByNameAndTypeName(ownerKey, dataSetName, EntityConstants.TYPE_DATA_SET);
+            List<DataSet> dataSets = domainDao.getDomainObjectsByName(ownerKey, DataSet.class, dataSetName);
             if (dataSets.size() == 1) {
-                Entity dataSetEntity = dataSets.get(0);
-                String dataSetIdentifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-                entities = entityBean.getUserEntitiesWithAttributeValueAndTypeName(ownerKey,
-                        EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier,
-                        EntityConstants.TYPE_SAMPLE);
+                DataSet dataSet = dataSets.get(0);
+                samples = domainDao.getSamplesForDataSet(ownerKey, dataSet.getIdentifier());
             } 
             else {
                 throw new IllegalArgumentException("found " + dataSets.size() + " entities for " + ownerKey
                         + " data set '" + dataSetName + "' when only one is expected");
             }
-
         }
 
-		logger.info("Found " + entities.size() + " Samples. Filtering with rules:");
+		logger.info("Found " + samples.size() + " Samples. Filtering with rules:");
 		logger.info("    includeNewSamples="+includeNewSamples);
 		logger.info("    includeErrorSamples="+includeErrorSamples);
 		logger.info("    includeAllSamples="+includeAllSamples);
-		logger.info("    includeChildSamples="+includeChildSamples);
-		logger.info("    includeParentSamples="+includeParentSamples);
 		
-    	for(Entity entity : entities) {
-    	    List<Entity> included = getIncludedSamples(entity);
-    		for(Entity sample : included) {
-    			outObjects.add(outputObjects ? sample : sample.getId().toString());	
-    		}
+    	for(Sample sample : samples) {
+    	    if (isIncludedSample(sample)) {
+    	        outObjects.add(outputObjects ? sample : sample.getId().toString()); 
+    	    }
     	}
 
 		logger.info("Putting "+outObjects.size()+" ids in "+outvar);
     	processData.putItem(outvar, outObjects);
     }
     
-    private List<Entity> getIncludedSamples(Entity sample) throws Exception {
+    private boolean isIncludedSample(Sample sample) throws Exception {
+        
+        String status = sample.getStatus();
 
-        List<Entity> included = new ArrayList<>();
-        String dataSetIdentifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-        if (StringUtils.isEmpty(dataSetIdentifier)) {
-        	// Don't include anything without a data set (these are most likely child samples that will be inspected as part of their parents' inspection)
-        	return included;
+        if (includeAllSamples) {
+            logger.info("Included " + sample + " (id=" + sample.getId() + ") - all");
+            return true;
         }
         
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
-
+        if (includeMarkedSamples && isMarked(status)) {
+            logger.info("Included " + sample + " (id=" + sample.getId() + ") - marked");
+            return true;
+        }
+        
         if (isBlocked(status)) {
             logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - blocked");
-            return included;
+            return false;
         }
 
         if (isDesync(status)) {
             logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - desync");
-            return included;
+            return false;
         }
         
         if (isRetired(status)) {
             logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - retired");
-            return included;
-        }
-        
-        populateChildren(sample);
-        List<Entity> childSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
-
-        if (childSamples.isEmpty()) {
-            // Childless samples are always included
-            if (includeSample(sample)) {
-                included.add(sample);
-                logger.info("Included " + sample + " (id=" + sample.getId() + ") - childless sample");
-            }
-            else {
-                logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - childless sample ");
-            }
-        } 
-        else {
-            // This is a parent sample because it has child samples. Check if any of the children are to be included.
-            Set<Entity> childrenIncluded = new HashSet<>();
-            Set<Entity> childrenExcluded = new HashSet<>();
-            for(Entity childSample : childSamples) {
-                populateChildren(childSample);
-                if (includeSample(childSample)) {
-                    childrenIncluded.add(childSample);
-                }
-                else {
-                    childrenExcluded.add(childSample);
-                }
-            }
-
-            if (includeParentSamples) {
-            	if (!childrenIncluded.isEmpty()) {
-                    logger.info("Included " + sample + " (id=" + sample.getId() + ") - child samples need processing");
-                    included.add(sample);
-            	}
-            	else if (isMarked(status)) {
-                    logger.info("Included " + sample + " (id=" + sample.getId() + ") - parent sample marked");
-                    included.add(sample);
-            	}
-            	else {
-                    logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - parent sample");
-            	}
-            } 
-            else {
-                logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - parent sample");
-            }
-
-            for(Entity childSample : childrenIncluded) {
-                if (includeChildSamples) {
-                    logger.info("  Included " + childSample + " (id=" + childSample.getId() + ") - because it is a child sample");
-                    included.add(childSample);
-                } 
-                else {
-                    logger.info("  Excluded " + childSample + " (id=" + childSample.getId() + ") - because it is a child sample");
-                }
-            }
-
-            for(Entity childSample : childrenExcluded) {
-                logger.info("  Excluded " + childSample + " (id=" + childSample.getId() + ") - child sample");
-            }
-        }
-
-        return included;
-    }
-
-    private boolean includeSample(Entity sample) throws Exception {
-
-        String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
-
-        if (isBlocked(status) || isDesync(status) || isRetired(status)) {
             return false;
         }
-
-        if (includeMarkedSamples && isMarked(status)) {
-            return true;
-        }
-
-        if (includeAllSamples) {
-            return true;
-        }
-
-        if (includeNewSamples) {
-            Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-            if (pipelineRun==null) {
+        
+        for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+            if (includeSample(objectiveSample)) {
+                logger.info("Included " + sample + " (id=" + sample.getId() + ") - incomplete");
                 return true;
             }
         }
 
+        logger.info("Excluded " + sample + " (id=" + sample.getId() + ")");
+        return false;
+    }
+
+    private boolean includeSample(ObjectiveSample objectiveSample) throws Exception {
+
+        if (includeNewSamples && objectiveSample.getLatestRun()==null) {
+            return true;
+        }
+
         if (includeErrorSamples) {
-            Entity pipelineRun = EntityUtils.getLatestChildOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-            if (pipelineRun!=null) {
-                populateChildren(pipelineRun);
-                Entity error = EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR);
-                if (error!=null) {
+            SamplePipelineRun run = objectiveSample.getLatestRun();
+            if (run!=null) {
+                if (run.getError()!=null) {
                     return true;
                 }
             }
@@ -274,18 +173,18 @@ public class SampleTraversalService extends AbstractEntityService {
     }
 
     private boolean isMarked(String status) {
-        return (status != null && EntityConstants.VALUE_MARKED.equals(status));
+        return (status != null && DomainConstants.VALUE_MARKED.equals(status));
     }
 
     private boolean isBlocked(String status) {
-        return (status != null && EntityConstants.VALUE_BLOCKED.equals(status));
+        return (status != null && DomainConstants.VALUE_BLOCKED.equals(status));
     }
 
     private boolean isDesync(String status) {
-        return (status != null && EntityConstants.VALUE_DESYNC.equals(status));
+        return (status != null && DomainConstants.VALUE_DESYNC.equals(status));
     }
     
     private boolean isRetired(String status) {
-        return (status != null && EntityConstants.VALUE_RETIRED.equals(status));
+        return (status != null && DomainConstants.VALUE_RETIRED.equals(status));
     }
 }

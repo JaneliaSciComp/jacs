@@ -28,9 +28,16 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     @SearchAttribute(key="bcomp_txt",label="Brightness Compensation")
     private String brightnessCompensation;
+
+    @SearchAttribute(key="completion_dt",label="Completion Date")
+    private Date completionDate;
     
     // SAGE Terms
 
+    @SAGEAttribute(cvName="image_query", termName="create_date")
+    @SearchAttribute(key="tmog_dt",label="TMOG Date")
+    private Date tmogDate;
+    
     @SAGEAttribute(cvName="image_query", termName="id")
     @SearchAttribute(key="sage_id_i",label="SAGE Id")
     private Integer sageId;
@@ -107,7 +114,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="full_age_txt",label="Full Age")
     private String fullAge;
 
-    @SAGEAttribute(cvName="light_imagery", termName="mount_protocol")
+    @SAGEAttribute(cvName="light_imagery", termName="mounting_protocol")
     @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol")
     private String mountingProtocol;
 
@@ -275,6 +282,14 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="vtline_txt",label="VT Line")
     private String vtLine;
 
+    @SAGEAttribute(cvName="light_imagery", termName="qi")
+    @SearchAttribute(key="qi_score_s",label="QI score")
+    private String qiScore;
+
+    @SAGEAttribute(cvName="light_imagery", termName="qm")
+    @SearchAttribute(key="qm_score_s",label="QM score")
+    private String qmScore;
+    
     @SAGEAttribute(cvName="line_query", termName="organism")
     @SearchAttribute(key="organism_txt",label="Organism")
     private String organism;
@@ -348,6 +363,22 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     public void setBrightnessCompensation(String brightnessCompensation) {
         this.brightnessCompensation = brightnessCompensation;
+    }
+
+    public Date getTmogDate() {
+        return tmogDate;
+    }
+
+    public void setTmogDate(Date tmogDate) {
+        this.tmogDate = tmogDate;
+    }
+
+    public Date getCompletionDate() {
+        return completionDate;
+    }
+
+    public void setCompletionDate(Date completionDate) {
+        this.completionDate = completionDate;
     }
 
     public Integer getSageId() {
@@ -836,6 +867,21 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     public void setVtLine(String vtLine) {
         this.vtLine = vtLine;
+    }
+    public String getQiScore() {
+        return qiScore;
+    }
+
+    public void setQiScore(String qiScore) {
+        this.qiScore = qiScore;
+    }
+
+    public String getQmScore() {
+        return qmScore;
+    }
+
+    public void setQmScore(String qmScore) {
+        this.qmScore = qmScore;
     }
 
     public String getOrganism() {

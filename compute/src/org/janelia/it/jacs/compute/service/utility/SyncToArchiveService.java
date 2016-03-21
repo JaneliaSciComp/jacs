@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.utils.SystemCall;
@@ -26,7 +26,7 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SyncToArchiveService extends AbstractEntityService {
+public class SyncToArchiveService extends AbstractDomainService {
 
 	protected Logger logger = Logger.getLogger(SyncToArchiveService.class);
 	

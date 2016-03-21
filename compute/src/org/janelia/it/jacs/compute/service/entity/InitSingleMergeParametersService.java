@@ -2,8 +2,6 @@ package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.List;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
@@ -20,9 +18,9 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InitSingleMergeParametersService implements IService {
+public class InitSingleMergeParametersService extends AbstractDomainService {
 
-	public void execute(IProcessData processData) throws ServiceException {
+	public void execute() throws Exception {
 	    
         AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
         if (sampleArea==null) {
@@ -33,7 +31,7 @@ public class InitSingleMergeParametersService implements IService {
     	if (mergedLsmPairs.size() != 1) {
     		throw new ServiceException("SAMPLE_AREA must contain exactly one merged pair");
     	}
-    	String stitchedFilename = mergedLsmPairs.get(0).getMergedFilepath();
-    	sampleArea.setStitchedFilename(stitchedFilename);
+    	String stitchedFilepath = mergedLsmPairs.get(0).getMergedFilepath();
+    	sampleArea.setStitchedFilepath(stitchedFilepath);
     }
 }

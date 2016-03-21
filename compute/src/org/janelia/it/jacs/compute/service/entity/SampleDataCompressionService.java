@@ -12,13 +12,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -26,7 +29,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleDataCompressionService extends AbstractEntityService {
+public class SampleDataCompressionService extends AbstractDomainService {
 
 	public transient static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
 	
@@ -47,13 +50,14 @@ public class SampleDataCompressionService extends AbstractEntityService {
 
     private String mode;
     private String recordMode;
-    private String rootEntityId;
+    private String sampleEntityId;
     private String inputType;
     private String outputType;
     
     private boolean deleteSourceFiles = true;
     private Set<Pattern> exclusions = new HashSet<>();
     
+    private Sample sample;
     private final Set<String> inputFiles = new HashSet<>();
     private final Set<Long> visited = new HashSet<Long>();
     private Map<String,Set<Long>> entityMap;
@@ -68,10 +72,13 @@ public class SampleDataCompressionService extends AbstractEntityService {
         
         mode = data.getRequiredItemAsString("MODE");
         recordMode = data.getRequiredItemAsString("RECORD_MODE");
-    	rootEntityId = data.getItemAsString("ROOT_ENTITY_ID");
+    	sampleEntityId = data.getItemAsString("ROOT_ENTITY_ID");
     	inputType = data.getRequiredItemAsString("INPUT_TYPE");
         outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
 
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        
         if (!RECORD_MODE_ADD.equals(recordMode) && !RECORD_MODE_UPDATE.equals(recordMode) && !RECORD_MODE_FLIP.equals(recordMode)) {
             throw new IllegalStateException("Illegal RECORD_MODE: "+recordMode);
         }
@@ -116,35 +123,20 @@ public class SampleDataCompressionService extends AbstractEntityService {
             }
         }
         
-        if (rootEntityId!=null) {
-            contextLogger.info("Finding files to compress under root "+rootEntityId+" with type "+inputType);
-            
-            Entity entity = EJBFactory.getLocalEntityBean().getEntityTree(new Long(rootEntityId));
-            if (entity == null) {
-                throw new IllegalArgumentException("Entity not found: "+rootEntityId);
-            }
-            
-            Map<Long,Entity> entities = EntityUtils.getEntityMap(EntityUtils.getDescendantsOfType(entity,EntityConstants.TYPE_IMAGE_3D));
-            for(Entity image : entities.values()) {
-                String filepath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                String jfspath = image.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
-                if ((filepath!=null && filepath.endsWith(inputType)) || (jfspath!=null && jfspath.endsWith(inputType))) {
-                    addEntityToInputList(image);
-                }
-            }
-        }
-        else {
-            contextLogger.info("Finding files belonging to "+ownerKey+" with type "+inputType);
-            
-            for(Entity image : entityBean.getUserEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_FILE_PATH, "%"+inputType)) {
-                if (!image.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                    contextLogger.warn("Entity is not an Image 3D: "+image.getId());
-                    continue;
-                }
-                addEntityToInputList(image);
-            }
-        }
+        contextLogger.info("Finding files to compress under sample "+sampleEntityId+" with type "+inputType);
         
+        for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+            for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
+                for(PipelineResult result : run.getResults()) {
+                    for(String filepath : result.getFiles().values()) {
+                        if ((filepath!=null && filepath.endsWith(inputType))) {
+                            addEntityToInputList(filepath);
+                        }
+                    }
+                }
+            }
+        }
+   
         List<List<String>> inputGroups = createGroups(inputFiles, GROUP_SIZE);
         processData.putItem("INPUT_PATH_LIST", inputGroups);
         processData.putItem("ENTITY_MAP", entityMap);
@@ -157,8 +149,10 @@ public class SampleDataCompressionService extends AbstractEntityService {
         }
     }
     
-    private void addEntityToInputList(Entity imageEntity) throws ComputeException {
+    private void addEntityToInputList(String filepath) throws ComputeException {
 
+        Entity imageEntity = null;
+        
         if (visited.contains(imageEntity.getId())) return;
         visited.add(imageEntity.getId());
         
@@ -166,19 +160,6 @@ public class SampleDataCompressionService extends AbstractEntityService {
             contextLogger.warn("Entity is not owned by "+ownerKey);
         	return;
         }
-
-        String filepath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-        String jfsPath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_JFS_PATH);
-        
-        if (filepath==null) {
-        	if (jfsPath==null) {
-                contextLogger.warn("Entity has null filepath and jfspath: "+imageEntity.getId());
-                return;	
-        	}
-        	filepath = jfsPath;
-        }
-        
-        populateChildren(imageEntity);
         
         if (outputType.equals("h5j")) {
 

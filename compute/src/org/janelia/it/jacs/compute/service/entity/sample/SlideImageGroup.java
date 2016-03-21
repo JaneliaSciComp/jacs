@@ -3,6 +3,8 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+
 /**
  * A group of SlideImages with a tag and an anatomical area. In general, a TileImageGroup usually contains either
  * a single LSM, or two LSMs to be merged, but it may contain an arbitrary number of images.  
@@ -13,7 +15,7 @@ public class SlideImageGroup {
     
     private final String anatomicalArea;
     private final String tag;
-    private final List<SlideImage> images = new ArrayList<SlideImage>();
+    private final List<LSMImage> images = new ArrayList<>();
 
     public SlideImageGroup(String anatomicalArea, String tag) {
         this.anatomicalArea = anatomicalArea==null?"":anatomicalArea;
@@ -28,11 +30,11 @@ public class SlideImageGroup {
 		return tag;
 	}
 
-	public List<SlideImage> getImages() {
+	public List<LSMImage> getImages() {
 		return images;
 	}
 
-	public void addFile(SlideImage image) {
+	public void addFile(LSMImage image) {
 		images.add(image);
 	}
 }

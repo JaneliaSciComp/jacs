@@ -11,8 +11,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 
 /**
- * Merge neuron fragments.
- * Parameters:
+ * TODO: UNDOCUMENTED
  *
  * @author <a href="mailto:saffordt@janelia.hhmi.org">Todd Safford</a>
  */

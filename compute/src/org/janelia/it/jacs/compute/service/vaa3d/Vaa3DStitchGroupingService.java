@@ -10,17 +10,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainGridService;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
@@ -36,7 +32,7 @@ import org.janelia.it.jacs.shared.utils.SystemCall;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
+public class Vaa3DStitchGroupingService extends AbstractDomainGridService {
 
     private static final String CONFIG_PREFIX = "groupConfiguration.";
     private File groupedFile;
@@ -119,24 +115,30 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
         List<String> currGroup = new ArrayList<String>();
         	
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(groupedFile));
-            String line;
-            while((line = reader.readLine()) != null) {
-            	line = line.trim();
-            	if (line.startsWith("# tiled image group")) {
-            		if (!currGroup.isEmpty()) {
-            			groups.add(currGroup);
-            			currGroup = new ArrayList<String>();
-            		}
-            	}
-            	else if ("".equals(line)) {
-            		// skip blank line
-            	}
-            	else {
-            		currGroup.add(line);
-            	}
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(groupedFile));
+                String line;
+                while((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (line.startsWith("# tiled image group")) {
+                        if (!currGroup.isEmpty()) {
+                            groups.add(currGroup);
+                            currGroup = new ArrayList<String>();
+                        }
+                    }
+                    else if ("".equals(line)) {
+                        // skip blank line
+                    }
+                    else {
+                        currGroup.add(line);
+                    }
+                }
+                if (!currGroup.isEmpty()) groups.add(currGroup);
             }
-            if (!currGroup.isEmpty()) groups.add(currGroup);
+            finally {
+                if (reader!=null) reader.close();
+            }
           
         }
         catch (FileNotFoundException e) {
@@ -202,36 +204,22 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
 
         logger.debug("Validating sample area tiles");
 
-        outerLoop: for(Iterator<Long> iterator = sampleArea.getTileIds().iterator(); iterator.hasNext(); ) {
+        outerLoop: for(Iterator<String> iterator = sampleArea.getTileNames().iterator(); iterator.hasNext(); ) {
 
-        	Long tileEntityId = iterator.next();
-        	Entity tileEntity = null;
-        	try {
-        		tileEntity = entityBean.getEntityAndChildren(tileEntityId);
-        	}
-        	catch (ComputeException e) {
-        		logger.error("Error getting tile "+tileEntityId+". Skipping validation.", e);
-        		continue;
-        	}
-            logger.debug("Validating '"+tileEntity.getName()+"' tile");
+            String tileName = iterator.next();
+            logger.debug("Validating '"+tileName+"' tile");
 
-            for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
-
-                String lsmFilename = lsmStack.getName();
-                logger.debug("Looking for "+lsmFilename);
-                
-                boolean found = false;
-                for(MergedLsmPair mergedLsmPair : newMergedLsmPairs) {
-                	if (mergedLsmPair.getOriginalFilepath1().endsWith(lsmFilename) || (mergedLsmPair.getOriginalFilepath2()!=null && mergedLsmPair.getOriginalFilepath2().endsWith(lsmFilename))) {
-                		found = true;
-                	}
+            boolean found = false;
+            for(MergedLsmPair mergedLsmPair : newMergedLsmPairs) {
+                if (mergedLsmPair.getTileName().equals(tileName)) {
+                    found = true;
                 }
-                
-                if (!found) {
-                    logger.info("LSM "+lsmFilename+" is not in the largest group for '"+sampleArea.getName()+"'. Removing tile "+tileEntityId+" from sample area.");
-                    iterator.remove();
-            		continue outerLoop;
-                }
+            }
+            
+            if (!found) {
+                logger.info("Removing tile "+tileName+", which is not in the largest group for '"+sampleArea.getName()+"'.");
+                iterator.remove();
+                continue outerLoop;
             }
         }
         
@@ -242,5 +230,4 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
     		processData.putItem("RUN_STITCH", Boolean.FALSE);
     	}
     }
-    
 }

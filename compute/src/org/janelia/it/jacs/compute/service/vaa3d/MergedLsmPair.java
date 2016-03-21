@@ -11,19 +11,19 @@ public class MergedLsmPair extends CombinedFile {
 	private Long lsmEntityId2;
 	private String originalFilepath1;
 	private String originalFilepath2;
-    private String tag;
+    private String tileName;
     
-	public MergedLsmPair(Long lsmEntityId1, Long lsmEntityId2, String originalFilepath1, String originalFilepath2, String lsmFilepath1, String lsmFilepath2, String mergedFilepath, String tag) {
+	public MergedLsmPair(Long lsmEntityId1, Long lsmEntityId2, String originalFilepath1, String originalFilepath2, String lsmFilepath1, String lsmFilepath2, String mergedFilepath, String tileName) {
 		super(lsmFilepath1, lsmFilepath2, mergedFilepath);
 		this.lsmEntityId1 = lsmEntityId1;
 		this.lsmEntityId2 = lsmEntityId2;
 		this.originalFilepath1 = originalFilepath1;
 		this.originalFilepath2 = originalFilepath2;
-		this.tag = tag;
+		this.tileName = tileName;
 	}
 
-	public String getTag() {
-        return tag;
+	public String getTileName() {
+        return tileName;
     }
 
     public Long getLsmEntityId1() {
@@ -55,6 +55,6 @@ public class MergedLsmPair extends CombinedFile {
 	}
 	
 	public MergedLsmPair getMovedLsmPair(String newPath1, String newPath2) {
-		return new MergedLsmPair(lsmEntityId1, lsmEntityId2, originalFilepath1, originalFilepath2, newPath1, newPath2, getMergedFilepath(), tag);
+		return new MergedLsmPair(lsmEntityId1, lsmEntityId2, originalFilepath1, originalFilepath2, newPath1, newPath2, getMergedFilepath(), tileName);
 	}
 }

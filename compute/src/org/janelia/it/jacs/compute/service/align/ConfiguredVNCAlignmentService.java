@@ -3,8 +3,7 @@ package org.janelia.it.jacs.compute.service.align;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 
 /**
  * A configured aligner which aligns a VNC on its own.
@@ -17,19 +16,15 @@ public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
     protected void populateInputs(List<AnatomicalArea> sampleAreas) throws Exception {
         for(AnatomicalArea anatomicalArea : sampleAreas) {
             String areaName = anatomicalArea.getName();
-            Entity result = getLatestResultOfType(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, areaName);
+            SampleProcessingResult result = getLatestResultOfType(objectiveSample, areaName);
             if (result!=null) {
-                entityLoader.populateChildren(result);
-                Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-                if (image!=null)  {
-                    if (VNC_AREA.equalsIgnoreCase(areaName)) {
-                        alignedAreas.add(anatomicalArea);
-                        input1 = new AlignmentInputFile();
-                        input1.setPropertiesFromEntity(image);
-                        input1.setSampleId(sampleEntity.getId());
-                        input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
-                        if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
-                    }
+                if (VNC_AREA.equalsIgnoreCase(areaName)) {
+                    alignedAreas.add(anatomicalArea);
+                    input1 = new AlignmentInputFile();
+                    input1.setPropertiesFromEntity(result);
+                    input1.setSampleId(sample.getId());
+                    input1.setObjective(objectiveSample.getObjective());
+                    if (warpNeurons) input1.setInputSeparationFilename(getConsolidatedLabel(result));
                 }
             }
         }

@@ -10,7 +10,7 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
+import org.janelia.it.jacs.compute.service.domain.FileDiscoveryHelperNG;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -96,7 +96,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
     protected File maskNameIndexFile;
     protected IProcessData processData;
     protected String mode;
-    FileDiscoveryHelper helper;
+    FileDiscoveryHelperNG helper;
 
     protected void init(IProcessData processData) throws Exception {
         try {
@@ -130,7 +130,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
         String ownerName = ProcessDataHelper.getTask(processData).getOwner();
         Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
         this.ownerKey = subject.getKey();
-        helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
+        helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
 
         createDate = new Date();
         refresh = task.getParameter(PARAM_refresh).trim().toLowerCase().equals("true");
@@ -171,7 +171,8 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
             throw new Exception("Do not recognize mode="+mode);
         }
 
-        Entity topLevelFolder = helper.createOrVerifyRootEntity(TOP_LEVEL_GUIDE_DIR_NAME, true, true);
+        if (true) throw new UnsupportedOperationException("THIS SERVICE MUST BE PORTED TO NG");
+        Entity topLevelFolder = null;//helper.createOrVerifyRootEntity(TOP_LEVEL_GUIDE_DIR_NAME, true, true);
         Map<String, Entity> subfolderMap = new HashMap<String, Entity>();
         Set<Entity> children = topLevelFolder.getChildren();
         if (children != null && children.size() > 0) {

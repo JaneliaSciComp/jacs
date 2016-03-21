@@ -153,9 +153,10 @@
         <sequence if="ANCESTOR_ID is not empty">
             
             <!-- Set the compression type on the sample in case it was passed in separately. If it wasn't passed in as a parameter, then this will set it to the current value, and have no effect. -->
-            <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.entity.SetEntityAttributeValueService">
-                <input name="ENTITY_ID" value="$V{ANCESTOR_ID}"/>
-                <input name="ATTRIBUTE_NAME" value="Compression Type"/>
+            <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.entity.SetAttributeValueService">
+                <input name="OBJECT_CLASS" value="org.janelia.it.jacs.model.domain.sample.Sample"/>
+                <input name="OBJECT_ID" value="$V{ANCESTOR_ID}"/>
+                <input name="ATTRIBUTE_NAME" value="compressionType"/>
                 <input name="ATTRIBUTE_VALUE" value="$V{COMPRESSION_TYPE}"/>
             </operation>
             

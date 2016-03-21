@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.janelia.it.jacs.model.domain.interfaces.HasImageStack;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 /**
@@ -71,13 +73,14 @@ public class SamplePipelineRun {
     }
     
     @JsonIgnore
-    public <T extends PipelineResult> T getLatestResultOfType(Class<T> type) {
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> T getLatestResultOfType(Class<T> resultClass) {
         if (results==null) {
             return null;
         }
         for (int i = results.size()-1; i>=0; i--) {
             PipelineResult result = results.get(i);
-            if (type==null || type.isAssignableFrom(result.getClass())) {
+            if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
                 return (T)result;
             }
         }
@@ -95,22 +98,37 @@ public class SamplePipelineRun {
     }
 
     @JsonIgnore
-    public SampleAlignmentResult getLatestAlignmentResult() {
+    public HasImageStack getLatestAlignmentResult() {
         return getLatestResultOfType(SampleAlignmentResult.class);
     }
 
     @JsonIgnore
-    public <T extends PipelineResult> List<T> getResultsOfType(Class<T> type) {
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> List<T> getResultsOfType(Class<T> resultClass) {
         List<T> filteredResults = new ArrayList<>();
         if (results==null) {
             return filteredResults;
         }
         for (PipelineResult result : results) {
-            if (type==null || type.isAssignableFrom(result.getClass())) {
+            if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
                 filteredResults.add((T)result);
             }
         }
         return null;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> List<T> getResultsById(Class<T> resultClass, Long resultId) {
+        List<T> results = new ArrayList<>();
+        for(PipelineResult result : getResults()) {
+            if (resultId.equals(result.getId()) && (resultClass==null || resultClass.isAssignableFrom(result.getClass()))) {
+                results.add((T)result);
+            }
+            for(T childResult : result.getResultsById(resultClass, resultId)) {
+                results.add(childResult);
+            }
+        }
+        return results;
     }
     
     @JsonIgnore

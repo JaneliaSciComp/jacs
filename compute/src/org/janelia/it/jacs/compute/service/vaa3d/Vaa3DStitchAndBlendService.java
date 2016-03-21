@@ -58,7 +58,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         writeInstanceFiles();
         setJobIncrementStop(1);
 
-        this.stitchedFilename = sampleArea.getStitchedFilename();
+        this.stitchedFilename = sampleArea.getStitchedFilepath();
     	List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
     	if (mergedLsmPairs.size()==1) {
     		logger.warn("Creating stitching bypass script. This is an old code path that should not longer be exercised!");
@@ -145,5 +145,4 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     		throw new MissingGridResultException(file.getAbsolutePath(), "Stitched output file not found for "+resultFileNode.getDirectoryPath());
     	}
 	}
-    
 }

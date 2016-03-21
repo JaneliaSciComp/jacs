@@ -1,8 +1,10 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -10,15 +12,17 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CreatePipelineRunEntityService extends AbstractEntityService {
-	
-    public void execute() throws Exception {
-        
-    	String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-    	if (StringUtils.isEmpty(sampleEntityId)) {
-    		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-    	}
+public class CreatePipelineRunEntityService extends AbstractDomainService {
 
+    private Sample sample;
+    private ObjectiveSample objectiveSample;
+    
+    public void execute() throws Exception {
+
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        
     	String pipelineName = (String)processData.getItem("PIPELINE_NAME");
     	if (StringUtils.isEmpty(pipelineName)) {
     		pipelineName = "Pipeline";
@@ -31,18 +35,12 @@ public class CreatePipelineRunEntityService extends AbstractEntityService {
     		throw new IllegalArgumentException("PIPELINE_PROCESS may not be null");
     	}
     	
-    	Entity sampleEntity = entityBean.getEntityById(new Long(sampleEntityId));
-    	if (sampleEntity == null) {
-    		throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-    	}
+    	int pipelineVersion = 1; // TODO: pipeline versions
     	
-    	Entity pipelineRun = entityBean.createEntity(ownerKey, EntityConstants.TYPE_PIPELINE_RUN, pipelineRunName);
-    	pipelineRun.setValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS, pipelineProcess);
-    	
-    	entityBean.saveOrUpdateEntity(pipelineRun);
-    	entityBean.addEntityToParent(ownerKey, sampleEntity.getId(), pipelineRun.getId(), sampleEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
+    	SamplePipelineRun pipelineRun = sampleHelper.addNewPipelineRun(objectiveSample, pipelineRunName, pipelineProcess, pipelineVersion);
+    	sampleHelper.saveSample(sample);
 
-    	contextLogger.info("Added new pipeline run to sample "+sampleEntity);
+    	contextLogger.info("Added new pipeline run to sample "+sample.getName());
     	
     	processData.putItem("PIPELINE_RUN_ENTITY_ID", pipelineRun.getId().toString());
     	contextLogger.info("Putting '"+pipelineRun.getId()+"' in PIPELINE_RUN_ENTITY_ID");

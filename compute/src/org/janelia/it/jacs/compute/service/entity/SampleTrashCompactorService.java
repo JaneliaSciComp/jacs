@@ -18,7 +18,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleTrashCompactorService extends AbstractEntityService {
+public class SampleTrashCompactorService extends AbstractDomainService {
 
     public transient static final String PARAM_testRun = "is test run";
     

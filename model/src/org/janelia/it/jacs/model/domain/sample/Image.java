@@ -4,8 +4,7 @@ import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
@@ -18,7 +17,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
  */
 @MongoMapped(collectionName="image",label="Image")
 @SearchType(key="image",label="Image")
-public class Image extends AbstractDomainObject implements HasFiles, HasFilepath {
+public class Image extends AbstractDomainObject implements HasRelativeFiles {
 
     @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
@@ -81,6 +80,9 @@ public class Image extends AbstractDomainObject implements HasFiles, HasFilepath
     }
 
     @Override
+    /**
+     * Use DomainUtils.getFilepath instead of this method, to get the absolute path
+     */
     public Map<FileType, String> getFiles() {
         return files;
     }

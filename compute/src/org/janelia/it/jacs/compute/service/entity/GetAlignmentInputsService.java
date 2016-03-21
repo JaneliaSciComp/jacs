@@ -9,7 +9,7 @@ import org.janelia.it.jacs.compute.service.align.Aligner;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetAlignmentInputsService extends AbstractEntityService {
+public class GetAlignmentInputsService extends AbstractDomainService {
 
 	@Override 
     public void execute() throws Exception {

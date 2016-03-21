@@ -7,7 +7,7 @@ import org.janelia.it.jacs.model.entity.Entity;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class FindAncestorService extends AbstractEntityService {
+public class FindAncestorService extends AbstractDomainService {
 
     public void execute() throws Exception {
         	

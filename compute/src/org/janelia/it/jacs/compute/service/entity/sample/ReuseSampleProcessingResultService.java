@@ -1,70 +1,52 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 
 /**
  * Find the latest sample processing entity in the given sample, and add it to the given pipeline run.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ReuseSampleProcessingResultService extends AbstractEntityService {
-	
+public class ReuseSampleProcessingResultService extends AbstractDomainService {
+
+    private Sample sample;
+    private ObjectiveSample objectiveSample;
+    
     public void execute() throws Exception {
 
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (StringUtils.isEmpty(sampleEntityId)) {
-            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-        }
-
-        String pipelineRunId = (String)processData.getItem("PIPELINE_RUN_ENTITY_ID");
-        if (StringUtils.isEmpty(pipelineRunId)) {
-            throw new IllegalArgumentException("PIPELINE_RUN_ENTITY_ID may not be null");
-        }
-        
-        Entity sampleEntity = entityBean.getEntityTree(new Long(sampleEntityId));
-        if (sampleEntity == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-        }
-
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
         AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
         
-        Entity myPipelineRun = null;
-        Entity latestSp = null;
+        SampleProcessingResult latestSp = null;
         
-        for(Entity pipelineRun : sampleEntity.getOrderedChildren()) {
-            if (pipelineRun.getEntityTypeName().equals(EntityConstants.TYPE_PIPELINE_RUN)) {
-                if (pipelineRun.getId().toString().equals(pipelineRunId)) {
-                    myPipelineRun = pipelineRun;
+        for(SamplePipelineRun pipelineRun : objectiveSample.getPipelineRuns()) {
+            for(SampleProcessingResult sp : pipelineRun.getSampleProcessingResults()) {
+                String spArea = sp.getAnatomicalArea();
+                if (spArea==null) spArea = "";
+                if (sampleArea!=null && !sampleArea.getName().equals(spArea)) {
+                    contextLogger.debug("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
+                    continue;
                 }
-                for(Entity sp : pipelineRun.getChildren()) {
-                    if (sp.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
-                        String spArea = sp.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-                        if (spArea==null) spArea = "";
-                        if (sampleArea!=null && !sampleArea.getName().equals(spArea)) {
-                            contextLogger.debug("Can't use "+sp.getId()+" because "+sampleArea.getName()+"!="+spArea);
-                            continue;
-                        }
-                        latestSp = sp;
-                    }
-                }
+                latestSp = sp;
             }
         }
         
-        if (myPipelineRun==null) {
-            throw new Exception("Cannot find pipeline run with id="+pipelineRunId);
-        }
-        
         if (latestSp!=null) {
-            String stitchedFilename = latestSp.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-            if (stitchedFilename!=null) {
-                sampleArea.setStitchedFilename(stitchedFilename);
+            String stitchedFilepath = DomainUtils.getDefault3dImageFilePath(latestSp);
+            if (stitchedFilepath!=null) {
+                sampleArea.setStitchedFilepath(stitchedFilepath);
+                run.addResult(latestSp);
                 
-                entityBean.addEntityToParent(ownerKey, myPipelineRun.getId(), latestSp.getId(), myPipelineRun.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_RESULT);        
-                entityBean.saveOrUpdateEntity(myPipelineRun);
-                contextLogger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+pipelineRunId);
+                contextLogger.info("Reusing sample processing result "+latestSp.getId()+" for "+sampleArea.getName()+" area in new pipeline run "+run.getId());
                 
                 processData.putItem("RESULT_ENTITY_ID", latestSp.getId().toString());
                 contextLogger.info("Putting '"+latestSp.getId()+"' in RESULT_ENTITY_ID");
@@ -77,7 +59,9 @@ public class ReuseSampleProcessingResultService extends AbstractEntityService {
             }
         }
         else {
-            contextLogger.info("No existing sample processing available for reuse for sample: "+sampleEntityId);
+            contextLogger.info("No existing sample processing available for reuse for sample: "+sample.getId());
         }
+        
+        sampleHelper.saveSample(sample);
     }
 }

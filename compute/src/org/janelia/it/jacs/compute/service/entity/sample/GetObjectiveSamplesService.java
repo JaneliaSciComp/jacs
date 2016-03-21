@@ -4,12 +4,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Extracts sub-samples based on their objective.
@@ -24,8 +24,9 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetObjectiveSamplesService extends AbstractEntityService {
+public class GetObjectiveSamplesService extends AbstractDomainService {
 
+    private Sample sample;
 	private List<String> pipelines20x = null; 
 	private List<String> pipelines40x = null; 
 	private List<String> pipelines63x = null;
@@ -76,69 +77,56 @@ public class GetObjectiveSamplesService extends AbstractEntityService {
 			}
     	}
 	
-        final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
-        populateChildren(sampleEntity);
-        final List<Entity> subSamples = EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-        
-        if (! subSamples.isEmpty()) {
+        final Sample sampleEntity = entityHelper.getRequiredSample(data);
+    
+        String sampleIdStr = sampleEntity.getId().toString();
+        data.putItem("PARENT_SAMPLE_ID", sampleIdStr);
 
-            data.putItem("PARENT_SAMPLE_ID", sampleEntity.getId().toString());
-
-            String objective;
-            String subSampleId;
-            for (Entity subSample : subSamples) {
-                objective = subSample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-                subSampleId = subSample.getId().toString();
-                if (run20x && Objective.OBJECTIVE_20X.getName().equals(objective)) {
-                	if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines20x)) {
-                        data.putItem("SAMPLE_20X_ID", subSampleId);
-                	}
-                } 
-                else if (run40x && Objective.OBJECTIVE_40X.getName().equals(objective)) {
-                    if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines40x)) {
-                        data.putItem("SAMPLE_40X_ID", subSampleId);
-                	}
-                } 
-                else if (run63x && Objective.OBJECTIVE_63X.getName().equals(objective)) {
-                	if (!reusePipelineRuns || !sampleHasAllPipelines(subSample, pipelines63x)) {
-                        data.putItem("SAMPLE_63X_ID", subSampleId);
-                	}
-                }
-            }
-
-        } 
-        else {
-            contextLogger.info("No sub-samples found");
-            String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-            if (objective != null) {
-                data.putItem("SAMPLE_" + objective.toUpperCase() + "_ID", sampleEntity.getId().toString());
+        String objective;
+        for (ObjectiveSample objectiveSample : sampleEntity.getObjectiveSamples()) {
+            objective = objectiveSample.getObjective();
+            if (run20x && Objective.OBJECTIVE_20X.getName().equals(objective)) {
+            	if (!reusePipelineRuns || !sampleHasAllPipelines(objectiveSample, pipelines20x)) {
+                    data.putItem("SAMPLE_20X_ID", sampleIdStr);
+            	}
+            } 
+            else if (run40x && Objective.OBJECTIVE_40X.getName().equals(objective)) {
+                if (!reusePipelineRuns || !sampleHasAllPipelines(objectiveSample, pipelines40x)) {
+                    data.putItem("SAMPLE_40X_ID", sampleIdStr);
+            	}
+            } 
+            else if (run63x && Objective.OBJECTIVE_63X.getName().equals(objective)) {
+            	if (!reusePipelineRuns || !sampleHasAllPipelines(objectiveSample, pipelines63x)) {
+                    data.putItem("SAMPLE_63X_ID", sampleIdStr);
+            	}
             }
         }
+
     }
 
-	private boolean sampleHasAllPipelines(Entity subSample, List<String> pipelines) throws Exception {
+	private boolean sampleHasAllPipelines(ObjectiveSample objectiveSample, List<String> pipelines) throws Exception {
 
 		if (pipelines==null) return false;
-    	populateChildren(subSample);
 		
     	Set<String> pipelineSet = new HashSet<String>(pipelines);
     	
-        for(Entity pipelineRun : EntityUtils.getChildrenOfType(subSample, EntityConstants.TYPE_PIPELINE_RUN)) {
-        	populateChildren(pipelineRun);
-        	if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR)!=null) {
-        		continue;
-        	}
-        	String pipelineName = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-        	if (pipelineName!=null) {
-        		pipelineSet.remove(pipelineName);
-        	}
-        }
+    	if (objectiveSample.hasPipelineRuns()) {
+            for(SamplePipelineRun pipelineRun : objectiveSample.getPipelineRuns()) {
+            	if (pipelineRun.hasError()) {
+            		continue;
+            	}
+            	String pipelineName = pipelineRun.getPipelineProcess();
+            	if (pipelineName!=null) {
+            		pipelineSet.remove(pipelineName);
+            	}
+            }
+    	}
     	
         if (pipelineSet.isEmpty()) {
-            contextLogger.info("Sample "+subSample.getName()+" has no unfulfilled pipelines");
+            contextLogger.info("Sample "+sample.getName()+" "+objectiveSample.getObjective()+" has no unfulfilled pipelines");
         }
         else {
-            contextLogger.info("Sample "+subSample.getName()+" has unfulfilled pipelines: "+pipelineSet);	
+            contextLogger.info("Sample "+sample.getName()+" "+objectiveSample.getObjective()+" has unfulfilled pipelines: "+pipelineSet);	
         }
         
 		return pipelineSet.isEmpty();

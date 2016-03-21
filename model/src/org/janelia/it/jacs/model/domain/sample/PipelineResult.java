@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.common.collect.Lists;
 
 /**
  * The result of some processing. May be nested if further processing is done on this result.
@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
-public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
+public class PipelineResult implements HasRelativeFiles, HasIdentifier {
 
     private Long id;
     private String name;
@@ -116,6 +116,35 @@ public class PipelineResult implements HasFilepath, HasFiles, HasIdentifier {
         return (NeuronSeparation) getLatestResultOfType(NeuronSeparation.class);
     }
 
+    @JsonIgnore
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> List<T> getResultsOfType(Class<T> resultClass) {
+        List<T> filteredResults = new ArrayList<>();
+        if (results==null) {
+            return filteredResults;
+        }
+        for (PipelineResult result : results) {
+            if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
+                filteredResults.add((T)result);
+            }
+        }
+        return null;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> List<T> getResultsById(Class<T> resultClass, Long resultId) {
+        List<T> results = new ArrayList<>();
+        for(PipelineResult result : getResults()) {
+            if (resultId.equals(result.getId()) && (resultClass==null || resultClass.isAssignableFrom(result.getClass()))) {
+                results.add((T)result);
+            }
+            for(T childResult : result.getResultsById(resultClass, resultId)) {
+                results.add(childResult);
+            }
+        }
+        return results;
+    }
+    
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     
     public Long getId() {

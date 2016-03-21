@@ -2,34 +2,26 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.util.List;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 
 /**
  * Get the pipeline process file configured for given sample or parent sample.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetPipelineForSampleService extends AbstractEntityService {
+public class GetPipelineForSampleService extends AbstractDomainService {
 	
     public void execute() throws Exception {
 
-        final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
+        final Sample sampleEntity = entityHelper.getRequiredSample(data);
 
-        String dataSetIdentifier = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        String dataSetIdentifier = sampleEntity.getDataSet();
+        DataSet dataSet = domainDao.getDataSetByIdentifier(ownerKey, dataSetIdentifier);
         
-        if (dataSetIdentifier==null) {
-            Entity parentSampleEntity = entityBean.getAncestorWithType(sampleEntity, EntityConstants.TYPE_SAMPLE);
-            dataSetIdentifier = parentSampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-        }
-        
-        Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
-        
-        String pipelineProcess = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-        contextLogger.info("data set pipeline process list is: " + pipelineProcess);
-        List<String> pipelineNames = Task.listOfStringsFromCsvString(pipelineProcess);
+        List<String> pipelineNames = dataSet.getPipelineProcesses();
+        contextLogger.info("data set pipeline process list is: " + pipelineNames);
         
         String pipelineName = pipelineNames.get(0);
         String processDefName = "PipelineConfig_"+pipelineName;

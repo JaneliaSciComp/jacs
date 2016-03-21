@@ -1,34 +1,31 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
+import java.util.ArrayList;
+import java.util.HashSet;
+
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
-import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 
 /**
  * Updates the status of a sample.
  */
-public class LSMSampleStartProcessingService extends AbstractEntityService {
+public class LSMSampleStartProcessingService extends AbstractDomainService {
     private static final String SAMPLE_PROCESSING_JOBNAME = "GSPS_CompleteSamplePipeline";
 
     public void execute() throws Exception {
         String datasetIdWithsampleId = processData.getString("SAMPLE_DATASET_ID_WITH_ENTITY_ID");
         String sampleId = Iterables.get(Splitter.on(':').split(datasetIdWithsampleId),1);
+        // TODO: this code needs to be ported to use domain objects
         Entity sampleEntity = entityBean.getEntityById(sampleId);
         Task processSampleTask = createTask(sampleEntity);
         computeBean.dispatchJob(SAMPLE_PROCESSING_JOBNAME, processSampleTask.getObjectId());

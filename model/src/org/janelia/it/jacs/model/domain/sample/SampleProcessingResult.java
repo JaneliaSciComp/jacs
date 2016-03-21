@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasAnatomicalArea;
+import org.janelia.it.jacs.model.domain.interfaces.HasImageStack;
 
 /**
  * The result of processing the LSMs of a single anatomical area
@@ -8,7 +9,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasAnatomicalArea;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleProcessingResult extends PipelineResult implements HasAnatomicalArea {
+public class SampleProcessingResult extends PipelineResult implements HasAnatomicalArea, HasImageStack {
 	
 	private String anatomicalArea;
     private String imageSize;

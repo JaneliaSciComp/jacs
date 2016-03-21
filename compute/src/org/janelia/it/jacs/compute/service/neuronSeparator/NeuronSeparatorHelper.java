@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.neuronSeparator;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Common utility functions for generating command lines to call the Neuron Separator and its related utilities.

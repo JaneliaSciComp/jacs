@@ -11,31 +11,31 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
 import org.janelia.it.jacs.compute.service.exceptions.EntityException;
 import org.janelia.it.jacs.compute.service.exceptions.LSMMetadataException;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataConsensusException;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
-import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.entity.cv.MergeAlgorithm;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.entity.EntityVisitor;
-import org.janelia.it.jacs.shared.utils.entity.EntityVistationBuilder;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
@@ -64,15 +64,14 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 	private static final int START_DISPLAY_PORT = 890;
     private static final String CONFIG_PREFIX = "convertConfiguration.";
     
-    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected AnnotationBeanLocal annotationBean;
     protected String ownerKey;
-    protected SampleHelper sampleHelper;
-    protected EntityBeanEntityLoader entityLoader;
+    protected SampleHelperNG sampleHelper;
+    protected DomainDAO domainDao;
     
     protected FileNode metadataFileNode;
-    protected Entity sampleEntity;
+    protected Sample sample;
+    protected ObjectiveSample objectiveSample;
     protected AnatomicalArea sampleArea;
     protected List<MergedLsmPair> mergedLsmPairs;
     protected int randomPort;
@@ -80,8 +79,8 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     protected String mergeAlgorithm;    
     
     // Data lookup maps, keys by the LSM file name
-    protected Map<String,Entity> lsmEntityMap = new HashMap<String,Entity>();
-    protected Map<String,LSMMetadata> lsmMetadataMap = new HashMap<String,LSMMetadata>();
+    protected Map<String,LSMImage> lsmMap = new HashMap<>();
+    protected Map<String,LSMMetadata> lsmMetadataMap = new HashMap<>();
     
     // State for processing
     protected String referenceDye;
@@ -96,18 +95,17 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
         try {
-            this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
-            this.annotationBean = EJBFactory.getLocalAnnotationBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
-            this.entityLoader = new EntityBeanEntityLoader(entityBean);
+            this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+            this.domainDao = DomainDAOManager.getInstance().getDao();
             this.randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
 
             // retrieve sample first so that it gets added to log context
-            sampleEntity = sampleHelper.getRequiredSampleEntity(data);
+            sample = sampleHelper.getRequiredSample(data);
+            objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
 
             metadataFileNode = (FileNode) data.getItem("METADATA_RESULT_FILE_NODE");
             if (metadataFileNode == null) {
@@ -155,11 +153,11 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
         
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
 
-            contextLogger.info("Processing tile: "+mergedLsmPair.getTag());
+            contextLogger.info("Processing tile: "+mergedLsmPair.getTileName());
             
-            File lsm1 = new File(mergedLsmPair.getLsmFilepath1());
-            LSMMetadata lsm1Metadata = lsmMetadataMap.get(lsm1.getName());
-            contextLogger.info("Parsing file 1: "+lsm1);
+            File lsm1File = new File(mergedLsmPair.getLsmFilepath1());
+            LSMMetadata lsm1Metadata = lsmMetadataMap.get(lsm1File.getName());
+            contextLogger.info("Parsing file 1: "+lsm1File);
             
             List<String> unmergedChannelList = new ArrayList<String>();
             List<String> inputChannelList = new ArrayList<String>();
@@ -228,13 +226,13 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
 
                 contextLogger.info("Falling back on chanspec...");
 
-                Entity lsm1Entity = lsmEntityMap.get(lsm1.getName());
-                if (lsm1Entity==null) throw new EntityException("Could not find LSM entity for first LSM: "+lsm1.getName());
+                LSMImage lsm1 = lsmMap.get(lsm1File.getName());
+                if (lsm1==null) throw new EntityException("Could not find LSM entity for first LSM: "+lsm1File.getName());
 
-                String outputChanSpec = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
+                String outputChanSpec = objectiveSample.getChanSpec();
                 
                 int refIndex1 = getRefIndex(lsm1Metadata);
-                String chanSpec1 = sampleHelper.getLSMChannelSpec(lsm1Entity, refIndex1);
+                String chanSpec1 = sampleHelper.getLSMChannelSpec(lsm1, refIndex1);
 
                 contextLogger.info("  Output spec: "+outputChanSpec);
                 contextLogger.info("  Input spec 1: "+chanSpec1);
@@ -245,14 +243,14 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
                     // the input chan spec consists of the non-reference channels of both files, followed by the  
                     // reference channel. 
                     
-                    File lsm2 = new File(mergedLsmPair.getLsmFilepath2());
-                    Entity lsm2Entity = lsmEntityMap.get(lsm2.getName());
-                    if (lsm2Entity==null) throw new EntityException("Could not find LSM entity for second LSM: "+lsm2.getName());
+                    File lsm2File = new File(mergedLsmPair.getLsmFilepath2());
+                    LSMImage lsm2 = lsmMap.get(lsm2File.getName());
+                    if (lsm2==null) throw new EntityException("Could not find LSM entity for second LSM: "+lsm2File.getName());
                 
-                    LSMMetadata lsm2Metadata = lsmMetadataMap.get(lsm2.getName());
+                    LSMMetadata lsm2Metadata = lsmMetadataMap.get(lsm2File.getName());
                     int refIndex2 = getRefIndex(lsm2Metadata);
                     
-                    String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2Entity, refIndex2);
+                    String chanSpec2 = sampleHelper.getLSMChannelSpec(lsm2, refIndex2);
                     contextLogger.info("  Input spec 2: "+chanSpec2);
                     
                     unmergedChannelList.addAll(ChanSpecUtils.convertChanSpecToList(chanSpec1+chanSpec2));
@@ -580,24 +578,22 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
     
     private void populateMaps() throws Exception {
 
-		List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
-        for(Entity tile : tileEntities) {
-        	
-        	entityLoader.populateChildren(tile);
-            contextLogger.info("Populating maps for tile: "+tile.getName());
+        for(SampleTile sampleTile : sampleHelper.getTiles(objectiveSample, sampleArea.getTileNames())) {
+            contextLogger.info("Populating maps for tile: "+sampleTile.getName());
             
-            for(Entity lsmStack : EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK)) {
+            List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
+            for(LSMImage lsmStack : lsms) {
                 
                 // The actual filename of the LSM we're dealing with is not compressed
                 String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
                 
                 contextLogger.info("Populating maps for image: "+lsmFilename);
-                lsmEntityMap.put(lsmFilename, lsmStack);
+                lsmMap.put(lsmFilename, lsmStack);
                 
                 File jsonFile = new File(metadataFileNode.getDirectoryPath(), lsmFilename+".json");
                 
                 if (!jsonFile.exists()) {
-                	String jsonFilepath = findExistingJson(lsmFilename);
+                    String jsonFilepath = DomainUtils.getFilepath(lsmStack, FileType.LsmMetadata);
                 	if (jsonFilepath!=null) {
                 		jsonFile = new File(jsonFilepath);
                 	}
@@ -617,29 +613,4 @@ public class Vaa3DConvertToSampleImageService extends Vaa3DBulkMergeService {
             }
         }
     }
-
-    /**
-     * Find an existing JSON metadata file for the given LSM. 
-     * TODO: in the future, the JSON metadata filepath should be directly accessible from the LSM, so this code could be much simplified.
-     */
-	private String findExistingJson(final String lsmName) throws Exception {
-		final StringHolder stringHolder = new StringHolder();
-        EntityVistationBuilder.create(new EntityBeanEntityLoader(entityBean)).startAt(sampleEntity)
-                .childrenOfType(EntityConstants.TYPE_PIPELINE_RUN)
-                .childrenOfAttr(EntityConstants.ATTRIBUTE_RESULT)
-                .childrenOfType(EntityConstants.TYPE_SUPPORTING_DATA).first()
-                .childrenOfType(EntityConstants.TYPE_TEXT_FILE)
-                .run(new EntityVisitor() {
-            public void visit(Entity textFile) throws Exception {
-                if (textFile.getName().startsWith(lsmName) && textFile.getName().endsWith(".json")) {
-                	stringHolder.s = textFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                }
-            }
-        });
-        return stringHolder.s;
-	}
-	
-	private class StringHolder {
-		String s = null;
-	}
 }

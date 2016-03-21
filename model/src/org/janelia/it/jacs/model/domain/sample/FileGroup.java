@@ -3,15 +3,14 @@ package org.janelia.it.jacs.model.domain.sample;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 
 /**
  * A group of files with a common parent path. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class FileGroup implements HasFilepath, HasFiles {
+public class FileGroup implements HasRelativeFiles {
 
     private String filepath;
 	private Map<FileType, String> files;

@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.service.align.ImageStack;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.compute.util.FileUtils;
@@ -20,7 +20,7 @@ import org.janelia.it.jacs.compute.util.FileUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetInputImagesService extends AbstractEntityService {
+public class GetInputImagesService extends AbstractDomainService {
 
     public void execute() throws Exception {
 

@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class StringUtils {
+    
 	public static boolean isEmpty(String s) {
 		return s==null || "".equals(s);
 	}
@@ -19,6 +20,13 @@ public class StringUtils {
         return s==null || "".equals(s.trim());
     }
 
+    public static boolean areEqual(String s1, String s2) {
+        if (s1==null) {
+            return s2==null;
+        }
+        return s1.equals(s2);
+    }
+    
 	public static boolean areAllEmpty(Collection<String> strings) {
 	    for (String s : strings) {
 	        if (!isEmpty(s)) {

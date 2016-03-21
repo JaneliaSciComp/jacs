@@ -5,11 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -20,33 +20,30 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetPipelinesForDataSetService extends AbstractEntityService {
+public class GetPipelinesForDataSetService extends AbstractDomainService {
 
     public void execute() throws Exception {
         
         String dataSetIdentifier = data.getRequiredItemAsString("DATA_SET_IDENTIFIER");
         boolean reusePipelineRuns = data.getItemAsBoolean("REUSE_PIPELINE_RUNS");
-        
-        Entity dataSet = annotationBean.getUserDataSetByIdentifier(dataSetIdentifier);
+
+        DataSet dataSet = domainDao.getDataSetByIdentifier(ownerKey, dataSetIdentifier);
 
         if (dataSet==null) {
             throw new IllegalArgumentException("Data does not exist with identifier: "+dataSetIdentifier);
         }
         else {
             List<String> processNames = new ArrayList<String>();
-            String pipelineProcess = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
-            contextLogger.info("data set pipeline process list is: " + pipelineProcess);
+            List<String> pipelineNames = dataSet.getPipelineProcesses();
+            contextLogger.info("data set pipeline process list is: " + pipelineNames);
             
-            List<String> pipelineNames = Task.listOfStringsFromCsvString(pipelineProcess);
-            
-
             Set<String> skippedPipelines = new HashSet<String>();
             
             if (reusePipelineRuns) {
             	// If we don't want to rerun pipelines which already have results, then we have to check if the results are there
             	Long sampleEntityId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
-            	Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-            	skippedPipelines.addAll(getPipelinesHavingSuccessfulRuns(populateChildren(sampleEntity), pipelineNames));
+            	Sample sample = domainDao.getDomainObject(ownerKey, Sample.class, new Long(sampleEntityId));
+            	skippedPipelines.addAll(getPipelinesHavingSuccessfulRuns(sample, pipelineNames));
             }
             
             for(String processName : pipelineNames) {
@@ -63,44 +60,40 @@ public class GetPipelinesForDataSetService extends AbstractEntityService {
         }
     }
 
-    private Set<String> getPipelinesHavingSuccessfulRuns(Entity sample, List<String> pipelineNames) throws Exception {
+    private Set<String> getPipelinesHavingSuccessfulRuns(Sample sample, List<String> pipelineNames) throws Exception {
     	
     	Set<String> successfulPipelines = null;
-
-    	List<Entity> subSamples = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_SAMPLE);
-    	if (!subSamples.isEmpty()) {
-    		// This is a parent sample, process the sub-samples
-    		for (Entity subSample : subSamples) {
-    			Set<String> successfulSubPipelines = getPipelinesHavingSuccessfulRuns(populateChildren(subSample), pipelineNames);
-    			if (successfulPipelines==null) {
-    				successfulPipelines = new HashSet<String>(successfulSubPipelines);
-    			}
-    			else {
-    				// Assumption: all sub-samples must have a successful run for any given pipeline to be considered a success
-    				successfulPipelines.retainAll(successfulSubPipelines);
-    			}
-    		}
-    		return successfulPipelines;
-    	}
-    	else {
-    		successfulPipelines = new HashSet<String>();
-    	}
-    	
-    	List<Entity> runs = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-    	if (runs.isEmpty()) return successfulPipelines;
-    	
-        for(Entity pipelineRun : runs) {
-            String processName = pipelineRun.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
+    	List<ObjectiveSample> objectiveSamples = sample.getObjectiveSamples();
+		// This is a parent sample, process the sub-samples
+		for (ObjectiveSample objectiveSample : objectiveSamples) {
+			Set<String> successfulSubPipelines = getPipelinesHavingSuccessfulRuns(objectiveSample, pipelineNames);
+			if (successfulPipelines==null) {
+				successfulPipelines = new HashSet<String>(successfulSubPipelines);
+			}
+			else {
+				// Assumption: all sub-samples must have a successful run for any given pipeline to be considered a success
+				successfulPipelines.retainAll(successfulSubPipelines);
+			}
+		}
+		return successfulPipelines;
+    }
+    
+    private Set<String> getPipelinesHavingSuccessfulRuns(ObjectiveSample objectiveSample, List<String> pipelineNames) throws Exception {
+        
+        Set<String> successfulPipelines = new HashSet<String>();
+        if (!objectiveSample.hasPipelineRuns()) return successfulPipelines;
+        
+        for(SamplePipelineRun pipelineRun : objectiveSample.getPipelineRuns()) {
+            String processName = pipelineRun.getPipelineProcess();
             // Do we care about this pipeline?
             if (pipelineNames.contains(processName)) {
-	            populateChildren(pipelineRun);
-	            // Is the run a success?
-	            if (EntityUtils.getLatestChildOfType(pipelineRun, EntityConstants.TYPE_ERROR)==null) {
-	            	successfulPipelines.add(processName);
-	            }
+                // Is the run a success?
+                if (!pipelineRun.hasError()) {
+                    successfulPipelines.add(processName);
+                }
             }
         }
         
-    	return successfulPipelines;
+        return successfulPipelines;
     }
 }

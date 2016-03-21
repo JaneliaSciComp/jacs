@@ -1,5 +1,11 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Scanner;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -8,29 +14,20 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.entity.EntityHelper;
+import org.janelia.it.jacs.compute.service.domain.EntityHelperNG;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.maskSearch.MaskSearchTask;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.maskSearch.MaskSearchResultNode;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
-
 /**
- * File discovery service for neuron merge results.
- * 
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ * TODO: UNDOCUMENTED
  */
 public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
 
-	protected EntityHelper entityHelper;
+	protected EntityHelperNG entityHelper;
     protected Logger logger;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
@@ -47,13 +44,15 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
+            entityHelper = new EntityHelperNG(entityBean, computeBean, ownerKey, logger);
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
 
             MaskSearchResultNode tmpNode = (MaskSearchResultNode)ProcessDataHelper.getResultFileNode(processData);
-            Entity parentFolder = entityHelper.createOrVerifyRootEntity(task.getParameter(MaskSearchTask.PARAM_resultsFolderName),
-                    true, true);
+            if (true) {
+                throw new UnsupportedOperationException("THIS SERVICE NEEDS TO BE PORTED TO NG");
+            }
+            Entity parentFolder = null;//entityHelper.createOrVerifyRootEntity(task.getParameter(MaskSearchTask.PARAM_resultsFolderName), true, true);
             parentFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_SEARCH_TASK_ID, task.getObjectId().toString());
             Entity inputMaskEntity = createMaskInputEntity(task.getParameter(MaskSearchTask.PARAM_inputFilePath));
             Entity textResultsEntity = createMaskSearchResultEntity(tmpNode.getFilePathByTag(MaskSearchResultNode.TAG_RESULTS));

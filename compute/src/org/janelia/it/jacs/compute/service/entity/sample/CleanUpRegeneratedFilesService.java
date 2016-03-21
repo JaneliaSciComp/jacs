@@ -3,7 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.io.File;
 
 import org.janelia.it.jacs.compute.service.align.AlignmentInputFile;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -14,7 +14,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CleanUpRegeneratedFilesService extends AbstractEntityService {
+public class CleanUpRegeneratedFilesService extends AbstractDomainService {
 
     private static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
     private static final String centralDir = SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);

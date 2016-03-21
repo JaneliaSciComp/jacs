@@ -1,26 +1,35 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
-import org.janelia.it.jacs.compute.service.entity.sample.SampleRetirementService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.utility.*;
+import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
+import org.janelia.it.jacs.model.tasks.utility.GenericTask;
+import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
+import org.janelia.it.jacs.model.tasks.utility.ScalityMigrationTask;
+import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.rmi.RemoteException;
-import java.util.*;
 
 public class SampleDataManager implements SampleDataManagerMBean {
 
@@ -158,72 +167,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             taskParameters.add(new TaskParameter("compression type", compressionType, null));
             String user = sample.getOwnerKey();
             saveAndRunTask(user, processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-    
-    public void runSampleImageRegistration(String user) {
-        try {
-            String processName = "SampleImageRegistration";
-            String displayName = "Sample Image Registration";
-            saveAndRunTask(user, processName, displayName);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-    
-    public void runSampleRetirement(String user, String dataSetName, String maxSamples, Boolean testRun) {
-        try {
-            String processName = "SampleRetirementPipeline";
-            String displayName = "Sample Retirement Pipeline";
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter(SampleRetirementService.PARAM_testRun, Boolean.toString(testRun), null)); 
-            taskParameters.add(new TaskParameter("data set name", dataSetName, null));
-            taskParameters.add(new TaskParameter("max samples", maxSamples, null));
-            saveAndRunTask(user, processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-    
-    public void runAllSampleRetirement(String maxSamplesPerUser, Boolean testRun) {
-        try {
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
-            for(String subjectKey : subjectKeys) {
-                runSampleRetirement(subjectKey, null, maxSamplesPerUser, testRun);
-            }
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-
-    public void runSingleSampleArchival(String sampleEntityId) {
-        try {
-            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
-            String processName = "SyncSampleToArchive";
-            String displayName = "Single Sample Archival";
-            saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-    
-    public void runCompleteSampleArchival(String user) {
-        try {
-            String processName = "CompleteSampleArchivalService";
-            String displayName = "Complete Sample Archival";
-            saveAndRunTask(user, processName, displayName);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -475,43 +418,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.error("Error running pipeline", ex);
         }
     }
-    
-    public void runNeuronSeparationPipeline(String resultEntityId) {
-        try {
-            String processName = "PipelineHarness_FlyLightSeparation";
-            String displayName = "Standalone Neuron Separation Pipeline";
-            Entity result = EJBFactory.getLocalEntityBean().getEntityById(resultEntityId);
-            if (result==null) throw new IllegalArgumentException("Entity with id "+resultEntityId+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("result entity id", resultEntityId, null)); 
-            String user = result.getOwnerKey();
-            saveAndRunTask(user, processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
 
-    public void runNeuronSeparationMapping(String separationId1, String separationId2) {
-        try {
-            String processName = "NeuronSeparationMapping";
-            String displayName = "Standalone Neuron Separation Mapping";
-            Entity result1 = EJBFactory.getLocalEntityBean().getEntityById(separationId1);
-            if (result1==null) throw new IllegalArgumentException("Entity with id "+separationId1+" does not exist");
-            Entity result2 = EJBFactory.getLocalEntityBean().getEntityById(separationId2);
-            if (result2==null) throw new IllegalArgumentException("Entity with id "+separationId2+" does not exist");
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("separation id 1", separationId1, null));
-            taskParameters.add(new TaskParameter("separation id 2", separationId2, null));
-            String user = result2.getOwnerKey();
-            saveAndRunTask(user, processName, displayName, taskParameters);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-
-    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParams) {
+    public void applyProcessToDataset(String user, String dataSetName, String processName, String extraParams) {
         try {
             if (!StringUtils.isEmpty(dataSetName)) {
                 Subject subject = EJBFactory.getLocalComputeBean().getSubjectByNameOrKey(user);
@@ -526,7 +434,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("data set name", dataSetName, null)); 
             taskParameters.add(new TaskParameter("process def name", processName, null));
-            taskParameters.add(new TaskParameter("parent or children", parentOrChildren, null));
             addExtraParams(taskParameters, extraParams);
             saveAndRunTask(user, parentProcessName, displayName, taskParameters);
         } 
@@ -571,28 +478,6 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 }
             }
         } catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-    
-    public void runRepairSeparationsPipeline(String user) {
-        try {
-            String processName = "RepairSeparationsPipeline";
-            String displayName = "Repair Separations Pipeline";
-            saveAndRunTask(user, processName, displayName);
-        } 
-        catch (Exception ex) {
-            log.error("Error running pipeline", ex);
-        }
-    }
-
-    public void runRepairSeparationResultsPipeline(String user) {
-        try {
-            String processName = "RepairSeparationResultsPipeline";
-            String displayName = "Repair Separation Results Pipeline";
-            saveAndRunTask(user, processName, displayName);
-        } 
-        catch (Exception ex) {
             log.error("Error running pipeline", ex);
         }
     }

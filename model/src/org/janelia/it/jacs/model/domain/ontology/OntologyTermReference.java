@@ -5,6 +5,17 @@ public class OntologyTermReference {
     private Long ontologyId;
     private Long ontologyTermId;
 
+    public static OntologyTermReference createFor(OntologyTerm term) {
+        OntologyTerm currTerm = term;
+        while(!(currTerm instanceof Ontology) && currTerm!=null) {
+            currTerm = currTerm.getParent();
+        }
+        if (currTerm instanceof Ontology) {
+            return new OntologyTermReference((Ontology)currTerm, term);
+        }
+        throw new IllegalArgumentException("Term has no ontology ancestor");
+    }
+    
     public OntologyTermReference() {
     }
     
