@@ -402,7 +402,11 @@ public class ResultImageRegistrationService extends AbstractEntityService {
                 defaultImage = file;
                 priority = 10;
                 contextLogger.debug("      Using as default image");
-            } else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
+            } else if (filename.matches("AlignedFlyVNC.v3d(raw|pbd)") && priority < 10) {
+				defaultImage = file;
+				priority = 10;
+				contextLogger.debug("      Using as default image");
+			} else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
                 defaultImage = file;
                 priority = 9;
                 contextLogger.debug("      Using as default image");
