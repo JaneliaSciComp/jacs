@@ -100,6 +100,7 @@ public class EntityConstants {
     // Tile Microscope 
     public static final String TYPE_3D_TILE_MICROSCOPE_SAMPLE        = "3D Tile Microscope Sample";
     public static final String TYPE_TILE_MICROSCOPE_WORKSPACE        = "Tile Microscope Workspace";
+    public static final String TYPE_ANNOTATION_COLLECTION            = "Tile Microscope Annotation Collection";
     public static final String TYPE_TILE_MICROSCOPE_NEURON           = "Tile Microscope Neuron";
     public static final String TYPE_PROPERTY_SET                     = "Property Set";
     
@@ -159,6 +160,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS       = "Alignment Board User Settings";
     public static final String ATTRIBUTE_ALIGNMENT_OVERLAP_COEFFICIENT       = "Alignment Overlap Coefficient";
     public static final String ATTRIBUTE_ALIGNMENT_OBJECT_PEARSON_COEFFICIENT= "Alignment Object Pearson Coefficient";
+    public static final String ATTRIBUTE_ALIGNMENT_OTSUNA_OBJECT_PEARSON_COEFFICIENT= "Alignment Otsuna Object Pearson Coefficient";
     public static final String ATTRIBUTE_RESULT_NODE_ID                      = "Result Node Id";
     public static final String ATTRIBUTE_PERFORMANCE_PROXY_IMAGE             = "Performance Proxy Image";
     public static final String ATTRIBUTE_ARTIFACT_SOURCE_ID                  = "Artifact Source Entity Id";
@@ -189,6 +191,7 @@ public class EntityConstants {
     public static final String ATTRIBUTE_JFS_PATH                            = "JFS Path";
     public static final String ATTRIBUTE_TMOG_DATE                           = "TMOG Date"; // Timestamp indicating when the LSM or Sample was TMOG'd. For Samples, this is the max TMOG date of all the LSMs. 
     public static final String ATTRIBUTE_COMPLETION_DATE                     = "Completion Date"; // Timestamp indicating when the LSM or Sample was first completed.
+    public static final String ATTRIBUTE_PROTOBUF_NEURON                     = "PB Serialized Neuron";
     
     // Fly Line Release
     public static final String ATTRIBUTE_RELEASE_DATE                        = "Release Date"; // Timestamp indicating when the release will take place
@@ -211,6 +214,10 @@ public class EntityConstants {
     // TmStructuredTextAnnotation
     // "<id>:<parentId>:<parentType>:<FORMAT_VERSION>:<dataString>"
     public static final String ATTRIBUTE_STRUCTURED_TEXT                     = "Structured Text";
+    public static final String ATTRIBUTE_COLLECTION_BRAIN_NAME               = "Collection Brain Name";
+    public static final String ATTRIBUTE_COLLECTION_VERSION                  = "Collection Version";
+    public static final String ATTRIBUTE_COLLECTION_NOTES                    = "Collection Notes"; 
+    public static final String ATTRIBUTE_COLLECTION_SAMPLE_ID                = "Collection Sample ID";
 
     // Alignment Spaces
     public static final String ATTRIBUTE_ALIGNMENT_SPACE                     = "Alignment Space"; // e.g. "Unified 20x Alignment Space"

@@ -22,8 +22,6 @@
                 <input name="OBJECTIVE"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
-                <output name="RESULT_ENTITY"/>
-                <output name="RESULT_ENTITY_ID"/>
                 <output name="ALIGNED_FILENAME"/>
                 <output name="RUN_ALIGNMENT"/>
             </operation>
@@ -161,42 +159,51 @@
 	                <input name="SAMPLE_ENTITY_ID"/>
                     <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
-	                <output name="RESULT_ENTITY_ID"/>
+	                <output name="ALIGNMENT_ID"/>
 	            </operation>
-	    	    
-	            <!-- Synchronize results to SAGE -->
-	            <operation name="Sage Qi Score Sync" processor="org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService">
-                    <input name="SAMPLE_ENTITY_ID"/>
-                    <input name="OBJECTIVE"/>
-                    <input name="PIPELINE_RUN_ENTITY_ID"/>
-	                <input name="ALIGNMENT_ID" value="$V{RESULT_ENTITY_ID}"/>
-	            </operation>
-	    
-	            <sequence if="RUN_ANALYSIS=true">
-	                <sequence forEach="ANALYSIS_ALGORITHM">
-	                     
-                        <!-- Get analysis parameters -->
-                        <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
-                            <input name="ANALYSIS_ALGORITHM"/>
-                            <output name="ANALYSIS_PIPELINE_NAME"/>
-                        </operation>
-                        
-	                    <!-- Run separation for each alignment output (e.g. 20x, 63x, etc...) -->
-	                    <sequence forEach="ALIGNMENT_ID">
-	                    
-	                        <!-- Run neuron separation if there are signal channels to analyze -->
-	                        <include process="FlyLightSeparationPipeline" name="Aligned neuron separation" startEvent="running">
-	                            <input name="SAMPLE_ENTITY_ID"/>
+
+                <sequence forEach="ALIGNMENT_ID">
+	
+                    <!-- Synchronize results to SAGE -->
+                    <operation name="Sage Qi Score Sync" processor="org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService">
+                        <input name="SAMPLE_ENTITY_ID"/>
+                        <input name="OBJECTIVE"/>
+                        <input name="PIPELINE_RUN_ENTITY_ID"/>
+                        <input name="ALIGNMENT_ID"/>
+                    </operation>
+    
+    	            <sequence if="RUN_ANALYSIS=true">
+    	                <sequence forEach="ANALYSIS_ALGORITHM">
+    	                     
+                            <!-- Get analysis parameters -->
+                            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+                                <input name="SAMPLE_ENTITY_ID"/>
                                 <input name="OBJECTIVE"/>
                                 <input name="PIPELINE_RUN_ENTITY_ID"/>
-                                <input name="ROOT_ENTITY_ID" value="${ALIGNMENT_ID}"/>
-	                            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
-	                        </include>
-	                    
-	                    </sequence>
-	                    
-	                </sequence>
-	            </sequence>
+                                <input name="ALIGNMENT_ID"/>
+                                <input name="ANALYSIS_ALGORITHM"/>
+                                <output name="ANALYSIS_PIPELINE_NAME"/>
+                                <output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+                            </operation>
+                            
+    	                    <!-- Run separation for each alignment output (e.g. 20x, 63x, etc...) -->
+                            <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is not empty">
+                            
+                                <!-- Run neuron separation if there are signal channels to analyze -->
+                                <include process="FlyLightSeparationPipeline" name="Aligned neuron separation" startEvent="running">
+                                    <input name="SAMPLE_ENTITY_ID"/>
+                                    <input name="OBJECTIVE"/>
+                                    <input name="PIPELINE_RUN_ENTITY_ID"/>
+                                    <input name="ROOT_ENTITY_ID" value="${ALIGNMENT_ID}"/>
+                                    <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
+                                </include>
+                            
+    	                    </sequence>
+    	                    
+    	                </sequence>
+    	            </sequence>
+
+                </sequence>
 	    
 	        </sequence>
 	        

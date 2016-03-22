@@ -224,6 +224,71 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
         return null;
     }
 
+    /**
+     * Multiple-message version of asynchronous tool event logging.
+     * @param userToolEvents list of all events to be batch-recorded.
+     */
+    @Override
+    public void addEventsToSessionAsync(UserToolEvent[] userToolEvents) {
+        // save as other override, but talk to MDB.
+        Connection connection = null;
+        javax.jms.Session session = null;
+        MessageProducer producer = null;
+        try {
+            connection = connectionFactory.createConnection();
+            session = connection.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE);
+
+            // Marshalling the event into a message.
+            ObjectMessage message = session.createObjectMessage();
+            if (message == null) {
+                logger.error("Session returned null message.");
+                return;
+            } else if (userToolEvents == null) {
+                logger.error("Cannot log null message.");
+                return;
+            }
+            message.setObject(userToolEvents);
+
+            // Send and complete.
+            producer = session.createProducer(metricsLoggingQueue);
+            producer.send(message);
+
+            return;
+        } catch (Throwable th) {
+            logger.error("Cannot log batched events to session.");
+            logger.error("Error: " + th.getMessage(), th);
+        } finally {
+            String finalMessage = null;
+            try {
+                if (producer != null) {
+                    producer.close();
+                }
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the producer", ex);
+            }
+            try {
+                if (session != null) {
+                    session.close();
+                }
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the session", ex);
+            }
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (JMSException ex) {
+                finalMessage = ex.getMessage();
+                logger.error("Error closing the connection", ex);
+            }
+            if (finalMessage != null) {
+                logger.error("Failure during JMS message tear-down: " + finalMessage);
+            }
+        }
+    }
+
     @Override
     public void endSession(String userLogin, String toolName, Long userSessionId) {
     	logger.info("End session for "+userLogin);
@@ -757,7 +822,21 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     @Override
     public void recordProcessError(String processDefName, Long processId, Throwable e) {
         try {
-            updateTaskStatus(processId, Event.ERROR_EVENT, e.getMessage());
+
+            StringBuilder sb = new StringBuilder();
+            Throwable x = e;
+            while (x!=null) {
+            	if (e!=x) sb.append("Caused by: ");
+            	sb.append(x.getClass().getName()).append(": ").append(x.getMessage()).append("\n");
+                for (StackTraceElement element : x.getStackTrace()) {
+                	sb.append("\tat ");
+                    sb.append(element.toString()).append("\n");
+                    break;
+                }
+                x = x.getCause();
+            }
+        	
+            updateTaskStatus(processId, Event.ERROR_EVENT, sb.toString());
         }
         catch (Exception ee) {
             logger.error("Caught exception updating status of process: " + processDefName, ee);

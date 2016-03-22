@@ -268,7 +268,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing data set pipelines for "+subjectKey);
-                String ret = runUserDataSetPipelines(subjectKey, null, true, runMode, reuseSummary, reuseProcessing, reusePost, reuseAlignment, true, force);
+                String ret = runUserDataSetPipelines(subjectKey, null, true, runMode, reuseSummary, reuseProcessing, reusePost, reuseAlignment, force);
                 if (sb.length()>0) sb.append(",\n");
                 sb.append(subjectKey).append(": ").append(ret);
             }
@@ -280,17 +280,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
-    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
+    public String runUserDataSetPipelines(String user, String dataSetName, Boolean runSampleDiscovery, String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
         try {
             String processName = "GSPS_UserDataSetPipelines";
             String displayName = "User Data Set Pipelines";
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("run mode", runMode, null));
+	            HashSet<TaskParameter> taskParameters = new HashSet<>();
+	            taskParameters.add(new TaskParameter("run mode", runMode, null));
             if (runSampleDiscovery!=null) {
                 taskParameters.add(new TaskParameter("run sample discovery", runSampleDiscovery.toString(), null));
-            }
-            if (reusePipelineRuns!=null) {
-                taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
             }
             if (reuseSummary!=null) {
                 taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
@@ -338,7 +335,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSampleFolder(String folderId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
+    public void runSampleFolder(String folderId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
             if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
@@ -346,11 +343,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
             for(Entity child : entity.getOrderedChildren()) {
                 if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    runSampleFolder(child.getId().toString(), reusePipelineRuns, reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
+                    runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
                 }
                 else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reusePipelineRuns, reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
+                    runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
                 else {
@@ -362,16 +359,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    public void runSamplePipelines(String sampleId, Boolean reusePipelineRuns, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
+    public void runSamplePipelines(String sampleId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
             Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("sample entity id", sampleId, null)); 
-            if (reusePipelineRuns!=null) {
-                taskParameters.add(new TaskParameter("reuse pipeline runs", reusePipelineRuns.toString(), null));
-            }
+            taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
             if (reuseSummary!=null) {
                 taskParameters.add(new TaskParameter("reuse summary", reuseSummary.toString(), null));
             }
@@ -516,6 +510,22 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    /**
+     * Method to point to a file of jfs commands and extract them.
+     * Example file exists in /nrs/jacs/jacsData/saffordt/jfsonly.sh
+     *
+     */
+    public void jfsExportService(String filePath) {
+        try {
+            JFSExportTask exportTask = new JFSExportTask("system", new ArrayList<Event>(), filePath);
+            exportTask = (JFSExportTask) EJBFactory.getLocalComputeBean().saveOrUpdateTask(exportTask);
+            EJBFactory.getLocalComputeBean().submitJob("JFSExport", exportTask.getObjectId());
+        }
+        catch (DaoException | RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void visuallyLosslessCorrectionService(String filePath, String debug) {
         try {
@@ -578,7 +588,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksdicksonlab1115.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft03042016.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);

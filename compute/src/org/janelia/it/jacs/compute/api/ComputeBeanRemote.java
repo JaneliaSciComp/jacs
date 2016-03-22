@@ -123,6 +123,7 @@ public interface ComputeBeanRemote {
     
     public UserToolEvent addEventToSession(UserToolEvent userToolEvent);
     public UserToolEvent addEventToSessionAsync(UserToolEvent userToolEvent);
+    public void addEventsToSessionAsync(UserToolEvent[] userToolEvents);
 
     /**
      * @deprecated

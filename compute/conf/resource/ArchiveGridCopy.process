@@ -24,9 +24,9 @@
         <!-- Create a result node -->
         <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
             <input name="NAME" value="Temp"/>
-            <input name="OUTPUT_VAR_NAME" value="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE"/>
-            <output name="RESULT_FILE_NODE_ID"/>
+            <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE"/>
+            <output name="TEMP_FILE_NODE_ID"/>
         </operation>
         
         <!-- Copy the files to or from archive -->
@@ -42,7 +42,7 @@
         
         <!-- We're done with the node -->
         <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-            <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+            <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
         </operation>
         
     </sequence>

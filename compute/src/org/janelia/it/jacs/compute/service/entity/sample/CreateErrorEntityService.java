@@ -68,11 +68,15 @@ public class CreateErrorEntityService extends AbstractDomainService {
         if (resultFileNode!=null) {
             outputDir = new File(resultFileNode.getDirectoryPath());
         }
-        else {
+        
+    	if (!outputDir.exists()) {
+    		outputDir = null;
+    	}
+        
+        if (outputDir==null) {
             File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
             outputDir = new File(userFilestore, ERRORS_DIR_NAME);
             outputDir.mkdirs();
-            logger.warn("No RESULT_FILE_NODE is specified, saving error message to general Errors folder: "+outputDir);
         }
 
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);

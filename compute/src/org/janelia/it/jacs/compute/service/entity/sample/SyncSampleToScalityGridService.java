@@ -131,9 +131,9 @@ public class SyncSampleToScalityGridService extends AbstractDomainGridService {
             for(SampleTile tile : objectiveSample.getTiles()) {
                 for(DomainObject domainObject : domainDao.getDomainObjects(ownerKey, tile.getLsmReferences())) {
                     LSMImage lsmImage = (LSMImage)domainObject;
-                    Date completionDate = lsmImage.getCompletionDate();
-                    if (null!=completionDate) {
-                        if (cutoffDate.isAfter(new DateTime(completionDate))) {
+                    Date creationDate = lsmImage.getCreationDate();
+                    if (null!=creationDate) {
+                        if (cutoffDate.isAfter(new DateTime(creationDate))) {
 
                             String filepath = DomainUtils.getFilepath(lsmImage, FileType.LosslessStack);
                             
@@ -164,7 +164,7 @@ public class SyncSampleToScalityGridService extends AbstractDomainGridService {
                         }
                     }
                     else {
-                        logger.info("LSM has not been completed, so it can't be moved: "+lsmImage.getId());
+                    	logger.error("LSM does not have a creation date, so it can't be moved: "+lsmImage.getId());
                     }
                 }
             }
@@ -268,7 +268,7 @@ public class SyncSampleToScalityGridService extends AbstractDomainGridService {
         script.append("cd $WORKING_DIR\n");
         
         // If the file is an LSM, ensure that it is compressed before uploading
-        script.append("FILE_STUB=`basename $FILE_PATH`\n");
+        script.append("FILE_STUB=`basename \"$FILE_PATH\"`\n");
         script.append("FILE_EXT=${FILE_STUB##*.}\n");
         script.append("if [[ \"$FILE_EXT\" = \"lsm\" ]]; then\n");
         script.append("  WORKING_FILE=$WORKING_DIR/$FILE_STUB.bz2\n");

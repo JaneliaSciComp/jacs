@@ -50,6 +50,8 @@ public class JFSUtils {
             sb.append(entity.getName());
         }
         else if (JFS_LSM_STORE.equals(entity.getStore())) {
+            // Spaces in PBID's are not allowed.
+            filepath = filepath.replace(" ","_");
         	filepath = filepath.substring(1);
         	filepath = filepath.substring(filepath.indexOf('/'));
         	sb.append(JFS_LSM_STORE);

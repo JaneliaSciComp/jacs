@@ -66,19 +66,16 @@ public class SageQiScoreSyncService extends AbstractDomainService {
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
         
-        Long alignmentId = data.getItemAsLong("ALIGNMENT_ID");
-        if (alignmentId==null) {
-            throw new IllegalArgumentException("ALIGNMENT_ID cannot be null");
-        }
-        
-        this.sage = new SageDAO(logger);
-        this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
-        this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
+        Long alignmentId = data.getRequiredItemAsLong("ALIGNMENT_ID");
         List<SampleAlignmentResult> results = run.getResultsById(SampleAlignmentResult.class, alignmentId);
         if (results.isEmpty()) {
             throw new IllegalArgumentException("Could not find alignment "+alignmentId+" in sample "+sample.getId());
         }
         this.alignment = results.get(0); // We can take any instance, since they're all the same
+
+        this.sage = new SageDAO(logger);
+        this.qiScoreTerm = getCvTermByName("light_imagery",QI_SCORE_TERM_NAME);
+        this.qmScoreTerm = getCvTermByName("light_imagery",QM_SCORE_TERM_NAME);
         
     	processAlignment();
 

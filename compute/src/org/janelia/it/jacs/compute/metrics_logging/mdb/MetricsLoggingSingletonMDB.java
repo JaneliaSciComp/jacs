@@ -61,6 +61,7 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
         Date timestamp;
         
         UserToolEvent event = null;
+        UserToolEvent[] events = null;
         
         if ( message instanceof  MapMessage ) {
             MapMessage mapMessage = (MapMessage)message;
@@ -88,6 +89,9 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
                 if (messageObject instanceof UserToolEvent) {
                     event = (UserToolEvent) messageObject;
                 }
+                else if (messageObject instanceof UserToolEvent[]) {
+                    events = (UserToolEvent[]) messageObject;
+                }
                 else {
                     final String errorMessage = "Unexpected object type.  User Tool Event expected." + DROP_MSG_WARNING;
                     logger.error(errorMessage);
@@ -101,20 +105,25 @@ public class MetricsLoggingSingletonMDB implements MessageListener {
             logger.error("Invalid message type delivered.  Expected Map or Object Message, received " + message.getClass().getName() + DROP_MSG_WARNING);
         }
         
-        if (event != null) {
-            try {
+        try {
+            if (event != null) {
                 // Pump this event, using the compute infrastructure.
                 new ComputeDAO(logger).addEventToSession(event);
-            } catch (Throwable ce) {
-                // This block will catch runtime exceptions.
-                // Runtime exceptions will cause this rollback.
-                // Unknown at this time, whether this can cause
-                // stale context resource to accumulate in event
-                // of RTE from called method.
-                logger.error("Failed to log the user tool event." + DROP_MSG_WARNING);
-                ce.printStackTrace();
-                context.setRollbackOnly();
+            } else if (events != null) {
+                ComputeDAO dao = new ComputeDAO(logger);
+                for (UserToolEvent unbatchedEvent: events) {
+                    dao.addEventToSession(unbatchedEvent);
+                }
             }
+        } catch (Throwable ce) {
+            // This block will catch runtime exceptions.
+            // Runtime exceptions will cause this rollback.
+            // Unknown at this time, whether this can cause
+            // stale context resource to accumulate in event
+            // of RTE from called method.
+            logger.error("Failed to log the user tool event." + DROP_MSG_WARNING);
+            ce.printStackTrace();
+            context.setRollbackOnly();
         }
     }
 

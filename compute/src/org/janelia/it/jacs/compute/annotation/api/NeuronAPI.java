@@ -8,8 +8,11 @@ package org.janelia.it.jacs.compute.annotation.api;
 
 //import javax.annotation.security.RolesAllowed;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -22,6 +25,7 @@ import javax.ws.rs.core.Response;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPoint;
 import org.janelia.it.jacs.compute.annotation.to.AnnotationPointCollection;
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.annotation.to.NeuronBean;
 
 /*
 
@@ -43,7 +47,7 @@ curl -H"Content-Type:text/plain"  --request PUT ${SRVR_URL}/${CONTEXT}/NeuronAPI
 
 echo
 echo TESTING POINT ADD
-echo \{ \"pointGUID\":9999, \"collectionGUID\":8888, \"neuronGUID\":9996, \"x\":74000, \"y\":46000, \"z\":17000, \"structureID\":2, \"parentPointGUID\":9997 \} >${FILE}
+echo \{ \"pointGUID\":9999, \"collectionGUID\":8888, \"neuronGUID\":9996, \"x\":74000, \"y\":46000, \"z\":17000, \"radius\":-1.0, \"structureID\":2, \"parentPointGUID\":9997 \} >${FILE}
 curl -H"Content-Type:application/json"  --request POST --data @${FILE} ${SRVR_URL}/${CONTEXT}/NeuronAPI/addPointJSON/9999/
 
 #
@@ -75,10 +79,11 @@ echo
 @Path("/NeuronAPI")
 public class NeuronAPI {
     private Logger log = Logger.getLogger(NeuronAPI.class);
+    private AnnotationCollector annotationCollector = new AnnotationCollector();
 
     @POST
     @Path("/addCollection/{collectionGUID}")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public Response addCollection(AnnotationPointCollection collection) {
         try {
@@ -93,14 +98,34 @@ public class NeuronAPI {
         
     }
 
-    @PUT
+    @GET
     @Path("/setCollectionSampleID/{collectionGUID}")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
     public Response setCollectionSampleID(
             @PathParam("collectionGUID") Long collectionGUID,
             @QueryParam("sampleID") Long sampleID) {
         try {
             setCollectionSampleIDImpl(sampleID, collectionGUID);
             return Response.ok(new GenericEntity<>("Collection Updated", String.class)).build();
+        } catch (Exception ex) {
+            return errorResponse(ex);
+        }
+    }
+    
+    /**
+     * Adds all points supplied under a single neuron.
+     * @param neuron
+     * @return 
+     */
+    @POST
+    @Path("/addNeuronJSON/")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response addNeuronJSON(NeuronBean neuron) {
+        try {
+            addNeuronImpl(neuron);
+            return Response.ok(new GenericEntity<>("Neuron Added", String.class)).build();
         } catch (Exception ex) {
             return errorResponse(ex);
         }
@@ -118,10 +143,11 @@ public class NeuronAPI {
                            @QueryParam("collectionGUID") Long collectionGUID, 
                            @QueryParam("neuronGUID") Long neuronGUID, 
                            @QueryParam("x") int x, @QueryParam("y") int y, @QueryParam("z") int z, 
+                           @QueryParam("radius") Double radius,
                            @QueryParam("structureID") int structureID,
                            @QueryParam("parentPointGUID") Long parentPointGUID) {
         try {
-            addPointImpl(pointGUID, collectionGUID, neuronGUID, x, y, z, structureID, parentPointGUID);
+            addPointImpl(pointGUID, collectionGUID, neuronGUID, x, y, z, radius, structureID, parentPointGUID);
             return Response.ok(new GenericEntity<>("Point Added", String.class)).build();
         } catch (Exception ex) {
             return errorResponse(ex);
@@ -142,24 +168,12 @@ public class NeuronAPI {
         try {
             addPointImpl(
                     point.pointGUID, point.collectionGUID, point.neuronGUID, 
-                    point.x, point.y, point.z, 
+                    point.x, point.y, point.z,
+                    point.radius,
                     point.structureID,
                     point.parentPointGUID
             );
             return Response.ok(new GenericEntity<>("Point Added", String.class)).build();
-        } catch (Exception ex) {
-            return errorResponse(ex);
-        }
-    }
-
-    @DELETE
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.TEXT_PLAIN)
-    @Path("/removePoint/{pointGUID}")
-    public Response removePoint(@PathParam("pointGUID") Long pointGUID) {
-        try {
-            removePointImpl(pointGUID);
-            return Response.ok(new GenericEntity<>("Point Removed", String.class)).build();
         } catch (Exception ex) {
             return errorResponse(ex);
         }
@@ -192,38 +206,49 @@ public class NeuronAPI {
     }
 
     public Response errorResponse(Exception ex) {
+        log.error(ex.getMessage());
+        ex.printStackTrace();
         return Response.serverError()
                 .header("error-message", ex.getMessage())
                 .build();
     }
     
+    private void addNeuronImpl(
+            NeuronBean neuron
+    ) throws Exception {
+        annotationCollector.addNeuronImpl(neuron);
+    }
+    
     private void addPointImpl(
             Long pointGUID, Long collectionGUID, Long neuronGUID, 
             int x, int y, int z, 
+            Double radius,
             int structureID, 
-            Long parentPointGUID) {
+            Long parentPointGUID) throws Exception {
         log.info(String.format(
                 "Adding point: %d,%d,%d under UID %d w/ parent %d.  Adding to neuron %d.  In collection %d.", 
                 x, y, z, 
                 pointGUID, parentPointGUID, 
                 neuronGUID, collectionGUID)
         );
+        annotationCollector.addPointImpl(pointGUID, collectionGUID, neuronGUID, x,y,z, radius, structureID, collectionGUID);
     }
     
-    private void removePointImpl(Long pointGUID) {
-        log.info("Removed point " + pointGUID);
-    }
-    private void removeNeuronImpl(Long neuronGUID) {
+    private void removeNeuronImpl(Long neuronGUID) throws Exception {
         log.info("Removed neuron " + neuronGUID);
+        annotationCollector.removeNeuronImpl(neuronGUID);
     }
-    private void removeCollectionImpl(Long collectionGUID) {
+    private void removeCollectionImpl(Long collectionGUID) throws Exception {
         log.info("Removed collection " + collectionGUID);
+        annotationCollector.removeCollectionImpl(collectionGUID);
     }
-    private void addCollectionImpl(AnnotationPointCollection collection) {
+    private void addCollectionImpl(AnnotationPointCollection collection) throws Exception {
         log.info(String.format("Creating collection '%s':%d.  Date: %s.", collection.name, collection.guid, collection.creationDate.toString()));
+        annotationCollector.addCollectionImpl(collection);
     }
-    private void setCollectionSampleIDImpl(Long sampleID, Long collectionGUID) {
+    private void setCollectionSampleIDImpl(Long sampleID, Long collectionGUID) throws Exception {
         log.info("Setting the sampleID to " + sampleID + " for collection " + collectionGUID);
+        annotationCollector.setCollectionSampleIDImpl(sampleID, collectionGUID);
     }
 
 }

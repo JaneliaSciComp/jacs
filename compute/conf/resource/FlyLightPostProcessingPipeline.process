@@ -38,9 +38,8 @@
                 <!-- Create a result node for this group -->
                 <operation name="Create Post-Processing Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
                     <input name="NAME" value="Post"/>
-                    <input name="OUTPUT_VAR_NAME" value="POST_RESULT_FILE_NODE"/>
-                    <output name="POST_RESULT_FILE_NODE"/>
-                    <output name="POST_RESULT_FILE_NODE_ID"/>
+                    <output name="RESULT_FILE_NODE"/>
+                    <output name="RESULT_FILE_NODE_ID"/>
                 </operation>
                 
                 <!-- Get a list of unaligned images to create summaries for -->
@@ -61,8 +60,8 @@
                 <sequence name="Create Unaligned Image Artifacts" waitForAsync="true">
                     <operation name="Create Unaligned Image Artifacts" processor="queue/gridSubmitAndWait">
                         <input name="iservice" value="$V{SERVICE_CLASS}"/>
-                        <input name="RESULT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
-                        <input name="OUTPUT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
+                        <input name="RESULT_FILE_NODE"/>
+                        <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                         <input name="INPUT_IMAGES"/>
                         <input name="NORMALIZE_TO_FIRST_IMAGE"/>
                         <input name="OPTIONS" value="mips:movies:legends:hist"/>
@@ -72,8 +71,8 @@
                 
                 <!-- Load the MIPs and movies into the database -->
                 <operation name="Discover Post-Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalPostProcessingResultsDiscoveryService">
-                    <input name="ROOT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
-                    <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                    <input name="SAMPLE_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
                     <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
                     <input name="RESULT_ENTITY_NAME" value="Post-Processing Result"/>

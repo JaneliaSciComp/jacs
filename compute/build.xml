@@ -67,7 +67,7 @@
         <mkdir dir="${dep.dir}" />
 
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
-	<path id="compute.classpath">
+        <path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
 		    <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
 		    <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
@@ -80,11 +80,12 @@
 			<fileset dir="${common.dir}/Scality" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
             <fileset dir="${common.dir}/snakeyaml-1.11" includes="**/*.jar"/>
-			<fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
-			<fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
             <fileset dir="${common.dir}/JodaTime" includes="**/*.jar"/>
-        	<fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
-			<fileset file="${common.dir}/Spring/jxl.jar"/>
+            <fileset dir="${common.dir}/protostuff-1.3.9" includes="**/*.jar"/>
+            <fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
+            <fileset file="${common.dir}/Spring/jxl.jar"/>
             <fileset dir="${basedir}/../shared/lib" includes="**/jai*.jar"/>
         </path>
     		

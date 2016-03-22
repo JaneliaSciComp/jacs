@@ -32,10 +32,6 @@ public class ReuseAlignmentResultService extends AbstractDomainService {
         if (latestAr!=null) {
                 sampleHelper.addResult(run, latestAr);
                 contextLogger.info("Reusing alignment result "+latestAr.getId()+" for "+latestAr.getName()+" in new pipeline run "+run.getId());
-                processData.putItem("RESULT_ENTITY", latestAr);
-                contextLogger.info("Putting '"+latestAr+"' in RESULT_ENTITY");
-                processData.putItem("RESULT_ENTITY_ID", latestAr.getId().toString());
-                contextLogger.info("Putting '"+latestAr.getId()+"' in RESULT_ENTITY_ID");
                 String alignedFilename = DomainUtils.getDefault3dImageFilePath(latestAr);
                 processData.putItem("ALIGNED_FILENAME", alignedFilename);    
                 contextLogger.info("Putting '"+alignedFilename+"' in ALIGNED_FILENAME");
