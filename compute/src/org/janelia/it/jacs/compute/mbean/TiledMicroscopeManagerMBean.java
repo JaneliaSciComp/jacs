@@ -10,6 +10,8 @@ package org.janelia.it.jacs.compute.mbean;
 public interface TiledMicroscopeManagerMBean {
 
     public void createTiledMicroscopeEntityTypes();
+    
+    public void convertAllTmWorkspaceToProtobuf();
 
     public void test();
 

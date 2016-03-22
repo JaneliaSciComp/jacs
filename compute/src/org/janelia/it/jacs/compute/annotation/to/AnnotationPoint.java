@@ -22,10 +22,11 @@ public class AnnotationPoint {
     // from _existing_ objects in JACS database, or some documentation.
     @XmlElement public Long pointGUID;
     @XmlElement public Long collectionGUID;
-    @XmlElement public Long neuronGUID;
+    @XmlElement public Long neuronGUID = -1L; // Omissible
     @XmlElement public int x;
     @XmlElement public int y;
     @XmlElement public int z;
+    @XmlElement public Double radius = -1.0;  // Omissible
     @XmlElement public int structureID;
     @XmlElement public Long parentPointGUID;
 }

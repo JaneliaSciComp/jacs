@@ -226,27 +226,30 @@
 			    				<output name="REFERENCE_CHANNEL"/>
 	                            <output name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
 	                        </operation>
-	                        
-	    	    			<sequence if="SIGNAL_CHANNELS is not empty">
-		                        
-		                        <!-- Run neuron separation if there are signal channels to analyze -->
-		                        <include process="FlyLightSeparationPipeline" name="Aligned neuron separation" startEvent="running">
-		                            <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
-		                            <input name="SAMPLE_ENTITY_ID"/>
-		                            <input name="INPUT_IMAGE_ID" value="$V{IMAGE_ID}"/>
-		                            <input name="INPUT_FILENAME" value="$V{FILENAME}"/>
-		                            <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
-		                            <input name="SIGNAL_CHANNELS"/>
-		                            <input name="REFERENCE_CHANNEL"/>
-		                            <input name="OPTICAL_RESOLUTION"/>
-		                            <input name="PIXEL_RESOLUTION"/>
-		                            <input name="OBJECTIVE"/>
-		                            <input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
-		                        </include>
-		                        
-	                        </sequence>
-	                    
-	                    </sequence>
+
+							<sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is not empty">
+								<sequence if="SIGNAL_CHANNELS is not empty">
+									<!-- Run neuron separation if there are signal channels to analyze -->
+									<include process="FlyLightSeparationPipeline" name="Aligned neuron separation"
+											 startEvent="running">
+										<input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
+										<input name="SAMPLE_ENTITY_ID"/>
+										<input name="INPUT_IMAGE_ID" value="$V{IMAGE_ID}"/>
+										<input name="INPUT_FILENAME" value="$V{FILENAME}"/>
+										<input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
+										<input name="SIGNAL_CHANNELS"/>
+										<input name="REFERENCE_CHANNEL"/>
+										<input name="OPTICAL_RESOLUTION"/>
+										<input name="PIXEL_RESOLUTION"/>
+										<input name="OBJECTIVE"/>
+										<input name="ALIGNED_CONSOLIDATED_LABEL_FILEPATH"/>
+									</include>
+
+								</sequence>
+							</sequence>
+
+
+						</sequence>
 	                    
 	                </sequence>
 	            </sequence>

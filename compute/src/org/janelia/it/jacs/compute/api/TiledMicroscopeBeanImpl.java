@@ -56,17 +56,6 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
 
     @Override
-    public TmNeuron createTiledMicroscopeNeuron(Long workspaceId, String name) throws ComputeException {
-        try {
-            return _tiledMicroscopeDAO.createTiledMicroscopeNeuron(workspaceId, name);
-        } catch (Exception e) {
-            String errorString="Error calling createTiledMicroscopeNeuron in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
     public TmSample createTiledMicroscopeSample(String user, String sampleName, String pathToRenderFolder) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.createTiledMicroscopeSample(user, sampleName, pathToRenderFolder);
@@ -89,98 +78,6 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
     }
     
-    @Override
-    public TmGeoAnnotation addGeometricAnnotation(Long neuronId, Long parentAnnotationId, int index,
-                                                  double x, double y, double z, String comment) throws ComputeException {
-        try {
-            return _tiledMicroscopeDAO.addGeometricAnnotation(neuronId, parentAnnotationId, index, x, y, z, comment);
-        } catch (Exception e) {
-            String errorString="Error calling addGeometricAnnotation in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void addLinkedGeometricAnnotations(Map<Integer, Integer> nodeParentLinkage, Map<Integer, TmGeoAnnotation> annotations) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.addLinkedGeometricAnnotations(nodeParentLinkage, annotations);
-        } catch (Exception e) {
-            String errorString = "Error calling addGeometricLinkedAnnotations in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-        
-    }
-
-    @Override
-    public void reparentGeometricAnnotation(TmGeoAnnotation annotation, Long newParentAnnotationID,
-                                            TmNeuron neuron) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.reparentGeometricAnnotation(annotation, newParentAnnotationID, neuron);
-        } catch (Exception e) {
-            String errorString="Error calling reparentGeometricAnnotation in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void rerootNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.rerootNeurite(neuron, newRoot);
-        } catch (Exception e) {
-            String errorString="Error calling rerootNeurite in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void splitNeurite(TmNeuron neuron, TmGeoAnnotation newRoot) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.splitNeurite(neuron, newRoot);
-        } catch (Exception e) {
-            String errorString="Error calling splitNeurite in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void moveNeurite(TmGeoAnnotation annotation, TmNeuron newNeuron) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.moveNeurite(annotation, newNeuron);
-        } catch (Exception e) {
-            String errorString="Error calling moveNeurite in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void updateGeometricAnnotation(TmGeoAnnotation geoAnnotation,
-                                          int index, double x, double y, double z, String comment) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.updateGeometricAnnotation(geoAnnotation, index, x, y, z, comment);
-        } catch (Exception e) {
-            String errorString="Error calling updateGeometricAnnotation in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public List<TmWorkspaceDescriptor> getWorkspacesForBrainSample(Long brainSampleId, String ownerKey) throws ComputeException {
-        try {
-            return _tiledMicroscopeDAO.getWorkspacesForBrainSample(brainSampleId, ownerKey);
-        } catch (Exception e) {
-            String errorString="Error calling getWorkspacesForBrainSample in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
     @Override
     public List<TmNeuronDescriptor> getNeuronsForWorkspace(Long workspaceId, String ownerKey) throws ComputeException {
         try {
@@ -215,127 +112,11 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
     }
 
     @Override
-    public void deleteNeuron(String ownerKey, Long neuronId) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.deleteNeuron(ownerKey, neuronId);
-        } catch (Exception e) {
-            String errorString="Error calling deleteNeuron in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void deleteWorkspace(String ownerKey, Long workspaceId) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.deleteWorkspace(ownerKey, workspaceId);
-        } catch (Exception e) {
-            String errorString="Error calling deleteWorkspace in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void deleteGeometricAnnotation(Long geoId) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.deleteGeometricAnnotation(geoId);
-        } catch (Exception e) {
-            String errorString="Error calling deleteGeometricAnnotation in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
     public TmWorkspace loadWorkspace(Long workspaceId) throws ComputeException {
         try {
             return _tiledMicroscopeDAO.loadWorkspace(workspaceId);
         } catch (Exception e) {
-            String errorString="Error calling loadWorkspace in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public TmNeuron loadNeuron(Long neuronId) throws ComputeException {
-        try {
-            return _tiledMicroscopeDAO.loadNeuron(neuronId);
-        } catch (Exception e) {
-            String errorString="Error calling loadNeuron in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public TmAnchoredPath addAnchoredPath(Long neuronID, Long annotationID1, Long annotationID2,
-        List<List<Integer>> pointlist) throws ComputeException {
-        try {
-            return _tiledMicroscopeDAO.addAnchoredPath(neuronID,
-                    annotationID1, annotationID2, pointlist);
-        } catch (Exception e) {
-            String errorString="Error calling addAnchoredPath in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void updateAnchoredPath(TmAnchoredPath anchoredPath, Long annotationID1, Long annotationID2,
-        List<List<Integer>> pointlist) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.updateAnchoredPath(anchoredPath, annotationID1, annotationID2, pointlist);
-        } catch (Exception e) {
-            String errorString="Error calling updateAnchoredPath in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void deleteAnchoredPath(Long pathID) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.deleteAnchoredPath(pathID);
-        } catch (Exception e) {
-            String errorString="Error calling deleteAnchoredPath in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public TmStructuredTextAnnotation addStructuredTextAnnotation(Long neuronID, Long parentID,
-        int parentType, int formatVersion, String data) throws ComputeException {
-        try {
-            return _tiledMicroscopeDAO.addStructuredTextAnnotation(neuronID,
-                    parentID, parentType, formatVersion, data);
-        } catch (Exception e) {
-            String errorString="Error calling addStructuredTextAnnotation in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void updateStructuredTextAnnotation(TmStructuredTextAnnotation textAnnotation, String data)
-            throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.updateStructuredTextAnnotation(textAnnotation, data);
-        } catch (Exception e) {
-            String errorString="Error calling udpateStructuredTextAnnotation in DAO layer: " + e.getMessage();
-            _logger.error(errorString);
-            throw new ComputeException(errorString);
-        }
-    }
-
-    @Override
-    public void deleteStructuredTextAnnotation(Long annID) throws ComputeException {
-        try {
-            _tiledMicroscopeDAO.deleteStructuredText(annID);
-        } catch (Exception e) {
-            String errorString="Error calling deleteStructuredTextAnnotation in DAO layer: " + e.getMessage();
+            String errorString="Workspace " + workspaceId + ".  Error calling loadWorkspace in DAO layer: " + e.getMessage();
             _logger.error(errorString);
             throw new ComputeException(errorString);
         }

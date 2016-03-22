@@ -1,15 +1,15 @@
 package org.janelia.it.jacs.model.user_data.tiledMicroscope;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
+import io.protostuff.Tag;
 
 import java.io.Serializable;
 import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
+ * Requires no-args constructor for use with Protostuff/Protobuf
+ * 
  * User: murphys
  * Date: 5/1/13
  * Time: 1:21 PM
@@ -33,16 +33,26 @@ public class TmNeuron implements IsSerializable, Serializable {
         PREV_PARALLEL,
     }
 
+    @Tag(1)
     private Long id;
+    @Tag(2)
+    private Long workspaceId;
+    @Tag(3)
     private String name;
+    @Tag(4)
     private Date creationDate;
-    private transient Entity entity;
-    private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<Long, TmGeoAnnotation>();
-    private List<TmGeoAnnotation> rootAnnotations=new ArrayList<TmGeoAnnotation>();
-    private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<TmAnchoredPathEndpoints, TmAnchoredPath>();
+    @Tag(5)
+    private String ownerKey;
+    @Tag(6)
+    private Map<Long, TmGeoAnnotation> geoAnnotationMap=new HashMap<>();
+    @Tag(7)
+    private List<Long> rootAnnotationIds = new ArrayList<>();
+    @Tag(8)
+    private Map<TmAnchoredPathEndpoints, TmAnchoredPath> anchoredPathMap = new HashMap<>();
 
-    private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<Long, TmStructuredTextAnnotation>();
-
+    @Tag(9)
+    private Map<Long, TmStructuredTextAnnotation> textAnnotationMap = new HashMap<>();
+    
     public Long getId() {
         return id;
     }
@@ -63,8 +73,36 @@ public class TmNeuron implements IsSerializable, Serializable {
         return creationDate;
     }
     
-    public Entity getEntity() {
-        return entity;
+    public void setCreationDate(Date date) {
+        this.creationDate = date;
+    }
+    
+    /**
+     * @return the ownerKey
+     */
+    public String getOwnerKey() {
+        return ownerKey;
+    }
+
+    /**
+     * @param ownerKey the ownerKey to set
+     */
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
+    }
+
+    /**
+     * @return the workspaceId
+     */
+    public Long getWorkspaceId() {
+        return workspaceId;
+    }
+
+    /**
+     * @param workspaceId the workspaceId to set
+     */
+    public void setWorkspaceId(Long workspaceId) {
+        this.workspaceId = workspaceId;
     }
 
     @Override
@@ -82,9 +120,67 @@ public class TmNeuron implements IsSerializable, Serializable {
         return anchoredPathMap;
     }
 
+    /** 
+     * Returns all the root annotations, such that:
+     * + the contents of the returned collection may not be changed;
+     * + the annotations within the collection _could_ be changed.
+     * 
+     * Note that this contract guarantees that no new root annotations may
+     * be placed into the returned value, nor any added.  This collection is
+     * meant for read-only purposes.  Any removal of root annotations, or
+     * addition of root annotations, must be done via the id collection.
+     * 
+     * However, nothing may prevent a caller
+     * from modifying state of any geo-annotation found in this collection.
+     * 
+     * This collection is immutable to avoid deceiving callers about the
+     * effects of modifying the return value.
+     */
     public List<TmGeoAnnotation> getRootAnnotations() {
-        return rootAnnotations;
+        TmGeoAnnotation[] tempList = new TmGeoAnnotation[rootAnnotationIds.size()];
+        int i = 0;        
+        for (Long id: rootAnnotationIds) {
+            tempList[ i++ ] = geoAnnotationMap.get(id);
+        }
+        return Collections.unmodifiableList(Arrays.asList(tempList));
     }
+    
+    public TmGeoAnnotation getFirstRoot() {
+        if (rootAnnotationIds.size() > 0) {
+            return geoAnnotationMap.get(rootAnnotationIds.get(0));
+        }
+        else {
+            return null;
+        }
+    }
+    
+    public void removeRootAnnotation(TmGeoAnnotation root) {
+        removeRootAnnotation(root.getId());
+    }
+    
+    public void removeRootAnnotation(Long rootId) {
+        rootAnnotationIds.remove(rootId);
+    }
+    
+    public void addRootAnnotation(TmGeoAnnotation root) {
+        addRootAnnotation(root.getId());
+    }
+    
+    public void addRootAnnotation(Long rootId) {
+        rootAnnotationIds.add(rootId);
+    }
+    
+    public boolean containsRootAnnotation(TmGeoAnnotation root) {
+        return containsRootAnnotation(root.getId());
+    }
+    
+    public boolean containsRootAnnotation(Long rootId) {
+        return rootAnnotationIds.contains(rootId);
+    }
+    
+    public int getRootAnnotationCount() { return rootAnnotationIds.size(); }
+    
+    public void clearRootAnnotations() { rootAnnotationIds.clear(); }
 
     // maps ID of parent to text annotation
     public Map<Long, TmStructuredTextAnnotation> getStructuredTextAnnotationMap() {
@@ -96,50 +192,7 @@ public class TmNeuron implements IsSerializable, Serializable {
         this.name=name;
     }
 
-    public TmNeuron(Entity entity) throws Exception {
-        if (!entity.getEntityTypeName().equals(EntityConstants.TYPE_TILE_MICROSCOPE_NEURON)) {
-            throw new Exception("Entity type must be "+EntityConstants.TYPE_TILE_MICROSCOPE_NEURON);
-        }
-        this.entity = entity;
-        this.id=entity.getId();
-        this.name=entity.getName();
-        this.creationDate = entity.getCreationDate();
-
-        // First step is to take all those entity data and put them into the
-        //  appropriate objects, and the objects into the right collections
-        for (EntityData ed : entity.getEntityData()) {
-            String edAttr = ed.getEntityAttrName();
-            if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_TREE_COORDINATE) ||
-                    edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                TmGeoAnnotation ga = new TmGeoAnnotation(ed);
-                if (edAttr.equals(EntityConstants.ATTRIBUTE_GEO_ROOT_COORDINATE)) {
-                    rootAnnotations.add(ga);
-                }
-                geoAnnotationMap.put(ga.getId(), ga);
-                ga.setNeuronId(id);
-            } else if (edAttr.equals(EntityConstants.ATTRIBUTE_ANCHORED_PATH)) {
-                TmAnchoredPath path = new TmAnchoredPath(ed.getValue());
-                anchoredPathMap.put(path.getEndpoints(), path);
-            } else if (edAttr.equals(EntityConstants.ATTRIBUTE_STRUCTURED_TEXT)) {
-                TmStructuredTextAnnotation ann = new TmStructuredTextAnnotation(ed.getValue());
-                textAnnotationMap.put(ann.getParentId(), ann);
-            }
-        }
-        // Second step is to link children to produce the graph for
-        //  the GeoAnnotations
-        for (TmGeoAnnotation ga : geoAnnotationMap.values()) {
-            Long parentId = ga.getParentId();
-            // if parent ID is the neuron ID, it's a root, the ID won't be in
-            //  the map, and we don't need to connect it:
-            if (!parentId.equals(this.id)) {
-                TmGeoAnnotation parent = geoAnnotationMap.get(parentId);
-                if (parent==null) {
-                    throw new TmConnectivityException(String.format("Could not find parent for TmGeoAnnotation id = %d in neuron id = %d", ga.getId(), id));
-                }
-                parent.addChild(ga);
-            }
-        }
-    }
+    public TmNeuron() {}
 
     public TmGeoAnnotation getParentOf(TmGeoAnnotation annotation) {
         if (annotation == null) {
@@ -214,6 +267,14 @@ public class TmNeuron implements IsSerializable, Serializable {
     }
 
     private void appendSubTreeList(List<TmGeoAnnotation> annList, TmGeoAnnotation ann) {
+		if (ann == null) {
+			// For this to happen (below), one of the children of a
+			// annotation would have to be null, for "a" in the method call
+			// becomes "ann" in the argument list.
+			System.out.println("Null annotation in TmNeuron " + System.identityHashCode(this));
+			new Exception("recursed into null").printStackTrace();
+			return;
+		}
         annList.add(ann);
         for (TmGeoAnnotation a: getChildrenOf(ann)) {
             appendSubTreeList(annList, a);
