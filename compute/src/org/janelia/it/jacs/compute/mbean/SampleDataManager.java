@@ -24,6 +24,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.BZipTestTask;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
+import org.janelia.it.jacs.model.tasks.utility.JFSExportTask;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.tasks.utility.ScalityMigrationTask;
 import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
