@@ -16,6 +16,7 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -28,7 +29,6 @@ import org.janelia.it.jacs.model.tasks.utility.ScalityMigrationTask;
 import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 public class SampleDataManager implements SampleDataManagerMBean {
@@ -216,7 +216,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.info("Found users with data sets: " + subjectKeys);
             log.info("Canceling incomplete tasks");
             for(String subjectKey : subjectKeys) {
-                if (null!=user && !EntityUtils.getNameFromSubjectKey(subjectKey).equals(user)) {continue;}
+                if (null!=user && !DomainUtils.getNameFromSubjectKey(subjectKey).equals(user)) {continue;}
                 log.info("  Canceling tasks for user "+subjectKey);
                 int c = EJBFactory.getLocalComputeBean().cancelIncompleteTasksForUser(subjectKey);
                 if (c>0) {

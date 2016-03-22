@@ -40,4 +40,6 @@ public class DomainConstants {
     public static final String ERROR_ONTOLOGY_NAME = "Image Evaluation";
     public static final String ERROR_ONTOLOGY_CATEGORY = "Report";
 
+    public static final String SCALITY_PATH_PREFIX = "/scality/";
+
 }

@@ -78,13 +78,10 @@ public class SampleHelperNG extends EntityHelperNG {
         this(computeBean, ownerKey, logger, null);
     }
 
-    public SampleHelperNG(ComputeBeanLocal computeBean,
-                        String ownerKey,
-                        Logger logger,
-                        ContextLogger contextLogger) {
-        super(null, computeBean, ownerKey, logger, contextLogger);
+    public SampleHelperNG(ComputeBeanLocal computeBean, String ownerKey, Logger logger, ContextLogger contextLogger) {
+        super(computeBean, ownerKey, logger, contextLogger);
     }
-    
+
     /**
      * Clear all the visited flags on all entities owned by the user.
      */
@@ -1094,9 +1091,4 @@ public class SampleHelperNG extends EntityHelperNG {
         });
         domainDao.save(treeNode);
     }
-
-    
-    
-    
-    
 }

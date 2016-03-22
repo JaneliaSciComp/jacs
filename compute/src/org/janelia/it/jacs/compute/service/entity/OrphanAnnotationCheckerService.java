@@ -1,9 +1,5 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import java.util.List;
-
-import org.janelia.it.jacs.model.entity.Entity;
-
 /**
  * Find annotations with missing targets or ontology terms.
  *   
@@ -26,24 +22,27 @@ public class OrphanAnnotationCheckerService extends AbstractDomainService {
         logger.info("    deleteAnnotationsMissingTargets="+deleteAnnotationsMissingTargets);
         logger.info("    deleteAnnotationsMissingTerms="+deleteAnnotationsMissingTerms+" (this feature is not implemented at this time)");
     
-        List<Long> annotationIds = annotationBean.getOrphanAnnotationIdsMissingTargets(ownerKey);
-        logger.info("Found "+annotationIds.size()+" orphan annotations");
+        // TODO: port this service to use domain objects
+        throw new UnsupportedOperationException("This service is out of order");
         
-        int numDeleted = 0;
-        
-        if (deleteAnnotationsMissingTargets) {
-            for(Long id : annotationIds) {
-            	entityBean.deleteEntityById(id);
-            	numDeleted++;
-            }
-        }
-        else {
-            logger.info("Orphan annotations:");
-            for(Entity entity : entityBean.getEntitiesById(annotationIds)) {
-                logger.info(entity.getEntityTypeName()+" - "+entity.getName()+" (id="+entity.getId()+")");
-            }
-        }
-        
-        logger.info("Done with orphan annotation deletion. Deleted "+numDeleted+" annotation entities.");
+//        List<Long> annotationIds = annotationBean.getOrphanAnnotationIdsMissingTargets(ownerKey);
+//        logger.info("Found "+annotationIds.size()+" orphan annotations");
+//        
+//        int numDeleted = 0;
+//        
+//        if (deleteAnnotationsMissingTargets) {
+//            for(Long id : annotationIds) {
+//            	entityBean.deleteEntityById(id);
+//            	numDeleted++;
+//            }
+//        }
+//        else {
+//            logger.info("Orphan annotations:");
+//            for(Entity entity : entityBean.getEntitiesById(annotationIds)) {
+//                logger.info(entity.getEntityTypeName()+" - "+entity.getName()+" (id="+entity.getId()+")");
+//            }
+//        }
+//        
+//        logger.info("Done with orphan annotation deletion. Deleted "+numDeleted+" annotation entities.");
     }
 }

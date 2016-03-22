@@ -1,8 +1,10 @@
 package org.janelia.it.jacs.compute.access.solr;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 
 /**
  * Simplified entity, holding those things we need to load into the SOLR index.
@@ -34,7 +36,7 @@ public class SimpleEntity {
 		this.name = name;
 	}
 	public String getOwnerName() {
-		return EntityUtils.getNameFromSubjectKey(ownerKey);
+		return DomainUtils.getNameFromSubjectKey(ownerKey);
 	}
 	public void setOwnerKey(String ownerKey) {
 		this.ownerKey = ownerKey;
@@ -70,7 +72,7 @@ public class SimpleEntity {
 		Set<String> names = new HashSet<String>();
 		for(String subjectKey : subjectKeys) {
 			if (subjectKey==null) continue;
-			names.add(EntityUtils.getNameFromSubjectKey(subjectKey));
+			names.add(DomainUtils.getNameFromSubjectKey(subjectKey));
 		}
 		return names;
 	}

@@ -1,9 +1,9 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 
 /**
@@ -24,25 +24,13 @@ public class SampleDebuggerService extends AbstractDomainService {
 		for (TaskParameter parameter : task.getTaskParameterSet()) {
 			contextLogger.info("    "+parameter.getName()+": "+parameter.getValue());
 		}
-        
-    	String sampleEntityId = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
-		contextLogger.info("Sample Id: "+sampleEntityId);
-		Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-    	if (sampleEntity == null) {
-    		logger.warn("Sample entity not found with id="+sampleEntityId);
-    	}
-    	else {
-    		String dataSetIdentifier = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-    		String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-    		
-    		contextLogger.info("    Name: "+sampleEntity.getName());
-    		if (dataSetIdentifier!=null) {
-    			contextLogger.info("    Data Set: "+dataSetIdentifier);
-    		}
-    		if (objective!=null) {
-    			contextLogger.info("    Objective: "+objective);
-    		}
-    	}
-        
+
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        Sample sample = sampleHelper.getRequiredSample(data);
+	
+        contextLogger.info("    Sample Id: "+sample.getId());
+        contextLogger.info("    Name: "+sample.getName());
+		contextLogger.info("    Data Set: "+sample.getDataSet());
+		contextLogger.info("    Objectives: "+sample.getObjectives().keySet());
     }
 }

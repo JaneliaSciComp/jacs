@@ -86,6 +86,12 @@ public class Reference {
         if (domainObject==null) throw new IllegalArgumentException("Null domain object reference");
         return new Reference(domainObject.getClass().getName(), domainObject.getId());
     }
+
+    public static Reference createFor(String className, Long id) {
+        if (className==null) throw new IllegalArgumentException("Null domain object class name");
+        if (id==null) throw new IllegalArgumentException("Null domain object id");
+        return new Reference(className, id);
+    }
     
     public static Reference createFor(String strRef) {
         if (strRef==null) throw new IllegalArgumentException("Null string reference");

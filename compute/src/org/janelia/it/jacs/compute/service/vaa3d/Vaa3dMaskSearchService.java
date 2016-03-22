@@ -81,9 +81,6 @@ public class Vaa3dMaskSearchService extends SubmitDrmaaJobService {
     @Override
     public void postProcess() throws MissingDataException {
         super.postProcess();
-        ArrayList<String> archiveList = new ArrayList<>();
-        archiveList.add(resultFileNode.getDirectoryPath());
-        processData.putItem("ARCHIVE_FILE_PATHS", archiveList);
 
         File tmpFile = new File(task.getParameter(MaskSearchTask.PARAM_inputFilePath));
         String outputPath=resultFileNode.getDirectoryPath()+File.separator+"mipArtifact_"+

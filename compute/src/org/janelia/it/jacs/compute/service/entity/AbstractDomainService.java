@@ -2,10 +2,8 @@ package org.janelia.it.jacs.compute.service.entity;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -30,8 +28,6 @@ public abstract class AbstractDomainService implements IService {
     protected IProcessData processData;
     protected ProcessDataAccessor data;
     protected ComputeBeanLocal computeBean;
-    protected EntityBeanLocal entityBean;
-    protected AnnotationBeanLocal annotationBean;
     protected EntityHelperNG entityHelper;
     protected DomainDAO domainDao;
     protected String ownerKey;
@@ -45,9 +41,7 @@ public abstract class AbstractDomainService implements IService {
             this.processData = processData;
             this.data = new ProcessDataAccessor(processData, contextLogger);
             this.computeBean = EJBFactory.getLocalComputeBean();
-            this.entityBean = EJBFactory.getLocalEntityBean();
-            this.annotationBean = EJBFactory.getLocalAnnotationBean();
-            this.entityHelper = new EntityHelperNG(entityBean, computeBean, ownerKey, logger, contextLogger);
+            this.entityHelper = new EntityHelperNG(computeBean, ownerKey, logger, contextLogger);
             this.domainDao = DomainDAOManager.getInstance().getDao();
             
             final String ownerName = ProcessDataHelper.getTask(processData).getOwner();

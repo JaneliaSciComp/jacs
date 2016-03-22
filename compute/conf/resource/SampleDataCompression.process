@@ -4,32 +4,28 @@
 <process name="Sample Data Compression" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
-		<input name="ROOT_ENTITY_ID"/>
+		<input name="SAMPLE_ENTITY_ID"/>
         <input name="INPUT_TYPE"/>
 	    <input name="OUTPUT_TYPE"/>
         <input name="DELETE_INPUTS"/>
-        <input name="RECORD_MODE"/>
         <input name="EXCLUDE_FILES"/>
 	
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="OVERRIDE" value="false"/>
-            <input name="ROOT_ENTITY_ID"/>
+            <input name="SAMPLE_ENTITY_ID"/>
             <input name="OUTPUT_TYPE"/>
             <input name="INPUT_TYPE"/>
-            <input name="RECORD_MODE"/>
             <input name="EXCLUDE_FILES"/>
             <input name="TASK_PARAMETER_MAP">
-                <entry key="root entity id" value="ROOT_ENTITY_ID"/>
+                <entry key="sample entity id" value="SAMPLE_ENTITY_ID"/>
                 <entry key="output type" value="OUTPUT_TYPE"/>
                 <entry key="input type" value="INPUT_TYPE"/>
-                <entry key="record mode" value="RECORD_MODE"/>
                 <entry key="exclude files" value="EXCLUDE_FILES"/>
             </input>
-            <output name="ROOT_ENTITY_ID"/>
+            <output name="SAMPLE_ENTITY_ID"/>
             <output name="OUTPUT_TYPE"/>
             <output name="INPUT_TYPE"/>
-            <output name="RECORD_MODE"/>
             <output name="EXCLUDE_FILES"/>
         </operation>
         
@@ -39,82 +35,70 @@
             <input name="INPUT_TYPE"/>
             <input name="OUTPUT_TYPE"/>
             <input name="DELETE_INPUTS"/>
-            <input name="RECORD_MODE"/>
             <input name="PROCESS_VARIABLE_MAP">
                 <entry key="INPUT_TYPE" value="v3draw"/>
                 <entry key="OUTPUT_TYPE" value="v3dpbd"/>
                 <entry key="DELETE_INPUTS" value="true"/>
-                <entry key="RECORD_MODE" value="UPDATE"/>
             </input>
             <output name="INPUT_TYPE"/>
             <output name="OUTPUT_TYPE"/>
             <output name="DELETE_INPUTS"/>
-            <output name="RECORD_MODE"/>
         </operation>
         
 	    <!-- Create the input file list -->
 		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
 	        <input name="MODE" value="CREATE_INPUT_LIST"/>
-            <input name="RECORD_MODE"/>
-			<input name="ROOT_ENTITY_ID"/>
+			<input name="SAMPLE_ENTITY_ID"/>
             <input name="INPUT_TYPE"/>
             <input name="OUTPUT_TYPE"/>
             <input name="EXCLUDE_FILES"/>
             <input name="DELETE_INPUTS"/>
 			<output name="INPUT_PATH_LIST"/>
-			<output name="ENTITY_MAP"/>
 		</operation>
-		
-	    <sequence forEach="INPUT_PATH_LIST">
-		    
-		    <!-- Create a result node for this group -->
-		    <operation name="Create Group Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
-			    <input name="NAME" value="Temp"/>
-		        <output name="RESULT_FILE_NODE"/>
-		        <output name="RESULT_FILE_NODE_ID"/>
+			    
+	    <!-- Create a temp result node -->
+	    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+		    <input name="NAME" value="Temp"/>
+	        <output name="RESULT_FILE_NODE"/>
+	        <output name="RESULT_FILE_NODE_ID"/>
+	    </operation>
+	    
+	    <!-- Create the output file list -->
+		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
+	        <input name="MODE" value="CREATE_OUTPUT_LIST"/>
+			<input name="SAMPLE_ENTITY_ID"/>
+        	<input name="INPUT_TYPE"/>
+            <input name="OUTPUT_TYPE"/>
+			<input name="INPUT_PATH_LIST"/>
+			<output name="OUTPUT_PATH_LIST"/>
+		</operation>
+	    
+	    <!-- Convert all the files in the group -->
+        <sequence name="RAW Conversion to PBD" waitForAsync="true">
+	        <operation name="RAW Conversion to PBD" processor="queue/gridSubmitAndWait">
+	            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
+			    <input name="IGNORE_ERRORS" value="true"/>
+	    		<input name="RESULT_FILE_NODE"/>
+			    <input name="INPUT_PATH_LIST"/>
+			    <input name="OUTPUT_PATH_LIST"/>
 		    </operation>
-		    
-		    <!-- Create the output file list -->
-			<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
-		        <input name="MODE" value="CREATE_OUTPUT_LIST"/>
-                <input name="RECORD_MODE"/>
-				<input name="ROOT_ENTITY_ID"/>
-            	<input name="INPUT_TYPE"/>
-                <input name="OUTPUT_TYPE"/>
-				<input name="INPUT_PATH_LIST"/>
-				<output name="OUTPUT_PATH_LIST"/>
-			</operation>
-		    
-		    <!-- Convert all the files in the group -->
-            <sequence name="RAW Conversion to PBD" waitForAsync="true">
-		        <operation name="RAW Conversion to PBD" processor="queue/gridSubmitAndWait">
-		            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
-				    <input name="IGNORE_ERRORS" value="true"/>
-		    		<input name="RESULT_FILE_NODE"/>
-				    <input name="INPUT_PATH_LIST"/>
-				    <input name="OUTPUT_PATH_LIST"/>
-			    </operation>
-			</sequence>
-		
-		    <!--  Update the affected entities -->
-			<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
-                <input name="MODE" value="COMPLETE"/>
-                <input name="RECORD_MODE"/>
-				<input name="ROOT_ENTITY_ID"/>
-            	<input name="INPUT_TYPE"/>
-                <input name="OUTPUT_TYPE"/>
-                <input name="INPUT_PATH_LIST"/>
-				<input name="OUTPUT_PATH_LIST"/>
-				<input name="ENTITY_MAP"/>
-                <input name="DELETE_INPUTS"/>
-			</operation>
-		
-		    <!-- Trash temporary file node -->
-		    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
-		        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
-		    </operation>
-		
-		</sequence>        
+		</sequence>
+	
+	    <!--  Update the affected entities -->
+		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
+            <input name="MODE" value="COMPLETE"/>
+			<input name="SAMPLE_ENTITY_ID"/>
+        	<input name="INPUT_TYPE"/>
+            <input name="OUTPUT_TYPE"/>
+            <input name="INPUT_PATH_LIST"/>
+			<input name="OUTPUT_PATH_LIST"/>
+            <input name="DELETE_INPUTS"/>
+		</operation>
+	
+	    <!-- Trash temporary file node -->
+	    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+	        <input name="FILE_NODE_ID" value="$V{RESULT_FILE_NODE_ID}"/>
+	    </operation>
 		    
     </sequence>
 </process>

@@ -6,9 +6,11 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -61,8 +63,9 @@ public class SyncToArchiveService extends AbstractDomainService {
     public void execute(String filepath) throws ServiceException {
         try {
             this.logger = Logger.getLogger(this.getClass());
-            this.entityBean = EJBFactory.getLocalEntityBean();
+            this.contextLogger = new ContextLogger(logger);
             this.computeBean = EJBFactory.getLocalComputeBean();
+            this.domainDao = DomainDAOManager.getInstance().getDao();
             List<String> paths = new ArrayList<String>();
             paths.add(filepath);
             syncPaths(paths);
@@ -78,8 +81,9 @@ public class SyncToArchiveService extends AbstractDomainService {
     public void execute(Collection<String> filepaths) throws ServiceException {
         try {
             this.logger = Logger.getLogger(this.getClass());
-            this.entityBean = EJBFactory.getLocalEntityBean();
+            this.contextLogger = new ContextLogger(logger);
             this.computeBean = EJBFactory.getLocalComputeBean();
+            this.domainDao = DomainDAOManager.getInstance().getDao();
             syncPaths(filepaths);
         } 
         catch (Exception e) {
@@ -163,7 +167,7 @@ public class SyncToArchiveService extends AbstractDomainService {
     private void updateEntities(String originalPath, String archivePath) throws ComputeException {
         int updatedNodes = computeBean.moveFileNodesToArchive(originalPath);
         logger.info("Updated "+updatedNodes+" file nodes to use archived file: "+archivePath);
-        int updatedDatas = entityBean.bulkUpdateEntityDataPrefix(originalPath, archivePath);
+        int updatedDatas = domainDao.bulkUpdatePathPrefix(originalPath, archivePath);
         logger.info("Updated "+updatedDatas+" entity data values to use archived file: "+archivePath);
     }
 }

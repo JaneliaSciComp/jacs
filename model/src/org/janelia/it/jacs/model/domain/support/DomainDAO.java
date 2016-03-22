@@ -1195,6 +1195,20 @@ public class DomainDAO {
         return TimebasedIdentifierGenerator.generateIdList(1).get(0);
     }
 
+    public int bulkUpdatePathPrefix(String originalPath, String archivePath) {
+
+        // TODO: 
+        
+        return 0;
+    }
+
+    public long getCountWithPathPrefix(String subjectKey, String prefix) {
+
+        // TODO: 
+        
+        return 0;
+    }
+
 //    public static void main(String[] args) throws Exception {
 //        
 //        String MONGO_SERVER_URL = "mongodb2";

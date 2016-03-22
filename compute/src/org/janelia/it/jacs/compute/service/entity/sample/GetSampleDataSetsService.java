@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -16,22 +17,15 @@ public class GetSampleDataSetsService extends AbstractDomainService {
 
     public void execute() throws Exception {
 
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (sampleEntityId == null || "".equals(sampleEntityId)) {
-            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-        }
-
-        Sample sample = domainDao.getDomainObject(ownerKey, Sample.class, new Long(sampleEntityId));
-        if (sample == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-        }
-
-        contextLogger.info("Retrieved sample: "+sample.getName()+" (id="+sampleEntityId+")");
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        Sample sample = sampleHelper.getRequiredSample(data);
+        
+        contextLogger.info("Retrieved sample: "+sample.getName()+" (id="+sample.getId()+")");
 
         String dataSetStr = sample.getDataSet();
 
         if (dataSetStr==null) {
-            logger.warn("Sample is not part of a dataset, id="+sampleEntityId);
+            logger.warn("Sample is not part of a dataset, id="+sample.getId());
         }
         else {
             List<String> dataSetList = new ArrayList<String>();

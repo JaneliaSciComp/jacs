@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.io.File;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
@@ -136,7 +135,7 @@ public class SampleTrashCompactorService extends AbstractDomainService {
                 String path = dir.getAbsolutePath();
                 
                 numResultNodes++;
-                long numEntities = entityBean.getCountUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_FILE_PATH, path+"%");
+                long numEntities = domainDao.getCountWithPathPrefix(null, path);
                 if (numEntities==0) {
                     
                     // Because some nodes may have dual citizenship on groups and archive, for legacy reasons, we need
@@ -154,7 +153,7 @@ public class SampleTrashCompactorService extends AbstractDomainService {
                         return;
                     }
                     
-                    numEntities = entityBean.getCountUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_FILE_PATH, sisterPath+"%");
+                    numEntities = domainDao.getCountWithPathPrefix(null, sisterPath);
                     if (numEntities==0) {
                         logger.info(dir+ " has no references, trashing it.");    
                         if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);

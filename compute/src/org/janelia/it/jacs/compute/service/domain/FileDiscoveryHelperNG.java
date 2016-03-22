@@ -26,7 +26,7 @@ public class FileDiscoveryHelperNG extends EntityHelperNG {
     private boolean excludeSymLinks = true;
     
     public FileDiscoveryHelperNG(ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
-        super(null, computeBean, ownerKey, logger);
+        super(computeBean, ownerKey, logger);
         addFileExclusion("*.log");
         addFileExclusion("*.oos");
         addFileExclusion("sge_*");

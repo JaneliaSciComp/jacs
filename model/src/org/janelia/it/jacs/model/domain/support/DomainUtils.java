@@ -625,9 +625,9 @@ public class DomainUtils {
         }
     }
 
-    public static Object getAttributeValue(LSMImage image, String attrName) throws Exception {
-        Method getter = ReflectionHelper.getGetter(image.getClass(), attrName);
-        return getter.invoke(image);
+    public static Object getAttributeValue(DomainObject domainObject, String attrName) throws Exception {
+        Method getter = ReflectionHelper.getGetter(domainObject.getClass(), attrName);
+        return getter.invoke(domainObject);
     }
     
     /**
