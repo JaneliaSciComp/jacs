@@ -3,9 +3,9 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.Task;
 
 /**
@@ -13,30 +13,19 @@ import org.janelia.it.jacs.model.tasks.Task;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetSampleDataSetsService extends AbstractEntityService {
+public class GetSampleDataSetsService extends AbstractDomainService {
 
     public void execute() throws Exception {
 
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (sampleEntityId == null || "".equals(sampleEntityId)) {
-            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-        }
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        Sample sample = sampleHelper.getRequiredSample(data);
+        
+        contextLogger.info("Retrieved sample: "+sample.getName()+" (id="+sample.getId()+")");
 
-        Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-        if (sampleEntity == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-        }
-
-        if (!EntityConstants.TYPE_SAMPLE.equals(sampleEntity.getEntityTypeName())) {
-            throw new IllegalArgumentException("Entity is not a sample: "+sampleEntityId);
-        }
-
-        contextLogger.info("Retrieved sample: "+sampleEntity.getName()+" (id="+sampleEntityId+")");
-
-        String dataSetStr = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        String dataSetStr = sample.getDataSet();
 
         if (dataSetStr==null) {
-            logger.warn("Sample is not part of a dataset, id="+sampleEntityId);
+            logger.warn("Sample is not part of a dataset, id="+sample.getId());
         }
         else {
             List<String> dataSetList = new ArrayList<String>();

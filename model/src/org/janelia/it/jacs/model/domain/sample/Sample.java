@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,9 +33,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="age_txt",label="Age",facet="age_s")
     private String age;
     
-    @SearchAttribute(key="chan_spec_txt",label="Channel Specification",facet="chan_spec_s")
-    private String chanSpec;
-    
     @SearchAttribute(key="data_set_txt",label="Data Set",facet="data_set_s")
     private String dataSet;
     
@@ -53,8 +51,17 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="status_txt",label="Status")
     private String status;
     
-    @SearchAttribute(key="visited_s",label="Visited")
-    private String visited;
+    @SearchAttribute(key="visited_b",label="Visited")
+    private Boolean visited;
+
+    @SearchAttribute(key="compression_txt",label="Compression Type")
+    private String compressionType;
+
+    @SearchAttribute(key="tmog_dt",label="TMOG Date")
+    private Date tmogDate;
+    
+    @SearchAttribute(key="completion_dt",label="Completion Date")
+    private Date completionDate;
     
     private Map<String, ObjectiveSample> objectives;
     
@@ -106,6 +113,15 @@ public class Sample extends AbstractDomainObject implements IsParent {
     }
 
     @JsonIgnore
+    public List<ObjectiveSample> getObjectiveSamples() {
+        List<ObjectiveSample> samples = new ArrayList<>();
+        for(String objective : getOrderedObjectives()) {
+            samples.add(getObjectiveSample(objective));
+        }
+        return samples;
+    }
+    
+    @JsonIgnore
     public PipelineResult findResultById(Long id) {
         for(String objective : getOrderedObjectives()) {
             ObjectiveSample objectiveSample = getObjectiveSample(objective);
@@ -129,14 +145,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setAge(String age) {
         this.age = age;
-    }
-
-    public String getChanSpec() {
-        return chanSpec;
-    }
-
-    public void setChanSpec(String chanSpec) {
-        this.chanSpec = chanSpec;
     }
 
     public String getDataSet() {
@@ -187,11 +195,36 @@ public class Sample extends AbstractDomainObject implements IsParent {
         this.status = status;
     }
 
-    public String getVisited() {
+    public Boolean getVisited() {
         return visited;
     }
 
-    public void setVisited(String visited) {
+    public void setVisited(Boolean visited) {
         this.visited = visited;
     }
+
+    public String getCompressionType() {
+        return compressionType;
+    }
+
+    public void setCompressionType(String compressionType) {
+        this.compressionType = compressionType;
+    }
+    
+    public Date getTmogDate() {
+        return tmogDate;
+    }
+
+    public void setTmogDate(Date tmogDate) {
+        this.tmogDate = tmogDate;
+    }
+
+    public Date getCompletionDate() {
+        return completionDate;
+    }
+
+    public void setCompletionDate(Date completionDate) {
+        this.completionDate = completionDate;
+    }
+
 }

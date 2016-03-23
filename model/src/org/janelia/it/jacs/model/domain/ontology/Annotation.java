@@ -20,6 +20,7 @@ public class Annotation extends AbstractDomainObject {
     private OntologyTermReference valueTerm;
     private String key;
     private String value;
+    private boolean isComputational;
 
     public Annotation() {
     }
@@ -34,6 +35,7 @@ public class Annotation extends AbstractDomainObject {
         setValueTerm(baseAnnotation.getValueTerm());
         setReaders(baseAnnotation.getReaders());
         setWriters(baseAnnotation.getWriters());
+        setComputational(baseAnnotation.isComputational());
     }
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */
@@ -77,4 +79,12 @@ public class Annotation extends AbstractDomainObject {
 	public void setValue(String value) {
 		this.value = value;
 	}
+
+    public boolean isComputational() {
+        return isComputational;
+    }
+
+    public void setComputational(boolean isComputational) {
+        this.isComputational = isComputational;
+    }
 }

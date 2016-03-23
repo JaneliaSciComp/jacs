@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import org.janelia.it.jacs.compute.service.align.AlignmentInputFile;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 
@@ -10,7 +10,7 @@ import org.janelia.it.jacs.model.tasks.TaskMessage;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InjectRegeneratedInputService extends AbstractEntityService {
+public class InjectRegeneratedInputService extends AbstractDomainService {
 	
     public void execute() throws Exception {
 

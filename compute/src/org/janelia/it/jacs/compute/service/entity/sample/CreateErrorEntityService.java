@@ -13,29 +13,32 @@ import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.compute.service.exceptions.EntityException;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
+import org.janelia.it.jacs.model.domain.DomainConstants;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-import org.janelia.it.jacs.shared.utils.entity.DataReporter;
+import org.janelia.it.jacs.shared.utils.domain.DataReporter;
+
+import com.google.common.collect.Lists;
 
 /**
- * Creates an Error entity based on the given exception, and adds it to the root entity (usually a Pipeline Run).
+ * Creates an Error based on the given exception, and adds it to the pipeline run.
  * 
  * Also tries to classify the error and take appropriate action: resubmit the job if the error is recoverable, submit
  * a JIRA ticket if there is a data problem, etc.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CreateErrorEntityService extends AbstractEntityService {
+public class CreateErrorEntityService extends AbstractDomainService {
 
 	public static final String ANNOTATION_OWNER = "group:workstation_users";
     private static final String FROM_EMAIL = SystemConfigurationProperties.getString("System.DataErrorSource");
@@ -46,50 +49,46 @@ public class CreateErrorEntityService extends AbstractEntityService {
     private static final int MAX_CONSECUTIVE_ERRORS = 3;
     
     private FileNode resultFileNode;
-    private Entity rootEntity;
+    private SampleHelperNG sampleHelper;
+    private Sample sample;
+    private ObjectiveSample objectiveSample;
     private ClassifiedError error;
     
     public void execute() throws Exception {
-            
-    	String rootEntityId = data.getRequiredItemAsString("ROOT_ENTITY_ID");
 
+        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
+        
     	File outputDir = null;
         this.resultFileNode = (FileNode)processData.getItem("RESULT_FILE_NODE");
-        String username = EntityUtils.getNameFromSubjectKey(ownerKey);
+        String username = DomainUtils.getNameFromSubjectKey(ownerKey);
 
         if (resultFileNode!=null) {
             outputDir = new File(resultFileNode.getDirectoryPath());
         }
-        else {
+        
+    	if (!outputDir.exists()) {
+    		outputDir = null;
+    	}
+        
+        if (outputDir==null) {
             File userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
             outputDir = new File(userFilestore, ERRORS_DIR_NAME);
             outputDir.mkdirs();
-            logger.warn("No RESULT_FILE_NODE is specified, saving error message to general Errors folder: "+outputDir);
         }
-    	
-    	this.rootEntity = entityBean.getEntityById(rootEntityId);
-    	if (rootEntity == null) {
-    		throw new IllegalArgumentException("Root entity not found with id="+rootEntityId);
-    	}
 
     	Exception exception = (Exception)processData.getItem(IProcessData.PROCESSING_EXCEPTION);
         this.error = new ClassifiedError(exception);
         contextLogger.info("Classified error as "+error.getType()+" with description '"+error.getDescription()+"'");
         
-    	Entity errorEntity = entityBean.createEntity(rootEntity.getOwnerKey(), EntityConstants.TYPE_ERROR, "Error");
-    	contextLogger.info("Saved error entity as id="+errorEntity.getId());
-    	
-        File errorFile = new File(outputDir, errorEntity.getId().toString()+".txt");
+        File errorFile = new File(outputDir, domainDao.getNewId()+".txt");
         FileUtils.writeStringToFile(errorFile, error.getStackTrace());
         contextLogger.info("Wrote error message to "+errorFile);
+
+        sampleHelper.setPipelineRunError(run, errorFile.getAbsolutePath(), error.getDescription(), error.getType().toString());
         
-        entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_FILE_PATH, errorFile.getAbsolutePath());
-        entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_DESCRIPTION, error.getDescription());
-        entityBean.setOrUpdateValue(errorEntity.getId(), EntityConstants.ATTRIBUTE_CLASSIFICATION, error.getType().toString());
-        
-    	entityBean.addEntityToParent(ownerKey, rootEntity.getId(), errorEntity.getId(), rootEntity.getMaxOrderIndex()+1, 
-    			EntityConstants.ATTRIBUTE_ENTITY);
-    	
     	switch (error.getType()) {
     	case RecoverableError:
     	    markSampleForReprocessing();
@@ -104,24 +103,19 @@ public class CreateErrorEntityService extends AbstractEntityService {
 	        logger.warn("Cannot classify error type");
 	        break;
     	}
-    	
+
+    	// Save any changes to the sample, including errors and status changes
+        sampleHelper.saveSample(sample);
     }
     
     private void markSampleForReprocessing() {
         try {
-            Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);
 
-            populateChildren(sample);
-            List<Entity> runs = EntityUtils.getChildrenOfType(sample, EntityConstants.TYPE_PIPELINE_RUN);
-            Collections.reverse(runs);
+            List<SamplePipelineRun> runs = Lists.reverse(objectiveSample.getPipelineRuns());
             
             int numConsecutiveErrors = 0;
-            for(Entity run : runs) {
-                populateChildren(run);
-                Entity errorEntity = EntityUtils.findChildWithType(run, EntityConstants.TYPE_ERROR);
-                if (errorEntity==null) {
-                	break;
-                }
+            for(SamplePipelineRun run : runs) {
+                if (!run.hasError()) break;
                 numConsecutiveErrors++;
             }
             
@@ -130,13 +124,7 @@ public class CreateErrorEntityService extends AbstractEntityService {
             	return;
             }
             
-            if (sample!=null && sample.getName().contains("~")) {
-                sample = entityBean.getAncestorWithType(sample, EntityConstants.TYPE_SAMPLE);
-            }
-            if (sample==null) {
-                throw new EntityException("Could not find containing Sample for "+rootEntity.getId());
-            }
-            entityBean.setOrUpdateValue(sample.getId(), EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED);
+            sample.setStatus(DomainConstants.VALUE_MARKED);
             contextLogger.info("Marked sample for reprocessing: "+sample.getId());
         }
         catch (Exception e) {
@@ -145,23 +133,13 @@ public class CreateErrorEntityService extends AbstractEntityService {
     }
 
     private void reportError() {
-        try {
-        	// Annotate the run
-            Entity errorOntology = annotationBean.getErrorOntology();
-            Entity keyEntity = EntityUtils.findChildWithName(errorOntology, LAB_ERROR_TERM_NAME);
-            String keyString = keyEntity.getName();
-            String valueString = error.getDescription();
-            final OntologyAnnotation annotation = new OntologyAnnotation(
-                    null, rootEntity.getId(), keyEntity.getId(), keyString, null, valueString);
-            Entity annotationEntity = annotationBean.createOntologyAnnotation(ANNOTATION_OWNER, annotation);
-            
+        try {            
             // Report the sample
-            Entity sample = entityBean.getAncestorWithType(rootEntity, EntityConstants.TYPE_SAMPLE);
             DataReporter reporter = new DataReporter(FROM_EMAIL, TO_EMAIL);
-            reporter.reportData(sample, annotationEntity.getName());
+            reporter.reportData(sample, LAB_ERROR_TERM_NAME);
         }
         catch (Exception e) {
-            logger.error("Error trying to report error on "+rootEntity.getId(), e);
+            logger.error("Error trying to report error on "+sample.getId(), e);
         }
         
     }

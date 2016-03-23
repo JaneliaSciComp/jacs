@@ -21,21 +21,12 @@
             <!-- Reuse sample processing from previous pipeline run -->
             <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.ReusePostProcessingResultService">
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <output name="RESULT_ENTITY"/>
                 <output name="RESULT_ENTITY_ID"/>
                 <output name="RUN_POST"/>
             </operation>
-            
-            <sequence if="RUN_POST=false">
-        
-                <!-- Register images -->
-                <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-                    <input name="RESULT_ENTITY_ID"/>
-                    <input name="PIPELINE_RUN_ENTITY_ID"/>
-                </operation>
-        
-            </sequence>
             
         </sequence>
         
@@ -47,16 +38,16 @@
                 <!-- Create a result node for this group -->
                 <operation name="Create Post-Processing Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
                     <input name="NAME" value="Post"/>
-                    <input name="OUTPUT_VAR_NAME" value="POST_RESULT_FILE_NODE"/>
-                    <output name="POST_RESULT_FILE_NODE"/>
-                    <output name="POST_RESULT_FILE_NODE_ID"/>
+                    <output name="RESULT_FILE_NODE"/>
+                    <output name="RESULT_FILE_NODE_ID"/>
                 </operation>
                 
                 <!-- Get a list of unaligned images to create summaries for -->
                 <operation name="Get unaligned image List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetUnalignedInputImagesService">
-                    <input name="SAMPLE_AREAS"/>
                     <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
+                    <input name="SAMPLE_AREAS"/>
                     <input name="OUTPUT_COLOR_SPEC"/>
                     <input name="MODE" value="$V{IMAGE_TYPE}"/>
                     <input name="SAMPLE_NAMING" value="true"/>
@@ -69,8 +60,8 @@
                 <sequence name="Create Unaligned Image Artifacts" waitForAsync="true">
                     <operation name="Create Unaligned Image Artifacts" processor="queue/gridSubmitAndWait">
                         <input name="iservice" value="$V{SERVICE_CLASS}"/>
-                        <input name="RESULT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
-                        <input name="OUTPUT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
+                        <input name="RESULT_FILE_NODE"/>
+                        <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                         <input name="INPUT_IMAGES"/>
                         <input name="NORMALIZE_TO_FIRST_IMAGE"/>
                         <input name="OPTIONS" value="mips:movies:legends:hist"/>
@@ -80,19 +71,14 @@
                 
                 <!-- Load the MIPs and movies into the database -->
                 <operation name="Discover Post-Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalPostProcessingResultsDiscoveryService">
-                    <input name="ROOT_FILE_NODE" value="$V{POST_RESULT_FILE_NODE}"/>
-                    <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                    <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                    <input name="SAMPLE_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                    <input name="OBJECTIVE"/>
+                    <input name="PIPELINE_RUN_ENTITY_ID"/>
                     <input name="RESULT_ENTITY_NAME" value="Post-Processing Result"/>
                     <output name="RESULT_ENTITY_ID"/>
                 </operation>
                     
-                <!-- Register images -->
-                <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-                    <input name="PIPELINE_RUN_ENTITY_ID"/>
-                    <input name="RESULT_ENTITY_ID"/>
-                    <input name="INPUT_IMAGES"/>
-                </operation>
-            
             </sequence>
         
         </sequence>

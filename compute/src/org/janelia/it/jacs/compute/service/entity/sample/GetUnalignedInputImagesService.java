@@ -9,14 +9,18 @@ import java.util.Map;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.compute.util.FileUtils;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import com.google.common.collect.ComparisonChain;
@@ -28,65 +32,41 @@ import com.google.common.collect.Ordering;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetUnalignedInputImagesService extends AbstractEntityService {
+public class GetUnalignedInputImagesService extends AbstractDomainService {
 
     private static final String SERVICE_PACKAGE = "org.janelia.it.jacs.compute.service.image";
     
     private boolean sampleNaming;
     private String colorSpec;
     private String mode;
-    
+
+    private Sample sample;
+    private ObjectiveSample objectiveSample;
     private Map<String,String> tileNames = new HashMap<>();
     
     public void execute() throws Exception {
 
-        List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getRequiredItem("SAMPLE_AREAS");
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
         
+        List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getRequiredItem("SAMPLE_AREAS");
         this.colorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
         this.mode = data.getItemAsString("MODE");
         this.sampleNaming = data.getItemAsBoolean("SAMPLE_NAMING");
-        
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (StringUtils.isEmpty(sampleEntityId)) {
-            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-        }
-
-        Entity sampleEntity = entityBean.getEntityTree(new Long(sampleEntityId));
-        if (sampleEntity == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-        }
-        
-        String pipelineRunId = (String)processData.getItem("PIPELINE_RUN_ENTITY_ID");
-        if (StringUtils.isEmpty(pipelineRunId)) {
-            throw new IllegalArgumentException("PIPELINE_RUN_ENTITY_ID may not be null");
-        }
-        
-        Entity pipelineRun = entityBean.getEntityTree(new Long(pipelineRunId));
-        if (pipelineRun == null) {
-            throw new IllegalArgumentException("Pipeline run entity not found with id="+pipelineRunId);
-        }
-        
-        String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
 
         // For each merged file, find the tile name and save it in a map for later lookup
         for(AnatomicalArea sampleArea : sampleAreas) {
             for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
-                tileNames.put(mergedPair.getMergedFilepath(), mergedPair.getTag());
+                tileNames.put(mergedPair.getMergedFilepath(), mergedPair.getTileName());
             }
         }
 
         // Create an input image for each sample processing result
         List<InputImage> inputImages = new ArrayList<InputImage>();
-        for(Entity resultEntity : EntityUtils.getChildrenOfType(pipelineRun, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
-            
-            String area = resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
-            Entity defaultImage = resultEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-            String chanSpec = defaultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-            
-            Entity supportingData = EntityUtils.getSupportingData(resultEntity);
-            for(Entity resultImage : EntityUtils.getChildrenOfType(supportingData, EntityConstants.TYPE_IMAGE_3D)) {
-                inputImages.add(getInputImage(sampleEntity, resultImage, objective, area, chanSpec));
-            }
+        for(SampleProcessingResult resultEntity : run.getSampleProcessingResults()) {
+            inputImages.add(getInputImage(resultEntity));
         }
         
         Collections.sort(inputImages, new Comparator<InputImage>() {
@@ -110,13 +90,13 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         
         boolean normalizeToFirst = false;
         
-        if ("20x".equals(objective) && inputImages.size()==2 && sb.toString().equals("Brain,VNC")) {
+        if ("20x".equals(objectiveSample.getObjective()) && inputImages.size()==2 && sb.toString().equals("Brain,VNC")) {
             // Special case of 20x Brain/VNC which need to be normalized
             // TODO: in the future, we should be able to normalize any number of images to a Brain
             normalizeToFirst = true;
         }
     
-        String serviceClassName = ("20x".equals(objective) || mode==null) ? "BasicMIPandMovieGenerationService" : "EnhancedMIPandMovieGenerationService";
+        String serviceClassName = ("20x".equals(objectiveSample.getObjective()) || mode==null) ? "BasicMIPandMovieGenerationService" : "EnhancedMIPandMovieGenerationService";
         String serviceClass = SERVICE_PACKAGE+"."+serviceClassName;
         
         contextLogger.info("Putting "+normalizeToFirst+" into NORMALIZE_TO_FIRST_IMAGE");
@@ -127,20 +107,18 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
     
-    private InputImage getInputImage(Entity sampleEntity, Entity resultImage, String objective, String area, String chanSpec) throws ComputeException {
+    private InputImage getInputImage(SampleProcessingResult resultEntity) throws ComputeException {
 
-        String effector = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR);
-        String filepath = resultImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+        String area = resultEntity.getAnatomicalArea();
+        String chanSpec = resultEntity.getChannelSpec();
+        String effector = sample.getEffector();
+        String filepath = DomainUtils.getDefault3dImageFilePath(resultEntity);
         String tileName = tileNames.get(filepath);
         
         String prefix = FileUtils.getFilePrefix(filepath);
         if (sampleNaming) {
-            String sampleName = sanitize(sampleEntity.getName());
-            int tilde = sampleName.indexOf('~');
-            if (tilde>0) {
-                sampleName = sampleName.substring(0,tilde);
-            }
-            if (resultImage.getName().startsWith("stitched")) {
+            String sampleName = sanitize(sample.getName());
+            if (filepath.contains("stitched-")) {
                 if (StringUtils.isEmpty(area)) {
                     prefix = sampleName+"-stitched";
                 }
@@ -159,6 +137,7 @@ public class GetUnalignedInputImagesService extends AbstractEntityService {
         
         String colorspec = colorSpec;
         
+        String objective = objectiveSample.getObjective();
         if (colorspec==null) {
             contextLogger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective="+objective+" and MODE="+mode+"...");
             

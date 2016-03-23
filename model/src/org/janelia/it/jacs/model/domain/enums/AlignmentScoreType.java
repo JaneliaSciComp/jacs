@@ -12,7 +12,9 @@ public enum AlignmentScoreType {
     NormalizedCrossCorrelation("Normalized Cross Correlation Score"),
     ModelViolation("Model Violation Score"),
     Qi("Alignment Qi Score"),
-    QiByRegion("Alignment Qi Scores");
+    QiByRegion("Alignment Qi Scores"),
+    OverlapCoefficient("Overlap Coefficient"),
+    ObjectPearsonCoefficient("Object Pearson Coefficient");
 
     private final String label;
 

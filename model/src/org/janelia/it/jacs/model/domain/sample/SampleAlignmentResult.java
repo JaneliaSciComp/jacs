@@ -4,13 +4,14 @@ import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.interfaces.HasAnatomicalArea;
+import org.janelia.it.jacs.model.domain.interfaces.HasImageStack;
 
 /**
  * The result of running an alignment algorithm on a sample. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleAlignmentResult extends PipelineResult implements HasAnatomicalArea {
+public class SampleAlignmentResult extends PipelineResult implements HasAnatomicalArea, HasImageStack {
 
 	private String anatomicalArea;
     private String imageSize;
@@ -24,6 +25,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
 
+    @Override
     public String getAnatomicalArea() {
         return anatomicalArea;
     }
@@ -32,6 +34,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
         this.anatomicalArea = anatomicalArea;
     }
     
+    @Override
     public String getImageSize() {
         return imageSize;
     }
@@ -40,6 +43,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
         this.imageSize = imageSize;
     }
 
+    @Override
     public String getOpticalResolution() {
         return opticalResolution;
     }
@@ -48,6 +52,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
         this.opticalResolution = opticalResolution;
     }
 
+    @Override
     public String getChannelColors() {
         return channelColors;
     }
@@ -56,6 +61,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
         this.channelColors = channelColors;
     }
 
+    @Override
     public String getChannelSpec() {
         return channelSpec;
     }

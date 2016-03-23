@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -8,13 +9,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.ISO8601Utils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.DomainConstants;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.LineRelease;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 
@@ -26,95 +29,81 @@ import com.google.common.collect.Multimap;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SyncReleaseFoldersService extends AbstractEntityService {
+public class SyncReleaseFoldersService extends AbstractDomainService {
 	
-    private Entity topLevelFolder;
-    private SampleHelper sampleHelper;
-    private Entity releaseFolder;
-    private Multimap<String,Entity> samplesByLine = ArrayListMultimap.<String,Entity>create();
+    private SampleHelperNG sampleHelper;
+    private LineRelease release;
+    private TreeNode topLevelFolder;
+    private TreeNode releaseFolder;
+    private Multimap<String,Sample> samplesByLine = ArrayListMultimap.<String,Sample>create();
     
     public void execute() throws Exception {
         
-        this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger);
         
-    	Long releaseEntityId = data.getRequiredItemAsLong("RELEASE_ENTITY_ID");
-    	Entity releaseEntity = entityBean.getEntityById(releaseEntityId);
-    	if (releaseEntity == null) {
-    		throw new IllegalArgumentException("Release entity not found with id="+releaseEntityId);
-    	}
-
-        String releaseDateStr = releaseEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RELEASE_DATE);
-        if (releaseDateStr == null) {
-            throw new IllegalArgumentException("Release has no release date: "+releaseEntityId);
+    	Long releaseId = data.getRequiredItemAsLong("RELEASE_ENTITY_ID");
+    	this.release = domainDao.getDomainObject(ownerKey, LineRelease.class, releaseId);
+        if (release == null) {
+            throw new IllegalArgumentException("Release not found with id="+releaseId);
         }
-        
-        DateTime releaseDate = new DateTime(ISO8601Utils.parse(releaseDateStr));
+                
+        DateTime releaseDate = new DateTime(release.getReleaseDate());
         logger.info("Release date: "+releaseDate);
         
         DateTime cutoffDate = null;
-        String lagTimeStr = releaseEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LAG_TIME_MONTHS);
-        if (lagTimeStr != null) {
-            int lagTime = Integer.parseInt(lagTimeStr);
+        Integer lagTime = release.getLagTimeMonths();
+        if (lagTime != null) {
             cutoffDate = releaseDate.minus(Period.months(lagTime));
             logger.info("Cutoff date: "+cutoffDate);
         }
         
     	loadTopLevelFolder();
-    	this.releaseFolder = sampleHelper.verifyOrCreateChildFolder(topLevelFolder, releaseEntity.getName());
+    	this.releaseFolder = sampleHelper.verifyOrCreateChildFolder(topLevelFolder, release.getName());
 
-    	Set<String> includedDataSets = new HashSet<String>();
-    	String dataSetStr = releaseEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SETS);
-    	if (!StringUtils.isEmpty(dataSetStr)) {
-    	    for(String dataSetIdentifier : dataSetStr.split(",")) {
-    	        includedDataSets.add(dataSetIdentifier);
-    	    }
-    	}
+    	Set<String> includedDataSets = new HashSet<String>(release.getDataSets());
     	
-    	List<Entity> dataSets = new ArrayList<>();
-    	for(Entity dataSetEntity : entityBean.getEntitiesByTypeName(ownerKey, EntityConstants.TYPE_DATA_SET)) {
-    	    String identifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+    	List<DataSet> dataSets = new ArrayList<>();
+    	for(DataSet dataSet : domainDao.getDataSets(ownerKey)) {
+    	    String identifier = dataSet.getIdentifier();
     	    if (includedDataSets.isEmpty() || includedDataSets.contains(identifier)) {
-    	        dataSets.add(dataSetEntity);
+    	        dataSets.add(dataSet);
     	    }
     	}
     	
     	int samplesAdded = 0;
-    	for(Entity dataSetEntity : dataSets) {
-    	    String identifier = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+    	for(DataSet dataSetEntity : dataSets) {
+    	    String identifier = dataSetEntity.getIdentifier();
     	    logger.debug("Processing data set "+identifier);
-    	    for(Entity sample : entityBean.getEntitiesWithAttributeValue(ownerKey, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, identifier)) {
+    	    for(Sample sample : domainDao.getSamplesForDataSet(ownerKey, identifier)) {
                 logger.debug("  Processing sample "+sample.getName());
-    	        if (sample.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
-    	            String completionDateStr = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE);
-    	            if (completionDateStr!=null) {
-    	                String status = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
-    	                if (EntityConstants.VALUE_BLOCKED.equals(status)) {
-    	                    logger.trace("    Sample is blocked");
-    	                }
-    	                else if (EntityConstants.VALUE_RETIRED.equals(status)) {
-    	                    logger.trace("    Sample is retired");
+	            Date completionDate = sample.getCompletionDate();
+	            if (completionDate!=null) {
+	                String status = sample.getStatus();
+	                if (DomainConstants.VALUE_BLOCKED.equals(status)) {
+	                    logger.trace("    Sample is blocked");
+	                }
+	                else if (DomainConstants.VALUE_RETIRED.equals(status)) {
+	                    logger.trace("    Sample is retired");
+	                }
+	                else {
+	                    String line = sample.getLine();
+	                    if (line==null) {
+	                        logger.warn("    Cannot process sample without line: "+sample.getId());
+	                        continue;
+	                    }
+    	                if (cutoffDate==null || cutoffDate.isAfter(new DateTime(completionDate))) {
+    	                    samplesByLine.put(line, sample);
+    	                    logger.debug("    Adding sample to line: "+line);
+    	                    samplesAdded++;
     	                }
     	                else {
-    	                    String line = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE);
-    	                    if (line==null) {
-    	                        logger.warn("    Cannot process sample without line: "+sample.getId());
-    	                        continue;
-    	                    }
-        	                DateTime completionDate = new DateTime(ISO8601Utils.parse(completionDateStr));
-        	                if (cutoffDate==null || cutoffDate.isAfter(completionDate)) {
-        	                    samplesByLine.put(line, sample);
-        	                    logger.debug("    Adding sample to line: "+line);
-        	                    samplesAdded++;
-        	                }
-        	                else {
-        	                    logger.debug("    Sample completed after cutoff date: "+completionDate);
-        	                }
+    	                    logger.debug("    Sample completed after cutoff date: "+completionDate);
     	                }
-    	            }
-    	            else {
-    	                logger.debug("    Sample has no completion date");
-    	            }
-    	        }
+	                }
+	            }
+	            else {
+	                logger.debug("    Sample has no completion date");
+	            }
     	    }
     	}
 
@@ -125,13 +114,13 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
     	Collections.sort(lines);
     	for(String line : lines) {
 
-            List<Entity> samples = new ArrayList<>(samplesByLine.get(line));
+            List<Sample> samples = new ArrayList<>(samplesByLine.get(line));
             logger.info("Processing line "+line+" with "+samples.size()+" samples");
             
             // Ensure there is at least one 63x polarity sample
 
             boolean has63xPolaritySample = false;
-            for(Entity sample : samples) {
+            for(Sample sample : samples) {
                 if (has63xPolaritySample(sample)) {
                     has63xPolaritySample = true;
                     break;
@@ -143,19 +132,12 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
                 continue;
             }
             
-    	    Entity lineFolder = null;
-    	    EntityData lineFolderEd = EntityUtils.findChildEntityDataWithName(releaseFolder, line);
-    	    if (lineFolderEd==null) {
-    	        lineFolder = verifyOrCreateChildFolder(releaseFolder, line);
-    	    }
-    	    else {
-    	        lineFolder = lineFolderEd.getChildEntity();
-    	    }
+            ObjectSet lineFolder = verifyOrCreateChildFolder(releaseFolder, line);
     	    
     	    // Sort samples
-    	    Collections.sort(samples, new Comparator<Entity>() {
+    	    Collections.sort(samples, new Comparator<Sample>() {
                 @Override
-                public int compare(Entity o1, Entity o2) {
+                public int compare(Sample o1, Sample o2) {
                     return o1.getName().compareTo(o2.getName());
                 }
             });
@@ -163,24 +145,21 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
             logger.info("  Adding samples to line folder");
             
     	    // Add missing samples
-    	    for(Entity sample : samples) {
+    	    for(Sample sample : samples) {
     	        logger.debug("    Processing sample "+sample.getName());
-    	        EntityData ed = EntityUtils.findChildEntityDataWithChildId(lineFolder, sample.getId());
-    	        if (ed==null) {
-    	            logger.debug("      Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");   
-    	            sampleHelper.addToParent(lineFolder, sample, lineFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-    	            numAdded++;
+    	        if (!lineFolder.getMembers().contains(sample.getId())) {
+                    logger.debug("      Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");
+                    domainDao.addMembers(ownerKey, lineFolder, Arrays.asList(Reference.createFor(sample)));
+                    numAdded++;
     	        }
     	    }
     	    
     	    // Re-sort line folder
-            List<EntityData> eds = EntityUtils.getOrderedEntityDataWithChildren(lineFolder);
-            sortByChildName(eds);
+    	    sampleHelper.sortMembersByName(lineFolder);
     	}
 
         // Re-sort release folder
-        List<EntityData> eds = EntityUtils.getOrderedEntityDataWithChildren(releaseFolder);
-        sortByChildName(eds);
+        sampleHelper.sortChildrenByName(releaseFolder);
 
         logger.info("Added "+numAdded+" samples to line folders");
         
@@ -188,91 +167,38 @@ public class SyncReleaseFoldersService extends AbstractEntityService {
         contextLogger.info("Putting '"+releaseFolder.getId()+"' in RELEASE_FOLDER_ID");
     }
     
-    private boolean has63xPolaritySample(Entity sample) throws Exception {
+    private boolean has63xPolaritySample(Sample sample) throws Exception {
 
-        String identifier = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        String identifier = sample.getDataSet();
         if (identifier==null || !identifier.toLowerCase().contains("polarity")) {
             // If the parent sample is not a polarity sample then we don't need to check anything else
             return false;
         }
         
-        String objective = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-        if ("63x".equals(objective)) {
-            return true;
-        }
-        else if (objective==null) {
-            // Check for sub-samples
-            entityLoader.populateChildren(sample);
-            for(Entity subsample : sample.getChildren()) {
-                objective = subsample.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-                if ("63x".equals(objective)) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
+        return sample.getObjectives().keySet().contains("63x");
     }
 
-    private void sortByChildName(List<EntityData> eds) throws Exception {
-        Collections.sort(eds, new Comparator<EntityData>() {
-            @Override
-            public int compare(EntityData o1, EntityData o2) {
-                Entity s1 = o1.getChildEntity();
-                Entity s2 = o2.getChildEntity();
-                return s1.getName().compareTo(s2.getName());
+    public ObjectSet verifyOrCreateChildFolder(TreeNode parentFolder, String childName) throws Exception {
 
-            }
-        });
-        int index = 1;
-        for(EntityData ed : eds) {
-            if ((ed.getOrderIndex() == null) || (ed.getOrderIndex() != index)) {
-                logger.info("Updating index: "+ed.getOrderIndex()+" -> "+index);
-                entityBean.updateChildIndex(ed, index);
-            }
-            index++;
-        }
-    }
-
-    public Entity verifyOrCreateChildFolder(Entity parentFolder, String childName) throws Exception {
-
-        entityLoader.populateChildren(parentFolder);
-        
-        Entity folder = null;
-        for (Entity child : EntityUtils.getChildrenOfType(parentFolder, EntityConstants.TYPE_FOLDER)) {
-            if (child.getName().equals(childName)) {
-                if (folder != null) {
-                    logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
-                }
-                else {
-                    folder = child;
-                }
+        for(ObjectSet flyLineFolder : domainDao.getDomainObjectsAs(releaseFolder.getChildren(), ObjectSet.class)) {
+            if (flyLineFolder.getName().equals(childName)) {
+                return flyLineFolder;
             }
         }
         
-        if (folder == null) {
-            // We need to create a new folder
-            Date createDate = new Date();
-            folder = new Entity();
-            folder.setCreationDate(createDate);
-            folder.setUpdatedDate(createDate);
-            folder.setOwnerKey(ownerKey);
-            folder.setName(childName);
-            folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
-            folder = entityBean.saveOrUpdateEntity(folder);
-            entityHelper.addToParent(parentFolder, folder, parentFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-        }
+        ObjectSet childSet = new ObjectSet();
+        childSet.setName(childName);
+        childSet.setClassName(Sample.class.getName());
+        childSet = domainDao.save(childSet);
         
-        return folder;
+        domainDao.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(childSet)));
+        
+        return childSet;
     }
     
     private void loadTopLevelFolder() throws Exception {
         if (topLevelFolder!=null) return;
         logger.info("Getting releases folder...");
-        this.topLevelFolder = sampleHelper.createOrVerifyRootEntity(EntityConstants.NAME_FLY_LINE_RELEASES, true, false);
-        if (topLevelFolder.getValueByAttributeName(EntityConstants.ATTRIBUTE_IS_PROTECTED)==null) {
-            EntityUtils.addAttributeAsTag(topLevelFolder, EntityConstants.ATTRIBUTE_IS_PROTECTED);
-            entityBean.saveOrUpdateEntity(topLevelFolder);
-        }
+        this.topLevelFolder = sampleHelper.createOrVerifyRootEntity(DomainConstants.NAME_FLY_LINE_RELEASES, true, false);
     }
 }

@@ -6,149 +6,121 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
+import javax.resource.spi.IllegalStateException;
+
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.compute.service.domain.FileDiscoveryHelperNG;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.janelia.it.jacs.model.user_data.FileNode;
 
 /**
  * File discovery service for sample processing results.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleProcessingResultsDiscoveryService extends SupportingFilesDiscoveryService {
-	
-    @Override
-    public void execute(IProcessData processData) throws ServiceException {
-        processData.putItem("RESULT_ENTITY_TYPE", EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT);
-        super.execute(processData);
-    }
+public class SampleProcessingResultsDiscoveryService extends AbstractDomainService {
 
-    @Override
-    protected void processFolderForData(Entity sampleProcessingResult) throws Exception {
+    private Sample sample;
+    private ObjectiveSample objectiveSample;
+    
+    public void execute() throws Exception {
 
-    	SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, null, ownerKey, logger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
         
-        if (!sampleProcessingResult.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT)) {
-            throw new IllegalStateException("Expected Sample Processing Result as input");
-        }
-        
-        super.processFolderForData(sampleProcessingResult);
-
-        String channelMappingStr = (String)processData.getItem("LSM_CHANNEL_MAPPING");
+        String channelMappingStr = data.getRequiredItemAsString("LSM_CHANNEL_MAPPING");
         Collection<String> channelMapping = Task.listOfStringsFromCsvString(channelMappingStr);
         
-        String channelSpec = (String)processData.getItem("CHANNEL_SPEC");
-        if (StringUtils.isEmpty(channelSpec)) {
-            throw new IllegalArgumentException("CHANNEL_SPEC may not be null");
-        }
+        String channelSpec = data.getRequiredItemAsString("CHANNEL_SPEC");
+        AnatomicalArea sampleArea = (AnatomicalArea)data.getRequiredItem("SAMPLE_AREA");
+        String resultName = data.getRequiredItemAsString("RESULT_ENTITY_NAME");
+        
+        SampleProcessingResult result = sampleHelper.addNewSampleProcessingResult(run, resultName);
+        
+        FileNode resultFileNode = (FileNode)data.getRequiredItem("ROOT_FILE_NODE");
+        String rootPath = resultFileNode.getDirectoryPath();
 
-        AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
-        if (sampleArea==null) {
-            throw new IllegalArgumentException("SAMPLE_AREA may not be null");
-        }
-        
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (StringUtils.isEmpty(sampleEntityId)) {
-            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-        }
-        
-        Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-        if (sampleEntity == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-        }
+        logger.info("Discovering supporting files in "+rootPath);
+        logger.info("Creating entity named '"+resultName+"' with type 'SampleProcessingResult'");
 
-        sampleProcessingResult.setValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA, sampleArea.getName());
-        entityBean.saveOrUpdateEntity(sampleProcessingResult);
-        
-        String stitchedFilename = sampleArea.getStitchedFilename();
+        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
+        List<String> filepaths = helper.getFilepaths(rootPath);
 
-        // Find consensus optical res
-        entityLoader.populateChildren(sampleEntity);    
-        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sampleArea, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
+        result.setAnatomicalArea(sampleArea.getName());
         
-        Entity supportingFiles = EntityUtils.getSupportingData(sampleProcessingResult);
+        String stitchedFilepath = sampleArea.getStitchedFilepath();
+        
+        if (channelSpec!=null) {
+            logger.info("Setting result channel specification to "+channelSpec);
+            result.setChannelSpec(channelSpec);
+        }
+        
         String pixelRes = null;
-        Entity image3d = null;
-        
-        for(Entity resultItem : supportingFiles.getChildren()) {
-            if (resultItem.getName().endsWith(".tc")) {
-                pixelRes = getStitchedDimensions(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        File image3d = null;
+        for(String filepath : filepaths) {
+            File file = new File(filepath);
+            if (file.getName().endsWith(".tc")) {
+                pixelRes = getStitchedDimensions(filepath);
             }
-            else if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                if (stitchedFilename.equals(resultItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH))) {
-                    if (image3d!=null) {
-                        logger.warn("More than one 3d image result detected for sample processing "+sampleProcessingResult.getId());
-                    }   
-                    logger.info("Using as main 3d image: "+resultItem.getName());
-                    image3d = resultItem; 
-                    if (channelSpec!=null) {
-                        logger.info("Setting channel specification for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+channelSpec);
-                        helper.setChannelSpec(resultItem, channelSpec);
-                    }
-                    if (opticalRes!=null) {
-                        logger.info("Setting optic resolution for "+resultItem.getName()+" (id="+resultItem.getId()+") to "+opticalRes);
-                        helper.setOpticalResolution(resultItem, opticalRes);
-                    }
-                }
-                else {
-                    logger.info("Ignoring 3d image which is not the stitched file: "+resultItem.getName());
-                }
+            else if (filepath.equals(stitchedFilepath)) {
+                if (image3d!=null) {
+                    logger.warn("More than one 3d image result detected for sample processing "+result.getId());
+                }   
+                logger.info("Using as main 3d image: "+file.getName());
+                image3d = file;
             }
+            // TODO: MIPS
+//            else if (file.getName().endsWith(suffix)) {
+//              "ReferenceMip": "merge/tile-1947307609727959138_reference.png",
+//              "SignalMip": "merge/tile-1947307609727959138_signal.png",
+//            }
         }
-
+        
+        if (image3d==null) {
+            throw new IllegalStateException("Sample image not found: "+stitchedFilepath);
+        }
+        
         if (pixelRes==null) {
             // The result image was not stitched (since no *.tc file was found), so we can get the pixel resolution from the LSMs
-            pixelRes = sampleHelper.getConsensusLsmAttributeValue(sampleArea, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
+            pixelRes = sampleHelper.getConsensusLsmAttributeValue(sampleArea, "imageSize");
         }
 
         // TODO: should determine consensus pixel resolution for all tiles (not just the main image), if we didn't stitch them
         if (pixelRes!=null) {
-            logger.info("Setting pixel resolution for "+image3d.getName()+" (id="+image3d.getId()+") to "+pixelRes);
-            helper.setPixelResolution(image3d, pixelRes);
+            logger.info("Setting result pixel resolution to "+pixelRes);
+            result.setImageSize(pixelRes);
         }
         else {
-        	throw new ServiceException("Could not determine pixel resolution for "+image3d.getName());
+            throw new ServiceException("Could not determine pixel resolution for "+image3d.getName());
         }
-
-        List<String> consensusLsmColors = null;
-        boolean consensusColors = true;
-
-		List<Entity> tileEntities = entityBean.getEntitiesById(sampleArea.getTileIds());
-        for(Entity tileEntity : tileEntities) {
-            
-        	entityLoader.populateChildren(tileEntity);
-        	
-            List<String> allLsmColors = new ArrayList<String>();
-
-            for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
-                String colorStr = lsmStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS);
-                if (colorStr!=null) {
-	                List<String> colors = Task.listOfStringsFromCsvString(colorStr);
-	                allLsmColors.addAll(colors);
-                }
-                else {
-                	logger.warn("LSM does not have channel colors: "+lsmStack.getId());
-                }
-            }
-            
-            if (consensusLsmColors==null) {
-                consensusLsmColors = allLsmColors;
-            }
-            else if (!consensusLsmColors.equals(allLsmColors)) {
-                logger.warn("No color consensus among tiles ("+consensusLsmColors+"!="+allLsmColors+")");
-                consensusColors = false;
-            }
-        }
-
-        logger.debug("channelMapping="+channelMapping);
         
-        if (consensusLsmColors!=null && consensusColors) {
+        result.setFilepath(rootPath);
+        DomainUtils.setFilepath(result, FileType.LosslessStack, image3d.getAbsolutePath());
+        
+        // Find consensus optical res    
+        String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sampleArea, "opticalResolution");
+        if (opticalRes!=null) {
+            logger.info("Setting result optic resolution to "+opticalRes);
+            result.setOpticalResolution(opticalRes);
+        }
+     
+        // Find consensus channel colors
+        logger.debug("channelMapping="+channelMapping);
+        String channelColors = sampleHelper.getConsensusLsmAttributeValue(sampleArea, "channelColors");
+        
+        if (channelColors!=null) {
+            List<String> consensusLsmColors = Task.listOfStringsFromCsvString(channelColors);
             logger.debug("consensusLsmColors="+consensusLsmColors);
         
             List<String> resultColors = new ArrayList<String>();
@@ -166,11 +138,16 @@ public class SampleProcessingResultsDiscoveryService extends SupportingFilesDisc
             if (image3d!=null && !resultColors.isEmpty()) {
                 String resultColorsStr = Task.csvStringFromCollection(resultColors);
                 logger.info("Setting result image colors: "+resultColorsStr);
-                helper.setChannelColors(image3d, resultColorsStr);
+                result.setChannelColors(resultColorsStr);
             }
         }
+        
+        sampleHelper.saveSample(sample);
+        
+        contextLogger.info("Putting "+result.getId()+" in RESULT_ENTITY_ID");
+        data.putItem("RESULT_ENTITY_ID", result.getId());
     }
-
+    
     private String getStitchedDimensions(String filePath) throws Exception {
         
         boolean takeNext = false;

@@ -5,8 +5,7 @@ import java.util.Map;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
@@ -17,7 +16,7 @@ import org.janelia.it.jacs.model.domain.support.SearchTraversal;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="fragment",label="Neuron Fragment")
-public class NeuronFragment extends AbstractDomainObject implements HasFiles, HasFilepath {
+public class NeuronFragment extends AbstractDomainObject implements HasRelativeFiles {
 
     @SearchTraversal({NeuronFragment.class})
     private Reference sample;

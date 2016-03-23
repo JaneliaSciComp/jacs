@@ -1,49 +1,42 @@
 package org.janelia.it.jacs.compute.service.entity;
 
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
-import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.user_data.FileNode;
-import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
+import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
+import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
+
 /**
  * Takes the bulk merge parameters and creates metadata files for each one. 
  * The parameters should be included in the ProcessData:
- *   SAMPLE_ENTITY_ID
  *   SAMPLE_AREA 
  *   RESULT_FILE_NODE
  *   OUTPUT_FILE_NODE
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
+public class CreateLsmMetadataFilesService extends AbstractDomainGridService {
 
     private static final String CONFIG_PREFIX = "metadataConfiguration.";
     
+    protected Long sampleId;
     protected File outputDir;
     protected Logger logger;
     private List<File> inputFiles = new ArrayList<File>();
-
-    private String sampleEntityId;
-    private File jsonDataFile;
     
-    protected void init(IProcessData processData) throws Exception {
-    	super.init(processData);
-    	
-        logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+    private File jsonDataFile;
+
+    protected void init() throws Exception {
 
     	FileNode outputNode = (FileNode)processData.getItem("OUTPUT_FILE_NODE");
     	if (outputNode == null) {
@@ -51,14 +44,11 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
     	}
     	outputDir = new File(outputNode.getDirectoryPath());
     	
-    	sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-    	if (sampleEntityId == null) {
-    		throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-    	}
-    	
         AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
         List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
 
+        this.sampleId = sampleArea.getSampleId();
+        
         for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {
             inputFiles.add(new File(mergedLsmPair.getLsmFilepath1()));
             if (mergedLsmPair.getLsmFilepath2() != null) {
@@ -105,7 +95,7 @@ public class CreateLsmMetadataFilesService extends SubmitDrmaaJobService {
         script.append("read INPUT_FILENAME\n");
         script.append("read JSON_FILENAME\n");
         script.append("cd "+outputDir.getAbsolutePath()).append("\n");
-        script.append("echo \"Generating metadata for LSM files in sample "+sampleEntityId+"\" \n");
+        script.append("echo \"Generating metadata for LSM files in sample "+sampleId+"\" \n");
         script.append(getScriptToCreateLsmJsonFile("$INPUT_FILENAME", "$JSON_FILENAME")).append("\n");
         
         writer.write(script.toString());

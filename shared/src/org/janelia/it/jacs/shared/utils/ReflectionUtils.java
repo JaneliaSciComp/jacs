@@ -46,7 +46,7 @@ public class ReflectionUtils {
      * Set the given field on the specified object. If the field is
      * private, this subverts the security manager to set the value anyway.
      */
-    public static Object getFieldValue(Object obj, Field field, Object value) 
+    public static Object getFieldValue(Object obj, Field field) 
             throws NoSuchFieldException {
         try {
             field.setAccessible(true);

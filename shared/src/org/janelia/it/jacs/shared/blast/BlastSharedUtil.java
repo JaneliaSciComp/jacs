@@ -1,12 +1,10 @@
 
 package org.janelia.it.jacs.shared.blast;
 
-import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.channels.FileLock;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,7 +17,7 @@ public class BlastSharedUtil {
     /**
      * This isn't needed at the moment but will become important when we off-load merge to grid and if we were
      * to execute multiple merge operations in parallel.  Of course, writing out to file instead of db is a no-no in a
-     * clustered app server environment but we don't have to worry about that in our cluster grid F environment.
+     * clustered app server environment but we don't have to worry about that in our cluster grid environment.
      *
      * @param parsedBlastResultCollection - collection object of blast results
      * @param totalBlastHitsFilePath      - path to file
@@ -30,11 +28,11 @@ public class BlastSharedUtil {
                                                         String totalBlastHitsFilePath) throws IOException {
         // Using RandomAccessFile because it offers read and write lock
         RandomAccessFile totalBlastHitsFile = null;
-        FileLock fl = null;
+//        FileLock fl = null;
         long newBlastHits;
         try {
             totalBlastHitsFile = new RandomAccessFile(totalBlastHitsFilePath, "rw");
-            fl = FileUtil.lockFile(totalBlastHitsFile, totalBlastHitsFilePath, 100);
+//            fl = FileUtil.lockFile(totalBlastHitsFile, totalBlastHitsFilePath, 100);
             long oldBlastHits = retrieveTotalBlastHitsCount(totalBlastHitsFile);
             newBlastHits = oldBlastHits + parsedBlastResultCollection.size();
             totalBlastHitsFile.setLength(0);
@@ -42,7 +40,7 @@ public class BlastSharedUtil {
             totalBlastHitsFile.writeUTF(String.valueOf(newBlastHits));
         }
         finally {
-            if (fl != null) fl.release();
+//            if (fl != null) fl.release();
             if (null != totalBlastHitsFile) {
                 totalBlastHitsFile.close(); // releases the lock
             }
@@ -65,41 +63,18 @@ public class BlastSharedUtil {
         return totalBlastHits;
     }
 
-    public static synchronized void writeLongValueToSharedFile(File file, long value) throws IOException {
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        FileLock fl = null;
-        try {
-            fl = FileUtil.lockFile(raf, file.getAbsolutePath(), 100);
-            raf.setLength(0);
-            raf.writeUTF(String.valueOf(value));
-            fl.release();
-        }
-        finally {
-            if (fl != null) fl.release();
-            raf.close();
-        }
-    }
-
     public static synchronized void writeLongValueToNewFile(File file, long value) throws IOException {
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        try {
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
             raf.setLength(0);
             raf.writeUTF(String.valueOf(value));
-        }
-        finally {
-            raf.close();
         }
     }
 
     public static synchronized long readLongValueFromFile(File file) throws IOException {
         long value = 0L;
         if (file.length() > 0) {
-            RandomAccessFile raf = new RandomAccessFile(file, "r");
-            try {
+            try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
                 value = Long.parseLong(raf.readUTF());
-            }
-            finally {
-                raf.close();
             }
         }
         return value;

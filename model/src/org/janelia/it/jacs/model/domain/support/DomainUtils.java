@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.model.domain.support;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,12 +26,15 @@ import org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.util.ReflectionHelper;
+import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,6 +204,54 @@ public class DomainUtils {
     }
 
     /**
+     * Generate a list of DomainObjectAttributes for the given domain object class. DomainObjectAttributes are
+     * generated for all fields and methods marked with a @SearchAttribute annotation. 
+     * @param clazz a class which extends DomainObject
+     * @return a list of DomainObjectAttributes
+     */
+    public static List<DomainObjectAttribute> getSearchAttributes(Class<? extends DomainObject> clazz) {
+        
+        List<DomainObjectAttribute> attrs = new ArrayList<>();
+        
+        // Look for annotated fields 
+        for (Field field : ReflectionUtils.getAllFields(clazz)) {
+            SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
+            if (searchAttributeAnnot!=null) {
+                try {
+                    Method getter = ReflectionHelper.getGetter(clazz, field.getName());
+                    Method setter = ReflectionHelper.getSetter(clazz, field.getName(), getter.getReturnType());
+                    DomainObjectAttribute attr = new DomainObjectAttribute(field.getName(), searchAttributeAnnot.label(), searchAttributeAnnot.key(), searchAttributeAnnot.facet(), searchAttributeAnnot.display(), getter, setter);
+                    attrs.add(attr);
+                }
+                catch (Exception e) {
+                    log.warn("Error getting field " + field.getName() + " on " + clazz.getName(), e);
+                }
+            }
+        }
+
+        // Look for annotated getters
+        for (Method getter : clazz.getMethods()) {
+            SearchAttribute searchAttributeAnnot = getter.getAnnotation(SearchAttribute.class);
+            if (searchAttributeAnnot!=null) {
+                try {
+                    String name = getter.getName();
+                    if (getter.getName().startsWith("get")) {
+                        name = name.substring(3, 4).toLowerCase() + name.substring(4);
+                        Method setter = ReflectionHelper.getSetter(clazz, name, getter.getReturnType());
+                        DomainObjectAttribute attr = new DomainObjectAttribute(name, searchAttributeAnnot.label(), searchAttributeAnnot.key(), searchAttributeAnnot.facet(), searchAttributeAnnot.display(), getter, setter);
+                        attrs.add(attr);
+                    }
+                }
+                catch (Exception e) {
+                    log.warn("Error getting method " + getter.getName() + " on " + clazz.getName(), e);
+                }
+            }
+        }
+
+        return attrs;
+    }
+        
+    /**
      * Returns the subject name part of a given subject key. For example, for "group:flylight", this returns "flylight".
      * @param subjectKey
      * @return
@@ -265,8 +318,8 @@ public class DomainUtils {
         StringBuilder urlSb = new StringBuilder();
 
         // Add prefix
-        if (hasFiles instanceof HasFilepath) {
-            String rootPath = ((HasFilepath)hasFiles).getFilepath();
+        if (hasFiles instanceof HasRelativeFiles) {
+            String rootPath = ((HasRelativeFiles)hasFiles).getFilepath();
             if (rootPath!=null) {
                 urlSb.append(rootPath);
                 if (!rootPath.endsWith("/")) urlSb.append("/");
@@ -277,6 +330,27 @@ public class DomainUtils {
         urlSb.append(filepath);
         
         return urlSb.length()>0 ? urlSb.toString() : null;
+    }
+    
+    public static void setFilepath(HasRelativeFiles hasFiles, FileType fileType, String filepath) {
+        if (filepath==null) {
+            hasFiles.getFiles().remove(fileType);
+        }
+        else {
+            hasFiles.getFiles().put(fileType, getRelativeFilename(hasFiles, filepath));    
+        }
+    }
+
+    private static String getRelativeFilename(HasFilepath result, String filepath) {
+        if (filepath==null) return null;
+        if (result==null) return filepath;
+        String parentFilepath = result.getFilepath();
+        if (parentFilepath==null) throw new IllegalArgumentException("Result "+filepath+" has null parent filepath");
+        String prefix = parentFilepath.endsWith("/") ? parentFilepath : parentFilepath+"/";
+        if (!filepath.startsWith(prefix)) {
+            return filepath;
+        }
+        return filepath.replaceFirst(prefix, "");
     }
     
     public static String getDefault3dImageFilePath(HasFiles hasFiles) {
@@ -407,8 +481,8 @@ public class DomainUtils {
      * @param objects collection of domain objects
      * @return a list of references, one for each domain object
      */
-    public static Collection<Reference> getReferences(Collection<? extends DomainObject> domainObjects) {
-        Collection<Reference> refs = new ArrayList<>();
+    public static List<Reference> getReferences(Collection<? extends DomainObject> domainObjects) {
+        List<Reference> refs = new ArrayList<>();
         for(DomainObject domainObject : domainObjects) {
             if (domainObject!=null) {
                 refs.add(Reference.createFor(domainObject));
@@ -428,6 +502,23 @@ public class DomainUtils {
             for (DomainObject domainObject : objects) {
                 if (domainObject != null) {
                     objectMap.put(Reference.createFor(domainObject), domainObject);
+                }
+            }
+        }
+        return objectMap;
+    }
+
+    /**
+     * Generate a map by reference to the given domain objects.
+     * @param objects collection of domain objects
+     * @return a map with the domain objects as values, keyed by reference to each domain object
+     */
+    public static Map<Long, DomainObject> getMapById(Collection<? extends DomainObject> objects) {
+        Map<Long, DomainObject> objectMap = new HashMap<>();
+        if (objects!=null) {
+            for (DomainObject domainObject : objects) {
+                if (domainObject != null) {
+                    objectMap.put(domainObject.getId(), domainObject);
                 }
             }
         }
@@ -532,6 +623,11 @@ public class DomainUtils {
         else {
             throw new IllegalArgumentException("Unknown criteria subtype: "+criteria.getClass().getName());
         }
+    }
+
+    public static Object getAttributeValue(DomainObject domainObject, String attrName) throws Exception {
+        Method getter = ReflectionHelper.getGetter(domainObject.getClass(), attrName);
+        return getter.invoke(domainObject);
     }
     
     /**

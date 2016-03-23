@@ -19,6 +19,7 @@ public class ISO8601Utils {
     private static final DateTimeFormatter parser = ISODateTimeFormat.dateTimeNoMillis();
     
     public static Date parse(String dateTimeStr) {
+        if (dateTimeStr==null) return null;
         try {
             return parser.parseDateTime(dateTimeStr).toDate();
         }
@@ -28,8 +29,8 @@ public class ISO8601Utils {
         }
     }
 
-    public static  String format(Date date) {
-        DateTime dt = date==null?null:new DateTime(date);
-        return parser.print(dt);
+    public static String format(Date date) {
+        if (date==null) return null;
+        return parser.print(new DateTime(date));
     }
 }

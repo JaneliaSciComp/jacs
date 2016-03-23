@@ -253,7 +253,7 @@ public class SWCData {
                 nRoots += 1;
             }
 
-            // is node valid: valid type, positive radius
+            // is node valid:
             if (!node.isValid()) {
                 invalidReason = String.format("invalid node (index %d)", node.getIndex());
                 return false;

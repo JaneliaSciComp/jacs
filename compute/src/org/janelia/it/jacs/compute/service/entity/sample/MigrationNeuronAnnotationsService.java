@@ -10,13 +10,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronMappingGridService;
-import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparatorHelper;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.compute.service.neuronSeparator.NeuronSeparationPipelineGridService;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import com.google.common.collect.HashMultimap;
@@ -29,84 +33,54 @@ import com.google.common.collect.Multimap;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class MigrationNeuronAnnotationsService extends AbstractEntityService {
+public class MigrationNeuronAnnotationsService extends AbstractDomainService {
 
-    private static final String ANNOTATION_MIGRATION_RESULT = "Migration Result";
-    
+    private SampleHelperNG sampleHelper;
+    private Sample sample;
+    private ObjectiveSample objectiveSample;
 	private String resultComment;
 	
     public void execute() throws Exception {
 
-    	boolean annotateSample = data.getItemAsBoolean("ANNOTATE_SAMPLE");
+        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+
         Long sourceSeparationId = data.getRequiredItemAsLong("SOURCE_SEPARATION_ID");
         Long targetSeparationId = data.getRequiredItemAsLong("TARGET_SEPARATION_ID");
         boolean targetIsWarped = data.getItemAsBoolean("TARGET_IS_WARPED"); // default to false
         
-        Entity sourceSeparation = entityBean.getEntityTree(sourceSeparationId);
-        if (sourceSeparation == null) {
+        List<NeuronSeparation> sourceSeparations = objectiveSample.getResultsById(NeuronSeparation.class, sourceSeparationId);
+        if (sourceSeparations.isEmpty()) {
             throw new IllegalArgumentException("Source separation entity not found with id="+sourceSeparationId);
         }
 
+        NeuronSeparation sourceSeparation = sourceSeparations.get(sourceSeparations.size()-1);
         contextLogger.info("Retrieved source separation: "+sourceSeparation.getName()+" (id="+sourceSeparationId+")");
         
-        Entity targetSeparation = entityBean.getEntityTree(targetSeparationId);
-        if (targetSeparation == null) {
-            throw new IllegalArgumentException("Target separation entity not found with id="+targetSeparation);
+        List<NeuronSeparation> targetSeparations = objectiveSample.getResultsById(NeuronSeparation.class, sourceSeparationId);
+        if (targetSeparations.isEmpty()) {
+            throw new IllegalArgumentException("Target separation entity not found with id="+targetSeparations);
         }
 
+        NeuronSeparation targetSeparation = targetSeparations.get(targetSeparations.size()-1);
         contextLogger.info("Retrieved target separation: "+targetSeparation.getName()+" (id="+targetSeparationId+")");
 
         migrateAnnotations(sourceSeparation, targetSeparation, targetIsWarped);
-        
-        if (annotateSample) {
-	        Entity sample = entityBean.getAncestorWithType(targetSeparation, EntityConstants.TYPE_SAMPLE);
-	        Entity comment = null;
-	        
-	        for(Entity entity : entityBean.getEntitiesByNameAndTypeName(ownerKey, ANNOTATION_MIGRATION_RESULT, EntityConstants.TYPE_ONTOLOGY_ELEMENT)) {
-	            if (comment!=null) {
-	                logger.warn("Found multiple terms with name "+ANNOTATION_MIGRATION_RESULT+" will use "+comment.getId());
-	            }
-	            else {
-	            	comment = entity;
-	            }
-	        }
-	        
-	        if (comment==null) {
-	        	throw new Exception("Could not find annotation text term owned by "+ownerKey+" with name "+ANNOTATION_MIGRATION_RESULT);
-	        }
-	        
-	        OntologyAnnotation annotation = new OntologyAnnotation(null, sample.getId(), comment.getId(), comment.getName(), null, resultComment);
-	        annotationBean.createOntologyAnnotation(ownerKey,annotation);
-        }
-        
     }
     
     /**
      * Check for Samples with the old result structure.
      */
-    private void migrateAnnotations(Entity sourceSeparation, Entity targetSeparation, boolean targetIsWarped) throws Exception {
-          
-        populateChildren(sourceSeparation);
-        populateChildren(targetSeparation);
+    private void migrateAnnotations(NeuronSeparation sourceSeparation, NeuronSeparation targetSeparation, boolean targetIsWarped) throws Exception {
         
-        Entity supportingFiles = EntityUtils.getSupportingData(targetSeparation);
-        populateChildren(supportingFiles);
+        boolean resultWasMapped = DomainUtils.getFilepath(targetSeparation, FileType.NeuronSeparatorResult)!=null;
         
-        boolean resultWasMapped = NeuronSeparatorHelper.getSeparationResult(supportingFiles)!=null; 
+        List<NeuronFragment> sourceFragments = domainDao.getNeuronFragmentsBySeparationId(ownerKey, sourceSeparation.getId());
+        List<NeuronFragment> targetFragments = domainDao.getNeuronFragmentsBySeparationId(ownerKey, targetSeparation.getId());
         
-        Entity sourceNeuronCollection = EntityUtils.findChildWithType(sourceSeparation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
-        Entity targetNeuronCollection = EntityUtils.findChildWithType(targetSeparation, EntityConstants.TYPE_NEURON_FRAGMENT_COLLECTION);
-        
-        List<Entity> sourceAnnotations = getAnnotationsForChildren(sourceNeuronCollection);
-        List<Entity> targetAnnotations = getAnnotationsForChildren(targetNeuronCollection);
-
-        if (!targetAnnotations.isEmpty()) {
-            contextLogger.warn("Target separation ("+targetSeparation.getId()+") already has neuron annotations ("+targetAnnotations.size()+").");
-            // TODO: is this an error condition, or should we just warn and proceed?
-            contextLogger.warn("Cannot proceed with annotation migration to annotated separation");
-            resultComment = "Target neurons already annotated";
-            return;
-        }
+        Multimap<Integer,Annotation> sourceAnnotations = getNeuronAnnotations(sourceFragments);
+        Multimap<Integer,Annotation> targetAnnotations = getNeuronAnnotations(targetFragments);
         
         if (sourceAnnotations.isEmpty()) {
             contextLogger.info("Source separation ("+sourceSeparation.getId()+") has no neuron annotations to migrate");
@@ -116,13 +90,13 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
         contextLogger.info("Migrating annotations from: "+sourceSeparation.getId()+" to "+targetSeparation.getId());
         
         if (targetIsWarped) {
-            int ns = sourceNeuronCollection.getChildren().size();
-            int nt = targetNeuronCollection.getChildren().size();
+            Long ns = sourceSeparation.getFragmentsReference().getCount();
+            Long nt = targetSeparation.getFragmentsReference().getCount();
             if (ns != nt) {
                 throw new IllegalStateException("Target separation was warped, but does not contain the same number of neurons as the source ("+ns+"!="+nt+")");
             }
             Map<Integer,Integer> mapping = generateOneToOneMapping(ns);
-            migrateAnnotations(sourceNeuronCollection, targetNeuronCollection, sourceAnnotations, targetAnnotations, mapping);
+            migrateAnnotations(sourceFragments, targetFragments, sourceAnnotations, targetAnnotations, mapping);
             
         }
         else {
@@ -131,7 +105,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
                 contextLogger.info("Retrieved "+mapping.size()+" neuron mappings");
 	            if (!mapping.isEmpty()) {
 	                
-	            	migrateAnnotations(sourceNeuronCollection, targetNeuronCollection, sourceAnnotations, targetAnnotations, mapping);
+	            	migrateAnnotations(sourceFragments, targetFragments, sourceAnnotations, targetAnnotations, mapping);
 	            }
 	            else if (resultComment == null){
 	            	resultComment = "No neuron mappings";
@@ -142,48 +116,43 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
             }
         }    
     }
+
+    public Multimap<Integer,Annotation> getNeuronAnnotations(List<NeuronFragment> fragments) {
+        Map<Number,Number> sourceNeuronNumByEntityId = getNeuronNumMap(fragments, false);
+        Multimap<Integer,Annotation> map = HashMultimap.<Integer,Annotation>create();
+        for(Annotation annotation : domainDao.getAnnotations(null, DomainUtils.getReferences(fragments))) {
+            Number fragmentIndex = sourceNeuronNumByEntityId.get(annotation.getTarget().getTargetId());
+            map.put(fragmentIndex.intValue(), annotation);
+        }
+        return map;
+    }
     
-    /**
-     * Return a mapping from the neuron entity ids to the neuron numbers, or vice-versa if invertMap is true.
-     */
-    private Map<Number,Number> getNeuronNumMap(Entity neuronCollection, boolean invertMap) {
-        Map<Number,Number> neuronNumMap = new HashMap<Number,Number>();
-        for(Entity neuron : EntityUtils.getChildrenOfType(neuronCollection, EntityConstants.TYPE_NEURON_FRAGMENT)) {
-            String numberStr = neuron.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
-            if (numberStr!=null) {
-                Integer number = new Integer(numberStr);
-                if (invertMap) {
-                    neuronNumMap.put(number, neuron.getId());
-                }
-                else {
-                    neuronNumMap.put(neuron.getId(), number);
-                }
+    public Map<Number, Number> getNeuronNumMap(List<NeuronFragment> fragments, boolean invert) {
+        Map<Number, Number> fragmentIndexMap = new HashMap<>();
+        for(NeuronFragment fragment : fragments) {
+            if (invert) {
+                fragmentIndexMap.put(fragment.getNumber(), fragment.getId());  
+            }
+            else {  
+                fragmentIndexMap.put(fragment.getId(), fragment.getNumber());
             }
         }
-        return neuronNumMap;
+        return fragmentIndexMap;
     }
     
     /**
      * Migrate the annotations between two collection of neurons, given a neuron number mapping.
      */
-    private void migrateAnnotations(Entity sourceNeuronCollection, Entity targetNeuronCollection, 
-            List<Entity> sourceAnnotations, List<Entity> targetAnnotations, Map<Integer,Integer> mapping) 
-                    throws ComputeException {
+    private void migrateAnnotations(List<NeuronFragment> sourceNeuronCollection, List<NeuronFragment> targetNeuronCollection, 
+            Multimap<Integer,Annotation> sourceAnnotations, Multimap<Integer,Annotation> targetAnnotations, Map<Integer,Integer> mapping) 
+                    throws Exception {
 
-        Map<Number,Number> sourceNeuronNumByEntityId = getNeuronNumMap(sourceNeuronCollection, false);
         Map<Number,Number> targetEntityIdByNeuronNum = getNeuronNumMap(targetNeuronCollection, true);
-        
-        Multimap<Long,Entity> sourceAnnotationMap = getAnnotationMap(sourceAnnotations);
-        
-        for(Long neuronEntityId : sourceAnnotationMap.keySet()) {
-            Collection<Entity> annotations = sourceAnnotationMap.get(neuronEntityId);
-            if (annotations==null) {
-                contextLogger.warn("Neuron (id="+neuronEntityId+") has null annotation");
-                continue;
-            }
-            Number sourceNumber = sourceNeuronNumByEntityId.get(neuronEntityId);
-            if (sourceNumber==null) {
-                contextLogger.warn("Neuron (id="+neuronEntityId+") has null number");
+                
+        for(Integer sourceNumber : sourceAnnotations.keySet()) {
+            Collection<Annotation> annotations = sourceAnnotations.get(sourceNumber);
+            if (annotations==null||annotations.isEmpty()) {
+                contextLogger.warn("Neuron "+sourceNumber+" has null annotation");
                 continue;
             }
             Integer targetNumber = mapping.get(sourceNumber);
@@ -196,7 +165,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
                 contextLogger.warn("Neuron (number="+sourceNumber+") has no entity in the target separation");
                 continue;
             }
-            contextLogger.info("Neuron "+sourceNumber+"->"+targetNumber+" ("+neuronEntityId+"->"+targetEntityId+") has "+annotations.size()+" annotations");
+            contextLogger.info("Neuron "+sourceNumber+"->"+targetNumber+" has "+annotations.size()+" annotations");
         	migrateAnnotations(annotations, targetEntityId);
         	resultComment = "Migrated "+annotations.size()+" annotations";
         }
@@ -205,8 +174,8 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
     /**
      * Copy the given annotations to the new target, and mark them computational.
      */
-    private void migrateAnnotations(Collection<Entity> annotations, Long targetId) throws ComputeException {
-        for(Entity annotation : annotations) {
+    private void migrateAnnotations(Collection<Annotation> annotations, Long targetId) throws Exception {
+        for(Annotation annotation : annotations) {
             contextLogger.info("Migrating annotation "+annotation.getName()+" to "+targetId);
             migrateAnnotation(annotation, targetId);    
         }
@@ -218,45 +187,16 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
      * @param targetId
      * @throws ComputeException
      */
-    private void migrateAnnotation(Entity annotationEntity, Long targetId) throws ComputeException {
-        OntologyAnnotation annotation = new OntologyAnnotation();
-        annotation.init(annotationEntity);
-        annotation.setEntity(null);
-        annotation.setId(null);
-        annotation.setIsComputational(true);
-        annotation.setTargetEntityId(targetId);
-        annotationBean.createOntologyAnnotation(ownerKey, annotation);
+    private void migrateAnnotation(Annotation annotationEntity, Long targetId) throws Exception {
+        Annotation annotation = new Annotation(annotationEntity);
+        annotation.setTarget(new Reference(annotationEntity.getTarget().getTargetClassName(), targetId));
+        domainDao.save(annotation);
     }
     
     /**
-     * Returns the annotations for the children of a given enity.
-     */
-    private List<Entity> getAnnotationsForChildren(Entity entity) throws ComputeException {
-        return annotationBean.getAnnotationsForChildren(ownerKey, entity.getId());
-    }
-     
-    /**
-     * Returns a multimap from entity to list of annotations which target that entity.
-     */
-    private Multimap<Long,Entity> getAnnotationMap(List<Entity> neuronAnnotations) {
-
-        Multimap<Long,Entity> neuronAnnotationMap = HashMultimap.<Long,Entity>create();
-        
-        for(Entity annotation : neuronAnnotations) {
-            String targetIdStr = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-            if (targetIdStr!=null) {
-                Long targetId = Long.parseLong(targetIdStr);
-                neuronAnnotationMap.put(targetId, annotation);
-            }
-        }
-        
-        return neuronAnnotationMap;
-    }
-
-    /**
      * Generate a simple one-to-one mapping of any given size.
      */
-    private Map<Integer,Integer> generateOneToOneMapping(int size) {
+    private Map<Integer,Integer> generateOneToOneMapping(Long size) {
         Map<Integer,Integer> mapping = new HashMap<Integer,Integer>();
         for(int i=1; i<=size; i++) {
             mapping.put(i, i);
@@ -276,15 +216,15 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
      * If useMappedIndicies is false, then this method returns this mapping:
      *     Previous index # -> Unmapped index #
      */
-    private Map<Integer,Integer> getMapping(Entity separation, Long sourceSeparationId, boolean useMappedIndicies) {
-        String dir = separation.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+    private Map<Integer,Integer> getMapping(NeuronSeparation separation, Long sourceSeparationId, boolean useMappedIndicies) {
+        String dir = separation.getFilepath();
 
         File separationDir = new File(dir);
-        File[] mappingFiles = FileUtil.getFilesWithPrefixes(separationDir, NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX);
+        File[] mappingFiles = FileUtil.getFilesWithPrefixes(separationDir, NeuronSeparationPipelineGridService.MAPPING_FILE_NAME_PREFIX);
                 
     	File mappingFile = null;
     	for(File file : mappingFiles) {
-    		if (file.getName().startsWith(NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+"_"+sourceSeparationId)) {
+    		if (file.getName().startsWith(NeuronSeparationPipelineGridService.MAPPING_FILE_NAME_PREFIX+"_"+sourceSeparationId)) {
     			mappingFile = file;
     		}
     	}
@@ -292,7 +232,7 @@ public class MigrationNeuronAnnotationsService extends AbstractEntityService {
     	if (mappingFile==null) {
     		// Accept old-style mapping files in cases where the new one is not available (this should never happen, but you never know.)
 	    	for(File file : mappingFiles) {
-	    		if (file.getName().equals(NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+".txt")) {
+	    		if (file.getName().equals(NeuronSeparationPipelineGridService.MAPPING_FILE_NAME_PREFIX+".txt")) {
 	    			mappingFile = file;
 	    		}
 	    	}

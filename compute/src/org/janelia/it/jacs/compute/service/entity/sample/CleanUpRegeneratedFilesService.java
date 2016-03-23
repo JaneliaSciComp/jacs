@@ -3,18 +3,17 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.io.File;
 
 import org.janelia.it.jacs.compute.service.align.AlignmentInputFile;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Cleans up the temporary regenerated files. 
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CleanUpRegeneratedFilesService extends AbstractEntityService {
+public class CleanUpRegeneratedFilesService extends AbstractDomainService {
 
     private static final String CENTRAL_DIR_PROP = "FileStore.CentralDir";
     private static final String centralDir = SystemConfigurationProperties.getString(CENTRAL_DIR_PROP);
@@ -42,14 +41,8 @@ public class CleanUpRegeneratedFilesService extends AbstractEntityService {
             return;
         }
 
-        long numEntities = entityBean.getCountUserEntitiesWithAttributeValue(null, EntityConstants.ATTRIBUTE_FILE_PATH, path+"%");
-        if (numEntities==0) {
-            contextLogger.info("Deleting regenerated temporary files at: "+path+" (nodeId="+node.getObjectId()+")");
-            String username = EntityUtils.getNameFromSubjectKey(ownerKey);
-            computeBean.trashNode(username, node.getObjectId(), true);
-        }
-        else {
-            logger.warn("Path should be temporary, but it's referenced in the database: "+path);
-        }
+        contextLogger.info("Deleting regenerated temporary files at: "+path+" (nodeId="+node.getObjectId()+")");
+        String username = DomainUtils.getNameFromSubjectKey(ownerKey);
+        computeBean.trashNode(username, node.getObjectId(), true);
     }
 }

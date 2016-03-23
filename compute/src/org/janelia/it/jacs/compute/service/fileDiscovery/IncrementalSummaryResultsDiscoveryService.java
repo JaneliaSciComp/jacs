@@ -8,12 +8,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.janelia.it.jacs.compute.service.domain.FileDiscoveryHelperNG;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
-import org.janelia.it.jacs.compute.util.FileUtils;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.FileGroup;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
+import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata;
 import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.Channel;
@@ -34,86 +41,88 @@ import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class IncrementalSummaryResultsDiscoveryService extends IncrementalResultDiscoveryService {
+public class IncrementalSummaryResultsDiscoveryService extends AbstractDomainService {
+    
+    private SampleHelperNG sampleHelper;
+    private Sample sample;
+    private ObjectiveSample objectiveSample;
 
-    @Override
-    protected Entity createNewResultEntity(String resultName) throws Exception {
-        if (StringUtils.isEmpty(resultName)) {
-            resultName = "LSM Summary Result";
+    private Map<String,String> jsonEntityMap = new HashMap<String,String>();
+    private Map<String,String> propertiesEntityMap = new HashMap<String,String>();
+    
+    public void execute() throws Exception {
+
+        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sample = sampleHelper.getRequiredSample(data);
+        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
+
+        String resultName = data.getRequiredItemAsString("RESULT_ENTITY_NAME");
+        FileNode resultFileNode = (FileNode)data.getRequiredItem("ROOT_FILE_NODE");
+        String rootPath = resultFileNode.getDirectoryPath();
+        LSMSummaryResult result = sampleHelper.addNewLSMSummaryResult(run, resultName);
+        result.setFilepath(rootPath);
+
+        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
+        List<String> filepaths = helper.getFilepaths(rootPath);
+        for(String filepath : filepaths) {
+            populateMaps(filepath);
         }
-        Entity resultEntity = helper.createFileEntity(resultFileNode.getDirectoryPath(), resultName, EntityConstants.TYPE_LSM_SUMMARY_RESULT);
-        contextLogger.info("Created new summary result: "+resultEntity.getName()+" (id="+resultEntity.getId()+")");
-        return resultEntity;
+
+        // TODO: is this code from MongoDbImport needed here?
+//        Set<String> keys = new HashSet<>();
+//        for(LSMImage lsm : lsms) {
+//            String name = lsm.getName();
+//            int index = name.indexOf('.');
+//            String key = index<1 ? name : name.substring(0, index);
+//            keys.add(key);
+//        }
+//        keys.add("montage");
+        
+        Map<String,FileGroup> groups = sampleHelper.createFileGroups(result, filepaths);
+        result.setGroups(groups);
+
+        sampleHelper.saveSample(sample);
+
+        updateLSMS();
+        
+        contextLogger.info("Putting "+result.getId()+" in RESULT_ENTITY_ID");
+        data.putItem("RESULT_ENTITY_ID", result.getId());
     }
     
-    @Override
-    protected void discoverResultFiles(Entity summaryResult) throws Exception {
+    private void populateMaps(String filepath) {
 
-        if (!summaryResult.getEntityTypeName().equals(EntityConstants.TYPE_LSM_SUMMARY_RESULT)) {
-            throw new IllegalStateException("Expected LSM Summary Result as input");
-        }
+        File file = new File(filepath);
         
-        File dir = new File(summaryResult.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        contextLogger.info("Processing "+summaryResult.getName()+" results in "+dir.getAbsolutePath());
-        
-        if (!dir.canRead()) {
-            contextLogger.info("Cannot read from folder "+dir.getAbsolutePath());
-            return;
+        if (file.getName().endsWith(".json")) {
+            String stub = file.getName().replaceFirst("\\.json", "");
+            jsonEntityMap.put(stub, file.getAbsolutePath());
+            contextLogger.info("Found JSON metadata file: "+file);
         }
+    
+        if (file.getName().endsWith(".properties")) {
+            String stub = file.getName().replaceFirst("\\.properties", ".lsm");
+            propertiesEntityMap.put(stub, file.getAbsolutePath());
+            contextLogger.info("Found properties file: "+file);
+        }
+    }
+    
+    protected void updateLSMS() throws Exception {
 
-        Entity supportingFiles = helper.getOrCreateSupportingFilesFolder(summaryResult);
-        addFilesInDirToFolder(supportingFiles, dir, false);
-
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (StringUtils.isEmpty(sampleEntityId)) {
-            throw new IllegalArgumentException("SAMPLE_ENTITY_ID may not be null");
-        }
-        
-        Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-        if (sampleEntity == null) {
-            throw new IllegalArgumentException("Sample entity not found with id="+sampleEntityId);
-        }
-        
-        Map<String,Entity> jsonEntityMap = new HashMap<String,Entity>();
-        for(Entity resultItem : supportingFiles.getChildren()) {
-            if (resultItem.getName().endsWith(".json")) {
-                String stub = resultItem.getName().replaceFirst("\\.json", "");
-                jsonEntityMap.put(stub, resultItem);
-                contextLogger.info("Found JSON metadata file: "+resultItem.getName());
-            }
-        }
-        
-        Map<String,Entity> propertiesEntityMap = new HashMap<String,Entity>();
-        for(Entity resultItem : supportingFiles.getChildren()) {
-            if (resultItem.getEntityTypeName().equals(EntityConstants.TYPE_TEXT_FILE)) {
-                if (resultItem.getName().endsWith(".properties")) {
-                    String stub = resultItem.getName().replaceFirst("\\.properties", ".lsm");
-                    propertiesEntityMap.put(stub, resultItem);
-                    contextLogger.info("Found properties file: "+resultItem.getName());
-                }
-            }
-        }
-        
-        entityLoader.populateChildren(sampleEntity);
-        Entity sampleSupportingFiles = EntityUtils.getSupportingData(sampleEntity);
-                
-        entityLoader.populateChildren(sampleSupportingFiles);
-        List<Entity> tileEntities = sampleSupportingFiles.getOrderedChildren();
-        for(Entity tileEntity : tileEntities) {
+        for(SampleTile tileEntity : objectiveSample.getTiles()) {
             
-            entityLoader.populateChildren(tileEntity);
-            
-            for(Entity lsmStack : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
-                String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsmStack.getName());
+            List<LSMImage> lsms = domainDao.getDomainObjectsAs(tileEntity.getLsmReferences(), LSMImage.class);
+            for(LSMImage lsm : lsms) {
+                String lsmFilename = ArchiveUtils.getDecompressedFilepath(lsm.getName());
                 contextLogger.debug("Processing metadata for LSM: "+lsmFilename);
 
                 boolean dirty = false;
                 
-                Entity jsonEntity = jsonEntityMap.get(lsmFilename);
-                if (jsonEntity!=null) {
+                String jsonFilepath = jsonEntityMap.get(lsmFilename);
+                if (jsonFilepath!=null) {
 	                List<String> colors = new ArrayList<>();
 	                List<String> dyeNames = new ArrayList<>();
-	                File jsonFile = new File(jsonEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+	                File jsonFile = new File(jsonFilepath);
 	                
 	                try {
 	                    LSMMetadata metadata = LSMMetadata.fromFile(jsonFile);
@@ -133,57 +142,36 @@ public class IncrementalSummaryResultsDiscoveryService extends IncrementalResult
 	                }
 	
 	                if (!colors.isEmpty() && !StringUtils.areAllEmpty(colors)) {
-	                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_COLORS, Task.csvStringFromCollection(colors))) {
-	                        contextLogger.info("  Setting LSM colors: "+colors);
-	                        dirty = true;
-	                    }
+	                    contextLogger.info("  Setting LSM colors: "+colors);
+	                    lsm.setChannelColors(Task.csvStringFromCollection(colors));
+	                    dirty = true;
 	                }
 	                
 	                if (!dyeNames.isEmpty() && !StringUtils.areAllEmpty(dyeNames)) {
-	                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES, Task.csvStringFromCollection(dyeNames))) {
-	                        contextLogger.info("  Setting LSM dyes: "+dyeNames);
-	                        dirty = true;
-	                    }
+	                    contextLogger.info("  Setting LSM dyes: "+dyeNames);
+                        lsm.setChannelDyeNames(Task.csvStringFromCollection(dyeNames));
+                        dirty = true;
 	                }
                 }
                 
-                Entity propertiesEntity = propertiesEntityMap.get(lsmFilename);
-                if (propertiesEntity!=null) {
-	                File propertiesFile = new File(propertiesEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+                String propertiesFilepath = propertiesEntityMap.get(lsmFilename);
+                if (propertiesFilepath!=null) {
+	                File propertiesFile = new File(propertiesFilepath);
 	                Properties properties = new Properties();
 	                properties.load(new FileReader(propertiesFile));
 	                
 	                String brightnessCompensation = properties.getProperty("image.brightness.compensation");
 	                if (!StringUtils.isEmpty(brightnessCompensation)) {
-	                    if (EntityUtils.setAttribute(lsmStack, EntityConstants.ATTRIBUTE_BRIGHTNESS_COMPENSATION, brightnessCompensation)) {
-	                        contextLogger.info("  Setting brightness compensation: "+brightnessCompensation);
-	                        dirty = true;
-	                    }
+	                    contextLogger.info("  Setting brightness compensation: "+brightnessCompensation);
+	                    lsm.setBrightnessCompensation(brightnessCompensation);
+                        dirty = true;
 	                }
 	            }
                 
-                
                 if (dirty) {
-                    entityBean.saveOrUpdateEntity(lsmStack);
+                    sampleHelper.saveLsm(lsm);
                 }
             }
         }   
-    }
-
-    private List<File> addFilesInDirToFolder(Entity folder, File dir, boolean recurse) throws Exception {
-        List<File> files = helper.collectFiles(dir, recurse);
-        contextLogger.info("Collected "+files.size()+" files for addition to "+folder.getName());
-        if (!files.isEmpty()) {
-            FileUtils.sortFilesByName(files);
-            addFilesToFolder(folder, files);
-        }
-        return files;
-    }
-
-    private void addFilesToFolder(Entity filesFolder, List<File> files) throws Exception {
-        for (File resultFile : files) {
-            Entity resultEntity = getOrCreateResultItem(resultFile);
-            addToParentIfNecessary(filesFolder, resultEntity, EntityConstants.ATTRIBUTE_ENTITY);
-        }
     }
 }

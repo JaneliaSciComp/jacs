@@ -1,5 +1,5 @@
-import org.janelia.it.workstation.shared.util.SWCData
-import org.janelia.it.workstation.shared.util.SWCNode
+import org.janelia.it.jacs.shared.swc.SWCData
+import org.janelia.it.jacs.shared.swc.SWCNode
 
 /**
  * create test swc files for use with large volume viewer

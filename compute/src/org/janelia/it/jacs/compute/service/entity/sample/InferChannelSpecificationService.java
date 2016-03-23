@@ -4,24 +4,27 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.compute.api.ComputeException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
 
 /**
  * If LSMs don't have a chan spec, we need to infer it from the dye spec and populate it so that the rest of the pipeline can use it.
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InferChannelSpecificationService extends AbstractEntityService {
+public class InferChannelSpecificationService extends AbstractDomainService {
 
+    private SampleHelperNG sampleHelper;
     private String channelDyeSpec;
     private Set<String> referenceDyes = new HashSet<>();
     
     public void execute() throws Exception {
 
+        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
         this.channelDyeSpec = data.getItemAsString("CHANNEL_DYE_SPEC");
         
         if (channelDyeSpec!=null) {
@@ -52,9 +55,9 @@ public class InferChannelSpecificationService extends AbstractEntityService {
     private void ensureChanSpec(Long lsmId) throws Exception {
 
         if (lsmId==null) return;
-        Entity lsm = entityBean.getEntityById(lsmId);
-        String chanSpec = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION);
-        String channelDyeNames = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_DYE_NAMES);
+        LSMImage lsm = domainDao.getDomainObject(ownerKey, LSMImage.class, lsmId);
+        String chanSpec = lsm.getChanSpec();
+        String channelDyeNames = lsm.getChannelDyeNames();
         
         if (chanSpec==null) {
             StringBuilder chanSpecSb = new StringBuilder();
@@ -64,11 +67,10 @@ public class InferChannelSpecificationService extends AbstractEntityService {
                     numChannels = channelDyeNames.split(",").length;
                 }
                 else {
-                    String numChannelsStr = lsm.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUM_CHANNELS);    
-                    if (numChannelsStr==null) {
+                    numChannels = lsm.getNumChannels();    
+                    if (numChannels==null) {
                         throw new ComputeException("Both Num Channels and Channel Dye Names are null for LSM id="+lsmId);
                     }
-                    numChannels = new Integer(numChannelsStr);
                 }
                 // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
                 chanSpecSb.append(ChanSpecUtils.createChanSpec(numChannels, 1));
@@ -84,7 +86,8 @@ public class InferChannelSpecificationService extends AbstractEntityService {
                 }
             }
             contextLogger.info("Chanspec was inferred as "+chanSpecSb+" for LSM id="+lsmId);
-            entityHelper.setChannelSpec(lsm, chanSpecSb.toString());
+            lsm.setChanSpec(chanSpecSb.toString());
+            sampleHelper.saveLsm(lsm);
         }
         else {
             contextLogger.info("Chanspec was provided as "+chanSpec+" for LSM id="+lsmId);

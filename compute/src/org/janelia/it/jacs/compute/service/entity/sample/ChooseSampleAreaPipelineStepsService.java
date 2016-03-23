@@ -3,12 +3,14 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.exceptions.MetadataException;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -16,24 +18,28 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService {
+public class ChooseSampleAreaPipelineStepsService extends AbstractDomainService {
 
     public void execute() throws Exception {
 
-        final Entity sampleEntity = entityHelper.getRequiredSampleEntity(data);
+        final Sample sample = entityHelper.getRequiredSample(data);
+        final ObjectiveSample objectiveSample = entityHelper.getRequiredObjectiveSample(sample, data);
+        
         AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
 
-    	List<Entity> tiles = entityBean.getEntitiesById(sampleArea.getTileIds());
+        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        
+        List<SampleTile> tiles = sampleHelper.getTiles(objectiveSample, sampleArea.getTileNames());
+        
         Integer numImagesPerTile = null;
         Integer numTiles = tiles.size();
-        for (Entity tile : tiles) {
-            populateChildren(tile);
-            List<Entity> lsms = EntityUtils.getChildrenOfType(tile, EntityConstants.TYPE_LSM_STACK);
-            if (numImagesPerTile != null && numImagesPerTile != lsms.size()) {
-                throw new MetadataException("Sample " + sampleEntity.getName() + " (" + sampleEntity.getId() +
+        for (SampleTile tile : tiles) {
+            int numLsms = tile.getLsmReferences()==null?0:tile.getLsmReferences().size();
+            if (numImagesPerTile != null && numImagesPerTile != numLsms) {
+                throw new MetadataException("Sample " + sample.getName() + " (" + sample.getId() +
                                                 ") has differing numbers of images per tile");
             }
-            numImagesPerTile = lsms.size();
+            numImagesPerTile = numLsms;
         }
 
         final String mergeAlgorithms = data.getItemAsString("MERGE_ALGORITHMS");
@@ -70,6 +76,6 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractEntityService 
             steps.add("analysis");
         }
 
-        contextLogger.info("Processing pipeline for Sample "+sampleEntity.getName()+": "+Task.csvStringFromCollection(steps));
+        contextLogger.info("Processing pipeline for Sample "+sample.getName()+": "+Task.csvStringFromCollection(steps));
     }
 }

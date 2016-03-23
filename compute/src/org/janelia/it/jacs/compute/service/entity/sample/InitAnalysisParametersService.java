@@ -1,8 +1,15 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import java.util.List;
+
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.entity.cv.AnalysisAlgorithm;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
@@ -11,21 +18,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InitAnalysisParametersService extends AbstractEntityService {
-	
+public class InitAnalysisParametersService extends AbstractDomainService {
+    
     public void execute() throws Exception {
-
-        String sampleEntityId = (String)processData.getItem("SAMPLE_ENTITY_ID");
-        if (sampleEntityId != null) {
-            Entity sampleEntity = entityBean.getEntityById(sampleEntityId);
-            if (sampleEntity!=null) {
-                String objective = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-                if (objective!=null) {
-                    contextLogger.info("Putting '"+objective+"' in OBJECTIVE");
-                    processData.putItem("OBJECTIVE", objective);
-                }
-            }
-        }
         
 		String analysisAlgorithm = (String)processData.getItem("ANALYSIS_ALGORITHM");
     	if (StringUtils.isEmpty(analysisAlgorithm)) {
@@ -38,39 +33,23 @@ public class InitAnalysisParametersService extends AbstractEntityService {
 			contextLogger.info("Putting '"+pipelineName+"' in ANALYSIS_PIPELINE_NAME");
         	processData.putItem("ANALYSIS_PIPELINE_NAME", pipelineName);
 		}
-    	
-    	String resultEntityId = (String)processData.getItem("RESULT_ENTITY_ID");
-    	if (StringUtils.isEmpty(resultEntityId)) {
-    		throw new IllegalArgumentException("RESULT_ID may not be null");
-    	}
-    	
-    	Entity result = entityBean.getEntityById(resultEntityId);
-    	populateChildren(result);
-    	
-    	Entity default3dImage = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
-    	if (default3dImage==null) {
-    		throw new IllegalArgumentException("Result with id="+result.getId()+" has no Default 3d Image.");
-    	}
-    	
-    	String filename = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-    	if (filename!=null) {
-    	    contextLogger.info("Putting '"+filename+"' in OUTPUT_FILENAME");
-            processData.putItem("OUTPUT_FILENAME", filename);
-    	}
-        
-    	String opticalRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION);
-    	if (opticalRes!=null) {
-    	    contextLogger.info("Putting '"+opticalRes+"' in OPTICAL_RESOLUTION");
-            processData.putItem("OPTICAL_RESOLUTION", opticalRes);
-    	}
-    	
-    	String pixelRes = default3dImage.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION);
-        if (pixelRes!=null) {
-            contextLogger.info("Putting '"+pixelRes+"' in PIXEL_RESOLUTION");
-            processData.putItem("PIXEL_RESOLUTION", pixelRes);
+
+		SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        Sample sample = sampleHelper.getRequiredSample(data);
+        ObjectiveSample objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
+            
+        Long alignmentId = data.getRequiredItemAsLong("ALIGNMENT_ID");
+        List<SampleAlignmentResult> results = run.getResultsById(SampleAlignmentResult.class, alignmentId);
+        if (results.isEmpty()) {
+            throw new IllegalArgumentException("Could not find alignment "+alignmentId+" in sample "+sample.getId());
         }
-        
-        contextLogger.info("Putting '' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
-        processData.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", "");
+        SampleAlignmentResult alignment = results.get(0); // We can take any instance, since they're all the same
+
+        String alignedConsolidatedLabel = DomainUtils.getFilepath(alignment, FileType.AlignedCondolidatedLabel);
+        if (alignedConsolidatedLabel!=null) {
+            contextLogger.info("Putting '"+alignedConsolidatedLabel+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
+            data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabel);
+        }
     }
 }

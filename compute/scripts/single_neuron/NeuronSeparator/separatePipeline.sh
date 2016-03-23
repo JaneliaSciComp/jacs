@@ -157,10 +157,12 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         mv *.nsp $OUTDIR 
         mv *.pbd $OUTDIR
         mv *.txt $OUTDIR
-        mv $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3draw
-        mv ConsolidatedSignal.v3draw $OUTDIR
-        mv ConsolidatedLabel.v3draw $OUTDIR
-        mv Reference.v3draw $OUTDIR
+        
+        echo "~ Compressing final output to: $OUTDIR"
+        $Vaa3D -cmd image-loader -convert $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3dpbd
+        $Vaa3D -cmd image-loader -convert ConsolidatedSignal.v3draw $OUTDIR/ConsolidatedSignal.v3dpbd
+        $Vaa3D -cmd image-loader -convert ConsolidatedLabel.v3draw $OUTDIR/ConsolidatedLabel.v3dpbd
+        $Vaa3D -cmd image-loader -convert Reference.v3draw $OUTDIR/Reference.v3dpbd
     fi
 fi
 
