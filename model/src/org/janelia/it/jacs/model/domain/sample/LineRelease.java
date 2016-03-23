@@ -22,41 +22,103 @@ public class LineRelease extends AbstractDomainObject {
     private List<String> subscribers;
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
+
     public Date getReleaseDate() {
         return releaseDate;
     }
+
     public void setReleaseDate(Date releaseDate) {
         this.releaseDate = releaseDate;
     }
+
     public Integer getLagTimeMonths() {
         return lagTimeMonths;
     }
+
     public void setLagTimeMonths(Integer lagTimeMonths) {
         this.lagTimeMonths = lagTimeMonths;
     }
+
     public boolean isSageSync() {
         return sageSync;
     }
+
     public void setSageSync(boolean sageSync) {
         this.sageSync = sageSync;
     }
+
     public List<String> getDataSets() {
         return dataSets;
     }
+
     public void setDataSets(List<String> dataSets) {
         this.dataSets = dataSets;
     }
+
     public List<String> getAnnotators() {
         return annotators;
     }
+
     public void setAnnotators(List<String> annotators) {
         this.annotators = annotators;
     }
+
     public List<String> getSubscribers() {
         return subscribers;
     }
+
     public void setSubscribers(List<String> subscribers) {
         this.subscribers = subscribers;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LineRelease [");
+        if (releaseDate != null) {
+            builder.append("releaseDate=");
+            builder.append(releaseDate);
+            builder.append(", ");
+        }
+        if (lagTimeMonths != null) {
+            builder.append("lagTimeMonths=");
+            builder.append(lagTimeMonths);
+            builder.append(", ");
+        }
+        builder.append("sageSync=");
+        builder.append(sageSync);
+        builder.append(", ");
+        if (dataSets != null) {
+            builder.append("dataSets=");
+            builder.append(dataSets);
+            builder.append(", ");
+        }
+        if (annotators != null) {
+            builder.append("annotators=");
+            builder.append(annotators);
+            builder.append(", ");
+        }
+        if (subscribers != null) {
+            builder.append("subscribers=");
+            builder.append(subscribers);
+            builder.append(", ");
+        }
+        if (getOwnerName() != null) {
+            builder.append("getOwnerName()=");
+            builder.append(getOwnerName());
+            builder.append(", ");
+        }
+        if (getId() != null) {
+            builder.append("getId()=");
+            builder.append(getId());
+            builder.append(", ");
+        }
+        if (getName() != null) {
+            builder.append("getName()=");
+            builder.append(getName());
+        }
+        builder.append("]");
+        return builder.toString();
+    }
+    
 }

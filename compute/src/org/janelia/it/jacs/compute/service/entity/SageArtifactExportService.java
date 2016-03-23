@@ -237,7 +237,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     }
 
     private TreeNode findReleaseFolder() throws Exception {
-        TreeNode releasesFolder = sampleHelper.createOrVerifyRootEntity(EntityConstants.NAME_FLY_LINE_RELEASES, true, false);
+        TreeNode releasesFolder = sampleHelper.createOrVerifyRootEntity(ownerKey, EntityConstants.NAME_FLY_LINE_RELEASES, true);
         if (releasesFolder==null) {
             throw new Exception("No releases folder owned by "+release.getOwnerKey()+" was found with name '"+DomainConstants.NAME_FLY_LINE_RELEASES+"'");
         }

@@ -244,6 +244,7 @@ public class DomainDAO {
      * Return the set of subjectKeys which are readable by the given subject. This includes the subject itself, and all of the groups it is part of. 
      */
     private Set<String> getSubjectSet(String subjectKey) {
+        if (subjectKey==null) return null;
         Subject subject = subjectCollection.findOne("{key:#}",subjectKey).projection("{_id:0,class:1,groups:1}").as(Subject.class);
         if (subject==null) throw new IllegalArgumentException("No such subject: "+subjectKey);
         Set<String> groups = subject.getGroups();
@@ -577,7 +578,7 @@ public class DomainDAO {
                      annotation.getKey() + " = " + annotation.getValue());
         annotation.setName(tag);
 
-        Annotation savedAnnotation = save(annotation);
+        Annotation savedAnnotation = save(subjectKey, annotation);
         log.info("Saved annotation as " + savedAnnotation.getId());
         
         // TODO: auto-share annotation based on auto-share template (this logic is currently in the client)
@@ -664,19 +665,12 @@ public class DomainDAO {
     }
 
     public TreeNode getParentTreeNodes(String subjectKey, Long id) {
-        Set<String> subjects = subjectKey == null ? null : getSubjectSet(subjectKey);
+        Set<String> subjects = getSubjectSet(subjectKey);
         if (subjects == null) {
             return treeNodeCollection.findOne("{'children.targetId':#}", id).as(TreeNode.class);
         } else {
             return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}", id, subjects).as(TreeNode.class);
         }
-    }
-
-    public <T extends DomainObject> T save(T domainObject) throws Exception {
-        if (domainObject.getOwnerKey()==null) {
-            throw new IllegalArgumentException("Domain object must contain owner key in order to use the bare version of save");
-        }
-        return saveImpl(domainObject.getOwnerKey(), domainObject);
     }
     
     private <T extends DomainObject> T saveImpl(String subjectKey, T domainObject) throws Exception {
@@ -1218,16 +1212,21 @@ public class DomainDAO {
 
     public List<LineRelease> getLineReleases(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(releaseCollection.find("{readers:{$in:#}}",subjects).as(LineRelease.class));
+        if (subjects == null) {
+            return toList(releaseCollection.find().as(LineRelease.class));
+        } 
+        else {
+            return toList(releaseCollection.find("{readers:{$in:#}}",subjects).as(LineRelease.class));
+        }        
     }
 
-    public LineRelease createLineRelease(String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
+    public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
         LineRelease release = new LineRelease();
         release.setName(name);
         release.setReleaseDate(releaseDate);
         release.setLagTimeMonths(lagTimeMonths);
         release.setDataSets(dataSets);
-        return save(release);
+        return save(subjectKey, release);
     }
 
 //    public static void main(String[] args) throws Exception {

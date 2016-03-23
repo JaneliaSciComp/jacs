@@ -32,6 +32,7 @@ import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.reflections.ReflectionUtils;
@@ -234,11 +235,18 @@ public class DomainUtils {
             SearchAttribute searchAttributeAnnot = getter.getAnnotation(SearchAttribute.class);
             if (searchAttributeAnnot!=null) {
                 try {
-                    String name = getter.getName();
+                    String getterName = getter.getName();
                     if (getter.getName().startsWith("get")) {
-                        name = name.substring(3, 4).toLowerCase() + name.substring(4);
-                        Method setter = ReflectionHelper.getSetter(clazz, name, getter.getReturnType());
-                        DomainObjectAttribute attr = new DomainObjectAttribute(name, searchAttributeAnnot.label(), searchAttributeAnnot.key(), searchAttributeAnnot.facet(), searchAttributeAnnot.display(), getter, setter);
+                        getterName = getterName.substring(3, 4).toLowerCase() + getterName.substring(4);
+                        Method setter;
+                        try {
+                            setter = ReflectionHelper.getSetter(clazz, getterName, getter.getReturnType());
+                        }
+                        catch (NoSuchMethodException e) {
+                            log.trace("Getter has no corresponding setter: "+getterName);
+                            setter = null;
+                        }
+                        DomainObjectAttribute attr = new DomainObjectAttribute(getterName, searchAttributeAnnot.label(), searchAttributeAnnot.key(), searchAttributeAnnot.facet(), searchAttributeAnnot.display(), getter, setter);
                         attrs.add(attr);
                     }
                 }
@@ -491,6 +499,20 @@ public class DomainUtils {
         return refs;
     }
 
+    /**
+     * Generate a list of references for the members of an object set.
+     * @param objectSet
+     * @return
+     */
+    public static List<Reference> getReferencesForMembers(ObjectSet objectSet) {
+        // TODO: I feel like I already wrote this code somewhere else, so when I find it I'll de-dup
+        List<Reference> refs = new ArrayList<>();
+        for(Long id : objectSet.getMembers()) {
+            refs.add(Reference.createFor(objectSet.getClassName(), id));
+        }
+        return refs;
+    }
+    
     /**
      * Generate a map by reference to the given domain objects.
      * @param objects collection of domain objects

@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
@@ -74,11 +74,11 @@ public class SampleHelperNG extends EntityHelperNG {
     private int numSamplesMovedToBlockedFolder = 0;
     private int numSamplesReprocessed = 0;
     
-    public SampleHelperNG(ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
+    public SampleHelperNG(ComputeBeanRemote computeBean, String ownerKey, Logger logger) {
         this(computeBean, ownerKey, logger, null);
     }
 
-    public SampleHelperNG(ComputeBeanLocal computeBean, String ownerKey, Logger logger, ContextLogger contextLogger) {
+    public SampleHelperNG(ComputeBeanRemote computeBean, String ownerKey, Logger logger, ContextLogger contextLogger) {
         super(computeBean, ownerKey, logger, contextLogger);
     }
 
@@ -108,7 +108,7 @@ public class SampleHelperNG extends EntityHelperNG {
             dirty = true;
         }
         if (dirty) {
-            domainDao.save(lsm);
+            domainDao.save(ownerKey, lsm);
         }
         return lsm;
     }
@@ -359,7 +359,7 @@ public class SampleHelperNG extends EntityHelperNG {
         
         if (dirty) {
             sample.setVisited(true);
-            domainDao.save(sample);
+            domainDao.save(ownerKey, sample);
             markForProcessing(sample);
         }
         else {
@@ -634,7 +634,7 @@ public class SampleHelperNG extends EntityHelperNG {
         }
         logger.info("  Sample tiles changed, marking for reprocessing: "+sample.getName());
         sample.setStatus(DomainConstants.VALUE_MARKED);
-        domainDao.save(sample);
+        domainDao.save(ownerKey, sample);
         numSamplesReprocessed++;
     }
     
@@ -870,15 +870,15 @@ public class SampleHelperNG extends EntityHelperNG {
     /* --------------------------- */
 
     public void saveLsm(LSMImage lsm) throws Exception {
-        domainDao.save(lsm);
+        domainDao.save(ownerKey, lsm);
     }
     
     public void saveSample(Sample sample) throws Exception {
-        domainDao.save(sample);
+        domainDao.save(ownerKey, sample);
     }
 
     public void saveNeuron(NeuronFragment neuron) throws Exception {
-        domainDao.save(neuron);
+        domainDao.save(ownerKey, neuron);
     }
 
     public SamplePipelineRun addNewPipelineRun(ObjectiveSample objectiveSample, String name, String pipelineProcess, int pipelineVersion) {
@@ -1067,6 +1067,7 @@ public class SampleHelperNG extends EntityHelperNG {
     }
 
     public void sortMembersByName(ObjectSet objectSet) throws Exception {
+        if (objectSet==null || !objectSet.hasMembers()) return;
         final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getMembers(ownerKey, objectSet));
         Collections.sort(objectSet.getMembers(), new Comparator<Long>() {
             @Override
@@ -1076,10 +1077,11 @@ public class SampleHelperNG extends EntityHelperNG {
                 return d1.getName().compareTo(d2.getName());
             }
         });
-        domainDao.save(objectSet);
+        domainDao.save(ownerKey, objectSet);
     }
     
     public void sortChildrenByName(TreeNode treeNode) throws Exception {
+        if (treeNode==null || !treeNode.hasChildren()) return;
         final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getChildren(ownerKey, treeNode));
         Collections.sort(treeNode.getChildren(), new Comparator<Reference>() {
             @Override
@@ -1089,6 +1091,6 @@ public class SampleHelperNG extends EntityHelperNG {
                 return d1.getName().compareTo(d2.getName());
             }
         });
-        domainDao.save(treeNode);
+        domainDao.save(ownerKey, treeNode);
     }
 }

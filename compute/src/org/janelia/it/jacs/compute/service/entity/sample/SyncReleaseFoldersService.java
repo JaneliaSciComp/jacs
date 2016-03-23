@@ -46,7 +46,8 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
         if (release == null) {
             throw new IllegalArgumentException("Release not found with id="+releaseId);
         }
-                
+        logger.info("Release: "+release);
+        
         DateTime releaseDate = new DateTime(release.getReleaseDate());
         logger.info("Release date: "+releaseDate);
         
@@ -57,15 +58,17 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
             logger.info("Cutoff date: "+cutoffDate);
         }
         
-    	loadTopLevelFolder();
-    	this.releaseFolder = sampleHelper.verifyOrCreateChildFolder(topLevelFolder, release.getName());
-
+    	this.topLevelFolder = sampleHelper.createOrVerifyRootEntity(ownerKey, DomainConstants.NAME_FLY_LINE_RELEASES, true);
+    	logger.info("Top level folder: "+topLevelFolder);
+    	
+    	this.releaseFolder = sampleHelper.createOrVerifyChildFolder(topLevelFolder, release.getName(), true);
+    	logger.info("Release folder: "+releaseFolder);
+    	
     	Set<String> includedDataSets = new HashSet<String>(release.getDataSets());
     	
     	List<DataSet> dataSets = new ArrayList<>();
     	for(DataSet dataSet : domainDao.getDataSets(ownerKey)) {
-    	    String identifier = dataSet.getIdentifier();
-    	    if (includedDataSets.isEmpty() || includedDataSets.contains(identifier)) {
+    	    if (includedDataSets.isEmpty() || includedDataSets.contains(dataSet.getIdentifier())) {
     	        dataSets.add(dataSet);
     	    }
     	}
@@ -73,17 +76,17 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	int samplesAdded = 0;
     	for(DataSet dataSetEntity : dataSets) {
     	    String identifier = dataSetEntity.getIdentifier();
-    	    logger.debug("Processing data set "+identifier);
+    	    logger.info("Processing data set "+identifier);
     	    for(Sample sample : domainDao.getSamplesForDataSet(ownerKey, identifier)) {
-                logger.debug("  Processing sample "+sample.getName());
+                logger.info("  Processing sample "+sample.getName());
 	            Date completionDate = sample.getCompletionDate();
 	            if (completionDate!=null) {
 	                String status = sample.getStatus();
 	                if (DomainConstants.VALUE_BLOCKED.equals(status)) {
-	                    logger.trace("    Sample is blocked");
+	                    logger.info("    Sample is blocked");
 	                }
 	                else if (DomainConstants.VALUE_RETIRED.equals(status)) {
-	                    logger.trace("    Sample is retired");
+	                    logger.info("    Sample is retired");
 	                }
 	                else {
 	                    String line = sample.getLine();
@@ -93,16 +96,16 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
 	                    }
     	                if (cutoffDate==null || cutoffDate.isAfter(new DateTime(completionDate))) {
     	                    samplesByLine.put(line, sample);
-    	                    logger.debug("    Adding sample to line: "+line);
+    	                    logger.info("    Adding sample to line: "+line);
     	                    samplesAdded++;
     	                }
     	                else {
-    	                    logger.debug("    Sample completed after cutoff date: "+completionDate);
+    	                    logger.info("    Sample completed after cutoff date: "+completionDate);
     	                }
 	                }
 	            }
 	            else {
-	                logger.debug("    Sample has no completion date");
+	                logger.info("    Sample has no completion date");
 	            }
     	    }
     	}
@@ -189,16 +192,10 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
         ObjectSet childSet = new ObjectSet();
         childSet.setName(childName);
         childSet.setClassName(Sample.class.getName());
-        childSet = domainDao.save(childSet);
+        childSet = domainDao.save(ownerKey, childSet);
         
         domainDao.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(childSet)));
         
         return childSet;
-    }
-    
-    private void loadTopLevelFolder() throws Exception {
-        if (topLevelFolder!=null) return;
-        logger.info("Getting releases folder...");
-        this.topLevelFolder = sampleHelper.createOrVerifyRootEntity(DomainConstants.NAME_FLY_LINE_RELEASES, true, false);
     }
 }

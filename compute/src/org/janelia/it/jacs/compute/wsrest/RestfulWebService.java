@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
@@ -29,14 +30,23 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
-import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.model.domain.DomainConstants;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.sample.LineRelease;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.entity.DataSet;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.janelia.it.jacs.model.entity.json.JsonRelease;
 import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
+import org.janelia.it.jacs.model.entity.json.JsonRelease;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.status.CurrentTaskStatus;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
@@ -46,7 +56,6 @@ import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
 import org.jboss.resteasy.spi.Failure;
@@ -557,15 +566,15 @@ public class RestfulWebService {
     @Formatted
     public Response getReleaseInfo() {
 
-        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
         List<JsonRelease> releaseList = new ArrayList<>();
 
         try {
-            for(Entity releaseEntity : entityBean.getEntitiesByTypeName(null, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
-                releaseList.add(new JsonRelease(releaseEntity));
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            for(LineRelease release : dao.getDomainObjects(null, LineRelease.class)) {
+                releaseList.add(new JsonRelease(release));
             }
         }
-        catch (ComputeException e) {
+        catch (Exception e) {
             logger.error("Problem getting releases",e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
@@ -583,15 +592,15 @@ public class RestfulWebService {
     public Response getReleaseInfo(
             @PathParam("releaseName")String releaseName) {
 
-        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
         List<JsonRelease> releaseList = new ArrayList<>();
         
         try {
-            for(Entity releaseEntity : entityBean.getEntitiesByNameAndTypeName(null, releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
-                releaseList.add(new JsonRelease(releaseEntity));
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            for(LineRelease release : dao.getDomainObjectsByName(null, LineRelease.class, releaseName)) {
+                releaseList.add(new JsonRelease(release));
             }
         }
-        catch (ComputeException e) {
+        catch (Exception e) {
             logger.error("Problem getting releases",e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
@@ -610,46 +619,42 @@ public class RestfulWebService {
             @PathParam("releaseName")String releaseName) {
 
         final String context = "getReleaseStatus: ";
-        final AnnotationBeanRemote annotationBean = EJBFactory.getRemoteAnnotationBean();
-        final EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
-        final EntityBeanEntityLoader entityLoader = new EntityBeanEntityLoader(entityBean);
+        
         final Map<String,JsonLineStatus> lines = new HashMap<>();
         
         try {
+            final DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            final ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
+            final SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, null, logger);
+            
             // Consider all releases with a given name
-            for(Entity releaseEntity : entityBean.getEntitiesByNameAndTypeName(null, releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+            for(LineRelease release : dao.getLineReleases(null)) {
                 
                 // Find the release folder
-                Entity releaseFolder = null;
-                for(Entity folder : entityBean.getEntitiesByNameAndTypeName(releaseEntity.getOwnerKey(), releaseName, EntityConstants.TYPE_FOLDER)) {
-                    if (!folder.getOwnerKey().equals(releaseEntity.getOwnerKey())) continue;
-                    if (releaseFolder!=null) {
-                        return getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR,
-                                "Multiple annotation folders for release " + releaseName);
-                    }
-                    releaseFolder = folder;
+                TreeNode topLevelFolder = sampleHelper.createOrVerifyRootEntity(release.getOwnerKey(), DomainConstants.NAME_FLY_LINE_RELEASES, false);
+                if (topLevelFolder==null) {
+                    logger.error("User "+release.getOwnerKey()+" is missing top-level folder '"+DomainConstants.NAME_FLY_LINE_RELEASES+"'");
+                    continue;
+                }
+                TreeNode releaseFolder = sampleHelper.createOrVerifyChildFolder(topLevelFolder, release.getName(), false);
+                if (releaseFolder==null) {
+                    logger.error("User "+release.getOwnerKey()+" is missing release folder '"+release.getName()+"'");
+                    continue;
                 }
                 
                 // Get all annotators
-                Set<String> annotatorKeys = new HashSet<>();
-                String annotatorsStr = releaseEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATORS);
-                if (annotatorsStr != null) {
-                    for (String key : annotatorsStr.split(",")) {
-                        annotatorKeys.add(key);
-                    }
-                }
-                annotatorKeys.add(releaseEntity.getOwnerKey());
+                Set<String> annotatorKeys = new HashSet<>(release.getAnnotators());
+                annotatorKeys.add(release.getOwnerKey());
                 
                 // Walk the release folder hierarchy
-                entityLoader.populateChildren(releaseFolder);
-                for(Entity flylineFolder : EntityUtils.getChildrenOfType(releaseFolder, EntityConstants.TYPE_FOLDER)) {
-                    entityLoader.populateChildren(flylineFolder);
+                for(ObjectSet sampleSet : dao.getDomainObjectsAs(releaseFolder.getChildren(), ObjectSet.class)) {
 
+                    List<Reference> refs = DomainUtils.getReferencesForMembers(sampleSet);
+                    
                     // Get all sample annotations
-                    Multimap<String, Entity> annotationsByTarget = HashMultimap.<String, Entity>create();
-                    for (Entity annotation : annotationBean.getAnnotationsForChildren(null, flylineFolder.getId())) {
-                        String targetId = annotation.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANNOTATION_TARGET_ID);
-                        annotationsByTarget.put(targetId, annotation);
+                    Multimap<Long, Annotation> annotationsByTarget = HashMultimap.<Long, Annotation>create();
+                    for (Annotation annotation : dao.getAnnotations(null, refs)) {
+                        annotationsByTarget.put(annotation.getTarget().getTargetId(), annotation);
                     }
                     
                     // Count of samples in this release for this fly line
@@ -657,9 +662,9 @@ public class RestfulWebService {
                     // Count of representative samples marked for export
                     int numRepresentatives = 0;
                     
-                    for(Entity sample : EntityUtils.getChildrenOfType(flylineFolder, EntityConstants.TYPE_SAMPLE)) {
+                    for(Sample sample : dao.getDomainObjectsAs(refs, Sample.class)) {
                         boolean export = false;
-                        for(Entity annotation : annotationsByTarget.get(sample.getId().toString())) {
+                        for(Annotation annotation : annotationsByTarget.get(sample.getId())) {
                             if (!annotatorKeys.contains(annotation.getOwnerKey())) {
                                 continue;
                             }
@@ -676,15 +681,15 @@ public class RestfulWebService {
                         numSamples++;
                     }
                     
-                    JsonLineStatus status = lines.get(flylineFolder.getName());
+                    JsonLineStatus status = lines.get(sampleSet.getName());
                     if (status==null) {
                         status = new JsonLineStatus();
-                        lines.put(flylineFolder.getName(), status);
+                        lines.put(sampleSet.getName(), status);
                     }
                     
                     status.addSamples(numSamples);
                     status.addRepresentatives(numRepresentatives);
-                    status.getReleaseIds().add(releaseEntity.getId().toString());
+                    status.getReleaseIds().add(release.getId().toString());
                 }
             }
         }

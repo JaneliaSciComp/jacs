@@ -3,13 +3,13 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.io.File;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.entity.AlignmentResultNode;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
 import org.janelia.it.jacs.model.user_data.entity.SampleResultNode;
 import org.janelia.it.jacs.model.user_data.entity.SeparationResultNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 /**
@@ -48,7 +48,7 @@ public class SampleTrashCompactorService extends AbstractDomainService {
         	isDebug = Boolean.parseBoolean(testRun);	
         }
         
-        this.username = EntityUtils.getNameFromSubjectKey(ownerKey);
+        this.username = DomainUtils.getNameFromSubjectKey(ownerKey);
         this.userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
         this.archiveFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_ARCHIVE_DIR_PROP) + File.separator + username + File.separator);
         

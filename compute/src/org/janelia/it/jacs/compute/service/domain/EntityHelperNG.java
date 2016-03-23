@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
+import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -25,15 +25,15 @@ public class EntityHelperNG {
 
     protected Logger logger;
     protected ContextLogger contextLogger;
-    protected ComputeBeanLocal computeBean;
+    protected ComputeBeanRemote computeBean;
     protected DomainDAO domainDao;
     protected String ownerKey;
    
-    public EntityHelperNG(ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
+    public EntityHelperNG(ComputeBeanRemote computeBean, String ownerKey, Logger logger) {
         this(computeBean, ownerKey, logger, null);
     }
 
-    public EntityHelperNG(ComputeBeanLocal computeBean,
+    public EntityHelperNG(ComputeBeanRemote computeBean,
                         String ownerKey,
                         Logger logger,
                         ContextLogger contextLogger) {
@@ -55,7 +55,7 @@ public class EntityHelperNG {
      * @return
      * @throws Exception
      */
-    public TreeNode verifyOrCreateChildFolder(TreeNode parentFolder, String childName) throws Exception {
+    public TreeNode createOrVerifyChildFolder(TreeNode parentFolder, String childName, boolean createIfNecessary) throws Exception {
         
         TreeNode folder = null;
         for(DomainObject domainObject : domainDao.getDomainObjects(ownerKey, parentFolder.getChildren())) {
@@ -75,7 +75,7 @@ public class EntityHelperNG {
         if (folder == null) {
             folder = new TreeNode();
             folder.setName(childName);
-            domainDao.save(folder);
+            domainDao.save(ownerKey, folder);
             domainDao.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(folder)));
         }
 
@@ -91,7 +91,7 @@ public class EntityHelperNG {
      * @return
      * @throws Exception
      */
-    public TreeNode createOrVerifyRootEntity(String topLevelFolderName, boolean createIfNecessary, boolean loadTree) throws Exception {
+    public TreeNode createOrVerifyRootEntity(String ownerKey, String topLevelFolderName, boolean createIfNecessary) throws Exception {
         TreeNode topLevelFolder = null;
         Workspace workspace = domainDao.getDefaultWorkspace(ownerKey);
         
@@ -108,7 +108,7 @@ public class EntityHelperNG {
                 logger.debug("Creating new topLevelFolder with name=" + topLevelFolderName);
                 topLevelFolder = new TreeNode();
                 topLevelFolder.setName(topLevelFolderName);
-                domainDao.save(topLevelFolder);
+                domainDao.save(ownerKey, topLevelFolder);
                 domainDao.addChildren(ownerKey, workspace, Arrays.asList(Reference.createFor(topLevelFolder)));
                 logger.debug("Saved top level folder as " + topLevelFolder.getId());
             } 
