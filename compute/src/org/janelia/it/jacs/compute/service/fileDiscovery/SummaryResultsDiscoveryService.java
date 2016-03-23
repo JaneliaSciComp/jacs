@@ -41,7 +41,7 @@ import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class IncrementalSummaryResultsDiscoveryService extends AbstractDomainService {
+public class SummaryResultsDiscoveryService extends AbstractDomainService {
     
     private SampleHelperNG sampleHelper;
     private Sample sample;

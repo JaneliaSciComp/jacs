@@ -23,14 +23,13 @@ import org.janelia.it.jacs.model.user_data.FileNode;
 
 import com.google.common.collect.Ordering;
 
-
 /**
  * A neuron separation results discovery service which can be re-run multiple times on the same separation and
  * discover additional files each time.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class IncrementalSeparationDiscoveryService extends AbstractDomainService {
+public class SeparationDiscoveryService extends AbstractDomainService {
     
     private static final String NEURON_MIP_PREFIX = NeuronSeparationPipelineGridService.NAME+".PR.neuron";
     

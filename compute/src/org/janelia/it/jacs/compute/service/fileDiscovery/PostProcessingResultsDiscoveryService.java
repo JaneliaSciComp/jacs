@@ -18,7 +18,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class IncrementalPostProcessingResultsDiscoveryService extends AbstractDomainService {
+public class PostProcessingResultsDiscoveryService extends AbstractDomainService {
 
     private SampleHelperNG sampleHelper;
     private Sample sample;
