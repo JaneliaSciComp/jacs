@@ -1216,6 +1216,20 @@ public class DomainDAO {
         return 0;
     }
 
+    public List<LineRelease> getLineReleases(String subjectKey) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return toList(releaseCollection.find("{readers:{$in:#}}",subjects).as(LineRelease.class));
+    }
+
+    public LineRelease createLineRelease(String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
+        LineRelease release = new LineRelease();
+        release.setName(name);
+        release.setReleaseDate(releaseDate);
+        release.setLagTimeMonths(lagTimeMonths);
+        release.setDataSets(dataSets);
+        return save(release);
+    }
+
 //    public static void main(String[] args) throws Exception {
 //        
 //        String MONGO_SERVER_URL = "mongodb2";
