@@ -166,5 +166,35 @@ public class StringUtils {
         return newName;
     }
 
+    /**
+     * This is needed in case an all-digit-run string needs to be replaced in a
+     * string. There is some possibility that the target string will hold an
+     * all-digit string identical, except longer than the one to find.
+     *
+     * @author fosterl@janelia.org  blame me.
+     * @param targetString replace in this.
+     * @param oldDigitString what to replace.
+     * @param newDigitString what to replace it with.
+     * @return new version of target string.
+     */
+    public static String digitSafeReplace(String targetString, String oldDigitString, String newDigitString) {
+        if (targetString == null) {
+            return null;
+        }
+        int nextPos = 0;
+        int pos = -1;
+        while (-1 != (pos = targetString.indexOf(oldDigitString, nextPos))) {
+            // Do the string replacement, being careful about any
+            // (however remote) possibility of encountering a
+            // string-match that is longer than the search-string.
+            nextPos = pos + oldDigitString.length();
+            if ((pos == 0 || !Character.isDigit(targetString.charAt(pos - 1))
+                    && (nextPos >= targetString.length() || !Character.isDigit(targetString.charAt(nextPos))))) {
+                targetString = targetString.substring(0, pos) + newDigitString + targetString.substring(nextPos);
+                break;
+            }
+        }
+        return targetString;
+    }
     
 }
