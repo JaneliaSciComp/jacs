@@ -172,6 +172,13 @@ public class DomainDAO {
     }
 
     /**
+     * Return subject by name.
+     */
+    public Subject getSubjectByName(String subjectName) {
+        return subjectCollection.findOne("{name:#}",subjectName).as(Subject.class);
+    }
+
+    /**
      * Return all the preferences for a given subject.
      */
     public List<Preference> getPreferences(String subjectKey) {

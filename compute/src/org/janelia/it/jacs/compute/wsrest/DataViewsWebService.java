@@ -21,10 +21,19 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.mongodb.Block;
+import com.mongodb.MongoClient;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
+import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
@@ -36,6 +45,7 @@ import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
@@ -45,6 +55,9 @@ import org.janelia.it.jacs.shared.solr.SolrJsonResults;
 import org.janelia.it.jacs.shared.solr.SolrParams;
 import org.janelia.it.jacs.shared.solr.SolrQueryBuilder;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
+import static com.mongodb.client.model.Projections.*;
+import static com.mongodb.client.model.Filters.*;
+import static java.util.Arrays.asList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -283,22 +296,6 @@ public class DataViewsWebService extends ResourceConfig {
         }
     }
 
-    @GET
-    @Path("/sample/lsms")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<LSMImage> getLsmsForSample(@QueryParam("subjectKey") final String subjectKey,
-                                           @QueryParam("sampleId") final Long sampleId) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
-        try {
-            Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
-            return new ArrayList<LSMImage>(lsms);
-        } catch (Exception e) {
-            log.error("Error occurred getting lsms for sample",e);
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @POST
     @Path("/search")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -331,6 +328,66 @@ public class DataViewsWebService extends ResourceConfig {
 
         } catch (Exception e) {
             log.error("Error occurred executing search against SOLR",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GET
+    @Path("/sample/lsms")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<LSMImage> getLsmsForSample(@QueryParam("subjectKey") final String subjectKey,
+                                           @QueryParam("sampleId") final Long sampleId) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
+            return new ArrayList<LSMImage>(lsms);
+        } catch (Exception e) {
+            log.error("Error occurred getting lsms for sample",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/sample/info")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getLSMImageInfo(@QueryParam("totals") final Boolean totals,
+                                @QueryParam("status") final String status) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> sample = db.getCollection("sample");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            if (totals!=null && totals.booleanValue()) {
+                // get image counts by status
+                log.info(Long.toString(System.currentTimeMillis()));
+                jsonResult = sample.aggregate(asList(
+                        new Document("$group", new Document("_id", "$status").append("count", new Document("$sum", 1))))).into(new ArrayList());
+                log.info(Long.toString(System.currentTimeMillis()));
+
+
+            } else {
+                // get a list of sample info (name, ownerKey, updatedDate) by Status
+                log.info(Long.toString(System.currentTimeMillis()));
+                if (status!=null) {
+                    jsonResult = sample.find(eq("status", status)).batchSize(1000000).projection(fields(include("name", "ownerKey", "updatedDate"),
+                            excludeId())).into(new ArrayList());
+                } else {
+                    jsonResult = sample.find().batchSize(1000000).projection(fields(include("name", "ownerKey", "updatedDate", "status"),
+                            excludeId())).into(new ArrayList());
+                }
+                log.info(Long.toString(System.currentTimeMillis()));
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String moo =  objectMapper.writeValueAsString(jsonResult);
+            log.info(Long.toString(System.currentTimeMillis()));
+            return moo;
+        } catch (Exception e) {
+            log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
