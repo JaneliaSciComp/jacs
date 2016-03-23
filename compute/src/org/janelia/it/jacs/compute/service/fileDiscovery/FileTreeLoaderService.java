@@ -625,7 +625,7 @@ public class FileTreeLoaderService implements IService {
         1. Iterates through each group of PBD results
         2. Creates a new Entity for the PBD result
         3. Adds this entity as a ATTRIBUTE_PERFORMANCE_PROXY_IMAGE attribute for the original source Entity
-        4. Builds a map of <sourceEntityId> => <PBD result entityId>
+        4. Builds a map of <sourceDomainId> => <PBD result entityId>
         5. Then, iterates through each group of the MIP results
         6. Creates a new Entity for the MIP result
         7. Adds the MIP entity as the DEFAULT_2D_IMAGE for the matching PBD, if there is one
@@ -648,12 +648,12 @@ public class FileTreeLoaderService implements IService {
             for (ArtifactInfo ai : artifactList) {
                 String pbdResultPath=ai.artifactPath;
                 if (pbdResultPath==null) {
-                    logger.error("pbdResultPath for sourceEntityId="+ai.sourceEntityId+" is null");
+                    logger.error("pbdResultPath for sourceDomainId="+ai.sourceEntityId+" is null");
                 } else {
                     File pbdResultFile=new File(pbdResultPath);
                     logger.info("doComplete() using pbdResultFile="+pbdResultFile.getAbsolutePath());
                     if (!pbdResultFile.exists()) {
-                        logger.error("Could not find expected pbd result file="+pbdResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
+                        logger.error("Could not find expected pbd result file="+pbdResultFile.getAbsolutePath()+" for sourceDomainId="+ai.sourceEntityId);
                     } else {
                         // First, create the pbdResultEntity and place it in the supporting files folder
                         logger.info("doComplete() creating pbdResultEntity");
@@ -685,11 +685,11 @@ public class FileTreeLoaderService implements IService {
             for (ArtifactInfo ai : artifactList) {
                 String mipResultPath=ai.artifactPath;
                 if (mipResultPath==null) {
-                    logger.error("mipResultPath for sourceEntityId="+ai.sourceEntityId+" is null");
+                    logger.error("mipResultPath for sourceDomainId="+ai.sourceEntityId+" is null");
                 } else {
                     File mipResultFile=new File(mipResultPath);
                     if (!mipResultFile.exists()) {
-                        logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
+                        logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceDomainId="+ai.sourceEntityId);
                     } else {
                         // Create the mip entity
                     	Entity mipResultEntity=createEntityForFile(mipResultFile, EntityConstants.TYPE_IMAGE_2D);

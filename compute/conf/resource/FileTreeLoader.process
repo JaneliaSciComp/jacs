@@ -35,19 +35,19 @@
                 <input name="TASK_PARAMETER_3" value="files uploaded"/>
                 <input name="PROCESS_VARIABLE_3" value="FILES_UPLOADED"/>
                 <input name="TASK_PARAMETER_4" value="top level folder id"/>
-                <input name="PROCESS_VARIABLE_4" value="TOP_LEVEL_FOLDER_ID"/>
+                <input name="PROCESS_VARIABLE_4" value="PARENT_FOLDER_ID"/>
                 <output name="TOP_LEVEL_FOLDER_NAME"/>
                 <output name="FILE_TREE_ROOT_DIRECTORY"/>
                 <output name="FILES_UPLOADED"/>
-                <output name="TOP_LEVEL_FOLDER_ID"/>
+                <output name="PARENT_FOLDER_ID"/>
     	    </operation>
 
-	    	<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService" startEvent="running">
+	    	<operation name="Initial File Discovery" processor="org.janelia.it.jacs.compute.service.domain.FileTreeLoaderService" startEvent="running">
 	    	    <input name="MODE" value="SETUP"/>
     			<input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
                 <input name="FILES_UPLOADED"/>
-                <input name="TOP_LEVEL_FOLDER_ID"/>
+                <input name="PARENT_FOLDER_ID"/>
     			<input name="PBD_SIZE_THRESHOLD" value="5000000"/>
     			<input name="PBD_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW"/>
     			<input name="MIP_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW V3DPBD PBD"/>
@@ -68,13 +68,13 @@
 	                <sequence>
 
 				        <!-- Service instance for processing each PBD Group. This also adds to the MIP Groups -->
-				        <operation name="Create PBD Lists" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
+				        <operation name="Create PBD Lists" processor="org.janelia.it.jacs.compute.service.domain.FileTreeLoaderService">
 				            <input name="MODE" value="PBDLIST"/>
 				            <input name="GROUP_SIZE"/>
 				            <input name="PBD_INDEX"/>
  			                <input name="TOP_LEVEL_FOLDER_NAME"/>
     			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
-                            <input name="TOP_LEVEL_FOLDER_ID"/>
+                            <input name="PARENT_FOLDER_ID"/>
     				        <output name="PBD_RESULT_NODE"/>
 				            <output name="PBD_INPUT_LIST"/>
 				            <output name="PBD_OUTPUT_LIST"/>
@@ -99,13 +99,13 @@
         	    </sequence>
             </sequence>
 
-            <operation name="Synchronize updated MIP_INDEX after PBD" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
+            <operation name="Synchronize updated MIP_INDEX after PBD" processor="org.janelia.it.jacs.compute.service.domain.FileTreeLoaderService">
                 <input name="MODE" value="MIPSYNC"/>
 				<input name="GROUP_SIZE"/>
 				<input name="MIP_INDEX"/>
  			    <input name="TOP_LEVEL_FOLDER_NAME"/>
     			<input name="FILE_TREE_ROOT_DIRECTORY"/>
-                <input name="TOP_LEVEL_FOLDER_ID"/>
+                <input name="PARENT_FOLDER_ID"/>
     			<output name="MIP_INDEX"/>
             </operation>
 
@@ -115,13 +115,13 @@
 	                <sequence>
 
 				        <!-- Service instance for processing each MIP Group -->
-				        <operation name="Create MIP Lists" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService">
+				        <operation name="Create MIP Lists" processor="org.janelia.it.jacs.compute.service.domain.FileTreeLoaderService">
 				            <input name="MODE" value="MIPLIST"/>
 				            <input name="GROUP_SIZE"/>
 				            <input name="MIP_INDEX"/>
  			                <input name="TOP_LEVEL_FOLDER_NAME"/>
     			            <input name="FILE_TREE_ROOT_DIRECTORY"/>
-                            <input name="TOP_LEVEL_FOLDER_ID"/>
+                            <input name="PARENT_FOLDER_ID"/>
 				            <output name="MIP_RESULT_NODE"/>
 				            <output name="MIP_INPUT_LIST"/>
 				            <output name="MIP_OUTPUT_LIST"/>
@@ -159,14 +159,14 @@
             
             <sequence name="Discovery of new items" startEvent="running">
                 
-                <operation name="Creating Entities" processor="org.janelia.it.jacs.compute.service.fileDiscovery.FileTreeLoaderService" startEvent="running">
+                <operation name="Creating DomainObjects" processor="org.janelia.it.jacs.compute.service.domain.FileTreeLoaderService" startEvent="running">
                     <input name="MODE" value="COMPLETE"/>
                     <input name="GROUP_SIZE"/>
                     <input name="RESULT_NODE"/>
                     <input name="RESULT_NODE_ID"/>
                     <input name="TOP_LEVEL_FOLDER_NAME"/>
                     <input name="FILE_TREE_ROOT_DIRECTORY"/>
-                    <input name="TOP_LEVEL_FOLDER_ID"/>
+                    <input name="PARENT_FOLDER_ID"/>
                 </operation>
         
             </sequence>

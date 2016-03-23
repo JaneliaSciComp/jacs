@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.domain;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
@@ -9,14 +10,18 @@ import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
+import org.janelia.it.jacs.compute.service.domain.util.DomainHelper;
 import org.janelia.it.jacs.compute.util.FileUtils;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
+import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.Image;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.FileTreeLoaderResultNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -102,15 +107,13 @@ public class FileTreeLoaderService implements IService {
     final public String PBD_EXTENSIONS="PBD_EXTENSIONS";
     final public String MIP_EXTENSIONS="MIP_EXTENSIONS";
 
-    final public String SUPPORTING_FILES_FOLDER_NAME="supportingFiles";
-
     protected Logger logger;
+    protected DomainDAO domainDAO;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
-    protected FileDiscoveryHelper helper;
 
     protected Task task;
     protected String sessionName;
@@ -119,7 +122,8 @@ public class FileTreeLoaderService implements IService {
     protected Long topLevelFolderId;
     protected String rootDirectoryPath;
     protected boolean filesUploaded;
-    protected Entity topLevelFolder;
+    protected TreeNode topLevelFolder;
+    protected TreeNode parentFolder;
 //    protected Entity supportingFilesFolder;
     protected File rootDirectory;
     protected FileTreeLoaderResultNode resultNode;
@@ -133,7 +137,7 @@ public class FileTreeLoaderService implements IService {
     protected List<String> nodeFilePaths;
 
     protected static class ArtifactInfo {
-        public Long sourceEntityId;
+        public Long sourceDomainId;
         public String sourcePath;
         public String artifactPath;
     }
@@ -150,70 +154,60 @@ public class FileTreeLoaderService implements IService {
    @Override
     public void execute(IProcessData processData) throws ServiceException {
         try {
+            domainDAO = DomainDAOManager.getInstance().getDao();
+            computeBean = EJBFactory.getLocalComputeBean();
             this.processData=processData;
             logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
-            createDate = new Date();
             task= ProcessDataHelper.getTask(processData);
             sessionName = ProcessDataHelper.getSessionRelativePath(processData);
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
-            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            Subject subject = domainDAO.getSubjectByName(ownerName);
             this.ownerKey = subject.getKey();
             
             getNodeDirs();
             
-            helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
+            /*helper = new FileDiscoveryHelper(entityBean, computeBean, ownerKey, logger);
             helper.addFileExclusion("DrmaaSubmitter.log");
             helper.addFileExclusion("*.oos");
             helper.addFileExclusion("sge_*");
             helper.addFileExclusion("temp");
             helper.addFileExclusion("core.*");
-
+*/
             topLevelFolderName=processData.getString("TOP_LEVEL_FOLDER_NAME");
-
-            final String topLevelFolderIdStr = processData.getString("TOP_LEVEL_FOLDER_ID");
-            if ((topLevelFolderIdStr == null) || "null".equals(topLevelFolderIdStr)) {
-                logger.info("Creating top-level folder");
-                topLevelFolderId = null;
-                topLevelFolder = createOrVerifyRootEntity(topLevelFolderName);
+            String topLevelFolderIdStr = processData.getString("PARENT_FOLDER_ID");
+            if (topLevelFolderIdStr==null) {
+                throw new ServiceException(
+                        "failed to determine the folder where the imported files will be created");
             } else {
-                logger.info("Loading top-level folder using id");
                 try {
                     topLevelFolderId = Long.parseLong(topLevelFolderIdStr);
                 } catch (NumberFormatException e) {
                     throw new ServiceException(
-                            "failed to parse TOP_LEVEL_FOLDER_ID '" + topLevelFolderIdStr + "'", e);
+                            "failed to parse PARENT_FOLDER_ID '" + topLevelFolderIdStr + "'", e);
                 }
-                
-                if (topLevelFolderName!=null) {
-                    // need to load entire tree since children get checked for supporting files
-                    Entity parentFolder = entityBean.getEntityAndChildren(topLevelFolderId);
-                    List<Entity> orderedChildren = parentFolder.getOrderedChildren();
-                    Collections.reverse(orderedChildren);
-                    Entity foundChild = null;
-                    for(Entity child : orderedChildren) {
-                        if (child.getName().equals(topLevelFolderName)) {
-                            foundChild = child;
-                        }
-                    }
-                    if (foundChild!=null) {
-                        topLevelFolder = foundChild;
-                    }
-                    else {
-                        topLevelFolder = helper.addChildFolderToEntity(parentFolder, topLevelFolderName, null);
+                parentFolder = (TreeNode)domainDAO.getDomainObject(ownerKey,
+                        new Reference(TreeNode.class.getCanonicalName(), topLevelFolderId));
+                for (Reference parentChild: parentFolder.getChildren()) {
+                    DomainObject parentChildObj = domainDAO.getDomainObject(ownerKey, parentChild);
+                    if (parentChildObj.getName().equals(topLevelFolderName) && parentChildObj instanceof TreeNode) {
+                        topLevelFolder = (TreeNode)parentChildObj;
+                        logger.info("Loading top-level folder with id " + topLevelFolder.getId());
+                        break;
                     }
                 }
-                else {
-                    // need to load entire tree since children get checked for supporting files
-                    topLevelFolder = entityBean.getEntityTree(topLevelFolderId);
+                if (topLevelFolder == null) {
+                    logger.info("Creating top-level folder");
+                    TreeNode node = new TreeNode();
+                    node.setName(topLevelFolderName);
+                    topLevelFolder = domainDAO.save(ownerKey, node);
+                    List<Reference> refList = new ArrayList<>();
+                    refList.add(new Reference(DomainHelper.TREENODE_CLASSNAME,
+                            topLevelFolder.getId()));
+                    domainDAO.addChildren(ownerKey,parentFolder,refList);
                 }
             }
-
-//            logger.info("Creating supporting files folder");
-//            supportingFilesFolder=verifyOrCreateVirtualSubFolder(topLevelFolder, SUPPORTING_FILES_FOLDER_NAME);
 
             logger.info("Validating root directorypath");
             rootDirectoryPath=processData.getString("FILE_TREE_ROOT_DIRECTORY");
@@ -257,21 +251,6 @@ public class FileTreeLoaderService implements IService {
             throw new ServiceException(e);
         }
     }
-
-    protected Entity createOrVerifyRootEntity(String topLevelFolderName) throws Exception {
-        return helper.createOrVerifyRootEntity(topLevelFolderName,true /* create if necessary */, true);
-    }
-
-    protected Entity verifyOrCreateVirtualSubFolder(Entity parentFolder, String subFolderName) throws Exception {
-       for (Entity child : parentFolder.getChildren()) {
-           if (child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER) &&
-                   child.getName().equals(subFolderName)) {
-               return child;
-           }
-       }
-       // Need to create
-        return helper.addChildFolderToEntity(parentFolder, subFolderName, null);
-   }
    
     protected static synchronized Map<Long, List<ArtifactInfo>> getPbdGroupMap(Task task, boolean remove) {
         Long taskId=task.getObjectId();
@@ -341,16 +320,17 @@ public class FileTreeLoaderService implements IService {
         // First, set up result node
         resultNode = new FileTreeLoaderResultNode(task.getOwner(), task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for task " + task.getObjectId(), visibility, sessionName);
+
         EJBFactory.getLocalComputeBean().saveOrUpdateNode(resultNode);
         addNodeDir(resultNode.getDirectoryPath());
         
-        logger.info("FileTreeLoaderService  doSetup()  resultNodeId="+resultNode.getObjectId()+ " intended path="+resultNode.getDirectoryPath());
+        logger.info("FileTreeLoaderService  doSetup()  resultNodeId=" + resultNode.getObjectId() + " intended path=" + resultNode.getDirectoryPath());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
         FileUtil.cleanDirectory(resultNode.getDirectoryPath());
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE, resultNode);
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_ID, resultNode.getObjectId());
         processData.putItem(ProcessDataConstants.RESULT_FILE_NODE_DIR, resultNode.getDirectoryPath());
-        
+
         // Next, we will recursively traverse the file tree, and as we do so, we will create entities for
         // directories and files. We will also create lists of files for PBD and MIP generation.
         // In the 'COMPLETION' phase we will create entities for the MIPs and PBDs, and set the attributes
@@ -375,66 +355,37 @@ public class FileTreeLoaderService implements IService {
         logger.info("Finishing doSetup()");
     }
 
-    protected void addDirectoryAndContentsToFolder(Entity folder, File dir, Integer index) throws Exception {
+    protected void addDirectoryAndContentsToFolder(TreeNode folder, File dir, Integer index) throws Exception {
         logger.info("addDirectoryAndContentsToFolder: entry, folder=" +
                     folder + ", dir="+ dir.getAbsolutePath());
-        Entity dirEntity=verifyOrCreateChildFolderFromDir(folder, dir, index);
+        TreeNode dirFolder=verifyOrCreateChildFolderFromDir(folder, dir, index);
         List<File> orderedFiles=FileUtils.getOrderedFilesInDir(dir);
         for (int i=0;i<orderedFiles.size();i++) {
             File f=orderedFiles.get(i);
             if (passesExclusionFilter(f)) {
                 if (f.isDirectory()) {
-                    addDirectoryAndContentsToFolder(dirEntity, f, i);
+                    addDirectoryAndContentsToFolder(dirFolder, f, i);
                 } else {
-                    verifyOrCreateFileEntityForFolder(dirEntity, f, i);
+                    verifyOrCreateFileEntityForFolder(dirFolder, f, i);
+                    dirFolder = (TreeNode)domainDAO.getDomainObject(ownerKey,
+                            new Reference(DomainHelper.TREENODE_CLASSNAME, dirFolder.getId()));
                 }
             }
         }
     }
 
-    protected Entity verifyOrCreateChildFolderFromDir(Entity parentFolder, File dir, Integer index) throws Exception {
-
-        logger.info("Looking for folder entity with path "+dir.getAbsolutePath()+" in parent folder "+parentFolder.getId());
-        Entity folder = null;
-
-        entityBean.loadLazyEntity(parentFolder, false);
-        
-        for (EntityData ed : parentFolder.getEntityData()) {
-            Entity child = ed.getChildEntity();
-
-            if (child != null && child.getEntityTypeName().equals(EntityConstants.TYPE_FOLDER)) {
-                String folderPath = child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-                if (folderPath == null) {
-                    logger.warn("Unexpectedly could not find attribute '"+EntityConstants.ATTRIBUTE_FILE_PATH+"' for entity id="+child.getId());
-                }
-                else if (folderPath.equals(dir.getAbsolutePath())) {
-                    if (folder != null) {
-                        logger.warn("Unexpectedly found multiple child folders with path=" + dir.getAbsolutePath()+" for parent folder id="+parentFolder.getId());
-                    }
-                    else {
-                        folder = ed.getChildEntity();
-                    }
+    protected TreeNode verifyOrCreateChildFolderFromDir(TreeNode parentFolder, File dir, Integer index) throws Exception {
+        logger.info("Looking for folder with path "+dir.getAbsolutePath()+" in parent folder "+parentFolder.getId());
+        if (parentFolder.getChildren()!=null) {
+            for (Reference child: parentFolder.getChildren()) {
+                DomainObject childObj = domainDAO.getDomainObject(ownerKey, child);
+                if (childObj.getName()!=null && childObj.getName().equals(dir.getName())) {
+                    return (TreeNode)childObj;
                 }
             }
         }
-
-        if (folder == null) {
-            // We need to create a new folder
-            folder = new Entity();
-            folder.setCreationDate(createDate);
-            folder.setUpdatedDate(createDate);
-            folder.setOwnerKey(ownerKey);
-            folder.setName(dir.getName());
-            folder.setEntityTypeName(EntityConstants.TYPE_FOLDER);
-            folder.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, dir.getAbsolutePath());
-            folder = entityBean.saveOrUpdateEntity(folder);
-            logger.info("Saved folder as "+folder.getId());
-            helper.addToParent(parentFolder, folder, index, EntityConstants.ATTRIBUTE_ENTITY);
-        }
-        else {
-            logger.info("Found folder with id="+folder.getId());
-        }
-
+        TreeNode folder = DomainHelper.createChildFolder(parentFolder,ownerKey,dir.getName(), index);
+        logger.info("Saved folder as "+folder.getId());
         return folder;
     }
 
@@ -442,43 +393,66 @@ public class FileTreeLoaderService implements IService {
         return !f.getName().startsWith(".");
     }
 
-    protected void verifyOrCreateFileEntityForFolder(Entity folder, File f, Integer index) throws Exception {
-        // First check to see if an entity for this file path already exists
-        Entity fileEntity=null;
+    protected void verifyOrCreateFileEntityForFolder(TreeNode folder, File f, Integer index) throws Exception {
+        // if no object exists in this treenode, create an objectset
+        ObjectSet objectSet = null;
+        logger.info("ASDASDFAFDASFASDFASDFA" + folder.getChildren());
+        if (folder.getChildren()!=null) {
+            for (Reference item: folder.getChildren()) {
+                if (item.getTargetClassName().equals(DomainHelper.OBJECTSET_CLASSNAME)) {
+                    objectSet = (ObjectSet) domainDAO.getDomainObject(ownerKey, item);
+                    break;
+                }
+            }
+        }
+        if (objectSet==null) {
+            objectSet = DomainHelper.createChildObjectSet(folder,ownerKey,"Image Set");
+        }
+
+        // create an image object, if it doesn't already exist
+        // add the image object
+        Image imageFile = new Image();
+        imageFile.setName(f.getName());
         boolean alreadyExists=false;
-        entityBean.loadLazyEntity(folder, false);
-        for (Entity child : folder.getChildren()) {
-            String filePath=child.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
-            if (filePath!=null && filePath.equals(f.getAbsolutePath())) {
-                // Entity already exists
-                alreadyExists=true;
-                fileEntity=child;
+
+        if (objectSet.getMembers()!=null) {
+            for (Long imageId: objectSet.getMembers()) {
+                Reference imageRef = new Reference(DomainHelper.IMAGE_CLASSNAME, imageId);
+
+                Image imageObj = (Image)domainDAO.getDomainObject(ownerKey,imageRef);
+                if (imageObj.getFilepath().equals(f.getAbsolutePath())) {
+                    alreadyExists=true;
+                    imageFile = imageObj;
+                }
             }
         }
 
         if (!alreadyExists) {
-            // Assume the entity needs to be created
-            String entityTypeName = helper.getEntityTypeForFile(f);
-            fileEntity=createEntityForFile(f, entityTypeName);
-            helper.addToParent(folder, fileEntity, index, EntityConstants.ATTRIBUTE_ENTITY);
+            imageFile.setFilepath(f.getAbsolutePath());
+            imageFile = domainDAO.save(ownerKey, imageFile);
+            Reference imageRef = new Reference(DomainHelper.IMAGE_CLASSNAME, imageFile.getId());
+            List<Reference> imageRefList = new ArrayList<>();
+            imageRefList.add(imageRef);
+            domainDAO.addMembers(ownerKey, objectSet, imageRefList);
         }
 
         // Handle artifacts
         boolean willHaveMipArtifactBecauseHasPbdArtifact=false;
+        if (imageFile.getFiles()==null) {
+            imageFile.setFiles(new HashMap<FileType, String>());
+        }
         if (shouldHaveArtifact(f, pbdExtensions) && shouldTifHavePbdArtifact(f)) {
             willHaveMipArtifactBecauseHasPbdArtifact=true;
-            Entity pbdArtifact=fileEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
-            if (pbdArtifact==null) {
+            if (!imageFile.getFiles().containsKey(FileType.LosslessStack)) {
                 // We need to create one
-                addToArtifactList(fileEntity, null /*altSourcePath*/, pbdGroupMap);
+                addToArtifactList(imageFile, null /*altSourcePath*/, pbdGroupMap);
             }
         }
 
         if (!willHaveMipArtifactBecauseHasPbdArtifact && shouldHaveArtifact(f, mipExtensions)) {
-            Entity mipArtifact=fileEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-            if (mipArtifact==null) {
+            if (!imageFile.getFiles().containsKey(FileType.SignalMip)) {
                 // We need to create one
-                addToArtifactList(fileEntity, null /*altSourcePath*/, mipGroupMap);
+                addToArtifactList(imageFile, null /*altSourcePath*/, mipGroupMap);
             }
         }
 
@@ -488,20 +462,7 @@ public class FileTreeLoaderService implements IService {
         return !f.getName().toLowerCase().endsWith(".tif") || f.length() >= pbdThreshold;
     }
 
-    protected Entity createEntityForFile(File f, String entityTypeName) throws Exception {
-        Entity fileEntity=new Entity();
-        fileEntity.setCreationDate(createDate);
-        fileEntity.setUpdatedDate(createDate);
-        fileEntity.setOwnerKey(ownerKey);
-        fileEntity.setName(f.getName());
-        fileEntity.setEntityTypeName(entityTypeName);
-        fileEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH, f.getAbsolutePath());
-        fileEntity = entityBean.saveOrUpdateEntity(fileEntity);
-        logger.info("Saved file "+f.getAbsolutePath()+" as entity="+fileEntity.getId());
-        return fileEntity;
-    }
-
-    protected void addToArtifactList(Entity pbdSourceEntity, String altSourcePath, Map<Long, List<ArtifactInfo>> groupMap) {
+    protected void addToArtifactList(Image pbdSource, String altSourcePath, Map<Long, List<ArtifactInfo>> groupMap) {
         long currentIndex=groupMap.size()-1;
         List<ArtifactInfo> artifactList;
         if (currentIndex<0) {
@@ -518,11 +479,11 @@ public class FileTreeLoaderService implements IService {
             groupMap.put(currentIndex, artifactList);
         }
         ArtifactInfo newInfo=new ArtifactInfo();
-        newInfo.sourceEntityId=pbdSourceEntity.getId();
+        newInfo.sourceDomainId =pbdSource.getId();
         if (altSourcePath!=null) {
             newInfo.sourcePath=altSourcePath;
         } else {
-            newInfo.sourcePath=pbdSourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            newInfo.sourcePath=pbdSource.getFilepath();
         }
         // leave artifactPath null for now
         artifactList.add(newInfo);
@@ -543,12 +504,12 @@ public class FileTreeLoaderService implements IService {
         Long groupIndex=processData.getLong("PBD_INDEX");
         logger.info("PBD_INDEX="+groupIndex);
         List<ArtifactInfo> artifactList=pbdGroupMap.get(groupIndex);
-        
+
         FileTreeLoaderResultNode resultNode=new FileTreeLoaderResultNode(ownerKey, task, "FileTreeLoaderResultNode",
                 "FileTreeLoaderResultNode for "+rootDirectoryPath+" pbd group index="+groupIndex, visibility, sessionName);
         resultNode=(FileTreeLoaderResultNode)computeBean.saveOrUpdateNode(resultNode);
         addNodeDir(resultNode.getDirectoryPath());
-        
+
         logger.info("Created resultNode id=" + resultNode.getObjectId() + " PBD groupIndex=" +
                     groupIndex + " listSize=" + artifactList.size());
         FileUtil.ensureDirExists(resultNode.getDirectoryPath());
@@ -556,12 +517,12 @@ public class FileTreeLoaderService implements IService {
         List<String> outputPathList=new ArrayList<String>();
         for (ArtifactInfo ai : artifactList) {
             inputPathList.add(ai.sourcePath);
-            String outputPath=resultNode.getDirectoryPath()+File.separator+"pbdArtifact_"+ai.sourceEntityId+".v3dpbd";
+            String outputPath=resultNode.getDirectoryPath()+File.separator+"pbdArtifact_"+ai.sourceDomainId +".v3dpbd";
             ai.artifactPath=outputPath;
             outputPathList.add(outputPath);
             // Add mip entry
-            Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
-            addToArtifactList(sourceEntity, outputPath, mipGroupMap);
+            Image source = (Image)domainDAO.getDomainObject(ownerKey, new Reference(DomainHelper.IMAGE_CLASSNAME, ai.sourceDomainId));
+            addToArtifactList(source, outputPath, mipGroupMap);
         }
         logger.info("doPbdList() putting vars in processData, inputListSize="+inputPathList.size()+" outputListSize="+outputPathList.size());
         processData.putItem("PBD_RESULT_NODE", resultNode);
@@ -598,8 +559,8 @@ public class FileTreeLoaderService implements IService {
         List<String> outputPathList=new ArrayList<String>();
         for (ArtifactInfo ai : artifactList) {
             inputPathList.add(ai.sourcePath);
-            String outputPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceEntityId+".tif";
-            ai.artifactPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceEntityId+".png";
+            String outputPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceDomainId +".tif";
+            ai.artifactPath=resultNode.getDirectoryPath()+File.separator+"mipArtifact_"+ai.sourceDomainId +".png";
             outputPathList.add(outputPath);
         }
         logger.info("doMipList() putting vars in processData, inputListSize="+inputPathList.size()+" outputListSize="+outputPathList.size());
@@ -616,9 +577,9 @@ public class FileTreeLoaderService implements IService {
         Executes the following steps:
 
         1. Iterates through each group of PBD results
-        2. Creates a new Entity for the PBD result
-        3. Adds this entity as a ATTRIBUTE_PERFORMANCE_PROXY_IMAGE attribute for the original source Entity
-        4. Builds a map of <sourceEntityId> => <PBD result entityId>
+        2. Creates a new DomainObject for the PBD result
+       // 3. Adds this object as a ATTRIBUTE_PERFORMANCE_PROXY_IMAGE attribute for the original source Entity
+        4. Builds a map of <sourceDomainId> => <PBD result DomainId>
         5. Then, iterates through each group of the MIP results
         6. Creates a new Entity for the MIP result
         7. Adds the MIP entity as the DEFAULT_2D_IMAGE for the matching PBD, if there is one
@@ -627,9 +588,6 @@ public class FileTreeLoaderService implements IService {
      */
     protected void doComplete() throws Exception {
         logger.info("Starting doComplete()");
-
-        // Map for interconnecting PBD results with MIP results
-        Map<Long, Entity> sourceEntityIdToPbdEntityMap=new HashMap<Long, Entity>();
 
         // Handle PBDs
         List<Long> pbdGroupKeyList=new ArrayList<Long>(pbdGroupMap.keySet());
@@ -641,29 +599,24 @@ public class FileTreeLoaderService implements IService {
             for (ArtifactInfo ai : artifactList) {
                 String pbdResultPath=ai.artifactPath;
                 if (pbdResultPath==null) {
-                    logger.error("pbdResultPath for sourceEntityId="+ai.sourceEntityId+" is null");
+                    logger.error("pbdResultPath for sourceDomainId="+ai.sourceDomainId +" is null");
                 } else {
                     File pbdResultFile=new File(pbdResultPath);
                     logger.info("doComplete() using pbdResultFile="+pbdResultFile.getAbsolutePath());
                     if (!pbdResultFile.exists()) {
-                        logger.error("Could not find expected pbd result file="+pbdResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
+                        logger.error("Could not find expected pbd result file="+pbdResultFile.getAbsolutePath()+" for sourceDomainId="+ai.sourceDomainId);
                     } else {
-                        // First, create the pbdResultEntity and place it in the supporting files folder
-                        logger.info("doComplete() creating pbdResultEntity");
-                        Entity pbdResultEntity=createEntityForFile(pbdResultFile, EntityConstants.TYPE_IMAGE_3D);
-                        pbdResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
-                        logger.info("doComplete() saving pbdResultEntity");
-                        entityBean.saveOrUpdateEntity(pbdResultEntity);
-//                        helper.addToParent(supportingFilesFolder, pbdResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
-                        // Second, add this entity as the proxy attribute of the source Entity
-                        logger.info("doComplete() adding entity as performance proxy");
-                        Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
-                        logger.info("doComplete() adding entityData to entity of type="+sourceEntity.getEntityTypeName());
-                        entityBean.addEntityToParent(sourceEntity, pbdResultEntity, null, EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE);
-                        
-                        // Populate map
-                        logger.info("doComplete() populating entityIdToPbdEntity map");
-                        sourceEntityIdToPbdEntityMap.put(ai.sourceEntityId, pbdResultEntity);
+                        // First, get the source Image DomainObject and attach pbd results
+                        logger.info("doComplete() creating pbdResult for source " + ai.sourceDomainId);
+                        Image sourceImage = (Image)domainDAO.getDomainObject(ownerKey, new Reference(DomainHelper.IMAGE_CLASSNAME,
+                                ai.sourceDomainId));
+                        if (sourceImage!=null) {
+                            if (sourceImage.getFiles()==null) {
+                                sourceImage.setFiles(new HashMap<FileType, String>());
+                            }
+                            sourceImage.getFiles().put(FileType.LosslessStack, pbdResultPath);
+                        }
+                        domainDAO.save(ownerKey, sourceImage);
                     }
                 }
             }
@@ -678,29 +631,24 @@ public class FileTreeLoaderService implements IService {
             for (ArtifactInfo ai : artifactList) {
                 String mipResultPath=ai.artifactPath;
                 if (mipResultPath==null) {
-                    logger.error("mipResultPath for sourceEntityId="+ai.sourceEntityId+" is null");
+                    logger.error("mipResultPath for sourceDomainId="+ai.sourceDomainId +" is null");
                 } else {
                     File mipResultFile=new File(mipResultPath);
                     if (!mipResultFile.exists()) {
-                        logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceEntityId="+ai.sourceEntityId);
+                        logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceDomainId="+ai.sourceDomainId);
                     } else {
-                        // Create the mip entity
-                    	Entity mipResultEntity=createEntityForFile(mipResultFile, EntityConstants.TYPE_IMAGE_2D);
-                        mipResultEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_ARTIFACT_SOURCE_ID, ai.sourceEntityId.toString());
-                        entityBean.saveOrUpdateEntity(mipResultEntity);
-//                        helper.addToParent(supportingFilesFolder, mipResultEntity, null, EntityConstants.ATTRIBUTE_ENTITY);
-                        // Add as default 2D image
-                        Entity sourceEntity=entityBean.getEntityById(ai.sourceEntityId.toString());
-                        File sourceFile=new File(sourceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-                        logger.info("Creating entityData DEFAULT_2D_IMAGE for sourceEntity id="+sourceEntity.getId()+" type="+sourceEntity.getEntityTypeName()+" sourceFile="+sourceFile.getAbsolutePath());
-                        entityBean.addEntityToParent(sourceEntity, mipResultEntity, null, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
-                        
-                        logger.info("Done with entityData save");
-                        // Get PBD and add 2D default image for this
-                        Entity pbdForMip=sourceEntityIdToPbdEntityMap.get(ai.sourceEntityId);
-                        if (pbdForMip!=null) {
-                            entityBean.addEntityToParent(pbdForMip, mipResultEntity, null, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+                        // Create the mip filepath
+                        Image sourceImage = (Image)domainDAO.getDomainObject(ownerKey, new Reference(DomainHelper.IMAGE_CLASSNAME,
+                                ai.sourceDomainId));
+                        if (sourceImage!=null) {
+                            if (sourceImage.getFiles()==null) {
+                                sourceImage.setFiles(new HashMap<FileType, String>());
+                            }
+                            sourceImage.getFiles().put(FileType.SignalMip, mipResultPath);
                         }
+                        domainDAO.save(ownerKey, sourceImage);
+                        logger.info("Done with entityData save");
+
                         // Delete extra tif file
                         String pngName=mipResultFile.getName();
                         if (pngName.endsWith(".png")) {
@@ -715,11 +663,6 @@ public class FileTreeLoaderService implements IService {
             }
         }
 
-        // remove supporting files entity if it is empty
-//        if (! supportingFilesFolder.hasChildren()) {
-//            entityBean.deleteSmallEntityTree(ownerKey, supportingFilesFolder.getId());
-//        }
-
         clearResultMaps();
 
         logger.info("Finished doComplete()");
@@ -733,6 +676,7 @@ public class FileTreeLoaderService implements IService {
         }
     }
 
+    // move files to scality
     private void moveUploadedFilesIntoFileStore() throws Exception {
 
         final File uploadDirectory = rootDirectory;
@@ -785,6 +729,8 @@ public class FileTreeLoaderService implements IService {
 
             for (File movedFile : movedFiles) {
                 verifyOrCreateFileEntityForFolder(topLevelFolder, movedFile, 1 /*index*/);
+                topLevelFolder = (TreeNode)domainDAO.getDomainObject(ownerKey,
+                        new Reference(DomainHelper.TREENODE_CLASSNAME, topLevelFolder.getId()));
             }
 
         } else {
