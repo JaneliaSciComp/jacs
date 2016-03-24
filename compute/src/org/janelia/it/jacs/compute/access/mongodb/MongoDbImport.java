@@ -1977,7 +1977,7 @@ public class MongoDbImport extends AnnotationDAO {
         Cache annotationCache = largeOp.getCache(MongoLargeOperations.ANNOTATION_MAP);
         List<Long> targetIds = new ArrayList<>();
         for(Object key : annotationCache.getKeys()) {
-            Set<Annotation> annotations = (Set<Annotation>)annotationCache.get(key);
+            Set<Annotation> annotations = (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, key);
             Map<Long,Annotation> map = DomainUtils.getMapById(annotations);
             
             List<Long> annotationIds = DomainUtils.getIds(annotations);
