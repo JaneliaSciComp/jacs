@@ -63,27 +63,26 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
     
-    private Map<String, ObjectiveSample> objectives;
-    
+    private Map<String, ObjectiveSample> objectives = new HashMap<>();
+
+    @JsonProperty
     public Map<String, ObjectiveSample> getObjectives() {
-        return Collections.unmodifiableMap(objectives);
+        return objectives;
     }
 
     @JsonProperty
     public void setObjectives(Map<String, ObjectiveSample> objectives) {
+        if (objectives==null) throw new IllegalArgumentException("Property cannot be null");
+        this.objectives = objectives;
         for(String objective : objectives.keySet()) {
             ObjectiveSample objectiveSample = objectives.get(objective);
             objectiveSample.setObjective(objective);
             objectiveSample.setParent(this);
         }
-        this.objectives = objectives;
     }
     
     @JsonIgnore
     public void addObjectiveSample(String objective, ObjectiveSample objectiveSample) {
-        if (objectives==null) {
-            this.objectives = new HashMap<>();
-        }
         objectiveSample.setObjective(objective);
         objectiveSample.setParent(this);
         objectives.put(objective, objectiveSample);
@@ -91,16 +90,13 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @JsonIgnore
     public void removeObjectiveSample(String objective, ObjectiveSample objectiveSample) {
-        if (objectives==null) {
-            return;
+        if (objectives.remove(objective)==objectiveSample) {
+            objectiveSample.setParent(null);
         }
-        objectiveSample.setParent(null);
-        objectives.remove(objective);
     }
 
     @JsonIgnore
     public List<String> getOrderedObjectives() {
-        if (objectives==null || objectives.isEmpty()) return null;
         List<String> sortedObjectives = new ArrayList<>(objectives.keySet());
         Collections.sort(sortedObjectives);
         return Collections.unmodifiableList(sortedObjectives);
@@ -108,7 +104,6 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     @JsonIgnore
     public ObjectiveSample getObjectiveSample(String objective) {
-        if (objectives==null) return null;
         return objectives.get(objective);
     }
 
@@ -122,20 +117,12 @@ public class Sample extends AbstractDomainObject implements IsParent {
     }
     
     @JsonIgnore
-    public PipelineResult findResultById(Long id) {
-        for(String objective : getOrderedObjectives()) {
-            ObjectiveSample objectiveSample = getObjectiveSample(objective);
-            if (!objectiveSample.hasPipelineRuns()) continue;
-            for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
-                if (!run.hasResults()) continue;
-                for(PipelineResult result : run.getResults()) {
-                    if (result!=null && result.getId()!=null && result.getId().equals(id)) {
-                        return result;
-                    }
-                }
-            }
+    public <T extends PipelineResult> List<T> getResultsById(Class<T> resultClass, Long resultEntityId) {
+        List<T> results = new ArrayList<>();
+        for(ObjectiveSample objectiveSample : getObjectiveSamples()) {
+            results.addAll(objectiveSample.getResultsById(resultClass, resultEntityId));
         }
-        return null;
+        return results;
     }
     
     /* EVERYTHING BELOW IS AUTO-GENERATED */

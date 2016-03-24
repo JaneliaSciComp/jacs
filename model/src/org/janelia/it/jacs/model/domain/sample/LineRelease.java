@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -17,11 +18,9 @@ public class LineRelease extends AbstractDomainObject {
     private Date releaseDate;
     private Integer lagTimeMonths;
     private boolean sageSync;    
-    private List<String> dataSets;
-    private List<String> annotators;
-    private List<String> subscribers;
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    private List<String> dataSets = new ArrayList<>();
+    private List<String> annotators = new ArrayList<>();
+    private List<String> subscribers = new ArrayList<>();
 
     public Date getReleaseDate() {
         return releaseDate;
@@ -52,6 +51,7 @@ public class LineRelease extends AbstractDomainObject {
     }
 
     public void setDataSets(List<String> dataSets) {
+        if (dataSets==null) throw new IllegalArgumentException("Property cannot be null");
         this.dataSets = dataSets;
     }
 
@@ -60,6 +60,7 @@ public class LineRelease extends AbstractDomainObject {
     }
 
     public void setAnnotators(List<String> annotators) {
+        if (annotators==null) throw new IllegalArgumentException("Property cannot be null");
         this.annotators = annotators;
     }
 
@@ -68,6 +69,7 @@ public class LineRelease extends AbstractDomainObject {
     }
 
     public void setSubscribers(List<String> subscribers) {
+        if (subscribers==null) throw new IllegalArgumentException("Property cannot be null");
         this.subscribers = subscribers;
     }
 

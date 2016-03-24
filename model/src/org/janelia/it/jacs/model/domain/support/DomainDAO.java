@@ -539,7 +539,7 @@ public class DomainDAO {
             log.warn("Multiple error ontologies detected. Please ensure that "+DomainConstants.GENERAL_USER_GROUP_KEY+" only owns a single ontology with name "+DomainConstants.ERROR_ONTOLOGY_NAME);
         }
         for (Ontology ontology : ontologies) {
-            OntologyTerm term = DomainUtils.findTerm(ontology, DomainConstants.ERROR_ONTOLOGY_CATEGORY);
+            OntologyTerm term = ontology.findTerm(DomainConstants.ERROR_ONTOLOGY_CATEGORY);
             if (term instanceof Category) {
                 return term;
             }
@@ -550,7 +550,7 @@ public class DomainDAO {
     public Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, Object value) throws Exception {
         
         Ontology ontology = getDomainObject(subjectKey, Ontology.class, ontologyTermReference.getOntologyId());
-        OntologyTerm ontologyTerm = DomainUtils.findTerm(ontology, ontologyTermReference.getOntologyTermId());
+        OntologyTerm ontologyTerm = ontology.findTerm(ontologyTermReference.getOntologyTermId());
         
         OntologyTerm keyTerm = ontologyTerm;
         OntologyTerm valueTerm = null;
@@ -737,7 +737,7 @@ public class DomainDAO {
         if (ontology==null) {
             throw new IllegalArgumentException("Ontology not found: "+ontologyId);
         }
-        OntologyTerm parent = DomainUtils.findTerm(ontology, parentTermId);
+        OntologyTerm parent = ontology.findTerm(parentTermId);
         if (parent==null) {
             throw new IllegalArgumentException("Term not found: "+parentTermId);
         }
@@ -792,7 +792,7 @@ public class DomainDAO {
         if (ontology==null) {
             throw new IllegalArgumentException("Ontology not found: "+ontologyId);
         }
-        OntologyTerm parent = DomainUtils.findTerm(ontology, parentTermId);
+        OntologyTerm parent = ontology.findTerm(parentTermId);
         if (parent==null) {
             throw new IllegalArgumentException("Term not found: "+parentTermId);
         }
@@ -821,7 +821,7 @@ public class DomainDAO {
         if (ontology==null) {
             throw new IllegalArgumentException("Ontology not found: "+ontologyId);
         }
-        OntologyTerm parent = DomainUtils.findTerm(ontology, parentTermId);
+        OntologyTerm parent = ontology.findTerm(parentTermId);
         if (parent.getTerms()==null) {
             throw new Exception("Term has no children: "+parentTermId);
         }
@@ -1231,14 +1231,13 @@ public class DomainDAO {
 
 //    public static void main(String[] args) throws Exception {
 //        
-//        String MONGO_SERVER_URL = "mongodb2";
+//        String MONGO_SERVER_URL = "dev-mongodb";
 //        String MONGO_DATABASE = "jacs";
-//        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, "flyportal", "flyportal");
-//        Collection<Workspace> workspaces = dao.getWorkspaces("user:asoy");
-//        for(Workspace workspace : workspaces) {
-//            System.out.println(workspace.getId()+" "+workspace);
+//        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
+//        Collection<DataSet> datasets = dao.getDataSets("group:heberleinlab");
+//        for(DataSet dataset : datasets) {
+//            System.out.println(dataset.getId()+" "+dataset.getPipelineProcesses());
 //        }
-//        dao.changePermissions("user:nerna", "objectSet", Arrays.asList(1827600279629987929L), "user:rokickik", "rw", true);
 //        
 //    }
 

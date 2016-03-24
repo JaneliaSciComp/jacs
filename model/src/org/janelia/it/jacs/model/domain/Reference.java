@@ -10,7 +10,6 @@ public class Reference {
     private String targetClassName;
     private Long targetId;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Reference() {
     }
 

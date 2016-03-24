@@ -14,7 +14,6 @@ public class ReverseReference {
     private Long referenceId;
     private Long count;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getReferringClassName() {
         return referringClassName;
     }

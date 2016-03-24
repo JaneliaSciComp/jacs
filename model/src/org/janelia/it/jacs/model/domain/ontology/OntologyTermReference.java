@@ -29,7 +29,6 @@ public class OntologyTermReference {
         this.ontologyTermId = term.getId();
     }
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Long getOntologyId() {
         return ontologyId;
     }

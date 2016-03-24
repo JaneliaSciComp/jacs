@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
@@ -29,9 +30,7 @@ public class NeuronFragment extends AbstractDomainObject implements HasRelativeF
     @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
     
-    private Map<FileType, String> files;
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    private Map<FileType, String> files = new HashMap<>();
     
     public Integer getNumber() {
         return number;
@@ -70,6 +69,7 @@ public class NeuronFragment extends AbstractDomainObject implements HasRelativeF
     }
 
     public void setFiles(Map<FileType, String> files) {
+        if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
     }
 

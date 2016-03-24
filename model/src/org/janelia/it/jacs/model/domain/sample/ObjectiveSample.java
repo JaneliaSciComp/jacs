@@ -15,8 +15,8 @@ import com.google.common.collect.Lists;
 public class ObjectiveSample {
 
     private String chanSpec;
-    private List<SampleTile> tiles;
-    private List<SamplePipelineRun> pipelineRuns;
+    private List<SampleTile> tiles = new ArrayList<>();
+    private List<SamplePipelineRun> pipelineRuns = new ArrayList<>();
     
     private transient String objective;
     private transient Sample parent;
@@ -62,32 +62,24 @@ public class ObjectiveSample {
     }
 
     public void setPipelineRuns(List<SamplePipelineRun> pipelineRuns) {
+        if (pipelineRuns==null) throw new IllegalArgumentException("Property cannot be null");
         this.pipelineRuns = pipelineRuns;
     }
     
     @JsonIgnore
     public void addRun(SamplePipelineRun pipelineRun) {
-        if (pipelineRuns==null) {
-            this.pipelineRuns = new ArrayList<>();
-        }
         pipelineRun.setParent(this);
         pipelineRuns.add(pipelineRun);
     }
 
     @JsonIgnore
     public void removeRun(SamplePipelineRun pipelineRun) {
-        if (pipelineRuns==null) {
-            return;
-        }
         pipelineRun.setParent(null);
         pipelineRuns.remove(pipelineRun);
     }
 
     @JsonIgnore
     public SamplePipelineRun getLatestRun() {
-        if (pipelineRuns == null) {
-            return null;
-        }
         if (pipelineRuns.isEmpty()) {
             return null;
         }
@@ -96,9 +88,6 @@ public class ObjectiveSample {
 
     @JsonIgnore
     public SamplePipelineRun getLatestSuccessfulRun() {
-        if (pipelineRuns == null) {
-            return null;
-        }
         if (pipelineRuns.isEmpty()) {
             return null;
         }
@@ -127,9 +116,6 @@ public class ObjectiveSample {
     
     @JsonIgnore
     public SamplePipelineRun getRunById(Long pipelineRunId) {
-        if (pipelineRuns == null) {
-            return null;
-        }
         for(SamplePipelineRun run : pipelineRuns) {
             if (run.getId().equals(pipelineRunId)) {
                 return run;
@@ -156,23 +142,18 @@ public class ObjectiveSample {
     }
 
     public void setTiles(List<SampleTile> tiles) {
+        if (tiles==null) throw new IllegalArgumentException("Property cannot be null");
         this.tiles = tiles;
     }
     
     @JsonIgnore
     public void addTile(SampleTile tile) {
-        if (tiles==null) {
-            this.tiles = new ArrayList<>();
-        }
         tile.setParent(this);
         tiles.add(tile);
     }
 
     @JsonIgnore
     public void removeTile(SampleTile tile) {
-        if (tiles==null) {
-            return;
-        }
         tile.setParent(null);
         tiles.remove(tile);
     }

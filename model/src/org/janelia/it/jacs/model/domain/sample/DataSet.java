@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
@@ -18,9 +19,8 @@ public class DataSet extends AbstractDomainObject {
     private String sampleNamePattern;
     private SampleImageType sampleImageType;
     private boolean sageSync;
-    private List<String> pipelineProcesses;
+    private List<String> pipelineProcesses = new ArrayList<>();
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getIdentifier() {
         return identifier;
     }
@@ -58,6 +58,8 @@ public class DataSet extends AbstractDomainObject {
     }
 
     public void setPipelineProcesses(List<String> pipelineProcesses) {
+        if (pipelineProcesses==null) throw new IllegalArgumentException("Property cannot be null");
         this.pipelineProcesses = pipelineProcesses;
     }
+    
 }

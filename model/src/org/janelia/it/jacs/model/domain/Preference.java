@@ -31,8 +31,6 @@ public class Preference implements HasIdentifier {
         this.key = key;
         this.value = value;
     }
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     
     public String getCategory() {
         return category;

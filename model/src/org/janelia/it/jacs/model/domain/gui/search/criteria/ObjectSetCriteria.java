@@ -10,8 +10,6 @@ public class ObjectSetCriteria extends Criteria {
     @JsonUnwrapped
     private Reference objectSetReference;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
-
     public String getObjectSetName() {
         return objectSetName;
     }

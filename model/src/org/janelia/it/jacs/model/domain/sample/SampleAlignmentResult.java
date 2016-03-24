@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
@@ -21,9 +22,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
     private String objective;
     private String alignmentSpace;
     private String boundingBox;
-    private Map<AlignmentScoreType, String> scores;
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    private Map<AlignmentScoreType, String> scores = new HashMap<>();
 
     @Override
     public String getAnatomicalArea() {
@@ -99,6 +98,7 @@ public class SampleAlignmentResult extends PipelineResult implements HasAnatomic
     }
 
     public void setScores(Map<AlignmentScoreType, String> scores) {
+        if (scores==null) throw new IllegalArgumentException("Property cannot be null");
         this.scores = scores;
     }
 }

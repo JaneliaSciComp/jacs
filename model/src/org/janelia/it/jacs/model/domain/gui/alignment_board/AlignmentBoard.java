@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.gui.alignment_board;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
@@ -12,7 +13,7 @@ public class AlignmentBoard extends AbstractDomainObject {
     private String opticalResolution;
     private String alignmentSpace;
     private String encodedUserSettings;
-    private List<AlignmentBoardItem> children;
+    private List<AlignmentBoardItem> children = new ArrayList<>();
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getImageSize() {
@@ -52,6 +53,7 @@ public class AlignmentBoard extends AbstractDomainObject {
     }
 
     public void setChildren(List<AlignmentBoardItem> children) {
+        if (children==null) throw new IllegalArgumentException("Property cannot be null");
         this.children = children;
     }
 }

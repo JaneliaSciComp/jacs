@@ -21,7 +21,7 @@ public class SamplePipelineRun {
     private String pipelineProcess;
     private Integer pipelineVersion;
     private Date creationDate;
-    private List<PipelineResult> results;
+    private List<PipelineResult> results = new ArrayList<>();
     private PipelineError error;
     private transient ObjectiveSample parent;
 
@@ -37,47 +37,37 @@ public class SamplePipelineRun {
 
     @JsonIgnore
     public boolean hasResults() {
-        return results!=null && !results.isEmpty();
+        return !results.isEmpty();
     }
     
     @JsonProperty
     public List<PipelineResult> getResults() {
-        return results==null?null:Collections.unmodifiableList(results);
+        return results;
     }
     
     @JsonProperty
     public void setResults(List<PipelineResult> results) {
-        if (results==null)
-            return;
+        if (results==null) throw new IllegalArgumentException("Property cannot be null");
+        this.results = results;
         for(PipelineResult result : results) {
             result.setParentRun(this);
         }
-        this.results = results;
     }
 
     @JsonIgnore
     public void addResult(PipelineResult result) {
-        if (results==null) {
-            this.results = new ArrayList<>();
-        }
         result.setParentRun(this);
         results.add(result);
     }
 
     @JsonIgnore
     public void removeResult(PipelineResult result) {
-        if (results==null) {
-            return;
-        }
         results.remove(result);
     }
     
     @JsonIgnore
     @SuppressWarnings("unchecked")
     public <T extends PipelineResult> T getLatestResultOfType(Class<T> resultClass) {
-        if (results==null) {
-            return null;
-        }
         for (int i = results.size()-1; i>=0; i--) {
             PipelineResult result = results.get(i);
             if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
@@ -106,15 +96,12 @@ public class SamplePipelineRun {
     @SuppressWarnings("unchecked")
     public <T extends PipelineResult> List<T> getResultsOfType(Class<T> resultClass) {
         List<T> filteredResults = new ArrayList<>();
-        if (results==null) {
-            return filteredResults;
-        }
         for (PipelineResult result : results) {
             if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
                 filteredResults.add((T)result);
             }
         }
-        return null;
+        return filteredResults;
     }
     
     @SuppressWarnings("unchecked")
@@ -144,8 +131,6 @@ public class SamplePipelineRun {
     public boolean hasError() {
         return error!=null;
     }
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
 
     public Long getId() {
         return id;

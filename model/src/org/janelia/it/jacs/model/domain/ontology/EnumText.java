@@ -22,7 +22,6 @@ public class EnumText extends OntologyTerm {
         return "Enumerated Text";
     }
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Long getValueEnumId() {
         return valueEnumId;
     }

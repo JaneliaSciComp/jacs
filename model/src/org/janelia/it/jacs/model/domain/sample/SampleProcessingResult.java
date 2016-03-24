@@ -17,8 +17,6 @@ public class SampleProcessingResult extends PipelineResult implements HasAnatomi
     private String channelColors;
     private String chanelSpec;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
-
     public String getAnatomicalArea() {
         return anatomicalArea;
     }

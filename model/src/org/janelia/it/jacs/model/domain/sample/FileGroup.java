@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -13,9 +14,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 public class FileGroup implements HasRelativeFiles {
 
     private String filepath;
-	private Map<FileType, String> files;
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+	private Map<FileType, String> files = new HashMap<>();
     
     @Override
     public String getFilepath() {
@@ -31,6 +30,7 @@ public class FileGroup implements HasRelativeFiles {
     }
 
     public void setFiles(Map<FileType, String> files) {
+        if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
     }
 }

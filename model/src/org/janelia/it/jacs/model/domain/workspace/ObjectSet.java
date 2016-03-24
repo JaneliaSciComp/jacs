@@ -22,21 +22,18 @@ public class ObjectSet extends AbstractDomainObject implements IsParent {
 
     @SearchAttribute(key="class_name_txt",label="Class Name",display=false)
     private String className;
-    private List<Long> members;
+    private List<Long> members = new ArrayList<>();
 
     public boolean hasMembers() {
-    	return members!=null && !members.isEmpty();
+    	return !members.isEmpty();
     }
 
     @JsonIgnore
     public int getNumMembers() {
-        return members==null ? 0 : members.size();
+        return members.size();
     }
 
     public void addMember(Long memberId) {
-        if (members==null) {
-            this.members = new ArrayList<>();
-        }
         if (members.contains(memberId)) {
             return;
         }
@@ -44,13 +41,9 @@ public class ObjectSet extends AbstractDomainObject implements IsParent {
     }
 
     public void removeMember(Long memberId) {
-        if (members==null) {
-            return;
-        }
         members.remove(memberId);
     }
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getClassName() {
         return className;
     }
@@ -64,6 +57,7 @@ public class ObjectSet extends AbstractDomainObject implements IsParent {
     }
 
     public void setMembers(List<Long> members) {
+        if (members==null) throw new IllegalArgumentException("Property cannot be null");
         this.members = members;
     }
 }

@@ -330,8 +330,6 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="linehide_txt",label="Hide Line?",display=false)
     private String lineHide;
 
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     
     public Reference getSample() {
         return sample;

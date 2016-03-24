@@ -227,7 +227,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     }
     
     private OntologyTerm getPublishedTerm(Ontology publicationOntology, String termName) {
-        OntologyTerm publishedTerm = DomainUtils.findTerm(publicationOntology, termName);
+        OntologyTerm publishedTerm = publicationOntology.findTerm(termName);
         
         if (publishedTerm==null) {
             throw new IllegalStateException("No ontology term owned by "+PUBLICATION_OWNER+" was found with name '"+termName+"'");
@@ -688,7 +688,7 @@ public class SageArtifactExportService extends AbstractDomainService {
                 ontologyCache.put(ontologyId, ontology);
             }
             
-            OntologyTerm keyTerm = DomainUtils.findTerm(ontology, annotationEntity.getKeyTerm().getOntologyTermId());
+            OntologyTerm keyTerm = ontology.findTerm(annotationEntity.getKeyTerm().getOntologyTermId());
             
             String value = null;
             if (keyTerm instanceof Interval) {

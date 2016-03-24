@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +13,6 @@ import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.google.common.collect.Lists;
 
 /**
  * The result of some processing. May be nested if further processing is done on this result.
@@ -27,8 +26,8 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
     private String name;
     private String filepath;
     private Date creationDate;
-    private List<PipelineResult> results;
-    private Map<FileType, String> files;
+    private List<PipelineResult> results = new ArrayList<>();
+    private Map<FileType, String> files = new HashMap<>();
     private transient SamplePipelineRun parentRun;
     private transient PipelineResult parentResult;
 
@@ -58,18 +57,16 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
 
     @JsonIgnore
     public boolean hasResults() {
-        return results!=null && !results.isEmpty();
+        return !results.isEmpty();
     }
     
     @JsonProperty
     public List<PipelineResult> getResults() {
-        return results==null?null:Collections.unmodifiableList(results);
+        return results;
     }
     
     @JsonProperty
     public void setResults(List<PipelineResult> results) {
-        if (results==null)
-            return;
         for(PipelineResult result : results) {
             result.setParentRun(parentRun);
             result.setParentResult(this);
@@ -79,9 +76,6 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
 
     @JsonIgnore
     public void addResult(PipelineResult result) {
-        if (results==null) {
-            this.results = new ArrayList<>();
-        }
         result.setParentRun(parentRun);
         result.setParentResult(this);
         results.add(result);
@@ -89,9 +83,6 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
 
     @JsonIgnore
     public void removeResult(PipelineResult result) {
-        if (results==null) {
-            return;
-        }
         result.setParentRun(null);
         result.setParentResult(null);
         results.remove(result);
@@ -99,9 +90,6 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
     
     @JsonIgnore
     protected PipelineResult getLatestResultOfType(Class<? extends PipelineResult> type) {
-        if (results==null) {
-            return null;
-        }
         for (int i = results.size()-1; i>=0; i--) {
             PipelineResult result = results.get(i);
             if (type==null || type.isAssignableFrom(result.getClass())) {
@@ -120,15 +108,12 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
     @SuppressWarnings("unchecked")
     public <T extends PipelineResult> List<T> getResultsOfType(Class<T> resultClass) {
         List<T> filteredResults = new ArrayList<>();
-        if (results==null) {
-            return filteredResults;
-        }
         for (PipelineResult result : results) {
             if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
                 filteredResults.add((T)result);
             }
         }
-        return null;
+        return filteredResults;
     }
     
     @SuppressWarnings("unchecked")
@@ -144,8 +129,6 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
         }
         return results;
     }
-    
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     
     public Long getId() {
         return id;
@@ -185,6 +168,7 @@ public class PipelineResult implements HasRelativeFiles, HasIdentifier {
     }
 
     public void setFiles(Map<FileType, String> files) {
+        if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
     }
 }

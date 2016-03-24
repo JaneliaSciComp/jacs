@@ -58,7 +58,7 @@ public class MongoDbMaintainer {
             log.info("Refreshing denormalized permissions for " + collectionName);
 
             MongoCollection collection = dao.getCollectionByName(collectionName);
-            Class<?> domainClass = DomainUtils.getObjectClass(collectionName);
+            Class<?> domainClass = DomainUtils.getBaseClass(collectionName);
             if (!DomainObject.class.isAssignableFrom(domainClass))
                 continue;
             Iterable<?> iterable = collection.find().as(domainClass);

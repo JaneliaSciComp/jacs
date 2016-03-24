@@ -37,5 +37,4 @@ public class PipelineError implements HasFilepath {
     public void setDescription(String description) {
         this.description = description;
     }
-    
 }

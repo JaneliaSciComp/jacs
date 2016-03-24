@@ -7,8 +7,6 @@ public class DateRangeCriteria extends AttributeCriteria {
     private Date startDate;
     private Date endDate;
     
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
     public Date getStartDate() {
         return startDate;
     }

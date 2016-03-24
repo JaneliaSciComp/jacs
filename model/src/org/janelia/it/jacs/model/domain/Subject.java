@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
@@ -23,9 +24,8 @@ public class Subject implements HasIdentifier {
     private String name;
     private String fullName;
     private String email;
-    private Set<String> groups;
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    private Set<String> groups = new HashSet<>();
+    
     public Long getId() {
         return id;
     }
@@ -71,6 +71,8 @@ public class Subject implements HasIdentifier {
     }
 
     public void setGroups(Set<String> groups) {
+        if (groups==null) throw new IllegalArgumentException("Property cannot be null");
         this.groups = groups;
     }
+
 }
