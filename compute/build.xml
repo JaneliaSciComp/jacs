@@ -218,6 +218,7 @@
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/RestfulWebService.class"/>
                 <include name="org/**/wsrest/computeresources/**/*.class"/>
+                <include name="org/**/wsrest/mouselight/**/*.class"/>
                 <include name="org/**/wsrest/dataresources/**/*.class"/>
                 <include name="org/**/annotation/api/*.class"/>
                 <include name="org/**/annotation/to/*.class"/>
