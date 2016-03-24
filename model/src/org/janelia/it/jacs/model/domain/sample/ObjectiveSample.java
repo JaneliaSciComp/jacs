@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +13,7 @@ import com.google.common.collect.Lists;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ObjectiveSample {
+public class ObjectiveSample implements Serializable {
 
     private String chanSpec;
     private List<SampleTile> tiles = new ArrayList<>();

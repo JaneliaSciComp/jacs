@@ -1,11 +1,12 @@
 package org.janelia.it.jacs.model.domain.gui.alignment_board;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.domain.Reference;
 
-public class AlignmentBoardItem {
+public class AlignmentBoardItem implements Serializable{
 
     private Reference target;
     private boolean visible;

@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public abstract class OntologyTerm implements HasIdentifier {
+public abstract class OntologyTerm implements HasIdentifier, Serializable {
     
     @MongoId
     private Long id;

@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
-public class OntologyTermReference {
+import java.io.Serializable;
+
+public class OntologyTermReference implements Serializable {
 
     private Long ontologyId;
     private Long ontologyTermId;

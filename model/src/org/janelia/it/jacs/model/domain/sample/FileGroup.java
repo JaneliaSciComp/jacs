@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +12,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class FileGroup implements HasRelativeFiles {
+public class FileGroup implements HasRelativeFiles, Serializable {
 
     private String filepath;
 	private Map<FileType, String> files = new HashMap<>();

@@ -1,7 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SamplePipelineRun {
+public class SamplePipelineRun implements Serializable {
 
     private Long id;
     private String name;

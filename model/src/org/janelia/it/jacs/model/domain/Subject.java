@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,7 +14,7 @@ import org.jongo.marshall.jackson.oid.MongoId;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="subject",label="Subject")
-public class Subject implements HasIdentifier {
+public class Subject implements HasIdentifier, Serializable {
     
     public static final String ADMIN_KEY = "group:admin";
     public static final String USERS_KEY = "group:workstation_users";

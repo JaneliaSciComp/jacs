@@ -1,12 +1,13 @@
 package org.janelia.it.jacs.model.domain.compartments;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class Compartment implements HasFiles {
+public class Compartment implements HasFiles, Serializable {
 
     private String name;
     private String code;

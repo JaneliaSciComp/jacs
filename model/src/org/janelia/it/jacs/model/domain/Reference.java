@@ -1,11 +1,13 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.io.Serializable;
+
 /**
  * A reference to a DomainObject in a specific collection.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Reference {
+public class Reference implements Serializable {
 
     private String targetClassName;
     private Long targetId;

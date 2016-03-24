@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.io.Serializable;
+
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 
 /**
@@ -8,7 +10,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class PipelineError implements HasFilepath {
+public class PipelineError implements HasFilepath, Serializable {
 
     private String filepath;
     private String classification;
