@@ -189,7 +189,7 @@ public class DomainDAO {
      * Return subject by name or key.
      */
     public Subject getSubjectByNameOrKey(String subjectName) {
-        return subjectCollection.findOne("{$or:[{name:#},{key:#}]",subjectName,subjectName).as(Subject.class);
+        return subjectCollection.findOne("{$or:[{name:#},{key:#}]}",subjectName,subjectName).as(Subject.class);
     }
     
     /**

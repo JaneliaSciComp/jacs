@@ -209,7 +209,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     private Ontology getPublicationOntology() {
 
         Ontology publicationOntology = null;
-        for(Ontology ontology : domainDao.getDomainObjectsByName(ownerKey, Ontology.class, PUBLICATION_ONTOLOGY_NAME)) {
+        for(Ontology ontology : domainDao.getDomainObjectsByName(PUBLICATION_OWNER, Ontology.class, PUBLICATION_ONTOLOGY_NAME)) {
             if (publicationOntology==null) {
                 publicationOntology = ontology;
             }
@@ -541,12 +541,6 @@ public class SageArtifactExportService extends AbstractDomainService {
         String url = getWebdavUrl(path);
         
         if (image!=null) {
-            if (imageStack.filepath.startsWith(SCALITY_JFS_PREFIX)) {
-                image.setJfsPath(imageStack.filepath);    
-            }
-            else {
-                image.setPath(imageStack.filepath);
-            }
         	image.setFamily(consensusFamily);
         	image.setLine(line);
         	image.setSource(lab);
@@ -554,16 +548,28 @@ public class SageArtifactExportService extends AbstractDomainService {
         	image.setRepresentative(true);
         	image.setDisplay(true);
         	image.setCreatedBy(CREATED_BY);
+            if (path!=null) {
+                if (path.startsWith(SCALITY_JFS_PREFIX)) {
+                    image.setPath(null);
+                    image.setJfsPath(path);
+                }
+                else {
+                    image.setPath(path);
+                    image.setJfsPath(null);
+                }
+            }
             image = sage.saveImage(image);
             logger.debug("      Updated SAGE primary image "+image.getId());
         }
         else {
-            image = new Image(consensusFamily, line, lab, imageName, url, imageStack.filepath, true, true, CREATED_BY, createDate);
-            if (imageStack.filepath.startsWith(SCALITY_JFS_PREFIX)) {
-                image.setJfsPath(imageStack.filepath);    
-            }
-            else {
-                image.setPath(imageStack.filepath);
+            image = new Image(consensusFamily, line, lab, imageName, url, null, true, true, CREATED_BY, createDate);
+            if (path!=null) {
+                if (path.startsWith(SCALITY_JFS_PREFIX)) {
+                    image.setJfsPath(path);    
+                }
+                else {
+                    image.setPath(path);
+                }
             }
             image = sage.saveImage(image);
             logger.debug("      Created SAGE primary image "+image.getId());
