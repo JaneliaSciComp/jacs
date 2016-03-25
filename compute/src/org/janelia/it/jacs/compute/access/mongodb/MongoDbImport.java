@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
@@ -847,13 +848,11 @@ public class MongoDbImport extends AnnotationDAO {
 
         // Populate LSMMetadata on the LSMs themselves 
         for(LSMImage lsm : lsms) {
-            String name = lsm.getName();
-            int index = name.indexOf('.');
-            String key = index<1 ? name : name.substring(0, index);
+            String name = ArchiveUtils.getDecompressedFilepath(lsm.getName());
+            String key = FilenameUtils.getBaseName(name);
             FileGroup lsmSummaryResultGroup = result.getGroup(key);
             String metadataFilepath = DomainUtils.getFilepath(lsmSummaryResultGroup, FileType.LsmMetadata);
             addImage(lsm.getFiles(),FileType.LsmMetadata,getRelativeFilename(lsm,metadataFilepath));
-            
         }
         
         return result;
@@ -951,7 +950,7 @@ public class MongoDbImport extends AnnotationDAO {
 
                 String key = null;
                 if (childName.endsWith(".lsm.json")) {
-                	key = name;
+                	key = FilenameUtils.getBaseName(name);
                 	fileType = FileType.LsmMetadata;
                 }
                 else if (childName.endsWith(".lsm.metadata")) {

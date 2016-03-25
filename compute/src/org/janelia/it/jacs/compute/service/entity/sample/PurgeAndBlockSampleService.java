@@ -1,8 +1,6 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
@@ -34,30 +32,31 @@ public class PurgeAndBlockSampleService extends AbstractDomainService {
     public void execute() throws Exception {
         SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger);
         String sampleEntityIdStr = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
-        
-        List<Sample> samples = new ArrayList<>();
         for(String oneSampleEntityIdStr : Task.listOfStringsFromCsvString(sampleEntityIdStr)) {
-            final Sample sampleEntity = domainDao.getDomainObject(ownerKey, Sample.class, new Long(oneSampleEntityIdStr));
-            if (sampleEntity==null) {
+            final Sample sample = domainDao.getDomainObject(ownerKey, Sample.class, new Long(oneSampleEntityIdStr));
+            if (sample==null) {
                 throw new IllegalArgumentException("Sample does not exist: "+oneSampleEntityIdStr);
             }
-            samples.add(sampleEntity);
-        }
-        
-        for(Sample sample : samples) {
-            sample.setStatus(EntityConstants.VALUE_BLOCKED);
-            sampleHelper.saveSample(sample);
-            removeLargeImageFiles(sample);
+            int deleted = removeLargeImageFiles(sample);
+            // Save the entire sample because we updated some paths
+            if (deleted>0) {
+                sample.setStatus(EntityConstants.VALUE_BLOCKED);
+                sampleHelper.saveSample(sample);
+            }
         }
     }
     
-    private void removeLargeImageFiles(Sample sample) throws Exception {
+    private int removeLargeImageFiles(Sample sample) throws Exception {
+        int deleted = 0;
         for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
             for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
                 for(PipelineResult result : run.getResults()) {
                     String filepath = DomainUtils.getFilepath(result, FileType.LosslessStack);
-                    deletePath(filepath);
-                    DomainUtils.setFilepath(result, FileType.LosslessStack, null);
+                    int deletedStack = deletePath(filepath);
+                    if (deletedStack>0) {
+                        DomainUtils.setFilepath(result, FileType.LosslessStack, null);
+                        deleted++;
+                    }
                     for(NeuronSeparation separation : result.getResultsOfType(NeuronSeparation.class)) {
                         // TODO: need a better way of clearing out separations, now that we don't have the files in the database
                         String separationFilepath = separation.getFilepath();
@@ -66,22 +65,25 @@ public class PurgeAndBlockSampleService extends AbstractDomainService {
                         File consolidatedLabelPath = new File(separationFilepath, "ConsolidatedLabel.v3dpbd");
                         File consolidatedSignalPath = new File(separationFilepath, "ConsolidatedSignal.v3dpbd");
                         File referencePath = new File(separationFilepath, "Reference.v3dpbd");
-                        deletePath(sepArchivePath.getAbsolutePath());
-                        deletePath(sepFastLoadPath.getAbsolutePath());
-                        deletePath(consolidatedLabelPath.getAbsolutePath());
-                        deletePath(consolidatedSignalPath.getAbsolutePath());
-                        deletePath(referencePath.getAbsolutePath());
+                        deleted += deletePath(sepArchivePath.getAbsolutePath());
+                        deleted += deletePath(sepFastLoadPath.getAbsolutePath());
+                        deleted += deletePath(consolidatedLabelPath.getAbsolutePath());
+                        deleted += deletePath(consolidatedSignalPath.getAbsolutePath());
+                        deleted += deletePath(referencePath.getAbsolutePath());
                     }
                 }
             }
         }
+        return deleted;
     }
     
-    private void deletePath(String filepath) {
+    private int deletePath(String filepath) {
+        
+        if (filepath==null) return 0;
         
         if (!filepath.startsWith(JACS_DATA_DIR) && !filepath.startsWith(JACS_DATA_ARCHIVE_DIR)) {
             logger.warn("Cannot delete path outside of filestore: "+filepath);
-            return;
+            return 0;
         }
         
         File file = new File(filepath);
@@ -93,6 +95,9 @@ public class PurgeAndBlockSampleService extends AbstractDomainService {
         }
         catch (Exception e) {
             logger.error("Could not delete filepath "+filepath+" ("+e.getMessage()+")");
+            return 0;
         }
+        
+        return 1;
     }
 }

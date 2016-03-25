@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.service.entity;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -50,7 +51,7 @@ public class SampleDataCompressionService extends AbstractDomainService {
     private Set<Pattern> exclusions = new HashSet<>();
     
     private Sample sample;
-    private final Set<String> inputFiles = new HashSet<>();
+    private final Set<String> inputFiles = new LinkedHashSet<>();
     
     protected int numChanges;
 
@@ -115,7 +116,7 @@ public class SampleDataCompressionService extends AbstractDomainService {
             }
         }
    
-        processData.putItem("INPUT_PATH_LIST", inputFiles);
+        processData.putItem("INPUT_PATH_LIST", new ArrayList<>(inputFiles));
         
         if (inputFiles.isEmpty()) {
             contextLogger.info("Nothing to be done.");
@@ -190,12 +191,13 @@ public class SampleDataCompressionService extends AbstractDomainService {
     private void doCreateOutputList() throws ComputeException {
 
         List<String> inputPaths = (List<String>)data.getRequiredItem("INPUT_PATH_LIST");
-
         List<String> outputPaths = new ArrayList<String>();
+        
         for(String filepath : inputPaths) {
             String extension = getExtension(filepath);
             outputPaths.add(filepath.replaceAll(extension, outputType));
         }
+        
         processData.putItem("OUTPUT_PATH_LIST", outputPaths);
     }
     
