@@ -23,28 +23,23 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.service.domain.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.entity.SageArtifactExportService;
 import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.model.entity.DataSet;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
+import org.janelia.it.jacs.model.entity.json.JsonDataSet;
 import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
 import org.janelia.it.jacs.model.entity.json.JsonRelease;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
@@ -158,19 +153,21 @@ public class RestfulWebService {
     @Produces(MediaType.APPLICATION_XML)
     @Formatted
     @Wrapped(element = "dataSetList")
-    public List<DataSet> getDataSets(
+    public List<JsonDataSet> getDataSets(
             @QueryParam("user") List<String> userList,
             @QueryParam("includeOnlySageSync") String includeOnlySageSync)
             throws NotFoundException{
 
-        List<Entity> entityList = null;
+        List<DataSet> dataSets = new ArrayList<>();
         try {
-            final AnnotationBeanRemote annotationBean =
-                    EJBFactory.getRemoteAnnotationBean();
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
             if ((userList == null) || (userList.size() == 0)) {
-                entityList = annotationBean.getAllDataSets();
-            } else {
-                entityList = annotationBean.getUserDataSets(userList);
+                dataSets.addAll(dao.getDataSets(null));
+            } 
+            else {
+                for(String subjectKey : userList) {
+                    dataSets.addAll(dao.getDataSets(subjectKey));
+                }
             }
         } catch (Exception e) {
             logger.error("getDataSets: failed retrieval, userList=" +
@@ -179,9 +176,8 @@ public class RestfulWebService {
 
         final boolean includeOnlySageSyncFlag =
                 Boolean.parseBoolean(includeOnlySageSync);
-        final List<DataSet> dataSetList =
-                toDataSetList(entityList,
-                              includeOnlySageSyncFlag);
+        final List<JsonDataSet> dataSetList =
+                toDataSetList(dataSets, includeOnlySageSyncFlag);
 
         if ((dataSetList == null) || (dataSetList.size() == 0)) {
             StringBuilder msg = new StringBuilder(256);
@@ -439,27 +435,14 @@ public class RestfulWebService {
 
             final String subjectKey = subject.getKey();
 
-            final EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
-            final List<Entity> slideCodeSamples =
-                    entityBean.getUserEntitiesWithAttributeValueAndTypeName(subjectKey,
-                                                                            EntityConstants.ATTRIBUTE_SLIDE_CODE,
-                                                                            slideCode,
-                                                                            EntityConstants.TYPE_SAMPLE);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            final Sample slideCodeSample = dao.getSampleBySlideCode(subjectKey, dataSet, slideCode);
 
-            logger.info(context + "found " + slideCodeSamples.size() + " samples for slide code " + slideCode +
+            logger.info(context + "found " + slideCodeSample + " for slide code " + slideCode +
                         " (subjectKey is " + subjectKey + ")");
 
-            String sampleDataSetIdentifier;
-            Long sampleEntityId;
-            for (Entity sampleEntity : slideCodeSamples) {
-                sampleDataSetIdentifier = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-                if (dataSet.equals(sampleDataSetIdentifier)) {
-                    sampleEntityId = sampleEntity.getId();
-                    entityBean.deleteEntityTreeById(subjectKey, sampleEntityId, true);
-                    logger.info(context + "deleted sample entity " + sampleEntityId);
-                }
-            }
-
+            dao.remove(subjectKey, slideCodeSample);
+            logger.info(context + "deleted sample entity " + slideCodeSample.getId());
             response = Response.status(Response.Status.OK).build();
 
         } catch (IllegalArgumentException e) {
@@ -525,36 +508,6 @@ public class RestfulWebService {
         logger.info(context + "exit, returning " + getResponseString(response));
 
         return response;
-    }
-
-    /**
-     * @return list of all supported entity types.
-     */
-    @GET
-    @Path("entityType")
-    @Produces(MediaType.APPLICATION_XML)
-    @Formatted
-    @Wrapped(element = "entityTypeList")
-    public List<EntityType> getEntityTypes() {
-
-        List<EntityType> list = null;
-        try {
-            EntityBeanRemote entityBean = EJBFactory.getRemoteEntityBean();
-            list = entityBean.getEntityTypes();
-        } catch (Exception e) {
-            logger.error("getEntityTypes: failed retrieval", e);
-        }
-
-        if (list == null) {
-            list = new ArrayList<>();
-        }
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("getEntityTypes: exit, returning " + list.size() +
-                         " entity types");
-        }
-
-        return list;
     }
 
     /**
@@ -712,19 +665,16 @@ public class RestfulWebService {
      *
      * @return list of wrapped objects.
      */
-    private List<DataSet> toDataSetList(List<Entity> entityList,
+    private List<JsonDataSet> toDataSetList(List<DataSet> entityList,
                                         boolean includeOnlySageSync) {
-        List<DataSet> dataSetList = null;
+        List<JsonDataSet> dataSetList = null;
         if (entityList != null) {
-
             dataSetList = new ArrayList<>(entityList.size());
-            DataSet dataSet;
-            for (Entity entity : entityList) {
-
-                if (entity != null) {
-                    dataSet = new DataSet(entity);
-                    if ((! includeOnlySageSync) || dataSet.hasSageSync()) {
-                        dataSetList.add(dataSet);
+            for (DataSet dataSet : entityList) {
+                if (dataSet != null) {
+                    JsonDataSet jsonDataSet = new JsonDataSet(dataSet);
+                    if ((! includeOnlySageSync) || jsonDataSet.hasSageSync()) {
+                        dataSetList.add(jsonDataSet);
                     }
 
                 }

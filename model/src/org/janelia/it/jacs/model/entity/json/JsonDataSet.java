@@ -1,7 +1,9 @@
-package org.janelia.it.jacs.model.entity;
+package org.janelia.it.jacs.model.entity.json;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.janelia.it.jacs.model.domain.sample.DataSet;
 
 /**
  * Specific wrapper for data set entity that identifies valid attributes,
@@ -10,34 +12,32 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Eric Trautman
  */
 @XmlRootElement
-public class DataSet {
+public class JsonDataSet {
 
-    private Entity entity;
+    private DataSet dataSet;
 
     // required for JAXB
     @SuppressWarnings("UnusedDeclaration")
-    private DataSet() {
+    private JsonDataSet() {
     }
 
-    public DataSet(Entity entity) {
-        this.entity = entity;
+    public JsonDataSet(DataSet dataSet) {
+        this.dataSet = dataSet;
     }
 
     @XmlElement
     public String getName() {
-        return entity.getName();
+        return dataSet.getName();
     }
 
     @XmlElement
     public String getDataSetIdentifier() {
-        return entity.getValueByAttributeName(
-                EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+        return dataSet.getIdentifier();
     }
 
     @XmlElement
     public String getSageSync() {
-        return entity.getValueByAttributeName(
-                EntityConstants.ATTRIBUTE_SAGE_SYNC);
+        return dataSet.isSageSync() ? "SAGE Sync" : "";
     }
 
     public boolean hasSageSync() {
@@ -46,7 +46,7 @@ public class DataSet {
 
     @XmlElement
     public String getUser() {
-        return entity.getOwnerKey();
+        return dataSet.getOwnerKey();
     }
 
 }
