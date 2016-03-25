@@ -186,6 +186,13 @@ public class DomainDAO {
     }
 
     /**
+     * Return subject by name or key.
+     */
+    public Subject getSubjectByNameOrKey(String subjectName) {
+        return subjectCollection.findOne("{$or:[{name:#},{key:#}]",subjectName,subjectName).as(Subject.class);
+    }
+    
+    /**
      * Return all the preferences for a given subject.
      */
     public List<Preference> getPreferences(String subjectKey) {
@@ -588,7 +595,12 @@ public class DomainDAO {
     
     public List<DataSet> getDataSets(String subjectKey) {
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(dataSetCollection.find("{readers:{$in:#}}",subjects).as(DataSet.class));
+        if (subjects == null) {
+            return toList(dataSetCollection.find().as(DataSet.class));
+        }
+        else {
+            return toList(dataSetCollection.find("{readers:{$in:#}}",subjects).as(DataSet.class));
+        }
     }
 
     public DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier) {

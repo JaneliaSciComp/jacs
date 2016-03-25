@@ -13,12 +13,19 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService;
 import org.janelia.it.jacs.compute.service.entity.SampleTrashCompactorService;
+import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.sample.LineRelease;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -29,7 +36,6 @@ import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.tasks.utility.ScalityMigrationTask;
 import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
-import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 public class SampleDataManager implements SampleDataManagerMBean {
@@ -63,17 +69,23 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
     
+    private Set<String> getSubjectsWithDataSets() {
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+        log.info("Building list of users with data sets...");
+        Set<String> subjectKeys = new TreeSet<>();
+        for(DataSet dataSet : dao.getDataSets(null)) {
+            subjectKeys.add(dataSet.getOwnerKey());
+        }
+        return subjectKeys;
+    }
+    
     // -----------------------------------------------------------------------------------------------------
     // Maintenance Pipelines    
     // -----------------------------------------------------------------------------------------------------
     
     public void runAllSampleMaintenancePipelines() {
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(sample.getOwnerKey());
-            }
+            Set<String> subjectKeys = getSubjectsWithDataSets();
             List<String> sortedKeys = new ArrayList<>(subjectKeys);
             Collections.sort(sortedKeys);
             log.info("Found users with data sets: " + sortedKeys);
@@ -126,11 +138,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleDataCompression(String compressionType){
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
+            Set<String> subjectKeys = getSubjectsWithDataSets();
             log.info("Found users with data sets: " + subjectKeys);
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing sample data compression for "+subjectKey);
@@ -161,7 +169,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "PostPipeline_SampleCompression";
             String displayName = "Single Sample Data Compression";
-            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleId));
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
@@ -176,14 +185,15 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runSyncSampleToScality(String sampleEntityId, String filetypes, Boolean deleteSourceFiles) {
         try {
-            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleEntityId));
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null));
             taskParameters.add(new TaskParameter("file types", filetypes, null));
             taskParameters.add(new TaskParameter("delete source files", deleteSourceFiles.toString(), null));
             String processName = "SyncSampleToScality";
             String displayName = "Sync Sample to Scality";
-            saveAndRunTask(sampleEntity.getOwnerKey(), processName, displayName, taskParameters);
+            saveAndRunTask(sample.getOwnerKey(), processName, displayName, taskParameters);
         } 
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -209,11 +219,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     // todo Proved to be too slow.  Used the commented out main method below to generate insert statements adding canceled event (insanely faster)
     public void cancelAllIncompleteUserTasks(String user){
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
+            Set<String> subjectKeys = getSubjectsWithDataSets();
             log.info("Found users with data sets: " + subjectKeys);
             log.info("Canceling incomplete tasks");
             for(String subjectKey : subjectKeys) {
@@ -237,11 +243,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void cancelAllIncompleteDataSetPipelineTasks() {
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
+            Set<String> subjectKeys = getSubjectsWithDataSets();
             String processName = "GSPS_UserDataSetPipelines";
             log.info("Cancelling incomplete "+processName+" tasks");
             for(String subjectKey : subjectKeys) {
@@ -260,11 +262,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public String runAllDataSetPipelines(String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
+            Set<String> subjectKeys = getSubjectsWithDataSets();
             log.info("Found users with data sets: "+subjectKeys);
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
@@ -338,21 +336,26 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSampleFolder(String folderId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
-            Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
-            if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
-            EJBFactory.getLocalEntityBean().loadLazyEntity(entity, false);
-            for(Entity child : entity.getOrderedChildren()) {
-                if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
-                    log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
+            if (treeNode!=null) {
+                for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
+                    if (child instanceof TreeNode || child instanceof ObjectSet) {
+                        log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
+                        runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
+                    }
+                    else {
+                        log.info("runSampleFolder - Ignore child "+child.getType()+": "+child.getName());
+                    }
                 }
-                else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
+            }
+            else {
+                ObjectSet objectSet = dao.getDomainObject(null, ObjectSet.class, new Long(folderId));
+                if (objectSet==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
+                for(Sample child : dao.getDomainObjects(null, Sample.class, objectSet.getMembers())) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
                     runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
-                }
-                else {
-                    log.info("runSampleFolder - Ignoring child which is not a folder or sample: "+child.getName()+" (id="+child.getId()+")");
                 }
             }
         } catch (Exception ex) {
@@ -363,7 +366,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runSamplePipelines(String sampleId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
-            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleId));
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
@@ -390,7 +394,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment) {
         try {
             String processName = "PipelineConfig_"+configurationName;
-            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleEntityId));
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
@@ -416,11 +421,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void applyProcessToDataset(String user, String dataSetName, String processName, String extraParams) {
         try {
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
             if (!StringUtils.isEmpty(dataSetName)) {
-                Subject subject = EJBFactory.getLocalComputeBean().getSubjectByNameOrKey(user);
+                Subject subject = dao.getSubjectByNameOrKey(user);
                 if (subject==null) throw new IllegalArgumentException("User with name "+user+" does not exist");
-                List<Entity> dataSets = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(subject.getKey(),
-                        dataSetName, EntityConstants.TYPE_DATA_SET);
+                List<DataSet> dataSets = dao.getDomainObjectsByName(subject.getKey(), DataSet.class, dataSetName);
                 if (dataSets.isEmpty()) throw new IllegalArgumentException("Data set with name "+dataSetName+" does not exist");
                 if (dataSets.size()>1) throw new IllegalArgumentException("More than one data set with name "+dataSetName+" exists");   
             }
@@ -439,8 +444,9 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void applyProcessToSample(String sampleEntityId, String processName, String extraParams) {
         try {
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
             String displayName = "Apply Process To Sample";
-            Entity sample = EJBFactory.getLocalEntityBean().getEntityById(sampleEntityId);
+            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleEntityId));
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
@@ -455,24 +461,30 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParams) {
         try {
-            Entity entity = EJBFactory.getLocalEntityBean().getEntityById(folderId);
-            if (entity==null) throw new IllegalArgumentException("Entity with id "+folderId+" does not exist");
-            EJBFactory.getLocalEntityBean().loadLazyEntity(entity, false);
-            for(Entity child : entity.getOrderedChildren()) {
-                if (EntityConstants.TYPE_FOLDER.equals(child.getEntityTypeName())) {
-                    log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
-                    applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParams);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
+            if (treeNode!=null) {
+                for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
+                    if (child instanceof TreeNode || child instanceof ObjectSet) {
+                        log.info("applyProcessToSamplesInFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
+                        applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParams);
+                    }
+                    else {
+                        log.info("applyProcessToSamplesInFolder - Ignore child "+child.getType()+": "+child.getName());
+                    }
                 }
-                else if (EntityConstants.TYPE_SAMPLE.equals(child.getEntityTypeName())) {
-                    log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
+            }
+            else {
+                ObjectSet objectSet = dao.getDomainObject(null, ObjectSet.class, new Long(folderId));
+                if (objectSet==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
+                for(Sample child : dao.getDomainObjects(null, Sample.class, objectSet.getMembers())) {
+                    log.info("applyProcessToSamplesInFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
                     applyProcessToSample(child.getId().toString(), processName, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                 }
-                else {
-                    log.info("applyProcessToSamplesInFolder - Ignoring child which is not a folder or sample: "+child.getName()+" (id="+child.getId()+")");
-                }
             }
-        } catch (Exception ex) {
+        } 
+        catch (Exception ex) {
             log.error("Error running pipeline", ex);
         }
     }
@@ -631,12 +643,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSageArtifactExport(String owner, String releaseName) {
         try {
-            Subject subject = EJBFactory.getLocalComputeBean().getSubjectByNameOrKey(owner);
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            Subject subject = dao.getSubjectByNameOrKey(owner);
             if (subject==null) throw new IllegalArgumentException("User with name "+owner+" does not exist");
-            List<Entity> releases = EJBFactory.getLocalEntityBean().getEntitiesByNameAndTypeName(subject.getKey(), releaseName, EntityConstants.TYPE_FLY_LINE_RELEASE);
+            List<LineRelease> releases = dao.getDomainObjectsByName(subject.getKey(), LineRelease.class, releaseName);
             if (releases.isEmpty()) throw new IllegalArgumentException("Release with name "+releaseName+" does not exist");
             if (releases.size()>1) throw new IllegalArgumentException("More than one release with name "+releaseName);
-            Entity release = releases.get(0);
+            LineRelease release = releases.get(0);
             String processName = "SageArtifactExport";
             String displayName = "Sage Artifact Export";
             HashSet<TaskParameter> taskParameters = new HashSet<>();
@@ -650,12 +663,13 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSageArtifactExport() {
         try {
-            for(Entity releaseEntity : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_FLY_LINE_RELEASE)) {
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            for(LineRelease release : dao.getLineReleases(null)) {
                 String processName = "SageArtifactExport";
                 String displayName = "Sage Artifact Export";
                 HashSet<TaskParameter> taskParameters = new HashSet<>();
-                taskParameters.add(new TaskParameter("release entity id", releaseEntity.getId().toString(), null)); 
-                saveAndRunTask(releaseEntity.getOwnerKey(), processName, displayName, taskParameters);
+                taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null)); 
+                saveAndRunTask(release.getOwnerKey(), processName, displayName, taskParameters);
             }
         } 
         catch (Exception ex) {
