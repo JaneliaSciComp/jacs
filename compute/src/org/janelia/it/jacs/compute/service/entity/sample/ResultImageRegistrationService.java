@@ -398,23 +398,23 @@ public class ResultImageRegistrationService extends AbstractEntityService {
                 priority = 20;
                 contextLogger.debug("      Using as default image");
             }
-            if (filename.matches("Aligned.v3d(raw|pbd)") && priority < 10) {
+            if (filename.matches("Aligned.(v3draw|v3dpbd|h5j)") && priority < 10) {
                 defaultImage = file;
                 priority = 10;
                 contextLogger.debug("      Using as default image");
-            } else if (filename.matches("AlignedFlyVNC.v3d(raw|pbd)") && priority < 10) {
+            } else if (filename.matches("AlignedFlyVNC.(v3draw|v3dpbd|h5j)")&& priority < 10) {
 				defaultImage = file;
 				priority = 10;
 				contextLogger.debug("      Using as default image");
-			} else if (filename.matches("stitched-(\\w+?).v3d(raw|pbd)") && priority < 9) {
+			} else if (filename.matches("stitched-(\\w+?).(v3draw|v3dpbd|h5j)") && priority < 9) {
                 defaultImage = file;
                 priority = 9;
                 contextLogger.debug("      Using as default image");
-            } else if (filename.matches("tile-(\\w+?).v3d(raw|pbd)") && priority < 8) {
+            } else if (filename.matches("tile-(\\w+?).(v3draw|v3dpbd|h5j)") && priority < 8) {
                 defaultImage = file;
                 priority = 8;
                 contextLogger.debug("      Using as default image");
-            } else if (filename.matches("merged-(\\w+?).v3d(raw|pbd)") && priority < 7) {
+            } else if (filename.matches("merged-(\\w+?).(v3draw|v3dpbd|h5j)") && priority < 7) {
                 defaultImage = file;
                 priority = 7;
                 contextLogger.debug("      Using as default image");

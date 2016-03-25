@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.compute.service.tools;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
+
+import java.io.*;
 import java.util.Scanner;
 
 /**
@@ -100,24 +100,40 @@ public class ExportCleanup {
 
     // This method copies the "missed" files into the external drives.
     // This is the third and final export step.  Before this someone manually copies the "missing" file above to the "resync" input here.
-    public static void main(String[] args) {
-        try {
-            Scanner scanner = new Scanner(new File("/nrs/jacs/jacsData/saffordt/resyncFiles.AOTUv3_Part2"));
-            PrintWriter writer = new PrintWriter(new File("/nrs/jacs/jacsData/saffordt/resyncFiles.AOTUv3_Part2.sh"));
-            while (scanner.hasNextLine()){
-                String tmpLine = scanner.nextLine();
-                String tmpfilename = tmpLine.substring(tmpLine.indexOf("-file")+5).trim();
-                String tmpdestination = tmpfilename.replace("/nrs/jacs/jacsData/saffordt/download/drive/20160219_VND_for_Myers_group/AOTUv3_Prt2/",
-                                                            "/Volumes/Lee\\ Lab\\ Drive\\ 3/20160219_VND_for_Myers_group/AOTUv3_Part2/");
-                String tmpCmd = "rsync -av "+tmpfilename+" "+tmpdestination;
-                writer.append(tmpCmd).append("\n");
-            }
-            writer.close();
-            writer.flush();
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+//    public static void main(String[] args) {
+//        try {
+//            Scanner scanner = new Scanner(new File("/nrs/jacs/jacsData/saffordt/resyncFiles.AOTUv3_Part2"));
+//            PrintWriter writer = new PrintWriter(new File("/nrs/jacs/jacsData/saffordt/resyncFiles.AOTUv3_Part2.sh"));
+//            while (scanner.hasNextLine()){
+//                String tmpLine = scanner.nextLine();
+//                String tmpfilename = tmpLine.substring(tmpLine.indexOf("-file")+5).trim();
+//                String tmpdestination = tmpfilename.replace("/nrs/jacs/jacsData/saffordt/download/drive/20160219_VND_for_Myers_group/AOTUv3_Prt2/",
+//                                                            "/Volumes/Lee\\ Lab\\ Drive\\ 3/20160219_VND_for_Myers_group/AOTUv3_Part2/");
+//                String tmpCmd = "rsync -av "+tmpfilename+" "+tmpdestination;
+//                writer.append(tmpCmd).append("\n");
+//            }
+//            writer.close();
+//            writer.flush();
+//        }
+//        catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
+//    public static void main(String[] args) {
+//        String filePath = "/Users/saffordt/Desktop/YingJouAnnotations.txt";
+//        File tmpFile = new File(filePath);
+//        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
+//            Scanner scanner = new Scanner(tmpFile);
+//            while (scanner.hasNextLine()) {
+//                Long tmpId = (Long)TimebasedIdentifierGenerator.generate(1L);
+//                String targetAnnotationId = scanner.nextLine().trim();
+//                writer.write("insert into entity_actor_permission (id,entity_id,subject_key,permissions) values ("+tmpId+","+
+//                        targetAnnotationId+",\"user:leetz\",\"r\");\n");
+//            }
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
