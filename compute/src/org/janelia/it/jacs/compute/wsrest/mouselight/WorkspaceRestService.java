@@ -19,7 +19,7 @@ public class WorkspaceRestService {
 
     @GET
     @Path("mouselight")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(MediaType.APPLICATION_JSON)
     @Formatted
     public WorkspaceRestResponse getMessage() {
         log.info("getMessage() invoked");

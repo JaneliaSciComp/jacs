@@ -179,6 +179,7 @@
         <war warfile="${basedir}/build/jars/compute-dashboard.war" webxml="${basedir}/../dashboard/web.xml">
             <fileset dir="${basedir}/../dashboard/src">
                 <include name="index.html"/>
+                <include name="mouselight.html"/>
                 <include name="css/*"/>
                 <include name="img/*"/>
                 <include name="js/*"/>
