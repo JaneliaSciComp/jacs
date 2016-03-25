@@ -7,11 +7,11 @@
             <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
 
             <!-- ALIGNMENT_ALGORITHMS comma separated values must match an enum from org.janelia.it.jacs.model.entity.cv.AlignmentAlgorithm -->
-            <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_BRAIN_VNC"/>
+            <input name="ALIGNMENT_ALGORITHMS" value="CONFIGURED_BRAIN_VNC,CONFIGURED_VNC"/>
 
             <!-- ALIGNMENT_ALGORITHM_PARAMS identifies script in /groups/jacs/jacsHosts/servers/[instance-name]/executables/scripts/brainaligner/ -->
-            <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flybrainaligner20x_ditp_JBA.sh"/>
-            <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment"/>
+            <input name="ALIGNMENT_ALGORITHM_PARAMS" value="flybrainaligner20x_ditp_JBA.sh,flyalign20xVNC_CMTK.sh"/>
+            <input name="ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment,CMTK VNC Alignment"/>
 
             <input name="ANALYSIS_ALGORITHMS" value="NEURON_SEPARATOR"/>
 
