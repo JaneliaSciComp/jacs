@@ -15,6 +15,7 @@ import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
@@ -266,6 +267,7 @@ public class MongoLargeOperations {
     protected void associateImageProperties(Map<String,Object> imageProps) throws DaoException {
         String name = imageProps.get("image_query_name").toString();
         name = name.substring(name.lastIndexOf('/')+1); // Get just the filename
+        name = ArchiveUtils.getDecompressedFilepath(name); // Strip bz2 for lookup purposes 
         putValue(SAGE_IMAGEPROP_MAP, name, imageProps);
     }
     

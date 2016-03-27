@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -622,14 +623,13 @@ public class MongoDbImport extends AnnotationDAO {
             log.warn("  Sample has no supporting data: "+sampleEntity.getId());
             return null;
         }
-        collectAnnotations(supportingDataEntity.getId());
 
-        List<LSMImage> allLsms = new ArrayList<LSMImage>();
-        
+        List<LSMImage> allLsms = new ArrayList<LSMImage>();        
         List<SampleTile> tiles = new ArrayList<SampleTile>();
+        
         populateChildren(supportingDataEntity);
         collectAnnotations(supportingDataEntity.getId());
-        
+
         for(Entity tileEntity : supportingDataEntity.getOrderedChildren()) {
 
             populateChildren(tileEntity);
@@ -639,19 +639,16 @@ public class MongoDbImport extends AnnotationDAO {
             addImage(images,FileType.ReferenceMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE));
             addImage(images,FileType.SignalMip,tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_MIP_IMAGE));
             
-            List<LSMImage> lsmImages = new ArrayList<LSMImage>();
             List<Reference> lsmReferences = new ArrayList<Reference>();
             
             for(Entity lsmEntity : EntityUtils.getChildrenOfType(tileEntity, EntityConstants.TYPE_LSM_STACK)) {
                 LSMImage lsmImage = getLSMImage(parentSampleEntity, lsmEntity);
                 if (lsmImage!=null) {
-                    lsmImages.add(lsmImage);
+                    allLsms.add(lsmImage);
                     lsmReferences.add(getReference(lsmEntity));
                 }
                 insertAnnotations(getAnnotations(lsmImage.getId()), lsmImage);
             }
-
-            allLsms.addAll(lsmImages);
             
             SampleTile tile = new SampleTile();
             tile.setName(tileEntity.getName());
@@ -716,50 +713,52 @@ public class MongoDbImport extends AnnotationDAO {
                     List<Entity> resultImages = new ArrayList<>();
                     
                     Entity resultSupportingData = EntityUtils.getSupportingData(resultEntity);
-                    populateChildren(resultSupportingData);
-                    collectAnnotations(resultSupportingData.getId());
-                    
-                    List<Entity> children = resultSupportingData.getOrderedChildren();
-                    for(Entity resultFile : children) {
-                        collectAnnotations(resultFile.getId());
+                    if (resultSupportingData!=null) {
+                        populateChildren(resultSupportingData);
+                        collectAnnotations(resultSupportingData.getId());
                         
-                        if (resultFile.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                            if (!resultFile.getName().startsWith("Aligned")) continue;
-                            resultImages.add(resultFile);
-                        }
-                        else if (resultFile.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
-                            verifyMovie = resultFile;
-                        }
-                    }
-                    
-                    if (resultImages.isEmpty()) {
-                        resultImages.add(resultEntity);
-                    }
-                    
-                    for(Entity imageEntity : resultImages) {
-                        String objective = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
-                        if (StringUtils.isEmpty(objective)) objective = "";
-                        PipelineResult ns = nsResultMap.get(objective);
-                        List<PipelineResult> sprResults = new ArrayList<>();
-                        if (ns!=null) {
-                            sprResults.add(ns);
+                        List<Entity> children = resultSupportingData.getOrderedChildren();
+                        for(Entity resultFile : children) {
+                            collectAnnotations(resultFile.getId());
+                            
+                            if (resultFile.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                                if (!resultFile.getName().startsWith("Aligned")) continue;
+                                resultImages.add(resultFile);
+                            }
+                            else if (resultFile.getEntityTypeName().equals(EntityConstants.TYPE_MOVIE)) {
+                                verifyMovie = resultFile;
+                            }
                         }
                         
-                        SampleAlignmentResult alignmentResult = getAlignmentResult(resultEntity, imageEntity, verifyMovie);
-                        if (imageEntity.getName().contains("VNC")) {
-                            alignmentResult.setAnatomicalArea("VNC");    
-                        }
-                        else {
-                            alignmentResult.setAnatomicalArea("Brain");
+                        if (resultImages.isEmpty()) {
+                            resultImages.add(resultEntity);
                         }
                         
-                        if (!sprResults.isEmpty()) {
-                            alignmentResult.setResults(sprResults);
+                        for(Entity imageEntity : resultImages) {
+                            String objective = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE);
+                            if (StringUtils.isEmpty(objective)) objective = "";
+                            PipelineResult ns = nsResultMap.get(objective);
+                            List<PipelineResult> sprResults = new ArrayList<>();
+                            if (ns!=null) {
+                                sprResults.add(ns);
+                            }
+                            
+                            SampleAlignmentResult alignmentResult = getAlignmentResult(resultEntity, imageEntity, verifyMovie);
+                            if (imageEntity.getName().contains("VNC")) {
+                                alignmentResult.setAnatomicalArea("VNC");    
+                            }
+                            else {
+                                alignmentResult.setAnatomicalArea("Brain");
+                            }
+                            
+                            if (!sprResults.isEmpty()) {
+                                alignmentResult.setResults(sprResults);
+                            }
+                            
+                            results.add(alignmentResult);
                         }
-                        
-                        results.add(alignmentResult);
-                    }
-                }    
+                    }    
+                }
             }
             
             SamplePipelineRun run = new SamplePipelineRun();
@@ -788,7 +787,7 @@ public class MongoDbImport extends AnnotationDAO {
         sample.setPipelineRuns(runs);
 
         // Save LSMs
-        imageCollection.insert(allLsms);
+        imageCollection.insert(allLsms.toArray());
         
         return sample;
     }
@@ -807,11 +806,21 @@ public class MongoDbImport extends AnnotationDAO {
         addImage(files,FileType.RefSignal1Mip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_1_REF_MIP_IMAGE)));
         addImage(files,FileType.RefSignal2Mip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_2_REF_MIP_IMAGE)));
         addImage(files,FileType.RefSignal3Mip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SIGNAL_3_REF_MIP_IMAGE)));
-        addImage(files,FileType.FastStack,getRelativeFilename(result,getFilepath(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE))));
+        
+        String fastPath = getFilepath(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_FAST_3D_IMAGE));
+        if (fastPath==null) {
+            fastPath = getFilepath(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_PERFORMANCE_PROXY_IMAGE));
+        }
+        addImage(files,FileType.FastStack,getRelativeFilename(result,fastPath));
         
         if (files.isEmpty()) {
-            // This is a special case where no explicit MIPs have been defined. Let's assume that the default 2d image is a signal MIP.
-            addImage(files,FileType.SignalMip,getRelativeFilename(result,imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+            // This is a special case where no explicit MIPs have been defined, so we need to try to import the default 2d image.
+            String defaultPath = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE);
+            if (defaultPath==null) {
+                // The file tree loader doesn't correctly populate the denormalized path above, so we need to get path from the actual image.
+                defaultPath = getFilepath(imageEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE));
+            }
+            addImage(files,FileType.Unclassified2d,getRelativeFilename(result,defaultPath));
         }
 
         // Add the stack
@@ -1062,9 +1071,8 @@ public class MongoDbImport extends AnnotationDAO {
         }
 
         Entity supportingDataEntity = EntityUtils.getSupportingData(resultEntity);
-        collectAnnotations(supportingDataEntity.getId());
         if (supportingDataEntity!=null) {
-        	
+            collectAnnotations(supportingDataEntity.getId());
         	Map<FileType,String> files = new HashMap<FileType,String>();
         	
         	for(Entity child : supportingDataEntity.getChildren()) {
@@ -1446,7 +1454,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         for(Iterator<Entity> i = samples.iterator(); i.hasNext(); ) {
             Entity screenSampleEntity = i.next();
-            if (EntityConstants.TYPE_SCREEN_SAMPLE.equals(screenSampleEntity.getEntityTypeName())) continue;
+            if (!EntityConstants.TYPE_SCREEN_SAMPLE.equals(screenSampleEntity.getEntityTypeName())) continue;
             
             try {
                 long start = System.currentTimeMillis();
@@ -2202,7 +2210,7 @@ public class MongoDbImport extends AnnotationDAO {
     	for(Entity alignmentBoardItemEntity : EntityUtils.getChildrenForAttribute(alignmentBoardItem, EntityConstants.ATTRIBUTE_ITEM)) {
     		Entity targetEntity = alignmentBoardItemEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_ENTITY);
     		if (targetEntity==null) {
-    			log.info("Target no longer exists for alignment board item: "+alignmentBoardItemEntity.getId());
+    			log.info("    Target no longer exists for alignment board item: "+alignmentBoardItemEntity.getId());
     		}
     		else {
         		AlignmentBoardItem item = new AlignmentBoardItem();
@@ -2480,9 +2488,10 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     public String getObjectSetMemberType(ObjectSet objectSet) {
+        Class<?> objectSetMemberClass = DomainUtils.getObjectClassByName(objectSet.getClassName());
         String label = null;
         // Look for a @SearchType label
-        Class<?> clazz = DomainUtils.getObjectClassByName(objectSet.getClassName());
+        Class<?> clazz = objectSetMemberClass;
         while (clazz!=null && label==null) {
             SearchType searchType = clazz.getAnnotation(SearchType.class);
             if (searchType!=null) {
@@ -2492,7 +2501,7 @@ public class MongoDbImport extends AnnotationDAO {
         }
         if (label==null) {
             // No label found, so look again, this time at @MongoMapped
-            clazz = this.getClass();
+            clazz = objectSetMemberClass;
             while (clazz!=null && label==null) {
                 MongoMapped mongoMapped = clazz.getAnnotation(MongoMapped.class);
                 if (mongoMapped!=null) {
@@ -2756,19 +2765,18 @@ public class MongoDbImport extends AnnotationDAO {
                         break;
                     }
                 }
-                
             	LSMImage image = getLSMImage(null, entity);
             	if (image!=null) {
-            	    dao.getCollectionByName(collectionName).save(image);
+                    imageCollection.insert(image);
             	}
             }
             else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
             	Image image = getImage(entity);
-            	dao.getCollectionByName(collectionName).save(image);
+            	imageCollection.insert(image);
             }
             else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
             	Image image = getImage(entity);
-            	dao.getCollectionByName(collectionName).save(image);
+            	imageCollection.insert(image);
             }
             else {
             	log.warn(indent+"  Cannot handle rogue entity type: "+entityType+"#"+entity.getId());
@@ -2880,7 +2888,10 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     private void collectAnnotations(Long id) {
-        currAnnotations.addAll(getAnnotations(id));
+        Set<Annotation> annotations = getAnnotations(id);
+        if (annotations!=null) {
+            currAnnotations.addAll(annotations);
+        }
     }
 
     private void insertAnnotations(Set<Annotation> annotations, DomainObject domainObject) {
@@ -2888,12 +2899,13 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     private void insertAnnotations(Set<Annotation> annotations, Class<?> clazz, Long id) {
+        if (annotations==null || annotations.isEmpty()) return;
         Reference ref = Reference.createFor(clazz.getName(), id);
         for(Annotation annotation : annotations) {
             annotation.setTarget(ref);
         }
-        log.info("  Adding "+annotations.size()+" annotations for "+ref);
-        annotationCollection.insert(annotations);
+        log.debug("  Adding "+annotations.size()+" annotations for "+ref);
+        annotationCollection.insert(annotations.toArray());
     }
     
     /**
