@@ -17,15 +17,19 @@ public class DispatcherDAO {
 
     private SessionFactory sessionFactory;
 
-    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int maxLength) {
+    public List<DispatcherJob> nextPendingJobs(String hostName, boolean fetchUnassignedJobsFlag, int maxRetries, int maxLength) {
         List<DispatcherJob> nextJobs = new ArrayList<>();
         Session session = getCurrentSession();
         Transaction tx = session.beginTransaction();
-        Query query = session.createQuery("select dj from dispatcher_job dj " +
-                "where dj.status = :status " +
-                "and dj.retries < :maxretries " +
-                "and (dj.dispatchHost = :hostname or dj.dispatchHost is null) " +
-                "order by dj.creationDate");
+        StringBuffer pendingJobsQueryBuffer = new StringBuffer();
+        pendingJobsQueryBuffer.append("select dj from dispatcher_job dj where dj.status = :status and dj.retries < :maxretries ");
+        if (fetchUnassignedJobsFlag) {
+            pendingJobsQueryBuffer.append("and (dj.dispatchHost = :hostname or dj.dispatchHost is null) ");
+        } else {
+            pendingJobsQueryBuffer.append("dj.dispatchHost = :hostname ");
+        }
+        pendingJobsQueryBuffer.append("order by dj.creationDate");
+        Query query = session.createQuery(pendingJobsQueryBuffer.toString());
         query.setString("status", DispatcherJob.Status.PENDING.name());
         query.setInteger("maxretries", maxRetries);
         query.setString("hostname", hostName);
