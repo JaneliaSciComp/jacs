@@ -38,6 +38,9 @@ public class Sample extends AbstractDomainObject implements IsParent {
     
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
+
+    @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
+    private String flycoreAlias;
     
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
     private String gender;
@@ -148,6 +151,14 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setEffector(String effector) {
         this.effector = effector;
+    }
+    
+    public String getFlycoreAlias() {
+        return flycoreAlias;
+    }
+
+    public void setFlycoreAlias(String flycoreAlias) {
+        this.flycoreAlias = flycoreAlias;
     }
 
     public String getGender() {
