@@ -193,10 +193,11 @@ public class WorkspaceRestService {
     @Formatted
     public WorkspaceInfo addWorkspaceArtificialNeurons(
             @QueryParam("id") String idString,
+            @QueryParam("name") String nameString,
             @QueryParam("number") String numberString,
             @QueryParam("points") String pointsString,
             @QueryParam("brprob") String brprobString) {
-        log.info("addWorkspaceArtificialNeurons() invoked, id="+idString+" number="+numberString+" points="+pointsString+" brprob="+brprobString);
+        log.info("addWorkspaceArtificialNeurons() invoked, id="+idString+" name="+nameString+" number="+numberString+" points="+pointsString+" brprob="+brprobString);
 
         Session dbSession = null;
 
