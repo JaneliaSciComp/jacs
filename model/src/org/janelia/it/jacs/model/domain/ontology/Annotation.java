@@ -20,7 +20,7 @@ public class Annotation extends AbstractDomainObject {
     private OntologyTermReference valueTerm;
     private String key;
     private String value;
-    private boolean isComputational;
+    private boolean computational = false;
 
     public Annotation() {
     }
@@ -79,11 +79,11 @@ public class Annotation extends AbstractDomainObject {
 	}
 
     public boolean isComputational() {
-        return isComputational;
+        return computational;
     }
 
-    public void setComputational(boolean isComputational) {
-        this.isComputational = isComputational;
+    public void setComputational(boolean computational) {
+        this.computational = computational;
     }
 
     @Override
