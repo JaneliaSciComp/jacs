@@ -41,6 +41,12 @@
     </module>
     <module>
         <web>
+            <web-uri>compute-dashboard.war</web-uri>
+            <context-root>/dashboard</context-root>
+        </web>
+    </module>
+    <module>
+        <web>
             <web-uri>compute-rest-ws.war</web-uri>
             <context-root>/rest-v1</context-root>
         </web>

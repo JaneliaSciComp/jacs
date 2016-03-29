@@ -60,5 +60,5 @@ public interface JobControlBeanLocal {
 
     public void updateDispatcherJob(DispatcherJob job);
 
-    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int prefetchSize);
+    public List<DispatcherJob> nextPendingJobs(String hostName, boolean fetchUnassignedJobsFlag, int maxRetries, int prefetchSize);
 }

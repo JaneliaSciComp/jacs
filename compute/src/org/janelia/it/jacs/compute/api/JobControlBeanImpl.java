@@ -320,8 +320,8 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     }
 
     @Override
-    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int prefetchSize) {
+    public List<DispatcherJob> nextPendingJobs(String hostName, boolean fetchUnassignedJobsFlag, int maxRetries, int prefetchSize) {
         DispatcherDAO dispatcherDao = new DispatcherDAO();
-        return dispatcherDao.nextPendingJobs(hostName, maxRetries, prefetchSize);
+        return dispatcherDao.nextPendingJobs(hostName, fetchUnassignedJobsFlag, maxRetries, prefetchSize);
     }
 }

@@ -40,9 +40,10 @@ public class DispatchComputationMDB implements Job {
         }
         LOG.debug("Look for queued jobs.");
         int maxRetries = dispatchSettings.getMaxRetries();
+        boolean fetchUnassignedJobsFlag = dispatchSettings.isFetchUnassignedJobs();
         ComputeBeanLocal computeBean = (ComputeBeanLocal) mdctx.lookup(EJBFactory.LOCAL_COMPUTE_JNDI_NAME);
         JobControlBeanLocal jobBean = (JobControlBeanLocal) mdctx.lookup(EJBFactory.LOCAL_JOB_CONTROL_JNDI_NAME);
-        for (DispatcherJob job : jobBean.nextPendingJobs(processingNodeId, maxRetries, prefetchSize)) {
+        for (DispatcherJob job : jobBean.nextPendingJobs(processingNodeId, fetchUnassignedJobsFlag, maxRetries, prefetchSize)) {
             LOG.info("Submit job {}", job.getDispatchId());
             try {
                 computeBean.submitJob(job.getProcessDefnName(), job.getDispatchedTaskId());
