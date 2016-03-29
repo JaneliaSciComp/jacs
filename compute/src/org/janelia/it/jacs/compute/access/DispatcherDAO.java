@@ -26,7 +26,7 @@ public class DispatcherDAO {
         if (fetchUnassignedJobsFlag) {
             pendingJobsQueryBuffer.append("and (dj.dispatchHost = :hostname or dj.dispatchHost is null) ");
         } else {
-            pendingJobsQueryBuffer.append("dj.dispatchHost = :hostname ");
+            pendingJobsQueryBuffer.append("and dj.dispatchHost = :hostname ");
         }
         pendingJobsQueryBuffer.append("order by dj.creationDate");
         Query query = session.createQuery(pendingJobsQueryBuffer.toString());
