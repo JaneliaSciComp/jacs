@@ -17,7 +17,7 @@
         <sequence if="REUSE_ALIGNMENT=true">
             
             <!-- Reuse sample processing from previous pipeline run -->
-            <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.ReuseAlignmentResultService">
+            <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.domain.alignment.ReuseAlignmentResultService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="OBJECTIVE"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -31,14 +31,14 @@
         <sequence if="RUN_ALIGNMENT=true">
         
     	    <!-- Create a alignment result node, with nested result nodes for all the pipeline steps -->
-    	    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateAlignmentResultFileNodeService">
+    	    <operation name="Create Alignment Result Nodes" processor="org.janelia.it.jacs.compute.service.domain.node.CreateAlignmentResultFileNodeService">
     	        <output name="RESULT_FILE_NODE"/>
     	        <output name="RESULT_FILE_NODE_ID"/>
     	        <output name="ALIGN_RESULT_FILE_NODE"/>
     	    </operation>
                     
     	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-    	    <operation name="Init Alignment Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitAlignmentParametersService">
+    	    <operation name="Init Alignment Parameters" processor="org.janelia.it.jacs.compute.service.domain.alignment.InitAlignmentParametersService">
     			<input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
     			<output name="ALIGNMENT_SERVICE_CLASS"/>
     			<output name="ALIGNMENT_SCRIPT_NAME"/>
@@ -46,7 +46,7 @@
     		</operation>
     		
             <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-            <operation name="Get Alignment Parameters" processor="org.janelia.it.jacs.compute.service.entity.GetAlignmentInputsService">
+            <operation name="Get Alignment Parameters" processor="org.janelia.it.jacs.compute.service.domain.alignment.GetAlignmentInputsService">
                 <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
                 <input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
                 <input name="SAMPLE_ENTITY_ID"/>
@@ -83,7 +83,7 @@
                         <output name="REGENERATE_SAMPLE_ID"/>
                     </operation>
                 
-                    <operation name="Get Pipeline Process Name" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelineForSampleService">
+                    <operation name="Get Pipeline Process Name" processor="org.janelia.it.jacs.compute.service.domain.sample.GetPipelineForSampleService">
                         <input name="SAMPLE_ENTITY_ID" value="$V{REGENERATE_SAMPLE_ID}"/>
                         <output name="PROCESS_DEF_NAME"/>
                     </operation>
@@ -113,7 +113,7 @@
                         <output name="SUBTASK_ID"/>
                     </operation>
                     
-                    <operation name="Update aligned input to use the regenerated file" processor="org.janelia.it.jacs.compute.service.entity.sample.InjectRegeneratedInputService">
+                    <operation name="Update aligned input to use the regenerated file" processor="org.janelia.it.jacs.compute.service.domain.alignment.InjectRegeneratedInputService">
                         <input name="TASK_ID" value="$V{SUBTASK_ID}"/>
                         <input name="ALIGNMENT_INPUT" value="$V{REGENERATE_INPUT}"/>
                     </operation>
@@ -137,7 +137,7 @@
 	        
                 <sequence forEach="REGENERATE_INPUT">
                 
-                    <operation name="Remove regenerated input" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpRegeneratedFilesService">
+                    <operation name="Remove regenerated input" processor="org.janelia.it.jacs.compute.service.domain.alignment.CleanUpRegeneratedFilesService">
                         <input name="ALIGNMENT_INPUT" value="$V{REGENERATE_INPUT}"/>
                     </operation>
                     
@@ -153,7 +153,7 @@
 	            </sequence>
 	            
 	            <!-- Load the alignment results into the database -->
-	            <operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.AlignmentResultsDiscoveryService">
+	            <operation name="Discover Alignment Results" processor="org.janelia.it.jacs.compute.service.domain.discovery.AlignmentResultsDiscoveryService">
 	                <input name="ROOT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
 	                <input name="RESULT_ENTITY_NAME" value="$V{ALIGNMENT_RESULT_NAME}"/>
 	                <input name="SAMPLE_ENTITY_ID"/>
@@ -165,7 +165,7 @@
                 <sequence forEach="ALIGNMENT_ID">
 	
                     <!-- Synchronize results to SAGE -->
-                    <operation name="Sage Qi Score Sync" processor="org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService">
+                    <operation name="Sage Qi Score Sync" processor="org.janelia.it.jacs.compute.service.domain.alignment.SageQiScoreSyncService">
                         <input name="SAMPLE_ENTITY_ID"/>
                         <input name="OBJECTIVE"/>
                         <input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -176,7 +176,7 @@
     	                <sequence forEach="ANALYSIS_ALGORITHM">
     	                     
                             <!-- Get analysis parameters -->
-                            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+                            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.domain.sample.InitAnalysisParametersService">
                                 <input name="SAMPLE_ENTITY_ID"/>
                                 <input name="OBJECTIVE"/>
                                 <input name="PIPELINE_RUN_ENTITY_ID"/>

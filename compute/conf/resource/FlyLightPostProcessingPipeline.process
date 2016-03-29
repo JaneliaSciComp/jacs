@@ -12,14 +12,14 @@
         <input name="REUSE_POST"/>
     
         <!-- Decide which types of processing will be run -->
-        <operation name="Choose Summary Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostProcessingPipelineStepsService">
+        <operation name="Choose Summary Processing Steps" processor="org.janelia.it.jacs.compute.service.domain.sample.ChoosePostProcessingPipelineStepsService">
             <output name="RUN_POST"/>
         </operation>
         
         <sequence if="REUSE_POST=true">
             
             <!-- Reuse sample processing from previous pipeline run -->
-            <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.ReusePostProcessingResultService">
+            <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.domain.sample.ReusePostProcessingResultService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="OBJECTIVE"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -36,14 +36,14 @@
             <sequence if="RUN_PROCESSING=true">
             
                 <!-- Create a result node for this group -->
-                <operation name="Create Post-Processing Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                <operation name="Create Post-Processing Result Node" processor="org.janelia.it.jacs.compute.service.domain.node.CreateNamedResultFileNodeService">
                     <input name="NAME" value="Post"/>
                     <output name="RESULT_FILE_NODE"/>
                     <output name="RESULT_FILE_NODE_ID"/>
                 </operation>
                 
                 <!-- Get a list of unaligned images to create summaries for -->
-                <operation name="Get unaligned image List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetUnalignedInputImagesService">
+                <operation name="Get unaligned image List" processor="org.janelia.it.jacs.compute.service.domain.sample.GetUnalignedInputImagesService">
                     <input name="SAMPLE_ENTITY_ID"/>
                     <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -70,7 +70,7 @@
                 </sequence>
                 
                 <!-- Load the MIPs and movies into the database -->
-                <operation name="Discover Post-Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.PostProcessingResultsDiscoveryService">
+                <operation name="Discover Post-Processing Results" processor="org.janelia.it.jacs.compute.service.domain.discovery.PostProcessingResultsDiscoveryService">
                     <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                     <input name="SAMPLE_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
                     <input name="OBJECTIVE"/>

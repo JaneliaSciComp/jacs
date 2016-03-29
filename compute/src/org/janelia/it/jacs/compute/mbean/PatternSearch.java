@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
-import org.janelia.it.jacs.compute.service.domain.FileDiscoveryHelperNG;
+import org.janelia.it.jacs.compute.service.domain.util.FileDiscoveryHelperNG;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.annotation.CompartmentAnnotation3DTask;

@@ -3,7 +3,7 @@
 -->
 <process name="Orphan Annotation Checker" processor="queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
-		<operation name="Orphan Annotation" processor="org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService">
+		<operation name="Orphan Annotation" processor="org.janelia.it.jacs.compute.service.domain.OrphanAnnotationCheckerService">
 		</operation>
     </sequence>
 </process>

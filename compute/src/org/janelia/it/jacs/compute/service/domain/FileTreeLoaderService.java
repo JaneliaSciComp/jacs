@@ -111,6 +111,7 @@ public class FileTreeLoaderService implements IService {
     protected DomainDAO domainDAO;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
+    protected DomainHelper domainHelper;
     protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
@@ -154,17 +155,19 @@ public class FileTreeLoaderService implements IService {
    @Override
     public void execute(IProcessData processData) throws ServiceException {
         try {
-            domainDAO = DomainDAOManager.getInstance().getDao();
-            computeBean = EJBFactory.getLocalComputeBean();
+            this.domainDAO = DomainDAOManager.getInstance().getDao();
+            this.computeBean = EJBFactory.getLocalComputeBean();
             this.processData=processData;
-            logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
-            task= ProcessDataHelper.getTask(processData);
-            sessionName = ProcessDataHelper.getSessionRelativePath(processData);
-            visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
+            this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            this.task= ProcessDataHelper.getTask(processData);
+            this.sessionName = ProcessDataHelper.getSessionRelativePath(processData);
+            this.visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
             
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = domainDAO.getSubjectByName(ownerName);
             this.ownerKey = subject.getKey();
+            
+            this.domainHelper = new DomainHelper(computeBean, ownerKey, logger);
             
             getNodeDirs();
             
@@ -384,7 +387,7 @@ public class FileTreeLoaderService implements IService {
                 }
             }
         }
-        TreeNode folder = DomainHelper.createChildFolder(parentFolder,ownerKey,dir.getName(), index);
+        TreeNode folder = domainHelper.createChildFolder(parentFolder,ownerKey,dir.getName(), index);
         logger.info("Saved folder as "+folder.getId());
         return folder;
     }
@@ -406,7 +409,7 @@ public class FileTreeLoaderService implements IService {
             }
         }
         if (objectSet==null) {
-            objectSet = DomainHelper.createChildObjectSet(folder,ownerKey,"Image Set");
+            objectSet = domainHelper.createChildObjectSet(folder,ownerKey,"Image Set");
         }
 
         // create an image object, if it doesn't already exist

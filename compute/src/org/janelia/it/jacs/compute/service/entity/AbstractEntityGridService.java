@@ -8,7 +8,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.domain.EntityHelperNG;
+import org.janelia.it.jacs.compute.service.domain.util.DomainHelper;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Subject;
 
@@ -27,7 +27,7 @@ public abstract class AbstractEntityGridService extends SubmitDrmaaJobService {
     protected ProcessDataAccessor data;
     protected ComputeBeanLocal computeBean;
     protected String ownerKey;
-    protected EntityHelperNG entityHelper;
+    protected DomainHelper domainHelper;
 
     @Override
     protected void init(IProcessData processData) throws Exception {
@@ -43,7 +43,7 @@ public abstract class AbstractEntityGridService extends SubmitDrmaaJobService {
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
             
-            this.entityHelper = new EntityHelperNG(computeBean, ownerKey, logger);
+            this.domainHelper = new DomainHelper(computeBean, ownerKey, logger);
             
             init();
         } 

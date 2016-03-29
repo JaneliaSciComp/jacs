@@ -21,7 +21,7 @@
 	    </operation>
 	    
         <!-- Import variables from the entity -->
-        <operation name="Get Compression Type" processor="org.janelia.it.jacs.compute.service.entity.InitVariablesFromDomainObjectService">
+        <operation name="Get Compression Type" processor="org.janelia.it.jacs.compute.service.domain.InitVariablesFromDomainObjectService">
             <input name="OVERRIDE" value="true"/>
             <input name="COMPRESSION_TYPE"/>
             <input name="DOMAIN_OBJECT_CLASS_NAME" value="org.janelia.it.jacs.model.domain.sample.Sample"/>
@@ -99,7 +99,7 @@
         </sequence>
         
         <!-- Set the compression type on the sample in case it was passed in separately. If it wasn't passed in as a parameter, then this will set it to the current value, and have no effect. -->
-        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.entity.SetAttributeValueService">
+        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.domain.SetAttributeValueService">
             <input name="OBJECT_CLASS" value="org.janelia.it.jacs.model.domain.sample.Sample"/>
             <input name="OBJECT_ID" value="$V{SAMPLE_ENTITY_ID}"/>
             <input name="ATTRIBUTE_NAME" value="compressionType"/>

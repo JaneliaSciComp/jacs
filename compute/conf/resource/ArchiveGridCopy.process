@@ -22,7 +22,7 @@
 	    </operation>
 
         <!-- Create a result node -->
-        <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+        <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.domain.node.CreateNamedResultFileNodeService">
             <input name="NAME" value="Temp"/>
             <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
             <output name="TEMP_FILE_NODE"/>
@@ -41,7 +41,7 @@
         </sequence>
         
         <!-- We're done with the node -->
-        <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+        <operation name="Remove Temp Result Node" processor="org.janelia.it.jacs.compute.service.domain.node.TrashFileNodeService">
             <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
         </operation>
         

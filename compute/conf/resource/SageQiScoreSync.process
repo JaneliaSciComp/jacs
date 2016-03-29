@@ -2,7 +2,7 @@
 
     <sequence name="Main">
 
-        <operation name="Sage Qi Score Sync" processor="org.janelia.it.jacs.compute.service.entity.SageQiScoreSyncService">
+        <operation name="Sage Qi Score Sync" processor="org.janelia.it.jacs.compute.service.domain.alignment.SageQiScoreSyncService">
         </operation>
 
     </sequence>

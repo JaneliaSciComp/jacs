@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 

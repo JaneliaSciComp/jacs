@@ -46,7 +46,7 @@
         </operation>
         
 	    <!-- Create the input file list -->
-		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
+		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.domain.SampleDataCompressionService">
 	        <input name="MODE" value="CREATE_INPUT_LIST"/>
 			<input name="SAMPLE_ENTITY_ID"/>
             <input name="INPUT_TYPE"/>
@@ -59,7 +59,7 @@
         <sequence if="INPUT_PATH_LIST is not empty">
     			    
     	    <!-- Create a temp result node -->
-    	    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+    	    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.domain.node.CreateNamedResultFileNodeService">
     		    <input name="NAME" value="Temp"/>
     		    <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
     	        <output name="TEMP_FILE_NODE"/>
@@ -67,7 +67,7 @@
     	    </operation>
     	    
     	    <!-- Create the output file list -->
-    		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
+    		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.domain.SampleDataCompressionService">
     	        <input name="MODE" value="CREATE_OUTPUT_LIST"/>
     			<input name="SAMPLE_ENTITY_ID"/>
             	<input name="INPUT_TYPE"/>
@@ -88,7 +88,7 @@
     		</sequence>
     	
     	    <!--  Update the affected entities -->
-    		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.entity.SampleDataCompressionService">
+    		<operation name="MCFO Data Compress" processor="org.janelia.it.jacs.compute.service.domain.SampleDataCompressionService">
                 <input name="MODE" value="COMPLETE"/>
     			<input name="SAMPLE_ENTITY_ID"/>
             	<input name="INPUT_TYPE"/>
@@ -99,7 +99,7 @@
     		</operation>
     	
     	    <!-- Trash temporary file node -->
-    	    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+    	    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.domain.node.TrashFileNodeService">
     	        <input name="FILE_NODE_ID" value="$V{TEMP_FILE_NODE_ID}"/>
     	    </operation>
     	

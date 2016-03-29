@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.service.tiledMicroscope;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.FileNode;
@@ -13,6 +12,7 @@ import java.io.IOException;
 import java.util.Date;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanLocal;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.Event;
 
 /**

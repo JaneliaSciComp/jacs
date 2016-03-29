@@ -22,7 +22,7 @@ import org.janelia.it.jacs.compute.service.activeData.scanner.EntityScanner;
 import org.janelia.it.jacs.compute.service.activeData.ScannerManager;
 import org.janelia.it.jacs.compute.service.activeData.VisitorFactory;
 import org.janelia.it.jacs.compute.service.activeData.visitor.alignment.*;
-import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
 

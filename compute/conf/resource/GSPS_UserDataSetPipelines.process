@@ -65,7 +65,7 @@
         <sequence if="RUN_SAMPLE_DISCOVERY=true">
                         
             <!-- Discover samples in Sage and load them into the database as Entities -->
-            <operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageDataSetDiscoveryService">
+            <operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.domain.discovery.SageDataSetDiscoveryService">
                 <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
                 <input name="DATA_SET_NAME"/>
             </operation>
@@ -73,7 +73,7 @@
         </sequence>
 
         <!-- Find all the Sample Entities in the database -->
-        <operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
+        <operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.domain.sample.SampleTraversalService">
             <input name="RUN_MODE"/>
             <input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
             <input name="DATA_SET_NAME"/>

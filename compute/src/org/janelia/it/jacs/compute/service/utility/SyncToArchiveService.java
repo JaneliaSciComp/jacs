@@ -11,7 +11,7 @@ import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
-import org.janelia.it.jacs.compute.service.entity.AbstractDomainService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.utils.SystemCall;

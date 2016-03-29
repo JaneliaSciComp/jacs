@@ -22,7 +22,7 @@
         </operation>
         
         <!-- Get sub-samples -->
-        <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
+        <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.domain.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="REUSE_PIPELINE_RUNS"/>
             <output name="PARENT_SAMPLE_ID"/>

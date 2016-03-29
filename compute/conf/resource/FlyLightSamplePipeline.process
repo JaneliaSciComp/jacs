@@ -126,13 +126,13 @@
         <sequence if="PERSIST=true">
             
             <!-- Set the sample status -->
-            <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
+            <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.domain.sample.SetSampleStatusService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="STATUS" value="Processing"/>
             </operation>
     
             <!-- Create a pipeline run -->
-            <operation name="Create Pipeline Run" processor="org.janelia.it.jacs.compute.service.entity.sample.CreatePipelineRunEntityService">
+            <operation name="Create Pipeline Run" processor="org.janelia.it.jacs.compute.service.domain.sample.CreatePipelineRunEntityService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="OBJECTIVE"/>
                 <input name="PIPELINE_NAME"/>
@@ -153,7 +153,7 @@
         </sequence>
         
         <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-        <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.entity.sample.InitSampleAttributesService">
+        <operation name="Get Sample Attributes" processor="org.janelia.it.jacs.compute.service.domain.sample.InitSampleAttributesService">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="OBJECTIVE"/>
             <output name="SAMPLE_AREAS"/>
@@ -163,7 +163,7 @@
         <sequence forEach="SAMPLE_AREA">
             
             <!-- Decide which types of processing will be run -->
-            <operation name="Choose Sample Area Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChooseSampleAreaPipelineStepsService">
+            <operation name="Choose Sample Area Processing Steps" processor="org.janelia.it.jacs.compute.service.domain.sample.ChooseSampleAreaPipelineStepsService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="OBJECTIVE"/>
                 <input name="SAMPLE_AREA"/>
@@ -182,7 +182,7 @@
     		<sequence if="REUSE_PROCESSING=true">
         		
                 <!-- Reuse sample processing from previous pipeline run -->
-                <operation name="Reuse Sample Processing Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.ReuseSampleProcessingResultService">
+                <operation name="Reuse Sample Processing Entity" processor="org.janelia.it.jacs.compute.service.domain.sample.ReuseSampleProcessingResultService">
                     <input name="SAMPLE_ENTITY_ID"/>
                     <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -210,7 +210,7 @@
             <sequence if="RUN_PROCESSING=true" name="Sample processing" startEvent="running">
             
         	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
-        	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateSampleResultFileNodeService">
+        	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.domain.node.CreateSampleResultFileNodeService">
         	        <output name="RESULT_FILE_NODE"/>
         	        <output name="RESULT_FILE_NODE_ID"/>
         	        <output name="SAMPLE_RESULT_FILE_NODE"/>
@@ -222,7 +222,7 @@
         	    
         	    <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
         	    <sequence name="Wait Async" waitForAsync="true">
-    			    <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSampleProcessingParametersService">
+    			    <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.domain.sample.InitSampleProcessingParametersService">
     			        <input name="MERGE_RESULT_FILE_NODE"/>
     			        <input name="STITCH_RESULT_FILE_NODE"/>
     					<input name="SAMPLE_ENTITY_ID"/>
@@ -236,7 +236,7 @@
         	    </sequence>
                 
     		    <!-- Create a result node for this group -->
-    		    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+    		    <operation name="Create Temp Result Node" processor="org.janelia.it.jacs.compute.service.domain.node.CreateNamedResultFileNodeService">
     			    <input name="NAME" value="Temp"/>
     			    <input name="OUTPUT_VAR_NAME" value="LSM_FILE_NODE"/>
     		        <output name="LSM_FILE_NODE"/>
@@ -244,7 +244,7 @@
     		    </operation>
     		    
     		    <!-- Get the LSM file paths and update the bulk merge parameters to use the copied files -->
-		        <operation name="Get LSM file paths" processor="org.janelia.it.jacs.compute.service.entity.sample.GetLsmFilePathsService">
+		        <operation name="Get LSM file paths" processor="org.janelia.it.jacs.compute.service.domain.sample.GetLsmFilePathsService">
                     <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
 					<input name="SAMPLE_AREA"/>
                     <output name="SAMPLE_AREA"/>
@@ -303,7 +303,7 @@
                 </sequence>
         	            	
     		    <!-- We're done with the LSMs -->
-    		    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.TrashFileNodeService">
+    		    <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.domain.node.TrashFileNodeService">
     		        <input name="FILE_NODE_ID" value="$V{LSM_FILE_NODE_ID}"/>
     		    </operation>
     		   
@@ -345,7 +345,7 @@
             	<sequence if="RUN_STITCH=false">
         	    
         		    <!-- If we're not stitching then the single tile is considered the stitched file -->
-        		    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitSingleMergeParametersService">
+        		    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.domain.sample.InitSingleMergeParametersService">
         		        <input name="SAMPLE_AREA"/>
         		        <output name="SAMPLE_AREA"/>
         			</operation>
@@ -375,7 +375,7 @@
                     </sequence>
                     
             	    <!-- Load the sample analysis results into the database -->
-            		<operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SampleProcessingResultsDiscoveryService">
+            		<operation name="Discover Sample Processing Results" processor="org.janelia.it.jacs.compute.service.domain.discovery.SampleProcessingResultsDiscoveryService">
             			<input name="ROOT_FILE_NODE" value="$V{SAMPLE_RESULT_FILE_NODE}"/>
             			<input name="RESULT_ENTITY_NAME" value="$V{SAMPLE_PROCESSING_RESULTS_NAME}"/>
             			<input name="SAMPLE_ENTITY_ID"/>
@@ -391,7 +391,7 @@
                         <sequence forEach="ANALYSIS_ALGORITHM">
                                 
                             <!-- Get analysis parameters -->
-                            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.entity.sample.InitAnalysisParametersService">
+                            <operation name="Get Parameters" processor="org.janelia.it.jacs.compute.service.domain.sample.InitAnalysisParametersService">
                                 <input name="ANALYSIS_ALGORITHM"/>
                                 <output name="ANALYSIS_PIPELINE_NAME"/>
                             </operation>
@@ -430,12 +430,12 @@
         </sequence>
         
         <!-- Clean up merged files for all sample areas -->
-        <operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.entity.sample.CleanUpMergedTilesService">
+        <operation name="Remove merged files" processor="org.janelia.it.jacs.compute.service.domain.sample.CleanUpMergedTilesService">
             <input name="SAMPLE_AREAS"/>
         </operation>
             
         <!-- Decide which types of processing will be run -->
-        <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostSampleProcessingStepsService">
+        <operation name="Choose Next Steps" processor="org.janelia.it.jacs.compute.service.domain.sample.ChoosePostSampleProcessingStepsService">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="OBJECTIVE"/>
             <input name="SAMPLE_AREAS"/>
@@ -481,7 +481,7 @@
             </include>
              
             <!-- Set our status -->
-            <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
+            <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.domain.sample.SetSampleStatusService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="STATUS" value="Complete"/>
             </operation>
@@ -495,13 +495,13 @@
 	    <exceptionHandler>
 	    
             <!-- Set our status -->
-            <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.entity.sample.SetSampleStatusService">
+            <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.domain.sample.SetSampleStatusService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="STATUS" value="Error"/>
             </operation>
             
 		    <!-- Log the exception into the Pipeline Run -->
-			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.entity.sample.CreateErrorEntityService">
+			<operation name="Handle exceptions" processor="org.janelia.it.jacs.compute.service.domain.sample.CreateErrorEntityService">
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="OBJECTIVE"/>
 				<input name="PIPELINE_RUN_ENTITY_ID"/>

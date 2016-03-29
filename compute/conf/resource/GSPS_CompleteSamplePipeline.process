@@ -63,7 +63,7 @@
         </operation>
 
         <!-- Get the list of data sets which the sample is a part of -->
-        <operation name="Get Sample Data Sets" processor="org.janelia.it.jacs.compute.service.entity.sample.GetSampleDataSetsService">
+        <operation name="Get Sample Data Sets" processor="org.janelia.it.jacs.compute.service.domain.sample.GetSampleDataSetsService">
             <input name="SAMPLE_ENTITY_ID"/>
             <output name="DATA_SET_IDENTIFIER"/>
         </operation>
@@ -71,7 +71,7 @@
         <sequence forEach="DATA_SET_IDENTIFIER">
 
             <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
-            <operation name="Get Pipelines" processor="org.janelia.it.jacs.compute.service.entity.sample.GetPipelinesForDataSetService">
+            <operation name="Get Pipelines" processor="org.janelia.it.jacs.compute.service.domain.sample.GetPipelinesForDataSetService">
                 <input name="DATA_SET_IDENTIFIER"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="REUSE_PIPELINE_RUNS"/>

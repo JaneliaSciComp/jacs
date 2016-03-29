@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.AbstractDomainGridService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainGridService;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.cv.Objective;
