@@ -1900,7 +1900,7 @@ public class MongoDbImport extends AnnotationDAO {
     
     private void buildAnnotationMap() {
 
-        largeOp.clearCache(MongoLargeOperations.ANNOTATION_MAP);
+        largeOp.clearCache(MongoLargeOperations.ETL_ANNOTATION_MAP);
         
         long start = System.currentTimeMillis();
         
@@ -1976,12 +1976,12 @@ public class MongoDbImport extends AnnotationDAO {
                 		creationDate, updatedDate, targetId, targetType, keyId, valueId, keyStr, valueStr);
                 annotation.setComputational(!StringUtils.isEmpty(isComp));
 
-                Set<Annotation> annots = (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, targetId);
+                Set<Annotation> annots = (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ETL_ANNOTATION_MAP, targetId);
                 if (annots == null) {
                     annots = new HashSet<Annotation>();
                 }
                 annots.add(annotation);
-                largeOp.putValue(MongoLargeOperations.ANNOTATION_MAP, targetId, annots);
+                largeOp.putValue(MongoLargeOperations.ETL_ANNOTATION_MAP, targetId, annots);
                 
                 i++;
             }
@@ -2038,10 +2038,10 @@ public class MongoDbImport extends AnnotationDAO {
     }
     
     private void verifyAnnotations() {
-        Cache annotationCache = largeOp.getCache(MongoLargeOperations.ANNOTATION_MAP);
+        Cache annotationCache = largeOp.getCache(MongoLargeOperations.ETL_ANNOTATION_MAP);
         List<Long> targetIds = new ArrayList<>();
         for(Object key : annotationCache.getKeys()) {
-            Set<Annotation> annotations = (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, key);
+            Set<Annotation> annotations = (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ETL_ANNOTATION_MAP, key);
             Map<Long,Annotation> map = DomainUtils.getMapById(annotations);
             
             List<Long> annotationIds = DomainUtils.getIds(annotations);
@@ -2971,7 +2971,7 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     private Set<Annotation> getAnnotations(Long id) {
-        return (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, id);
+        return (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ETL_ANNOTATION_MAP, id);
     }
     
     private void collectAnnotations(Long id) {
