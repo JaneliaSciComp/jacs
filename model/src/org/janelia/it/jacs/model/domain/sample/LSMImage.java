@@ -302,11 +302,11 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="flycore_id_i",label="Fly Core Id")
     private Integer flycoreId;
 
-    @SAGEAttribute(cvName="line", termName="flycore_lab")
+    @SAGEAttribute(cvName="line", termName="flycore_alias")
     @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
     private String flycoreAlias;
 
-    @SAGEAttribute(cvName="line", termName="flycore_alias")
+    @SAGEAttribute(cvName="line", termName="flycore_lab")
     @SearchAttribute(key="fclab_s",label="Fly Core Lab Id")
     private String flycoreLabId;
     
