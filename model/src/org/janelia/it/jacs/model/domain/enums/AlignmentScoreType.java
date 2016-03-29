@@ -14,7 +14,8 @@ public enum AlignmentScoreType {
     Qi("Alignment Qi Score"),
     QiByRegion("Alignment Qi Scores"),
     OverlapCoefficient("Overlap Coefficient"),
-    ObjectPearsonCoefficient("Object Pearson Coefficient");
+    ObjectPearsonCoefficient("Object Pearson Coefficient"),
+    OtsunaObjectPearsonCoefficient("Otsuna Object Pearson Coefficient");
 
     private final String label;
 
