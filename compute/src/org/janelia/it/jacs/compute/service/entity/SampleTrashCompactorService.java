@@ -2,6 +2,9 @@ package org.janelia.it.jacs.compute.service.entity;
 
 import java.io.File;
 
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.user_data.FileNode;
@@ -30,16 +33,17 @@ public class SampleTrashCompactorService extends AbstractDomainService {
     protected static final String JACS_DATA_ARCHIVE_DIR =
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
-    
-	private String username;
     private boolean isDebug = false;
+    private boolean archiveEnabled = false;
+	private String username;
+    private SolrConnector solr;
+    private File userFilestore;
+    private File archiveFilestore;
+    
     private int numDirs = 0;
     private int numResultNodes = 0;
     private int numDeletedResultNodes = 0;
     private int numDefunctDirs = 0;
-    
-    private File userFilestore;
-    private File archiveFilestore;
     
     public void execute() throws Exception {
 
@@ -49,6 +53,7 @@ public class SampleTrashCompactorService extends AbstractDomainService {
         }
         
         this.username = DomainUtils.getNameFromSubjectKey(ownerKey);
+        this.solr = new SolrConnector(domainDao);
         this.userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
         this.archiveFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_ARCHIVE_DIR_PROP) + File.separator + username + File.separator);
         
@@ -61,8 +66,10 @@ public class SampleTrashCompactorService extends AbstractDomainService {
         	logger.info("This is the real thing. Files will be moved and/or deleted!");
         }
         
+        archiveEnabled = !userFilestore.getAbsolutePath().equals(archiveFilestore.getAbsolutePath());
+        
         processFilestore(userFilestore);
-        if (!userFilestore.getAbsolutePath().equals(archiveFilestore.getAbsolutePath())) {
+        if (archiveEnabled) {
         	processFilestore(archiveFilestore);
         }
         
@@ -135,25 +142,28 @@ public class SampleTrashCompactorService extends AbstractDomainService {
                 String path = dir.getAbsolutePath();
                 
                 numResultNodes++;
-                long numEntities = domainDao.getCountWithPathPrefix(null, path);
+                long numEntities = getCountWithPathPrefix(path);
                 if (numEntities==0) {
                     
-                    // Because some nodes may have dual citizenship on groups and archive, for legacy reasons, we need
-                    // to check the sister directory as well:
+                    if (archiveEnabled) {
+                        // Because some nodes may have dual citizenship on groups and archive, for legacy reasons, we need
+                        // to check the sister directory as well:
+                        
+                        String sisterPath = null;
+                        if (path.startsWith(JACS_DATA_DIR)) {
+                            sisterPath = path.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR);
+                        }
+                        else  if (path.startsWith(JACS_DATA_ARCHIVE_DIR)) {
+                            sisterPath = path.replaceFirst(JACS_DATA_ARCHIVE_DIR, JACS_DATA_DIR);
+                        }
+                        else {
+                            logger.error("Unknown path prefix: "+path);
+                            return;
+                        }
+                        
+                        numEntities = getCountWithPathPrefix(sisterPath);
+                    }
                     
-                    String sisterPath = null;
-                    if (path.startsWith(JACS_DATA_DIR)) {
-                        sisterPath = path.replaceFirst(JACS_DATA_DIR, JACS_DATA_ARCHIVE_DIR);
-                    }
-                    else  if (path.startsWith(JACS_DATA_ARCHIVE_DIR)) {
-                        sisterPath = path.replaceFirst(JACS_DATA_ARCHIVE_DIR, JACS_DATA_DIR);
-                    }
-                    else {
-                        logger.error("Unknown path prefix: "+path);
-                        return;
-                    }
-                    
-                    numEntities = domainDao.getCountWithPathPrefix(null, sisterPath);
                     if (numEntities==0) {
                         logger.info(dir+ " has no references, trashing it.");    
                         if (!isDebug) computeBean.trashNode(username, node.getObjectId(), true);
@@ -174,4 +184,12 @@ public class SampleTrashCompactorService extends AbstractDomainService {
         }
     }
     
+    private long getCountWithPathPrefix(String path) throws Exception {
+        // TODO: since it's very hard to search all of Mongo, the way we used to search all the Entities, we are using Solr instead.
+        // However, this relies on Solr always having an up-to-date view of Mongo. We need to either ensure that's the case, or 
+        // find another solution to this. 
+        SolrQuery query = new SolrQuery(path);
+        QueryResponse qr = solr.search(query);
+        return qr.getResults().getNumFound();
+    }
 }

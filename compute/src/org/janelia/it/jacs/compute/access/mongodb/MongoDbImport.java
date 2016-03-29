@@ -60,6 +60,7 @@ import org.janelia.it.jacs.model.domain.ontology.Interval;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
+import org.janelia.it.jacs.model.domain.sample.CuratedNeuron;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Image;
@@ -113,7 +114,7 @@ import net.sf.ehcache.Cache;
  */
 public class MongoDbImport extends AnnotationDAO {
 
-    private static final Logger logger = Logger.getLogger(MongoDbImport.class);
+    private static final Logger log = Logger.getLogger(MongoDbImport.class);
 
 	protected static final int INSERTION_BATCH_SIZE = 1000;
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
@@ -160,7 +161,7 @@ public class MongoDbImport extends AnnotationDAO {
     private Set<Annotation> currAnnotations = new HashSet<>();
     
     public MongoDbImport() throws UnknownHostException {
-        super(logger);
+        super(log);
         
         this.subjectDao = new SubjectDAO(log);
         this.sageDao = new SageDAO(log);
@@ -1155,6 +1156,10 @@ public class MongoDbImport extends AnnotationDAO {
         if (!StringUtils.isEmpty(pearsonScore)) {
             scores.put(AlignmentScoreType.ObjectPearsonCoefficient,pearsonScore);
         }
+        String otsunaPearsonScore = imageEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_OTSUNA_OBJECT_PEARSON_COEFFICIENT);
+        if (!StringUtils.isEmpty(otsunaPearsonScore)) {
+            scores.put(AlignmentScoreType.OtsunaObjectPearsonCoefficient,otsunaPearsonScore);
+        }
         if (!scores.isEmpty()) result.setScores(scores);
         
         Map<FileType,String> files = new HashMap<FileType,String>();
@@ -1360,6 +1365,16 @@ public class MongoDbImport extends AnnotationDAO {
             insertAnnotations(getAnnotations(neuronFragment.getId()), neuronFragment);
         }
 
+        Entity cnCollectionEntity = EntityUtils.getLatestChildOfType(separationEntity, EntityConstants.TYPE_CURATED_NEURON_COLLECTION);
+        if (cnCollectionEntity!=null) {
+            collectAnnotations(cnCollectionEntity.getId());
+            for(Entity fragmentEntity : EntityUtils.getChildrenOfType(cnCollectionEntity, EntityConstants.TYPE_CURATED_NEURON)) {
+                CuratedNeuron neuronFragment = getCuratedNeuron(sampleEntity, separationEntity, fragmentEntity);
+                neuronFragments.add(neuronFragment);
+                insertAnnotations(getAnnotations(neuronFragment.getId()), neuronFragment);
+            }
+        }
+        
         fragmentCollection.insert(neuronFragments.toArray());
         
         ReverseReference fragmentsReference = new ReverseReference();
@@ -1424,6 +1439,47 @@ public class MongoDbImport extends AnnotationDAO {
         return neuronFragment;
     }
 
+    private CuratedNeuron getCuratedNeuron(Entity sampleEntity, Entity separationEntity, Entity fragmentEntity) throws Exception {
+        CuratedNeuron neuronFragment = new CuratedNeuron();
+        neuronFragment.setId(fragmentEntity.getId());
+        neuronFragment.setSample(getReference(sampleEntity));
+        neuronFragment.setName(fragmentEntity.getName());
+        neuronFragment.setOwnerKey(fragmentEntity.getOwnerKey());
+        neuronFragment.setReaders(getSubjectKeysWithPermission(fragmentEntity, "r"));
+        neuronFragment.setWriters(getSubjectKeysWithPermission(fragmentEntity, "w"));
+        neuronFragment.setCreationDate(fragmentEntity.getCreationDate());
+        neuronFragment.setUpdatedDate(fragmentEntity.getUpdatedDate());
+        String number = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
+        if (number!=null) {
+            neuronFragment.setNumber(Integer.parseInt(number));
+        }
+        neuronFragment.setSeparationId(separationEntity.getId());
+
+        populateChildren(fragmentEntity);
+        for(Entity childFragment : EntityUtils.getChildrenOfType(fragmentEntity, EntityConstants.TYPE_NEURON_FRAGMENT)) {
+            if (neuronFragment.getFragment1()==null) {
+                neuronFragment.setFragment1(getReference(childFragment));
+            }
+            else if (neuronFragment.getFragment2()==null) {
+                neuronFragment.setFragment2(getReference(childFragment));
+            }
+            else {
+                log.warn("    Encountered curated neuron with more than two child fragments: "+fragmentEntity.getId());
+            }
+        }
+        
+        String stackFilepath = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+        File stackFile = new File(stackFilepath);
+        neuronFragment.setFilepath(stackFile.getParent());
+        
+        Map<FileType,String> images = new HashMap<FileType,String>();
+        addImage(images,stackFilepath.endsWith("h5j")?FileType.VisuallyLosslessStack:FileType.LosslessStack,getRelativeFilename(neuronFragment,stackFilepath));
+        addImage(images,FileType.SignalMip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        neuronFragment.setFiles(images);
+        
+        return neuronFragment;
+    }
+    
 	/* SCREEN SAMPLES */
     
     private void loadScreenData() throws DaoException {
@@ -1531,7 +1587,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         if (lsmImage!=null) {
             if (lsmImage.getDataSet()==null) {
-                logger.info("    Setting default data set for screen LSM "+lsmImage.getId());
+                log.info("    Setting default data set for screen LSM "+lsmImage.getId());
                 lsmImage.setDataSet(SCREEN_DEFAULT_DATA_SET);
             }
             
@@ -1547,7 +1603,7 @@ public class MongoDbImport extends AnnotationDAO {
             screenSample.setDataSet(lsmImage.getDataSet());
         }
         else {
-            logger.info("    Setting default data set for screen sample "+screenSample.getId());
+            log.info("    Setting default data set for screen sample "+screenSample.getId());
             screenSample.setDataSet(SCREEN_DEFAULT_DATA_SET);
         }
         
@@ -1575,37 +1631,38 @@ public class MongoDbImport extends AnnotationDAO {
         // Alignment result 
         
         Entity alignedStack = EntityUtils.findChildWithType(screenSampleEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK);
-        
-        SampleAlignmentResult alignmentResult = new SampleAlignmentResult();
-        alignmentResult.setId(alignedStack.getId());
-        alignmentResult.setName(SCREEN_ALIGNMENT_RESULT_NAME);
-        alignmentResult.setCreationDate(alignedStack.getCreationDate());
-        alignmentResult.setAlignmentSpace(SCREEN_ALIGNMENT_SPACE);
-        alignmentResult.setChannelSpec(SCREEN_CHAN_SPEC);
-        alignmentResult.setFilepath(new File(getFilepath(alignedStack)).getParent());
-        alignmentResult.setObjective(SCREEN_OBJECTIVE);
-        alignmentResult.setAnatomicalArea(SCREEN_ANATOMICAL_AREA);
-        
-        Map<AlignmentScoreType,String> scores = new HashMap<AlignmentScoreType,String>();
-        String qmScore = alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
-        if (!StringUtils.isEmpty(qmScore)) {
-            scores.put(AlignmentScoreType.ModelViolation,qmScore);
-        } 
-        String incScore = alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
-        if (!StringUtils.isEmpty(incScore)) {
-            scores.put(AlignmentScoreType.Inconsistency,incScore);
-            scores.put(AlignmentScoreType.Qi,ALIGNMENT_SCORE_FORMATTER.format(1-Double.parseDouble(incScore)));
-        }
-
-        if (!scores.isEmpty()) alignmentResult.setScores(scores);
-        
-        Map<FileType,String> images = new HashMap<FileType,String>();
         if (alignedStack!=null) {
-            addImage(images,FileType.LosslessStack,getRelativeFilename(alignmentResult,getFilepath(alignedStack)));
-            addImage(images,FileType.AllMip,getRelativeFilename(alignmentResult,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+            SampleAlignmentResult alignmentResult = new SampleAlignmentResult();
+            alignmentResult.setId(alignedStack.getId());
+            alignmentResult.setName(SCREEN_ALIGNMENT_RESULT_NAME);
+            alignmentResult.setCreationDate(alignedStack.getCreationDate());
+            alignmentResult.setAlignmentSpace(SCREEN_ALIGNMENT_SPACE);
+            alignmentResult.setChannelSpec(SCREEN_CHAN_SPEC);
+            alignmentResult.setFilepath(new File(getFilepath(alignedStack)).getParent());
+            alignmentResult.setObjective(SCREEN_OBJECTIVE);
+            alignmentResult.setAnatomicalArea(SCREEN_ANATOMICAL_AREA);
+            
+            Map<AlignmentScoreType,String> scores = new HashMap<AlignmentScoreType,String>();
+            String qmScore = alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_MODEL_VIOLATION_SCORE);
+            if (!StringUtils.isEmpty(qmScore)) {
+                scores.put(AlignmentScoreType.ModelViolation,qmScore);
+            } 
+            String incScore = alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_INCONSISTENCY_SCORE);
+            if (!StringUtils.isEmpty(incScore)) {
+                scores.put(AlignmentScoreType.Inconsistency,incScore);
+                scores.put(AlignmentScoreType.Qi,ALIGNMENT_SCORE_FORMATTER.format(1-Double.parseDouble(incScore)));
+            }
+    
+            if (!scores.isEmpty()) alignmentResult.setScores(scores);
+            
+            Map<FileType,String> images = new HashMap<FileType,String>();
+            if (alignedStack!=null) {
+                addImage(images,FileType.LosslessStack,getRelativeFilename(alignmentResult,getFilepath(alignedStack)));
+                addImage(images,FileType.AllMip,getRelativeFilename(alignmentResult,alignedStack.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH)));
+            }
+            alignmentResult.setFiles(images);
+            run.addResult(alignmentResult);
         }
-        alignmentResult.setFiles(images);
-        run.addResult(alignmentResult);
         
         // Pattern and Mask annotation results 
         
@@ -2331,16 +2388,21 @@ public class MongoDbImport extends AnnotationDAO {
     
     private DomainObject loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, Map<Long,DomainObject> loaded, String indent) throws Exception {
         
-    	// TODO: should we load these?
-    	
+        // Arnim's stuff is no longer needed.
     	if ("user:jenetta".equals(folderEntity.getOwnerKey())) {
     		return null;
     	}
     	
+    	// Stuff from file tree loader is no longer needed.
     	if ("supportingFiles".equals(folderEntity.getName())) {
     		return null;
     	}
-    	
+
+        // Dump all user search results, because it takes forever to import them all (due to translation), and they don't really jive with the new way of Filtering anyway.
+        if ("Search Results".equals(folderEntity.getName()) && EntityUtils.isProtected(folderEntity)) {
+            return null;
+        }
+        
         log.info(indent+"Loading "+folderEntity.getName());
         
         if (loaded.containsKey(folderEntity.getId())) {
@@ -2525,20 +2587,20 @@ public class MongoDbImport extends AnnotationDAO {
 
 	    // --------------------------------------------------------------------------------
 		// Make sure all objects are of the same type
-		String setType = null;
+		String setEntityType = null;
 		List<Entity> entityMembers = new ArrayList<Entity>(); 
 		for(Entity childEntity : items) {
-			if (setType==null) {
-				setType = childEntity.getEntityTypeName();	
+			if (setEntityType==null) {
+				setEntityType = childEntity.getEntityTypeName();	
 			}
-			else if (!setType.equals(childEntity.getEntityTypeName())) {
-				log.warn(indent+"  Ignoring entity with type that does not match set ("+childEntity.getEntityTypeName()+"!="+setType+")");
+			else if (!setEntityType.equals(childEntity.getEntityTypeName())) {
+				log.warn(indent+"  Ignoring entity with type that does not match set ("+childEntity.getEntityTypeName()+"!="+setEntityType+")");
 				continue;
 			}
 			entityMembers.add(childEntity);
 		}
 		
-		if (setType==null) {
+		if (setEntityType==null) {
 			// Object set has no members 
 			return objectSet;
 		}
@@ -2548,27 +2610,29 @@ public class MongoDbImport extends AnnotationDAO {
 	    String translatedSetType = null;
 		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
 		
-		if (getCollectionName(setType)==null) {
+		if (getCollectionName(setEntityType)==null) {
 			// We don't know this type, attempt mass translation up to sample
-			translatedEntities.putAll(translateToSample(indent, entityMembers, setType));
+			translatedEntities.putAll(translateToSample(indent, entityMembers, setEntityType));
 			if (!translatedEntities.isEmpty()) {
-//				for(Long id : translatedEntities.keySet()) {
-//					Entity translatedEntity = translatedEntities.get(id);
-//					if (translatedEntity==null) {
-//						log.info(indent+"  "+id+" --> null");
-//					}
-//					else {
-//						log.info(indent+"  "+id+" --> "+translatedEntity.getId()+" ("+translatedEntity.getEntityTypeName()+")");
-//					}
-//				}
-				translatedSetType = setType = "Sample";
+			    if (log.isTraceEnabled()) {
+    				for(Long id : translatedEntities.keySet()) {
+    					Entity translatedEntity = translatedEntities.get(id);
+    					if (translatedEntity==null) {
+    						log.trace(indent+"  "+id+" --> null");
+    					}
+    					else {
+    						log.trace(indent+"  "+id+" --> "+translatedEntity.getId()+" ("+translatedEntity.getEntityTypeName()+")");
+    					}
+    				}
+			    }
+				translatedSetType = setEntityType = EntityConstants.TYPE_SAMPLE;
 			}
 		}
 
-//		log.info(indent+"  setType="+setType+", translatedEntities.size="+translatedEntities.size());
+		log.debug(indent+"  setType="+setEntityType+", translatedEntities.size="+translatedEntities.size());
 		
 		// Translate sub-samples into samples
-		if ("Sample".equals(setType)) {
+		if (EntityConstants.TYPE_SAMPLE.equals(setEntityType)) {
 			// We're at samples, but we may need to go one level higher to the parent sample
 			Map<Long,Entity> secondaryTranslatedEntities = new HashMap<>();
 			List<Long> subsampleIds = new ArrayList<>();
@@ -2598,21 +2662,24 @@ public class MongoDbImport extends AnnotationDAO {
 	            }
             	log.info(indent+"  Translated "+subsampleIds.size()+ " sub samples to "+secondaryTranslatedEntities.size()+" parent samples");
             	if (!secondaryTranslatedEntities.isEmpty()) {
-//    				for(Long id : secondaryTranslatedEntities.keySet()) {
-//    					Entity translatedEntity = secondaryTranslatedEntities.get(id);
-//    					if (translatedEntity==null) {
-//    						log.info(indent+"  "+id+" --> null");
-//    					}
-//    					else {
-//    						log.info(indent+"  "+id+" --> "+translatedEntity.getId()+" ("+translatedEntity.getEntityTypeName()+")");
-//    					}
-//    				}
-            		translatedSetType = "Sample";
+            	    if (log.isTraceEnabled()) {
+        				for(Long id : secondaryTranslatedEntities.keySet()) {
+        					Entity translatedEntity = secondaryTranslatedEntities.get(id);
+        					if (translatedEntity==null) {
+        						log.trace(indent+"  "+id+" --> null");
+        					}
+        					else {
+        						log.trace(indent+"  "+id+" --> "+translatedEntity.getId()+" ("+translatedEntity.getEntityTypeName()+")");
+        					}
+        				}
+            	    }
+            		translatedSetType = EntityConstants.TYPE_SAMPLE;
     			}
 	            translatedEntities.putAll(secondaryTranslatedEntities);
 			}
 		}
-//		log.info(indent+"  translatedEntities.size="+translatedEntities.size());
+		
+		log.debug(indent+"  translatedEntities.size="+translatedEntities.size());
 		
 	    // --------------------------------------------------------------------------------
 		// Load the members, translating them one-by-one if necessary
@@ -2625,23 +2692,21 @@ public class MongoDbImport extends AnnotationDAO {
         	
         	if (translatedEntity!=null) {
         		// already translated this above
-        		logger.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+importEntity.getEntityTypeName()+"#"+importEntity.getId());
+        		log.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+importEntity.getEntityTypeName()+"#"+importEntity.getId());
         		importEntity = translatedEntity;
         	}
         	else if (TRANSLATE_ENTITIES) {
                 String importCollection = getCollectionName(importEntity.getEntityTypeName());
-        	    if ((importCollection==null || "image".equals(importCollection))) {
-            		// See if we can substitute a higher-level entity for the one that the user referenced. For example, 
-            		// if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
-            		// The priority list defines the ordered list of possible entity types to try as ancestors.  
-            		for (String entityType : entityTranslationPriority) {
-            			Entity ancestor = getAncestorWithType(childEntity.getOwnerKey(), importEntity.getId(), entityType);
-                    	if (ancestor!=null) {
-                    		logger.info(indent+"  Will reference "+entityType+"#"+ancestor.getId()+" instead of unknown "+importEntity.getEntityTypeName()+"#"+importEntity.getId());                		
-                            importEntity = ancestor;
-                    		break;
-                    	}
-            		}
+        	    if ((importCollection==null || "image".equals(importCollection)) && !EntityConstants.TYPE_LSM_STACK.equals(childEntity.getEntityTypeName())) {
+            		// If we don't know how to import this entity, see if we can substitute a higher-level entity for the one that the user referenced. 
+        	        // For example, if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
+                    log.info(indent+"  Finding higher-level ancestors for unknown entity "+importEntity.getEntityTypeName()+"#"+importEntity.getId());          
+        	        Entity ancestor = getHigherLevelAncestor(importEntity, new HashSet<Long>());
+        	        if (ancestor!=null) {
+                        log.info(indent+"  Will reference "+ancestor.getEntityTypeName()+"#"+ancestor.getId()+" instead of unknown "+importEntity.getEntityTypeName()+"#"+importEntity.getId());                       
+                        importEntity = ancestor;
+                        break;
+                    }
         	    }
         	}
 
@@ -2683,6 +2748,29 @@ public class MongoDbImport extends AnnotationDAO {
         
 		return objectSet;
 	}
+
+    private Entity getHigherLevelAncestor(Entity entity, Set<Long> visited) throws DaoException {
+
+        if (visited.contains(entity.getId())) {
+            // We've already been here, don't need to search it again
+            return null;
+        }
+        visited.add(entity.getId());
+        
+        // Do not return the starting node as the ancestor, even if type matches
+        for (String entityType : entityTranslationPriority) {
+            if (entity.getEntityTypeName().equals(entityType)) {
+                return entity;
+            }
+        }
+        
+        for(Entity parent : getParentEntities(entity.getId())) {
+            Entity ancestor = getHigherLevelAncestor(parent, visited);
+            if (ancestor != null) return ancestor;
+        }
+        
+        return null;
+    }
     
     private Map<Long,Entity> translateToSample(String indent, List<Entity> entityMembers, String startingType) throws Exception {
 
@@ -2736,7 +2824,6 @@ public class MongoDbImport extends AnnotationDAO {
 	private void attemptRogueImport(Entity entity, String indent) {
 		
     	String entityType = entity.getEntityTypeName();
-        String collectionName = getCollectionName(entityType);
 
         if (entity.getName().endsWith(".mask") || entity.getName().endsWith(".chan") ) {
             return;

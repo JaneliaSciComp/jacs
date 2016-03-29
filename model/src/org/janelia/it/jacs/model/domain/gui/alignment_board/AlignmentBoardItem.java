@@ -9,7 +9,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 public class AlignmentBoardItem implements Serializable{
 
     private Reference target;
-    private boolean visible;
+    private boolean visible = true;
     private String inclusionStatus;
     private String color;
     private String renderMethod;

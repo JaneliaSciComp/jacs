@@ -1717,6 +1717,27 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
+    /**
+     * Auth-less / optimized version of getParentEntities for use in Mongo ETL.
+     */
+    public Set<Entity> getParentEntities(Long entityId) throws DaoException {
+        try {
+            if (log.isTraceEnabled()) {
+                log.trace("getParentEntitiesNoPerms(entityId="+entityId+")");
+            }
+            
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join ed.parentEntity ");
+            hql.append("where ed.childEntity.id=? ");
+            Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            return new HashSet(filter(query.list()));
+        } 
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
     public Set<Entity> getParentEntities(String subjectKey, Long entityId) throws DaoException {
         try {
             if (log.isTraceEnabled()) {

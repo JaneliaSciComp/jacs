@@ -1209,17 +1209,8 @@ public class DomainDAO {
     }
 
     public int bulkUpdatePathPrefix(String originalPath, String archivePath) {
-
         // TODO: this is only used by the SyncToArchiveService. Maybe we can get rid of it entirely? It would be tricky to implement in Mongo. 
-        
-        return 0;
-    }
-
-    public long getCountWithPathPrefix(String subjectKey, String prefix) {
-
-        // TODO: the trash compactor relies on this, so it needs to be implemented somehow. Tricky in Mongo however.. 
-        
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     public List<LineRelease> getLineReleases(String subjectKey) {
