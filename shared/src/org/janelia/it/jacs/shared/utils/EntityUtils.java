@@ -523,7 +523,11 @@ public class EntityUtils {
     	if (filepath != null) {
     		return filepath;
     	}
-    	return getDefault3dImageFilePath(entity);
+    	filepath = getDefault3dImageFilePath(entity);
+        if (filepath!=null) {
+            return filepath;
+        }
+        return getFilePath(entity);
     }
     
     public static Entity findChildWithEntityId(Entity entity, Long entityId) {
