@@ -35,7 +35,8 @@ public class WorkspaceRestService {
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
 
     //=============================================================================================================//
-    // Hello
+    // TESTS
+    //=============================================================================================================//
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public class WorkspaceRestResponse2 {
@@ -55,7 +56,8 @@ public class WorkspaceRestService {
     }
 
     //=============================================================================================================//
-    // Workspaces
+    // DATA CLASSES
+    //=============================================================================================================//
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public class WorkspaceInfo {
@@ -90,6 +92,10 @@ public class WorkspaceRestService {
         public int getNeuronCount() { return neuronCount; }
 
     }
+
+    //=============================================================================================================//
+    // METHODS
+    //=============================================================================================================//
 
     @GET
     @Path("/workspaces")
@@ -131,6 +137,24 @@ public class WorkspaceRestService {
                     wi.createTimeString = new Date(wi.createTimestamp).toString();
                     wi.dataType = "unknown";
                     wi.neuronCount = -1;
+
+                    {
+                        StringBuilder wql = new StringBuilder(256);
+                        wql.append("select distinct e from Entity e ");
+                        wql.append("where e.id = :entityId ");
+
+                        Query wq = dbSession.createQuery(wql.toString());
+                        wq.setParameter("entityId", q_id);
+                        Object wo = wq.uniqueResult();
+                        if (wo==null) {
+                            log.info("Object returned is null");
+                        }
+                        Entity workspaceEntity = (Entity)wo;
+
+                        findWorkspaceDataTypeAndNeuronCount(wi, workspaceEntity);
+
+                    }
+
                     workspaces.add(wi);
                 } else {
                     log.info("workspace list size unexpectedly="+qo.length);
@@ -200,8 +224,8 @@ public class WorkspaceRestService {
         log.info("addWorkspaceArtificialNeurons() invoked, id="+idString+" name="+nameString+" number="+numberString+" points="+pointsString+" brprob="+brprobString);
 
         Session dbSession = null;
-
         WorkspaceInfo wi=null;
+
         try {
             dbSession = HibernateSessionUtils.getSession();
 
@@ -219,10 +243,7 @@ public class WorkspaceRestService {
 //            }
 //            Entity workspaceEntity = (Entity)o;
 
-            wi = new WorkspaceInfo();
-            wi.neuronCount=777;
-
-//            findWorkspaceDataTypeAndNeuronCount(wi, workspaceEntity);
+            wi = getWorkspaceInfo(idString);
 
         } finally {
             HibernateSessionUtils.closeSession(dbSession);
@@ -232,7 +253,8 @@ public class WorkspaceRestService {
     }
 
     //=================================================================================================//
-    // Utility Functions
+    // UTILITIES
+    //=================================================================================================//
 
     private void findWorkspaceDataTypeAndNeuronCount(WorkspaceInfo wi, Entity e) {
         Set<EntityData> entityDataSet=e.getEntityData();
