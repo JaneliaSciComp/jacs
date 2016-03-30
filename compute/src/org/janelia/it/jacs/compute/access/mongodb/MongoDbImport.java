@@ -2720,8 +2720,8 @@ public class MongoDbImport extends AnnotationDAO {
         
             String collectionName = getCollectionName(translatedSetType);
             if (INSERT_ROGUE_ENTITIES) {
-                // A minor optimization, since we can only do rogue imports on images
-                if ("image".equals(collectionName)) {
+                // A minor optimization, since we can only do rogue imports on images and neuron fragments
+                if ("image".equals(collectionName) || "fragment".equals(collectionName)) {
 		            // Attempt imports of rogue entities which map to domain objects, but which have not been loaded by any other part of the import procedure
 		            if (dao.getCollectionByName(collectionName).count("{_id:#}",importEntity.getId())<1) {
 		            	attemptRogueImport(importEntity, indent);
