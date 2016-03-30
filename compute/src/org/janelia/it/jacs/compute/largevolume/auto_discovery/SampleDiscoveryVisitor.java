@@ -19,6 +19,8 @@ import org.apache.log4j.Logger;
 public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
     private Path basePath;
     private Logger logger;
+    
+    private Set<Path> tabooList;
 
     private static final String TIF0 = "default.0.tif";
     private static final int MAX_DESCENT_DEPTH = 4;
@@ -31,6 +33,8 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
         logger = Logger.getLogger(SampleDiscoveryVisitor.class);
         basePath = Paths.get(basePathStr);
         logger.info("Examining " + basePath.toString());
+        tabooList = new HashSet<Path>();
+        tabooList.add(FileSystems.getDefault().getPath("/nobackup2/mouselight/cluster"));
     }
 
     /** Launches the visit process. */
@@ -52,6 +56,10 @@ public class SampleDiscoveryVisitor extends SimpleFileVisitor<Path> {
         FileVisitResult result = FileVisitResult.CONTINUE;
         if (validatedFolders.contains(directory.getParent().toString())) {
             logger.debug("Skipping " + directory + " because parent is already marked.");
+            result = FileVisitResult.SKIP_SUBTREE;
+        }
+        else if (tabooList.contains(directory)) {
+            logger.debug("Skipping " + directory + " because it is on the taboo list.");
             result = FileVisitResult.SKIP_SUBTREE;
         }
         else if (isDigitDirectory(directory, directory.getFileName().toString())) {
