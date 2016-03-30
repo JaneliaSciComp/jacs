@@ -41,6 +41,8 @@ public class DispatcherDAO {
             Session updateSession = sessionFactory.openSession();
             Transaction updateTx = updateSession.beginTransaction();
             try {
+                job.setDispatchHost(hostName);
+                job.setDispatchedDate(new Date());
                 Query updateQuery = updateSession.createSQLQuery("update dispatcher_job " +
                         "set dispatch_status = :status, " +
                         "retries = :retries, " +
@@ -50,10 +52,11 @@ public class DispatcherDAO {
                         "and retries = :currentRetries ")
                         .setString("status", DispatcherJob.Status.IN_PROGRESS.name())
                         .setInteger("retries", job.getRetries() + 1)
-                        .setString("hostname", hostName)
-                        .setDate("dispatchedDate", new Date())
+                        .setString("hostname", job.getDispatchHost())
+                        .setDate("dispatchedDate", job.getDispatchedDate())
                         .setLong("dispatchId", job.getDispatchId())
                         .setInteger("currentRetries", job.getRetries());
+                job.setRetries(job.getRetries() + 1);
                 int nUpdates = updateQuery.executeUpdate();
                 if (nUpdates == 1) {
                     nextJobs.add(job);
