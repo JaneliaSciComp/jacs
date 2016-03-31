@@ -149,10 +149,18 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             log.debug("Subject key is " + subjectKey);
             String folderName = "3D Tile Microscope Samples";
             Collection<Entity> folders = annotationDAO.getEntitiesByName(subjectKey, folderName);
-            Entity folder;
-            if (folders != null && folders.size() > 0) {
-                folder = folders.iterator().next();
-            } else {
+            Entity folder = null;
+            if (folders!=null && folders.size()>0) {
+                for (Entity nextFolder: folders) {
+                    if (nextFolder.getOwnerKey().equals(subjectKey)) {
+                        folder = nextFolder;
+                        break;
+                    }
+                }
+            }
+            if (folder == null) {
+                // Either nothing found in getter, or nothing passed ownership
+                // test.
                 folder = annotationDAO.createFolderInDefaultWorkspace(subjectKey, folderName).getChildEntity();
             }
 
