@@ -617,6 +617,7 @@
         </exec>
 
          <!--restart JBoss -->
+    	<sleep seconds="2"/>
         <echo message="Starting JBoss" />
         <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} default)"
               outputproperty="exec.output" errorproperty="exec.error">
