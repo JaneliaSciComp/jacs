@@ -256,78 +256,53 @@ public class SampleHelperNG extends DomainHelper {
             }
         }
         
-        if (lsm.getGender()!=null) {
-            String gender = sanitizeGender(lsm.getGender());
-            if (!StringUtils.areEqual(lsm.getGender(), gender)) {
-                lsm.setGender(gender);
-                dirty = true;
-            }
-        }
-        
         return dirty;
     }
-
-    /**
-     * Convert non-standard gender values like "Female" into standardized codes like "f". The
-     * four standardized codes are "m", "f", "x", and "NO_CONSENSUS" in the case of samples.
-     */
-    private String sanitizeGender(String gender) {
-        if (gender==null) {
-            return null;
-        }
-        if (gender.equals(NO_CONSENSUS_VALUE)) {
-            return NO_CONSENSUS_VALUE;
-        }
-        String genderLc = gender.toLowerCase();
-        if (genderLc.startsWith("f")) {
-            return "f";
-        }
-        else if (genderLc.startsWith("m")) {
-            return "m";
-        }
-        else if (genderLc.startsWith("x")) {
-            return "x";
-        } 
-        else {
-            logger.warn("Invalid value for gender: "+gender);
-            return null;
-        }
-    }
-    
-    /**
-     * Create a sample or update it if it already exists.
-     * @param parentSample target sample to create or update
-     * @param slideCode string that denotes the target slide biomaterial
-     * @param dataSet researcher set the sample belongs to
-     * @param tileGroupList listing of the tiles expected
-     * @return returns the new or old target sample
-     * @throws Exception
-     */
-    public Sample createOrUpdateSample(String slideCode, DataSet dataSet, Collection<SlideImageGroup> tileGroupList) throws Exception {
+        
+    public Sample createOrUpdateSample(String slideCode, DataSet dataSet, Collection<LSMImage> lsms) throws Exception {
 
     	logger.info("Creating or updating sample: "+slideCode+" ("+(dataSet==null?"":"dataSet="+dataSet.getName())+")");
-        
-    	boolean lsmDirty = false;
+
         Multimap<String,SlideImageGroup> objectiveGroups = HashMultimap.create();
-        for(SlideImageGroup tileGroup : tileGroupList) {
-            String groupObjective = null;
-            for(LSMImage lsm : tileGroup.getImages()) {
-            	if (updatedLsmIds.contains(lsm.getId())) {
-            		lsmDirty = true;
+    	boolean lsmDirty = false;
+        int tileNum = 0;
+        for(LSMImage lsm : lsms) {
+
+        	// Have any of the LSMs been updated? If so, we need to mark the sample for reprocessing later.
+        	if (updatedLsmIds.contains(lsm.getId())) {
+        		lsmDirty = true;
+        	}
+        	
+        	// Extract LSM metadata
+        	String objective = lsm.getObjective();
+            String area = lsm.getAnatomicalArea();
+            String tag = lsm.getTile();
+            if (tag==null) {
+                tag = "Tile "+(tileNum+1);
+            }
+
+            // Group LSMs by objective and tile
+            Collection<SlideImageGroup> subTileGroupList = objectiveGroups.get(objective);
+            SlideImageGroup group = null;
+            for(SlideImageGroup slideImageGroup : subTileGroupList) {
+            	if (StringUtils.areEqual(slideImageGroup.getTag(), tag)) {
+            		group = slideImageGroup;
+            		if (!StringUtils.areEqual(slideImageGroup.getAnatomicalArea(), area)) {
+                        logger.warn("  No consensus for area in tile group '"+group.getTag()+"' ("+slideImageGroup.getAnatomicalArea()+" != "+area+")");
+                		group.setAnatomicalArea(NO_CONSENSUS_VALUE);
+            		}
+            		break;
             	}
-                if (groupObjective==null) {
-                    groupObjective = lsm.getObjective();
-                }
-                else if (!StringUtils.areEqual(groupObjective,lsm.getObjective())) {
-                    logger.warn("  No consensus for objective in tile group '"+tileGroup.getTag()+"' ("+groupObjective+" != "+lsm.getObjective()+")");
-                }
             }
-            if (groupObjective==null) {
-                groupObjective = "";
+            if (group==null) {
+            	group = new SlideImageGroup(area, tag);
+            	objectiveGroups.put(objective, group);
             }
-            objectiveGroups.put(groupObjective, tileGroup);
-        }    
-        
+            group.addFile(lsm);
+            
+            tileNum++;
+        }
+    	        
         if (lsmDirty) {
         	logger.info("  LSMs changed, will mark sample for reprocessing");
         }
@@ -343,9 +318,22 @@ public class SampleHelperNG extends DomainHelper {
             needsReprocessing = true;
         }
                 
-        if (setSampleAttributes(dataSet, sample, tileGroupList)) {
+        if (setSampleAttributes(dataSet, sample, objectiveGroups.values())) {
             sampleDirty = true;
             needsReprocessing = true;
+        }
+
+        // First, remove all tiles/LSMSs from objectives which are no longer found in SAGE
+        for(ObjectiveSample objectiveSample : new ArrayList<>(sample.getObjectiveSamples())) {
+        	if (!objectiveGroups.containsKey(objectiveSample.getObjective())) {
+	        	if (objectiveSample.hasPipelineRuns()) {
+	        		sample.removeObjectiveSample(objectiveSample);
+	        	}
+	        	else {
+	        		objectiveSample.setTiles(new ArrayList<SampleTile>());
+	        	}
+	            sampleDirty = true;
+        	}
         }
         
         List<String> objectives = new ArrayList<>(objectiveGroups.keySet());
@@ -354,11 +342,11 @@ public class SampleHelperNG extends DomainHelper {
             Collection<SlideImageGroup> subTileGroupList = objectiveGroups.get(objective);
                         
             // Figure out the number of channels that should be in the final merged/stitched sample
-            int sampleNumSignals = getNumSignalChannels(tileGroupList);
+            int sampleNumSignals = getNumSignalChannels(subTileGroupList);
             int sampleNumChannels = sampleNumSignals+1;
             String channelSpec = ChanSpecUtils.createChanSpec(sampleNumChannels, sampleNumChannels);
 
-            logger.debug("  Sample attributes: objective="+objective+", signalChannels="+sampleNumSignals+", chanSpec="+channelSpec);
+            logger.info("  Processing objective "+objective+", signalChannels="+sampleNumSignals+", chanSpec="+channelSpec);
             
             // Find the sample, if it exists, or create a new one.
             if (createOrUpdateObjectiveSample(sample, slideCode, objective, channelSpec, subTileGroupList)) {
@@ -395,6 +383,10 @@ public class SampleHelperNG extends DomainHelper {
         List<Reference> lsmRefs = sample.getLsmReferences();
         for(Reference lsmRef : lsmRefs) {
         	LSMImage lsm = lsmCache.get(lsmRef.getTargetId());
+        	if (lsm==null) {
+        		logger.warn("LSM (id="+lsmRef.getTargetId()+") not found in cache. This should never happen and indicates a bug.");
+        		continue;
+        	}
         	if (!StringUtils.areEqual(lsm.getSample(),sampleRef)) {
         		lsm.setSample(sampleRef);
         		saveLsm(lsm);
@@ -797,8 +789,9 @@ public class SampleHelperNG extends DomainHelper {
         int sampleNumSignals = -1;
         for(SlideImageGroup tileGroup : tileGroupList) {
 
-            int tileNumSignals = 0;
             logger.debug("  Calculating number of channels in tile "+tileGroup.getTag());
+            
+            int tileNumSignals = 0;
             for(LSMImage lsm : tileGroup.getImages()) {
                 String chanspec = lsm.getChanSpec();
                 if (chanspec!=null) {

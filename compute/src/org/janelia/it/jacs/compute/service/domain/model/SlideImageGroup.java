@@ -12,21 +12,25 @@ import org.janelia.it.jacs.model.domain.sample.LSMImage;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SlideImageGroup {
-    
-    private final String anatomicalArea;
+
     private final String tag;
     private final List<LSMImage> images = new ArrayList<>();
+    private String anatomicalArea;
 
     public SlideImageGroup(String anatomicalArea, String tag) {
-        this.anatomicalArea = anatomicalArea==null?"":anatomicalArea;
         this.tag = tag;
+    	setAnatomicalArea(anatomicalArea);
     }
     
     public String getAnatomicalArea() {
         return anatomicalArea;
     }
+    
+    public void setAnatomicalArea(String anatomicalArea) {
+		this.anatomicalArea = anatomicalArea==null?"":anatomicalArea;
+	}
 
-    public String getTag() {
+	public String getTag() {
 		return tag;
 	}
 

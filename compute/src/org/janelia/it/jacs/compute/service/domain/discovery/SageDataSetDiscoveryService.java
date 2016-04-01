@@ -1,18 +1,13 @@
 package org.janelia.it.jacs.compute.service.domain.discovery;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
-import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
@@ -153,55 +148,22 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
         }
     }
     
-    private void processSlideGroup(DataSet dataSet, String slideCode, Collection<LSMImage> slideGroup) throws Exception {
-
-        if (slideCode==null) {
-            for(LSMImage lsmImage : slideGroup) {
-                logger.error("SAGE id "+lsmImage.getSageId()+" has null slide code");
-            }
-            return;
-        }
-        
-        HashMap<String, SlideImageGroup> tileGroups = new HashMap<>();
-        
-        logger.debug("Processing "+slideCode+", "+slideGroup.size()+" slide images");
-        
-        int tileNum = 0;
-        for(LSMImage lsmImage : slideGroup) {
+    private void processSlideGroup(DataSet dataSet, String slideCode, Collection<LSMImage> lsms) throws Exception {
+    
+        for(LSMImage lsmImage : lsms) {
         	
-        	if (lsmImage.getFilepath()==null) {
-        		logger.warn("Slide code "+lsmImage.getSlideCode()+" has an image with a null path, so it is not ready for synchronization.");
+        	if (lsmImage.getSlideCode()==null) {
+        		logger.error("SAGE id "+lsmImage.getSageId()+" has null slide code");
         		return;
         	}
-
-            String area = lsmImage.getAnatomicalArea();
-            String tag = lsmImage.getTile();
-            if (tag==null) {
-                tag = "Tile "+(tileNum+1);
-            }
-            
-            String groupKey = area+"_"+tag;
-            SlideImageGroup tileGroup = tileGroups.get(groupKey);
-            if (tileGroup==null) {
-                tileGroup = new SlideImageGroup(area, tag);
-                tileGroups.put(groupKey, tileGroup);
-            }
-
-            tileGroup.addFile(lsmImage);
-            tileNum++;
+        	
+	    	if (lsmImage.getFilepath()==null) {
+	    		logger.warn("Slide code "+lsmImage.getSlideCode()+" has an image with a null path, so it is not ready for synchronization.");
+	    		return;
+	    	}
         }
-
-        List<SlideImageGroup> tileGroupList = new ArrayList<>(tileGroups.values());
-
-        // Sort the pairs by their tag name
-        Collections.sort(tileGroupList, new Comparator<SlideImageGroup>() {
-			@Override
-			public int compare(SlideImageGroup o1, SlideImageGroup o2) {
-				return o1.getTag().compareTo(o2.getTag());
-			}
-		});
-        
-        sampleHelper.createOrUpdateSample(slideCode, dataSet, tileGroupList);
+    	
+        sampleHelper.createOrUpdateSample(slideCode, dataSet, lsms);
     }
 
     private void markDesyncedSamples(DataSet dataSet) throws Exception {

@@ -16,6 +16,11 @@ public class SlideImage {
     
     public SlideImage(Map<String,Object> properties) {
         this.properties = properties;
+
+        String gender = (String)properties.get("light_imagery_gender");
+        if (gender!=null) {
+        	properties.put("light_imagery_gender", sanitizeGender(gender));
+        }
     }
     
     public Map<String,Object> getProperties() {
@@ -80,6 +85,7 @@ public class SlideImage {
         properties.put("image_query_id", new Long(sageId));
     }
 
+    
     public String getSlideCode() {
         return (String)properties.get("light_imagery_slide_code");
     }
@@ -150,5 +156,28 @@ public class SlideImage {
 
     public void setLab(String lab) {
         properties.put("image_lab_name", lab);
+    }
+    
+    /**
+     * Convert non-standard gender values like "Female" into standardized codes like "f". The
+     * four standardized codes are "m", "f", "x", and "NO_CONSENSUS" in the case of samples.
+     */
+    private String sanitizeGender(String gender) {
+        if (gender==null) {
+            return null;
+        }
+        String genderLc = gender.toLowerCase();
+        if (genderLc.startsWith("f")) {
+            return "f";
+        }
+        else if (genderLc.startsWith("m")) {
+            return "m";
+        }
+        else if (genderLc.startsWith("x")) {
+            return "x";
+        } 
+        else {
+            return null;
+        }
     }
 }

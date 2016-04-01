@@ -101,8 +101,8 @@ public class Sample extends AbstractDomainObject implements IsParent {
     }
 
     @JsonIgnore
-    public void removeObjectiveSample(String objective, ObjectiveSample objectiveSample) {
-        if (objectives.remove(objective)==objectiveSample) {
+    public void removeObjectiveSample(ObjectiveSample objectiveSample) {
+        if (objectives.remove(objectiveSample.getObjective())==objectiveSample) {
             objectiveSample.setParent(null);
         }
     }

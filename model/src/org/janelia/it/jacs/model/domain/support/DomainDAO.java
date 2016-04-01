@@ -791,7 +791,7 @@ public class DomainDAO {
         }
         for (OntologyTerm term : childTerms) {
             if (term != null) {
-                log.info("Adding broken term " + term.getId() + " at the end");
+                log.warn("Adding broken term " + term.getId() + " at the end");
                 parent.getTerms().add(term);
             }
         }
@@ -800,7 +800,7 @@ public class DomainDAO {
             throw new IllegalStateException("Reordered children have new size " + childTerms.size() + " (was " + originalSize + ")");
         }
 
-        log.info("Reordering children of ontology term '{}'", parent.getName());
+        log.debug("Reordering children of ontology term '{}'", parent.getName());
         saveImpl(subjectKey, ontology);
         return getDomainObject(subjectKey, ontology);
     }
@@ -832,7 +832,7 @@ public class DomainDAO {
             }
             i++;
         }
-        log.info("Adding " + terms.size() + " terms to " + parent.getName());
+        log.debug("Adding " + terms.size() + " terms to " + parent.getName());
         saveImpl(subjectKey, ontology);
         return getDomainObject(subjectKey, ontology);
     }
@@ -1137,7 +1137,7 @@ public class DomainDAO {
             keys[i] = granteeKey;
         }
 
-        log.info("withClause: " + withClause);
+        log.debug("withClause: " + withClause);
 
         String logIds = ids.size() < 6 ? "" + ids : ids.size() + " ids";
 

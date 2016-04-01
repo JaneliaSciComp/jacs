@@ -109,8 +109,8 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SAGEAttribute(cvName="fly", termName="cross_barcode")
     @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
     private Integer crossBarcode;
-    
-    // Not a @SAGEAttribute, because the gender value needs to be sanitized and set manually.  
+
+    @SAGEAttribute(cvName="light_imagery", termName="gender")
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
     private String gender;
 
