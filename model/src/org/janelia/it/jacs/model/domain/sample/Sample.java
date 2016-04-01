@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.interfaces.IsParent;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
@@ -30,24 +32,31 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @SearchType(key="sample",label="Sample")
 public class Sample extends AbstractDomainObject implements IsParent {
 
+    @SAGEAttribute(cvName="light_imagery", termName="age")
     @SearchAttribute(key="age_txt",label="Age",facet="age_s")
     private String age;
-    
+
+    @SAGEAttribute(cvName="light_imagery", termName="data_set")
     @SearchAttribute(key="data_set_txt",label="Data Set",facet="data_set_s")
     private String dataSet;
-    
+
+    @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
 
+    @SAGEAttribute(cvName="line", termName="flycore_alias")
     @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
     private String flycoreAlias;
-    
+
+    @SAGEAttribute(cvName="light_imagery", termName="gender")
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
     private String gender;
-    
+
+    @SAGEAttribute(cvName="image_query", termName="line")
     @SearchAttribute(key="line_txt",label="Line")
     private String line;
-    
+
+    @SAGEAttribute(cvName="light_imagery", termName="slide_code")
     @SearchAttribute(key="slide_code_txt",label="Slide Code")
     private String slideCode;
     
@@ -127,8 +136,18 @@ public class Sample extends AbstractDomainObject implements IsParent {
         }
         return results;
     }
-    
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+
+    @JsonIgnore
+	public List<Reference> getLsmReferences() {
+		List<Reference> refs = new ArrayList<>();
+        for(ObjectiveSample objectiveSample : getObjectiveSamples()) {
+        	for(SampleTile sampleTile : objectiveSample.getTiles()) {
+        		refs.addAll(sampleTile.getLsmReferences());
+        	}
+        }
+		return refs;
+	}
+
     public String getAge() {
         return age;
     }

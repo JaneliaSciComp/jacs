@@ -2,8 +2,12 @@ package org.janelia.it.jacs.shared.utils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Some helpful utilities for strings.
@@ -11,6 +15,8 @@ import org.apache.log4j.Logger;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class StringUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(StringUtils.class);
     
 	public static boolean isEmpty(String s) {
 		return s==null || "".equals(s);
@@ -20,7 +26,7 @@ public class StringUtils {
         return s==null || "".equals(s.trim());
     }
 
-    public static boolean areEqual(String s1, String s2) {
+    public static boolean areEqual(Object s1, Object s2) {
         if (s1==null) {
             return s2==null;
         }
@@ -207,6 +213,53 @@ public class StringUtils {
             }
         }
         return targetString;
+    }
+    
+    /**
+     * Given a variable naming pattern, replace the variables with values from the given map. The pattern syntax is as follows:
+     * {Variable Name} - Variable by name
+     * {Variable Name|Fallback} - Variable, with a fallback value
+     * {Variable Name|Fallback|"Value"} - Multiple fallback with static value
+     * @param variablePattern
+     * @param values
+     * @return
+     */
+    public static String replaceVariablePattern(String variablePattern, Map<String,String> values) {
+
+        log.debug("Replacing variables in pattern: "+variablePattern);
+        
+        Pattern pattern = Pattern.compile("\\{(.+?)\\}");
+        Matcher matcher = pattern.matcher(variablePattern);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            String template = matcher.group(1);
+            String replacement = null;
+            log.debug("  Matched: "+template);
+            for (String templatePart : template.split("\\|")) {
+                String attrLabel = templatePart.trim();
+                if (attrLabel.matches("\"(.*?)\"")) {
+                	replacement = attrLabel.substring(1, attrLabel.length()-1);
+                }
+                else {
+                    replacement = values.get(attrLabel);
+                }
+                if (replacement != null) {
+                    matcher.appendReplacement(buffer, replacement);
+                    log.debug("    '"+template+"'->'"+replacement+"' = '"+buffer+"'");
+                    break;
+                }
+            }
+
+            if (replacement==null) {
+                log.warn("      Cannot find a replacement for: "+template);
+                matcher.appendReplacement(buffer, "null");
+            }
+        }
+        matcher.appendTail(buffer);
+        
+        log.debug("Final buffer: "+buffer);
+        
+        return buffer.toString();
     }
     
 }

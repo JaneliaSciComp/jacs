@@ -413,7 +413,7 @@ public class DomainDAO {
                 cursor = getCollectionByName(collectionName).find().as(domainClass);
             }
             else {
-                cursor = getCollectionByName(collectionName).find("{readers:{$in:#}}", ids, subjects).as(domainClass);
+                cursor = getCollectionByName(collectionName).find("{readers:{$in:#}}", subjects).as(domainClass);
             }
         }
         else {
@@ -628,7 +628,7 @@ public class DomainDAO {
         return getDomainObjectsWithProperty(subjectKey, Sample.class, "dataSet", dataSetIdentifier);
     }
 
-    public Sample getSampleBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+    public List<Sample> getSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
 
         long start = System.currentTimeMillis();
         log.trace("getSampleBySlideCode(subjectKey={},dataSetIdentifier={},slideCode={})", subjectKey, dataSetIdentifier, slideCode);
@@ -646,10 +646,7 @@ public class DomainDAO {
 
         List<Sample> list = toList(cursor);
         log.trace("Getting " + list.size() + " Sample objects took " + (System.currentTimeMillis() - start) + " ms");
-        if (list.size() > 1) {
-            log.warn("More than one sample for dataSet/slideCode " + dataSetIdentifier + "/" + slideCode);
-        }
-        return list.isEmpty() ? null : list.get(0);
+        return list;
     }
 
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
@@ -1101,7 +1098,7 @@ public class DomainDAO {
     public <T extends DomainObject> void deleteProperty(String ownerKey, Class<T> clazz, String propName) {
         String collectionName = DomainUtils.getCollectionName(clazz);
         MongoCollection collection = getCollectionByName(collectionName);
-        WriteResult wr = collection.update("{ownerKey:#}", ownerKey).with("{$unset: {" + propName + ":#, updatedDate:#}}", "");
+        WriteResult wr = collection.update("{ownerKey:#}", ownerKey).with("{$unset: {" + propName + ":\"\"}}");
         if (wr.getN() != 1) {
             log.warn("Could not delete property " + collectionName + "." + propName);
         }

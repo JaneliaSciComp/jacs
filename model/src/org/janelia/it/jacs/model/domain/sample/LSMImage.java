@@ -98,6 +98,10 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="driver_txt",label="Driver")
     private String driver;
 
+    @SAGEAttribute(cvName="light_imagery", termName="file_size")
+    @SearchAttribute(key="file_size_l",label="File Size")
+    private Long fileSize;
+    
     @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
@@ -106,7 +110,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
     private Integer crossBarcode;
     
-    @SAGEAttribute(cvName="light_imagery", termName="gender")
+    // Not a @SAGEAttribute, because the gender value needs to be sanitized and set manually.  
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
     private String gender;
 
@@ -330,8 +334,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="linehide_txt",label="Hide Line?",display=false)
     private String lineHide;
 
-    
-    public Reference getSample() {
+	public Reference getSample() {
         return sample;
     }
 
@@ -499,7 +502,15 @@ public class LSMImage extends Image implements HasAnatomicalArea {
         this.driver = driver;
     }
 
-    public String getEffector() {
+    public Long getFileSize() {
+		return fileSize;
+	}
+
+	public void setFileSize(Long fileSize) {
+		this.fileSize = fileSize;
+	}
+
+	public String getEffector() {
         return effector;
     }
 

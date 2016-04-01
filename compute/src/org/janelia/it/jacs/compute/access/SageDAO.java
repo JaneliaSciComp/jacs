@@ -32,9 +32,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.service.domain.SageArtifactExportService;
-import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Experiment;
 import org.janelia.it.jacs.model.sage.Image;
@@ -44,7 +42,6 @@ import org.janelia.it.jacs.model.sage.Observation;
 import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
-import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**

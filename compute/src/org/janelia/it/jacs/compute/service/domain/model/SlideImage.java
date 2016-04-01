@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.domain.model;
 
+import java.io.File;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.entity.cv.Objective;
@@ -12,10 +13,6 @@ import org.janelia.it.jacs.model.entity.cv.Objective;
 public class SlideImage {
     
     private Map<String,Object> properties;
-
-//    public SlideImage() {
-//        this.properties = new HashMap<>();
-//    }
     
     public SlideImage(Map<String,Object> properties) {
         this.properties = properties;
@@ -41,6 +38,18 @@ public class SlideImage {
      
         return null;
     }
+    
+    public File getFile() {
+    	String filepath = getFilepath();
+    	if (filepath==null) return null;
+    	return new File(filepath);
+    }
+    
+    public String getName() {
+    	File file = getFile();
+    	if (file==null) return null;
+    	return file.getName();
+    }
         
     public String getObjective() {
         String objectiveStr = (String)properties.get("light_imagery_objective");
@@ -62,11 +71,13 @@ public class SlideImage {
     }
     
     public Integer getSageId() {
-        return (Integer)properties.get("image_query_id");
+        Long id = (Long)properties.get("image_query_id");
+        if (id==null) return null;
+        return id.intValue();
     }
 
     public void setSageId(Integer sageId) {
-        properties.put("image_query_id", sageId);
+        properties.put("image_query_id", new Long(sageId));
     }
 
     public String getSlideCode() {
@@ -117,62 +128,6 @@ public class SlideImage {
         properties.put("image_query_line", line);
     }
 
-//    public String getCrossBarcode() {
-//        return crossBarcode;
-//    }
-//
-//    public void setCrossBarcode(String crossBarcode) {
-//        this.crossBarcode = crossBarcode;
-//    }
-//
-//    public String getChannelSpec() {
-//        return channelSpec;
-//    }
-//
-//    public void setChannelSpec(String channelSpec) {
-//        this.channelSpec = channelSpec;
-//    }
-//
-//    public String getChannels() {
-//        return channels;
-//    }
-//
-//    public void setChannels(String channels) {
-//        this.channels = channels;
-//    }
-//
-//    public String getObjective() {
-//        return objective;
-//    }
-//
-//    public void setObjective(String objective) {
-//        this.objective = objective;
-//    }
-//
-//    public String getOpticalRes() {
-//        return opticalRes;
-//    }
-//
-//    public void setOpticalRes(String voxelSizeX, String voxelSizeY, String voxelSizeZ) {
-//        this.opticalRes = voxelSizeX + "x" + voxelSizeY + "x" + voxelSizeZ;
-//    }
-//
-//    public String getPixelRes() {
-//        return pixelRes;
-//    }
-//
-//    public void setPixelRes(String imageSizeX, String imageSizeY, String imageSizeZ) {
-//        this.pixelRes = imageSizeX + "x" + imageSizeY + "x" + imageSizeZ;
-//    }
-//
-//    public String getGender() {
-//        return gender;
-//    }
-//
-//    public void setGender(String gender) {
-//        this.gender = gender;
-//    }
-
     public String getArea() {
         return (String)properties.get("light_imagery_area");
     }
@@ -181,54 +136,6 @@ public class SlideImage {
         properties.put("light_imagery_area", area);
     }
 
-//    public String getAge() {
-//        return age;
-//    }
-//
-//    public void setAge(String age) {
-//        this.age = age;
-//    }
-//
-//    public String getEffector() {
-//        return effector;
-//    }
-//
-//    public void setEffector(String effector) {
-//        this.effector = effector;
-//    }
-//
-//    public String getMountingProtocol() {
-//        return mountingProtocol;
-//    }
-//
-//    public void setMountingProtocol(String mountingProtocol) {
-//        this.mountingProtocol = mountingProtocol;
-//    }
-//
-//    public String getTissueOrientation() {
-//        return tissueOrientation;
-//    }
-//
-//    public void setTissueOrientation(String tissueOrientation) {
-//        this.tissueOrientation = tissueOrientation;
-//    }
-//
-//    public File getFile() {
-//        return file;
-//    }
-//
-//    public void setFile(File file) {
-//        this.file = file;
-//    }
-//
-//    public String getVtLine() {
-//        return vtLine;
-//    }
-//
-//    public void setVtLine(String vtLine) {
-//        this.vtLine = vtLine;
-//    }
-//
     public String getTmogDate() {
         return (String)properties.get("tmog_date");
     }
@@ -236,15 +143,7 @@ public class SlideImage {
     public void setTmogDate(String tmogDate) {
         properties.put("tmog_date", tmogDate);
     }
-//
-//    public String getDatasetName() {
-//        return datasetName;
-//    }
-//
-//    public void setDatasetName(String datasetName) {
-//        this.datasetName = datasetName;
-//    }
-//
+
     public String getLab() {
         return (String)properties.get("image_lab_name");
     }
