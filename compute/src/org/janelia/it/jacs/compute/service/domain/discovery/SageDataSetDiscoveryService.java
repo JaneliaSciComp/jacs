@@ -2,7 +2,9 @@ package org.janelia.it.jacs.compute.service.domain.discovery;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
@@ -13,14 +15,13 @@ import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 
 /**
  * Discovers images in SAGE which are part of data sets defined in the workstation, and creates or updates Samples 
- * within the entity model.
+ * within the domain model.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */ 
@@ -29,6 +30,7 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
     private SageDAO sageDAO;
     private SampleHelperNG sampleHelper;
 
+    private Set<Long> visitedSampleIds = new HashSet<>();
 	private Map<String, Map<String, Object>> lineMap = new HashMap<>();
     private String dataSetName = null;
     private int sageRowsProcessed = 0;
@@ -163,8 +165,11 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
 	    	}
         }
     	
-        sampleHelper.createOrUpdateSample(slideCode, dataSet, lsms);
+        Sample sample = sampleHelper.createOrUpdateSample(slideCode, dataSet, lsms);
+        visitedSampleIds.add(sample.getId());
     }
+    
+    
 
     private void markDesyncedSamples(DataSet dataSet) throws Exception {
         String dataSetIdentifier = dataSet.getIdentifier();
@@ -173,10 +178,10 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
 
         // Make sure to fetch fresh samples, so that we have the latest visited flags
         for(Sample sample : domainDao.getSamplesForDataSet(ownerKey, dataSetIdentifier)) {
-            if (!sample.getVisited()) {
+            if (!visitedSampleIds.contains(sample.getId())) {
                 // Sample was not visited this time around, it should be marked as desynchronized, and eventually retired
-                boolean blocked = EntityConstants.VALUE_BLOCKED.equals(sample.getStatus());
-                boolean retired = EntityConstants.VALUE_RETIRED.equals(sample.getStatus());
+                boolean blocked = DomainConstants.VALUE_BLOCKED.equals(sample.getStatus());
+                boolean retired = DomainConstants.VALUE_RETIRED.equals(sample.getStatus());
                 // Ignore blocked and retired samples, they don't need to be synchronized 
                 if (!blocked && !retired) {
                     logger.info("  Marking unvisited sample as desynced: "+sample.getName()+" (id="+sample.getId()+")");

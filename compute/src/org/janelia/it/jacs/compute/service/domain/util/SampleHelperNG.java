@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.domain.util;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,8 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
@@ -22,7 +19,6 @@ import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
-import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -369,13 +365,8 @@ public class SampleHelperNG extends DomainHelper {
         }
         
         if (sampleDirty) {
-            sample.setVisited(true);
             sample = domainDao.save(ownerKey, sample);
             logger.info("  Saving sample: "+sample.getName()+" (id="+sample.getId()+")");  
-        }
-        else {
-            domainDao.updateProperty(ownerKey, Sample.class, sample.getId(), "visited", true);
-            logger.debug("  Setting visited flag on sample: "+sample.getName()+" (id="+sample.getId()+")");      
         }
 
         // Update all back-references from the sample's LSMs
