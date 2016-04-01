@@ -6,8 +6,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 /**
  * Some helpful utilities for strings.
@@ -16,7 +15,7 @@ import org.slf4j.LoggerFactory;
  */
 public class StringUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(StringUtils.class);
+    private static final Logger log = Logger.getLogger(StringUtils.class);
     
 	public static boolean isEmpty(String s) {
 		return s==null || "".equals(s);

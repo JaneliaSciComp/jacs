@@ -436,12 +436,11 @@ public class RestfulWebService {
             final String subjectKey = subject.getKey();
 
             DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            for(Sample slideCodeSample : dao.getSamplesBySlideCode(subjectKey, dataSet, slideCode)) {
-	            logger.info(context + "found " + slideCodeSample + " for slide code " + slideCode +
-	                        " (subjectKey is " + subjectKey + ")");
-	            dao.remove(subjectKey, slideCodeSample);
-	            logger.info(context + "deleted sample entity " + slideCodeSample.getId());
-            }
+            Sample slideCodeSample = dao.getSampleBySlideCode(subjectKey, dataSet, slideCode);
+            logger.info(context + "found " + slideCodeSample + " for slide code " + slideCode +
+                        " (subjectKey is " + subjectKey + ")");
+            dao.remove(subjectKey, slideCodeSample);
+            logger.info(context + "deleted sample entity " + slideCodeSample.getId());
             response = Response.status(Response.Status.OK).build();
 
         } catch (IllegalArgumentException e) {

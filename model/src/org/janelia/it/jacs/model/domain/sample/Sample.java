@@ -64,7 +64,10 @@ public class Sample extends AbstractDomainObject implements IsParent {
     private String status;
     
     @SearchAttribute(key="visited_b",label="Visited")
-    private Boolean visited;
+    private Boolean visited = false;
+    
+    @SearchAttribute(key="sage_synced",label="Synchronized to SAGE",facet="sage_synced_b")
+    private Boolean sageSynced = false;
 
     @SearchAttribute(key="compression_txt",label="Compression Type")
     private String compressionType;
@@ -220,6 +223,14 @@ public class Sample extends AbstractDomainObject implements IsParent {
         this.visited = visited;
     }
 
+    public Boolean getSageSynced() {
+		return sageSynced;
+	}
+
+	public void setSageSynced(Boolean sageSynced) {
+		this.sageSynced = sageSynced;
+	}
+	
     public String getCompressionType() {
         return compressionType;
     }

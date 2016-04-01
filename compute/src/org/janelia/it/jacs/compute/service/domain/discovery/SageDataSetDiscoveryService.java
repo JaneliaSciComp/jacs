@@ -30,10 +30,12 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
     private SageDAO sageDAO;
     private SampleHelperNG sampleHelper;
 
+    private Set<Long> visitedLsmIds = new HashSet<>();
     private Set<Long> visitedSampleIds = new HashSet<>();
 	private Map<String, Map<String, Object>> lineMap = new HashMap<>();
     private String dataSetName = null;
     private int sageRowsProcessed = 0;
+    private int lsmsMarkedDesync = 0;
     private int samplesMarkedDesync = 0;
 
     public void execute() throws Exception {
@@ -44,9 +46,6 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
 
         this.sageDAO = new SageDAO(logger);
         this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger);
-
-        // Clear "visited" flags on all our Samples
-        sampleHelper.clearVisited();
         sampleHelper.setDataSetNameFilter(dataSetName);
 
         buildLinePropertyMap();
@@ -58,20 +57,23 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
             else {
                 logger.info("Processing data set: "+dataSet.getName());
                 processSageDataSet(dataSet);
-                markDesyncedSamples(dataSet);
+                markDesynced(dataSet);
             }
         }
 
         logger.info("Processed "+sageRowsProcessed+" rows for "+ownerKey+" ("+dataSetName+"), created "+sampleHelper.getNumSamplesCreated()+
                 " samples, updated "+sampleHelper.getNumSamplesUpdated()+
                 " samples, marked "+sampleHelper.getNumSamplesReprocessed()+
-                " samples for reprocessing, marked "+samplesMarkedDesync+
-                " samples as desynced, added "+sampleHelper.getNumSamplesAdded()+
-                " samples to their corresponding data set folders, moved "+sampleHelper.getNumSamplesMovedToBlockedFolder()+
-                " samples to Blocked Data folder.");
+                " samples for reprocessing, marked "+lsmsMarkedDesync+
+                " lsms as desynched, marked "+samplesMarkedDesync+
+                " samples as desynced");
+
+        if (lsmsMarkedDesync > 0) {
+            logger.warn("IMPORTANT: "+lsmsMarkedDesync+" LSMs were marked as desynchronized. These need to be manually curated and fixed or deleted as soon as possible.");
+        }
         
         if (samplesMarkedDesync > 0) {
-            logger.warn("IMPORTANT: "+samplesMarkedDesync+" samples were marked as desynchronized. These need to be manually curated and fixed or retired as soon as possible, to avoid confusion caused by duplicate samples!");
+            logger.warn("IMPORTANT: "+samplesMarkedDesync+" samples were marked as desynchronized. These need to be manually curated and fixed or deleted as soon as possible.");
         }
 
     }
@@ -152,41 +154,48 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
     
     private void processSlideGroup(DataSet dataSet, String slideCode, Collection<LSMImage> lsms) throws Exception {
     
-        for(LSMImage lsmImage : lsms) {
+        for(LSMImage lsm : lsms) {
         	
-        	if (lsmImage.getSlideCode()==null) {
-        		logger.error("SAGE id "+lsmImage.getSageId()+" has null slide code");
+        	if (lsm.getSlideCode()==null) {
+        		logger.error("SAGE id "+lsm.getSageId()+" has null slide code");
         		return;
         	}
         	
-	    	if (lsmImage.getFilepath()==null) {
-	    		logger.warn("Slide code "+lsmImage.getSlideCode()+" has an image with a null path, so it is not ready for synchronization.");
+	    	if (lsm.getFilepath()==null) {
+	    		logger.warn("Slide code "+lsm.getSlideCode()+" has an image with a null path, so it is not ready for synchronization.");
 	    		return;
 	    	}
+	    	
+	    	visitedLsmIds.add(lsm.getId());
         }
     	
         Sample sample = sampleHelper.createOrUpdateSample(slideCode, dataSet, lsms);
         visitedSampleIds.add(sample.getId());
     }
     
-    
-
-    private void markDesyncedSamples(DataSet dataSet) throws Exception {
+    private void markDesynced(DataSet dataSet) throws Exception {
         String dataSetIdentifier = dataSet.getIdentifier();
 
+        logger.info("Marking desynchronized LSMs in dataSet: "+dataSet.getName());
+        for(LSMImage lsm : domainDao.getLSMsForDataSet(ownerKey, dataSetIdentifier)) {
+            if (!visitedLsmIds.contains(lsm.getId())) {
+                logger.info("  Marking unvisited LSM as desynced: "+lsm.getName()+" (id="+lsm.getId()+")");
+                domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", false);
+                lsmsMarkedDesync++;
+            }
+        }
+        
         logger.info("Marking desynchronized samples in dataSet: "+dataSet.getName());
-
-        // Make sure to fetch fresh samples, so that we have the latest visited flags
         for(Sample sample : domainDao.getSamplesForDataSet(ownerKey, dataSetIdentifier)) {
             if (!visitedSampleIds.contains(sample.getId())) {
                 // Sample was not visited this time around, it should be marked as desynchronized, and eventually retired
                 boolean blocked = DomainConstants.VALUE_BLOCKED.equals(sample.getStatus());
                 boolean retired = DomainConstants.VALUE_RETIRED.equals(sample.getStatus());
-                // Ignore blocked and retired samples, they don't need to be synchronized 
                 if (!blocked && !retired) {
                     logger.info("  Marking unvisited sample as desynced: "+sample.getName()+" (id="+sample.getId()+")");
                     domainDao.updateProperty(ownerKey, Sample.class, sample.getId(), "status", DomainConstants.VALUE_DESYNC);
                 }
+                domainDao.updateProperty(ownerKey, Sample.class, sample.getId(), "sageSynced", false);
                 samplesMarkedDesync++;
             }
         }

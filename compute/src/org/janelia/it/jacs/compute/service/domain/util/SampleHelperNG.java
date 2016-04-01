@@ -80,8 +80,6 @@ public class SampleHelperNG extends DomainHelper {
     private Set<String> sageAttrsNotFound = new HashSet<>();
     private int numSamplesCreated = 0;
     private int numSamplesUpdated = 0;
-    private int numSamplesAdded = 0;
-    private int numSamplesMovedToBlockedFolder = 0;
     private int numSamplesReprocessed = 0;
     
     public SampleHelperNG(ComputeBeanRemote computeBean, String ownerKey, Logger logger) {
@@ -90,14 +88,6 @@ public class SampleHelperNG extends DomainHelper {
 
     public SampleHelperNG(ComputeBeanRemote computeBean, String ownerKey, Logger logger, ContextLogger contextLogger) {
         super(computeBean, ownerKey, logger, contextLogger);
-    }
-
-    /**
-     * Clear all the visited flags on all entities owned by the user.
-     */
-    public void clearVisited() throws Exception {
-        logger.info("Clearing visited flag on all entities for user "+ownerKey);
-        domainDao.deleteProperty(ownerKey, Sample.class, "visited");
     }
     
     public void setDataSetNameFilter(String dataSetNameFilter) {
@@ -125,6 +115,9 @@ public class SampleHelperNG extends DomainHelper {
         if (dirty) {
             lsm = domainDao.save(ownerKey, lsm);
             updatedLsmIds.add(lsm.getId());
+        }
+        else if (!lsm.getSageSynced()) {
+            domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", true);
         }
         
         lsmCache.put(lsm.getId(), lsm);
@@ -365,8 +358,13 @@ public class SampleHelperNG extends DomainHelper {
         }
         
         if (sampleDirty) {
+        	sample.setSageSynced(true);
             sample = domainDao.save(ownerKey, sample);
-            logger.info("  Saving sample: "+sample.getName()+" (id="+sample.getId()+")");  
+            logger.info("  Saving sample: "+sample.getName()+" (id="+sample.getId()+")");
+            numSamplesUpdated++;
+        }
+        else if (!sample.getSageSynced()) {
+            domainDao.updateProperty(ownerKey, Sample.class, sample.getId(), "sageSynced", true);
         }
 
         // Update all back-references from the sample's LSMs
@@ -390,35 +388,18 @@ public class SampleHelperNG extends DomainHelper {
     
     private Sample getOrCreateSample(String slideCode, DataSet dataSet) {
         
-        List<Sample> samples = domainDao.getSamplesBySlideCode(ownerKey, dataSet.getIdentifier(), slideCode);
-        
-        Collections.sort(samples, new Comparator<Sample>() {
-            @Override
-            public int compare(Sample o1, Sample o2) {
-            	String s1 = o1.getStatus();
-            	String s2 = o2.getStatus();
-                ComparisonChain chain = ComparisonChain.start()
-                		// Retired samples are a last resort
-                        .compare(DomainConstants.VALUE_RETIRED.equals(s1), DomainConstants.VALUE_RETIRED.equals(s2), Ordering.natural())
-                        // Take desync if there are no active samples
-                        .compare(DomainConstants.VALUE_DESYNC.equals(s1), DomainConstants.VALUE_DESYNC.equals(s2), Ordering.natural())
-                        // Anything else, e.g. active samples, comes first
-                        .compare(o1.getId(), o2.getId(), Ordering.natural().nullsFirst());
-                return chain.result();
-            }
-        });
-        
-        // Return the first sample found, according to the sorting rules above
-        for(Sample sample : samples) {
+        Sample sample = domainDao.getSampleBySlideCode(ownerKey, dataSet.getIdentifier(), slideCode);
+        if (sample != null) {
         	logger.info("  Found existing sample "+sample.getId()+" with status "+sample.getStatus());
         	return sample;
         }
         
         // If no matching samples were found, create a new sample
-        Sample sample = new Sample();
+        sample = new Sample();
         sample.setDataSet(dataSet.getIdentifier());
         sample.setSlideCode(slideCode);
     	logger.info("  Creating new sample for "+dataSet.getIdentifier()+"/"+slideCode);
+        numSamplesCreated++;
         return sample;
     }
     
@@ -547,12 +528,10 @@ public class SampleHelperNG extends DomainHelper {
             objectiveSample = new ObjectiveSample();
             sample.addObjectiveSample(objective, objectiveSample);
             synchronizeTiles(objectiveSample, tileGroupList);
-            numSamplesCreated++;
             dirty = true;
         }
         else if (synchronizeTiles(objectiveSample, tileGroupList)) {
             dirty = true;
-            numSamplesUpdated++;
             logger.debug("Updated objective "+objective+" for sample "+sample.getName());
         }
         
@@ -903,14 +882,6 @@ public class SampleHelperNG extends DomainHelper {
         return numSamplesUpdated;
     }
 
-    public int getNumSamplesAdded() {
-        return numSamplesAdded;
-    }
-    
-    public int getNumSamplesMovedToBlockedFolder() {
-        return numSamplesMovedToBlockedFolder;
-    }
-    
     public int getNumSamplesReprocessed() {
         return numSamplesReprocessed;
     }

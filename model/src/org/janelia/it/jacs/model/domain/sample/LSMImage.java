@@ -20,6 +20,9 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchTraversal({})
     private Reference sample;
 
+    @SearchAttribute(key="sage_synced",label="Synchronized to SAGE",facet="sage_synced_b")
+    private Boolean sageSynced = false;
+    
     @SearchAttribute(key="chancolors_txt",label="Channel Colors")
     private String channelColors;
 
@@ -342,7 +345,15 @@ public class LSMImage extends Image implements HasAnatomicalArea {
         this.sample = sample;
     }
 
-    public String getChannelColors() {
+    public Boolean getSageSynced() {
+		return sageSynced;
+	}
+
+	public void setSageSynced(Boolean sageSynced) {
+		this.sageSynced = sageSynced;
+	}
+
+	public String getChannelColors() {
         return channelColors;
     }
 
