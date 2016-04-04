@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.computeresources;
+package org.janelia.it.jacs.compute.wsrest.process;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -21,12 +21,12 @@ import java.util.Map;
 /**
  * Created by goinac on 9/2/15.
  */
-abstract public class AbstractComputationResource<T extends Task, R extends FileNode> {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractComputationResource.class);
+abstract public class AbstractComputationService<T extends Task, R extends FileNode> {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractComputationService.class);
 
     private final String resourceName;
 
-    protected AbstractComputationResource(String resourceName) {
+    protected AbstractComputationService(String resourceName) {
         this.resourceName = resourceName;
     }
 

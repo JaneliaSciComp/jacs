@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.computeresources;
+package org.janelia.it.jacs.compute.wsrest.process;
 
 /**
  * Created by goinac on 9/3/15.

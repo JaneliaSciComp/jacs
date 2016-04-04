@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.computeresources;
+package org.janelia.it.jacs.compute.wsrest.process;
 
 
 import org.janelia.it.jacs.model.entity.json.JsonTask;
@@ -19,17 +19,17 @@ import java.util.Map;
  *
  * Created by goinac on 9/2/15.
  */
-@Path("/data")
-public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPMapTilesTask, MIPMapTilesResultNode> {
-    private static final Logger LOG = LoggerFactory.getLogger(MIPMapTilesServiceResource.class);
+@Path("/process")
+public class MIPMapTilesWebService extends AbstractComputationService<MIPMapTilesTask, MIPMapTilesResultNode> {
+    private static final Logger LOG = LoggerFactory.getLogger(MIPMapTilesWebService.class);
     private static final String RESOURCE_NAME = "MIPMapTiles";
 
-    public MIPMapTilesServiceResource() {
+    public MIPMapTilesWebService() {
         super(RESOURCE_NAME);
     }
 
     @POST
-    @Path("/{owner}/images/mipmaps")
+    @Path("/mipmaps/images")
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
@@ -38,7 +38,7 @@ public class MIPMapTilesServiceResource extends AbstractComputationResource<MIPM
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Response post(@PathParam("owner") String owner, MIPMapTilesTask mipMapTilesTask, @Context Request req) throws ProcessingException {
+    public Response post(@QueryParam("owner") String owner, MIPMapTilesTask mipMapTilesTask, @Context Request req) throws ProcessingException {
         LOG.info("3d mapping requested by {} with {}", owner, mipMapTilesTask);
         mipMapTilesTask.setOwner(owner);
         MIPMapTilesTask persistedTask = init(mipMapTilesTask);

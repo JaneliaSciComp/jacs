@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.dataresources;
+package org.janelia.it.jacs.compute.wsrest.process;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

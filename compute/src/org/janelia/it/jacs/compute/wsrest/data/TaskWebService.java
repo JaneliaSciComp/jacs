@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.dataresources;
+package org.janelia.it.jacs.compute.wsrest.data;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -18,20 +18,20 @@ import java.util.List;
 /**
  * Created by goinac on 9/2/15.
  */
-@Path("/")
-public class TaskResource {
-    private static final Logger LOG = LoggerFactory.getLogger(TaskResource.class);
+@Path("/data")
+public class TaskWebService {
+    private static final Logger LOG = LoggerFactory.getLogger(TaskWebService.class);
     private static final int DEFAULT_MAX_LENGTH = 100;
 
     @GET
-    @Path("/{owner}/tasks")
+    @Path("/tasks")
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public List<JsonTask> getAllTasks(@PathParam("owner") String owner,
-                                      @QueryParam("offset") int offset,
-                                      @QueryParam("length") int length) {
+    public List<JsonTask> getAllTasks(@QueryParam("owner") String owner,
+                                      @QueryParam("offset") Integer offset,
+                                      @QueryParam("length") Integer length) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -59,12 +59,13 @@ public class TaskResource {
     }
 
     @GET
-    @Path("/{owner}/tasks/{task-id}")
+    @Path("/task")
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public JsonTask getTask(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
+    public JsonTask getTask(@QueryParam("owner") String owner,
+                            @QueryParam("task-id") Long taskId) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -85,12 +86,13 @@ public class TaskResource {
     }
 
     @GET
-    @Path("/{owner}/tasks/{task-id}/events")
+    @Path("/task/events")
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public List<JsonTaskEvent> getTaskEvents(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
+    public List<JsonTaskEvent> getTaskEvents(@QueryParam("owner") String owner,
+                                             @QueryParam("task-id") Long taskId) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();

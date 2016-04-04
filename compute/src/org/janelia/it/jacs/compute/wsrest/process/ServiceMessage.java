@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.computeresources;
+package org.janelia.it.jacs.compute.wsrest.process;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

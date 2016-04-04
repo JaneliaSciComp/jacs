@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.wsrest.computeresources;
+package org.janelia.it.jacs.compute.wsrest.process;
 
 import com.google.common.base.Joiner;
 import org.apache.commons.httpclient.HttpStatus;
@@ -26,12 +26,12 @@ import java.util.Map;
  *
  * Created by goinac on 9/2/15.
  */
-@Path("/data")
-public class MIPGenerationServiceResource extends AbstractComputationResource<MIPGenerationTask, MIPGenerationResultNode> {
+@Path("/process")
+public class MIPGenerationWebService extends AbstractComputationService<MIPGenerationTask, MIPGenerationResultNode> {
     private static final String RESOURCE_NAME = "MIPGeneration";
-    private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationServiceResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationWebService.class);
 
-    public MIPGenerationServiceResource() {
+    public MIPGenerationWebService() {
         super(RESOURCE_NAME);
     }
 
@@ -44,7 +44,7 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
      * @throws ProcessingException
      */
     @POST
-    @Path("/{owner}/images/mips")
+    @Path("/mips/images")
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
@@ -53,7 +53,7 @@ public class MIPGenerationServiceResource extends AbstractComputationResource<MI
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public Response post(@PathParam("owner") String owner, MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
+    public Response post(@QueryParam("owner") String owner, MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
         LOG.info("MIP generation requested by {} with {}", owner, mipGenerationTask);
         mipGenerationTask.setOwner(owner);
         validateRequest(mipGenerationTask);

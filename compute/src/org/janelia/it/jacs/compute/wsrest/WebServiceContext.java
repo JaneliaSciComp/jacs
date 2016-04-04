@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  */
 @javax.servlet.annotation.WebListener
 public class WebServiceContext implements ServletContextListener  {
-    private static final Logger log = LoggerFactory.getLogger(DataViewsWebService.class);
+    private static final Logger log = LoggerFactory.getLogger(WebServiceContext.class);
 
     private static DomainDAO mongo;
     private static SolrConnector solr;
