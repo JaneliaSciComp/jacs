@@ -128,6 +128,7 @@
             <!-- Set the sample status -->
             <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.domain.sample.SetSampleStatusService">
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="STATUS" value="Processing"/>
             </operation>
     
@@ -198,7 +199,7 @@
                     <!-- Extract default image filepath --> 
                     <operation name="Get Default Image" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
                         <input name="BEAN" value="$V{SAMPLE_AREA}"/>
-                        <input name="BEAN_PROPERTY_1" value="stitchedFilename"/>
+                        <input name="BEAN_PROPERTY_1" value="stitchedFilepath"/>
                         <input name="PROCESS_VARIABLE_1" value="DEFAULT_IMAGE_FILENAME"/>
                         <output name="DEFAULT_IMAGE_FILENAME"/>
                     </operation>
@@ -355,7 +356,7 @@
                 <!-- Extract default image filepath --> 
                 <operation name="Get Default Image" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
                     <input name="BEAN" value="$V{SAMPLE_AREA}"/>
-                    <input name="BEAN_PROPERTY_1" value="stitchedFilename"/>
+                    <input name="BEAN_PROPERTY_1" value="stitchedFilepath"/>
                     <input name="PROCESS_VARIABLE_1" value="DEFAULT_IMAGE_FILENAME"/>
                     <output name="DEFAULT_IMAGE_FILENAME"/>
                 </operation>
@@ -483,6 +484,7 @@
             <!-- Set our status -->
             <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.domain.sample.SetSampleStatusService">
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="STATUS" value="Complete"/>
             </operation>
             
@@ -497,6 +499,7 @@
             <!-- Set our status -->
             <operation name="Set Status" processor="org.janelia.it.jacs.compute.service.domain.sample.SetSampleStatusService">
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="STATUS" value="Error"/>
             </operation>
             

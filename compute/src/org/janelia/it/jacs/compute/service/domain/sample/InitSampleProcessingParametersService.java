@@ -38,16 +38,9 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
         
         contextLogger.info("Running InitSampleProcessingParametersService for sample " + sample.getName());
         
-		AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
-
-		List<SampleTile> tiles = null;
-		if (sampleArea != null) {
-			contextLogger.info("Processing tiles for area: " + sampleArea.getName());
-			tiles = sampleHelper.getTiles(objectiveSample, sampleArea.getTileNames());
-		} 
-		else {
-		    throw new IllegalStateException("Due to NG refactoring, we are no longer supporting null SampleAreas. This exception will help us track down how they arise in the first place, and eliminate them at the source.");
-		}
+		AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
+		contextLogger.info("Processing tiles for area: " + sampleArea.getName());
+		List<SampleTile> tiles = sampleHelper.getTiles(objectiveSample, sampleArea.getTileNames());
 
 		List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
 		boolean archived = populateMergedLsmPairs(tiles, mergedLsmPairs);
@@ -94,7 +87,7 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
         processData.putItem("SAMPLE_AREA", sampleArea);
 	}
 
-	private boolean populateMergedLsmPairs(List<SampleTile> tileEntities, List<MergedLsmPair> mergedLsmPairs) throws Exception {
+	protected boolean populateMergedLsmPairs(List<SampleTile> tileEntities, List<MergedLsmPair> mergedLsmPairs) throws Exception {
 
 		boolean archived = false;
 
@@ -102,7 +95,6 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
 			
 			LSMImage lsm1 = null;
 			LSMImage lsm2 = null;
-
 			LSMImage first = null;
 
             List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
@@ -114,6 +106,10 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
 					lsm1 = lsmStack;
 					first = lsmStack;
 				}
+			}
+			
+			if (first==null) {
+				throw new IllegalStateException("Sample tile has no LSMs: "+sampleTile.getName());
 			}
 
 			if (lsm2 != null && "2".equals(first.getNumChannels())) {
@@ -131,7 +127,7 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
 			String lsmRealPath1 = lsmFilepath1 == null ? null : new File(lsmFilepath1).getCanonicalPath();
 			String lsmRealPath2 = lsmFilepath2 == null ? null : new File(lsmFilepath2).getCanonicalPath();
 
-			if (lsmRealPath1.startsWith(ARCHIVE_PREFIX) || (lsmRealPath2 != null && lsmRealPath2.startsWith(ARCHIVE_PREFIX))) {
+			if ((lsmRealPath1!=null && lsmRealPath1.startsWith(ARCHIVE_PREFIX)) || (lsmRealPath2 != null && lsmRealPath2.startsWith(ARCHIVE_PREFIX))) {
 				archived = true;
 			}
 
