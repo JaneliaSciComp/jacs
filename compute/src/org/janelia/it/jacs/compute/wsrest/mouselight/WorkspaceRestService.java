@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.janelia.it.jacs.compute.access.AnnotationDAO;
+import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -11,6 +15,8 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.slf4j.Logger;
@@ -90,6 +96,57 @@ public class WorkspaceRestService {
 
         @JsonProperty
         public int getNeuronCount() { return neuronCount; }
+
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public class NeuronInfo {
+
+        public String idString;
+        public String name;
+        public long createTimestamp;
+        public String createTimeString;
+        public int pointCount;
+
+        @JsonProperty
+        public String getIdString() { return idString; }
+
+        @JsonProperty
+        public String getName() { return name; }
+
+        @JsonProperty
+        public long getCreateTimestamp() { return createTimestamp; }
+
+        @JsonProperty
+        public String getCreateTimeString() { return createTimeString; }
+
+        @JsonProperty
+        public int getPointCount() { return pointCount; }
+
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public class PointInfo {
+        public double x;
+        public double y;
+        public double z;
+        public long createTimestamp;
+        public String createTimeString;
+
+        @JsonProperty
+        public double getX() { return x; }
+
+        @JsonProperty
+        public double getY() { return y; }
+
+        @JsonProperty
+        public double getZ() { return z; }
+
+        @JsonProperty
+        public long getCreateTimestamp() { return createTimestamp; }
+
+        @JsonProperty
+        public String getCreateTimeString() { return createTimeString; }
 
     }
 
@@ -209,6 +266,65 @@ public class WorkspaceRestService {
         }
 
         return wi;
+    }
+
+    @GET
+    @Path("/neuronSummaryForWorkspace")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Formatted
+    public List<NeuronInfo> getNeuronSummaryForWorkspace(@QueryParam("id") String idString) {
+        log.info("getNeuronSummaryForWorkspace() invoked, id="+idString);
+        List<NeuronInfo> neuronInfoList=new ArrayList<>();
+        try {
+            final TiledMicroscopeBeanRemote tiledMicroscopeBeanRemote=EJBFactory.getRemoteTiledMicroscopeBean();
+            Long workspaceId=new Long(idString);
+            Set<TmNeuron> neurons=tiledMicroscopeBeanRemote.getNeuronsFromProtobufDataByWorkspaceId(workspaceId);
+            for (TmNeuron neuron : neurons) {
+                NeuronInfo neuronInfo=new NeuronInfo();
+                neuronInfo.idString=neuron.getId().toString();
+                neuronInfo.name=neuron.getName();
+                neuronInfo.pointCount=neuron.getRootAnnotationCount();
+                neuronInfo.createTimestamp=neuron.getCreationDate().getTime();
+                neuronInfo.createTimeString=new Date(neuronInfo.createTimestamp).toString();
+                neuronInfoList.add(neuronInfo);
+            }
+        } catch (Exception e) {
+            log.error("Exception e="+e.getMessage());
+        }
+        log.info("Returning neuronInfoList of size="+neuronInfoList.size());
+        return neuronInfoList;
+    }
+
+    @GET
+    @Path("/pointSummaryForNeuron")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Formatted
+    public List<PointInfo> getPointSummaryForNeuron(@QueryParam("workspaceId") String workspaceIdString,
+                                                    @QueryParam("neuronId") String neuronIdString) {
+        log.info("getPointSummaryForNeuron() invoked, workspaceIdString="+workspaceIdString+" neuronIdString="+neuronIdString);
+        List<PointInfo> pointInfoList=new ArrayList<>();
+        try {
+            final TiledMicroscopeBeanRemote tiledMicroscopeBeanRemote=EJBFactory.getRemoteTiledMicroscopeBean();
+            Long workspaceId=new Long(workspaceIdString);
+            Long neuronId=new Long(neuronIdString);
+            Set<TmNeuron> neurons=tiledMicroscopeBeanRemote.getNeuronsFromProtobufDataByWorkspaceId(workspaceId);
+            for (TmNeuron neuron : neurons) {
+                if (neuron.getId().equals(neuronId)) {
+                    List<TmGeoAnnotation> tmGeoAnnotations=neuron.getRootAnnotations();
+                    for (TmGeoAnnotation tmGeoAnnotation : tmGeoAnnotations) {
+                        PointInfo pointInfo=new PointInfo();
+                        pointInfo.x=tmGeoAnnotation.getX();
+                        pointInfo.y=tmGeoAnnotation.getY();
+                        pointInfo.z=tmGeoAnnotation.getZ();
+                        pointInfoList.add(pointInfo);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Exception e="+e.getMessage());
+        }
+        log.info("Returning pointInfoList of size="+pointInfoList.size());
+        return pointInfoList;
     }
 
     @GET

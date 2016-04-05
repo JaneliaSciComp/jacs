@@ -1055,4 +1055,21 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         }
     }
 
+    // NOTE: This does NOT return a valid entity tree - this hijacks the legacy TmWorkspace, etc., objects to return
+    // protobuf data
+    public Set<TmNeuron> getNeuronsFromProtobufDataByWorkspaceId(Long workspaceId) throws Exception {
+        Set<TmNeuron> neuronSet=new HashSet<>();
+        AnnotationDAO annotationDAO = new AnnotationDAO(log);
+        Entity workspaceEntity = annotationDAO.getEntityById(workspaceId);
+        Set<EntityData> entityDatas=workspaceEntity.getEntityData();
+        for (EntityData ed : entityDatas) {
+            byte[] protobufBytes=annotationDAO.getB64DecodedEntityDataValue(workspaceId, ed.getId(), EntityConstants.ATTRIBUTE_PROTOBUF_NEURON);
+            if (protobufBytes!=null) {
+                TmProtobufExchanger exchanger=new TmProtobufExchanger();
+                neuronSet.add(exchanger.deserializeNeuron(protobufBytes));
+            }
+        }
+        return neuronSet;
+    }
+
 }
