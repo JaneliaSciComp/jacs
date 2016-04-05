@@ -25,10 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -310,8 +307,8 @@ public class WorkspaceRestService {
             Set<TmNeuron> neurons=tiledMicroscopeBeanRemote.getNeuronsFromProtobufDataByWorkspaceId(workspaceId);
             for (TmNeuron neuron : neurons) {
                 if (neuron.getId().equals(neuronId)) {
-                    List<TmGeoAnnotation> tmGeoAnnotations=neuron.getRootAnnotations();
-                    for (TmGeoAnnotation tmGeoAnnotation : tmGeoAnnotations) {
+                    Map<Long, TmGeoAnnotation> geoAnnotationMap=neuron.getGeoAnnotationMap();
+                    for (TmGeoAnnotation tmGeoAnnotation : geoAnnotationMap.values()) {
                         PointInfo pointInfo=new PointInfo();
                         pointInfo.x=tmGeoAnnotation.getX();
                         pointInfo.y=tmGeoAnnotation.getY();
