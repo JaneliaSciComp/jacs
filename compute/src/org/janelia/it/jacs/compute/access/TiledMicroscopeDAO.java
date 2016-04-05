@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.access;
 
 import Jama.Matrix;
-import com.google.common.base.Stopwatch;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +17,6 @@ import org.janelia.it.jacs.shared.img_3d_loader.TifVolumeFileLoader;
 
 import org.janelia.it.jacs.shared.swc.SWCData;
 import org.janelia.it.jacs.compute.access.util.FileByTypeCollector;
-import org.janelia.it.jacs.compute.annotation.api.AnnotationCollector;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.model.IdSource;
@@ -33,7 +31,6 @@ import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
 import org.janelia.it.jacs.shared.swc.SWCDataConverter;
 import org.janelia.it.jacs.shared.swc.SWCNode;
 import sun.misc.BASE64Encoder;
-import static org.janelia.it.jacs.shared.sample_discovery.SampleDiscoveryConstants.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,6 +43,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
     private AnnotationDAO annotationDAO;
     private ComputeDAO computeDAO;
 
+    private TmProtobufExchanger protobufExchanger = new TmProtobufExchanger();
     private TmFromEntityPopulator tmFactory = new TmFromEntityPopulator();
 
     public static final String VERSION_ATTRIBUTE = "Version";
@@ -901,7 +899,6 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
 
                 // Loop through, saving neurons as PROTOBUF, and mapping of old/new ids.
                 final Map<Long, Long> oldToNew = Collections.synchronizedMap(new HashMap<Long,Long>());
-                final AnnotationCollector collector = new AnnotationCollector();
                 final EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
 
                 for (TmNeuron neuron : workspace.getNeuronList()) {
@@ -917,7 +914,7 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                     neuron.setWorkspaceId(workspaceId);
                     neuron.setOwnerKey(workspaceEntity.getOwnerKey());
                     neuron.setCreationDate(new Date());
-                    neuron = collector.pushGuaranteedNewNeuron(workspaceEntity, neuron, entityBean);
+                    neuron = pushGuaranteedNewNeuron(workspaceEntity, neuron, entityBean);
                     oldToNew.put(oldNeuronID, neuron.getId());
                 }
 
@@ -997,6 +994,46 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
         return changeWorkspaceVersion(workspaceEntity, TmWorkspace.Version.ENTITY_PB_TRANSITION);
     }
 
+    private TmNeuron pushGuaranteedNewNeuron(Entity collectionEntity, TmNeuron neuron, EntityBeanLocal entityBean) throws Exception {
+        // Must now create a new entity data
+        EntityData entityData = new EntityData();
+        entityData.setOwnerKey(neuron.getOwnerKey());
+        entityData.setCreationDate(neuron.getCreationDate());
+        entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_PROTOBUF_NEURON);
+        entityData.setParentEntity(collectionEntity);
+
+        // save back.
+        log.debug("Saving back the neuron " + entityData.getId());
+        EntityData savedEntityData = entityBean.saveOrUpdateEntityData(entityData);
+        log.debug("Adding neuron to its collection.");
+        collectionEntity.getEntityData().add(savedEntityData);
+        log.debug("Saved back the neuron " + entityData.getId());
+
+        log.debug("Re-saving neuron with neuron id embedded in geo annotations.");
+        // Now that the neuron has been db-dipped, we can get its ID, and 
+        // push that into all points.
+        Long id = savedEntityData.getId();
+        for (TmGeoAnnotation anno : neuron.getGeoAnnotationMap().values()) {
+            anno.setNeuronId(id);
+            if (anno.getParentId().equals(-1L)) {
+                anno.setParentId(id);
+            }
+        }
+        // Need to make serializable version of the data.
+        neuron.setId(id);
+        createEntityData(entityData, neuron);
+        EntityData savedEd = entityBean.saveOrUpdateEntityData(entityData);
+        neuron.setId(id);
+
+        return neuron;
+    }
+
+    private void createEntityData(EntityData entityData, TmNeuron neuron) throws Exception {
+        byte[] serializableBytes = protobufExchanger.serializeNeuron(neuron);
+        BASE64Encoder encoder = new BASE64Encoder();
+        entityData.setValue(encoder.encode(serializableBytes));
+        entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_PROTOBUF_NEURON);
+    }
 
     private EntityData changeWorkspaceVersion(Entity workspaceEntity, TmWorkspace.Version version, boolean saveWsEntity) throws DaoException {
         // Eliminate any excessive previous version value(s).
