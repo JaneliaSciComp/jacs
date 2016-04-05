@@ -17,6 +17,7 @@ public class InputImage implements Serializable {
     private Integer laser;
     private Integer gain;
     private String area;
+    private String key;
     
     public String getFilepath() {
         return filepath;
@@ -66,7 +67,13 @@ public class InputImage implements Serializable {
     public void setArea(String area) {
         this.area = area;
     }
-    @Override
+    public String getKey() {
+		return key;
+	}
+	public void setKey(String key) {
+		this.key = key;
+	}
+	@Override
     public String toString() {
         return "InputImage [filepath=" + filepath + "]";
     }

@@ -41,50 +41,49 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         
         String channelMappingStr = data.getRequiredItemAsString("LSM_CHANNEL_MAPPING");
         Collection<String> channelMapping = Task.listOfStringsFromCsvString(channelMappingStr);
-        
         String channelSpec = data.getRequiredItemAsString("CHANNEL_SPEC");
         AnatomicalArea sampleArea = (AnatomicalArea)data.getRequiredItem("SAMPLE_AREA");
         String resultName = data.getRequiredItemAsString("RESULT_ENTITY_NAME");
-        
-        SampleProcessingResult result = sampleHelper.addNewSampleProcessingResult(run, resultName);
-        
         FileNode resultFileNode = (FileNode)data.getRequiredItem("ROOT_FILE_NODE");
         String rootPath = resultFileNode.getDirectoryPath();
-
+        
+        logger.info("Creating result named '"+resultName+"' with type 'SampleProcessingResult'");
+        SampleProcessingResult result = sampleHelper.addNewSampleProcessingResult(run, resultName);
+        logger.info("Setting result anatomical area to "+sampleArea.getName());
+        result.setAnatomicalArea(sampleArea.getName());
+        logger.info("Setting result channel specification to "+channelSpec);
+        result.setChannelSpec(channelSpec);
+        logger.info("Setting result filepath to "+rootPath);
+        result.setFilepath(rootPath);
+        
         logger.info("Discovering supporting files in "+rootPath);
-        logger.info("Creating entity named '"+resultName+"' with type 'SampleProcessingResult'");
-
         FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
-
-        result.setAnatomicalArea(sampleArea.getName());
         
         String stitchedFilepath = sampleArea.getStitchedFilepath();
-        
-        if (channelSpec!=null) {
-            logger.info("Setting result channel specification to "+channelSpec);
-            result.setChannelSpec(channelSpec);
-        }
-        
         String pixelRes = null;
         File image3d = null;
         for(String filepath : filepaths) {
             File file = new File(filepath);
-            if (file.getName().endsWith(".tc")) {
+            if (file.getName().endsWith("_reference.png")) {
+            	logger.info("Found reference MIP: "+file);
+            	DomainUtils.setFilepath(result, FileType.ReferenceMip, file.getAbsolutePath());
+            }
+            else if (file.getName().endsWith("_signal.png")) {
+            	logger.info("Found signal MIP: "+file);
+            	DomainUtils.setFilepath(result, FileType.SignalMip, file.getAbsolutePath());
+            }
+            else if (file.getName().endsWith(".tc")) {
+            	logger.info("Found stitched tile configuration: "+file);
                 pixelRes = getStitchedDimensions(filepath);
             }
             else if (filepath.equals(stitchedFilepath)) {
                 if (image3d!=null) {
                     logger.warn("More than one 3d image result detected for sample processing "+result.getId());
                 }   
-                logger.info("Using as main 3d image: "+file.getName());
+                logger.info("Found main 3d image: "+file.getName());
                 image3d = file;
             }
-            // TODO: MIPS
-//            else if (file.getName().endsWith(suffix)) {
-//              "ReferenceMip": "merge/tile-1947307609727959138_reference.png",
-//              "SignalMip": "merge/tile-1947307609727959138_signal.png",
-//            }
         }
         
         if (image3d==null) {
@@ -105,7 +104,6 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
             throw new ServiceException("Could not determine pixel resolution for "+image3d.getName());
         }
         
-        result.setFilepath(rootPath);
         DomainUtils.setFilepath(result, FileType.LosslessStack, image3d.getAbsolutePath());
         
         // Find consensus optical res    
@@ -135,7 +133,7 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
                 }
             }
             
-            if (image3d!=null && !resultColors.isEmpty()) {
+            if (!resultColors.isEmpty()) {
                 String resultColorsStr = Task.csvStringFromCollection(resultColors);
                 logger.info("Setting result image colors: "+resultColorsStr);
                 result.setChannelColors(resultColorsStr);
@@ -143,8 +141,6 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         }
         
         sampleHelper.saveSample(sample);
-        
-        contextLogger.info("Putting "+result.getId()+" in RESULT_ENTITY_ID");
         data.putItem("RESULT_ENTITY_ID", result.getId());
     }
     
@@ -165,6 +161,8 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         }
         
         scanner.close();
+        
+        if (dimensions==null) return null;
         
         String[] parts = dimensions.split(" ");
         if (parts.length<3) return null;

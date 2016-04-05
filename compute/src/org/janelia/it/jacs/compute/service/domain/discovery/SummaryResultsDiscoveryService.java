@@ -28,16 +28,6 @@ import org.janelia.it.jacs.shared.utils.zeiss.LSMMetadata.DetectionChannel;
 
 /**
  * Incremental file discovery service for LSM summary results.
- * 
- * Input variables if adding files to an existing result:
- *   RESULT_ENTITY or RESULT_ENTITY_ID  
- *   SAMPLE_ENTITY_ID - the sample entity containing the ROOT_ENTITY_ID
- * 
- * Input variables if discovering new result:
- *   ROOT_ENTITY_ID - the parent of the result
- *   ROOT_FILE_NODE - the file node containing the separation files to be discovered
- *   RESULT_ENTITY_NAME - the name of the new result entity
- *   SAMPLE_ENTITY_ID - the sample entity containing the ROOT_ENTITY_ID
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -47,9 +37,6 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
     private Sample sample;
     private ObjectiveSample objectiveSample;
 
-    private Map<String,String> jsonEntityMap = new HashMap<String,String>();
-    private Map<String,String> propertiesEntityMap = new HashMap<String,String>();
-    
     public void execute() throws Exception {
 
         this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
@@ -65,50 +52,38 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
 
         FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
-        for(String filepath : filepaths) {
-            populateMaps(filepath);
-        }
-
-        // TODO: is this code from MongoDbImport needed here?
-//        Set<String> keys = new HashSet<>();
-//        for(LSMImage lsm : lsms) {
-//            String name = lsm.getName();
-//            int index = name.indexOf('.');
-//            String key = index<1 ? name : name.substring(0, index);
-//            keys.add(key);
-//        }
-//        keys.add("montage");
         
         Map<String,FileGroup> groups = sampleHelper.createFileGroups(result, filepaths);
         result.setGroups(groups);
 
         sampleHelper.saveSample(sample);
-
-        updateLSMS();
-        
-        contextLogger.info("Putting "+result.getId()+" in RESULT_ENTITY_ID");
         data.putItem("RESULT_ENTITY_ID", result.getId());
-    }
-    
-    private void populateMaps(String filepath) {
-
-        File file = new File(filepath);
         
-        if (file.getName().endsWith(".json")) {
-            String stub = file.getName().replaceFirst("\\.json", "");
-            jsonEntityMap.put(stub, file.getAbsolutePath());
-            contextLogger.info("Found JSON metadata file: "+file);
-        }
-    
-        if (file.getName().endsWith(".properties")) {
-            String stub = file.getName().replaceFirst("\\.properties", ".lsm");
-            propertiesEntityMap.put(stub, file.getAbsolutePath());
-            contextLogger.info("Found properties file: "+file);
-        }
+        updateLSMS(filepaths);
     }
     
-    protected void updateLSMS() throws Exception {
+    protected void updateLSMS(List<String> filepaths) throws Exception {
+    	
+    	Map<String,String> jsonFileMap = new HashMap<String,String>();
+    	Map<String,String> propertiesFileMap = new HashMap<String,String>();
+    	
+        for(String filepath : filepaths) {
 
+            File file = new File(filepath);
+            
+            if (file.getName().endsWith(".json")) {
+                String stub = file.getName().replaceFirst("\\.json", "");
+                jsonFileMap.put(stub, file.getAbsolutePath());
+                contextLogger.info("Found JSON metadata file: "+file);
+            }
+        
+            if (file.getName().endsWith(".properties")) {
+                String stub = file.getName().replaceFirst("\\.properties", ".lsm");
+                propertiesFileMap.put(stub, file.getAbsolutePath());
+                contextLogger.info("Found properties file: "+file);
+            }
+        }
+        
         for(SampleTile tileEntity : objectiveSample.getTiles()) {
             
             List<LSMImage> lsms = domainDao.getDomainObjectsAs(tileEntity.getLsmReferences(), LSMImage.class);
@@ -118,7 +93,7 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
 
                 boolean dirty = false;
                 
-                String jsonFilepath = jsonEntityMap.get(lsmFilename);
+                String jsonFilepath = jsonFileMap.get(lsmFilename);
                 if (jsonFilepath!=null) {
 	                List<String> colors = new ArrayList<>();
 	                List<String> dyeNames = new ArrayList<>();
@@ -154,7 +129,7 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
 	                }
                 }
                 
-                String propertiesFilepath = propertiesEntityMap.get(lsmFilename);
+                String propertiesFilepath = propertiesFileMap.get(lsmFilename);
                 if (propertiesFilepath!=null) {
 	                File propertiesFile = new File(propertiesFilepath);
 	                Properties properties = new Properties();

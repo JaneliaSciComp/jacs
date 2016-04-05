@@ -244,6 +244,7 @@ public class SampleDataCompressionService extends AbstractDomainService {
         for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
             for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
                 for(PipelineResult result : run.getResults()) {
+
                     String llpath = DomainUtils.getFilepath(result, FileType.LosslessStack);
                     String vlpath = DomainUtils.getFilepath(result, FileType.VisuallyLosslessStack);
                     
@@ -266,18 +267,33 @@ public class SampleDataCompressionService extends AbstractDomainService {
             }
         }
 
+    	if (deleteIfNecessary(inputPath)) {
+    		// The input file was deleted, now we need to remove references to it
+	        for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+	            for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
+	                for(PipelineResult result : run.getResults()) {
+                		// Remove the source file from the file set
+                		for(FileType fileType : new HashSet<FileType>(result.getFiles().keySet())) {
+                			if (inputPath.equals(DomainUtils.getFilepath(result, fileType))) {
+                				DomainUtils.setFilepath(result, fileType, null);
+                			}
+                		}
+	                }
+	            }
+	        }
+    	}
+        
         sampleHelper.saveSample(sample);
         contextLogger.info("Updated "+numUpdated+" filepaths to use new compressed file "+outputPath+" in sample "+sample);
-    	deleteIfNecessary(inputPath);
 	}
     
-    private void deleteIfNecessary(String filepath) {
+    private boolean deleteIfNecessary(String filepath) {
     	
-        if (!deleteSourceFiles) return;
+        if (!deleteSourceFiles) return false;
         
         if (!filepath.startsWith(centralDir)) {
             contextLogger.warn("Path outside of filestore: "+filepath);
-            return;
+            return false;
         }
         
         if (!isDebug) {
@@ -290,12 +306,15 @@ public class SampleDataCompressionService extends AbstractDomainService {
                 try {
                     FileUtils.forceDelete(file);
                     contextLogger.info("Deleted old file: "+filepath);
+                    return true;
                 }
                 catch (Exception e) {
                     logger.info("Error deleting file "+filepath,e);
                 }
             }
-        }
+        }   
+        
+        return false;
     }
 
     private String getExtension(String filepath) {

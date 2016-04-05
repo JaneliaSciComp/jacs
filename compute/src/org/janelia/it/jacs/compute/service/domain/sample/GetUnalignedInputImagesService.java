@@ -36,7 +36,6 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
 
     private static final String SERVICE_PACKAGE = "org.janelia.it.jacs.compute.service.image";
     
-    private boolean sampleNaming;
     private String colorSpec;
     private String mode;
 
@@ -54,7 +53,6 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getRequiredItem("SAMPLE_AREAS");
         this.colorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
         this.mode = data.getItemAsString("MODE");
-        this.sampleNaming = data.getItemAsBoolean("SAMPLE_NAMING");
 
         // For each merged file, find the tile name and save it in a map for later lookup
         for(AnatomicalArea sampleArea : sampleAreas) {
@@ -115,28 +113,26 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         String filepath = DomainUtils.getDefault3dImageFilePath(resultEntity);
         String tileName = tileNames.get(filepath);
         
-        String prefix = FileUtils.getFilePrefix(filepath);
-        if (sampleNaming) {
-            String sampleName = sanitize(sample.getName());
-            if (filepath.contains("stitched-")) {
-                if (StringUtils.isEmpty(area)) {
-                    prefix = sampleName+"-stitched";
-                }
-                else {
-                    prefix = sampleName+"-"+area;
-                }
+        String key = null;
+        if (filepath.contains("stitched-")) {
+            if (StringUtils.isEmpty(area)) {
+            	key = "stitched";
             }
             else {
-                prefix = sampleName+"-"+sanitize(tileName);    
+            	key = area;
             }
-            // Append effector if available and not already in the prefix by way of the sample name
-            if (!StringUtils.isEmpty(effector) && !prefix.contains(effector)) {
-                prefix += "-"+sanitize(effector);
-            }
+        }
+        else {
+        	key = sanitize(tileName);    
+        }
+
+        String prefix = sanitize(sample.getName()) + "-" + key;
+        // Append effector if available and not already in the prefix by way of the sample name
+        if (!StringUtils.isEmpty(effector) && !prefix.contains(effector)) {
+            prefix += "-"+sanitize(effector);
         }
         
         String colorspec = colorSpec;
-        
         String objective = objectiveSample.getObjective();
         if (colorspec==null) {
             contextLogger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective="+objective+" and MODE="+mode+"...");
@@ -183,6 +179,7 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         inputImage.setColorspec(colorspec);
         inputImage.setDivspec("");
         inputImage.setOutputPrefix(prefix);
+        inputImage.setKey(key);
         
         return inputImage;
     }
