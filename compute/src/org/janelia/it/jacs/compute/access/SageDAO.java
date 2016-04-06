@@ -19,6 +19,7 @@ import javax.naming.InitialContext;
 import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -152,14 +153,19 @@ public class SageDAO {
      * @param lsmPath
      * @return
      */
-    public SlideImage getSlideImageByOwnerAndLSMName(String lsmName) throws DaoException {
-
+    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
         String sql = "select " +
                     COMMON_IMAGE_VW_ATTR + "," +
-                    "line_vw.lab as image_lab_name " +
+                    "line_vw.lab as image_lab_name" +
+                    buildPropertySql(ImmutableList.of("sample:data_set"), "ip1") + " " +
                     "from image_vw " +
                     "join image image_t on image_t.id = image_vw.id " +
                     "join line_vw on line_vw.id = image_t.line_id " +
+                    "join (" +
+                    "  select ip2.image_id, ip2.type, ip2.value from image_vw i " +
+                    "  inner join image_property_vw ip2 on " +
+                    "    (ip2.image_id = i.id and ip2.type='data_set' and ip2.value=?) " +
+                    ") ip1 on (ip1.image_id = image_vw.id) " +
                     "where image_vw.name = ? ";
         log.debug("GetSlideImageByLSMName: " + sql + "(" + lsmName + ")");
         SlideImage slideImage = null;
@@ -170,10 +176,12 @@ public class SageDAO {
             conn = getJdbcConnection();
             pstmt = conn.prepareStatement(sql);
             int fieldIndex = 1;
+            pstmt.setString(fieldIndex++, datasetName);
             pstmt.setString(fieldIndex++, lsmName);
             rs = pstmt.executeQuery();
             if (rs.next()) {
                 slideImage = new SlideImage();
+                slideImage.setDatasetName(rs.getString("sample_data_set"));
                 slideImage.setSageId(rs.getLong("image_query_id"));
                 slideImage.setImageName(rs.getString("image_query_name"));
                 slideImage.setImagePath(rs.getString("image_query_path"));
@@ -188,10 +196,7 @@ public class SageDAO {
                     }
                 }
             }
-            rs.close();
-            rs = null;
-            pstmt.close();
-            pstmt = null;
+            ResultSetIterator.close(rs, pstmt, null, log);
             if (slideImage != null) {
                 fillImageProperties(slideImage, conn);
             }
@@ -211,7 +216,6 @@ public class SageDAO {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            conn = getJdbcConnection();
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, slideImage.getSageId());
             rs = pstmt.executeQuery();
@@ -221,10 +225,9 @@ public class SageDAO {
                 String type = rs.getString("type");
                 Object value = rs.getObject("value");
                 // prefix every type with the controlled vocabulary except the data_set type
-                String key = "data_set".equals(type) ? type : cv + "_" + type;
+                String key = cv + "_" + type;
                 data.put(key, value);
             }
-            slideImage.setDatasetName((String) data.get("data_set"));
             slideImage.setSlideCode((String) data.get("light_imagery_slide_code"));
             slideImage.setTileType((String) data.get("light_imagery_tile"));
             slideImage.setCrossBarcode((String) data.get("fly_cross_barcode"));
@@ -287,7 +290,7 @@ public class SageDAO {
         try {
             connection = getJdbcConnection();
             final List<String> propertyTypeNames = getImagePropertyTypesByDataSet(dataSetName, connection);
-            final String sql = buildImagePropertySqlByDatasetName(propertyTypeNames);
+            final String sql = buildImagePropertySqlForPropertyList(propertyTypeNames);
 
             pStatement = connection.prepareStatement(sql);
             pStatement.setFetchSize(Integer.MIN_VALUE);
@@ -776,7 +779,7 @@ public class SageDAO {
      *
      * @return dynamically built SQL statement for the specified property type names.
      */
-    private String buildImagePropertySqlByDatasetName(List<String> propertyTypeNames) {
+    private String buildImagePropertySqlForPropertyList(List<String> propertyTypeNames) {
         StringBuilder sql = new StringBuilder(2048);
 
         sql.append("select ");
@@ -785,7 +788,7 @@ public class SageDAO {
         sql.append(IMAGE_PROPERTY_SQL_JOIN);
 
         if (log.isDebugEnabled()) {
-            log.debug("buildImagePropertySqlByDatasetName: returning \"" + sql + "\"");
+            log.debug("buildImagePropertySqlForPropertyList: returning \"" + sql + "\"");
         }
 
         return sql.toString();
