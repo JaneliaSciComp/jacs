@@ -13,6 +13,7 @@ import javax.annotation.Resource;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.ejb.MessageDrivenContext;
+import java.util.List;
 
 @MessageDriven(
     activationConfig = {
@@ -43,7 +44,8 @@ public class DispatchComputationMDB implements Job {
         boolean fetchUnassignedJobsFlag = dispatchSettings.isFetchUnassignedJobs();
         ComputeBeanLocal computeBean = (ComputeBeanLocal) mdctx.lookup(EJBFactory.LOCAL_COMPUTE_JNDI_NAME);
         JobControlBeanLocal jobBean = (JobControlBeanLocal) mdctx.lookup(EJBFactory.LOCAL_JOB_CONTROL_JNDI_NAME);
-        for (DispatcherJob job : jobBean.nextPendingJobs(processingNodeId, fetchUnassignedJobsFlag, maxRetries, prefetchSize)) {
+        List<DispatcherJob> pendingJobs = jobBean.nextPendingJobs(processingNodeId, fetchUnassignedJobsFlag, maxRetries, prefetchSize);
+        for (DispatcherJob job : pendingJobs) {
             LOG.info("Submit job {}", job.getDispatchId());
             try {
                 computeBean.submitJob(job.getProcessDefnName(), job.getDispatchedTaskId());

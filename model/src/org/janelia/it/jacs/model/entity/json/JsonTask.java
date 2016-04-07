@@ -24,6 +24,7 @@ public class JsonTask {
     private String taskId;
     private String taskName;
     private String owner;
+    private String taskStatusUrl;
     private List<JsonTaskEvent> taskEvents = new ArrayList<>();
     private Map<String, String> taskParameters = new LinkedHashMap<>();
     private List<JsonTaskData> inputNodes = new ArrayList<>();
@@ -65,6 +66,14 @@ public class JsonTask {
 
     public String getOwner() {
         return owner;
+    }
+
+    public String getTaskStatusUrl() {
+        return taskStatusUrl;
+    }
+
+    public void setTaskStatusUrl(String taskStatusUrl) {
+        this.taskStatusUrl = taskStatusUrl;
     }
 
     public List<JsonTaskEvent> getTaskEvents() {

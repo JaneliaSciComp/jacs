@@ -29,6 +29,7 @@ public class LSMProcessingTask extends Task {
     public static final String TASK_NAME = "lsmprocessing";
     public static final String DEFAULT_JOBNAME = "LSMProcessing";
     public static final String DISPLAY_NAME = "LSM Processing Task";
+    public static final String PARAM_DATASET_NAME = "dataset name";
     public static final String PARAM_LSM_NAMES = "lsm names";
     public static final String PARAM_REUSE_PIPELINE_RUNS = "reuse pipeline runs";
     public static final String PARAM_REUSE_SUMMARY = "reuse summary";
@@ -131,5 +132,14 @@ public class LSMProcessingTask extends Task {
 
     public void setRunObjectives(String val) {
         setParameter(PARAM_RUN_OBJECTIVES, val);
+    }
+
+    @XmlElement
+    public String getDataSetName() {
+        return getParameter(PARAM_DATASET_NAME);
+    }
+
+    public void setDataSetName(String val) {
+        setParameter(PARAM_DATASET_NAME, val);
     }
 }

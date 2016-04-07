@@ -337,12 +337,17 @@ public class RestfulWebService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    @Path("owner/{owner}/lsmPipelines")
+    @Path("owner/{owner}/dataSet/{dataSet}/lsmPipelines")
     public Response launchLsmPipelines(
             @PathParam("owner")String owner,
-            LSMProcessingTask lsmProcessingParams) {
+            @PathParam("dataSet")String dataSet,
+            LSMProcessingTask lsmProcessingParams,
+            @Context UriInfo uriInfo) {
 
         final String context = "launchLsmPipelines: ";
+        logger.info(context +"entry, owner=" + owner +
+                ", dataset=" + dataSet +
+                ", lsms=" + lsmProcessingParams.getLsmNames().toString());
         LSMProcessingTask lsmProcessingTask;
         try {
             final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
@@ -356,6 +361,7 @@ public class RestfulWebService {
                 }
             }
             lsmProcessingParams.setOwner(owner);
+            lsmProcessingParams.setDataSetName(dataSet);
             lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingParams);
             remoteComputeBean.dispatchJob(lsmProcessingTask.getJobName(), lsmProcessingTask.getObjectId());
         } catch (IllegalArgumentException e) {
@@ -370,9 +376,13 @@ public class RestfulWebService {
                     e);
             return response;
         }
+
+        JsonTask result = new JsonTask(lsmProcessingTask);
+        result.setTaskStatusUrl(getNormalizedBaseUrlString(uriInfo) + "task/" + lsmProcessingTask.getObjectId() + "/currentStatus");
+
         return Response
                 .status(Response.Status.CREATED)
-                .entity(new JsonTask(lsmProcessingTask))
+                .entity(result)
                 .build();
     }
 
