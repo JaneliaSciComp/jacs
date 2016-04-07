@@ -1,8 +1,6 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -19,6 +17,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -31,6 +35,12 @@ import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Projections.excludeId;
+import static com.mongodb.client.model.Projections.fields;
+import static com.mongodb.client.model.Projections.include;
+import static java.util.Arrays.asList;
 
 @Path("/data")
 public class DataSetWebService extends ResourceConfig {
@@ -54,6 +64,30 @@ public class DataSetWebService extends ResourceConfig {
             return new ArrayList<DataSet>(dataSets);
         } catch (Exception e) {
             log.error("Error occurred getting datasets",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/dataset/pipeline")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String,String> getDatasetPipelines() {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            Collection<DataSet> dataSets = dao.getDataSets(null);
+            Map<String,String> results = new HashMap<>();
+            for (DataSet dataSet: dataSets) {
+                List<String> pipelines = dataSet.getPipelineProcesses();
+                if (pipelines!=null) {
+                    for (String pipeline: pipelines) {
+                        results.put(dataSet.getIdentifier(), "PipelineConfig_" + pipeline);
+                    }
+                }
+            }
+            return results;
+        } catch (Exception e) {
+            log.error("Error occurred getting dataset-pipeline information",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

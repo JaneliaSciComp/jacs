@@ -4,7 +4,9 @@ package org.janelia.it.jacs.compute.wsrest.data;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,4 +45,28 @@ public class SampleWebService extends ResourceConfig {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GET
+    @Path("/sample")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List getSamples(@QueryParam("subjectKey") final String subjectKey,
+                                     @QueryParam("sampleId") final Long sampleId,
+                                     @QueryParam("sampleName") final String sampleName) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            if (sampleId!=null) {
+                return dao.getDomainObjectsByName(subjectKey, Sample.class, sampleName);
+            } else {
+                Reference ref = new Reference(Sample.class.getCanonicalName(), sampleId);
+                List<Reference> refList = new ArrayList<>();
+                refList.add(ref);
+                return dao.getDomainObjects(subjectKey, refList);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred getting lsms for sample",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

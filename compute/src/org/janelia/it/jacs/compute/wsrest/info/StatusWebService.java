@@ -1,6 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.info;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -26,6 +28,7 @@ import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import static com.mongodb.client.model.Projections.*;
 import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Sorts.*;
 import static java.util.Arrays.asList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +83,241 @@ public class StatusWebService extends ResourceConfig {
             return moo;
         } catch (Exception e) {
             log.error("Error occurred getting datasets",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/sample/blockview")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getBlockView() {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> sample = db.getCollection("sample");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = sample.find().batchSize(1000000).projection(fields(include("tmogDate", "status", "dataSet", "name")))
+                    .into(new ArrayList());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String samples =  objectMapper.writeValueAsString(jsonResult);
+            return samples;
+        } catch (Exception e) {
+            log.error("Error occurred getting samples",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/sample/imagecompletion")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getImageCompletion(@QueryParam("line") final String line,
+                                     @QueryParam("slideCode") final String slideCode) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> sample = db.getCollection("sample");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = sample.find(
+                    and(not(regex("status", ".*-Retired")),
+                            not(regex("status", ".*~.*")),
+                            eq("slideCode",slideCode),
+                            eq("line",line)))
+                    .batchSize(1000000)
+                    .projection(fields(include("tmogDate", "status", "dataSet", "name")))
+                    .sort(orderBy(descending("_id")))
+                    .into(new ArrayList());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String samples =  objectMapper.writeValueAsString(jsonResult);
+            return samples;
+        } catch (Exception e) {
+            log.error("Error occurred getting image completion",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/image/cycletime")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getImageCycleTime() {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> image = db.getCollection("image");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = image.aggregate(asList(
+                    new Document("$project", new Document("line", "$line")
+                            .append("slideCode", "$slideCode")
+                            .append("dataSet", "$dataSet")
+                            .append("tmogDate", "$tmogDate")
+                            .append("creationDate", "$creationDate")
+                            .append("completionDate", "$completionDate")
+                            .append("cycleTime",
+                                    new Document("$subtract", asList("$creationDate", "$tmogDate"))))))
+                    .into(new ArrayList());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String images =  objectMapper.writeValueAsString(jsonResult);
+            return images;
+        } catch (Exception e) {
+            log.error("Error occurred getting image cycle times",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/sample/pipelinestatus")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getSamplePipelineStatus() {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> sample = db.getCollection("sample");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = sample.aggregate(asList(
+                    new Document("$project", new Document("name", "$name")
+                            .append("dataSet", "$dataSet")
+                            .append("creationDate", "$creationDate")
+                            .append("completionDate", "$completionDate")
+                            .append("pipelineTime",
+                                    new Document("$subtract", asList(new Date(), "$creationDate"))))))
+                    .into(new ArrayList());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String images =  objectMapper.writeValueAsString(jsonResult);
+            return images;
+        } catch (Exception e) {
+            log.error("Error occurred getting image cycle times",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GET
+    @Path("/sample/errorbydataset")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getSampleErrorsByDataSet() {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> sample = db.getCollection("sample");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = sample.aggregate(asList(
+                    new Document("$match", new Document("status", "Error")),
+                    new Document("$group", new Document("_id", "$dataSet")
+                            .append("count", new Document("$sum", "1")))))
+                    .into(new ArrayList());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String images =  objectMapper.writeValueAsString(jsonResult);
+            return images;
+        } catch (Exception e) {
+            log.error("Error occurred getting sample error counts by dataset",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+    @GET
+    @Path("/dataset/sageimagery")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getDatasetsByOwner() {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> dataSet = db.getCollection("dataSet");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = dataSet.find()
+                    .batchSize(1000000)
+                    .projection(fields(include("identifier", "name", "ownerKey")))
+                    .sort(orderBy(ascending("identifier")))
+                    .into(new ArrayList());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String images =  objectMapper.writeValueAsString(jsonResult);
+            return images;
+        } catch (Exception e) {
+            log.error("Error occurred getting sample error counts by dataset",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GET
+    @Path("/sample/search")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getSampleName() {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> dataSet = db.getCollection("dataSet");
+        List<Document> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = dataSet.find(not(regex("name", ".*~.*")))
+                    .batchSize(1000000)
+                    .projection(fields(include("name")))
+                    .sort(orderBy(ascending("name")))
+                    .into(new ArrayList());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String images =  objectMapper.writeValueAsString(jsonResult);
+            return images;
+        } catch (Exception e) {
+            log.error("Error occurred getting sample error counts by dataset",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GET
+    @Path("/sample/workstationstatus")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getSampleStatusByDate(@QueryParam("startDate") final String startDate,
+                                        @QueryParam("endDate") final String endDate) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> sample = db.getCollection("sample");
+        List<Document> jsonResult = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy");
+        try {
+            Date startDateTime = sdf.parse(startDate);
+            if (endDate!=null) {
+                Date endDateTime = sdf.parse(endDate);
+                jsonResult = sample.find(and(
+                        gte("tmogDate", startDateTime),
+                        lte("tmogDate", endDateTime)))
+                        .batchSize(1000000)
+                        .projection(fields(include("name", "line", "slideCode", "status")))
+                        .into(new ArrayList());
+            } else {
+                jsonResult = sample.find(gte("tmogDate", startDateTime))
+                        .batchSize(1000000)
+                        .projection(fields(include("name", "line", "slideCode", "status")))
+                        .into(new ArrayList());
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            String images =  objectMapper.writeValueAsString(jsonResult);
+            return images;
+        } catch (Exception e) {
+            log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
