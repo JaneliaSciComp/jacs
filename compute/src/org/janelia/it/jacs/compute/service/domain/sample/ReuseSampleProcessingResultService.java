@@ -25,7 +25,7 @@ public class ReuseSampleProcessingResultService extends AbstractDomainService {
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
-        AnatomicalArea sampleArea = (AnatomicalArea)processData.getItem("SAMPLE_AREA");
+        AnatomicalArea sampleArea = (AnatomicalArea)data.getRequiredItem("SAMPLE_AREA");
         
         SampleProcessingResult latestSp = null;
         
@@ -44,6 +44,7 @@ public class ReuseSampleProcessingResultService extends AbstractDomainService {
         if (latestSp!=null) {
             String stitchedFilepath = DomainUtils.getDefault3dImageFilePath(latestSp);
             if (stitchedFilepath!=null) {
+            	contextLogger.info("Setting stitched filepath to "+stitchedFilepath+" for area "+sampleArea.getName());
                 sampleArea.setStitchedFilepath(stitchedFilepath);
                 run.addResult(latestSp);
                 

@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.janelia.it.jacs.model.domain.Reference;
 
 /**
@@ -9,23 +12,15 @@ import org.janelia.it.jacs.model.domain.Reference;
  */
 public class CuratedNeuron extends NeuronFragment {
 
-    private Reference fragment1;
-    
-    private Reference fragment2;
-    
-    public Reference getFragment1() {
-        return fragment1;
+    private List<Reference> componentFragments = new ArrayList<>();
+
+    public List<Reference> getComponentFragments() {
+        return componentFragments;
+    }
+
+    public void setComponentFragments(List<Reference> componentFragments) {
+        if (componentFragments==null) throw new IllegalArgumentException("Property cannot be null");
+        this.componentFragments = componentFragments;
     }
     
-    public void setFragment1(Reference fragment1) {
-        this.fragment1 = fragment1;
-    }
-    
-    public Reference getFragment2() {
-        return fragment2;
-    }
-    
-    public void setFragment2(Reference fragment2) {
-        this.fragment2 = fragment2;
-    }
 }

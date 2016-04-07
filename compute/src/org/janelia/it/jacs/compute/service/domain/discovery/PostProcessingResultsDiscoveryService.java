@@ -1,11 +1,13 @@
 package org.janelia.it.jacs.compute.service.domain.discovery;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.util.FileDiscoveryHelperNG;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
+import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -30,7 +32,8 @@ public class PostProcessingResultsDiscoveryService extends AbstractDomainService
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
-
+        List<InputImage> inputImages = (List<InputImage>)data.getRequiredItem("INPUT_IMAGES");
+        
         String resultName = data.getRequiredItemAsString("RESULT_ENTITY_NAME");
         FileNode resultFileNode = (FileNode)data.getRequiredItem("ROOT_FILE_NODE");
         String rootPath = resultFileNode.getDirectoryPath();
@@ -39,22 +42,28 @@ public class PostProcessingResultsDiscoveryService extends AbstractDomainService
 
         FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
-
-        // TODO: is this code from MongoDbImport needed here?
-//        Set<String> keys = new HashSet<>();
-//        for(LSMImage lsm : lsms) {
-//            String name = lsm.getName();
-//            int index = name.indexOf('.');
-//            String key = index<1 ? name : name.substring(0, index);
-//            keys.add(key);
-//        }
-//        keys.add("montage");
         
-        Map<String,FileGroup> groups = sampleHelper.createFileGroups(result, filepaths);
-        result.setGroups(groups);    
-        contextLogger.info("Putting "+result.getId()+" in RESULT_ENTITY_ID");
-        data.putItem("RESULT_ENTITY_ID", result.getId());
+        Map<String,FileGroup> fileGroups = sampleHelper.createFileGroups(result, filepaths);
+        
+        Map<String,String> prefixToKeyMap = new HashMap<>();
+        for(InputImage inputImage : inputImages) {
+        	prefixToKeyMap.put(inputImage.getOutputPrefix(), inputImage.getKey());
+        }
+        
+        Map<String,FileGroup> groups = new HashMap<>(); 
+        for(String outputPrefix : fileGroups.keySet()) {
+        	FileGroup fileGroup = fileGroups.get(outputPrefix);
+        	String key = prefixToKeyMap.get(outputPrefix);
+        	if (key==null) {
+        		logger.warn("Unrecognized output prefix: "+outputPrefix);
+        		continue;
+        	}
+        	groups.put(key, fileGroup);
+        }
+        
+        result.setGroups(groups);
         
         sampleHelper.saveSample(sample);
+        data.putItem("RESULT_ENTITY_ID", result.getId());
     }
 }

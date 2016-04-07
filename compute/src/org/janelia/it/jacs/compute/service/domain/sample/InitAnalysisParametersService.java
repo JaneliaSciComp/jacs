@@ -34,22 +34,25 @@ public class InitAnalysisParametersService extends AbstractDomainService {
         	processData.putItem("ANALYSIS_PIPELINE_NAME", pipelineName);
 		}
 
-		SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
-        Sample sample = sampleHelper.getRequiredSample(data);
-        ObjectiveSample objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
-        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
-            
-        Long alignmentId = data.getRequiredItemAsLong("ALIGNMENT_ID");
-        List<SampleAlignmentResult> results = run.getResultsById(SampleAlignmentResult.class, alignmentId);
-        if (results.isEmpty()) {
-            throw new IllegalArgumentException("Could not find alignment "+alignmentId+" in sample "+sample.getId());
-        }
-        SampleAlignmentResult alignment = results.get(0); // We can take any instance, since they're all the same
-
-        String alignedConsolidatedLabel = DomainUtils.getFilepath(alignment, FileType.AlignedCondolidatedLabel);
-        if (alignedConsolidatedLabel!=null) {
-            contextLogger.info("Putting '"+alignedConsolidatedLabel+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
-            data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabel);
-        }
+		Long sampleId = data.getItemAsLong("SAMPLE_ENTITY_ID");
+		if (sampleId!=null) {
+			SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+	        Sample sample = sampleHelper.getRequiredSample(data);
+	        ObjectiveSample objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+	        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
+	            
+	        Long alignmentId = data.getRequiredItemAsLong("ALIGNMENT_ID");
+	        List<SampleAlignmentResult> results = run.getResultsById(SampleAlignmentResult.class, alignmentId);
+	        if (results.isEmpty()) {
+	            throw new IllegalArgumentException("Could not find alignment "+alignmentId+" in sample "+sample.getId());
+	        }
+	        SampleAlignmentResult alignment = results.get(0); // We can take any instance, since they're all the same
+	
+	        String alignedConsolidatedLabel = DomainUtils.getFilepath(alignment, FileType.AlignedCondolidatedLabel);
+	        if (alignedConsolidatedLabel!=null) {
+	            contextLogger.info("Putting '"+alignedConsolidatedLabel+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
+	            data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabel);
+	        }
+		}
     }
 }

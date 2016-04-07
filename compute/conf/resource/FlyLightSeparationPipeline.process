@@ -8,6 +8,7 @@
 		<input name="OBJECTIVE"/>
 		<input name="PIPELINE_RUN_ENTITY_ID"/>
 		<input name="ROOT_ENTITY_ID"/>
+		<input name="RESULT_ENTITY_NAME"/>
 		
 	    <!-- Create a sample result node, with nested result nodes for all the pipeline steps -->
 	    <operation name="Create Sample Result Nodes" processor="org.janelia.it.jacs.compute.service.domain.node.CreateSeparationResultFileNodeService">
@@ -30,7 +31,7 @@
             <output name="REFERENCE_CHANNEL"/>
 		</operation>
 
-        <sequence if="SIGNAL_CHANNELS=true">
+        <sequence if="SIGNAL_CHANNELS is not empty">
             
     	    <!-- Run neuron separation on the stitched result -->
             <sequence name="Neuron Separation" waitForAsync="true">

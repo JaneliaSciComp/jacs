@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
@@ -1064,7 +1065,7 @@ public class SampleHelperNG extends DomainHelper {
 
             String key = null;
             if (filename.endsWith(".lsm.json")) {
-                key = name;
+            	key = FilenameUtils.getBaseName(name);
                 fileType = FileType.LsmMetadata;
             }
             else if (filename.endsWith(".lsm.metadata")) {

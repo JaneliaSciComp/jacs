@@ -71,16 +71,12 @@ public class Condition implements Serializable {
                 if (actualValue instanceof Collection) {
                     return !((Collection<?>)actualValue).isEmpty();
                 }
-                else {
-                    return actualValue!=null && !StringUtils.isEmpty(actualValue.toString());
-                }
+                return actualValue!=null && !StringUtils.isEmpty(actualValue.toString());
             case IS_EMPTY:
                 if (actualValue instanceof Collection) {
                     return ((Collection<?>)actualValue).isEmpty();
                 }
-                else {
-                    return actualValue==null || StringUtils.isEmpty(actualValue.toString());
-                }
+                return actualValue==null || StringUtils.isEmpty(actualValue.toString());
             default:
                 throw new RuntimeException("not supported");
         }

@@ -21,6 +21,8 @@ public class AnatomicalArea implements Serializable {
     private String stitchedFilepath;
 
     public AnatomicalArea(Long sampleId, String objective, String anatomicalArea) {
+    	this.sampleId = sampleId;
+    	this.objective = objective;
         this.name = anatomicalArea;
     }
 

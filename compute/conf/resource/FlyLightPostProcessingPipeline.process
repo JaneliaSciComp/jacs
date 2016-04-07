@@ -50,7 +50,6 @@
                     <input name="SAMPLE_AREAS"/>
                     <input name="OUTPUT_COLOR_SPEC"/>
                     <input name="MODE" value="$V{IMAGE_TYPE}"/>
-                    <input name="SAMPLE_NAMING" value="true"/>
                     <output name="INPUT_IMAGES"/>
                     <output name="SERVICE_CLASS"/>
                     <output name="NORMALIZE_TO_FIRST_IMAGE"/>
@@ -72,10 +71,11 @@
                 <!-- Load the MIPs and movies into the database -->
                 <operation name="Discover Post-Processing Results" processor="org.janelia.it.jacs.compute.service.domain.discovery.PostProcessingResultsDiscoveryService">
                     <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
-                    <input name="SAMPLE_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                    <input name="SAMPLE_ENTITY_ID"/>
                     <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
                     <input name="RESULT_ENTITY_NAME" value="Post-Processing Result"/>
+                    <input name="INPUT_IMAGES"/>
                     <output name="RESULT_ENTITY_ID"/>
                 </operation>
                     

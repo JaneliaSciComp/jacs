@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.FilenameUtils;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.util.FileDiscoveryHelperNG;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
@@ -65,12 +66,30 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
         
         List<Long> alignmentIds = new ArrayList<>(); 
         
+        Map<String,String> refMips = new HashMap<>();
+        Map<String,String> signalMips = new HashMap<>();
+        
+        // First find the supporting files
+        for(String filepath : filepaths) {
+            File file = new File(filepath);
+            String filename = file.getName();
+        
+            if (filename.endsWith("_reference.png")) {
+            	logger.info("Found reference MIP: "+file);
+            	refMips.put(filename.replace("_reference.png", ""), file.getAbsolutePath());
+            }
+            else if (filename.endsWith("_signal.png")) {
+            	logger.info("Found signal MIP: "+file);
+            	signalMips.put(filename.replace("_signal.png", ""), file.getAbsolutePath());
+            }
+        }
+
         for(String filepath : filepaths) {
             File file = new File(filepath);
             String filename = file.getName();
         
             if (filename.endsWith(".properties")) {
-                
+
                 logger.info("Processing alignment result: " + filename);
                 Properties properties = new Properties();
                 properties.load(new FileReader(file));
@@ -89,6 +108,13 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 logger.info("Created new alignment result: "+alignment.getId());
                 alignmentIds.add(alignment.getId());
 
+            	String prefix = FilenameUtils.getPrefix(filename);
+            	String refMip = refMips.get(prefix);
+            	String signalMip = signalMips.get(prefix);
+            	
+            	DomainUtils.setFilepath(alignment, FileType.ReferenceMip, refMip);
+            	DomainUtils.setFilepath(alignment, FileType.SignalMip, signalMip);
+            	
                 // TODO: there should be a better way of determining the area
                 if (stackFilename.contains("VNC")) {
                     alignment.setAnatomicalArea("VNC");    

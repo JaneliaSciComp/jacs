@@ -673,6 +673,13 @@
         <archive path="/common/Spring-3/scala-library-2.9.0-1.jar"/>
         <archive path="/common/Spring-3/server-api-1.6.1.jar"/>
     </library>
+    <library name="Swagger" systemlibrary="false">
+        <archive path="/common/swagger/swagger-annotations-1.5.0.jar"/>
+        <archive path="/common/swagger/swagger-core-1.5.0.jar"/>
+        <archive path="/common/swagger/swagger-jaxrs-1.5.0.jar"/>
+        <archive path="/common/swagger/swagger-jersey2-jaxrs-1.5.0.jar"/>
+        <archive path="/common/swagger/swagger-models-1.5.0.jar"/>
+    </library>
     <library name="Xuggler" systemlibrary="false">
         <archive path="/common/Xuggler/xuggle-xuggler-5.4.jar"/>
     </library>

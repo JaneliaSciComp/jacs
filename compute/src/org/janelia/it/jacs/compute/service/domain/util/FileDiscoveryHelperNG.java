@@ -93,10 +93,10 @@ public class FileDiscoveryHelperNG extends DomainHelper {
 
         List<String> filepaths = new ArrayList<>();
         File dir = new File(rootPath);
-        logger.info("Processing "+dir.getName()+" results in "+dir.getAbsolutePath());
+        logger.debug("Processing results in "+dir.getAbsolutePath());
         
         if (!dir.canRead()) {
-            logger.info("Cannot read from folder "+dir.getAbsolutePath());
+            logger.warn("Cannot read from folder "+dir.getAbsolutePath());
             return filepaths;
         }
         
