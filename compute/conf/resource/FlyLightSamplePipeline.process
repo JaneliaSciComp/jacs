@@ -402,7 +402,8 @@
                                 <input name="SAMPLE_ENTITY_ID"/>
                                 <input name="OBJECTIVE"/>
                                 <input name="PIPELINE_RUN_ENTITY_ID"/>
-                                <input name="ROOT_ENTITY_ID" value="${RESULT_ENTITY_ID}"/>
+                                <input name="ROOT_ENTITY_ID" value="$V{RESULT_ENTITY_ID}"/>
+                                <input name="RESULT_ENTITY_NAME" value="Neuron Separation"/>
                             </include>
                             
                         </sequence>
