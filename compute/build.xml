@@ -237,6 +237,9 @@
             <lib dir="${common.dir}/Solrj">
                 <include name="dom4j-1.6.1.jar"/>
             </lib>
+            <lib dir="${common.dir}/swagger">
+                <include name="**/*.jar"/>
+            </lib>
             <lib dir="${common.dir}/ehcache">
                 <include name="**/*.jar"/>
             </lib>
