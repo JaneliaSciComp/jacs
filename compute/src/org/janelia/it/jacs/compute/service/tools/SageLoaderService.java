@@ -174,6 +174,7 @@ public class SageLoaderService extends SubmitDrmaaJobService {
 
     @Override
     public void postProcess() throws MissingDataException {
+        boolean errorsEncountered = false;
         try {
             // reload task from database to avoid Hibernate errors on save
             sageLoaderTask = (SageLoaderTask) computeDAO.getTaskById(sageLoaderTask.getObjectId());
@@ -197,7 +198,7 @@ public class SageLoaderService extends SubmitDrmaaJobService {
                 }
             }
             if (expectedImages > 0) {
-                checkImagesFound(outputFile, expectedImages);
+                errorsEncountered = !checkImagesFound(outputFile, expectedImages);
             }
 
             computeDAO.saveOrUpdate(sageLoaderTask);
@@ -232,8 +233,9 @@ public class SageLoaderService extends SubmitDrmaaJobService {
      *
      * @param  sageLoaderStdOutFile  standard output from sageLoader script.
      * @param expectedImages - number of expected images.
+     * @return true if all expected images are found otherwise it returns false
      */
-    private void checkImagesFound(File sageLoaderStdOutFile, int expectedImages) {
+    private boolean checkImagesFound(File sageLoaderStdOutFile, int expectedImages) {
 
         int imagesFound = 0;
 
@@ -258,11 +260,13 @@ public class SageLoaderService extends SubmitDrmaaJobService {
             if (task != sageLoaderTask) {
                 task.addEvent(new Event(errorMessage, new Date(), Event.SUBTASKERROR_EVENT));
             }
+            return false;
         } else {
             if (task != sageLoaderTask) {
                 final Event processedOutput = new Event("Processed " + imagesFound + " images", new Date(), Event.SUBTASKCOMPLETED_EVENT);
                 task.addEvent(processedOutput);
             }
+            return true;
         }
     }
 
