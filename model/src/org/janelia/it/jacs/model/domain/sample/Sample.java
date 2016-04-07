@@ -66,7 +66,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="visited_b",label="Visited")
     private Boolean visited = false;
     
-    @SearchAttribute(key="sage_synced",label="Synchronized to SAGE",facet="sage_synced_b")
+    @SearchAttribute(key="sage_synced",label="SAGE Synchronized")
     private Boolean sageSynced = false;
 
     @SearchAttribute(key="compression_txt",label="Compression Type")
