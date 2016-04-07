@@ -87,7 +87,6 @@ import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -140,7 +139,6 @@ public class MongoDbImport extends AnnotationDAO {
 	protected final MongoCollection subjectCollection;
 	protected final MongoCollection preferenceCollection;
     protected final MongoCollection treeNodeCollection;
-    protected final MongoCollection objectSetCollection;
     protected final MongoCollection dataSetCollection;
     protected final MongoCollection releaseCollection;
 	protected final MongoCollection sampleCollection;
@@ -171,7 +169,6 @@ public class MongoDbImport extends AnnotationDAO {
     	this.subjectCollection = dao.getCollectionByClass(Subject.class);
         this.preferenceCollection = dao.getCollectionByClass(Preference.class);
     	this.treeNodeCollection = dao.getCollectionByClass(TreeNode.class);
-    	this.objectSetCollection = dao.getCollectionByClass(ObjectSet.class);
     	this.dataSetCollection = dao.getCollectionByClass(DataSet.class);
     	this.releaseCollection = dao.getCollectionByClass(LineRelease.class);
     	this.sampleCollection = dao.getCollectionByClass(Sample.class);
@@ -1439,44 +1436,36 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     private CuratedNeuron getCuratedNeuron(Entity sampleEntity, Entity separationEntity, Entity fragmentEntity) throws Exception {
-        CuratedNeuron neuronFragment = new CuratedNeuron();
-        neuronFragment.setId(fragmentEntity.getId());
-        neuronFragment.setSample(getReference(sampleEntity));
-        neuronFragment.setName(fragmentEntity.getName());
-        neuronFragment.setOwnerKey(fragmentEntity.getOwnerKey());
-        neuronFragment.setReaders(getSubjectKeysWithPermission(fragmentEntity, "r"));
-        neuronFragment.setWriters(getSubjectKeysWithPermission(fragmentEntity, "w"));
-        neuronFragment.setCreationDate(fragmentEntity.getCreationDate());
-        neuronFragment.setUpdatedDate(fragmentEntity.getUpdatedDate());
+        CuratedNeuron curatedFragment = new CuratedNeuron();
+        curatedFragment.setId(fragmentEntity.getId());
+        curatedFragment.setSample(getReference(sampleEntity));
+        curatedFragment.setName(fragmentEntity.getName());
+        curatedFragment.setOwnerKey(fragmentEntity.getOwnerKey());
+        curatedFragment.setReaders(getSubjectKeysWithPermission(fragmentEntity, "r"));
+        curatedFragment.setWriters(getSubjectKeysWithPermission(fragmentEntity, "w"));
+        curatedFragment.setCreationDate(fragmentEntity.getCreationDate());
+        curatedFragment.setUpdatedDate(fragmentEntity.getUpdatedDate());
         String number = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER);
         if (number!=null) {
-            neuronFragment.setNumber(Integer.parseInt(number));
+            curatedFragment.setNumber(Integer.parseInt(number));
         }
-        neuronFragment.setSeparationId(separationEntity.getId());
+        curatedFragment.setSeparationId(separationEntity.getId());
 
         populateChildren(fragmentEntity);
         for(Entity childFragment : EntityUtils.getChildrenOfType(fragmentEntity, EntityConstants.TYPE_NEURON_FRAGMENT)) {
-            if (neuronFragment.getFragment1()==null) {
-                neuronFragment.setFragment1(getReference(childFragment));
-            }
-            else if (neuronFragment.getFragment2()==null) {
-                neuronFragment.setFragment2(getReference(childFragment));
-            }
-            else {
-                log.warn("    Encountered curated neuron with more than two child fragments: "+fragmentEntity.getId());
-            }
+            curatedFragment.getComponentFragments().add(getReference(childFragment));
         }
         
         String stackFilepath = fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         File stackFile = new File(stackFilepath);
-        neuronFragment.setFilepath(stackFile.getParent());
+        curatedFragment.setFilepath(stackFile.getParent());
         
         Map<FileType,String> images = new HashMap<FileType,String>();
-        addImage(images,stackFilepath.endsWith("h5j")?FileType.VisuallyLosslessStack:FileType.LosslessStack,getRelativeFilename(neuronFragment,stackFilepath));
-        addImage(images,FileType.SignalMip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
-        neuronFragment.setFiles(images);
+        addImage(images,stackFilepath.endsWith("h5j")?FileType.VisuallyLosslessStack:FileType.LosslessStack,getRelativeFilename(curatedFragment,stackFilepath));
+        addImage(images,FileType.SignalMip,getRelativeFilename(curatedFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
+        curatedFragment.setFiles(images);
         
-        return neuronFragment;
+        return curatedFragment;
     }
     
 	/* SCREEN SAMPLES */
@@ -2299,7 +2288,7 @@ public class MongoDbImport extends AnnotationDAO {
             dataSetLookup.put(key,identifier);
         }
         
-        Map<Long,DomainObject> visited = new HashMap<Long,DomainObject>();
+        Map<Long,TreeNode> visited = new HashMap<>();
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             String subjectKey = subject.getKey();
             try {
@@ -2311,7 +2300,7 @@ public class MongoDbImport extends AnnotationDAO {
         }
     }
     
-    private void loadWorkspace(String subjectKey, Map<Long,DomainObject> visited) throws Exception {
+    private void loadWorkspace(String subjectKey, Map<Long,TreeNode> visited) throws Exception {
 
         long start = System.currentTimeMillis();
 
@@ -2347,7 +2336,7 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Loading workspace for "+subjectKey+" took "+(System.currentTimeMillis()-start)+" ms");
     }
     
-    private List<Reference> loadRootFolders(String subjectKey, Deque<Entity> rootFolders, Map<Long,DomainObject> loaded) {
+    private List<Reference> loadRootFolders(String subjectKey, Deque<Entity> rootFolders, Map<Long,TreeNode> loaded) {
 
         Set<Long> visitedSet = new HashSet<Long>();
         List<Reference> roots = new ArrayList<Reference>();
@@ -2362,9 +2351,9 @@ public class MongoDbImport extends AnnotationDAO {
                 long start = System.currentTimeMillis();
                 
                 session = openNewExternalSession();
-                DomainObject domainObject = loadFolderHierarchy(folderEntity, visitedSet, loaded, "  ");
-                if (domainObject!=null) {
-                    Reference ref = getReference(domainObject);
+                TreeNode treeNode = loadFolderHierarchy(folderEntity, visitedSet, loaded, "  ");
+                if (treeNode!=null) {
+                    Reference ref = getReference(treeNode);
                     roots.add(ref);
                 }
                 
@@ -2385,7 +2374,7 @@ public class MongoDbImport extends AnnotationDAO {
         return roots;
     }
     
-    private DomainObject loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, Map<Long,DomainObject> loaded, String indent) throws Exception {
+    private TreeNode loadFolderHierarchy(Entity folderEntity, Set<Long> visitedSet, Map<Long,TreeNode> loaded, String indent) throws Exception {
         
         // Arnim's stuff is no longer needed.
     	if ("user:jenetta".equals(folderEntity.getOwnerKey())) {
@@ -2415,22 +2404,6 @@ public class MongoDbImport extends AnnotationDAO {
         
         visitedSet.add(folderEntity.getId());
         
-        // What does this folder contain?
-        Multimap<String, Entity> childrenByType = ArrayListMultimap.<String, Entity>create();
-		for(Entity childEntity : folderEntity.getOrderedChildren()) {
-			childrenByType.put(childEntity.getEntityTypeName(), childEntity);
-		}
-        
-        if (childrenByType.keySet().size()==1 && EntityUtils.getChildrenOfType(folderEntity, EntityConstants.TYPE_FOLDER).isEmpty()) {
-        	// This folder contains only one type of non-Folder object, so we'll consider it an object set
-        	ObjectSet objectSet = getObjectSet(folderEntity, folderEntity.getOrderedChildren(), indent);
-            objectSetCollection.insert(objectSet);
-            log.info(indent+"Generated object set '"+objectSet.getName()+"' with "+objectSet.getNumMembers()+" members");
-            loaded.put(objectSet.getId(), objectSet);
-            insertAnnotations(getAnnotations(objectSet.getId()), objectSet);
-            return objectSet;
-        }
-	    
         // This folder contains other folders, so we'll just load those as part of the folder hierarchy
         TreeNode treeNode = new TreeNode();
         treeNode.setId(folderEntity.getId());
@@ -2443,7 +2416,6 @@ public class MongoDbImport extends AnnotationDAO {
     
 	    // Using a hash here to eliminate duplicates, especially those caused by folders which contain multiple descendants of the same sample
 	    Set<Reference> children = new LinkedHashSet<Reference>();
-	    Map<String,ObjectSet> extraSetCache = new LinkedHashMap<>();
 	    
 	    if ("Data Sets".equals(folderEntity.getName())) {
 	    	// Create a canned filter for each data set
@@ -2456,72 +2428,54 @@ public class MongoDbImport extends AnnotationDAO {
 			}
 		}
 	    else {
+	        List<Entity> unmappedChildren = new ArrayList<>();
+	        
 		    // Load folder children
-		    for(String childType : childrenByType.keySet()) {
-		    	Collection<Entity> childEntities = childrenByType.get(childType);
-		    	log.info(indent+"Processing "+childEntities.size()+" children of type "+childType);
+	        for(Entity childEntity : folderEntity.getOrderedChildren()) {
+	            String childType = childEntity.getEntityTypeName();
 		    	if (EntityConstants.TYPE_FOLDER.equals(childType)) {
-		    		for(Entity childFolder : childEntities) {
-	                    String dataSetKey = childFolder.getOwnerKey()+"/"+childFolder.getName();
-	                    String dataSetIdentifier = dataSetLookup.get(dataSetKey);
-	                    if (dataSetIdentifier!=null) {
-	                        // This looks like a reference to a data set. Important: the new filter is owned by the parent owner
-	                        Filter filter = getDataSetFilter(childFolder.getName(), folderEntity.getOwnerKey(), dataSetIdentifier);
-	                        children.add(getReference(filter));
-	                        log.info(indent+"  Added canned data set filter: "+filter.getName()+" to data set owned by "+childFolder.getOwnerKey());
-	                    }
-	                    else {
-    		    			DomainObject domainObject = loadFolderHierarchy(childFolder, visitedSet, loaded, indent+"  ");
-    		    			if (domainObject!=null) {
-    			                children.add(getReference(domainObject));
-    		    			}
-	                    }
-		    		}
+                    String dataSetKey = childEntity.getOwnerKey()+"/"+childEntity.getName();
+                    String dataSetIdentifier = dataSetLookup.get(dataSetKey);
+                    if (dataSetIdentifier!=null) {
+                        // This looks like a reference to a data set. Important: the new filter is owned by the parent owner
+                        Filter filter = getDataSetFilter(childEntity.getName(), folderEntity.getOwnerKey(), dataSetIdentifier);
+                        children.add(getReference(filter));
+                        log.info(indent+"  Added canned data set filter: "+filter.getName()+" to data set owned by "+childEntity.getOwnerKey());
+                    }
+                    else {
+		    			TreeNode childTreeNode = loadFolderHierarchy(childEntity, visitedSet, loaded, indent+"  ");
+		    			if (childTreeNode!=null) {
+			                children.add(getReference(childTreeNode));
+		    			}
+                    }
 		    	}
 		    	else {
-		    		// Create new object set for items of this type
-		    		Entity newFolder = new Entity();
-		    		newFolder.setId(dao.getNewId());
-		    		newFolder.setName(childType);
-		    		newFolder.setOwnerKey(folderEntity.getOwnerKey());
-		    		newFolder.setEntityActorPermissions(folderEntity.getEntityActorPermissions());
-		    		newFolder.setCreationDate(folderEntity.getCreationDate());
-		    		newFolder.setUpdatedDate(folderEntity.getUpdatedDate());
-			    	ObjectSet objectSet = getObjectSet(newFolder, childEntities, indent);
-			    	if (objectSet!=null) {
-			    		String setLabel = getObjectSetMemberType(objectSet);
-			    		if (setLabel!=null) {
-    			    		ObjectSet existingSet = extraSetCache.get(setLabel);
-    			    		if (existingSet!=null) {
-    			    			if (objectSet.hasMembers()) {
-    				    			for(Long memberId : objectSet.getMembers()) {
-    				    				existingSet.addMember(memberId);
-    				    			}
-    			    			}
-    			    		}
-    			    		else {
-    					    	objectSet.setName(setLabel);
-    					    	extraSetCache.put(setLabel, objectSet);
-    			    		}
-			    		}
-			    		else {
-			    		    log.warn(indent+"  Discarding "+childEntities.size()+" children of type "+childType);
-			    		}
-			    	}
+		    	    unmappedChildren.add(childEntity);
+		            children.add(Reference.createFor(null, childEntity.getId()));
 		    	}
 		    }
-		    
-		    for(ObjectSet objectSet : extraSetCache.values()) {
-		    	log.info(indent+"  Generated extra object set: "+objectSet.getName()+" with "+objectSet.getNumMembers()+" members");
-			    objectSetCollection.insert(objectSet);
-		        children.add(getReference(objectSet));
-		    }
+
+            Map<Long,Entity> mappedEntities = getMappedEntities(unmappedChildren, indent);
+            for(Iterator<Reference> iterator = children.iterator(); iterator.hasNext(); ) {
+                Reference ref = iterator.next();
+                Entity mapped = mappedEntities.get(ref.getTargetId());
+                if (mapped==null) {
+                    iterator.remove();
+                }
+                else {
+                    String className = getClassName(mapped.getEntityTypeName());
+                    if (className!=null) {
+                        ref.setTargetClassName(className);
+                    }
+                    else {
+                        iterator.remove();
+                        log.error("getMappedEntities returned illegal entity type: "+mapped.getEntityTypeName());
+                    }
+                }
+            }
 	    }
 	    
-        if (!children.isEmpty()) {
-            treeNode.setChildren(new ArrayList<Reference>(children));
-        }
-
+        treeNode.setChildren(new ArrayList<Reference>(children));
         treeNodeCollection.insert(treeNode);
         log.info(indent+"Created tree node: "+treeNode.getName());
         loaded.put(treeNode.getId(), treeNode);
@@ -2547,67 +2501,27 @@ public class MongoDbImport extends AnnotationDAO {
         filterCollection.insert(filter);
         return filter;
     }
+    
+    private Map<Long,Entity> getMappedEntities(Collection<Entity> items, String indent) throws Exception {
 
-    public String getObjectSetMemberType(ObjectSet objectSet) {
-        Class<?> objectSetMemberClass = DomainUtils.getObjectClassByName(objectSet.getClassName());
-        String label = null;
-        // Look for a @SearchType label
-        Class<?> clazz = objectSetMemberClass;
-        while (clazz!=null && label==null) {
-            SearchType searchType = clazz.getAnnotation(SearchType.class);
-            if (searchType!=null) {
-                label = searchType.label();
-            }
-            clazz = clazz.getSuperclass();
+        ArrayListMultimap<String, Entity> childrenByType = ArrayListMultimap.<String, Entity>create();
+        for(Entity childEntity : items) {
+            childrenByType.put(childEntity.getEntityTypeName(), childEntity);
         }
-        if (label==null) {
-            // No label found, so look again, this time at @MongoMapped
-            clazz = objectSetMemberClass;
-            while (clazz!=null && label==null) {
-                MongoMapped mongoMapped = clazz.getAnnotation(MongoMapped.class);
-                if (mongoMapped!=null) {
-                    label = mongoMapped.label();
-                }
-                clazz = clazz.getSuperclass();
-            }
+        
+        Map<Long,Entity> mapping = new HashMap<>();
+        for(String childType : childrenByType.keys()) {
+            mapping.putAll(translateEntities(childType, childrenByType.get(childType), indent));
         }
-        return label;
+     
+        return mapping;
     }
     
-    private ObjectSet getObjectSet(Entity folderEntity, Collection<Entity> items, String indent) throws Exception {
-		ObjectSet objectSet = new ObjectSet();
-		objectSet.setId(folderEntity.getId());
-		objectSet.setName(folderEntity.getName());
-		objectSet.setOwnerKey(folderEntity.getOwnerKey());
-		objectSet.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
-		objectSet.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
-		objectSet.setCreationDate(folderEntity.getCreationDate());
-		objectSet.setUpdatedDate(folderEntity.getUpdatedDate());
-
-	    // --------------------------------------------------------------------------------
-		// Make sure all objects are of the same type
-		String setEntityType = null;
-		List<Entity> entityMembers = new ArrayList<Entity>(); 
-		for(Entity childEntity : items) {
-			if (setEntityType==null) {
-				setEntityType = childEntity.getEntityTypeName();	
-			}
-			else if (!setEntityType.equals(childEntity.getEntityTypeName())) {
-				log.warn(indent+"  Ignoring entity with type that does not match set ("+childEntity.getEntityTypeName()+"!="+setEntityType+")");
-				continue;
-			}
-			entityMembers.add(childEntity);
-		}
-		
-		if (setEntityType==null) {
-			// Object set has no members 
-			return objectSet;
-		}
-
+    private Map<Long,Entity> translateEntities(String setEntityType, List<Entity> entityMembers, String indent) throws DaoException {
+        
 	    // --------------------------------------------------------------------------------
 	    // Preprocess all objects and see if we need to do a bulk mapping
-	    String translatedSetType = null;
-		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
+		Map<Long,Entity> translatedEntities = new HashMap<>();
 		
 		if (getCollectionName(setEntityType)==null) {
 			// We don't know this type, attempt mass translation up to sample
@@ -2624,7 +2538,6 @@ public class MongoDbImport extends AnnotationDAO {
     					}
     				}
 			    }
-				translatedSetType = setEntityType = EntityConstants.TYPE_SAMPLE;
 			}
 		}
 
@@ -2672,7 +2585,6 @@ public class MongoDbImport extends AnnotationDAO {
         					}
         				}
             	    }
-            		translatedSetType = EntityConstants.TYPE_SAMPLE;
     			}
 	            translatedEntities.putAll(secondaryTranslatedEntities);
 			}
@@ -2681,9 +2593,7 @@ public class MongoDbImport extends AnnotationDAO {
 		log.debug(indent+"  translatedEntities.size="+translatedEntities.size());
 		
 	    // --------------------------------------------------------------------------------
-		// Load the members, translating them one-by-one if necessary
-	    Collection<Long> memberIds = new LinkedHashSet<Long>();
-	    
+		// Make sure each entity can be loaded
 	    for(Entity childEntity : entityMembers) {
 	    	
         	Entity importEntity = childEntity;
@@ -2699,7 +2609,7 @@ public class MongoDbImport extends AnnotationDAO {
         	    if ((importCollection==null || "image".equals(importCollection)) && !EntityConstants.TYPE_LSM_STACK.equals(childEntity.getEntityTypeName())) {
             		// If we don't know how to import this entity, see if we can substitute a higher-level entity for the one that the user referenced. 
         	        // For example, if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
-                    log.info(indent+"  Finding higher-level ancestors for unknown entity "+importEntity.getEntityTypeName()+"#"+importEntity.getId());          
+                    log.info(indent+"  Finding higher-level ancestors for unknown entity "+importEntity.getEntityTypeName()+"#"+importEntity.getId());   
         	        Entity ancestor = getHigherLevelAncestor(importEntity, new HashSet<Long>());
         	        if (ancestor!=null) {
                         log.info(indent+"  Will reference "+ancestor.getEntityTypeName()+"#"+ancestor.getId()+" instead of unknown "+importEntity.getEntityTypeName()+"#"+importEntity.getId());                       
@@ -2708,16 +2618,15 @@ public class MongoDbImport extends AnnotationDAO {
                     }
         	    }
         	}
-
-			if (translatedSetType==null) {
-				translatedSetType = importEntity.getEntityTypeName();	
-			}
-			else if (!translatedSetType.equals(importEntity.getEntityTypeName())) {
-				log.warn(indent+"  Ignoring entity with type that does not match set ("+importEntity.getEntityTypeName()+"!="+translatedSetType+")");
-				continue;
-			}
         
-            String collectionName = getCollectionName(translatedSetType);
+            String collectionName = getCollectionName(translatedEntity.getEntityTypeName());
+            if (collectionName!=null) {
+                translatedEntities.put(childEntity.getId(), importEntity);
+            }
+            else {
+                translatedEntities.remove(childEntity.getId()); 
+            }
+            
             if (INSERT_ROGUE_ENTITIES) {
                 // A minor optimization, since we can only do rogue imports on images and neuron fragments
                 if ("image".equals(collectionName) || "fragment".equals(collectionName)) {
@@ -2728,24 +2637,9 @@ public class MongoDbImport extends AnnotationDAO {
                 }
             }
             log.trace(indent+"  Adding "+importEntity.getEntityTypeName()+"#"+importEntity.getId()+" ("+importEntity.getName()+")");
-            memberIds.add(importEntity.getId());
 	    }
 		
-        if (translatedSetType==null) {
-        	log.info(indent+"  Set type is null, with "+memberIds.size()+" ids");
-        }
-
-        String className = getClassName(translatedSetType);
-        if (className==null) {
-        	log.info(indent+"  Could not find domain class for set type: "+translatedSetType);
-        }
-        
-        objectSet.setClassName(className);
-        if (!memberIds.isEmpty()) {
-            objectSet.setMembers(new ArrayList<>(memberIds));
-        }
-        
-		return objectSet;
+		return translatedEntities;
 	}
 
     private Entity getHigherLevelAncestor(Entity entity, Set<Long> visited) throws DaoException {
@@ -2771,16 +2665,16 @@ public class MongoDbImport extends AnnotationDAO {
         return null;
     }
     
-    private Map<Long,Entity> translateToSample(String indent, List<Entity> entityMembers, String startingType) throws Exception {
+    private Map<Long,Entity> translateToSample(String indent, List<Entity> entityMembers, String startingType) throws DaoException  {
 
-		Map<Long,Entity> translatedEntities = new HashMap<Long,Entity>();
-	    List<Long> originalIds = new ArrayList<Long>();
+		Map<Long,Entity> translatedEntities = new HashMap<>();
+	    List<Long> originalIds = new ArrayList<>();
 	    for(Entity childEntity : entityMembers) {
     		originalIds.add(childEntity.getId());
 	    }
 	    
-		List<String> upMapping = new ArrayList<String>();
-		List<String> downMapping = new ArrayList<String>();
+		List<String> upMapping = new ArrayList<>();
+		List<String> downMapping = new ArrayList<>();
 		
 		if (EntityConstants.TYPE_IMAGE_TILE.equals(startingType)) {
 			upMapping.add("Supporting Data");
@@ -2837,9 +2731,9 @@ public class MongoDbImport extends AnnotationDAO {
                     // Attempt to find the "real" LSM entity in the objective sample
                     List<Long> lsmIds = new ArrayList<>();
                     lsmIds.add(entity.getId());
-                    List<String> upMapping = new ArrayList<String>();
+                    List<String> upMapping = new ArrayList<>();
                     upMapping.add("Sample");
-                    List<String> downMapping = new ArrayList<String>();
+                    List<String> downMapping = new ArrayList<>();
                     upMapping.add("Sample");
                     upMapping.add("Supporting Files");
                     upMapping.add("Image Tile");
@@ -2873,7 +2767,7 @@ public class MongoDbImport extends AnnotationDAO {
     	}
 	}
 
-	private Map<Long, Entity> getMappedEntities(List<MappedId> mappings) throws Exception {
+	private Map<Long, Entity> getMappedEntities(List<MappedId> mappings) throws DaoException {
 		List<Long> entityIds = new ArrayList<Long>(); 
 		for(MappedId mappedId : mappings) {
 			entityIds.add(mappedId.getMappedId());
