@@ -219,6 +219,9 @@
                 <include name="ehcache2-jacs.xml"/>
                 <include name="c3p0-nosql.json"/>
             </fileset>
+            <fileset dir="${basedir}/webcontent">
+                <include name="**/*"/>
+            </fileset>
             <lib dir="${common.dir}/Directory">
                 <include name="**/*.jar"/>
             </lib>

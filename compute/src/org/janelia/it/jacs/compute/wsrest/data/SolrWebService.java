@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -25,6 +28,7 @@ import java.util.*;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class SolrWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(SolrWebService.class);
 
@@ -37,6 +41,11 @@ public class SolrWebService extends ResourceConfig {
 
     @POST
     @Path("/search")
+    @ApiOperation(value = "Performs a SOLR search given query parameters",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public SolrJsonResults searchSolrIndices(SolrParams queryParams) {

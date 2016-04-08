@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -21,6 +24,7 @@ import java.util.List;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class DomainObjectWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(DomainObjectWebService.class);
 
@@ -36,6 +40,11 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject/details")
+    @ApiOperation(value = "Gets an Domain Object's Details",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectDetails(DomainQuery query) {
@@ -57,6 +66,11 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @GET
     @Path("/domainobject/name")
+    @ApiOperation(value = "Gets Domain Objects By Name",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectsByName(@QueryParam("subjectKey") final String subjectKey,
@@ -74,6 +88,11 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @GET
     @Path("/domainobject/reverseLookup")
+    @ApiOperation(value = "Gets Domain Objects that reference a Domain Object",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectsByReverseRef(@QueryParam("subjectKey") final String subjectKey,
@@ -97,6 +116,11 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject/references")
+    @ApiOperation(value = "Gets Folder and Set references to a Domain Object",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Reference> getContainerReferences(DomainQuery query) {
@@ -112,6 +136,11 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject/remove")
+    @ApiOperation(value = "Removes a Domain Object",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public void removeDomainObject(DomainQuery query) {
@@ -139,6 +168,11 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject")
+    @ApiOperation(value = "Updates a Domain Object's properties",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DomainObject updateObjectProperty(DomainQuery query) {

@@ -2,6 +2,9 @@ package org.janelia.it.jacs.compute.wsrest.data;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -31,6 +34,7 @@ import java.util.*;
 
 
 @Path("/process")
+@Api(value = "Janelia Workstation Domain Data")
 public class ReleaseWebService extends ResourceConfig {
     private final Logger logger = Logger.getLogger(this.getClass());
 
@@ -46,10 +50,15 @@ public class ReleaseWebService extends ResourceConfig {
      * Get release information.
      */
     @GET
-    @Path("release")
+    @Path("releases")
+    @ApiOperation(value = "Gets Release Information",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    public Response getReleaseInfo() {
+    public Response getReleasesInfo() {
 
         List<JsonRelease> releaseList = new ArrayList<>();
 
@@ -72,6 +81,11 @@ public class ReleaseWebService extends ResourceConfig {
      */
     @GET
     @Path("release/{releaseName}")
+    @ApiOperation(value = "Gets release info, given a releaseName",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
     public Response getReleaseInfo(
@@ -98,6 +112,11 @@ public class ReleaseWebService extends ResourceConfig {
      */
     @GET
     @Path("release/{releaseName}/status")
+    @ApiOperation(value = "Gets the status of annotations for a release",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
     public Response getReleaseStatus(

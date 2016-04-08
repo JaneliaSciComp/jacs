@@ -21,6 +21,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -34,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/info")
+@Api(value = "Janelia Workstation Informatics")
 public class StatusWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(StatusWebService.class);
 
@@ -46,6 +50,8 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/sample")
+    @ApiOperation(value = "Gets Status information for a sample",
+            notes = "")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getLSMImageInfo(@QueryParam("totals") final Boolean totals,
@@ -89,6 +95,8 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/blockview")
+    @ApiOperation(value = "Gets blockview information",
+            notes = "")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getBlockView() {
@@ -112,6 +120,9 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/imagecompletion")
+    @ApiOperation(value = "Gets Sample Inage Completion statistics",
+            notes = "")
+
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getImageCompletion(@QueryParam("line") final String line,
@@ -143,6 +154,9 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/image/cycletime")
+    @ApiOperation(value = "Gets Cycletime information for an image",
+            notes = "")
+
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getImageCycleTime() {
@@ -174,6 +188,8 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/pipelinestatus")
+    @ApiOperation(value = "Gets pipeline status for a sample",
+            notes = "")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getSamplePipelineStatus() {
@@ -204,6 +220,8 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/errorbydataset")
+    @ApiOperation(value = "Gets all the errors for a DataSet",
+            notes = "")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getSampleErrorsByDataSet() {
@@ -232,6 +250,8 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/dataset/sageimagery")
+    @ApiOperation(value = "Gets All the DataSets for an Owner",
+            notes = "")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getDatasetsByOwner() {
@@ -259,6 +279,11 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/search")
+    @ApiOperation(value = "Searchs Samples based off search parameters",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getSampleName() {
@@ -286,6 +311,11 @@ public class StatusWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/workstationstatus")
+    @ApiOperation(value = "Gets the Status for a Sample given start and end dates for tmog and completion",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getSampleStatusByDate(@QueryParam("startDate") final String startDate,

@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -18,6 +21,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class FilterWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(FilterWebService.class);
 
@@ -30,6 +34,11 @@ public class FilterWebService extends ResourceConfig {
 
     @PUT
     @Path("/filter")
+    @ApiOperation(value = "Creates a Filter",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Filter createFilter(DomainQuery query) {
@@ -46,6 +55,11 @@ public class FilterWebService extends ResourceConfig {
 
     @POST
     @Path("/filter")
+    @ApiOperation(value = "Updates a Filter",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Filter updateFilter(DomainQuery query) {

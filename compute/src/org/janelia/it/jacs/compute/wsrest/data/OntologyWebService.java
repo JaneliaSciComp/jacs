@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -22,6 +25,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class OntologyWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(OntologyWebService.class);
 
@@ -34,6 +38,11 @@ public class OntologyWebService extends ResourceConfig {
 
     @GET
     @Path("/ontology")
+    @ApiOperation(value = "Gets An Ontology",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Ontology> getOntologies(@QueryParam("subjectKey") final String subjectKey) {
@@ -50,6 +59,11 @@ public class OntologyWebService extends ResourceConfig {
 
     @PUT
     @Path("/ontology")
+    @ApiOperation(value = "Creates an Ontology",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology createOntology(DomainQuery query) {
@@ -86,6 +100,11 @@ public class OntologyWebService extends ResourceConfig {
 
     @PUT
     @Path("/ontology/terms")
+    @ApiOperation(value = "Adds Terms to an Ontology",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology addTermsToOntology(DomainQuery query) {
@@ -110,6 +129,11 @@ public class OntologyWebService extends ResourceConfig {
 
     @POST
     @Path("/ontology/terms")
+    @ApiOperation(value = "Reorders terms in an Ontology",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology reorderOntology(DomainQuery query) {
@@ -134,6 +158,11 @@ public class OntologyWebService extends ResourceConfig {
 
     @DELETE
     @Path("/ontology/terms")
+    @ApiOperation(value = "Removes terms from an Ontology",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology removeTermsFromOntology(@QueryParam("subjectKey") final String subjectKey,

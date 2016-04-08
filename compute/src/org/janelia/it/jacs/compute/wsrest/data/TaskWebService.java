@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
@@ -19,12 +22,18 @@ import java.util.List;
  * Created by goinac on 9/2/15.
  */
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class TaskWebService {
     private static final Logger LOG = LoggerFactory.getLogger(TaskWebService.class);
     private static final int DEFAULT_MAX_LENGTH = 100;
 
     @GET
     @Path("/tasks")
+    @ApiOperation(value = "Gets Task Objects for a User",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
@@ -60,6 +69,11 @@ public class TaskWebService {
 
     @GET
     @Path("/task")
+    @ApiOperation(value = "Gets a task given it's Id",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
@@ -87,6 +101,11 @@ public class TaskWebService {
 
     @GET
     @Path("/task/events")
+    @ApiOperation(value = "Gets the events for a task",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML

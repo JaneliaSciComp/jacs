@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -18,6 +21,7 @@ import java.util.List;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class TreeNodeWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(TreeNodeWebService.class);
 
@@ -35,6 +39,11 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @PUT
     @Path("/treenode")
+    @ApiOperation(value = "Creates a Folder",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode createTreeNode(DomainQuery query) {
@@ -52,6 +61,11 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @POST
     @Path("/treenode/reorder")
+    @ApiOperation(value = "Reorders a Folder",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode reorderTreeNode(DomainQuery query) {
@@ -73,6 +87,11 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @PUT
     @Path("/treenode/children")
+    @ApiOperation(value = "Adds Items to a Folder",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode addChildren(DomainQuery query) {
@@ -94,6 +113,11 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @POST
     @Path("/treenode/children")
+    @ApiOperation(value = "Removes items in a Folder",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode removeChildren(DomainQuery query) {

@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
@@ -20,6 +23,7 @@ import java.util.*;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class SampleWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(SampleWebService.class);
 
@@ -32,6 +36,11 @@ public class SampleWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/lsms")
+    @ApiOperation(value = "Gets a list of LSMImages for a Sample",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<LSMImage> getLsmsForSample(@QueryParam("subjectKey") final String subjectKey,
@@ -48,6 +57,11 @@ public class SampleWebService extends ResourceConfig {
 
     @GET
     @Path("/sample")
+    @ApiOperation(value = "Gets Samples given Id and Name",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List getSamples(@QueryParam("subjectKey") final String subjectKey,

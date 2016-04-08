@@ -25,7 +25,7 @@ import org.janelia.it.jacs.shared.utils.DomainQuery;
 
 
 @Path("/data")
-@Api(value = "Janelia Workstation", description = "Services for managing data in the workstation")
+@Api(value = "Janelia Workstation Domain Data")
 public class UserWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(UserWebService.class);
 

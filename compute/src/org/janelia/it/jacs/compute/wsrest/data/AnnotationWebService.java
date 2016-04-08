@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -7,8 +10,6 @@ import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.ontology.Ontology;
-import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
@@ -19,11 +20,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class AnnotationWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(AnnotationWebService.class);
 
@@ -36,6 +36,11 @@ public class AnnotationWebService extends ResourceConfig {
 
     @PUT
     @Path("/annotation")
+    @ApiOperation(value = "Creates an annotation",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Annotation createAnnotation(DomainQuery query) {
@@ -53,6 +58,11 @@ public class AnnotationWebService extends ResourceConfig {
 
     @POST
     @Path("/annotation")
+    @ApiOperation(value = "Updates an annotation",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Annotation updateAnnotation(DomainQuery query) {
@@ -70,6 +80,11 @@ public class AnnotationWebService extends ResourceConfig {
 
     @POST
     @Path("/annotation/details")
+    @ApiOperation(value = "Gets Annotations",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Annotation> getAnnotations(DomainQuery query) {
@@ -86,6 +101,11 @@ public class AnnotationWebService extends ResourceConfig {
 
     @DELETE
     @Path("/annotation")
+    @ApiOperation(value = "Removes annotations",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     public void removeAnnotations(@QueryParam("subjectKey") final String subjectKey,
                                   @QueryParam("annotationId") final String annotationId) {

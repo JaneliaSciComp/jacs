@@ -22,6 +22,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -43,6 +46,7 @@ import static com.mongodb.client.model.Projections.include;
 import static java.util.Arrays.asList;
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class DataSetWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(DataSetWebService.class);
 
@@ -55,6 +59,11 @@ public class DataSetWebService extends ResourceConfig {
 
     @GET
     @Path("/dataset")
+    @ApiOperation(value = "Gets a DataSet",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DataSet> getDataSets(@QueryParam("subjectKey") final String subjectKey) {
@@ -70,6 +79,11 @@ public class DataSetWebService extends ResourceConfig {
 
     @GET
     @Path("/dataset/pipeline")
+    @ApiOperation(value = "Gets the pipeline for a DataSet",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String,String> getDatasetPipelines() {
@@ -94,6 +108,11 @@ public class DataSetWebService extends ResourceConfig {
 
     @GET
     @Path("/dataset/sage")
+    @ApiOperation(value = "Get Sage sync Data Sets",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DataSet> getSageSyncDataSets(@QueryParam("owners") final List<String> owners,
@@ -128,6 +147,11 @@ public class DataSetWebService extends ResourceConfig {
 
     @PUT
     @Path("/dataset")
+    @ApiOperation(value = "Creates a Data Set",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet createDataSet(DomainQuery query) {
@@ -144,6 +168,11 @@ public class DataSetWebService extends ResourceConfig {
 
     @POST
     @Path("/dataset")
+    @ApiOperation(value = "Updates a DataSet",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet updateDataSet(DomainQuery query) {
@@ -161,6 +190,11 @@ public class DataSetWebService extends ResourceConfig {
 
     @DELETE
     @Path("/dataset")
+    @ApiOperation(value = "Removes a Data Set",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     public void removeDataSet(@QueryParam("subjectKey") final String subjectKey,
                               @QueryParam("dataSetId") final String dataSetId) {

@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.wsrest.process;
 
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.mip.MIPMapTilesTask;
 import org.janelia.it.jacs.model.user_data.mip.MIPMapTilesResultNode;
@@ -20,6 +23,7 @@ import java.util.Map;
  * Created by goinac on 9/2/15.
  */
 @Path("/process")
+@Api(value = "Janelia Workstation Pipelines")
 public class MIPMapTilesWebService extends AbstractComputationService<MIPMapTilesTask, MIPMapTilesResultNode> {
     private static final Logger LOG = LoggerFactory.getLogger(MIPMapTilesWebService.class);
     private static final String RESOURCE_NAME = "MIPMapTiles";
@@ -30,6 +34,11 @@ public class MIPMapTilesWebService extends AbstractComputationService<MIPMapTile
 
     @POST
     @Path("/mipmaps/images")
+    @ApiOperation(value = "Submits a request to generate MIPS for a tile.",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML

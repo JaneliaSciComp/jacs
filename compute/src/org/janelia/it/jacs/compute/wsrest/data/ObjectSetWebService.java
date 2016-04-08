@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -17,6 +20,7 @@ import java.util.List;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class ObjectSetWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(ObjectSetWebService.class);
 
@@ -32,6 +36,11 @@ public class ObjectSetWebService extends ResourceConfig {
 
     @PUT
     @Path("/objectset")
+    @ApiOperation(value = "Creates an Object Set",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectSet createObjectSet(DomainQuery query) {
@@ -49,6 +58,11 @@ public class ObjectSetWebService extends ResourceConfig {
 
     @PUT
     @Path("/objectset/member")
+    @ApiOperation(value = "Adds Items to a Set",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectSet addMembers(DomainQuery query) {
@@ -69,6 +83,11 @@ public class ObjectSetWebService extends ResourceConfig {
 
     @POST
     @Path("/objectset/member")
+    @ApiOperation(value = "Removes items from a Set",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectSet removeMembers(DomainQuery query) {

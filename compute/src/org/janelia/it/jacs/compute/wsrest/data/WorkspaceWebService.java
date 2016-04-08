@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
@@ -15,6 +18,7 @@ import java.util.List;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class WorkspaceWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(WorkspaceWebService.class);
 
@@ -31,6 +35,11 @@ public class WorkspaceWebService extends ResourceConfig {
     // mapping using explicit object mapping; TO DO configure jackson integration with jersey
     @GET
     @Path("/workspace")
+    @ApiOperation(value = "Gets a user workspace",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces(MediaType.APPLICATION_JSON)
     public Workspace getWorkspace(@QueryParam("subjectKey") String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
@@ -45,6 +54,11 @@ public class WorkspaceWebService extends ResourceConfig {
 
     @GET
     @Path("/workspaces")
+    @ApiOperation(value = "Gets all workspaces for a user",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Produces(MediaType.APPLICATION_JSON)
     public List<Workspace> getAllWorkspace(@QueryParam("subjectKey") String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
