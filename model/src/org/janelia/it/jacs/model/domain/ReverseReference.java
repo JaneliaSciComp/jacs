@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.io.Serializable;
+
 /**
  * A reverse reference to a set of DomainObjects in another collection. The referring DomainObjects
  * each have type <i>referringCollectionName</i> and contain an attribute with name <i>referenceAttr</i> and
@@ -7,14 +9,13 @@ package org.janelia.it.jacs.model.domain;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ReverseReference {
+public class ReverseReference implements Serializable {
 
     private String referringClassName;
     private String referenceAttr;
     private Long referenceId;
     private Long count;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getReferringClassName() {
         return referringClassName;
     }

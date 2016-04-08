@@ -102,76 +102,6 @@
     </operation>
     
     <operation>
-        <description>Register all images for a user's samples. Set/Correct all Default images as defined by Data Set</description>
-        <name>runSampleImageRegistration</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Retire all the samples which are in "Desync" status for the given user</description>
-        <name>runSampleRetirement</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Data Set Name (e.g. "Cell Count" or leave empty to run all data sets for the user)</description>
-            <name>dataSetName</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-            <description>Max Samples (e.g. "10" or leave empty for no max)</description>
-            <name>maxSamples</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Should this run as a test without making any real changes?</description>
-           <name>testRun</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Retire all the samples which are in "Desync" status for the all users</description>
-        <name>runAllSampleRetirement</name>
-        <parameter>
-            <description>Max Samples Per User (e.g. "10" or leave empty for no max)</description>
-            <name>maxSamplesPerUser</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Should this run as a test without making any real changes?</description>
-           <name>testRun</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Archive the given sample</description>
-        <name>runSingleSampleArchival</name>
-        <parameter>
-           <description>Entity id of the sample to run (e.g. "1679282451010027618")</description>
-           <name>sampleEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Archive all samples for a given user</description>
-        <name>runCompleteSampleArchival</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Synchronize the files for the given sample to Scality</description>
         <name>runSyncSampleToScality</name>
         <parameter>
@@ -291,17 +221,12 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse existing pipeline runs</description>
-            <name>reusePipelineRuns</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
             <description>Reuse previous summary results</description>
             <name>reuseSummary</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -311,7 +236,7 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -332,17 +257,12 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse existing pipeline runs</description>
-            <name>reusePipelineRuns</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
             <description>Reuse previous summary results</description>
             <name>reuseSummary</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -352,7 +272,7 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -372,17 +292,12 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Reuse existing pipeline runs</description>
-            <name>reusePipelineRuns</name>
-            <type>java.lang.Boolean</type>
-        </parameter>
-        <parameter>
             <description>Reuse previous summary results</description>
             <name>reuseSummary</name>
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous sample processing results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous sample processing results</description>
             <name>reuseProcessing</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -392,7 +307,7 @@
             <type>java.lang.Boolean</type>
         </parameter>
         <parameter>
-            <description>Reuse previous alignment results (if reusePipelineRuns is false)</description>
+            <description>Reuse previous alignment results</description>
             <name>reuseAlignment</name>
             <type>java.lang.Boolean</type>
         </parameter>
@@ -452,12 +367,7 @@
             <type>java.lang.String</type>
         </parameter>
         <parameter>
-            <description>Include parent samples or children samples, a.k.a subsamples (e.g. "parent" or "children")</description>
-            <name>parentOrChildren</name>
-            <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
+           <description>Process file name (e.g. "PostPipeline_SampleCompression")</description>
            <name>processName</name>
            <type>java.lang.String</type>
         </parameter>
@@ -477,7 +387,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
+           <description>Process file name (e.g. "PostPipeline_SampleCompression")</description>
            <name>processName</name>
            <type>java.lang.String</type>
         </parameter>
@@ -497,7 +407,7 @@
            <type>java.lang.String</type>
         </parameter>
         <parameter>
-           <description>Process file name (e.g. "PostPipeline_AddVerifyMovie")</description>
+           <description>Process file name (e.g. "PostPipeline_SampleCompression")</description>
            <name>processName</name>
            <type>java.lang.String</type>
         </parameter>
@@ -507,52 +417,7 @@
            <type>java.lang.String</type>
         </parameter>
     </operation>
-    
-    <operation>
-        <description>Run a separation for a given result entity</description>
-        <name>runNeuronSeparationPipeline</name>
-        <parameter>
-           <description>Entity id of the result to run (e.g. "1679282451010027618")</description>
-           <name>resultEntityId</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Generate a mapping between two neuron separations</description>
-        <name>runNeuronSeparationMapping</name>
-        <parameter>
-           <description>Entity id of the old separation result (e.g. "1679282451010027618")</description>
-           <name>separationId1</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Entity id of the new separation result (e.g. "1679282451010027618")</description>
-           <name>separationId2</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Repair any neuron separations which are incomplete</description>
-        <name>runRepairSeparationsPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Repair all neuron separations results</description>
-        <name>runRepairSeparationResultsPipeline</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
+        
     <operation>
         <description>BZip2 input LSM's defined in an ls'd file</description>
         <name>bzipLSMCompressionService</name>
@@ -578,6 +443,16 @@
         <name>scalityMigrationService</name>
         <parameter>
             <description>Path to the file with object id's</description>
+            <name>filePath</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
+        <description>JFS Bulk export utility</description>
+        <name>jfsExportService</name>
+        <parameter>
+            <description>Path to the file with command lines</description>
             <name>filePath</name>
             <type>java.lang.String</type>
         </parameter>

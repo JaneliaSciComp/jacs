@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,13 +18,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleTile implements HasFiles {
+public class SampleTile implements HasFiles, Serializable {
 
     private String name;
     private String anatomicalArea;
     @SearchTraversal({Sample.class})
     private List<Reference> lsmReferences;
-    private Map<FileType, String> files;
+    private Map<FileType, String> files = new HashMap<>();
     private transient ObjectiveSample parent;
 
     @JsonIgnore
@@ -35,7 +37,6 @@ public class SampleTile implements HasFiles {
         this.parent = parent;
     }
     
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getName() {
         return name;
     }
@@ -65,6 +66,7 @@ public class SampleTile implements HasFiles {
     }
 
     public void setFiles(Map<FileType, String> files) {
+        if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
     }
 

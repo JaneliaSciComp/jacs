@@ -2,6 +2,9 @@ package org.janelia.it.jacs.shared.utils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -11,6 +14,9 @@ import org.apache.log4j.Logger;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class StringUtils {
+
+    private static final Logger log = Logger.getLogger(StringUtils.class);
+    
 	public static boolean isEmpty(String s) {
 		return s==null || "".equals(s);
 	}
@@ -19,6 +25,13 @@ public class StringUtils {
         return s==null || "".equals(s.trim());
     }
 
+    public static boolean areEqual(Object s1, Object s2) {
+        if (s1==null) {
+            return s2==null;
+        }
+        return s1.equals(s2);
+    }
+    
 	public static boolean areAllEmpty(Collection<String> strings) {
 	    for (String s : strings) {
 	        if (!isEmpty(s)) {
@@ -170,5 +183,99 @@ public class StringUtils {
         return newName;
     }
 
+    /**
+     * This is needed in case an all-digit-run string needs to be replaced in a
+     * string. There is some possibility that the target string will hold an
+     * all-digit string identical, except longer than the one to find.
+     *
+     * @author fosterl@janelia.org  blame me.
+     * @param targetString replace in this.
+     * @param oldDigitString what to replace.
+     * @param newDigitString what to replace it with.
+     * @return new version of target string.
+     */
+    public static String digitSafeReplace(String targetString, String oldDigitString, String newDigitString) {
+        if (targetString == null) {
+            return null;
+        }
+        int nextPos = 0;
+        int pos = -1;
+        while (-1 != (pos = targetString.indexOf(oldDigitString, nextPos))) {
+            // Do the string replacement, being careful about any
+            // (however remote) possibility of encountering a
+            // string-match that is longer than the search-string.
+            nextPos = pos + oldDigitString.length();
+            if ((pos == 0 || !Character.isDigit(targetString.charAt(pos - 1))
+                    && (nextPos >= targetString.length() || !Character.isDigit(targetString.charAt(nextPos))))) {
+                targetString = targetString.substring(0, pos) + newDigitString + targetString.substring(nextPos);
+                break;
+            }
+        }
+        return targetString;
+    }
+    
+    /**
+     * Given a variable naming pattern, replace the variables with values from the given map. The pattern syntax is as follows:
+     * {Variable Name} - Variable by name
+     * {Variable Name|Fallback} - Variable, with a fallback value
+     * {Variable Name|Fallback|"Value"} - Multiple fallback with static value
+     * @param variablePattern
+     * @param values
+     * @return
+     */
+    public static String replaceVariablePattern(String variablePattern, Map<String,String> values) {
+
+        log.debug("Replacing variables in pattern: "+variablePattern);
+        
+        Pattern pattern = Pattern.compile("\\{(.+?)\\}");
+        Matcher matcher = pattern.matcher(variablePattern);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            String template = matcher.group(1);
+            String replacement = null;
+            log.debug("  Matched: "+template);
+            for (String templatePart : template.split("\\|")) {
+                String attrLabel = templatePart.trim();
+                if (attrLabel.matches("\"(.*?)\"")) {
+                	replacement = attrLabel.substring(1, attrLabel.length()-1);
+                }
+                else {
+                    replacement = values.get(attrLabel);
+                }
+                if (replacement != null) {
+                    matcher.appendReplacement(buffer, replacement);
+                    log.debug("    '"+template+"'->'"+replacement+"' = '"+buffer+"'");
+                    break;
+                }
+            }
+
+            if (replacement==null) {
+                log.warn("      Cannot find a replacement for: "+template);
+                matcher.appendReplacement(buffer, "null");
+            }
+        }
+        matcher.appendTail(buffer);
+        
+        log.debug("Final buffer: "+buffer);
+        
+        return buffer.toString();
+    }
+    
+    /**
+     * Taken from https://stackoverflow.com/questions/2559759/how-do-i-convert-camelcase-into-human-readable-names-in-java
+     * 
+     * @param s
+     * @return
+     */
+    public static String splitCamelCase(String s) {
+        return s.replaceAll(
+           String.format("%s|%s|%s",
+              "(?<=[A-Z])(?=[A-Z][a-z])",
+              "(?<=[^A-Z])(?=[A-Z])",
+              "(?<=[A-Za-z])(?=[^A-Za-z])"
+           ),
+           " "
+        );
+     }
     
 }

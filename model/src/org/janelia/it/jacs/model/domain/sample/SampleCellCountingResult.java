@@ -9,8 +9,6 @@ public class SampleCellCountingResult extends PipelineResult {
 
     private Integer cellCount;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
-
     public Integer getCellCount() {
         return cellCount;
     }

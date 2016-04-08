@@ -15,6 +15,7 @@ import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
@@ -38,6 +39,7 @@ public class MongoLargeOperations {
     private static final Logger log = Logger.getLogger(MongoLargeOperations.class);
     
 	public static final String ANNOTATION_MAP = "annotationMapCache";
+	public static final String ETL_ANNOTATION_MAP = "etlAnnotationMapCache";
 	public static final String ANCESTOR_MAP = "ancestorMapCache";
     public static final String SAGE_IMAGEPROP_MAP = "sageImagePropCache";
     public static final String SCREEN_SCORE_MAP = "screenScoreCache";
@@ -57,6 +59,7 @@ public class MongoLargeOperations {
             if (manager==null) {
                 manager = new CacheManager(getClass().getResource("/ehcache2-jacs.xml"));
                 caches.put(ANNOTATION_MAP, manager.getCache(ANNOTATION_MAP));
+                caches.put(ETL_ANNOTATION_MAP, manager.getCache(ETL_ANNOTATION_MAP));
                 caches.put(ANCESTOR_MAP, manager.getCache(ANCESTOR_MAP));
                 caches.put(SAGE_IMAGEPROP_MAP, manager.getCache(SAGE_IMAGEPROP_MAP));
                 caches.put(SCREEN_SCORE_MAP, manager.getCache(SCREEN_SCORE_MAP));
@@ -266,6 +269,7 @@ public class MongoLargeOperations {
     protected void associateImageProperties(Map<String,Object> imageProps) throws DaoException {
         String name = imageProps.get("image_query_name").toString();
         name = name.substring(name.lastIndexOf('/')+1); // Get just the filename
+        name = ArchiveUtils.getDecompressedFilepath(name); // Strip bz2 for lookup purposes 
         putValue(SAGE_IMAGEPROP_MAP, name, imageProps);
     }
     

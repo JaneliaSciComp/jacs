@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
@@ -12,7 +14,7 @@ import org.jongo.marshall.jackson.oid.MongoId;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="subject",label="Subject")
-public class Subject implements HasIdentifier {
+public class Subject implements HasIdentifier, Serializable {
     
     public static final String ADMIN_KEY = "group:admin";
     public static final String USERS_KEY = "group:workstation_users";
@@ -23,9 +25,8 @@ public class Subject implements HasIdentifier {
     private String name;
     private String fullName;
     private String email;
-    private Set<String> groups;
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
+    private Set<String> groups = new HashSet<>();
+    
     public Long getId() {
         return id;
     }
@@ -71,6 +72,8 @@ public class Subject implements HasIdentifier {
     }
 
     public void setGroups(Set<String> groups) {
+        if (groups==null) throw new IllegalArgumentException("Property cannot be null");
         this.groups = groups;
     }
+
 }

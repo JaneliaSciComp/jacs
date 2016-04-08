@@ -1,18 +1,20 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @MongoMapped(collectionName="ontology",label="Ontology")
 public class Ontology extends OntologyTerm implements DomainObject {
 
     private String ownerKey;
-    private Set<String> readers;
-    private Set<String> writers;
+    private Set<String> readers = new HashSet<>();
+    private Set<String> writers = new HashSet<>();
     private Date creationDate;
     private Date updatedDate;
 
@@ -33,7 +35,6 @@ public class Ontology extends OntologyTerm implements DomainObject {
         return "Ontology"; // this must match the MongoMapped.label above
     }
     
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getOwnerKey() {
         return ownerKey;
     }
@@ -47,6 +48,7 @@ public class Ontology extends OntologyTerm implements DomainObject {
     }
 
     public void setReaders(Set<String> readers) {
+        if (readers==null) throw new IllegalArgumentException("Property cannot be null");
         this.readers = readers;
     }
 
@@ -55,6 +57,7 @@ public class Ontology extends OntologyTerm implements DomainObject {
     }
 
     public void setWriters(Set<String> writers) {
+        if (writers==null) throw new IllegalArgumentException("Property cannot be null");
         this.writers = writers;
     }
 

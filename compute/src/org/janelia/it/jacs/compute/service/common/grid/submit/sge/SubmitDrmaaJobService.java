@@ -22,6 +22,7 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobService;
 import org.janelia.it.jacs.compute.service.common.grid.submit.WaitForJobException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.status.GridJobStatus;
+import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;

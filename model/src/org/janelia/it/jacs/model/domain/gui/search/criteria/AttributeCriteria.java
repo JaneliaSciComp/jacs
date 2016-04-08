@@ -4,8 +4,6 @@ public abstract class AttributeCriteria extends Criteria {
 
     private String attributeName;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
     public String getAttributeName() {
         return attributeName;
     }

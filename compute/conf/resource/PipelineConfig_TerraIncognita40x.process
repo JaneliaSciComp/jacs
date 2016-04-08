@@ -15,7 +15,7 @@
         </operation>
 
         <!-- Get sub-samples -->
-        <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.entity.sample.GetObjectiveSamplesService">
+        <operation name="Get Sub-Samples" processor="org.janelia.it.jacs.compute.service.domain.sample.GetObjectiveSamplesService">
             <input name="SAMPLE_ENTITY_ID"/>
             <input name="REUSE_PIPELINE_RUNS"/>
             <output name="PARENT_SAMPLE_ID"/>
@@ -27,6 +27,7 @@
 
             <include name="Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_40X_ID}"/>
+                <input name="OBJECTIVE" value="20x"/>
                 <input name="PIPELINE_NAME" value="FlyLight Pipeline"/>
                 <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>
@@ -41,6 +42,7 @@
 
             <include name="Pipeline" process="FlyLightSamplePipeline">
                 <input name="SAMPLE_ENTITY_ID" value="$V{SAMPLE_63X_ID}"/>
+                <input name="OBJECTIVE" value="63x"/>
                 <input name="PIPELINE_NAME" value="FlyLight Pipeline"/>
                 <input name="MERGE_ALGORITHMS" value="FLYLIGHT"/>
                 <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>

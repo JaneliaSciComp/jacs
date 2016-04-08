@@ -27,7 +27,6 @@ public class Interval extends OntologyTerm {
         return "Interval";
     }
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Long getLowerBound() {
         return lowerBound;
     }

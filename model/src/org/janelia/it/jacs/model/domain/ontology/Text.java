@@ -6,6 +6,7 @@ public class Text extends OntologyTerm {
     public boolean allowsChildren() {
         return true;
     }
+    
     @JsonIgnore
     public String getTypeName() {
         return "Text";

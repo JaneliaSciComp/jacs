@@ -61,6 +61,8 @@ import com.fasterxml.jackson.databind.util.ISO8601Utils;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import java.io.InputStream;
+import sun.misc.BASE64Decoder;
 
 @Deprecated
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
@@ -581,6 +583,92 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
 
         return filter((Entity)query.uniqueResult());
+    }
+    
+    /**
+     * Given ID of some entity that has entity-datas of the type
+     * provided, fetch the values from all such entitydata rows.  Prior to
+     * fetch, convert all byte array values to non-base-64 byte arrays.  The
+     * assumption is made, that the database content is base 64.
+     * 
+     * @param entityId the owner of the entity datas.
+     * @param entityDataType type of entity data, whose value will be fetched.
+     * @return collection of arrays of byte.
+     */
+    public List<byte[]> getB64DecodedEntityDataValues(Long entityId, String entityDataType) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getB64DecodedEntityDataValues(entityId=" + entityId + ", entityDataType=" + entityDataType +  ")");
+        }
+
+        List<byte[]> rtnVal = new ArrayList<>();
+        try (Connection conn = getJdbcConnection() ) {
+            conn.setAutoCommit(false);
+            String sql = "select ED.value as chars from entityData ED "
+                    + "where ED.parent_entity_id=? and ED.entity_att=?";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, entityId);
+                ps.setString(2, entityDataType);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        try (InputStream is = rs.getAsciiStream("chars")) {
+                            rtnVal.add(decoder.decodeBuffer(is));
+                        }
+                    }
+                }
+            }
+            
+        } catch(Exception ex) {
+            log.error("Failed to find entity datas under ID " + entityId + " of type " + entityDataType);
+            log.error(ex.getMessage());
+            throw new DaoException(ex);
+        }
+
+        return rtnVal;
+    }
+    
+    /**
+     * Given the ids of the parent entity, and the entity-data itself, fetch
+     * the entity-data.  Also constrain by type.
+     * 
+     * @param entityId owns the entity data
+     * @param entityDataId uniquely identifies the entity data.
+     * @param entityDataType entity-data must be one of these.
+     * @return what was fetched, as decoded from base 64.
+     * @throws DaoException wraps any exception thrown.
+     */
+    public byte[] getB64DecodedEntityDataValue(Long entityId, Long entityDataId, String entityDataType) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getB64DecodedEntityDataValue(entityId=" + entityId + ", entityDataId=" + entityDataId + ", entityDataType=" + entityDataType +  ")");
+        }
+
+        byte[] rtnVal = null;
+        
+        try (Connection conn = getJdbcConnection()) {
+            conn.setAutoCommit(false);
+            String sql = "select ED.value as chars from entityData ED "
+                       + "where ED.parent_entity_id=? and ED.id=? and ED.entity_att=?";
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, entityId);
+                ps.setLong(2, entityDataId);
+                ps.setString(3, entityDataType);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        try (InputStream is = rs.getAsciiStream("chars")) {
+                            rtnVal = decoder.decodeBuffer(is);
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Failed to find entity datas under ID " + entityId + " of type " + entityDataType);
+            log.error(ex.getMessage());
+            throw new DaoException(ex);
+        }
+        
+        return rtnVal;
     }
 
     public Entity getEntityById(Long targetId) {
@@ -1629,6 +1717,27 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
+    /**
+     * Auth-less / optimized version of getParentEntities for use in Mongo ETL.
+     */
+    public Set<Entity> getParentEntities(Long entityId) throws DaoException {
+        try {
+            if (log.isTraceEnabled()) {
+                log.trace("getParentEntitiesNoPerms(entityId="+entityId+")");
+            }
+            
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join ed.parentEntity ");
+            hql.append("where ed.childEntity.id=? ");
+            Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            return new HashSet(filter(query.list()));
+        } 
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
     public Set<Entity> getParentEntities(String subjectKey, Long entityId) throws DaoException {
         try {
             if (log.isTraceEnabled()) {
@@ -1803,6 +1912,50 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
             return nameMap;
         } 
         catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+
+    public List<Long> getChildEntityIdsByType(Long parentId, String entityTypeName) throws DaoException {
+        if (log.isTraceEnabled()) {
+            log.trace("getChildEntityIdsByType(parentId=" + parentId + "entityTypeName=" + entityTypeName + ")");
+        }
+        try {
+            Connection conn = null;
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            List<Long> resultIdList=new ArrayList<>();
+            try {
+                conn = getJdbcConnection();
+                String sql =
+                        "select e.id, e.entity_type from entity e, entityData edlink " +
+                                "where edlink.parent_entity_id=? and edlink.child_entity_id=e.id and e.entity_type=? " +
+                                "order by e.id asc"
+                ;
+                stmt = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+                stmt.setLong(1, parentId);
+                stmt.setString(2, entityTypeName);
+                rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Long id = rs.getBigDecimal(1).longValue();
+                    resultIdList.add(id);
+                }
+            }
+            catch (SQLException e) {
+                throw new DaoException(e);
+            }
+            finally {
+                try {
+                    if (rs!=null) rs.close();
+                    if (stmt!=null) stmt.close();
+                    if (conn!=null) conn.close();
+                }
+                catch (Exception e) {
+                    log.warn("Error closing JDBC connection",e);
+                }
+            }
+            return resultIdList;
+        } catch (Exception e) {
             throw new DaoException(e);
         }
     }
@@ -3372,7 +3525,7 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
 
 	/**
 	 * Removes all annotations in the given session and then returns them.
-	 * @param userLogin
+	 * @param subjectKey
 	 * @param sessionId
 	 * @return
 	 * @throws DaoException

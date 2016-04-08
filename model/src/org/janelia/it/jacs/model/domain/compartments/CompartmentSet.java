@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.domain.compartments;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
@@ -13,7 +14,7 @@ public class CompartmentSet extends AbstractDomainObject implements HasFilepath 
     private String imageSize;
     private String opticalResolution;
     private String alignmentSpace;
-    private List<Compartment> compartments;
+    private List<Compartment> compartments = new ArrayList<>();
 
     /* EVERYTHING BELOW IS AUTO-GENERATED */
     @Override
@@ -54,6 +55,7 @@ public class CompartmentSet extends AbstractDomainObject implements HasFilepath 
     }
 
     public void setCompartments(List<Compartment> compartments) {
+        if (compartments==null) throw new IllegalArgumentException("Property cannot be null");
         this.compartments = compartments;
     }
 

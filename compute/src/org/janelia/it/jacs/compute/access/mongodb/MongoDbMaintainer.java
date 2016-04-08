@@ -33,6 +33,7 @@ public class MongoDbMaintainer {
     protected DomainDAO dao;
 
     public MongoDbMaintainer() throws UnknownHostException {
+    	// We don't use DomainDAOManager here, so that we can customize the write concern below
         this.dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
         // To load as fast as possible, we don't wait to be acknowledged.
         // This can introduce subtle problems, so it's important to verify the
@@ -58,7 +59,7 @@ public class MongoDbMaintainer {
             log.info("Refreshing denormalized permissions for " + collectionName);
 
             MongoCollection collection = dao.getCollectionByName(collectionName);
-            Class<?> domainClass = DomainUtils.getObjectClass(collectionName);
+            Class<?> domainClass = DomainUtils.getBaseClass(collectionName);
             if (!DomainObject.class.isAssignableFrom(domainClass))
                 continue;
             Iterable<?> iterable = collection.find().as(domainClass);
@@ -133,16 +134,10 @@ public class MongoDbMaintainer {
 
         MongoCollection patternMaskCollection = dao.getCollectionByName("patternMask");
         ensureDomainIndexes(patternMaskCollection);
-        patternMaskCollection.ensureIndex("{'screenSample.targetId':1}");
-        patternMaskCollection.ensureIndex("{'screenSample.targetId':1,readers:1}");
 
         MongoCollection sampleCollection = dao.getCollectionByName("sample");
         ensureDomainIndexes(sampleCollection);
         sampleCollection.ensureIndex("{dataSet:1}");
-
-        MongoCollection screenSampleCollection = dao.getCollectionByName("screenSample");
-        ensureDomainIndexes(screenSampleCollection);
-        screenSampleCollection.ensureIndex("{flyLine:1}");
         
         MongoCollection subjectCollection = dao.getCollectionByName("subject");
         subjectCollection.ensureIndex("{key:1}","{unique:true}");

@@ -33,12 +33,14 @@ public enum FileType {
     
     // Alignment outputs
     AlignmentVerificationMovie("Alignment Verification Movie", false, false),
-
+    AlignedCondolidatedLabel("Aligned Consolidated Label", false, false),
+    
     // Heatmaps for pattern data
     HeatmapStack("Heatmap Stack", false, false),
     HeatmapMip("Heatmap MIP", true, false),
     
-    // Mask/Chan
+    // Neuron separation
+    NeuronSeparatorResult("Neuron Separator Result", false, false),
     MaskFile("Mask File", false, false),
     ChanFile("Chan File", false, false),
     

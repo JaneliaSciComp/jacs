@@ -8,13 +8,7 @@ package org.janelia.it.jacs.compute.mbean;
  * Time: 10:38 AM
  */
 public interface WorkstationDataManagerMBean {
-    	
-	// Pipelines for Arnim
-	public void runAnnotationImport(String user, String annotationsPath, String ontologyName);
-	public void runScreenScoresLoading(String user, String acceptsPath, String loadedPath);
-	public void runScreenScoresExport(String user, String outputFilepath);
-	public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath);
-	
+    
 	// ETL
 	public void runMongoDbSync(Boolean clearDb);
 	
@@ -32,9 +26,6 @@ public interface WorkstationDataManagerMBean {
     public void annexEntityTree(String subjectKey, String entityId);
     
     // Pipelines for FlyLight Screen Data
-    public void runFlyScreenPipeline(String user, Boolean refresh);
-    public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh);
-    public void performScreenPipelineSurgery(String user);
     public void createPatternAnnotationQuantifierSummaryFile();
     public void createMaskSummaryFile(String maskFolderName);
     public void runMaskAnnotationPipeline(String user, String maskFolderName, Boolean refresh);
@@ -60,7 +51,6 @@ public interface WorkstationDataManagerMBean {
     public void runBenchmarks();
     public void runScalityBenchmarks(String entityId);
     
-    public void runNernaRetiredDataCleanup();
     public void runFileVerification();
 
 }

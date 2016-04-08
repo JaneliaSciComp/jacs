@@ -7,7 +7,6 @@
         <input name="DATA_SET_NAME"/>
         <input name="PROCESS_DEF_NAME"/>
         <input name="SUBTASK_NAME"/>
-        <input name="PARENT_OR_CHILDREN"/>
         
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
@@ -15,36 +14,28 @@
             <input name="DATA_SET_NAME"/>
             <input name="PROCESS_DEF_NAME"/>
             <input name="SUBTASK_NAME"/>
-            <input name="PARENT_OR_CHILDREN"/>
             <input name="TASK_PARAMETER_MAP">
                 <entry key="data set name" value="DATA_SET_NAME"/>
                 <entry key="process def name" value="PROCESS_DEF_NAME"/>
                 <entry key="subtask name" value="SUBTASK_NAME"/>
-                <entry key="parent or children" value="PARENT_OR_CHILDREN"/>
             </input>
             <output name="DATA_SET_NAME"/>
             <output name="PROCESS_DEF_NAME"/>
             <output name="SUBTASK_NAME"/>
-            <output name="PARENT_OR_CHILDREN"/>
         </operation>
         
         <!-- Init variables -->
         <operation name="Init Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesService">
             <input name="OVERRIDE" value="false"/>
             <input name="SUBTASK_NAME"/>
-            <input name="PARENT_OR_CHILDREN"/>
             <input name="PROCESS_VARIABLE_1" value="SUBTASK_NAME"/>
             <input name="PROCESS_VARIABLE_VALUE_1" value="$V{PROCESS_DEF_NAME}"/>
-            <input name="PROCESS_VARIABLE_2" value="PARENT_OR_CHILDREN"/>
-            <input name="PROCESS_VARIABLE_VALUE_2" value="parent"/>
             <output name="SUBTASK_NAME"/>
-            <output name="PARENT_OR_CHILDREN"/>
         </operation>
         
 	    <!-- Find all the Sample Entities in the database -->
-		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
+		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.domain.sample.SampleTraversalService">
 			<input name="RUN_MODE" value="ALL"/>
-			<input name="PARENT_OR_CHILDREN"/>
 			<input name="DATA_SET_NAME"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
 			<output name="SAMPLE_ENTITY_ID"/>

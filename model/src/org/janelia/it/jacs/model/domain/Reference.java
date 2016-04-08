@@ -1,16 +1,17 @@
 package org.janelia.it.jacs.model.domain;
 
+import java.io.Serializable;
+
 /**
  * A reference to a DomainObject in a specific collection.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class Reference {
+public class Reference implements Serializable {
 
     private String targetClassName;
     private Long targetId;
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Reference() {
     }
 
@@ -85,6 +86,12 @@ public class Reference {
     public static Reference createFor(DomainObject domainObject) {
         if (domainObject==null) throw new IllegalArgumentException("Null domain object reference");
         return new Reference(domainObject.getClass().getName(), domainObject.getId());
+    }
+
+    public static Reference createFor(String className, Long id) {
+        if (className==null) throw new IllegalArgumentException("Null domain object class name");
+        if (id==null) throw new IllegalArgumentException("Null domain object id");
+        return new Reference(className, id);
     }
     
     public static Reference createFor(String strRef) {

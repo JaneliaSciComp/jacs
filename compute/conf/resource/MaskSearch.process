@@ -59,15 +59,6 @@
             <input name="RESULT_ENTITY_NAME" value=""/>
         </operation>
 
-        <!-- Move the files over if necessary -->
-        <sequence name="Wait For Archive Sync" waitForAsync="true">
-            <sequence name="Limit Archive Access" processor="queue/archiveAccess">
-                <operation name="Copy files to archive" processor="org.janelia.it.jacs.compute.service.utility.SyncToArchiveService">
-                    <input name="FILE_PATHS" value="$V{ARCHIVE_FILE_PATHS}"/>
-                </operation>
-            </sequence>
-        </sequence>
-
     </sequence>
     
 </process>

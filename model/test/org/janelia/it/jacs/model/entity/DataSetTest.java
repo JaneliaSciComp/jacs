@@ -1,19 +1,20 @@
 
 package org.janelia.it.jacs.model.entity;
 
+import java.io.StringWriter;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+
 import org.janelia.it.jacs.model.TestCategories;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.entity.json.JsonDataSet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import java.io.StringWriter;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
- * Tests the {@link DataSet} class.
+ * Tests the {@link JsonDataSet} class.
  *
  * @author Eric Trautman
  */
@@ -26,31 +27,23 @@ public class DataSetTest {
         final String name = "Pan Lineage 40x";
         final String ownerKey = "group:leetlab";
         final String dataSetIdentifier = "leetlab_pan_lineage_40x";
-        final String sageSync = "SAGE Sync";
+        final Boolean sageSync = true;
+        
+        DataSet dataSet = new DataSet();
+        dataSet.setName(name);
+        dataSet.setOwnerKey(ownerKey);
+        dataSet.setIdentifier(dataSetIdentifier);
+        dataSet.setSageSync(sageSync);
+        JsonDataSet jsonDataSet = new JsonDataSet(dataSet);
 
-        Set<EntityData> entityDataSet = new HashSet<EntityData>();
-        entityDataSet.add(
-                getEntityData(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
-                              ownerKey,
-                              dataSetIdentifier));
-        entityDataSet.add(
-                getEntityData(EntityConstants.ATTRIBUTE_SAGE_SYNC,
-                              ownerKey,
-                              sageSync));
-
-        Entity entity = new Entity(null, name, ownerKey, null, null, null,
-                                   entityDataSet);
-
-        DataSet dataSet = new DataSet(entity);
-
-        Assert.assertEquals("entity name not preserved", name, dataSet.getName());
-        Assert.assertEquals("entity userLogin not preserved", ownerKey, dataSet.getUser());
+        Assert.assertEquals("entity name not preserved", name, jsonDataSet.getName());
+        Assert.assertEquals("entity userLogin not preserved", ownerKey, jsonDataSet.getUser());
         Assert.assertEquals("entity dataSetIdentifier not preserved",
-                            dataSetIdentifier, dataSet.getDataSetIdentifier());
-        Assert.assertEquals("entity sageSync not preserved", sageSync, dataSet.getSageSync());
-        Assert.assertTrue("hasSageSync should return true", dataSet.hasSageSync());
+                            dataSetIdentifier, jsonDataSet.getDataSetIdentifier());
+        Assert.assertEquals("entity sageSync not preserved", sageSync, jsonDataSet.getSageSync());
+        Assert.assertTrue("hasSageSync should return true", jsonDataSet.hasSageSync());
 
-        JAXBContext ctx = JAXBContext.newInstance(DataSet.class);
+        JAXBContext ctx = JAXBContext.newInstance(JsonDataSet.class);
         Marshaller m = ctx.createMarshaller();
         m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
         StringWriter writer = new StringWriter();
@@ -68,10 +61,6 @@ public class DataSetTest {
         final StringBuffer sb = writer.getBuffer();
         Assert.assertEquals("JAXB marshalled xml does not match",
                             xml, sb.toString());
-    }
-
-    private EntityData getEntityData(String attrName, String ownerKey, String value) {
-        return new EntityData(null, attrName, null, null, ownerKey, value, null, null, null);
     }
 
 }

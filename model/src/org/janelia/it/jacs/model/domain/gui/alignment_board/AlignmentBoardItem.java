@@ -1,19 +1,20 @@
 package org.janelia.it.jacs.model.domain.gui.alignment_board;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.janelia.it.jacs.model.domain.Reference;
 
-public class AlignmentBoardItem {
+public class AlignmentBoardItem implements Serializable{
 
     private Reference target;
-    private boolean visible;
+    private boolean visible = true;
     private String inclusionStatus;
     private String color;
     private String renderMethod;
-    private List<AlignmentBoardItem> children;
+    private List<AlignmentBoardItem> children = new ArrayList<>();
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Reference getTarget() {
         return target;
     }
@@ -59,6 +60,7 @@ public class AlignmentBoardItem {
     }
 
     public void setChildren(List<AlignmentBoardItem> children) {
+        if (children==null) throw new IllegalArgumentException("Property cannot be null");
         this.children = children;
     }
 }

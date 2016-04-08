@@ -6,7 +6,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 import static org.janelia.it.jacs.model.entity.EntityConstants.*
 // Globals
 username = "user:leey10";
-rootId = 2204397075544670353; // leey10 folder "20151111"
+rootId = 2240583447523360913; // leey10 folder "20151111"
 targetDir = "/groups/jacs/jacsDev/saffordt/download/drive/";
 JacsUtils f = new JacsUtils(username, false);
 e = f.e;
@@ -60,7 +60,7 @@ def exportFiles(JacsUtils f, Entity target, File dir) {
 	}
 	String targetPath = (null==pathTest?jfsTest:pathTest);
 	// This locks it down to v3dpbd files and lsm metadata files exported.  Comment out or change to suit your need.
-	if (!targetPath.endsWith("v3dpbd")&&!targetPath.endsWith("metadata")&&!targetPath.endsWith("mask")&&!targetPath.endsWith("chan")) {return;}
+	if (!targetPath.endsWith("v3dpbd")&&!targetPath.endsWith("metadata")/**&&!targetPath.endsWith("mask")&&!targetPath.endsWith("chan")**/) {return;}
 	File targetFile = new File(targetPath);
 	file.println("/misc/local/jfs/jfs -command read -path "+targetPath+" -file "+dir+File.separator+targetFile.getName());
 }

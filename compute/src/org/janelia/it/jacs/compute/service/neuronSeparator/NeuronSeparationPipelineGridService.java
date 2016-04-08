@@ -4,10 +4,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainGridService;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.entity.cv.Objective;
@@ -27,8 +26,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class NeuronSeparationPipelineGridService extends AbstractEntityGridService {
+public class NeuronSeparationPipelineGridService extends AbstractDomainGridService {
 	
+    public static final String MAPPING_FILE_NAME_PREFIX = "mapping_issues";
     public static final String NAME = "neuronSeparatorPipeline";
     
     private static final String CONFIG_PREFIX = "neuSepConfiguration.";
@@ -173,13 +173,13 @@ public class NeuronSeparationPipelineGridService extends AbstractEntityGridServi
     	
     	// Copy the mapping file into the target separation directory
     	if (previousSeparationId!=null) {
-    		File[] mappingFiles = FileUtil.getFilesWithPrefixes(outputDir, NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX);
+    		File[] mappingFiles = FileUtil.getFilesWithPrefixes(outputDir, MAPPING_FILE_NAME_PREFIX);
 	    	if (mappingFiles.length<1) {
 	    		logger.warn("No mapping file found for separation "+outputDir);
 	    	}
 	    	else {
 		    	File resultFile = mappingFiles[0];
-		    	resultFile.renameTo(new File(outputDir, NeuronMappingGridService.MAPPING_FILE_NAME_PREFIX+"_"+previousSeparationId+".txt"));
+		    	resultFile.renameTo(new File(outputDir, MAPPING_FILE_NAME_PREFIX+"_"+previousSeparationId+".txt"));
 	    	}
     	}
 	}

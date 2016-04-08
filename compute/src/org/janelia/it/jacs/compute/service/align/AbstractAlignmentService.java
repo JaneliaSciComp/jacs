@@ -8,28 +8,30 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
-import org.janelia.it.jacs.compute.service.entity.sample.SampleHelper;
-import org.janelia.it.jacs.compute.util.EntityBeanEntityLoader;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.vo.ParameterException;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
 /**
@@ -53,14 +55,12 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 	
     protected static final String ARCHIVE_PREFIX = "/archive";
     
-    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
-    protected AnnotationBeanLocal annotationBean;
     protected String ownerKey;
-    protected SampleHelper sampleHelper;
-    protected EntityBeanEntityLoader entityLoader;
+    protected SampleHelperNG sampleHelper;
 
-    protected Entity sampleEntity;
+    protected Sample sample;
+    protected ObjectiveSample objectiveSample;
     protected List<AnatomicalArea> alignedAreas = new ArrayList<AnatomicalArea>();
     protected String gender;
     
@@ -84,16 +84,14 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             super.initLoggersAndData(processData);
             this.resultFileNode = ProcessDataHelper.getResultFileNode(processData);
             
-            this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
-            this.annotationBean = EJBFactory.getLocalAnnotationBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
-            this.entityLoader = new EntityBeanEntityLoader(entityBean);
+            this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
             
-            this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
+            this.sample = sampleHelper.getRequiredSample(data);
+            this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
             this.warpNeurons = !"false".equals((String)processData.getItem("WARP_NEURONS"));
 
             @SuppressWarnings("unchecked")
@@ -137,20 +135,19 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         // strategy for finding input files and other parameters.
         for(AnatomicalArea anatomicalArea : sampleAreas) {
             String areaName = anatomicalArea.getName();
-            Entity result = getLatestResultOfType(sampleEntity, EntityConstants.TYPE_SAMPLE_PROCESSING_RESULT, areaName);
+            SampleProcessingResult result = getLatestResultOfType(objectiveSample, areaName);
         	if (result!=null) {
 	            if (BRAIN_AREA.equalsIgnoreCase(areaName) || StringUtils.isEmpty(areaName)) {
-	                entityLoader.populateChildren(result);
 	                if (!alignedAreas.isEmpty()) {
 	                    contextLogger.warn("Found more than one default brain area to align. Using: "+alignedAreas.get(0).getName());
 	                }
 	                else {
-	                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
+	                    String imagePath = DomainUtils.getDefault3dImageFilePath(result);
 	                    alignedAreas.add(anatomicalArea);
 	                    input1 = new AlignmentInputFile();
-	                    input1.setPropertiesFromEntity(image);
-	                    input1.setSampleId(sampleEntity.getId());
-	                    input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
+	                    input1.setPropertiesFromEntity(result);
+	                    input1.setSampleId(sample.getId());
+	                    input1.setObjective(objectiveSample.getObjective());
 	                    if (warpNeurons) {
 	                        input1.setInputSeparationFilename(getConsolidatedLabel(result));
 	                    }
@@ -181,7 +178,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
         if (input.getObjective()==null) {
             contextLogger.warn("No objective on the input file. Trying to find a consensus among the LSMs...");
-            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_OBJECTIVE));
+            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "objective"));
             if (input.getObjective()!=null) {
                 contextLogger.info("Found objective consensus: "+input.getObjective());
             }
@@ -189,7 +186,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         
         if (input.getChannelColors()==null) {
             contextLogger.warn("No channel colors on the input file. Trying to find a consensus among the LSMs...");
-            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
+            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "channelColors"));
             if (input.getChannelColors()!=null) {
                 contextLogger.info("Found channel colors consensus: "+input.getChannelColors());
             }
@@ -197,7 +194,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         
         if (input.getChannelSpec()==null) {
             contextLogger.warn("No channel spec on the input file. Trying to find a consensus among the LSMs...");
-            input.setChannelSpec(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
+            input.setChannelSpec(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "channelSpec"));
             if (input.getChannelColors()!=null) {
                 contextLogger.info("Found channel spec consensus: "+input.getChannelSpec());
             }
@@ -205,7 +202,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 
         if (input.getOpticalResolution()==null) {
             contextLogger.warn("No optical resolution on the input file. Trying to find a consensus among the LSMs...");
-            input.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION));
+            input.setOpticalResolution(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "opticalResolution"));
             if (input.getOpticalResolution()!=null) {
                 contextLogger.info("Found optical resolution consensus: "+input.getOpticalResolution());
             }
@@ -213,7 +210,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         
         if (input.getPixelResolution()==null) {
             contextLogger.warn("No pixel resolution on the input file. Trying to find a consensus among the LSMs...");
-            input.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
+            input.setPixelResolution(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "imageSize"));
             if (input.getPixelResolution()!=null) {
                 contextLogger.info("Found pixel resolution consensus: "+input.getPixelResolution());
             }
@@ -255,57 +252,35 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         }
     }
 
-    protected Entity getLatestResultOfType(Entity objectiveSample, String resultType, String anatomicalArea) throws Exception {
-        entityLoader.populateChildren(objectiveSample);
+    protected SampleProcessingResult getLatestResultOfType(ObjectiveSample objectiveSample, String anatomicalArea) throws Exception {
 
-        contextLogger.debug("Looking for latest result of type "+resultType+" with anatomicalArea="+anatomicalArea);
+        contextLogger.debug("Looking for latest result with anatomicalArea="+anatomicalArea);
         
-        List<Entity> pipelineRuns = EntityUtils.getChildrenOfType(objectiveSample, EntityConstants.TYPE_PIPELINE_RUN);
-        Collections.reverse(pipelineRuns);
-        for(Entity pipelineRun : pipelineRuns) {
-            entityLoader.populateChildren(pipelineRun);
+        for(SamplePipelineRun pipelineRun : Lists.reverse(objectiveSample.getPipelineRuns())) {
 
             contextLogger.debug("  Check pipeline run "+pipelineRun.getName()+" (id="+pipelineRun.getId()+")");
 
-            if (EntityUtils.findChildWithType(pipelineRun, EntityConstants.TYPE_ERROR) != null) {
+            if (pipelineRun.hasError()) {
                 continue;
             }
             
-            List<Entity> results = EntityUtils.getChildrenForAttribute(pipelineRun, EntityConstants.ATTRIBUTE_RESULT);
-            Collections.reverse(results);
-            for(Entity result : results) {
+            for(SampleProcessingResult result : Lists.reverse(pipelineRun.getSampleProcessingResults())) {
 
                 contextLogger.debug("    Check result "+result.getName()+" (id="+result.getId()+")");
-                
-                if (result.getEntityTypeName().equals(resultType)) {
-                    if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA))) {
-                        entityLoader.populateChildren(result);
-                        return result;
-                    }
+            
+                if (anatomicalArea==null || anatomicalArea.equalsIgnoreCase(result.getAnatomicalArea())) {
+                    return result;
                 }
             }   
         }
         return null;
     }
     
-    protected String getConsolidatedLabel(Entity result) throws Exception {
-
-        Entity separation = EntityUtils.findChildWithType(result, EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
-        if (separation!=null) {
-            entityLoader.populateChildren(separation);
-            Entity nsSupportingFiles = EntityUtils.getSupportingData(separation);
-            if (nsSupportingFiles!=null) { 
-                entityLoader.populateChildren(nsSupportingFiles);
-                Entity labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3dpbd", EntityConstants.TYPE_IMAGE_3D);
-                if (labelFile==null) {
-                    labelFile = EntityUtils.findChildWithNameAndType(nsSupportingFiles, "ConsolidatedLabel.v3draw", EntityConstants.TYPE_IMAGE_3D);
-                }
-                if (labelFile!=null) {
-                    return labelFile.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH); 
-                }   
-            }
-        }
-        return null;
+    protected String getConsolidatedLabel(SampleProcessingResult result) throws Exception {
+        NeuronSeparation separation = result.getLatestSeparationResult();
+        if (separation==null) return null;
+        File labelFile = new File(separation.getFilepath(), "ConsolidatedLabel.v3dpbd");
+        return labelFile.getAbsolutePath();
     }
 
     protected void checkInput(AlignmentInputFile input) throws Exception {
@@ -355,16 +330,13 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         try {
             super.init(processData);
 
-            this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
-            this.annotationBean = EJBFactory.getLocalAnnotationBean();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger, contextLogger);
-            this.entityLoader = new EntityBeanEntityLoader(entityBean);
+            this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
             
-            this.sampleEntity = sampleHelper.getRequiredSampleEntity(data);
+            this.sample = sampleHelper.getRequiredSample(data);
             this.alignedAreas = (List<AnatomicalArea>) data.getItem("ALIGNED_AREAS");
             
             @SuppressWarnings("unchecked")

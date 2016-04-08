@@ -67,7 +67,7 @@
         <mkdir dir="${dep.dir}" />
 
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
-	<path id="compute.classpath">
+        <path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
 		    <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
 		    <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
@@ -80,11 +80,12 @@
 			<fileset dir="${common.dir}/Scality" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
             <fileset dir="${common.dir}/snakeyaml-1.11" includes="**/*.jar"/>
-			<fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
-			<fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
             <fileset dir="${common.dir}/JodaTime" includes="**/*.jar"/>
-        	<fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
-			<fileset file="${common.dir}/Spring/jxl.jar"/>
+            <fileset dir="${common.dir}/protostuff-1.3.9" includes="**/*.jar"/>
+            <fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
+            <fileset file="${common.dir}/Spring/jxl.jar"/>
             <fileset dir="${basedir}/../shared/lib" includes="**/jai*.jar"/>
         </path>
     		
@@ -198,28 +199,9 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </war>
-        <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
-            <classes dir="${build.classes.dir}">
-                <include name="org/**/wsrest/RestfulWebService.class"/>
-                <include name="org/**/wsrest/computeresources/**/*.class"/>
-                <include name="org/**/wsrest/dataresources/**/*.class"/>
-                <include name="org/**/annotation/api/*.class"/>
-                <include name="org/**/annotation/to/*.class"/>
-            </classes>
-            <lib dir="${basedir}/lib/resteasy-2.3.4">
-                <include name="**/*.jar"/>
-            </lib>
-            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
-            <manifest>
-                <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
-            </manifest>
-        </war>
         <war warfile="${basedir}/build/jars/${secure-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
-                <include name="org/**/wsrest/DataViewsWebService.class"/>
-                <include name="org/**/wsrest/UserWorkstationWebService.class"/>
-                <include name="org/**/wsrest/SemanticsWebService.class"/>
+                <include name="org/**/wsrest/**/*.class"/>
                 <include name="org/**/wsrest/WebServiceContext.class"/>
                 <include name="org/**/access/**/*.class"/>
                 <include name="org/**/api/ComputeException.class"/>
@@ -254,6 +236,9 @@
             </lib>
             <lib dir="${common.dir}/Solrj">
                 <include name="dom4j-1.6.1.jar"/>
+            </lib>
+            <lib dir="${common.dir}/swagger">
+                <include name="**/*.jar"/>
             </lib>
             <lib dir="${common.dir}/ehcache">
                 <include name="**/*.jar"/>
@@ -616,6 +601,7 @@
         </exec>
 
          <!--restart JBoss -->
+    	<sleep seconds="2"/>
         <echo message="Starting JBoss" />
         <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} default)"
               outputproperty="exec.output" errorproperty="exec.error">

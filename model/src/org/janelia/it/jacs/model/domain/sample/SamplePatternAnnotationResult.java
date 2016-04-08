@@ -29,14 +29,13 @@ public class SamplePatternAnnotationResult extends PipelineResult implements Has
 		return groups.get(key);
 	}
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
-
     @Override
 	public Map<String, FileGroup> getGroups() {
 		return groups;
 	}
 
 	public void setGroups(Map<String, FileGroup> groups) {
+	    if (groups==null) throw new IllegalArgumentException("Property cannot be null");
 		this.groups = groups;
 	}
 }

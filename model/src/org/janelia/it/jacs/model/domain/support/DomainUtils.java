@@ -1,12 +1,13 @@
 package org.janelia.it.jacs.model.domain.support;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,12 +25,15 @@ import org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.util.ReflectionHelper;
+import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,13 +114,7 @@ public class DomainUtils {
     }
 
     public static String getCollectionName(String className) {
-        // TODO: improve performance with a map keyed by class name
-        for (Map.Entry<String, Class<? extends DomainObject>> entry : typeClasses.entrySet()) {
-            if (entry.getValue().getName().equals(className)) {
-                return entry.getKey();
-            }
-        }
-        return null;
+        return getCollectionName(getObjectClassByName(className));
     }
     
     public static String getCollectionName(DomainObject domainObject) {
@@ -141,12 +139,12 @@ public class DomainUtils {
         return typeClasses.keySet();
     }
     
-    public static Class<? extends DomainObject> getObjectClass(String collectionName) {
+    public static Class<? extends DomainObject> getBaseClass(String collectionName) {
         return typeClasses.get(collectionName);
     }
 
     public static Set<Class<? extends DomainObject>> getSubClasses(String collectionName) {
-        return getSubClasses(getObjectClass(collectionName));
+        return getSubClasses(getBaseClass(collectionName));
     }
     
     public static Set<Class<? extends DomainObject>> getSubClasses(Class<? extends DomainObject> objectClass) {
@@ -161,7 +159,7 @@ public class DomainUtils {
      * @return list of domain object classes
      */
     public static Set<Class<? extends DomainObject>> getObjectClasses(String collectionName) {
-        return getObjectClasses(getObjectClass(collectionName));
+        return getObjectClasses(getBaseClass(collectionName));
     }
 
     /**
@@ -198,6 +196,61 @@ public class DomainUtils {
         return searchTypeToClassName.get(type);
     }
 
+    /**
+     * Generate a list of DomainObjectAttributes for the given domain object class. DomainObjectAttributes are
+     * generated for all fields and methods marked with a @SearchAttribute annotation. 
+     * @param clazz a class which extends DomainObject
+     * @return a list of DomainObjectAttributes
+     */
+    public static List<DomainObjectAttribute> getSearchAttributes(Class<? extends DomainObject> clazz) {
+        
+        List<DomainObjectAttribute> attrs = new ArrayList<>();
+        
+        // Look for annotated fields 
+        for (Field field : ReflectionUtils.getAllFields(clazz)) {
+            SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
+            if (searchAttributeAnnot!=null) {
+                try {
+                    Method getter = ReflectionHelper.getGetter(clazz, field.getName());
+                    Method setter = ReflectionHelper.getSetter(clazz, field.getName(), getter.getReturnType());
+                    DomainObjectAttribute attr = new DomainObjectAttribute(field.getName(), searchAttributeAnnot.label(), searchAttributeAnnot.key(), searchAttributeAnnot.facet(), searchAttributeAnnot.display(), getter, setter);
+                    attrs.add(attr);
+                }
+                catch (Exception e) {
+                    log.warn("Error getting field " + field.getName() + " on " + clazz.getName(), e);
+                }
+            }
+        }
+
+        // Look for annotated getters
+        for (Method getter : clazz.getMethods()) {
+            SearchAttribute searchAttributeAnnot = getter.getAnnotation(SearchAttribute.class);
+            if (searchAttributeAnnot!=null) {
+                try {
+                    String getterName = getter.getName();
+                    if (getter.getName().startsWith("get")) {
+                        getterName = getterName.substring(3, 4).toLowerCase() + getterName.substring(4);
+                        Method setter;
+                        try {
+                            setter = ReflectionHelper.getSetter(clazz, getterName, getter.getReturnType());
+                        }
+                        catch (NoSuchMethodException e) {
+                            log.trace("Getter has no corresponding setter: "+getterName);
+                            setter = null;
+                        }
+                        DomainObjectAttribute attr = new DomainObjectAttribute(getterName, searchAttributeAnnot.label(), searchAttributeAnnot.key(), searchAttributeAnnot.facet(), searchAttributeAnnot.display(), getter, setter);
+                        attrs.add(attr);
+                    }
+                }
+                catch (Exception e) {
+                    log.warn("Error getting method " + getter.getName() + " on " + clazz.getName(), e);
+                }
+            }
+        }
+
+        return attrs;
+    }
+        
     /**
      * Returns the subject name part of a given subject key. For example, for "group:flylight", this returns "flylight".
      * @param subjectKey
@@ -265,8 +318,8 @@ public class DomainUtils {
         StringBuilder urlSb = new StringBuilder();
 
         // Add prefix
-        if (hasFiles instanceof HasFilepath) {
-            String rootPath = ((HasFilepath)hasFiles).getFilepath();
+        if (hasFiles instanceof HasRelativeFiles) {
+            String rootPath = ((HasRelativeFiles)hasFiles).getFilepath();
             if (rootPath!=null) {
                 urlSb.append(rootPath);
                 if (!rootPath.endsWith("/")) urlSb.append("/");
@@ -277,6 +330,27 @@ public class DomainUtils {
         urlSb.append(filepath);
         
         return urlSb.length()>0 ? urlSb.toString() : null;
+    }
+    
+    public static void setFilepath(HasRelativeFiles hasFiles, FileType fileType, String filepath) {
+        if (filepath==null) {
+            hasFiles.getFiles().remove(fileType);
+        }
+        else {
+            hasFiles.getFiles().put(fileType, getRelativeFilename(hasFiles, filepath));    
+        }
+    }
+
+    private static String getRelativeFilename(HasFilepath result, String filepath) {
+        if (filepath==null) return null;
+        if (result==null) return filepath;
+        String parentFilepath = result.getFilepath();
+        if (parentFilepath==null) throw new IllegalArgumentException("Result "+filepath+" has null parent filepath");
+        String prefix = parentFilepath.endsWith("/") ? parentFilepath : parentFilepath+"/";
+        if (!filepath.startsWith(prefix)) {
+            return filepath;
+        }
+        return filepath.replaceFirst(prefix, "");
     }
     
     public static String getDefault3dImageFilePath(HasFiles hasFiles) {
@@ -309,43 +383,6 @@ public class DomainUtils {
         return countedTypeNames;
     }
     
-    /**
-     * Return true if the given tree node has the specified domain object as a child. 
-     * @param treeNode
-     * @param domainObject
-     * @return
-     */
-    public static boolean hasChild(TreeNode treeNode, DomainObject domainObject) {
-        if (treeNode.hasChildren()) {
-            for(Iterator<Reference> i = treeNode.getChildren().iterator(); i.hasNext(); ) {
-                Reference iref = i.next();
-                if (iref.getTargetId().equals(domainObject.getId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * Return true if the given ontology term has the specified ontology term as a child. 
-     * @param ontologyTerm parent term
-     * @param childTerm child term
-     * @return
-     */
-    public static boolean hasChild(OntologyTerm ontologyTerm, OntologyTerm childTerm) {
-        if (childTerm==null) return false;
-        if (ontologyTerm.hasChildren()) {
-            for(Iterator<OntologyTerm> i = ontologyTerm.getTerms().iterator(); i.hasNext(); ) {
-                OntologyTerm child = i.next();
-                if (child!=null && child.getId()!=null && child.getId().equals(childTerm.getId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     /**
      * Returns true if the collection is null or empty. 
      * @param collection
@@ -394,7 +431,7 @@ public class DomainUtils {
      * @param domainObjects
      * @return
      */
-    public static List<Long> getIds(List<? extends DomainObject> domainObjects) {
+    public static List<Long> getIds(Collection<? extends DomainObject> domainObjects) {
         List<Long> ids = new ArrayList<>();
         for(DomainObject domainObject : domainObjects) {
             ids.add(domainObject.getId());
@@ -407,9 +444,9 @@ public class DomainUtils {
      * @param objects collection of domain objects
      * @return a list of references, one for each domain object
      */
-    public static Collection<Reference> getReferences(Collection<? extends DomainObject> domainObjects) {
-        Collection<Reference> refs = new ArrayList<>();
-        for(DomainObject domainObject : domainObjects) {
+    public static <T extends DomainObject> List<Reference> getReferences(Collection<T> domainObjects) {
+        List<Reference> refs = new ArrayList<>();
+        for(T domainObject : domainObjects) {
             if (domainObject!=null) {
                 refs.add(Reference.createFor(domainObject));
             }
@@ -418,16 +455,47 @@ public class DomainUtils {
     }
 
     /**
+     * Generate a list of references for the members of an object set.
+     * @param objectSet
+     * @return
+     */
+    public static List<Reference> getReferencesForMembers(ObjectSet objectSet) {
+        // TODO: I feel like I already wrote this code somewhere else, so when I find it I'll de-dup
+        List<Reference> refs = new ArrayList<>();
+        for(Long id : objectSet.getMembers()) {
+            refs.add(Reference.createFor(objectSet.getClassName(), id));
+        }
+        return refs;
+    }
+    
+    /**
      * Generate a map by reference to the given domain objects.
      * @param objects collection of domain objects
      * @return a map with the domain objects as values, keyed by reference to each domain object
      */
-    public static Map<Reference, DomainObject> getMapByReference(Collection<? extends DomainObject> objects) {
-        Map<Reference, DomainObject> objectMap = new HashMap<>();
+    public static <T extends DomainObject> Map<Reference, T> getMapByReference(Collection<T> objects) {
+        Map<Reference, T> objectMap = new HashMap<>();
         if (objects!=null) {
-            for (DomainObject domainObject : objects) {
+            for (T domainObject : objects) {
                 if (domainObject != null) {
                     objectMap.put(Reference.createFor(domainObject), domainObject);
+                }
+            }
+        }
+        return objectMap;
+    }
+
+    /**
+     * Generate a map by reference to the given domain objects.
+     * @param objects collection of domain objects
+     * @return a map with the domain objects as values, keyed by reference to each domain object
+     */
+    public static <T extends DomainObject> Map<Long, T> getMapById(Collection<T> objects) {
+        Map<Long, T> objectMap = new HashMap<>();
+        if (objects!=null) {
+            for (T domainObject : objects) {
+                if (domainObject != null) {
+                    objectMap.put(domainObject.getId(), domainObject);
                 }
             }
         }
@@ -440,44 +508,6 @@ public class DomainUtils {
             annotationsByDomainObjectId.put(annotation.getTarget().getTargetId(), annotation);
         }
         return annotationsByDomainObjectId;
-    }
-    
-    /**
-     * Find the ontology term with the given id in the specified ontology tree.
-     * @param term ontololgy term tree structure
-     * @param termId GUID of the term to find 
-     * @return term with the given termId, or null if it cannot be found
-     */
-    public static OntologyTerm findTerm(OntologyTerm term, Long termId) {
-        if (termId==null) return null;
-        if (term.getId()!=null && term.getId().equals(termId)) {
-            return term;
-        }
-        if (term.getTerms()!=null) {
-            for(OntologyTerm child : term.getTerms()) {
-                OntologyTerm found = findTerm(child, termId);
-                if (found!=null) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static OntologyTerm findTerm(OntologyTerm term, String name) {
-        if (name==null) return null;
-        if (term.getName()!=null && term.getName().equals(name)) {
-            return term;
-        }
-        if (term.getTerms()!=null) {
-            for(OntologyTerm child : term.getTerms()) {
-                OntologyTerm found = findTerm(child, name);
-                if (found!=null) {
-                    return found;
-                }
-            }
-        }
-        return null;
     }
     
     /**
@@ -533,14 +563,19 @@ public class DomainUtils {
             throw new IllegalArgumentException("Unknown criteria subtype: "+criteria.getClass().getName());
         }
     }
+
+    public static Object getAttributeValue(DomainObject domainObject, String attrName) throws Exception {
+        Method getter = ReflectionHelper.getGetter(domainObject.getClass(), attrName);
+        return getter.invoke(domainObject);
+    }
     
     /**
      * Test Harness
      */
     public static void main(String[] args) {
-        System.out.println("getObjectClass(treeNode): "+DomainUtils.getObjectClass("treeNode"));
-        System.out.println("getObjectClass(sample): "+DomainUtils.getObjectClass("sample"));
-        System.out.println("getObjectClass(image): "+DomainUtils.getObjectClass("image"));
+        System.out.println("getObjectClass(treeNode): "+DomainUtils.getBaseClass("treeNode"));
+        System.out.println("getObjectClass(sample): "+DomainUtils.getBaseClass("sample"));
+        System.out.println("getObjectClass(image): "+DomainUtils.getBaseClass("image"));
         System.out.println("getSubClasses(TreeNode.class): " + DomainUtils.getSubClasses(TreeNode.class));
         System.out.println("getObjectClasses(image): "+DomainUtils.getObjectClasses("image"));
         System.out.println("getObjectClasses(LSMImage): " + DomainUtils.getObjectClasses(LSMImage.class));

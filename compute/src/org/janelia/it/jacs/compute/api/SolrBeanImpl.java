@@ -15,7 +15,6 @@ import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.mongodb.MongoDbMaintainer;
@@ -118,7 +117,6 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 
 	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException {
 		SolrDAO solrDAO = new SolrDAO(log, false, false);
-		System.out.println (query);
 		QueryResponse response = solrDAO.search(query);
 		List<Entity> resultList = null;
 		if (mapToEntities) {

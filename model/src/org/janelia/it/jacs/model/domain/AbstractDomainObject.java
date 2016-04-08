@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public abstract class AbstractDomainObject implements DomainObject,Serializable {
+public abstract class AbstractDomainObject implements DomainObject, Serializable {
     
     @MongoId
     @JsonProperty(value="_id")
@@ -35,8 +35,8 @@ public abstract class AbstractDomainObject implements DomainObject,Serializable 
     private String name;
     
     private String ownerKey;
-    private Set<String> readers;
-    private Set<String> writers;
+    private Set<String> readers = new HashSet<>();
+    private Set<String> writers = new HashSet<>();
 
     @SearchAttribute(key="creation_date",label="Creation Date")
     @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
@@ -137,6 +137,7 @@ public abstract class AbstractDomainObject implements DomainObject,Serializable 
 
     @Override
     public void setReaders(Set<String> readers) {
+        if (readers==null) throw new IllegalArgumentException("Property cannot be null");
         this.readers = readers;
     }
 
@@ -147,6 +148,7 @@ public abstract class AbstractDomainObject implements DomainObject,Serializable 
 
     @Override
     public void setWriters(Set<String> writers) {
+        if (writers==null) throw new IllegalArgumentException("Property cannot be null");
         this.writers = writers;
     }
 

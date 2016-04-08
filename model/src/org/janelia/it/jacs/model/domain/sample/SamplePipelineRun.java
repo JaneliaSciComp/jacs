@@ -1,9 +1,11 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
+import org.janelia.it.jacs.model.domain.interfaces.HasImageStack;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,14 +14,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SamplePipelineRun {
+public class SamplePipelineRun implements Serializable {
 
     private Long id;
     private String name;
     private String pipelineProcess;
     private Integer pipelineVersion;
     private Date creationDate;
-    private List<PipelineResult> results;
+    private List<PipelineResult> results = new ArrayList<>();
     private PipelineError error;
     private transient ObjectiveSample parent;
 
@@ -35,49 +37,40 @@ public class SamplePipelineRun {
 
     @JsonIgnore
     public boolean hasResults() {
-        return results!=null && !results.isEmpty();
+        return !results.isEmpty();
     }
     
     @JsonProperty
     public List<PipelineResult> getResults() {
-        return results==null?null:Collections.unmodifiableList(results);
+        return results;
     }
     
     @JsonProperty
     public void setResults(List<PipelineResult> results) {
-        if (results==null)
-            return;
+        if (results==null) throw new IllegalArgumentException("Property cannot be null");
+        this.results = results;
         for(PipelineResult result : results) {
             result.setParentRun(this);
         }
-        this.results = results;
     }
 
     @JsonIgnore
     public void addResult(PipelineResult result) {
-        if (results==null) {
-            this.results = new ArrayList<>();
-        }
         result.setParentRun(this);
         results.add(result);
     }
 
     @JsonIgnore
     public void removeResult(PipelineResult result) {
-        if (results==null) {
-            return;
-        }
         results.remove(result);
     }
     
     @JsonIgnore
-    public <T extends PipelineResult> T getLatestResultOfType(Class<T> type) {
-        if (results==null) {
-            return null;
-        }
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> T getLatestResultOfType(Class<T> resultClass) {
         for (int i = results.size()-1; i>=0; i--) {
             PipelineResult result = results.get(i);
-            if (type==null || type.isAssignableFrom(result.getClass())) {
+            if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
                 return (T)result;
             }
         }
@@ -95,22 +88,34 @@ public class SamplePipelineRun {
     }
 
     @JsonIgnore
-    public SampleAlignmentResult getLatestAlignmentResult() {
+    public HasImageStack getLatestAlignmentResult() {
         return getLatestResultOfType(SampleAlignmentResult.class);
     }
 
     @JsonIgnore
-    public <T extends PipelineResult> List<T> getResultsOfType(Class<T> type) {
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> List<T> getResultsOfType(Class<T> resultClass) {
         List<T> filteredResults = new ArrayList<>();
-        if (results==null) {
-            return filteredResults;
-        }
         for (PipelineResult result : results) {
-            if (type==null || type.isAssignableFrom(result.getClass())) {
+            if (resultClass==null || resultClass.isAssignableFrom(result.getClass())) {
                 filteredResults.add((T)result);
             }
         }
-        return null;
+        return filteredResults;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public <T extends PipelineResult> List<T> getResultsById(Class<T> resultClass, Long resultId) {
+        List<T> results = new ArrayList<>();
+        for(PipelineResult result : getResults()) {
+            if (resultId.equals(result.getId()) && (resultClass==null || resultClass.isAssignableFrom(result.getClass()))) {
+                results.add((T)result);
+            }
+            for(T childResult : result.getResultsById(resultClass, resultId)) {
+                results.add(childResult);
+            }
+        }
+        return results;
     }
     
     @JsonIgnore
@@ -126,8 +131,6 @@ public class SamplePipelineRun {
     public boolean hasError() {
         return error!=null;
     }
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
 
     public Long getId() {
         return id;

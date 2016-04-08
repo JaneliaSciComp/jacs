@@ -9,7 +9,7 @@ package org.janelia.it.jacs.compute.service.tiledMicroscope;
 import java.util.Date;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.mbean.LargeVolumeSampleDiscovery;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.Event;
 
 /**
@@ -17,7 +17,7 @@ import org.janelia.it.jacs.model.tasks.Event;
  *
  * @author fosterl
  */
-public class LargeVolumeSampleDiscoveryService extends AbstractEntityService  {
+public class LargeVolumeSampleDiscoveryService extends AbstractDomainService  {
     @Override
     public void execute() throws Exception {
         EJBFactory.getLocalComputeBean().updateTaskStatus(processData.getProcessId(), "Executing", "Large Sample Disccovery Begun");

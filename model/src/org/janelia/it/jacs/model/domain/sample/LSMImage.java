@@ -20,6 +20,9 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchTraversal({})
     private Reference sample;
 
+    @SearchAttribute(key="sage_synced",label="Synchronized to SAGE",facet="sage_synced_b")
+    private Boolean sageSynced = false;
+    
     @SearchAttribute(key="chancolors_txt",label="Channel Colors")
     private String channelColors;
 
@@ -28,9 +31,16 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     @SearchAttribute(key="bcomp_txt",label="Brightness Compensation")
     private String brightnessCompensation;
+
+    @SearchAttribute(key="completion_dt",label="Completion Date")
+    private Date completionDate;
     
     // SAGE Terms
 
+    @SAGEAttribute(cvName="image_query", termName="create_date")
+    @SearchAttribute(key="tmog_dt",label="TMOG Date")
+    private Date tmogDate;
+    
     @SAGEAttribute(cvName="image_query", termName="id")
     @SearchAttribute(key="sage_id_i",label="SAGE Id")
     private Integer sageId;
@@ -91,6 +101,10 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="driver_txt",label="Driver")
     private String driver;
 
+    @SAGEAttribute(cvName="light_imagery", termName="file_size")
+    @SearchAttribute(key="file_size_l",label="File Size")
+    private Long fileSize;
+    
     @SAGEAttribute(cvName="fly", termName="effector")
     @SearchAttribute(key="effector_txt",label="Effector")
     private String effector;
@@ -98,7 +112,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SAGEAttribute(cvName="fly", termName="cross_barcode")
     @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
     private Integer crossBarcode;
-    
+
     @SAGEAttribute(cvName="light_imagery", termName="gender")
     @SearchAttribute(key="gender_txt",label="Gender",facet="gender_s")
     private String gender;
@@ -107,7 +121,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="full_age_txt",label="Full Age")
     private String fullAge;
 
-    @SAGEAttribute(cvName="light_imagery", termName="mount_protocol")
+    @SAGEAttribute(cvName="light_imagery", termName="mounting_protocol")
     @SearchAttribute(key="mount_protocol_txt",label="Mounting Protocol")
     private String mountingProtocol;
 
@@ -275,6 +289,14 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="vtline_txt",label="VT Line")
     private String vtLine;
 
+    @SAGEAttribute(cvName="light_imagery", termName="qi")
+    @SearchAttribute(key="qi_score_s",label="QI score")
+    private String qiScore;
+
+    @SAGEAttribute(cvName="light_imagery", termName="qm")
+    @SearchAttribute(key="qm_score_s",label="QM score")
+    private String qmScore;
+    
     @SAGEAttribute(cvName="line_query", termName="organism")
     @SearchAttribute(key="organism_txt",label="Organism")
     private String organism;
@@ -287,11 +309,11 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="flycore_id_i",label="Fly Core Id")
     private Integer flycoreId;
 
-    @SAGEAttribute(cvName="line", termName="flycore_lab")
+    @SAGEAttribute(cvName="line", termName="flycore_alias")
     @SearchAttribute(key="fcalias_s",label="Fly Core Alias")
     private String flycoreAlias;
 
-    @SAGEAttribute(cvName="line", termName="flycore_alias")
+    @SAGEAttribute(cvName="line", termName="flycore_lab")
     @SearchAttribute(key="fclab_s",label="Fly Core Lab Id")
     private String flycoreLabId;
     
@@ -315,10 +337,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="linehide_txt",label="Hide Line?",display=false)
     private String lineHide;
 
-
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
-    
-    public Reference getSample() {
+	public Reference getSample() {
         return sample;
     }
 
@@ -326,7 +345,15 @@ public class LSMImage extends Image implements HasAnatomicalArea {
         this.sample = sample;
     }
 
-    public String getChannelColors() {
+    public Boolean getSageSynced() {
+		return sageSynced;
+	}
+
+	public void setSageSynced(Boolean sageSynced) {
+		this.sageSynced = sageSynced;
+	}
+
+	public String getChannelColors() {
         return channelColors;
     }
 
@@ -348,6 +375,22 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     public void setBrightnessCompensation(String brightnessCompensation) {
         this.brightnessCompensation = brightnessCompensation;
+    }
+
+    public Date getTmogDate() {
+        return tmogDate;
+    }
+
+    public void setTmogDate(Date tmogDate) {
+        this.tmogDate = tmogDate;
+    }
+
+    public Date getCompletionDate() {
+        return completionDate;
+    }
+
+    public void setCompletionDate(Date completionDate) {
+        this.completionDate = completionDate;
     }
 
     public Integer getSageId() {
@@ -470,7 +513,15 @@ public class LSMImage extends Image implements HasAnatomicalArea {
         this.driver = driver;
     }
 
-    public String getEffector() {
+    public Long getFileSize() {
+		return fileSize;
+	}
+
+	public void setFileSize(Long fileSize) {
+		this.fileSize = fileSize;
+	}
+
+	public String getEffector() {
         return effector;
     }
 
@@ -836,6 +887,21 @@ public class LSMImage extends Image implements HasAnatomicalArea {
 
     public void setVtLine(String vtLine) {
         this.vtLine = vtLine;
+    }
+    public String getQiScore() {
+        return qiScore;
+    }
+
+    public void setQiScore(String qiScore) {
+        this.qiScore = qiScore;
+    }
+
+    public String getQmScore() {
+        return qmScore;
+    }
+
+    public void setQmScore(String qmScore) {
+        this.qmScore = qmScore;
     }
 
     public String getOrganism() {

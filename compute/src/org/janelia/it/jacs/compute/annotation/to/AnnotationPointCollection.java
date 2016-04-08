@@ -20,8 +20,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class AnnotationPointCollection {
     //date stamp on it, maybe a name string, a version number, and an ID
     @XmlElement public Long guid;
-    @XmlElement public Long sampleID = -1L; // May be omitted.  If given, refers to ID in jacs.
+    @XmlElement public Long sampleID = -1L; // May not be omitted.  Refers to ID in jacs.
     @XmlElement public Date creationDate;
     @XmlElement public String name;
+    @XmlElement public String brain;
+    @XmlElement public String notes = ""; // Optional
     @XmlElement public Integer versionNumber = 1;
 }

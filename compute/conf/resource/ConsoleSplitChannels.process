@@ -18,11 +18,11 @@
                 <output name="OUTPUT_EXTENSION"/>
             </operation>
     	    
-    	    <operation name="Create Temporary Result Nodes" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+    	    <operation name="Create Temporary Result Nodes" processor="org.janelia.it.jacs.compute.service.domain.node.CreateNamedResultFileNodeService">
     		    <input name="NAME" value="Temp"/>
-    	        <output name="RESULT_FILE_NODE"/>
-    	        <output name="RESULT_FILE_NODE_ID"/>
-                <output name="RESULT_FILE_NODE_DIR"/>
+                <input name="OUTPUT_VAR_NAME" value="TEMP_FILE_NODE"/>
+                <output name="TEMP_FILE_NODE"/>
+                <output name="TEMP_FILE_NODE_ID"/>
     	    </operation>
             
         </sequence>
@@ -30,7 +30,7 @@
         <sequence name="Splitting channels" waitForAsync="true" startEvent="running">
             <operation name="Split Channels" processor="queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DBulkChannelSplitService"/>
-                <input name="RESULT_FILE_NODE"/>
+                <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="INPUT_FILE" value="$V{FILE_PATH}"/>
                 <input name="OUTPUT_EXTENSION"/>
             </operation>
@@ -38,7 +38,7 @@
 	    
 	    <sequence name="Finalizing output" startEvent="running">
             <operation name="Set Results as Task Message" processor="org.janelia.it.jacs.compute.service.utility.SetTaskFileResultsService">
-                <input name="RESULT_FILE_NODE"/>
+                <input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>
                 <input name="OUTPUT_EXTENSION"/>
             </operation>
         </sequence>

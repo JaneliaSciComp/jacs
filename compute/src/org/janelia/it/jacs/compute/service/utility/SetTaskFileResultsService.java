@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
@@ -22,7 +22,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SetTaskFileResultsService extends AbstractEntityService {
+public class SetTaskFileResultsService extends AbstractDomainService {
 
 	protected Logger logger = Logger.getLogger(SetTaskFileResultsService.class);
 	

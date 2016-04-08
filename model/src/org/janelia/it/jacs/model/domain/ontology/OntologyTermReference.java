@@ -1,10 +1,23 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
-public class OntologyTermReference {
+import java.io.Serializable;
+
+public class OntologyTermReference implements Serializable {
 
     private Long ontologyId;
     private Long ontologyTermId;
 
+    public static OntologyTermReference createFor(OntologyTerm term) {
+        OntologyTerm currTerm = term;
+        while(!(currTerm instanceof Ontology) && currTerm!=null) {
+            currTerm = currTerm.getParent();
+        }
+        if (currTerm instanceof Ontology) {
+            return new OntologyTermReference((Ontology)currTerm, term);
+        }
+        throw new IllegalArgumentException("Term has no ontology ancestor");
+    }
+    
     public OntologyTermReference() {
     }
     
@@ -18,7 +31,6 @@ public class OntologyTermReference {
         this.ontologyTermId = term.getId();
     }
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public Long getOntologyId() {
         return ontologyId;
     }

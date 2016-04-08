@@ -1,19 +1,20 @@
 package org.janelia.it.jacs.model.domain.compartments;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
-public class Compartment implements HasFiles {
+public class Compartment implements HasFiles, Serializable {
 
     private String name;
     private String code;
     private String color;
     private Integer number;
-    private Map<FileType, String> files;
+    private Map<FileType, String> files = new HashMap<>();
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getName() {
         return name;
     }
@@ -51,6 +52,7 @@ public class Compartment implements HasFiles {
     }
 
     public void setFiles(Map<FileType, String> files) {
+        if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
     }
 }

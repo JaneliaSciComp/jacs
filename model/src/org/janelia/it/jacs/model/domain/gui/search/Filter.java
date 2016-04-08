@@ -23,31 +23,23 @@ public class Filter extends AbstractDomainObject implements IsParent {
     private String searchClass;
     @SearchAttribute(key="search_string_txt",label="Search String")
     private String searchString;
-    private List<Criteria> criteriaList;
+    private List<Criteria> criteriaList = new ArrayList<>();
     private String sort;
     
     public boolean hasCriteria() {
-        return criteriaList!=null && !criteriaList.isEmpty();
+        return !criteriaList.isEmpty();
     }
     
     public void addCriteria(Criteria criteria) {
-        if (criteriaList==null) {
-            this.criteriaList = new ArrayList<>();
-        }
-        else if (criteriaList.contains(criteria)) {
+        if (criteriaList.contains(criteria)) {
             return;
         }
         criteriaList.add(criteria);
     }
 
     public void removeCriteria(Criteria criteria) {
-        if (criteriaList==null) {
-            return;
-        }
         criteriaList.remove(criteria);
     }
-    
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
 
     public String getSearchClass() {
         return searchClass;
@@ -70,6 +62,7 @@ public class Filter extends AbstractDomainObject implements IsParent {
     }
 
     public void setCriteriaList(List<Criteria> criteriaList) {
+        if (criteriaList==null) throw new IllegalArgumentException("Property cannot be null");
         this.criteriaList = criteriaList;
     }
 
