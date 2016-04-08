@@ -292,10 +292,6 @@ public class SampleHelperNG extends DomainHelper {
             
             tileNum++;
         }
-    	        
-        if (lsmDirty) {
-        	logger.info("  LSMs changed, will mark sample for reprocessing");
-        }
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
                 
@@ -353,7 +349,10 @@ public class SampleHelperNG extends DomainHelper {
 
         // TODO: Auto-share sample if necessary 
 
-        if (needsReprocessing) {
+        if (needsReprocessing && sample.getId()!=null) {
+		    if (lsmDirty) {
+		    	logger.info("  LSMs changed, will mark sample for reprocessing");
+		    }
         	markForProcessing(sample);
         	sampleDirty = true;
         }
@@ -590,7 +589,7 @@ public class SampleHelperNG extends DomainHelper {
             // Ensure each tile is in the sample
             SampleTile sampleTile = objectiveSample.getTileByName(tileGroup.getTag());
             if (sampleTile==null) {
-            	logger.info("  No such tile: "+tileGroup.getTag());
+            	logger.info("  Existing sample does not contain tile: "+tileGroup.getTag());
                 return false;
             }
             seenTiles.add(sampleTile);
