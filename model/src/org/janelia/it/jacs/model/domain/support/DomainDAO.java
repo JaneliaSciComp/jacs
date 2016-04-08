@@ -237,15 +237,16 @@ public class DomainDAO {
             return null;
         }
 
+        String refStr = Reference.createFor(domainObject).toString();
         List<Reference> refList = new ArrayList<>();
-        MongoCursor<TreeNode> treeCursor = treeNodeCollection.find("{children.targetId:#}", domainObject.getId()).as(TreeNode.class);
+        MongoCursor<TreeNode> treeCursor = treeNodeCollection.find("{children:#}", refStr).as(TreeNode.class);
         for (TreeNode item : treeCursor) {
-            Reference newRef = new Reference(item.getClass().getName(), item.getId());
+            Reference newRef = Reference.createFor(item.getClass(), item.getId());
             refList.add(newRef);
         }
-        MongoCursor<ObjectSet> objSetCursor = objectSetCollection.find("{children.targetId:#}", domainObject.getId()).as(ObjectSet.class);
+        MongoCursor<ObjectSet> objSetCursor = objectSetCollection.find("{children:#}", refStr).as(ObjectSet.class);
         for (ObjectSet item : objSetCursor) {
-            Reference newRef = new Reference(item.getClass().getName(), item.getId());
+            Reference newRef = Reference.createFor(item.getClass(), item.getId());
             refList.add(newRef);
         }
         return refList;
@@ -317,7 +318,7 @@ public class DomainDAO {
      */
     @SuppressWarnings("unchecked")
     public <T extends DomainObject> T getDomainObject(String subjectKey, Class<T> domainClass, Long id) {
-        Reference reference = new Reference(domainClass.getName(), id);
+        Reference reference = Reference.createFor(domainClass, id);
         return (T) getDomainObject(subjectKey, reference);
     }
 
@@ -688,12 +689,13 @@ public class DomainDAO {
     }
 
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
+        String refStr = "Sample#"+sampleId;
         Set<String> subjects = getSubjectSet(subjectKey);
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            return toList(imageCollection.find("{sample.targetId:#,sageSynched:true}", sampleId).as(LSMImage.class));
+            return toList(imageCollection.find("{sampleRef:#,sageSynched:true}", refStr).as(LSMImage.class));
         }
         else {
-            return toList(imageCollection.find("{sample.targetId:#,sageSynched:true,readers:{$in:#}}", sampleId, subjects).as(LSMImage.class));
+            return toList(imageCollection.find("{sampleRef:#,sageSynched:true,readers:{$in:#}}", refStr, subjects).as(LSMImage.class));
         }
     }
 
@@ -708,8 +710,9 @@ public class DomainDAO {
     }
 
     public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
+        String refStr = "Sample#"+sampleId;
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}", sampleId, subjects).as(NeuronFragment.class));
+        return toList(fragmentCollection.find("{sampleRef:#,readers:{$in:#}}", refStr, subjects).as(NeuronFragment.class));
     }
 
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
@@ -722,13 +725,14 @@ public class DomainDAO {
         return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}", id, subjects).as(TreeNode.class);
     }
 
-    public TreeNode getParentTreeNodes(String subjectKey, Long id) {
+    public TreeNode getParentTreeNodes(String subjectKey, Reference ref) {
+        String refStr = ref.toString();
         Set<String> subjects = getSubjectSet(subjectKey);
         if (subjects == null) {
-            return treeNodeCollection.findOne("{'children.targetId':#}", id).as(TreeNode.class);
+            return treeNodeCollection.findOne("{'children':#}", refStr).as(TreeNode.class);
         }
         else {
-            return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}", id, subjects).as(TreeNode.class);
+            return treeNodeCollection.findOne("{'children':#,readers:{$in:#}}", refStr, subjects).as(TreeNode.class);
         }
     }
 

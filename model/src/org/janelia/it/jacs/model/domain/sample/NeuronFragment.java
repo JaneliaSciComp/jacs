@@ -22,7 +22,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 public class NeuronFragment extends AbstractDomainObject implements HasRelativeFiles {
 
     @SearchTraversal({NeuronFragment.class})
-    private Reference sample;
+    private Reference sampleRef;
     
     private Long separationId;
         
@@ -39,11 +39,11 @@ public class NeuronFragment extends AbstractDomainObject implements HasRelativeF
     }
 
     public Reference getSample() {
-		return sample;
+		return sampleRef;
 	}
 
 	public void setSample(Reference sample) {
-		this.sample = sample;
+		this.sampleRef = sample;
 	}
 
 	public Long getSeparationId() {

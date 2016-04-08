@@ -18,7 +18,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 public class LSMImage extends Image implements HasAnatomicalArea {
 
     @SearchTraversal({})
-    private Reference sample;
+    private Reference sampleRef;
 
     @SearchAttribute(key="sage_synced",label="Synchronized to SAGE",facet="sage_synced_b")
     private Boolean sageSynced = false;
@@ -338,11 +338,11 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     private String lineHide;
 
 	public Reference getSample() {
-        return sample;
+        return sampleRef;
     }
 
     public void setSample(Reference sample) {
-        this.sample = sample;
+        this.sampleRef = sample;
     }
 
     public Boolean getSageSynced() {

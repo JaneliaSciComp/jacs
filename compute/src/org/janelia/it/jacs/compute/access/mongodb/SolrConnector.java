@@ -343,7 +343,7 @@ public class SolrConnector {
 				TreeNode treeNode = null;
 				DomainObject testObj = domainObject;
 				int depth = 0;
-				while (depth<10 && (treeNode=dao.getParentTreeNodes(null, testObj.getId()))!=null) {
+				while (depth<10 && (treeNode=dao.getParentTreeNodes(null, Reference.createFor(testObj)))!=null) {
 					ancestorIds.add(treeNode.getId());
 					testObj = treeNode;
 					depth++;

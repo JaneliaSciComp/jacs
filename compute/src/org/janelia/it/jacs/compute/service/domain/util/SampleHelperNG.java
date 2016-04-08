@@ -526,8 +526,8 @@ public class SampleHelperNG extends DomainHelper {
         
         ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
         if (objectiveSample==null) {
-            objectiveSample = new ObjectiveSample();
-            sample.addObjectiveSample(objective, objectiveSample);
+            objectiveSample = new ObjectiveSample(objective);
+            sample.addObjectiveSample(objectiveSample);
             synchronizeTiles(objectiveSample, tileGroupList);
             dirty = true;
         }
@@ -1014,7 +1014,7 @@ public class SampleHelperNG extends DomainHelper {
         separation.setFiles(new HashMap<FileType,String>());
 
         ReverseReference fragmentsReference = new ReverseReference();
-        fragmentsReference.setReferringClassName(NeuronFragment.class.getName());
+        fragmentsReference.setReferringClassName(NeuronFragment.class.getSimpleName());
         fragmentsReference.setReferenceAttr("separationId");
         fragmentsReference.setReferenceId(separation.getId());
         separation.setFragmentsReference(fragmentsReference);
@@ -1049,7 +1049,7 @@ public class SampleHelperNG extends DomainHelper {
         return result;
     }
 
-    public Map<String,FileGroup> createFileGroups(HasFilepath parent, List<String> filepaths) throws Exception {
+    public List<FileGroup> createFileGroups(HasFilepath parent, List<String> filepaths) throws Exception {
 
         Map<String,FileGroup> groups = new HashMap<>();
     
@@ -1129,7 +1129,7 @@ public class SampleHelperNG extends DomainHelper {
             
             FileGroup group = groups.get(key);
             if (group==null) {
-                group = new FileGroup();
+                group = new FileGroup(key);
                 group.setFilepath(parent.getFilepath());
                 group.setFiles(new HashMap<FileType,String>());
                 groups.put(key, group);
@@ -1137,8 +1137,8 @@ public class SampleHelperNG extends DomainHelper {
             
             DomainUtils.setFilepath(group, fileType, filepath);
         }
-        
-        return groups;
+
+        return new ArrayList<>(groups.values());
     }
 
     public void sortMembersByName(ObjectSet objectSet) throws Exception {

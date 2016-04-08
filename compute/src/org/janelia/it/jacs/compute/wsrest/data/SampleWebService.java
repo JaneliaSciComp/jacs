@@ -58,7 +58,7 @@ public class SampleWebService extends ResourceConfig {
             if (sampleId!=null) {
                 return dao.getDomainObjectsByName(subjectKey, Sample.class, sampleName);
             } else {
-                Reference ref = new Reference(Sample.class.getCanonicalName(), sampleId);
+                Reference ref = Reference.createFor(Sample.class, sampleId);
                 List<Reference> refList = new ArrayList<>();
                 refList.add(ref);
                 return dao.getDomainObjects(subjectKey, refList);

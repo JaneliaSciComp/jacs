@@ -2,10 +2,11 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -17,6 +18,8 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 
 /**
  * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 
@@ -78,57 +81,66 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
     
-    private Map<String, ObjectiveSample> objectives = new HashMap<>();
+    private List<ObjectiveSample> objectiveSamples = new ArrayList<>();
 
     @JsonProperty
-    public Map<String, ObjectiveSample> getObjectives() {
-        return objectives;
+    public List<ObjectiveSample> getObjectiveSamples() {
+        return objectiveSamples;
     }
 
     @JsonProperty
-    public void setObjectives(Map<String, ObjectiveSample> objectives) {
-        if (objectives==null) throw new IllegalArgumentException("Property cannot be null");
-        this.objectives = objectives;
-        for(String objective : objectives.keySet()) {
-            ObjectiveSample objectiveSample = objectives.get(objective);
-            objectiveSample.setObjective(objective);
+    public void setObjectiveSamples(List<ObjectiveSample> objectiveSamples) {
+        if (objectiveSamples==null) throw new IllegalArgumentException("Property cannot be null");
+        this.objectiveSamples = objectiveSamples;
+        for(ObjectiveSample objectiveSample : objectiveSamples) {
             objectiveSample.setParent(this);
         }
+        resortObjectiveSamples();
     }
     
     @JsonIgnore
-    public void addObjectiveSample(String objective, ObjectiveSample objectiveSample) {
-        objectiveSample.setObjective(objective);
+    public void addObjectiveSample(ObjectiveSample objectiveSample) {
         objectiveSample.setParent(this);
-        objectives.put(objective, objectiveSample);
+        objectiveSamples.add( objectiveSample);
+        resortObjectiveSamples();
+    }
+
+    @JsonIgnore
+    private void resortObjectiveSamples() {
+        Collections.sort(objectiveSamples, new Comparator<ObjectiveSample>() {
+            @Override
+            public int compare(ObjectiveSample o1, ObjectiveSample o2) {
+                return ComparisonChain.start()
+                        .compare(o1.getObjective(), o2.getObjective(), Ordering.natural().nullsLast())
+                        .result();
+            }
+        });
     }
 
     @JsonIgnore
     public void removeObjectiveSample(ObjectiveSample objectiveSample) {
-        if (objectives.remove(objectiveSample.getObjective())==objectiveSample) {
+        if (objectiveSamples.remove(objectiveSample)) {
             objectiveSample.setParent(null);
         }
     }
 
     @JsonIgnore
-    public List<String> getOrderedObjectives() {
-        List<String> sortedObjectives = new ArrayList<>(objectives.keySet());
-        Collections.sort(sortedObjectives);
-        return Collections.unmodifiableList(sortedObjectives);
-    }
-
-    @JsonIgnore
     public ObjectiveSample getObjectiveSample(String objective) {
-        return objectives.get(objective);
-    }
-
-    @JsonIgnore
-    public List<ObjectiveSample> getObjectiveSamples() {
-        List<ObjectiveSample> samples = new ArrayList<>();
-        for(String objective : getOrderedObjectives()) {
-            samples.add(getObjectiveSample(objective));
+        for(ObjectiveSample objectiveSample : objectiveSamples) {
+            if (objectiveSample.getObjective().equals(objective)) {
+                return objectiveSample;
+            }
         }
-        return samples;
+        return null;
+    }
+    
+    @JsonIgnore
+    public List<String> getObjectives() {
+        List<String> objectives = new ArrayList<>();
+        for(ObjectiveSample objectiveSample : objectiveSamples) {
+            objectives.add(objectiveSample.getObjective());
+        }
+        return objectives;
     }
     
     @JsonIgnore

@@ -64,6 +64,7 @@ public class DomainUtils {
     private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.<Class<? extends DomainObject>, Class<? extends DomainObject>>create();
     private static final List<Class<? extends DomainObject>> searchClasses = new ArrayList<>();
     private static final Map<String,String> searchTypeToClassName = new HashMap<>();
+    private static final Map<String,String> simpleToQualifiedNames = new HashMap<>();
     
     static {
         registerAnnotatedClasses();
@@ -85,10 +86,13 @@ public class DomainUtils {
                 }
                 log.info("Registering "+nodeClass.getName()+" as mapped class for type '"+collectionName+"'");
                 typeClasses.put(collectionName, nodeClass);
+                simpleToQualifiedNames.put(nodeClass.getSimpleName(), nodeClass.getName());
                 
+                // TODO: make this recursive to support more than 1 level of subtypes
                 for(Class<? extends DomainObject> subclass : reflections.getSubTypesOf(nodeClass)) {
                     log.info("  Registering "+subclass.getName()+" as a subtype");
                     subClasses.put(nodeClass, subclass);
+                    simpleToQualifiedNames.put(subclass.getSimpleName(), subclass.getName());
                 }
                 
             }
@@ -109,7 +113,7 @@ public class DomainUtils {
         });  
         for(Class<?> searchClazz : searchClasses) {
             String searchTypeKey = searchClazz.getAnnotation(SearchType.class).key();
-            searchTypeToClassName.put(searchTypeKey, searchClazz.getName());
+            searchTypeToClassName.put(searchTypeKey, searchClazz.getSimpleName());
         }
     }
 
@@ -175,12 +179,19 @@ public class DomainUtils {
     
     public static Class<? extends DomainObject> getObjectClassByName(String className) {
         if (className==null) return null;
+        if (!className.contains(".")) {
+            String qualified = simpleToQualifiedNames.get(className);
+            if (qualified==null) {
+                throw new IllegalArgumentException("Unknown domain object class: "+className);
+            }
+            className = qualified;
+        }
         Class<?> clazz;
         try {
             clazz = Class.forName(className);
         }
         catch (ClassNotFoundException e) {
-            throw new RuntimeException("Illegal domain object class: "+className);
+            throw new RuntimeException("Unknown domain object class: "+className);
         }
         if (!DomainObject.class.isAssignableFrom(clazz)) {
             throw new RuntimeException("Not a domain object class: "+className);
@@ -192,6 +203,11 @@ public class DomainUtils {
         return searchClasses;
     }
 
+    /**
+     * Takes a @SearchType.key and returns the corresponding simple class name.
+     * @param type
+     * @return
+     */
     public static String getClassNameForSearchType(String type) {
         return searchTypeToClassName.get(type);
     }
@@ -555,7 +571,7 @@ public class DomainUtils {
             ObjectSetCriteria source = (ObjectSetCriteria)criteria;
             ObjectSetCriteria newCriteria = new ObjectSetCriteria();
             newCriteria.setObjectSetName(source.getObjectSetName());
-            Reference setReference = new Reference(source.getObjectSetReference().getTargetClassName(), source.getObjectSetReference().getTargetId());
+            Reference setReference = Reference.createFor(source.getObjectSetReference().getTargetClassName(), source.getObjectSetReference().getTargetId());
             newCriteria.setObjectSetReference(setReference);
             return newCriteria;
         }

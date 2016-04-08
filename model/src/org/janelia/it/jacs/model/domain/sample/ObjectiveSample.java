@@ -15,12 +15,23 @@ import com.google.common.collect.Lists;
  */
 public class ObjectiveSample implements Serializable {
 
+    private String objective;
     private String chanSpec;
     private List<SampleTile> tiles = new ArrayList<>();
     private List<SamplePipelineRun> pipelineRuns = new ArrayList<>();
     
-    private transient String objective;
     private transient Sample parent;
+
+    public ObjectiveSample() {
+    }
+    
+    public ObjectiveSample(String objective) {
+        this.objective = objective;
+    }
+
+    public void setObjective(String objective) {
+        this.objective = objective;
+    }
 
     public String getChanSpec() {
         return chanSpec;
@@ -33,11 +44,6 @@ public class ObjectiveSample implements Serializable {
     @JsonIgnore
     public String getObjective() {
         return objective;
-    }
-
-    @JsonIgnore
-    void setObjective(String objective) {
-        this.objective = objective;
     }
 
     @JsonIgnore

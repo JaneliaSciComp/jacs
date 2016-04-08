@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.service.domain.discovery;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,25 +44,25 @@ public class PostProcessingResultsDiscoveryService extends AbstractDomainService
         FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
         
-        Map<String,FileGroup> fileGroups = sampleHelper.createFileGroups(result, filepaths);
+        List<FileGroup> fileGroups = sampleHelper.createFileGroups(result, filepaths);
         
-        Map<String,String> prefixToKeyMap = new HashMap<>();
+        Map<String,String> keyToCorrectedKeyMap = new HashMap<>();
         for(InputImage inputImage : inputImages) {
-        	prefixToKeyMap.put(inputImage.getOutputPrefix(), inputImage.getKey());
+        	keyToCorrectedKeyMap.put(inputImage.getOutputPrefix(), inputImage.getKey());
         }
         
         Map<String,FileGroup> groups = new HashMap<>(); 
-        for(String outputPrefix : fileGroups.keySet()) {
-        	FileGroup fileGroup = fileGroups.get(outputPrefix);
-        	String key = prefixToKeyMap.get(outputPrefix);
-        	if (key==null) {
-        		logger.warn("Unrecognized output prefix: "+outputPrefix);
+        for(FileGroup fileGroup : fileGroups) {
+            String key = fileGroup.getKey();
+        	String correctedKey = keyToCorrectedKeyMap.get(key);
+        	if (correctedKey==null) {
+        		logger.warn("Unrecognized output prefix: "+key);
         		continue;
         	}
-        	groups.put(key, fileGroup);
+        	groups.put(correctedKey, fileGroup);
         }
         
-        result.setGroups(groups);
+        result.setGroups(new ArrayList<>(groups.values()));
         
         sampleHelper.saveSample(sample);
         data.putItem("RESULT_ENTITY_ID", result.getId());

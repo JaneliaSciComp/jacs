@@ -1,6 +1,6 @@
 package org.janelia.it.jacs.model.domain.interfaces;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
@@ -16,5 +16,5 @@ public interface HasFileGroups {
     
     public FileGroup getGroup(String key);
     
-    public Map<String, FileGroup> getGroups();
+    public List<FileGroup> getGroups();
 }

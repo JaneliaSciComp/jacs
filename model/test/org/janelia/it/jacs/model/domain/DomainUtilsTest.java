@@ -65,19 +65,19 @@ public class DomainUtilsTest {
     @Test
     public void testGet2dTypeNames() throws Exception {
         
-        FileGroup group1 = new FileGroup();
+        FileGroup group1 = new FileGroup("group1");
         group1.setFilepath("/group1");
         group1.getFiles().put(FileType.AllMip, "allmip.png");
         group1.getFiles().put(FileType.SignalMip, "signalmip.png");
 
-        FileGroup group2 = new FileGroup();
+        FileGroup group2 = new FileGroup("group2");
         group2.setFilepath("/group2");
         group2.getFiles().put(FileType.AllMip, "allmip.png");
         group2.getFiles().put(FileType.ReferenceMip, "refmip.png");
         
         LSMSummaryResult result = new LSMSummaryResult();
-        result.getGroups().put("group1", group1);
-        result.getGroups().put("group2", group2);
+        result.getGroups().add(group1);
+        result.getGroups().add(group2);
         
         Multiset<String> names = DomainUtils.get2dTypeNames((HasFileGroups)result);
         Assert.assertEquals(3, names.elementSet().size());
@@ -225,9 +225,9 @@ public class DomainUtilsTest {
         
         Map<Reference,Sample> map = DomainUtils.getMapByReference(Arrays.asList(d1, d2, d3));
         Assert.assertEquals(3, map.size());
-        Assert.assertEquals(d1, map.get(Reference.createFor(Sample.class.getName(), 1L)));
-        Assert.assertEquals(d2, map.get(Reference.createFor(Sample.class.getName(), 2L)));
-        Assert.assertEquals(d3, map.get(Reference.createFor(Sample.class.getName(), 3L)));
+        Assert.assertEquals(d1, map.get(Reference.createFor(Sample.class.getSimpleName(), 1L)));
+        Assert.assertEquals(d2, map.get(Reference.createFor(Sample.class.getSimpleName(), 2L)));
+        Assert.assertEquals(d3, map.get(Reference.createFor(Sample.class.getSimpleName(), 3L)));
     }
     
     @Test

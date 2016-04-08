@@ -2,6 +2,9 @@ package org.janelia.it.jacs.model.domain;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * A reference to a DomainObject in a specific collection.
  *
@@ -15,23 +18,27 @@ public class Reference implements Serializable {
     public Reference() {
     }
 
-    public Reference(String targetClassName, Long targetId) {
-        this.targetClassName = targetClassName;
-        this.targetId = targetId;
+    private Reference(String className, Long id) {
+        this.targetClassName = className;
+        this.targetId = id;
     }
 
+    @JsonIgnore
     public String getTargetClassName() {
         return targetClassName;
     }
 
-    public void setTargetClassName(String type) {
-        this.targetClassName = type;
+    @JsonIgnore
+    public void setTargetClassName(String className) {
+        this.targetClassName = className;
     }
 
+    @JsonIgnore
     public Long getTargetId() {
         return targetId;
     }
 
+    @JsonIgnore
     public void setTargetId(Long targetId) {
         this.targetId = targetId;
     }
@@ -78,6 +85,7 @@ public class Reference implements Serializable {
         return true;
     }
 
+    @JsonValue
     @Override
     public String toString() {
         return targetClassName + "#" + targetId;
@@ -85,9 +93,14 @@ public class Reference implements Serializable {
 
     public static Reference createFor(DomainObject domainObject) {
         if (domainObject==null) throw new IllegalArgumentException("Null domain object reference");
-        return new Reference(domainObject.getClass().getName(), domainObject.getId());
+        return new Reference(domainObject.getClass().getSimpleName(), domainObject.getId());
     }
 
+    public static Reference createFor(Class<?> clazz, Long id) {
+        if (clazz==null) throw new IllegalArgumentException("Null domain object class");
+        return new Reference(clazz.getSimpleName(), id);
+    }
+    
     public static Reference createFor(String className, Long id) {
         if (className==null) throw new IllegalArgumentException("Null domain object class name");
         if (id==null) throw new IllegalArgumentException("Null domain object id");

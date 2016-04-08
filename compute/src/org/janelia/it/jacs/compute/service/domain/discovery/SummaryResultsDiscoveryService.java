@@ -53,7 +53,7 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
         FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
         
-        Map<String,FileGroup> groups = sampleHelper.createFileGroups(result, filepaths);
+        List<FileGroup> groups = sampleHelper.createFileGroups(result, filepaths);
         result.setGroups(groups);
 
         sampleHelper.saveSample(sample);
