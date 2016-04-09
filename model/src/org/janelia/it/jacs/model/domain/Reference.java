@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.domain;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -17,7 +18,7 @@ public class Reference implements Serializable {
 
     public Reference() {
     }
-
+    
     private Reference(String className, Long id) {
         this.targetClassName = className;
         this.targetId = id;
@@ -90,7 +91,7 @@ public class Reference implements Serializable {
     public String toString() {
         return targetClassName + "#" + targetId;
     }
-
+    
     public static Reference createFor(DomainObject domainObject) {
         if (domainObject==null) throw new IllegalArgumentException("Null domain object reference");
         return new Reference(domainObject.getClass().getSimpleName(), domainObject.getId());
@@ -107,6 +108,7 @@ public class Reference implements Serializable {
         return new Reference(className, id);
     }
     
+    @JsonCreator
     public static Reference createFor(String strRef) {
         if (strRef==null) throw new IllegalArgumentException("Null string reference");
         String[] s = strRef.split("#");

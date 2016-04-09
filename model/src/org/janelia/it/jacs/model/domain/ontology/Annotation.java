@@ -4,8 +4,6 @@ import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-
 /**
  * An annotation on a single domain object, using some Ontology.  
  * 
@@ -14,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 @MongoMapped(collectionName="annotation",label="Annotation")
 public class Annotation extends AbstractDomainObject {
     
-    @JsonUnwrapped
     private Reference target;
     private OntologyTermReference keyTerm;
     private OntologyTermReference valueTerm;
