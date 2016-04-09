@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,7 +17,6 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +34,6 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
-import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -84,9 +81,7 @@ import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
-import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -100,7 +95,6 @@ import org.reflections.ReflectionUtils;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.mongodb.WriteConcern;
 
@@ -197,10 +191,10 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Building disk-based SAGE property map");
         this.largeOp = new MongoLargeOperations(dao);
-        largeOp.buildSageImagePropMap();
 
-        log.info("Building LSM property map");
-        buildLsmAttributeMap();
+//        log.info("Building LSM property map");
+//        largeOp.buildSageImagePropMap();
+//        buildLsmAttributeMap();
         
         log.info("Building disk-based Annotation map");
         buildAnnotationMap();
@@ -208,27 +202,27 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Loading data into MongoDB");
         getSession().setFlushMode(FlushMode.MANUAL);
         
-        long startAll = System.currentTimeMillis(); 
+        long startAll = System.currentTimeMillis();
 
-        log.info("Adding subjects");
-        loadSubjects();
-
-        log.info("Adding data sets");
-        loadDataSets();
-
-        log.info("Adding fly lines");
-        loadFlyLines();
-        
-        log.info("Adding samples");
-        // TODO: handle deleted (i.e. "hidden") neurons
-        // TODO: handle pattern mask results in samples (knappj)
-        loadSamples();
-        
-        log.info("Adding screen samples");
-        loadScreenData();
-        
-        log.info("Adding compartment sets");
-        loadCompartmentSets();
+//        log.info("Adding subjects");
+//        loadSubjects();
+//
+//        log.info("Adding data sets");
+//        loadDataSets();
+//
+//        log.info("Adding fly lines");
+//        loadFlyLines();
+//
+//        log.info("Adding samples");
+//        // TODO: handle deleted (i.e. "hidden") neurons
+//        // TODO: handle pattern mask results in samples (knappj)
+//        loadSamples();
+//
+//        log.info("Adding screen samples");
+//        loadScreenData();
+//
+//        log.info("Adding compartment sets");
+//        loadCompartmentSets();
 
         log.info("Adding alignment boards");
         loadAlignmentBoards();
@@ -1420,7 +1414,9 @@ public class MongoDbImport extends AnnotationDAO {
     private NeuronFragment getNeuronFragment(Entity sampleEntity, Entity separationEntity, Entity fragmentEntity) throws Exception {
         NeuronFragment neuronFragment = new NeuronFragment();
         neuronFragment.setId(fragmentEntity.getId());
-        neuronFragment.setSample(getReference(sampleEntity));
+        if (sampleEntity!=null) {
+            neuronFragment.setSample(getReference(sampleEntity));
+        }
         neuronFragment.setName(fragmentEntity.getName());
         neuronFragment.setOwnerKey(fragmentEntity.getOwnerKey());
         neuronFragment.setReaders(getSubjectKeysWithPermission(fragmentEntity, "r"));
@@ -1431,8 +1427,10 @@ public class MongoDbImport extends AnnotationDAO {
         if (number!=null) {
             neuronFragment.setNumber(Integer.parseInt(number));
         }
-        neuronFragment.setSeparationId(separationEntity.getId());
-        neuronFragment.setFilepath(getFilepath(separationEntity));
+        if (separationEntity!=null) {
+            neuronFragment.setSeparationId(separationEntity.getId());
+            neuronFragment.setFilepath(getFilepath(separationEntity));
+        }
         
         Map<FileType,String> images = new HashMap<FileType,String>();
         addImage(images,FileType.SignalMip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
@@ -1446,7 +1444,9 @@ public class MongoDbImport extends AnnotationDAO {
     private CuratedNeuron getCuratedNeuron(Entity sampleEntity, Entity separationEntity, Entity fragmentEntity) throws Exception {
         CuratedNeuron curatedFragment = new CuratedNeuron();
         curatedFragment.setId(fragmentEntity.getId());
-        curatedFragment.setSample(getReference(sampleEntity));
+        if (sampleEntity!=null) {
+            curatedFragment.setSample(getReference(sampleEntity));
+        }
         curatedFragment.setName(fragmentEntity.getName());
         curatedFragment.setOwnerKey(fragmentEntity.getOwnerKey());
         curatedFragment.setReaders(getSubjectKeysWithPermission(fragmentEntity, "r"));
@@ -1457,7 +1457,10 @@ public class MongoDbImport extends AnnotationDAO {
         if (number!=null) {
             curatedFragment.setNumber(Integer.parseInt(number));
         }
-        curatedFragment.setSeparationId(separationEntity.getId());
+
+        if (separationEntity!=null) {
+            curatedFragment.setSeparationId(separationEntity.getId());
+        }
 
         populateChildren(fragmentEntity);
         for(Entity childFragment : EntityUtils.getChildrenOfType(fragmentEntity, EntityConstants.TYPE_NEURON_FRAGMENT)) {
@@ -2283,12 +2286,14 @@ public class MongoDbImport extends AnnotationDAO {
         		item.setVisible("true".equalsIgnoreCase(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY)));
         		item.setColor(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
         		item.setRenderMethod(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RENDER_METHOD));
-        		// TODO: Fix this. It creates references to samples and neurons just fine, but compartments are not domain objects so the reference type is null
-        		Reference target = getReference(targetEntity);
-        		item.setTarget(target);
-        		List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
-        		if (!children.isEmpty()) item.setChildren(children);	
-        		items.add(item);
+        		// TODO: Fix this. It creates references to samples and neurons just fine, but compartments are not domain objects so the reference type is null. We need some way to reference compartments. 
+        		if (!targetEntity.getEntityTypeName().equals(EntityConstants.TYPE_COMPARTMENT)) {
+             		Reference target = getReference(targetEntity);
+            		item.setTarget(target);
+            		List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
+            		if (!children.isEmpty()) item.setChildren(children);	
+            		items.add(item);
+        		}
     		}
     	}
     	
@@ -2530,7 +2535,7 @@ public class MongoDbImport extends AnnotationDAO {
         }
         
         Map<Long,Entity> mapping = new HashMap<>();
-        for(String childType : childrenByType.keys()) {
+        for(String childType : childrenByType.keySet()) {
             mapping.putAll(translateEntities(childType, childrenByType.get(childType), indent));
         }
      
@@ -2615,38 +2620,39 @@ public class MongoDbImport extends AnnotationDAO {
 	    // --------------------------------------------------------------------------------
 		// Make sure each entity can be loaded
 	    for(Entity childEntity : entityMembers) {
-	    	
-        	Entity importEntity = childEntity;
+
         	Entity translatedEntity = translatedEntities.get(childEntity.getId());
         	
         	if (translatedEntity!=null) {
         		// already translated this above
-        		log.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+importEntity.getEntityTypeName()+"#"+importEntity.getId());
-        		importEntity = translatedEntity;
+        		log.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+childEntity.getEntityTypeName()+"#"+childEntity.getId());
         	}
         	else if (TRANSLATE_ENTITIES) {
-                String importCollection = getCollectionName(importEntity.getEntityTypeName());
+                String importCollection = getCollectionName(childEntity.getEntityTypeName());
         	    if ((importCollection==null || "image".equals(importCollection)) && !EntityConstants.TYPE_LSM_STACK.equals(childEntity.getEntityTypeName())) {
             		// If we don't know how to import this entity, see if we can substitute a higher-level entity for the one that the user referenced. 
         	        // For example, if they referenced a sample processing result, we find the parent sample. Same goes for neuron separations, etc.
-                    log.info(indent+"  Finding higher-level ancestors for unknown entity "+importEntity.getEntityTypeName()+"#"+importEntity.getId());   
-        	        Entity ancestor = getHigherLevelAncestor(importEntity, new HashSet<Long>());
+                    log.debug(indent+"  Finding higher-level ancestors for unknown entity "+childEntity.getEntityTypeName()+"#"+childEntity.getId());
+        	        Entity ancestor = getHigherLevelAncestor(childEntity, new HashSet<Long>());
         	        if (ancestor!=null) {
-                        log.info(indent+"  Will reference "+ancestor.getEntityTypeName()+"#"+ancestor.getId()+" instead of unknown "+importEntity.getEntityTypeName()+"#"+importEntity.getId());                       
-                        importEntity = ancestor;
-                        break;
+                        log.info(indent+"  Will reference "+ancestor.getEntityTypeName()+"#"+ancestor.getId()+" instead of unknown "+childEntity.getEntityTypeName()+"#"+childEntity.getId());
+                        translatedEntity = ancestor;
                     }
         	    }
+                if (translatedEntity!=null) {
+                    String collectionName = getCollectionName(translatedEntity.getEntityTypeName());
+                    if (collectionName != null) {
+                        translatedEntities.put(childEntity.getId(), translatedEntity);
+                    }
+                    else {
+                        translatedEntities.remove(childEntity.getId());
+                    }
+                }
         	}
-        
-            String collectionName = getCollectionName(translatedEntity.getEntityTypeName());
-            if (collectionName!=null) {
-                translatedEntities.put(childEntity.getId(), importEntity);
-            }
-            else {
-                translatedEntities.remove(childEntity.getId()); 
-            }
-            
+
+            Entity importEntity = translatedEntity==null?childEntity:translatedEntity;
+            String collectionName = getCollectionName(importEntity.getEntityTypeName());
+
             if (INSERT_ROGUE_ENTITIES) {
                 // A minor optimization, since we can only do rogue imports on images and neuron fragments
                 if ("image".equals(collectionName) || "fragment".equals(collectionName)) {
@@ -2768,15 +2774,28 @@ public class MongoDbImport extends AnnotationDAO {
             	LSMImage image = getLSMImage(null, entity);
             	if (image!=null) {
                     imageCollection.insert(image);
+                    insertAnnotations(getAnnotations(image.getId()), image);
             	}
             }
             else if (EntityConstants.TYPE_IMAGE_3D.equals(entityType)) {
             	Image image = getImage(entity);
             	imageCollection.insert(image);
+            	insertAnnotations(getAnnotations(image.getId()), image);
             }
             else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
             	Image image = getImage(entity);
             	imageCollection.insert(image);
+            	insertAnnotations(getAnnotations(image.getId()), image);
+            }
+            else if (EntityConstants.TYPE_NEURON_FRAGMENT.equals(entityType)) {
+                NeuronFragment fragment = getNeuronFragment(null, null, entity);
+                fragmentCollection.insert(fragment);
+                insertAnnotations(getAnnotations(fragment.getId()), fragment);
+            }
+            else if (EntityConstants.TYPE_CURATED_NEURON.equals(entityType)) {
+                NeuronFragment fragment = getCuratedNeuron(null, null, entity);
+                fragmentCollection.insert(fragment);
+                insertAnnotations(getAnnotations(fragment.getId()), fragment);
             }
             else {
             	log.warn(indent+"  Cannot handle rogue entity type: "+entityType+"#"+entity.getId());
@@ -2798,7 +2817,12 @@ public class MongoDbImport extends AnnotationDAO {
     /* UTILITY METHODS */
 
     private Reference getReference(Entity entity) {
-        return Reference.createFor(getClassName(entity.getEntityTypeName()), entity.getId());
+        String className = getClassName(entity.getEntityTypeName());
+        if (className==null) {
+            log.warn("Cannot create reference to "+entity.getEntityTypeName());
+            return null;
+        }
+        return Reference.createFor(className, entity.getId());
 	}
 
     private Reference getReference(DomainObject domainObject) {
