@@ -115,7 +115,7 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
      
         // Find consensus channel colors
         logger.debug("channelMapping="+channelMapping);
-        String channelColors = sampleHelper.getConsensusLsmAttributeValue(sampleArea, "channelColors");
+        String channelColors = sampleHelper.getConsensusTileAttributeValue(sampleArea, "channelColors", ",");
         
         if (channelColors!=null) {
             List<String> consensusLsmColors = Task.listOfStringsFromCsvString(channelColors);

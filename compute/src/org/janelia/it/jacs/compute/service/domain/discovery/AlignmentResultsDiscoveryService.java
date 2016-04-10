@@ -58,10 +58,7 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
         Map<String,File> fileMap = new HashMap<>();
         for(String filepath : filepaths) {
             File file = new File(filepath);
-            String filename = file.getName();
-            if (filename.endsWith(".properties")) {
-                fileMap.put(filename, file);
-            }
+            fileMap.put(file.getName(), file);
         }
         
         List<Long> alignmentIds = new ArrayList<>(); 
@@ -214,7 +211,6 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
         
         sampleHelper.saveSample(sample);
 
-        contextLogger.info("Putting "+alignmentIds+" in ALIGNMENT_ID");
         data.putItem("ALIGNMENT_ID", alignmentIds);
     }
     
