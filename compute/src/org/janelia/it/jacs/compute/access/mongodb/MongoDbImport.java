@@ -223,9 +223,9 @@ public class MongoDbImport extends AnnotationDAO {
 //
 //        log.info("Adding compartment sets");
 //        loadCompartmentSets();
-
-        log.info("Adding alignment boards");
-        loadAlignmentBoards();
+//
+//        log.info("Adding alignment boards");
+//        loadAlignmentBoards();
 
         log.info("Adding folders");
         loadWorkspaces();
@@ -2974,7 +2974,7 @@ public class MongoDbImport extends AnnotationDAO {
         if (filepath==null) return null;
         if (result==null) return filepath;
         String parentFilepath = result.getFilepath();
-        if (parentFilepath==null) throw new IllegalArgumentException("Result "+filepath+" has null parent filepath");
+        if (parentFilepath==null) return filepath;
         String prefix = parentFilepath.endsWith("/") ? parentFilepath : parentFilepath+"/";
         if (!filepath.startsWith(prefix)) {
             return filepath;
