@@ -47,6 +47,7 @@ import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.reflections.ReflectionUtils;
 
@@ -292,10 +293,6 @@ public class SampleHelperNG extends DomainHelper {
             
             tileNum++;
         }
-    	        
-        if (lsmDirty) {
-        	logger.info("  LSMs changed, will mark sample for reprocessing");
-        }
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
                 
@@ -353,7 +350,10 @@ public class SampleHelperNG extends DomainHelper {
 
         // TODO: Auto-share sample if necessary 
 
-        if (needsReprocessing) {
+        if (needsReprocessing && sample.getId()!=null) {
+		    if (lsmDirty) {
+		    	logger.info("  LSMs changed, will mark sample for reprocessing");
+		    }
         	markForProcessing(sample);
         	sampleDirty = true;
         }
@@ -590,7 +590,7 @@ public class SampleHelperNG extends DomainHelper {
             // Ensure each tile is in the sample
             SampleTile sampleTile = objectiveSample.getTileByName(tileGroup.getTag());
             if (sampleTile==null) {
-            	logger.info("  No such tile: "+tileGroup.getTag());
+            	logger.info("  Existing sample does not contain tile: "+tileGroup.getTag());
                 return false;
             }
             seenTiles.add(sampleTile);
@@ -795,6 +795,68 @@ public class SampleHelperNG extends DomainHelper {
             }
         }
         return sampleNumSignals;
+    }
+
+    /**
+     * Go through a sample area's tiles and look for a concatenated LSM attribute with a given name. If a consensus can 
+     * be reached across all the Tiles in the area, then return that consensus. Otherwise log a warning and return null.
+     * @param sampleArea
+     * @param attrName
+     * @return
+     * @throws Exception
+     */
+    public String getConsensusTileAttributeValue(AnatomicalArea sampleArea, String attrName, String delimiter) throws Exception {
+        List<AnatomicalArea> sampleAreas = new ArrayList<>();
+        sampleAreas.add(sampleArea);
+        return getConsensusTileAttributeValue(sampleAreas, attrName, delimiter);
+    }
+
+    /**
+     * Go through a set of sample areas' tiles and look for an attribute with a given name. If a consensus
+     * can be reached across all the LSM's in the area then return that consensus. Otherwise log a warning and return null.
+     * @param attrName
+     * @return
+     * @throws Exception
+     */
+    public String getConsensusTileAttributeValue(List<AnatomicalArea> sampleAreas, String attrName, String delimiter) throws Exception {
+        Sample sample = null;
+        String consensus = null;
+        logger.trace("Determining consensus for "+attrName+" for sample areas: "+getSampleAreasCSV(sampleAreas));
+        for(AnatomicalArea sampleArea : sampleAreas) {
+        	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
+		
+        	if (sample==null) {
+            	sample = domainDao.getDomainObject(null, Sample.class, sampleArea.getSampleId());
+        	}
+        	else if (!sample.getId().equals(sampleArea.getSampleId())) {
+        	    throw new IllegalStateException("All sample areas must come from the same sample");
+        	}
+        	
+        	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
+        	for(String tileName : sampleArea.getTileNames()) {
+        	    logger.trace("    Determining consensus for "+attrName+" in "+tileName+" tile");
+        	    SampleTile sampleTile = objectiveSample.getTileByName(tileName);
+            	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
+	        	
+            	StringBuilder sb = new StringBuilder();
+                for(LSMImage image : lsms) {
+                    Object value = DomainUtils.getAttributeValue(image, attrName);
+                    if (sb.length()>0) sb.append(delimiter);
+                    if (value!=null) sb.append(value);
+                }
+                
+                String tileValue = sb.toString();
+                if (consensus!=null && !StringUtils.areEqual(consensus,tileValue)) {
+                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
+                    return null;
+                }
+                else {
+                    consensus = tileValue==null?null:tileValue.toString();
+                }
+        	}
+        
+        }
+        return consensus;
     }
     
     /**

@@ -12,6 +12,7 @@ import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.util.FileDiscoveryHelperNG;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
@@ -19,6 +20,7 @@ import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -95,6 +97,11 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
                 
                 String jsonFilepath = jsonFileMap.get(lsmFilename);
                 if (jsonFilepath!=null) {
+
+                    contextLogger.info("  Setting JSON Metadata: "+jsonFilepath);
+                	DomainUtils.setFilepath(lsm, FileType.LsmMetadata, jsonFilepath);
+                    dirty = true;
+                    
 	                List<String> colors = new ArrayList<>();
 	                List<String> dyeNames = new ArrayList<>();
 	                File jsonFile = new File(jsonFilepath);

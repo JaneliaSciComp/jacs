@@ -186,7 +186,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         
         if (input.getChannelColors()==null) {
             contextLogger.warn("No channel colors on the input file. Trying to find a consensus among the LSMs...");
-            input.setChannelColors(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "channelColors"));
+            input.setChannelColors(sampleHelper.getConsensusTileAttributeValue(alignedAreas, "channelColors", ","));
             if (input.getChannelColors()!=null) {
                 contextLogger.info("Found channel colors consensus: "+input.getChannelColors());
             }
@@ -194,7 +194,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
         
         if (input.getChannelSpec()==null) {
             contextLogger.warn("No channel spec on the input file. Trying to find a consensus among the LSMs...");
-            input.setChannelSpec(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "channelSpec"));
+            input.setChannelSpec(sampleHelper.getConsensusTileAttributeValue(alignedAreas, "channelSpec", ","));
             if (input.getChannelColors()!=null) {
                 contextLogger.info("Found channel spec consensus: "+input.getChannelSpec());
             }
@@ -335,8 +335,9 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
             this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
-            
+
             this.sample = sampleHelper.getRequiredSample(data);
+            this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
             this.alignedAreas = (List<AnatomicalArea>) data.getItem("ALIGNED_AREAS");
             
             @SuppressWarnings("unchecked")

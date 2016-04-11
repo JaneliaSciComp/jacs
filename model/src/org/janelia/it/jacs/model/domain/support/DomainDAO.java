@@ -681,6 +681,9 @@ public class DomainDAO {
 
         List<Sample> list = toList(cursor);
         log.trace("Getting " + list.size() + " Sample objects took " + (System.currentTimeMillis() - start) + " ms");
+        if (list.isEmpty()) {
+        	return null;
+        }
         if (list.size()>1) {
         	log.warn("More than one active sample found for "+dataSetIdentifier+"/"+slideCode);
         }
