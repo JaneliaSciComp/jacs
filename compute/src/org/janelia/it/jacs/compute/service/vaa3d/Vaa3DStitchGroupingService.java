@@ -160,7 +160,7 @@ public class Vaa3DStitchGroupingService extends AbstractDomainGridService {
         }
         
         logger.info("Grouper found "+groups.size()+" groups: "+groupedFile.getAbsolutePath());
-        logger.info("Largest group is: "+maxSizeIndex);
+        logger.info("Largest group index: "+maxSizeIndex);
         
         List<String> maxGroup = groups.get(maxSizeIndex);
     	List<MergedLsmPair> newMergedLsmPairs = new ArrayList<MergedLsmPair>();
@@ -196,7 +196,7 @@ public class Vaa3DStitchGroupingService extends AbstractDomainGridService {
         	}
         }
         catch (Exception e) {
-        	throw new MissingGridResultException(file.getAbsolutePath(), "Error creating merged file symlinks");
+        	throw new MissingGridResultException(file.getAbsolutePath(), "Error creating merged file symlinks", e);
         }
         
         // Replace the pairs with only the pairs in the largest group

@@ -994,6 +994,16 @@ public class SampleHelperNG extends DomainHelper {
         }
     }
 
+    public List<SampleTile> getTilesForArea(ObjectiveSample objectiveSample, String area) {
+        List<SampleTile> tiles = new ArrayList<>();
+        for(SampleTile tile : objectiveSample.getTiles()) {
+            if (area.equals(tile.getAnatomicalArea())) {
+                tiles.add(tile);
+            }
+        }
+        return tiles;
+    }
+    
     public List<SampleTile> getTiles(ObjectiveSample objectiveSample, List<String> tileNames) {
         List<SampleTile> tiles = new ArrayList<>();
         for(SampleTile tile : objectiveSample.getTiles()) {
