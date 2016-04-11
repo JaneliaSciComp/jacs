@@ -1284,15 +1284,23 @@ public class DomainDAO {
         return save(subjectKey, release);
     }
 
-//    public static void main(String[] args) throws Exception {
-//        
-//        String MONGO_SERVER_URL = "dev-mongodb";
-//        String MONGO_DATABASE = "jacs";
-//        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
-//        Collection<DataSet> datasets = dao.getDataSets("group:heberleinlab");
-//        for(DataSet dataset : datasets) {
-//            System.out.println(dataset.getId()+" "+dataset.getPipelineProcesses());
-//        }
-//        
-//    }
+    public static void main(String[] args) throws Exception {
+        
+        String MONGO_SERVER_URL = "dev-mongodb";
+        String MONGO_DATABASE = "jacs";
+        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
+
+        String owner = "user:rokickik";
+        for(Workspace workspace : dao.getWorkspaces(owner)) {
+            System.out.println(""+workspace.getName());
+            for(DomainObject topLevelObj : dao.getDomainObjects(owner, workspace.getChildren())) {
+                System.out.println("  "+topLevelObj.getName());
+                if (topLevelObj instanceof TreeNode) {
+                    for(DomainObject domainObject : dao.getDomainObjects(owner, ((TreeNode)topLevelObj).getChildren())) {
+                        System.out.println("    "+domainObject.getName());
+                    }
+                }   
+            }
+        }
+    }
 }

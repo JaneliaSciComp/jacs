@@ -192,9 +192,9 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Building disk-based SAGE property map");
         this.largeOp = new MongoLargeOperations(dao);
 
-//        log.info("Building LSM property map");
-//        largeOp.buildSageImagePropMap();
-//        buildLsmAttributeMap();
+        log.info("Building LSM property map");
+        largeOp.buildSageImagePropMap();
+        buildLsmAttributeMap();
         
         log.info("Building disk-based Annotation map");
         buildAnnotationMap();
@@ -204,28 +204,28 @@ public class MongoDbImport extends AnnotationDAO {
         
         long startAll = System.currentTimeMillis();
 
-//        log.info("Adding subjects");
-//        loadSubjects();
-//
-//        log.info("Adding data sets");
-//        loadDataSets();
-//
-//        log.info("Adding fly lines");
-//        loadFlyLines();
-//
-//        log.info("Adding samples");
-//        // TODO: handle deleted (i.e. "hidden") neurons
-//        // TODO: handle pattern mask results in samples (knappj)
-//        loadSamples();
-//
-//        log.info("Adding screen samples");
-//        loadScreenData();
-//
-//        log.info("Adding compartment sets");
-//        loadCompartmentSets();
-//
-//        log.info("Adding alignment boards");
-//        loadAlignmentBoards();
+        log.info("Adding subjects");
+        loadSubjects();
+
+        log.info("Adding data sets");
+        loadDataSets();
+
+        log.info("Adding fly lines");
+        loadFlyLines();
+
+        log.info("Adding samples");
+        // TODO: handle deleted (i.e. "hidden") neurons
+        // TODO: handle pattern mask results in samples (knappj)
+        loadSamples();
+
+        log.info("Adding screen samples");
+        loadScreenData();
+
+        log.info("Adding compartment sets");
+        loadCompartmentSets();
+
+        log.info("Adding alignment boards");
+        loadAlignmentBoards();
 
         log.info("Adding folders");
         loadWorkspaces();
@@ -2476,7 +2476,8 @@ public class MongoDbImport extends AnnotationDAO {
 		    	}
 		    	else {
 		    	    unmappedChildren.add(childEntity);
-		            children.add(Reference.createFor(TEMP_REF_CLASS, childEntity.getId()));
+		    	    String className = getClassName(childEntity.getEntityTypeName());
+		            children.add(Reference.createFor(className==null?TEMP_REF_CLASS:className, childEntity.getId()));
 		    	}
 		    }
 
@@ -2484,18 +2485,22 @@ public class MongoDbImport extends AnnotationDAO {
             for(Iterator<Reference> iterator = children.iterator(); iterator.hasNext(); ) {
                 Reference ref = iterator.next();
                 Entity mapped = mappedEntities.get(ref.getTargetId());
-                if (mapped==null) {
-                    iterator.remove();
-                }
-                else {
+                if (mapped!=null) {
                     String className = getClassName(mapped.getEntityTypeName());
                     if (className!=null) {
                         ref.setTargetClassName(className);
+                        ref.setTargetId(mapped.getId());
                     }
                     else {
+                        log.error(indent+"  getMappedEntities returned illegal entity type: "+mapped.getEntityTypeName());
+                        log.info(indent+"  Removing unrepresentable entity: "+ref.getTargetId());
                         iterator.remove();
-                        log.error("getMappedEntities returned illegal entity type: "+mapped.getEntityTypeName());
                     }
+                }
+                else if (ref.getTargetClassName().equals(TEMP_REF_CLASS)) {
+                    // No mapping, try the original class
+                    log.info(indent+"  Removing unrepresentable entity: "+ref.getTargetId());
+                    iterator.remove();
                 }
             }
 	    }
@@ -2621,11 +2626,13 @@ public class MongoDbImport extends AnnotationDAO {
 		// Make sure each entity can be loaded
 	    for(Entity childEntity : entityMembers) {
 
+	        Entity importEntity = childEntity;
         	Entity translatedEntity = translatedEntities.get(childEntity.getId());
         	
         	if (translatedEntity!=null) {
         		// already translated this above
         		log.info(indent+"  Will reference "+translatedEntity.getEntityTypeName()+"#"+translatedEntity.getId()+" instead of "+childEntity.getEntityTypeName()+"#"+childEntity.getId());
+        		importEntity = translatedEntity;
         	}
         	else if (TRANSLATE_ENTITIES) {
                 String importCollection = getCollectionName(childEntity.getEntityTypeName());
@@ -2636,23 +2643,14 @@ public class MongoDbImport extends AnnotationDAO {
         	        Entity ancestor = getHigherLevelAncestor(childEntity, new HashSet<Long>());
         	        if (ancestor!=null) {
                         log.info(indent+"  Will reference "+ancestor.getEntityTypeName()+"#"+ancestor.getId()+" instead of unknown "+childEntity.getEntityTypeName()+"#"+childEntity.getId());
-                        translatedEntity = ancestor;
+                        importEntity = ancestor;
+                        translatedEntities.put(childEntity.getId(), ancestor);
                     }
         	    }
-                if (translatedEntity!=null) {
-                    String collectionName = getCollectionName(translatedEntity.getEntityTypeName());
-                    if (collectionName != null) {
-                        translatedEntities.put(childEntity.getId(), translatedEntity);
-                    }
-                    else {
-                        translatedEntities.remove(childEntity.getId());
-                    }
-                }
         	}
 
-            Entity importEntity = translatedEntity==null?childEntity:translatedEntity;
             String collectionName = getCollectionName(importEntity.getEntityTypeName());
-
+            
             if (INSERT_ROGUE_ENTITIES) {
                 // A minor optimization, since we can only do rogue imports on images and neuron fragments
                 if ("image".equals(collectionName) || "fragment".equals(collectionName)) {

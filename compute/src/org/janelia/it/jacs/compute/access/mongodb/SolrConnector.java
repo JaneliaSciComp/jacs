@@ -311,8 +311,8 @@ public class SolrConnector {
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
-			throw new DaoException("Error removing documents with SOLR",e);
+			log.error("Error removing documents from SOLR" ,e);
+			throw new DaoException("Error removing documents from SOLR",e);
 		}
 
 		commit();
@@ -569,26 +569,26 @@ public class SolrConnector {
 		car.process(new CommonsHttpSolrServer(SOLR_SERVER_URL));
 	}
 
-	protected List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
-
-		String dt = SolrDocTypeEnum.SAGE_TERM.toString();
-
-		int id = 0;
-		List<SolrInputDocument> docs = new ArrayList<>();
-		for(SageTerm term : terms) {
-			SolrInputDocument doc = new SolrInputDocument();
-			doc.addField("id", dt+"_"+id, 1.0f);
-			doc.addField("doc_type", dt, 1.0f);
-			doc.addField("name", term.getName(), 1.0f);
-			doc.addField("data_type_t", term.getDataType(), 1.0f);
-			doc.addField("definition_t", term.getDefinition(), 1.0f);
-			doc.addField("display_name_t", term.getDisplayName(), 1.0f);
-			doc.addField("cv_t", term.getCv(), 1.0f);
-			docs.add(doc);
-			id++;
-		}
-		return docs;
-	}
+//	protected List<SolrInputDocument> createSageDocs(Collection<SageTerm> terms) {
+//
+//		String dt = SolrDocTypeEnum.SAGE_TERM.toString();
+//
+//		int id = 0;
+//		List<SolrInputDocument> docs = new ArrayList<>();
+//		for(SageTerm term : terms) {
+//			SolrInputDocument doc = new SolrInputDocument();
+//			doc.addField("id", dt+"_"+id, 1.0f);
+//			doc.addField("doc_type", dt, 1.0f);
+//			doc.addField("name", term.getName(), 1.0f);
+//			doc.addField("data_type_t", term.getDataType(), 1.0f);
+//			doc.addField("definition_t", term.getDefinition(), 1.0f);
+//			doc.addField("display_name_t", term.getDisplayName(), 1.0f);
+//			doc.addField("cv_t", term.getCv(), 1.0f);
+//			docs.add(doc);
+//			id++;
+//		}
+//		return docs;
+//	}
 
 	/**
 	 * Commit any outstanding changes to the index.

@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.interfaces.IsParent;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="treeNode",label="Folder")
+@SearchType(key="treeNode",label="Folder")
 public class TreeNode extends AbstractDomainObject implements IsParent {
 
     private List<Reference> children = new ArrayList<>();

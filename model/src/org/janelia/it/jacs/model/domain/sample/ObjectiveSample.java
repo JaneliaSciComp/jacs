@@ -29,6 +29,20 @@ public class ObjectiveSample implements Serializable {
         this.objective = objective;
     }
 
+    @JsonIgnore
+    public Sample getParent() {
+        return parent;
+    }
+
+    @JsonIgnore
+    void setParent(Sample parent) {
+        this.parent = parent;
+    }
+    
+    public String getObjective() {
+        return objective;
+    }
+    
     public void setObjective(String objective) {
         this.objective = objective;
     }
@@ -39,21 +53,6 @@ public class ObjectiveSample implements Serializable {
 
     public void setChanSpec(String chanSpec) {
         this.chanSpec = chanSpec;
-    }
-    
-    @JsonIgnore
-    public String getObjective() {
-        return objective;
-    }
-
-    @JsonIgnore
-    public Sample getParent() {
-        return parent;
-    }
-
-    @JsonIgnore
-    void setParent(Sample parent) {
-        this.parent = parent;
     }
 
     @JsonIgnore

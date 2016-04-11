@@ -6,13 +6,15 @@ import java.util.List;
 
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 
 /**
  * A release definition which controls how Samples are released and published to the external website. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MongoMapped(collectionName="release",label="Fly Line Release")
+@MongoMapped(collectionName="release",label="Line Release")
+@SearchType(key="release",label="Line Release")
 public class LineRelease extends AbstractDomainObject {
 
     private Date releaseDate;

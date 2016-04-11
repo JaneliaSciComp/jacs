@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
+import org.janelia.it.jacs.model.util.ModelStringUtil;
 import org.jongo.marshall.jackson.oid.MongoId;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -63,39 +64,41 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
         return names;
     }
 
+    /**
+     * Attempts to find and return a type name for the current class. First, it checks the class
+     * hierarchy for a SearchType.label, if none is found, it checks for a MongoMapped.label. The 
+     * purpose of this method is to provide a nice user-readable label.
+     */
     @SearchAttribute(key="type_label",label="Type")
     @JsonIgnore
     public String getType() {
-        String label = null;
-        // Look for a @SearchType label
-        Class<?> clazz = this.getClass();
-        while (clazz!=null && label==null) {
-            SearchType searchType = clazz.getAnnotation(SearchType.class);
-            if (searchType!=null) {
-                label = searchType.label();
-            }
-            clazz = clazz.getSuperclass();
+        Class<?> clazz = getClass();
+        SearchType searchType = clazz.getAnnotation(SearchType.class);
+        if (searchType!=null) {
+            return searchType.label();
         }
-        if (label==null) {
-            // No label found, so look again, this time at @MongoMapped
-            clazz = this.getClass();
-            while (clazz!=null && label==null) {
-                MongoMapped mongoMapped = clazz.getAnnotation(MongoMapped.class);
-                if (mongoMapped!=null) {
-                    label = mongoMapped.label();
-                }
-                clazz = clazz.getSuperclass();
-            }
+        MongoMapped mongoMapped = clazz.getAnnotation(MongoMapped.class);
+        if (mongoMapped!=null) {
+            return mongoMapped.label();
         }
-        return label;
+        return ModelStringUtil.splitCamelCase(clazz.getSimpleName());
     }
     
+    /**
+     * Attempts to find and return a @SearchType.key defined for this object or any of its super types. 
+     * If no @SearchType annotation is defined, this method returns null. 
+     * @return
+     */
     @SearchAttribute(key="search_type",label="Search Type",display=false)
     @JsonIgnore
     public String getSearchType() {
-    	SearchType searchTypeAnnot = getClass().getAnnotation(SearchType.class);
-        if (searchTypeAnnot!=null) {
-            return searchTypeAnnot.key();
+        Class<?> clazz = this.getClass();
+        while (clazz!=null) {
+            SearchType searchType = clazz.getAnnotation(SearchType.class);
+            if (searchType!=null) {
+                return searchType.key();
+            }
+            clazz = clazz.getSuperclass();
         }
         return null;
     }
