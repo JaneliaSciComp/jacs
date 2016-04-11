@@ -23,13 +23,26 @@ import java.util.*;
  */
 public class LSMSampleDiscoveryService extends AbstractEntityService {
 
-    private SampleHelper sampleHelper;
     private String datasetName;
 
     public void execute() throws Exception {
         datasetName = processData.getString("DATASET_NAME");
 
-        sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, ownerKey, logger);
+        // retrieve the dataset
+        List<Entity> datasets;
+        try {
+            datasets = entityBean.getUserEntitiesWithAttributeValueAndTypeName(null,
+                    EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
+                    datasetName, EntityConstants.TYPE_DATA_SET);
+        } catch (Exception e) {
+            logger.error("Error retrieving dataset entities for " + datasetName, e);
+            return;
+        }
+        if (datasets.size() > 1) {
+            logger.warn("More than one dataset found (" + datasets.size() + ") - only the first one will be considered: ");
+        }
+        Entity dataset = datasets.get(0);
+        SampleHelper sampleHelper = new SampleHelper(entityBean, computeBean, annotationBean, dataset.getOwnerKey(), logger);
         sampleHelper.getDataSets();
         sampleHelper.setDataSetNameFilter(datasetName);
 
@@ -45,48 +58,43 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
         for (String lsmName : lsmNames) {
             try {
                 SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
-                slideGroups.put(slideImage.getSlideCode(), slideImage);
+                if (slideImage.getSlideCode() != null)
+                    slideGroups.put(slideImage.getSlideCode(), slideImage);
+                else
+                    throw new IllegalArgumentException("Invalid slide code value - slideCode should not be null");
             } catch (DaoException e) {
                 logger.warn("Error while retrieving image for " + lsmName, e);
             }
         }
 
-        Set<String> sampleDatasetWithEntityIds = new LinkedHashSet<>();
-        prepareSlideImageGroupsForCurrentDataset(slideGroups, sampleDatasetWithEntityIds);
+        Set<String> sampleIds = new LinkedHashSet<>();
+        prepareSlideImageGroupsForCurrentDataset(sampleHelper, dataset, slideGroups, sampleIds);
 
-        processData.putItem("SAMPLE_DATASET_ID_WITH_ENTITY_ID", ImmutableList.copyOf(sampleDatasetWithEntityIds));
+        logger.info("Setting the sample ids output: " + sampleIds);
+        processData.putItem("SAMPLE_ID", ImmutableList.copyOf(sampleIds));
     }
 
-    private void prepareSlideImageGroupsForCurrentDataset(Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
-                                                          Collection<String> sampleDatasetWithEntityIds) {
-        List<Entity> datasets;
-        try {
-            datasets = entityBean.getUserEntitiesWithAttributeValueAndTypeName(null,
-                    EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
-                    datasetName, EntityConstants.TYPE_DATA_SET);
-        } catch (Exception e) {
-            logger.error("Error retrieving dataset entities for " + datasetName, e);
-            return;
-        }
-        for (Entity dataset : datasets) {
-            for (String slideCode : slideImagesGroupedBySlideCode.keySet()) {
-                try {
-                    Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
-                    prepareSlideImageGroupsBySlideCode(dataset, slideCode,
-                            slideImages,
-                            sampleDatasetWithEntityIds);
-                } catch (Exception e) {
-                    logger.error("Error while preparing image groups for  " + datasetName + ": " + slideCode, e);
-                }
+    private void prepareSlideImageGroupsForCurrentDataset(SampleHelper sampleHelper,
+                                                          Entity dataset,
+                                                          Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
+                                                          Collection<String> sampleIds) {
+        for (String slideCode : slideImagesGroupedBySlideCode.keySet()) {
+            try {
+                Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
+                Entity sampleEntity = prepareSlideImageGroupsBySlideCode(sampleHelper, dataset, slideCode, slideImages);
+                sampleIds.add(sampleEntity.getId().toString());
+            } catch (Exception e) {
+                logger.error("Error while preparing image groups for  " + datasetName + ": " + slideCode, e);
             }
         }
     }
 
-    private Entity prepareSlideImageGroupsBySlideCode(Entity dataset,
+    private Entity prepareSlideImageGroupsBySlideCode(SampleHelper sampleHelper,
+                                                      Entity dataset,
                                                       String slideCode,
-                                                      Collection<SlideImage> slideImages,
-                                                      Collection<String> sampleDatasetWithEntityIds)
+                                                      Collection<SlideImage> slideImages)
             throws Exception {
+        logger.info("Group images for slideCode " + slideCode);
         Map<String, SlideImageGroup> tileGroups = new LinkedHashMap<>();
 
         int tileNum = 0;

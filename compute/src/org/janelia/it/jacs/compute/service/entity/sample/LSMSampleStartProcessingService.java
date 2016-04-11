@@ -27,10 +27,11 @@ public class LSMSampleStartProcessingService extends AbstractEntityService {
     private static final String SAMPLE_PROCESSING_JOBNAME = "GSPS_CompleteSamplePipeline";
 
     public void execute() throws Exception {
-        String datasetIdWithsampleId = processData.getString("SAMPLE_DATASET_ID_WITH_ENTITY_ID");
-        String sampleId = Iterables.get(Splitter.on(':').split(datasetIdWithsampleId),1);
+        String sampleId = processData.getString("SAMPLE_ID");
+        logger.info("Creating ProcessSample task for " + sampleId);
         Entity sampleEntity = entityBean.getEntityById(sampleId);
         Task processSampleTask = createTask(sampleEntity);
+        logger.info("Dispatch sample processing task " + processSampleTask.getObjectId());
         computeBean.dispatchJob(SAMPLE_PROCESSING_JOBNAME, processSampleTask.getObjectId());
     }
 
