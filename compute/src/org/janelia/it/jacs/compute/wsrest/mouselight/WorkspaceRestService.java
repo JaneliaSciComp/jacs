@@ -6,7 +6,9 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
 import org.janelia.it.jacs.model.entity.Entity;
@@ -18,9 +20,11 @@ import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
+import org.janelia.it.jacs.model.user_data.tiled_microscope_protobuf.TmProtobufExchanger;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.BASE64Encoder;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -340,25 +344,43 @@ public class WorkspaceRestService {
         WorkspaceInfo wi=null;
 
         try {
-            dbSession = HibernateSessionUtils.getSession();
+            final EntityBeanRemote entityBeanRemote=EJBFactory.getRemoteEntityBean();
+            Long workspaceId=new Long(idString);
+            Entity workspaceEntity=EJBFactory.getRemoteEntityBean().getEntityById(null, workspaceId);
+            int numberOfNeurons=new Integer(numberString);
+            int numberOfPoints=new Integer(pointsString);
+            double branchProbability=new Double(brprobString);
+            for (int n=0;n<numberOfNeurons;n++) {
 
-            StringBuilder hql = new StringBuilder(256);
+                // Must now push a new entity data - we have to save twice to get Id
+                EntityData entityData = new EntityData();
+                entityData.setOwnerKey(workspaceEntity.getOwnerKey());
+                entityData.setCreationDate(new Date());
+                entityData.setParentEntity(workspaceEntity);
+                entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_PROTOBUF_NEURON);
+                entityData=entityBeanRemote.saveOrUpdateEntityData(workspaceEntity.getOwnerKey(), entityData);
 
-//            hql.append("select distinct e from Entity e ");
-//            hql.append("where e.id = :entityId ");
-//
-//            Query q = dbSession.createQuery(hql.toString());
-//            long entityId=new Long(idString);
-//            q.setParameter("entityId", entityId);
-//            Object o = q.uniqueResult();
-//            if (o==null) {
-//                log.info("Object returned is null");
-//            }
-//            Entity workspaceEntity = (Entity)o;
+                TmNeuron neuron=createArtificialNeuron(entityData.getId(), numberOfPoints, branchProbability, (long)n);
+                neuron.setCreationDate(new Date());
+                neuron.setName(nameString+"."+n);
+                neuron.setOwnerKey(workspaceEntity.getOwnerKey());
+                neuron.setWorkspaceId(workspaceId);
+                neuron.setId(entityData.getId());
 
+                TmProtobufExchanger exchanger=new TmProtobufExchanger();
+                byte[] neuronBytes=exchanger.serializeNeuron(neuron);
+                BASE64Encoder base64Encoder=new BASE64Encoder();
+                String protobufString=base64Encoder.encode(neuronBytes);
+
+                entityData.setValue(protobufString);
+                entityBeanRemote.saveOrUpdateEntityData(workspaceEntity.getOwnerKey(), entityData);
+            }
             wi = getWorkspaceInfo(idString);
 
-        } finally {
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        finally {
             HibernateSessionUtils.closeSession(dbSession);
         }
 
@@ -383,6 +405,74 @@ public class WorkspaceRestService {
             wi.dataType = "protobuf";
             wi.neuronCount = protobufCount;
         }
+    }
+
+    private TmNeuron createArtificialNeuron(long neuronId, int numberOfPoints, double branchProbability, long randomSeed) {
+        final double CENTER_X=22000.0;
+        final double CENTER_Y=10000.0;
+        final double CENTER_Z=5600.0;
+
+        Random random=new Random(randomSeed);
+
+        long geoIdIndex=1;
+        double[] xyz=new double[3];
+        xyz[0]=CENTER_X;
+        xyz[1]=CENTER_Y;
+        xyz[2]=CENTER_Z;
+        randomizePoint(xyz, 2000.0);
+        TmNeuron neuron=new TmNeuron();
+        Map<Long,TmGeoAnnotation> map=neuron.getGeoAnnotationMap();
+        TmGeoAnnotation rootAnnotation = new TmGeoAnnotation();
+        rootAnnotation.setId(geoIdIndex++);
+        rootAnnotation.setNeuronId(neuronId);
+        rootAnnotation.setParentId(neuronId);
+        neuron.addRootAnnotation(rootAnnotation);
+        rootAnnotation.setCreationDate(new Date());
+        rootAnnotation.setX(xyz[0]);
+        rootAnnotation.setY(xyz[1]);
+        rootAnnotation.setZ(xyz[2]);
+        map.put(rootAnnotation.getId(), rootAnnotation);
+
+        List<TmGeoAnnotation> endPoints=new LinkedList<>();
+        endPoints.add(rootAnnotation);
+        for (int i=1;i<numberOfPoints;i++) {
+            TmGeoAnnotation geoAnnotation=new TmGeoAnnotation();
+            geoAnnotation.setCreationDate(new Date());
+            geoAnnotation.setId(geoIdIndex++);
+            geoAnnotation.setNeuronId(neuronId);
+            map.put(geoAnnotation.getId(), geoAnnotation);
+            int branchIndex=(int)(endPoints.size()*Math.random());
+            TmGeoAnnotation branchEnd=endPoints.get(branchIndex);
+            xyz[0]=branchEnd.getX();
+            xyz[1]=branchEnd.getY();
+            xyz[2]=branchEnd.getZ();
+            randomizePoint(xyz, 10.0);
+            geoAnnotation.setX(xyz[0]);
+            geoAnnotation.setY(xyz[1]);
+            geoAnnotation.setZ(xyz[2]);
+            double branchCheck=random.nextDouble();
+            if (branchCheck<branchProbability && i>10) {
+                // Branch
+                TmGeoAnnotation parent=map.get(branchEnd.getParentId());
+                geoAnnotation.setParentId(parent.getId());
+                parent.addChild(geoAnnotation);
+                endPoints.add(geoAnnotation);
+            } else {
+                geoAnnotation.setParentId(branchEnd.getId());
+                branchEnd.addChild(geoAnnotation);
+                endPoints.remove(branchEnd);
+                endPoints.add(geoAnnotation);
+            }
+        }
+        return neuron;
+    }
+
+    private void randomizePoint(double[] pointArr, double radius) {
+        Random random=new Random();
+        double r2=radius/2.0;
+        pointArr[0]+=(random.nextDouble()*radius-r2);
+        pointArr[1]+=(random.nextDouble()*radius-r2);
+        pointArr[2]+=(random.nextDouble()*radius-r2);
     }
 
 }
