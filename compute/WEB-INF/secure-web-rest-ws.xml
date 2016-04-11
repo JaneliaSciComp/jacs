@@ -33,13 +33,17 @@
         </init-param>
         <init-param>
             <param-name>swagger.api.basepath</param-name>
-            <param-value>http://jacs:8180/rest-v1/</param-value>
+            <param-value>http://jacs:8180/rest-v1</param-value>
         </init-param>
         <load-on-startup>2</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>Jersey Web Application</servlet-name>
         <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/ui/*</url-pattern>
     </servlet-mapping>
 </web-app>
 
