@@ -69,6 +69,7 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
 
         Set<String> sampleIds = new LinkedHashSet<>();
         prepareSlideImageGroupsForCurrentDataset(sampleHelper, dataset, slideGroups, sampleIds);
+        sampleHelper.annexSamples();
 
         logger.info("Setting the sample ids output: " + sampleIds);
         processData.putItem("SAMPLE_ID", ImmutableList.copyOf(sampleIds));

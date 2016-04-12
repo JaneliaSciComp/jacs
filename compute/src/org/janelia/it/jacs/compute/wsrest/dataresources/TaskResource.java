@@ -1,14 +1,12 @@
 package org.janelia.it.jacs.compute.wsrest.dataresources;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
+import org.janelia.it.jacs.compute.access.TaskDAO;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
 import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,8 +18,7 @@ import java.util.List;
  */
 @Path("/")
 public class TaskResource {
-    private static final Logger LOG = LoggerFactory.getLogger(TaskResource.class);
-    private static final int DEFAULT_MAX_LENGTH = 100;
+    private TaskDAO taskDAO = new TaskDAO();
 
     @GET
     @Path("/{owner}/tasks")
@@ -35,19 +32,7 @@ public class TaskResource {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
-            Query q = dbSession.createQuery("select t " +
-                    "from Task t " +
-                    "where t.owner = :task_owner");
-            q.setParameter("task_owner", owner);
-            if (offset > 0) {
-                q.setFirstResult(offset);
-            }
-            if (length > 0) {
-                q.setMaxResults(length);
-            } else {
-                q.setMaxResults(DEFAULT_MAX_LENGTH);
-            }
-            List<Task> taskResults = q.list();
+            List<Task> taskResults = taskDAO.getAllTasksByOwner(owner, offset, length, dbSession);
             List<JsonTask> jsonTasks = new ArrayList<>();
             for (Task t : taskResults) {
                 jsonTasks.add(new JsonTask(t));
@@ -59,59 +44,52 @@ public class TaskResource {
     }
 
     @GET
-    @Path("/{owner}/tasks/{task-id}")
+    @Path("/tasks/{task-id}")
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public JsonTask getTask(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
+    public JsonTask getTask(@PathParam("task-id") Long taskId) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
-            Query q = dbSession.createQuery("select t from Task t " +
-                    "where t.owner = :task_owner " +
-                    "and t.objectId = :id");
-            q.setParameter("task_owner", owner);
-            q.setParameter("id", taskId);
-            Task t = (Task) q.uniqueResult();
+            Task t = taskDAO.getTaskById(taskId, dbSession);
             if (t != null) {
-                return new JsonTask(t);
-            } else {
-                throw new IllegalArgumentException("Record not found");
+                JsonTask mainTask = new JsonTask(t);
+                List<Task> childrenTasks = taskDAO.getChildrenTasksByParentTaskId(t.getObjectId(), dbSession);
+                for (Task c : childrenTasks) {
+                    mainTask.addChildTask(new JsonTask(c));
+                }
+                return mainTask;
             }
         } finally {
             HibernateSessionUtils.closeSession(dbSession);
         }
+        throw new IllegalArgumentException("Record not found");
     }
 
     @GET
-    @Path("/{owner}/tasks/{task-id}/events")
+    @Path("/tasks/{task-id}/events")
     @Produces({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML
     })
-    public List<JsonTaskEvent> getTaskEvents(@PathParam("owner") String owner, @PathParam("task-id") Long taskId) {
+    public List<JsonTaskEvent> getTaskEvents(@PathParam("task-id") Long taskId) {
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
-            Query q = dbSession.createQuery("select t from org.janelia.it.jacs.model.tasks.Task t " +
-                    "where t.owner = :task_owner " +
-                    "and t.objectId = :id");
-            q.setParameter("task_owner", owner);
-            q.setParameter("id", taskId);
-            Task t = (Task) q.uniqueResult();
+            Task t = taskDAO.getTaskById(taskId, dbSession);
             if (t != null) {
                 List<JsonTaskEvent> taskEvents = new ArrayList<>();
                 for (Event evt : t.getEvents()) {
                     taskEvents.add(new JsonTaskEvent(evt));
                 }
                 return taskEvents;
-            } else {
-                throw new IllegalArgumentException("Record not found");
             }
         } finally {
             HibernateSessionUtils.closeSession(dbSession);
         }
+        throw new IllegalArgumentException("Record not found");
     }
 
 }
