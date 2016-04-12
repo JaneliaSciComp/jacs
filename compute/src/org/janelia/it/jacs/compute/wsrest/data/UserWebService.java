@@ -4,13 +4,12 @@ import java.util.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.internal.util.Base64;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.security.LDAPProvider;
 import org.janelia.it.jacs.shared.security.Token;
 import org.slf4j.Logger;
@@ -45,10 +44,12 @@ public class UserWebService extends ResourceConfig {
 
     @GET
     @Path("/login")
-    @ApiOperation(value = "Logs a User in and generates a JSON Web Token",
-            notes = "")
+    @ApiOperation(value = "Logs a user in and generates a JSON Web Token",
+            notes = "Uses Basic Authentication to check the user against LDAP"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully attempted login", response=Subject.class),
+            @ApiResponse( code = 500, message = "Internal Server Error trying to login" )
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Subject loginSubject () {
@@ -88,10 +89,13 @@ public class UserWebService extends ResourceConfig {
 
     @GET
     @Path("/user/subjects")
-    @ApiOperation(value = "Gets a List of the Users in the Workstation",
-            notes = "")
+    @ApiOperation(value = "Get a List of the Workstation Users",
+            notes = ""
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully got list of workstation users", response=Subject.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of workstation users" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -110,10 +114,13 @@ public class UserWebService extends ResourceConfig {
 
     @GET
     @Path("/user/subject")
-    @ApiOperation(value = "Returns a Subject Object by Key",
-            notes = "")
+    @ApiOperation(value = "Get a List of the Workstation Users",
+            notes = ""
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully got list of workstation users", response=Subject.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of workstation users" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -131,14 +138,17 @@ public class UserWebService extends ResourceConfig {
 
     @GET
     @Path("/user/preferences")
-    @ApiOperation(value = "Get a User's Preferences",
-            notes = "")
+    @ApiOperation(value = "Get a List of the User's Preferences",
+            notes = ""
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully got user preferences", response=Preference.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting user preferences" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Preference> getPreferences(@QueryParam("subjectKey") String subjectKey) {
+    public List<Preference> getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("getPreferences({})",subjectKey);
@@ -152,10 +162,12 @@ public class UserWebService extends ResourceConfig {
 
     @PUT
     @Path("/user/preferences")
-    @ApiOperation(value = "Sets a User's Preferences",
-            notes = "")
+    @ApiOperation(value = "Sets User Preferences",
+            notes = "uses the Preferences Parameter of the DomainQuery."
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully set user preferences", response=Preference.class),
+            @ApiResponse( code = 500, message = "Internal Server Error setting user preferences" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -173,14 +185,18 @@ public class UserWebService extends ResourceConfig {
 
     @PUT
     @Path("/user/permissions")
-    @ApiOperation(value = "Change the permissions of a user",
-            notes = "")
+    @ApiOperation(value = "Changes the permissions for a DomainObject",
+            notes = "uses a map (targetClass=domainObject class, granteeKey = user subject key, grant = boolean flag," +
+                    "rights = read, write, targetId=Id of the domainObject"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully got user preferences", response=Preference.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting user preferences" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void changePermissions(Map<String, Object> params) {
+    public void changePermissions(@ApiParam Map<String, Object> params) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("changePermissions({})",params);

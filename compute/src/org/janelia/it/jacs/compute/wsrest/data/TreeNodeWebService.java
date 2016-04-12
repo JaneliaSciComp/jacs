@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.wsrest.data;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -39,14 +41,16 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @PUT
     @Path("/treenode")
-    @ApiOperation(value = "Creates a Folder",
-            notes = "")
+    @ApiOperation(value = "Creates A TreeNode",
+            notes = "Uses the DomainObject parameter of the DomainQuery"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully creating TreeNode", response=TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error creating TreeNode" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode createTreeNode(DomainQuery query) {
+    public TreeNode createTreeNode(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("createTreeNode({})",query);
@@ -61,14 +65,16 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @POST
     @Path("/treenode/reorder")
-    @ApiOperation(value = "Reorders a Folder",
-            notes = "")
+    @ApiOperation(value = "Reorders the items in a TreeNode",
+            notes = "Uses the DomainObject parameter of the DomainQuery and the Ordering parameter for the new ordering."
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully reordered TreeNode", response=TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error reordering TreeNode" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode reorderTreeNode(DomainQuery query) {
+    public TreeNode reorderTreeNode(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("reorderTreeNode({})",query);
@@ -87,14 +93,17 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @PUT
     @Path("/treenode/children")
-    @ApiOperation(value = "Adds Items to a Folder",
-            notes = "")
+    @ApiOperation(value = "Adds items to a TreeNode",
+            notes = "Uses the DomainObject parameter of the DomainQuery for the Treenode, " +
+                    "the References parameter for the list of items to add"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully added items to the TreeNode", response=TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error adding items to the TreeNode" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode addChildren(DomainQuery query) {
+    public TreeNode addChildren(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("addChildren({})",query);
@@ -113,14 +122,17 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @POST
     @Path("/treenode/children")
-    @ApiOperation(value = "Removes items in a Folder",
-            notes = "")
+    @ApiOperation(value = "Removes items from a TreeNode",
+            notes = "Uses the DomainObject parameter of the DomainQuery for the Treenode, " +
+                    "the References parameter for the list of items to remove"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully removed items from the TreeNode", response=TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error removing items from the TreeNode" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TreeNode removeChildren(DomainQuery query) {
+    public TreeNode removeChildren(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("removeChildren({})",query);

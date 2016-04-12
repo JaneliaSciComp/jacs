@@ -101,7 +101,7 @@ public class TaskWebService {
 
     @GET
     @Path("/task/events")
-    @ApiOperation(value = "Gets the events for a task",
+    @ApiOperation(value = "Gets the ev",
             notes = "")
     @ApiResponses(value = {
 

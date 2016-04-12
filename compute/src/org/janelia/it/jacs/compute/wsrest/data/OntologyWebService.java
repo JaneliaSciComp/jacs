@@ -1,8 +1,6 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.*;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -11,6 +9,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,14 +37,17 @@ public class OntologyWebService extends ResourceConfig {
 
     @GET
     @Path("/ontology")
-    @ApiOperation(value = "Gets An Ontology",
-            notes = "")
+    @ApiOperation(value = "Gets all the ontologies for a user",
+            notes = ""
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully returned Ontologies", response=Ontology.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of Ontologies" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Ontology> getOntologies(@QueryParam("subjectKey") final String subjectKey) {
+    public List<Ontology> getOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("getOntologies({})",subjectKey);
@@ -59,14 +61,16 @@ public class OntologyWebService extends ResourceConfig {
 
     @PUT
     @Path("/ontology")
-    @ApiOperation(value = "Creates an Ontology",
-            notes = "")
+    @ApiOperation(value = "Creates An Ontology",
+            notes = "Uses the DomainObject parameter of the DomainQuery"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully created an Ontology", response=Ontology.class),
+            @ApiResponse( code = 500, message = "Internal Server Error creating an Ontology" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Ontology createOntology(DomainQuery query) {
+    public Ontology createOntology(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("createOntology({})",query);
@@ -81,10 +85,17 @@ public class OntologyWebService extends ResourceConfig {
 
     @DELETE
     @Path("/ontology")
+    @ApiOperation(value = "Removes An Ontology",
+            notes = "Uses the ontologyId to remove the ontology"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed an Ontology"),
+            @ApiResponse( code = 500, message = "Internal Server Error removing an ontology" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void removeOntology(@QueryParam("subjectKey") final String subjectKey,
-                               @QueryParam("ontologyId") final String ontologyId) {
+    public void removeOntology(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                               @ApiParam @QueryParam("ontologyId") final String ontologyId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         Reference ontologyRef = new Reference (Ontology.class.getName(), new Long(ontologyId));
         try {
@@ -101,13 +112,17 @@ public class OntologyWebService extends ResourceConfig {
     @PUT
     @Path("/ontology/terms")
     @ApiOperation(value = "Adds Terms to an Ontology",
-            notes = "")
+            notes = "Uses the ObjectId parameter of the DomainQuery (1st object is the ontology id," +
+                    " second object is the parent id) and serialized JSON list of OntologyTerm as the " +
+                    "ObjectList parameter."
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully added terms to Ontology", response=Ontology.class),
+            @ApiResponse( code = 500, message = "Internal Server Error adding terms to an Ontology" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Ontology addTermsToOntology(DomainQuery query) {
+    public Ontology addTermsToOntology(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("addTermsToOntology({})",query);
@@ -129,14 +144,17 @@ public class OntologyWebService extends ResourceConfig {
 
     @POST
     @Path("/ontology/terms")
-    @ApiOperation(value = "Reorders terms in an Ontology",
-            notes = "")
+    @ApiOperation(value = "Reorders Terms in an Ontology",
+            notes = "Uses the ObjectId parameter of the DomainQuery (1st object is the ontology id," +
+                    " second object is the parent id) and for ordering the Ordering parameter of the DomainQuery."
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully reordered terms in Ontology", response=Ontology.class),
+            @ApiResponse( code = 500, message = "Internal Server Error reordered terms in Ontology" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Ontology reorderOntology(DomainQuery query) {
+    public Ontology reorderOntology(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("reorderOntology({})",query);
@@ -158,17 +176,20 @@ public class OntologyWebService extends ResourceConfig {
 
     @DELETE
     @Path("/ontology/terms")
-    @ApiOperation(value = "Removes terms from an Ontology",
-            notes = "")
+    @ApiOperation(value = "Removes Terms from an Ontology",
+            notes = "Uses the ontologyId, parentTermId to find the Ontology. " +
+                    "The termId is the id in the ontology to remove."
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully removed a term from Ontology", response=Ontology.class),
+            @ApiResponse( code = 500, message = "Internal Server Error removed term from Ontology" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Ontology removeTermsFromOntology(@QueryParam("subjectKey") final String subjectKey,
-                                            @QueryParam("ontologyId") final Long ontologyId,
-                                            @QueryParam("parentTermId") final Long parentTermId,
-                                            @QueryParam("termId") final Long termId) {
+    public Ontology removeTermsFromOntology(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                            @ApiParam @QueryParam("ontologyId") final Long ontologyId,
+                                            @ApiParam @QueryParam("parentTermId") final Long parentTermId,
+                                            @ApiParam @QueryParam("termId") final Long termId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             log.debug("removeTermsFromOntology({},{},{},{})",subjectKey,ontologyId,parentTermId,termId);

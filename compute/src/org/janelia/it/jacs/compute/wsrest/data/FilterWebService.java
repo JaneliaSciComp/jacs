@@ -3,11 +3,14 @@ package org.janelia.it.jacs.compute.wsrest.data;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
+import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
@@ -35,13 +38,15 @@ public class FilterWebService extends ResourceConfig {
     @PUT
     @Path("/filter")
     @ApiOperation(value = "Creates a Filter",
-            notes = "")
+            notes = "uses the DomainObject parameter of the DomainQuery"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully created a Filter", response=DomainObject.class),
+            @ApiResponse( code = 500, message = "Internal Server Error creating a Filter" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Filter createFilter(DomainQuery query) {
+    public Filter createFilter(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
@@ -56,13 +61,15 @@ public class FilterWebService extends ResourceConfig {
     @POST
     @Path("/filter")
     @ApiOperation(value = "Updates a Filter",
-            notes = "")
+            notes = "uses the DomainObject parameter of the DomainQuery"
+    )
     @ApiResponses(value = {
-
+            @ApiResponse( code = 200, message = "Successfully Updated a Filter", response=DomainObject.class),
+            @ApiResponse( code = 500, message = "Internal Server Error Updating a Filter" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Filter updateFilter(DomainQuery query) {
+    public Filter updateFilter(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Filter updateFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
