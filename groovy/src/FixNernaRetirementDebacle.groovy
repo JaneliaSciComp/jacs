@@ -7,24 +7,17 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 
 /**
  * This script goes through samples in Retired Data and finds corresponding unretired samples.
- * When the sub-samples are the same objects, the unretired (new) samples are deleted, 
- * and the Retired samples are restored.
+ * When the sub-samples are the same objects, they are unlinked from the retired sample.
  */
 
 // Globals
 boolean DEBUG = true
-boolean PRINTS = true
 int numSamplesProcessed = 0
-int numTrulyRetired = 0
+int numFixed = 0
 
 subjectKey = "user:nerna"
 f = new JacsUtils(subjectKey, false)
 e = f.e
-    
-Calendar cal = Calendar.getInstance();
-cal.setTimeInMillis(0);
-cal.set(2014, 8, 5, 0, 0, 0);
-Date cutoff = cal.getTime();
 
 retiredDataFolders = e.getUserEntitiesByNameAndTypeName(subjectKey, "Retired Data", TYPE_FOLDER)
 if (retiredDataFolders.size()>1) {
@@ -41,131 +34,89 @@ for(EntityData retiredSampleEd : retiredEds) {
 	if (retiredSampleEd.childEntity==null) continue
 	Entity retiredSample = retiredSampleEd.childEntity
 	
-	//if (!retiredSample.name.startsWith("GMR_SS00302-20130807_19_C4")) continue
-	// GMR_SS00302-20130807_19_C4 20x not match
-	// GMR_SS00784-20130926_19_H3 63 not match
+	println retiredSample.name+" ("+retiredSample.id+")"
 	
 	f.loadChildren(retiredSample)
-	String realName = retiredSample.name.replaceAll("-Retired","")
 	
+	EntityData retiredSample20xEd
+	EntityData retiredSample63xEd
+	for(EntityData ed : retiredSample.getEntityData()) {
+		Entity subSample = ed.childEntity
+		if (subSample!=null && subSample.entityTypeName.equals(TYPE_SAMPLE)) {
+			objective = subSample.getValueByAttributeName(ATTRIBUTE_OBJECTIVE)
+			if ("20x".equals(objective)) {
+				retiredSample20xEd = ed
+			}
+			else if ("63x".equals(objective)) {
+				retiredSample63xEd = ed
+			}
+		}
+	}
+	
+	if (retiredSample20xEd==null||retiredSample63xEd==null) {
+		continue
+	}
+	
+	Entity retiredSample20x = retiredSample20xEd.childEntity
+	Entity retiredSample63x = retiredSample63xEd.childEntity
+	
+	String realName = retiredSample.name.replaceAll("-Retired","")
 	realSamples = e.getEntitiesByNameAndTypeName(subjectKey, realName, TYPE_SAMPLE)
 	if (realSamples.isEmpty()) {
-		System.out.println("  This is a truly retired sample, because we cannot find corresponding real sample: "+retiredSample.name)
-		numTrulyRetired++
-		continue;
+		continue
 	}
-	
-	List matchedSamples = new ArrayList()
-	for(Entity realSample : realSamples) {
-		if (realSample.creationDate.after(cutoff)) {
-			matchedSamples.add(realSample)
-		}
-	}
-	
-	Entity retiredSample20x
-	Entity retiredSample63x
-	for(Entity subSample : EntityUtils.getChildrenOfType(retiredSample, TYPE_SAMPLE)) {
-		objective = subSample.getValueByAttributeName(ATTRIBUTE_OBJECTIVE)
-		if ("20x".equals(objective)) {
-			retiredSample20x = subSample
-		}
-		else if ("63x".equals(objective)) {
-			retiredSample63x = subSample
-		}
-	}
+	println "  "+realSamples.size()+" duplicate samples"
 	
 	boolean foundMatch = false
-	for (Entity realSample : matchedSamples) {
-		if (foundMatch) {
-			System.out.println("WARNING: already dealt with retired sample "+retiredSample.id+". Skipping matched sample "+realSample.id)
-			continue
-		}
-		if (realSample.creationDate.after(cutoff)) {
-			
-			f.loadChildren(realSample)
-			
-			Entity dataSetFolder = e.getAncestorWithType(subjectKey, realSample.id, TYPE_FOLDER)
-			
-			System.out.println(numSamplesProcessed+": "+retiredSample.name +" -> "+ realSample.name +" ("+dataSetFolder.name+")")
-			
-			Entity realSample20x
-			Entity realSample63x
-			for(Entity subSample : EntityUtils.getChildrenOfType(realSample, TYPE_SAMPLE)) {
-				objective = subSample.getValueByAttributeName(ATTRIBUTE_OBJECTIVE)
-				if ("20x".equals(objective)) {
-					realSample20x = subSample;
-				}
-				else if ("63x".equals(objective)) {
-					realSample63x = subSample;
-				}
+	
+	for (Entity realSample : realSamples) {
+		
+		f.loadChildren(realSample)
+		Entity dataSetFolder = e.getAncestorWithType(subjectKey, realSample.id, TYPE_FOLDER)
+		
+		Entity realSample20x
+		Entity realSample63x
+		for(Entity subSample : EntityUtils.getChildrenOfType(realSample, TYPE_SAMPLE)) {
+			objective = subSample.getValueByAttributeName(ATTRIBUTE_OBJECTIVE)
+			if ("20x".equals(objective)) {
+				realSample20x = subSample;
 			}
-			
-			if (!retiredSample20x.id.equals(realSample20x.id)) {
-				System.out.println("  20x sub-samples do not match. Aborting sample processing for "+realName)
-				continue
+			else if ("63x".equals(objective)) {
+				realSample63x = subSample;
 			}
-			if (!retiredSample63x.id.equals(realSample63x.id)) {
-				System.out.println("  63x sub-samples do not match. Aborting sample processing for "+realName)
-				continue
-			}
-			
-			if (PRINTS) System.out.println("  Removing current 'real' tree "+realSample.id)
-			if (!DEBUG) f.e.deleteEntityTreeById(subjectKey, realSample.id)
-			
-			if (PRINTS) System.out.println("  Add retired sample to data set folder "+dataSetFolder.name)
-			if (!DEBUG) {
-				EntityData ed = f.e.addEntityToParent(subjectKey, dataSetFolder.id, retiredSample.id, dataSetFolder.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-				dataSetFolder.entityData.add(ed)
-			}
-			
-			if (PRINTS) System.out.println("  Removing from retired data folder")
-			retiredDataFolder.entityData.remove(retiredSampleEd)
-			if (!DEBUG) f.e.deleteEntityData(subjectKey, retiredSampleEd.id)
-			
-			if (PRINTS) System.out.println("  Renaming retired sample to "+realName)
-			retiredSample.setName(realName)
-			if (!DEBUG) retiredSample = f.e.saveOrUpdateEntity(subjectKey, retiredSample)
-			
-			if (PRINTS) System.out.println("  Renaming LSMs to include bz2 extension "+realName)
-			Entity supportingData = EntityUtils.findChildWithName(retiredSample, "Supporting Files")
-			if (supportingData==null) {
-				System.out.println("  WARNING: could not find supporting files")
-				continue
-			}
-
-			f.loadChildren(supportingData)
-			for(Entity tile : EntityUtils.getChildrenOfType(supportingData, TYPE_IMAGE_TILE)) {
-				f.loadChildren(tile)
-				for(Entity lsm : EntityUtils.getChildrenOfType(tile, TYPE_LSM_STACK)) {
-					String newName = lsm.name+".bz2"
-					if (PRINTS) System.out.println("    Renaming "+lsm.name+" -> "+newName)
-					lsm.setName(newName)
-					if (!DEBUG) {
-						lsm = f.e.saveOrUpdateEntity(subjectKey, lsm)
-					}
-				}
-			}
-			
-			numSamplesProcessed++
-			foundMatch = true
-			
-			//System.exit(1)
-		}
-		else {
-			System.out.println("WARNING: retired sample is too old: "+retiredSample.name +" ("+realSample.creationDate+" < "+cutoff+")")
 		}
 		
+		matched20x = false
+		if (realSample20x!=null && retiredSample20x.id.equals(realSample20x.id)) {
+			matched20x = true;
+		}
+		matched63x = false
+		if (realSample63x!=null && retiredSample63x.id.equals(realSample63x.id)) {
+			matched63x = true;
+		}
+		
+		if (matched20x && matched63x) {
+			println "  Found matching active sample: "+realSample.id
+			foundMatch = true
+		}
+		numSamplesProcessed++
 		realSample.setEntityData(null)
 	}
+	
+	if (foundMatch) {
+		println "  deleting retired Eds "+retiredSample20xEd.id+" and"+retiredSample63xEd.id
 		
-	if (!foundMatch) {
-		System.out.println("  Considering this a truly retired sample because the sub-samples don't match the new sample")
-		numTrulyRetired++
+		if (!DEBUG) {
+			e.deleteEntityData(subjectKey, retiredSample20xEd.id)
+			e.deleteEntityData(subjectKey, retiredSample63xEd.id)
+		}
+		
+		numFixed++
 	}
 	
 	retiredSample.setEntityData(null)
 }
 
-println "Rescued "+numSamplesProcessed+" samples"
-println "Consider "+numTrulyRetired+" as truly retired samples"
+println "Processed "+numSamplesProcessed+" samples"
+println "Fixed "+numFixed+" samples"
 

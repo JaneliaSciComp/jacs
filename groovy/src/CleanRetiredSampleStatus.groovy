@@ -7,7 +7,7 @@ import org.janelia.it.jacs.shared.utils.EntityUtils
 class CleanSampleStatusScript {
 	
 	private static final boolean DEBUG = false;
-    private String ownerKey = "group:dicksonlab";
+    private String ownerKey = null;
     private final JacsUtils f;
 	private String context;
 	private int numCorrectedStatus;
@@ -23,7 +23,6 @@ class CleanSampleStatusScript {
                 subjectKeys.add(dataSet.getOwnerKey());
             }
             for(String subjectKey : subjectKeys) {
-                //if (!subjectKey.equals("group:leetlab")) continue
                 processSamples(subjectKey);
             }
         }

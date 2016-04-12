@@ -721,7 +721,7 @@
        <str name="echoParams">explicit</str>
        <int name="rows">10</int>
        <str name="qf">
-          id^10.0 all_strings^0.7 text^0.5 
+          id^10.0 all_strings^0.7 all_gen^0.6 text^0.5 
        </str>
      </lst>
 
@@ -784,7 +784,7 @@
        <str name="echoParams">explicit</str>
        <int name="rows">10</int>
        <str name="qf">
-          id^10.0 all_strings^0.7 text^0.5 
+          id^1.0 all_strings^0.8 text^0.5 
        </str>
        <str name="defType">edismax</str>
 
@@ -830,7 +830,6 @@
      -->
   </requestHandler>
 
-  <!--
   <requestHandler name="/mlt" class="solr.MoreLikeThisHandler">
      <lst name="defaults">
        <str name="mlt.fl">all_gen</str>
@@ -838,7 +837,6 @@
        <int name="mlt.mintf">1</int>
      </lst>
   </requestHandler>   
-  -->
 
   <!-- XML Update Request Handler.  
        

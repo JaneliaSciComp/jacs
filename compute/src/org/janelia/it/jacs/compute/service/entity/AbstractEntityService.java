@@ -70,6 +70,17 @@ public abstract class AbstractEntityService implements IService {
 
     protected abstract void execute() throws Exception;
 
+    protected String extractOwnerId(String ownerKeyValue) {
+        int ownerSeparatorIndex = ownerKeyValue.indexOf(':');
+        String ownerId;
+        if (ownerSeparatorIndex != -1) {
+            ownerId = ownerKeyValue.substring(ownerSeparatorIndex);
+        } else {
+            ownerId = ownerKeyValue;
+        }
+        return ownerId;
+    }
+
     protected Entity populateChildren(Entity entity) throws ComputeException {
         try {
             return entityLoader.populateChildren(entity);
