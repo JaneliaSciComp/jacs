@@ -182,4 +182,16 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         return neuronSet;
     }
 
+    @Override
+    public void saveProtobufNeuronBytesJDBC(Long entityDataId, byte[] serializedBytes) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.saveProtobufNeuronBytesJDBC(entityDataId, serializedBytes);
+        } catch (Exception e) {
+            String errorString="Error calling saveProtobufNeuronBytesJDBC: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(e);
+        }
+    }
+
+
 }
