@@ -286,6 +286,9 @@ public class TmNeuron implements IsSerializable, Serializable {
      * check that its relationships are consistent, and any
      * referred-to annotations are actually present
      *
+     * note that these repairs are performed on the object;
+     * the calling routine will need to persist the fixes
+     *
      * returns list of problems found and/or fixed; empty
      * list = no problems
      */
@@ -319,6 +322,11 @@ public class TmNeuron implements IsSerializable, Serializable {
             }
         }
 
+        // note on repairs: a lot of this isn't implemented yet; when
+        //  you get to it, follow the model above: usually you'll want
+        //  to record the problems in one loop, then loop over problems
+        //  and solve them; that way you'll avoid concurrent modification issues
+
 
         // check annotation parents
         // all anns have parent in map?  roots in root list?
@@ -329,6 +337,7 @@ public class TmNeuron implements IsSerializable, Serializable {
                     results.add("neuron " + getName() + ": root ID " + ann.getId() + " not in root list");
                     if (repair) {
                         results.add("repair not implemented for this problem");
+                        // to repair: add it to the root list
                     }
                 }
             } else if (!getGeoAnnotationMap().containsKey(ann.getParentId())) {
@@ -337,6 +346,7 @@ public class TmNeuron implements IsSerializable, Serializable {
                     results.add("neuron " + getName() + ": ann ID " + ann.getId() + "'s parent not in ann map");
                     if (repair) {
                         results.add("repair not implemented for this problem");
+                        // to repair: promote the annotation to root (see above)
                     }
                 }
             }
