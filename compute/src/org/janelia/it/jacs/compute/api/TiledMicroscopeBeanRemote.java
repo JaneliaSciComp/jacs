@@ -42,4 +42,6 @@ public interface TiledMicroscopeBeanRemote {
 
     public Set<TmNeuron> getNeuronsFromProtobufDataByWorkspaceId(Long workspaceId) throws ComputeException;
 
+    public void saveProtobufNeuronBytesJDBC(Long entityDataId, byte[] serializedBytes) throws ComputeException;
+
 }
