@@ -39,9 +39,9 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
         contextLogger.info("Running InitSampleProcessingParametersService for sample " + sample.getName());
         
 		AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
-		contextLogger.info("Processing tiles for area: " + sampleArea.getName());
-		List<SampleTile> tiles = sampleHelper.getTiles(objectiveSample, sampleArea.getTileNames());
-
+		List<SampleTile> tiles = sampleHelper.getTilesForArea(objectiveSample, sampleArea.getName());
+		contextLogger.info("Processing tiles for area " + sampleArea.getName()+": "+tiles);
+		
 		List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();
 		boolean archived = populateMergedLsmPairs(tiles, mergedLsmPairs);
 		contextLogger.info("Putting " + archived + " in COPY_FROM_ARCHIVE");
@@ -77,7 +77,7 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
 			sampleProcessingResultsName += " (" + sampleArea.getName() + ")";
 		}
 		
-		contextLogger.info("Putting " + stackFilenames.size()+ " items in STACK_FILENAMES");
+		contextLogger.info("Putting " + stackFilenames+ " in STACK_FILENAMES");
 		processData.putItem("STACK_FILENAMES", stackFilenames);
 
 		contextLogger.info("Putting " + sampleProcessingResultsName+ " in SAMPLE_PROCESSING_RESULTS_NAME");
