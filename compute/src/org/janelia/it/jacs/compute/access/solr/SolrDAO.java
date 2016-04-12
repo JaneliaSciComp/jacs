@@ -204,19 +204,29 @@ public class SolrDAO extends AnnotationDAO {
             }
         }
 
+    	log.info("Indexing Sage vocabularies");
+    	index(createSageDocs(usedSageVocab));
+		commit();
+		
         try {
-        	log.info("Indexing Sage vocabularies");
-        	
-        	index(createSageDocs(usedSageVocab));
-        	
-    		commit();
+    		log.info("Clearing caches to make room for index optimization");
+    		largeOp.clearCache(LargeOperations.ANCESTOR_MAP);
+    		largeOp.clearCache(LargeOperations.ANNOTATION_MAP);
+    		largeOp.clearCache(LargeOperations.SAGE_IMAGEPROP_MAP);
     		optimize();
-        	log.info("Completed indexing "+i+" entities");
-            swapBuildCore();
-            log.info("Build core swapped to main core. The new index is now live.");
         }
         catch (Exception e) {
         	throw new DaoException(e);
+        }
+        finally { 
+        	try {
+	        	log.info("Completed indexing "+i+" entities");
+	            swapBuildCore();
+	            log.info("Build core swapped to main core. The new index is now live.");
+        	}
+            catch (Exception e) {
+            	log.error("Error swapping build core",e);
+            }
         }
     }
 

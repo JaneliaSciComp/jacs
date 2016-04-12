@@ -62,13 +62,13 @@
             <input name="TASK_OWNER"/>
             <input name="DATASET_NAME"/>
             <input name="LSM_NAMES"/>
-            <output name="SAMPLE_DATASET_ID_WITH_ENTITY_ID"/>
+            <output name="SAMPLE_ID"/>
         </operation>
 
-        <sequence forEach="SAMPLE_DATASET_ID_WITH_ENTITY_ID">
+        <sequence forEach="SAMPLE_ID">
 
             <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleStartProcessingService">
-                <input name="SAMPLE_DATASET_ID_WITH_ENTITY_ID"/>
+                <input name="SAMPLE_ID"/>
                 <input name="REUSE_PIPELINE_RUNS"/>
                 <input name="REUSE_SUMMARY"/>
                 <input name="REUSE_PROCESSING"/>

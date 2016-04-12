@@ -69,6 +69,10 @@ public class LargeOperations {
 
     public void clearCache(String cacheName) {
     	Cache cache = getCache(cacheName);
+    	if (cache==null) {
+    		logger.info("No such cache: "+cacheName);
+    		return;
+    	}
     	cache.removeAll();
     }
     

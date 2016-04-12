@@ -22,8 +22,18 @@ public class SetSampleStatusService extends AbstractEntityService {
         String status = data.getRequiredItemAsString("STATUS");
     	Long entityId = data.getRequiredItemAsLong("ENTITY_ID");
     	Entity sample = entityBean.getEntityById(entityId);
-    	Entity parentSample = entityBean.getAncestorWithType(sample, EntityConstants.TYPE_SAMPLE);
-
+    	
+    	Entity parentSample = null;
+    	for(Entity parent : entityBean.getParentEntities(ownerKey, sample.getId())) {
+    		if (!parent.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) continue;
+			if (!parent.getName().endsWith("Retired")) {
+				parentSample = parent;
+			}
+			else if (parentSample==null) {
+				parentSample = parent;
+			}
+    	}
+    	
     	// We care only about the first completion of the child samples. Parent completion dates can be overridden if the child is newly completed.
         this.firstCompletion = sample.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE)==null;
         

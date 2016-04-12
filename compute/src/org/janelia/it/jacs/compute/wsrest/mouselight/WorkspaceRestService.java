@@ -41,6 +41,20 @@ public class WorkspaceRestService {
 
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
 
+    private static long quasiTimebasedGuid=0L;
+
+    private static long[] getNextGuidArray(int count) {
+        long timeValue=new Date().getTime();
+        if (timeValue>quasiTimebasedGuid) {
+            quasiTimebasedGuid=timeValue;
+        }
+        long[] guidArr=new long[count];
+        for (int i=0;i<count;i++) {
+            guidArr[i]=quasiTimebasedGuid++;
+        }
+        return guidArr;
+    }
+
     //=============================================================================================================//
     // TESTS
     //=============================================================================================================//
@@ -128,11 +142,23 @@ public class WorkspaceRestService {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public class PointInfo {
+        public String idString;
+        public String parentIdString;
         public double x;
         public double y;
         public double z;
         public long createTimestamp;
         public String createTimeString;
+
+        @JsonProperty
+        public String getIdString() {
+            return idString;
+        }
+
+        @JsonProperty
+        public String getParentIdString() {
+            return parentIdString;
+        }
 
         @JsonProperty
         public double getX() { return x; }
@@ -314,6 +340,8 @@ public class WorkspaceRestService {
                     Map<Long, TmGeoAnnotation> geoAnnotationMap=neuron.getGeoAnnotationMap();
                     for (TmGeoAnnotation tmGeoAnnotation : geoAnnotationMap.values()) {
                         PointInfo pointInfo=new PointInfo();
+                        pointInfo.idString=tmGeoAnnotation.getId().toString();
+                        pointInfo.parentIdString=tmGeoAnnotation.getParentId().toString();
                         pointInfo.x=tmGeoAnnotation.getX();
                         pointInfo.y=tmGeoAnnotation.getY();
                         pointInfo.z=tmGeoAnnotation.getZ();
@@ -414,16 +442,16 @@ public class WorkspaceRestService {
 
         Random random=new Random(randomSeed);
 
-        long geoIdIndex=1;
+        long[] guidArr=getNextGuidArray(numberOfPoints);
         double[] xyz=new double[3];
         xyz[0]=CENTER_X;
         xyz[1]=CENTER_Y;
         xyz[2]=CENTER_Z;
-        randomizePoint(xyz, 2000.0);
+        randomizePoint(xyz, 4000.0);
         TmNeuron neuron=new TmNeuron();
         Map<Long,TmGeoAnnotation> map=neuron.getGeoAnnotationMap();
         TmGeoAnnotation rootAnnotation = new TmGeoAnnotation();
-        rootAnnotation.setId(geoIdIndex++);
+        rootAnnotation.setId(guidArr[0]);
         rootAnnotation.setNeuronId(neuronId);
         rootAnnotation.setParentId(neuronId);
         neuron.addRootAnnotation(rootAnnotation);
@@ -438,7 +466,7 @@ public class WorkspaceRestService {
         for (int i=1;i<numberOfPoints;i++) {
             TmGeoAnnotation geoAnnotation=new TmGeoAnnotation();
             geoAnnotation.setCreationDate(new Date());
-            geoAnnotation.setId(geoIdIndex++);
+            geoAnnotation.setId(guidArr[i]);
             geoAnnotation.setNeuronId(neuronId);
             map.put(geoAnnotation.getId(), geoAnnotation);
             int branchIndex=(int)(endPoints.size()*Math.random());
@@ -446,7 +474,7 @@ public class WorkspaceRestService {
             xyz[0]=branchEnd.getX();
             xyz[1]=branchEnd.getY();
             xyz[2]=branchEnd.getZ();
-            randomizePoint(xyz, 10.0);
+            randomizePoint(xyz, 20.0);
             geoAnnotation.setX(xyz[0]);
             geoAnnotation.setY(xyz[1]);
             geoAnnotation.setZ(xyz[2]);

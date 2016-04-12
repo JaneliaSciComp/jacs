@@ -1,11 +1,9 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -62,51 +60,60 @@ public class LSMSampleInitService extends AbstractEntityService {
             logger.error("Error retrieving dataset entities for " + datasetName, e);
             return;
         }
-        for (Entity dataset : datasets) {
-            String owner = extractOwner(dataset.getOwnerKey());
-            String configPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_CONFIG_PATH).getValue();
-            String grammarPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_GRAMMAR_PATH).getValue();
+        if (datasets.size() > 1) {
+            logger.warn("More than one dataset found (" + datasets.size() + ") - only the first one will be considered: ");
+        }
+        Entity dataset = datasets.get(0);
+        String owner = extractOwnerId(dataset.getOwnerKey());
+        processData.putItem("DATASET_OWNER", owner);
 
-            for (String slideCode : slideImagesGroupedBySlideCode.keySet()) {
-                try {
-                    Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
-                    String[] labAndLine = prepareSlideImageGroupsBySlideCode(slideImages);
-                    List<String> slideImageNames = ImmutableList.copyOf(Iterables.transform(slideImages, new Function<SlideImage, String>() {
-                        @Nullable
-                        @Override
-                        public String apply(SlideImage slideImage) {
-                            return slideImage.getImageName();
-                        }
-                    }));
-                    SageLoaderTask sageLoaderTask = new SageLoaderTask(owner,
-                            new ArrayList<Event>(),
-                            slideImageNames,
-                            labAndLine[1],
-                            configPath,
-                            grammarPath,
-                            labAndLine[0],
-                            "true",
-                            null);
-                    sageLoaderTask.setParentTaskId(task.getObjectId());
-                    computeBean.saveOrUpdateTask(sageLoaderTask);
-                    targetTasks.add(sageLoaderTask);
+        String configPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_CONFIG_PATH).getValue();
+        String grammarPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_GRAMMAR_PATH).getValue();
 
-                } catch (Exception e) {
-                    logger.error("Error while preparing image groups for  " + datasetName + ": " + slideCode, e);
-                }
+        for (final String slideCode : slideImagesGroupedBySlideCode.keySet()) {
+            try {
+                Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
+                String[] labAndLine = prepareSlideImageGroupsBySlideCode(slideImages);
+                List<String> slideImageNames = FluentIterable
+                        .from(slideImages)
+                        .filter(new Predicate<SlideImage>() {
+                            @Override
+                            public boolean apply(@Nullable SlideImage slideImage) {
+                                if (slideImage.getImageName() != null && slideImage.getImageName().length() > 0) {
+                                    return true;
+                                } else {
+                                    logger.warn("Invalid image name encountered for " + slideCode + " " + slideImage.getLine());
+                                    return false;
+                                }
+                            }
+                        })
+                        .transform(new Function<SlideImage, String>() {
+                            @Nullable
+                            @Override
+                            public String apply(SlideImage slideImage) {
+                                return slideImage.getImageName();
+                            }
+                        })
+                        .toImmutableList();
+                SageLoaderTask sageLoaderTask = new SageLoaderTask(owner,
+                        new ArrayList<Event>(),
+                        slideImageNames,
+                        labAndLine[1],
+                        configPath,
+                        grammarPath,
+                        labAndLine[0],
+                        "true",
+                        null);
+                sageLoaderTask.setParentTaskId(task.getObjectId());
+                computeBean.saveOrUpdateTask(sageLoaderTask);
+                logger.info("Created SageLoaderTask " + sageLoaderTask.getObjectId());
+                targetTasks.add(sageLoaderTask);
+
+            } catch (Exception e) {
+                logger.error("Error while preparing image groups for  " + datasetName + ": " + slideCode, e);
             }
         }
-    }
 
-    private String extractOwner(String ownerKey) {
-        int ownerSeparatorIndex = ownerKey.indexOf(':');
-        String owner;
-        if (ownerSeparatorIndex != -1) {
-            owner = ownerKey.substring(ownerSeparatorIndex);
-        } else {
-            owner = ownerKey;
-        }
-        return owner;
     }
 
     private String[] prepareSlideImageGroupsBySlideCode(Collection<SlideImage> slideImages) {
