@@ -57,7 +57,8 @@
             </include>
         </sequence>
 
-        <!-- Discover the samples -->
+        <!--
+        Disable the rest of the pipeline until the discovery can work correctly and assign new LSMs to the proper parent sample
         <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleDiscoveryService">
             <input name="TASK_OWNER"/>
             <input name="DATASET_NAME"/>
@@ -78,6 +79,6 @@
             </operation>
 
         </sequence>
-
+        -->
     </sequence>
 </process>

@@ -379,6 +379,7 @@ public class RestfulWebService {
 
         JsonTask result = new JsonTask(lsmProcessingTask);
         result.setTaskStatusUrl(getNormalizedBaseUrlString(uriInfo) + "task/" + lsmProcessingTask.getObjectId() + "/currentStatus");
+        result.setTaskUri(getNormalizedBaseUrlString(uriInfo) + "tasks/" + lsmProcessingTask.getObjectId());
 
         return Response
                 .status(Response.Status.CREATED)

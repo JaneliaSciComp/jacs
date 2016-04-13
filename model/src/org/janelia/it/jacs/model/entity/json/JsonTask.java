@@ -27,6 +27,7 @@ public class JsonTask {
     private String parentTaskId;
     private String owner;
     private String taskStatusUrl;
+    private String taskUrl;
     private String status;
 
     private List<JsonTaskEvent> taskEvents = new ArrayList<>();
@@ -92,6 +93,14 @@ public class JsonTask {
 
     public void setTaskStatusUrl(String taskStatusUrl) {
         this.taskStatusUrl = taskStatusUrl;
+    }
+
+    public String getTaskUrl() {
+        return taskUrl;
+    }
+
+    public void setTaskUrl(String taskUrl) {
+        this.taskUrl = taskUrl;
     }
 
     public List<JsonTaskEvent> getTaskEvents() {
