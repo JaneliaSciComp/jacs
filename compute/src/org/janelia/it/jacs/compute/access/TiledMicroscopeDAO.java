@@ -4,6 +4,11 @@ import Jama.Matrix;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import org.apache.log4j.Logger;
 
@@ -30,6 +35,7 @@ import org.janelia.it.jacs.shared.swc.ImportExportSWCExchanger;
 import org.janelia.it.jacs.shared.swc.MatrixDrivenSWCExchanger;
 import org.janelia.it.jacs.shared.swc.SWCDataConverter;
 import org.janelia.it.jacs.shared.swc.SWCNode;
+import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 /**
@@ -1107,6 +1113,32 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
             }
         }
         return neuronSet;
+    }
+
+    public void saveProtobufNeuronBytesJDBC(Long entityDataId, byte[] serializedBytes) throws Exception {
+        PreparedStatement statement = null;
+        Connection conn = null;
+        BASE64Encoder encoder=new BASE64Encoder();
+        String base64String=encoder.encode(serializedBytes);
+        try {
+            conn = getJdbcConnection();
+            conn.setAutoCommit(false);
+            String sql = "UPDATE entityData SET value=? WHERE id=?";
+            statement = conn.prepareStatement(sql);
+            statement.setString(1, base64String) ;
+            statement.setLong(2, entityDataId);
+            statement.execute();
+            conn.commit();
+        }
+        catch (Exception ex) {
+            try {
+                conn.rollback();
+            }
+            catch (SQLException se) {
+                se.printStackTrace();
+            }
+            throw new DaoException(ex);
+        }
     }
 
 }
