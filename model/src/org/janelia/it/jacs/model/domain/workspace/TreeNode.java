@@ -1,16 +1,16 @@
 package org.janelia.it.jacs.model.domain.workspace;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.interfaces.IsParent;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
 import org.janelia.it.jacs.model.domain.support.SearchType;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A generic node in a domain object tree. 
@@ -21,11 +21,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @SearchType(key="treeNode",label="Folder")
 public class TreeNode extends AbstractDomainObject implements IsParent {
 
+    @SearchTraversal({})
     private List<Reference> children = new ArrayList<>();
 
     /**
-     * Return true if the given tree node has the specified domain object as a child. 
-     * @param treeNode
+     * Return true if the given tree node has the specified domain object as a child.
      * @param domainObject
      * @return
      */

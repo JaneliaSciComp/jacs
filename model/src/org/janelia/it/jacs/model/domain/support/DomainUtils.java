@@ -17,11 +17,8 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.AttributeValueCriteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.Criteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.DateRangeCriteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.FacetCriteria;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.*;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.TreeNodeCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
@@ -567,12 +564,12 @@ public class DomainUtils {
             newCriteria.setValues(new HashSet<>(source.getValues()));
             return newCriteria;
         }
-        else if (criteria instanceof ObjectSetCriteria) {
-            ObjectSetCriteria source = (ObjectSetCriteria)criteria;
-            ObjectSetCriteria newCriteria = new ObjectSetCriteria();
-            newCriteria.setObjectSetName(source.getObjectSetName());
-            Reference setReference = Reference.createFor(source.getObjectSetReference().getTargetClassName(), source.getObjectSetReference().getTargetId());
-            newCriteria.setObjectSetReference(setReference);
+        else if (criteria instanceof TreeNodeCriteria) {
+            TreeNodeCriteria source = (TreeNodeCriteria)criteria;
+            TreeNodeCriteria newCriteria = new TreeNodeCriteria();
+            newCriteria.setTreeNodeName(source.getTreeNodeName());
+            Reference setReference = Reference.createFor(source.getTreeNodeReference().getTargetClassName(), source.getTreeNodeReference().getTargetId());
+            newCriteria.setTreeNodeReference(setReference);
             return newCriteria;
         }
         else {

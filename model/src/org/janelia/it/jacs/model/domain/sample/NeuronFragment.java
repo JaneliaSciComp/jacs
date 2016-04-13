@@ -1,8 +1,5 @@
 package org.janelia.it.jacs.model.domain.sample;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -10,7 +7,9 @@ import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchTraversal;
-import org.janelia.it.jacs.model.domain.support.SearchType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A neuron fragment segmented from an image by the Neuron Separator. 
@@ -18,7 +17,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="fragment",label="Neuron Fragment")
-@SearchType(key="fragment",label="Neuron Fragment")
+//@SearchType(key="fragment",label="Neuron Fragment")
 public class NeuronFragment extends AbstractDomainObject implements HasRelativeFiles {
 
     @SearchTraversal({NeuronFragment.class})

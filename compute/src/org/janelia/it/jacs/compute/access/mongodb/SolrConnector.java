@@ -1,21 +1,9 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.mongodb.Bytes;
+import com.mongodb.DBCursor;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -37,24 +25,24 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
-import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.support.SearchAttribute;
-import org.janelia.it.jacs.model.domain.support.SearchTraversal;
-import org.janelia.it.jacs.model.domain.support.SearchType;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.it.jacs.model.domain.support.*;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
-import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.mongodb.Bytes;
-import com.mongodb.DBCursor;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.*;
 
 /**
  * A connector for loading the full text Solr index from the data in the Mongo Database. 
@@ -85,10 +73,10 @@ public class SolrConnector {
 	protected DomainDAO dao;
     
     // Caches
-    Map<Class<?>, List<Field>> classFields = new HashMap<Class<?>,List<Field>>();
+    Map<Class<?>, List<Field>> classFields = new HashMap<>();
     
     // Current indexing context
-    private Set<SimpleAnnotation> annotations = new HashSet<SimpleAnnotation>();
+    private Set<SimpleAnnotation> annotations = new HashSet<>();
     private Multimap<String,String> fullTextStrings = HashMultimap.<String,String>create();
 
     public SolrConnector(DomainDAO dao) throws UnknownHostException {
@@ -139,13 +127,13 @@ public class SolrConnector {
 
 		Reflections reflections = new Reflections(JANELIA_MODEL_PACKAGE);
 		Set<Class<?>> searchClasses = reflections.getTypesAnnotatedWith(SearchType.class);
-    	List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+    	List<SolrInputDocument> docs = new ArrayList<>();
         int total = 0;
         
 		for (Class<?> clazz : searchClasses) {
 
             long start = System.currentTimeMillis();
-            
+
 	    	log.info("Getting objects of type "+clazz.getName());
 	    	
 			String collectionName = DomainUtils.getCollectionName(clazz);
@@ -211,7 +199,7 @@ public class SolrConnector {
     	doc.setField("class", domainObject.getClass().getName(), 1.0f);
     	doc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
     	
-		Map<String,Object> attrs = new HashMap<String,Object>();
+		Map<String,Object> attrs = new HashMap<>();
 		for(Field field : fields) {
 			SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
 			try {
@@ -374,12 +362,12 @@ public class SolrConnector {
 		if (object==null) return;
 		Class<?> clazz = object.getClass();
 				
-        log.debug(indent+"indexing "+clazz.getName());
+        log.info(indent+"indexing "+clazz.getName());
         
         if (object instanceof DomainObject) {
             DomainObject domainObject = (DomainObject)object;
             Long id = domainObject.getId();
-            String key = clazz.getName()+"#"+id;
+			String key = Reference.createFor(domainObject).toString();
             if (visited.contains(key)) {
                 return;
             }
@@ -419,29 +407,31 @@ public class SolrConnector {
 	 */
 	private void findStrings(Set<String> visited, DomainObject rootObject, Object object, Field field, String indent) throws Exception {
 
-		if (object==null) return;
+		if (object == null) return;
 
-        if (!isTraversable(field, rootObject)) {
-            return;
-        }
+		if (!isTraversable(field, rootObject)) {
+			return;
+		}
 
-        if (Modifier.isTransient(field.getModifiers())) {
-        	return;
-        }
-        
-        if (object instanceof String) {
-            addFullTextString(field.getName(), (String)object);
-            return;
-        }
-        
-        log.debug(indent+"indexing "+object+"."+field.getName());
+		if (Modifier.isTransient(field.getModifiers())) {
+			return;
+		}
 
-        
-        Object childObj = ReflectionHelper.getFieldValue(object, field);
-        if (childObj==null) return;
+		if (object instanceof String) {
+			addFullTextString(field.getName(), (String) object);
+			return;
+		}
+
+		log.debug(indent + "indexing " + object + "." + field.getName());
+		Object childObj = ReflectionHelper.getFieldValue(object, field);
+		if (childObj==null) return;
+
         Class<?> childClass = childObj.getClass();
-		
-		if (childObj instanceof String) {
+
+		if (childClass.isEnum()) {
+			addFullTextString(field.getName(), childObj.toString());
+		}
+		else if (childObj instanceof String) {
             addFullTextString(field.getName(), childObj.toString());
 		}
 		else if (childObj instanceof Map) {
@@ -459,8 +449,7 @@ public class SolrConnector {
 		else if (childObj instanceof Reference) {
             Reference ref = (Reference) childObj;
             // Don't fetch objects which we've already visited
-            String key = ref.getTargetClassName()+"#"+ref.getTargetId();
-            if (visited.contains(key)) {
+            if (visited.contains(ref.toString())) {
                 return;
             }
             log.trace(indent+"fetching reference "+ref);
@@ -485,21 +474,6 @@ public class SolrConnector {
 			log.warn("Encountered unknown class: "+childClass.getName());
 		}
 	}
-	
-	private boolean isTraversable(Field field, Object rootObject) {
-        SearchTraversal searchTraversal = field.getAnnotation(SearchTraversal.class);
-        
-        // Default to traversing every unannotated field
-        if (searchTraversal==null) return true;
-        
-        for(Class<?> allowedClass : searchTraversal.value()) {
-            if (allowedClass.equals(rootObject.getClass())) {
-                return true;
-            }
-        }
-        // Annotation exists, but this field is not traversable from the given root object
-        return false;
-	}
 
 	/**
 	 * Find strings in the field of the given object, which reduces to the given collection. 
@@ -521,16 +495,27 @@ public class SolrConnector {
             }
             Class<?> clazz = collectionObject.getClass();
             if (clazz.getName().startsWith(JANELIA_MODEL_PACKAGE)) {
+				if (collectionObject instanceof Reference) {
+					Reference ref = (Reference) collectionObject;
+					// Don't fetch objects which we've already visited
+					if (visited.contains(ref.toString())) {
+						return;
+					}
+					log.trace(indent+"fetching reference "+ref);
+					DomainObject obj = dao.getDomainObject(null, ref);
+					findStrings(visited, rootObject, obj, false, indent + "  ");
+				}
+
                 findStrings(visited, rootObject, collectionObject, false, indent+"  ");
             }
             else if (collectionObject instanceof String) {
-                findStrings(visited, rootObject, collectionObject, field, indent+"  ");   
+				addFullTextString(field.getName(), collectionObject.toString());
             }
             else if (collectionObject instanceof Number) {
                 // Ignore
             }
             else {
-                log.warn("Encountered collection with objects of type "+clazz.getName());
+                log.warn(indent+"Encountered collection with objects of type "+clazz.getName());
             }
         }   
     }
@@ -548,6 +533,23 @@ public class SolrConnector {
 		}
 		
 		fullTextStrings.put(key, value);
+	}
+
+	private boolean isTraversable(Field field, Object rootObject) {
+		SearchTraversal searchTraversal = field.getAnnotation(SearchTraversal.class);
+
+		// Default to traversing every unannotated field
+		if (searchTraversal==null) {
+			return true;
+		}
+
+		for(Class<?> allowedClass : searchTraversal.value()) {
+			if (allowedClass.equals(rootObject.getClass())) {
+				return true;
+			}
+		}
+		// Annotation exists, but this field is not traversable from the given root object
+		return false;
 	}
 
 	protected void index(List<SolrInputDocument> docs) throws DaoException {
@@ -788,5 +790,4 @@ public class SolrConnector {
 		index(inputDocs);
 		commit();
 	}
-
 }
