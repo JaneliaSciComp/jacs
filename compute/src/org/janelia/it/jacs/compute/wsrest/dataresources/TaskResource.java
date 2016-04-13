@@ -116,6 +116,6 @@ public class TaskResource {
     }
 
     private String getTaskStatusUrl(UriInfo uriInfo, Long taskId) {
-        return getNormalizedBaseUrlString(uriInfo) + "tasks/" + taskId;
+        return getNormalizedBaseUrlString(uriInfo) + "task/" + taskId + "/currentStatus";
     }
 }
