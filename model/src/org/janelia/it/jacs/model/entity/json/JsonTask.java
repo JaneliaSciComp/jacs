@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.model.entity.json;
 
+import com.google.common.collect.Ordering;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -23,12 +24,17 @@ public class JsonTask {
 
     private String taskId;
     private String taskName;
+    private String parentTaskId;
     private String owner;
     private String taskStatusUrl;
+    private String taskUrl;
+    private String status;
+
     private List<JsonTaskEvent> taskEvents = new ArrayList<>();
     private Map<String, String> taskParameters = new LinkedHashMap<>();
     private List<JsonTaskData> inputNodes = new ArrayList<>();
     private List<JsonTaskData> outputNodes = new ArrayList<>();
+    private List<JsonTask> childrenTasks = new ArrayList<>();
 
     JsonTask() {
         // needed by JAXB serializer
@@ -37,9 +43,18 @@ public class JsonTask {
     public JsonTask(Task t) {
         taskId = t.getObjectId().toString();
         taskName = t.getTaskName();
+        parentTaskId = t.getParentTaskId() != null && t.getParentTaskId() != 0 ? t.getParentTaskId().toString() : null;
         owner = t.getOwner();
-        for (Event e : t.getEvents()) {
-            taskEvents.add(new JsonTaskEvent(e));
+        Ordering<Event> taskEventsOrdering = new Ordering<Event>() {
+            @Override
+            public int compare(Event left, Event right) {
+                return left.getTimestamp().compareTo(right.getTimestamp());
+            }
+        };
+        for (Event e : taskEventsOrdering.immutableSortedCopy(t.getEvents())) {
+            JsonTaskEvent jsonEvent = new JsonTaskEvent(e);
+            taskEvents.add(jsonEvent);
+            status = jsonEvent.getEventType();
         }
         for (TaskParameter p : t.getTaskParameterSet()) {
             taskParameters.put(p.getName(), p.getValue());
@@ -64,6 +79,10 @@ public class JsonTask {
         return taskName;
     }
 
+    public String getParentTaskId() {
+        return parentTaskId;
+    }
+
     public String getOwner() {
         return owner;
     }
@@ -74,6 +93,14 @@ public class JsonTask {
 
     public void setTaskStatusUrl(String taskStatusUrl) {
         this.taskStatusUrl = taskStatusUrl;
+    }
+
+    public String getTaskUrl() {
+        return taskUrl;
+    }
+
+    public void setTaskUrl(String taskUrl) {
+        this.taskUrl = taskUrl;
     }
 
     public List<JsonTaskEvent> getTaskEvents() {
@@ -90,5 +117,17 @@ public class JsonTask {
 
     public List<JsonTaskData> getOutputNodes() {
         return outputNodes;
+    }
+
+    public List<JsonTask> getChildrenTasks() {
+        return childrenTasks;
+    }
+
+    public void setChildrenTasks(List<JsonTask> childrenTasks) {
+        this.childrenTasks = childrenTasks;
+    }
+
+    public void addChildTask(JsonTask childTask) {
+        childrenTasks.add(childTask);
     }
 }
