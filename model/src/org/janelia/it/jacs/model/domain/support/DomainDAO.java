@@ -1,15 +1,7 @@
 package org.janelia.it.jacs.model.domain.support;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
@@ -521,19 +513,20 @@ public class DomainDAO {
     }
 
     public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
+        log.trace("getAnnotations(subjectKey={},references=" + references + ")");
         Set<String> subjects = getSubjectSet(subjectKey);
 
-        List<Long> targetIds = new ArrayList<>();
+        List<String> targetRefs = new ArrayList<>();
         for (Reference reference : references) {
-            targetIds.add(reference.getTargetId());
+            targetRefs.add(reference.toString());
         }
 
         MongoCursor<Annotation> cursor = null;
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            cursor = annotationCollection.find("{targetId:{$in:#}}", targetIds).as(Annotation.class);
+            cursor = annotationCollection.find("{target:{$in:#}}", targetRefs).as(Annotation.class);
         }
         else {
-            cursor = annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}", targetIds, subjects).as(Annotation.class);
+            cursor = annotationCollection.find("{target:{$in:#},readers:{$in:#}}", targetRefs, subjects).as(Annotation.class);
         }
 
         return toList(cursor);
@@ -958,7 +951,7 @@ public class DomainDAO {
             throw new IllegalStateException("Reordered children have new size " + references.size() + " (was " + originalSize + ")");
         }
 
-        log.info("Reordering children of tree node '{}'", treeNode.getName());
+        log.info("Reordering children of TreeNode#" , treeNode.getId());
         saveImpl(subjectKey, treeNode);
         return getDomainObject(subjectKey, treeNode);
     }
@@ -968,25 +961,7 @@ public class DomainDAO {
     }
 
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        if (references == null) {
-            throw new IllegalArgumentException("Cannot add null children");
-        }
-        TreeNode treeNode = getDomainObject(subjectKey, TreeNode.class, treeNodeArg.getId());
-        if (treeNode == null) {
-            throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
-        }
-        for (Reference ref : references) {
-            if (ref.getTargetId() == null) {
-                throw new IllegalArgumentException("Cannot add child without an id");
-            }
-            if (ref.getTargetClassName() == null) {
-                throw new IllegalArgumentException("Cannot add child without a target class name");
-            }
-            treeNode.addChild(ref);
-        }
-        log.info("Adding " + references.size() + " objects to " + treeNode.getName());
-        saveImpl(subjectKey, treeNode);
-        return getDomainObject(subjectKey, treeNode);
+        return addChildren(subjectKey, treeNodeArg, references, null);
     }
 
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception {
@@ -997,6 +972,10 @@ public class DomainDAO {
         if (treeNode == null) {
             throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
         }
+        Set<String> refs = new HashSet<>();
+        for (Reference reference : treeNode.getChildren()) {
+            refs.add(reference.toString());
+        }
         int i = 0;
         for (Reference ref : references) {
             if (ref.getTargetId() == null) {
@@ -1004,6 +983,10 @@ public class DomainDAO {
             }
             if (ref.getTargetClassName() == null) {
                 throw new IllegalArgumentException("Cannot add child without a target class name");
+            }
+            if (refs.contains(ref.toString())) {
+                log.trace("Tree node "+treeNode.getId()+" already contains " + ref);
+                continue;
             }
             if (index != null) {
                 treeNode.insertChild(index + i, ref);
@@ -1013,7 +996,7 @@ public class DomainDAO {
             }
             i++;
         }
-        log.info("Adding " + references.size() + " objects to " + treeNode.getName());
+        log.info("Adding {} children to TreeNode#{}",i,treeNode.getId());
         saveImpl(subjectKey, treeNode);
         return getDomainObject(subjectKey, treeNode);
     }
