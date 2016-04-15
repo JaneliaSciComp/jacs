@@ -178,7 +178,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
             return false;
         }
         
-        return sample.getObjectives().keySet().contains("63x");
+        return sample.getObjectives().contains("63x");
     }
 
     public ObjectSet verifyOrCreateChildFolder(TreeNode parentFolder, String childName) throws Exception {

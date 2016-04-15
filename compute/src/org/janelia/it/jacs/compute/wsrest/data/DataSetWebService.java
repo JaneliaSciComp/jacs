@@ -213,7 +213,7 @@ public class DataSetWebService extends ResourceConfig {
     public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("dataSetId") final String dataSetId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        Reference dataSetRef = new Reference (Annotation.class.getName(), new Long(dataSetId));
+        Reference dataSetRef = Reference.createFor(Annotation.class, new Long(dataSetId));
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
             IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());

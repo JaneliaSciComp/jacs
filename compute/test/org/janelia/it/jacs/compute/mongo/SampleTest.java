@@ -241,9 +241,8 @@ public class SampleTest extends MongoDbTest {
                 lsmMap.put(lsm.getId(), lsm);
             }
             
-            for(String objective : sample.getOrderedObjectives()) {
-                ObjectiveSample osample = sample.getObjectiveSample(objective);
-                for(SampleTile tile : osample.getTiles()) {
+            for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+                for(SampleTile tile : objectiveSample.getTiles()) {
                     for(Reference lsmRef : tile.getLsmReferences()) {
                         LSMImage image = lsmMap.get(lsmRef.getTargetId());
                         if (image==null) {
@@ -281,13 +280,12 @@ public class SampleTest extends MongoDbTest {
         }
         for(DomainObject obj : dao.getDomainObjects(subjectKey, treeNode.getChildren())) {
             Sample sample = (Sample)obj;
-            for(String objective : sample.getOrderedObjectives()) {
-                ObjectiveSample osample = sample.getObjectiveSample(objective);
-                for(SampleTile tile : osample.getTiles()) {
+            for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+                for(SampleTile tile : objectiveSample.getTiles()) {
                     for(Reference lsm : tile.getLsmReferences()) {
                     }
                 }
-                for(SamplePipelineRun run : osample.getPipelineRuns()) {
+                for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
                     if (run.getResults()==null) continue;
                     for(PipelineResult result : run.getResults()) {
                         if (result.getResults()==null) continue;

@@ -468,6 +468,13 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            diskSpoolBufferSizeMB="50"
             />
 
+    <cache name="etlAnnotationMapCache"
+           maxEntriesLocalHeap="10"
+           eternal="true"
+           overflowToDisk="true"
+           diskSpoolBufferSizeMB="50"
+            />
+
     <cache name="ancestorMapCache"
            maxEntriesLocalHeap="10"
            eternal="true"

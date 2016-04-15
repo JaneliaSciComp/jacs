@@ -1,15 +1,7 @@
 package org.janelia.it.jacs.model.domain.support;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
@@ -237,15 +229,16 @@ public class DomainDAO {
             return null;
         }
 
+        String refStr = Reference.createFor(domainObject).toString();
         List<Reference> refList = new ArrayList<>();
-        MongoCursor<TreeNode> treeCursor = treeNodeCollection.find("{children.targetId:#}", domainObject.getId()).as(TreeNode.class);
+        MongoCursor<TreeNode> treeCursor = treeNodeCollection.find("{children:#}", refStr).as(TreeNode.class);
         for (TreeNode item : treeCursor) {
-            Reference newRef = new Reference(item.getClass().getName(), item.getId());
+            Reference newRef = Reference.createFor(item.getClass(), item.getId());
             refList.add(newRef);
         }
-        MongoCursor<ObjectSet> objSetCursor = objectSetCollection.find("{children.targetId:#}", domainObject.getId()).as(ObjectSet.class);
+        MongoCursor<ObjectSet> objSetCursor = objectSetCollection.find("{children:#}", refStr).as(ObjectSet.class);
         for (ObjectSet item : objSetCursor) {
-            Reference newRef = new Reference(item.getClass().getName(), item.getId());
+            Reference newRef = Reference.createFor(item.getClass(), item.getId());
             refList.add(newRef);
         }
         return refList;
@@ -317,7 +310,7 @@ public class DomainDAO {
      */
     @SuppressWarnings("unchecked")
     public <T extends DomainObject> T getDomainObject(String subjectKey, Class<T> domainClass, Long id) {
-        Reference reference = new Reference(domainClass.getName(), id);
+        Reference reference = Reference.createFor(domainClass, id);
         return (T) getDomainObject(subjectKey, reference);
     }
 
@@ -520,19 +513,20 @@ public class DomainDAO {
     }
 
     public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
+        log.trace("getAnnotations(subjectKey={},references=" + references + ")");
         Set<String> subjects = getSubjectSet(subjectKey);
 
-        List<Long> targetIds = new ArrayList<>();
+        List<String> targetRefs = new ArrayList<>();
         for (Reference reference : references) {
-            targetIds.add(reference.getTargetId());
+            targetRefs.add(reference.toString());
         }
 
         MongoCursor<Annotation> cursor = null;
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            cursor = annotationCollection.find("{targetId:{$in:#}}", targetIds).as(Annotation.class);
+            cursor = annotationCollection.find("{target:{$in:#}}", targetRefs).as(Annotation.class);
         }
         else {
-            cursor = annotationCollection.find("{targetId:{$in:#},readers:{$in:#}}", targetIds, subjects).as(Annotation.class);
+            cursor = annotationCollection.find("{target:{$in:#},readers:{$in:#}}", targetRefs, subjects).as(Annotation.class);
         }
 
         return toList(cursor);
@@ -691,12 +685,13 @@ public class DomainDAO {
     }
 
     public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
+        String refStr = "Sample#"+sampleId;
         Set<String> subjects = getSubjectSet(subjectKey);
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            return toList(imageCollection.find("{sample.targetId:#,sageSynched:true}", sampleId).as(LSMImage.class));
+            return toList(imageCollection.find("{sampleRef:#,sageSynched:true}", refStr).as(LSMImage.class));
         }
         else {
-            return toList(imageCollection.find("{sample.targetId:#,sageSynched:true,readers:{$in:#}}", sampleId, subjects).as(LSMImage.class));
+            return toList(imageCollection.find("{sampleRef:#,sageSynched:true,readers:{$in:#}}", refStr, subjects).as(LSMImage.class));
         }
     }
 
@@ -711,8 +706,9 @@ public class DomainDAO {
     }
 
     public List<NeuronFragment> getNeuronFragmentsBySampleId(String subjectKey, Long sampleId) {
+        String refStr = "Sample#"+sampleId;
         Set<String> subjects = getSubjectSet(subjectKey);
-        return toList(fragmentCollection.find("{sampleId:#,readers:{$in:#}}", sampleId, subjects).as(NeuronFragment.class));
+        return toList(fragmentCollection.find("{sampleRef:#,readers:{$in:#}}", refStr, subjects).as(NeuronFragment.class));
     }
 
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
@@ -725,13 +721,14 @@ public class DomainDAO {
         return treeNodeCollection.findOne("{_id:#,readers:{$in:#}}", id, subjects).as(TreeNode.class);
     }
 
-    public TreeNode getParentTreeNodes(String subjectKey, Long id) {
+    public TreeNode getParentTreeNodes(String subjectKey, Reference ref) {
+        String refStr = ref.toString();
         Set<String> subjects = getSubjectSet(subjectKey);
         if (subjects == null) {
-            return treeNodeCollection.findOne("{'children.targetId':#}", id).as(TreeNode.class);
+            return treeNodeCollection.findOne("{'children':#}", refStr).as(TreeNode.class);
         }
         else {
-            return treeNodeCollection.findOne("{'children.targetId':#,readers:{$in:#}}", id, subjects).as(TreeNode.class);
+            return treeNodeCollection.findOne("{'children':#,readers:{$in:#}}", refStr, subjects).as(TreeNode.class);
         }
     }
 
@@ -957,7 +954,7 @@ public class DomainDAO {
             throw new IllegalStateException("Reordered children have new size " + references.size() + " (was " + originalSize + ")");
         }
 
-        log.info("Reordering children of tree node '{}'", treeNode.getName());
+        log.info("Reordering children of TreeNode#" , treeNode.getId());
         saveImpl(subjectKey, treeNode);
         return getDomainObject(subjectKey, treeNode);
     }
@@ -967,25 +964,7 @@ public class DomainDAO {
     }
 
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        if (references == null) {
-            throw new IllegalArgumentException("Cannot add null children");
-        }
-        TreeNode treeNode = getDomainObject(subjectKey, TreeNode.class, treeNodeArg.getId());
-        if (treeNode == null) {
-            throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
-        }
-        for (Reference ref : references) {
-            if (ref.getTargetId() == null) {
-                throw new IllegalArgumentException("Cannot add child without an id");
-            }
-            if (ref.getTargetClassName() == null) {
-                throw new IllegalArgumentException("Cannot add child without a target class name");
-            }
-            treeNode.addChild(ref);
-        }
-        log.info("Adding " + references.size() + " objects to " + treeNode.getName());
-        saveImpl(subjectKey, treeNode);
-        return getDomainObject(subjectKey, treeNode);
+        return addChildren(subjectKey, treeNodeArg, references, null);
     }
 
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception {
@@ -996,6 +975,10 @@ public class DomainDAO {
         if (treeNode == null) {
             throw new IllegalArgumentException("Tree node not found: " + treeNodeArg.getId());
         }
+        Set<String> refs = new HashSet<>();
+        for (Reference reference : treeNode.getChildren()) {
+            refs.add(reference.toString());
+        }
         int i = 0;
         for (Reference ref : references) {
             if (ref.getTargetId() == null) {
@@ -1003,6 +986,10 @@ public class DomainDAO {
             }
             if (ref.getTargetClassName() == null) {
                 throw new IllegalArgumentException("Cannot add child without a target class name");
+            }
+            if (refs.contains(ref.toString())) {
+                log.trace("Tree node "+treeNode.getId()+" already contains " + ref);
+                continue;
             }
             if (index != null) {
                 treeNode.insertChild(index + i, ref);
@@ -1012,7 +999,7 @@ public class DomainDAO {
             }
             i++;
         }
-        log.info("Adding " + references.size() + " objects to " + treeNode.getName());
+        log.info("Adding {} children to TreeNode#{}",i,treeNode.getId());
         saveImpl(subjectKey, treeNode);
         return getDomainObject(subjectKey, treeNode);
     }
@@ -1283,15 +1270,23 @@ public class DomainDAO {
         return save(subjectKey, release);
     }
 
-//    public static void main(String[] args) throws Exception {
-//        
-//        String MONGO_SERVER_URL = "dev-mongodb";
-//        String MONGO_DATABASE = "jacs";
-//        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
-//        Collection<DataSet> datasets = dao.getDataSets("group:heberleinlab");
-//        for(DataSet dataset : datasets) {
-//            System.out.println(dataset.getId()+" "+dataset.getPipelineProcesses());
-//        }
-//        
-//    }
+    public static void main(String[] args) throws Exception {
+        
+        String MONGO_SERVER_URL = "dev-mongodb";
+        String MONGO_DATABASE = "jacs";
+        DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
+
+        String owner = "user:rokickik";
+        for(Workspace workspace : dao.getWorkspaces(owner)) {
+            System.out.println(""+workspace.getName());
+            for(DomainObject topLevelObj : dao.getDomainObjects(owner, workspace.getChildren())) {
+                System.out.println("  "+topLevelObj.getName());
+                if (topLevelObj instanceof TreeNode) {
+                    for(DomainObject domainObject : dao.getDomainObjects(owner, ((TreeNode)topLevelObj).getChildren())) {
+                        System.out.println("    "+domainObject.getName());
+                    }
+                }   
+            }
+        }
+    }
 }

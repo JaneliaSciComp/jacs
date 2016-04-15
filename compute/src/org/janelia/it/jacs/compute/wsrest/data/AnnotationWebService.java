@@ -121,7 +121,7 @@ public class AnnotationWebService extends ResourceConfig {
     public void removeAnnotations(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("annotationId") final String annotationId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        Reference annotationRef = new Reference (Annotation.class.getName(), new Long(annotationId));
+        Reference annotationRef = Reference.createFor(Annotation.class, new Long(annotationId));
         try {
             log.debug("removeAnnotations({},{})",subjectKey,annotationId);
             DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);

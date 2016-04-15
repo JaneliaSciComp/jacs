@@ -104,7 +104,7 @@ public class MongoLargeOperations {
      */
     public void buildAncestorMap() throws DaoException {
 
-    	log.info("Building ancestor map for all entities");
+    	log.info("Building ancestor map for all tree nodes");
     	Cache ancestorMapCache = caches.get(ANCESTOR_MAP);
     	
     	for(Iterator<TreeNode> iterator = dao.getDomainObjects(null, TreeNode.class, null).iterator(); iterator.hasNext(); ) {
@@ -123,7 +123,7 @@ public class MongoLargeOperations {
     		}
     	}
 
-    	log.info("    Loaded entity graph, now to find the ancestors...");
+    	log.info("    Loaded tree node graph, now to find the ancestors...");
 
     	for(Object entityIdObj : ancestorMapCache.getKeys()) {
     		calculateAncestors((Long)entityIdObj, new HashSet<Long>(), 0);
@@ -221,8 +221,6 @@ public class MongoLargeOperations {
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
 
                 String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
-//                if (!dataSetIdentifier.startsWith("dolanm")) continue;
-//                if (!dataSetIdentifier.startsWith("flylight")) continue;
 
                 log.info("  Building property map for all SAGE images in Data Set '"+dataSetIdentifier+"'");
 

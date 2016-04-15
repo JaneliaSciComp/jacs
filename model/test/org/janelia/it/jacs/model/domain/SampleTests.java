@@ -70,7 +70,7 @@ public class SampleTests {
         pipelineRun2.addResult(sar22);
         pipelineRun2.setError(new PipelineError());
 
-        ObjectiveSample objective20xSample = new ObjectiveSample();
+        ObjectiveSample objective20xSample = new ObjectiveSample("20x");
         objective20xSample.addRun(pipelineRun1);
         objective20xSample.addRun(pipelineRun2);
         
@@ -87,10 +87,9 @@ public class SampleTests {
         
         Sample sample = new Sample();
         sample.setName("Test");
-        sample.addObjectiveSample("20x", objective20xSample);
+        sample.addObjectiveSample(objective20xSample);
 
-        Assert.assertEquals(1, sample.getObjectives().size());
-        Assert.assertEquals(1, sample.getOrderedObjectives().size());
+        Assert.assertEquals(1, sample.getObjectiveSamples().size());
         Assert.assertEquals("20x", objective20xSample.getObjective());
         Assert.assertEquals(objective20xSample, sample.getObjectiveSample("20x"));
         Assert.assertEquals(Arrays.asList(spr1, spr2), sample.getResultsById(SampleProcessingResult.class, spr1.getId()));
