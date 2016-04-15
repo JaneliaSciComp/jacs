@@ -11,6 +11,8 @@ import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;

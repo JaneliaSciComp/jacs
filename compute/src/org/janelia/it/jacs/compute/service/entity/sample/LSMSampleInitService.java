@@ -158,7 +158,7 @@ public class LSMSampleInitService extends AbstractEntityService {
             //    tileGroup = new SlideImageGroup(area, tag);
             //    tileGroups.put(groupKey, tileGroup);
             //}
-            tileNum++;
+            //tileNum++;
         }
         return new String[] {lab, line};
     }
