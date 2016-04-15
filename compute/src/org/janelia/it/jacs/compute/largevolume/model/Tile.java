@@ -43,4 +43,14 @@ public class Tile {
         this.transform = transform;
     }
 
+    // Transform and Homography are identical, and either may be provided.
+    //   Per conversation with Johan Winnubst, 3/28/2016.
+    public Double[] getHomography() {
+        return transform;
+    }
+
+    public void setHomography(Double[] transform) {
+        this.transform = transform;
+    }
+
 }

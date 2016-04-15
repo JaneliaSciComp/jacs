@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransf
 import javax.ejb.Remote;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,4 +39,9 @@ public interface TiledMicroscopeBeanRemote {
 	public RawFileInfo getNearestChannelFiles(String basePath, int[] viewerCoord) throws ComputeException;
 	
     public CoordinateToRawTransform getTransform( String basePath ) throws ComputeException;
+
+    public Set<TmNeuron> getNeuronsFromProtobufDataByWorkspaceId(Long workspaceId) throws ComputeException;
+
+    public void saveProtobufNeuronBytesJDBC(Long entityDataId, byte[] serializedBytes) throws ComputeException;
+
 }

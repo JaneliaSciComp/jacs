@@ -271,7 +271,7 @@ public class TmNeuron implements IsSerializable, Serializable {
 			// For this to happen (below), one of the children of a
 			// annotation would have to be null, for "a" in the method call
 			// becomes "ann" in the argument list.
-			System.out.println("Null annotation in TmNeuron " + System.identityHashCode(this));
+			System.out.println("Null annotation in TmNeuron " + getName() + ", " + System.identityHashCode(this));
 			new Exception("recursed into null").printStackTrace();
 			return;
 		}
@@ -281,5 +281,97 @@ public class TmNeuron implements IsSerializable, Serializable {
         }
     }
 
+    /**
+     * check a neuron for problems and potentially repair;
+     * check that its relationships are consistent, and any
+     * referred-to annotations are actually present
+     *
+     * note that these repairs are performed on the object;
+     * the calling routine will need to persist the fixes
+     *
+     * returns list of problems found and/or fixed; empty
+     * list = no problems
+     */
+    public List<String> checkRepairNeuron(boolean repair) {
+        List<String> results = new ArrayList<>();
 
+        // are all roots in ann map?
+        Set<Long> rootIDsNotInMap = new HashSet<>();
+        for (Long rootID: rootAnnotationIds) {
+            if (!getGeoAnnotationMap().containsKey(rootID)) {
+                results.add("neuron " + getName() + ": ann ID " + rootID + " is a root but not in ann map");
+                rootIDsNotInMap.add(rootID);
+            }
+        }
+        if (repair) {
+            // remove bad ID from root ID list
+            for (Long r: rootIDsNotInMap) {
+                rootAnnotationIds.remove(r);
+                results.add("removed root ID " + r + " from root list");
+            }
+
+            // check that no annotations have it as a parent;
+            //  if one does, promote it to root (set parent to neuron,
+            //  add to root list)
+            for (TmGeoAnnotation ann: getGeoAnnotationMap().values()) {
+                if (rootIDsNotInMap.contains(ann.getParentId())) {
+                    ann.setParentId(getId());
+                    rootAnnotationIds.add(ann.getId());
+                    results.add("promoted ann ID " + ann.getId() + " to root annotation");
+                }
+            }
+        }
+
+        // note on repairs: a lot of this isn't implemented yet; when
+        //  you get to it, follow the model above: usually you'll want
+        //  to record the problems in one loop, then loop over problems
+        //  and solve them; that way you'll avoid concurrent modification issues
+
+
+        // check annotation parents
+        // all anns have parent in map?  roots in root list?
+        for (TmGeoAnnotation ann: getGeoAnnotationMap().values()) {
+            if (ann.getParentId().equals(getId())) {
+                // if parent = neuron, it's a root; in the root list?
+                if (!getRootAnnotations().contains(ann)) {
+                    results.add("neuron " + getName() + ": root ID " + ann.getId() + " not in root list");
+                    if (repair) {
+                        results.add("repair not implemented for this problem");
+                        // to repair: add it to the root list
+                    }
+                }
+            } else if (!getGeoAnnotationMap().containsKey(ann.getParentId())) {
+                // otherwise, is parent in map?
+                if (!getGeoAnnotationMap().containsKey(ann.getParentId())) {
+                    results.add("neuron " + getName() + ": ann ID " + ann.getId() + "'s parent not in ann map");
+                    if (repair) {
+                        results.add("repair not implemented for this problem");
+                        // to repair: promote the annotation to root (see above)
+                    }
+                }
+            }
+        }
+
+
+        // check that endpoints of anchored paths are present; if not,
+        //  remove the paths
+        // (unimplemented)
+
+
+        // check that structured text annotations are attached to valid things
+        //  if not, remove them
+        // (unimplemented)
+
+
+
+        return results;
+    }
+
+    public List<String> checkRepairNeuron() {
+        return checkRepairNeuron(true);
+    }
+
+    public List<String> checkNeuron() {
+        return checkRepairNeuron(false);
+    }
 }

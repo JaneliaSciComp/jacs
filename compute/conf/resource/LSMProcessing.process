@@ -3,6 +3,7 @@
 -->
 <process name="LSM Processing Pipeline" processor="queue/lsmPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
+        <input name="DATASET_NAME"/>
         <input name="LSM_NAMES"/>
         <input name="REUSE_PIPELINE_RUNS"/>
         <input name="REUSE_SUMMARY"/>
@@ -13,6 +14,7 @@
 
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+            <input name="DATASET_NAME"/>
             <input name="LSM_NAMES"/>
             <input name="REUSE_PIPELINE_RUNS"/>
             <input name="REUSE_SUMMARY"/>
@@ -21,6 +23,7 @@
             <input name="REUSE_ALIGNMENT"/>
             <input name="RUN_OBJECTIVES"/>
             <input name="TASK_PARAMETER_MAP">
+                <entry key="dataset name" value="DATASET_NAME"/>
                 <entry key="lsm names" value="LSM_NAMES"/>
                 <entry key="reuse pipeline runs" value="REUSE_PIPELINE_RUNS"/>
                 <entry key="reuse summary" value="REUSE_SUMMARY"/>
@@ -29,6 +32,7 @@
                 <entry key="reuse alignment" value="REUSE_ALIGNMENT"/>
                 <entry key="run objectives" value="RUN_OBJECTIVES"/>
             </input>
+            <output name="DATASET_NAME"/>
             <output name="LSM_NAMES"/>
             <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_SUMMARY"/>
@@ -39,24 +43,33 @@
             <output name="TASK_OWNER"/>
         </operation>
 
-        <!-- Get the list of data sets which the sample is a part of -->
-        <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleInitService">
-            <input name="TASK_OWNER"/>
+        <!-- Prepare the sage loader task -->
+        <operation name="Prepare sage loader tasks" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleInitService">
+            <input name="DATASET_NAME"/>
             <input name="LSM_NAMES"/>
-            <output name="SAMPLE_DATASET_ID_WITH_ENTITY_ID"/>
             <output name="SAGE_TASK"/>
         </operation>
 
+        <!-- Run the sage loader -->
         <sequence forEach="SAGE_TASK">
             <include name="Load sample" process="SageLoader">
                 <input name="SAGE_TASK" />
             </include>
         </sequence>
 
-        <sequence forEach="SAMPLE_DATASET_ID_WITH_ENTITY_ID">
+        <!--
+        Disable the rest of the pipeline until the discovery can work correctly and assign new LSMs to the proper parent sample
+        <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleDiscoveryService">
+            <input name="TASK_OWNER"/>
+            <input name="DATASET_NAME"/>
+            <input name="LSM_NAMES"/>
+            <output name="SAMPLE_ID"/>
+        </operation>
+
+        <sequence forEach="SAMPLE_ID">
 
             <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleStartProcessingService">
-                <input name="SAMPLE_DATASET_ID_WITH_ENTITY_ID"/>
+                <input name="SAMPLE_ID"/>
                 <input name="REUSE_PIPELINE_RUNS"/>
                 <input name="REUSE_SUMMARY"/>
                 <input name="REUSE_PROCESSING"/>
@@ -66,6 +79,6 @@
             </operation>
 
         </sequence>
-
+        -->
     </sequence>
 </process>

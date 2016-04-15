@@ -14,6 +14,7 @@ public class DispatchSettings implements DispatchSettingsMBean {
     private static final Logger LOG = LoggerFactory.getLogger(DispatchSettings.class);
 
     private String currentProcessingId = SystemConfigurationProperties.getString("computeserver.dispatch.identifier");
+    private boolean fetchUnassignedJobs = SystemConfigurationProperties.getBoolean("computeserver.dispatch.fetchUnassignedJobs", false);
     private int maxRetries = SystemConfigurationProperties.getInt("computeserver.dispatch.maxRetries");
     private int prefetchSize = SystemConfigurationProperties.getInt("computeserver.dispatch.prefetchSize");
 
@@ -25,6 +26,16 @@ public class DispatchSettings implements DispatchSettingsMBean {
     @Override
     public void setCurrentProcessingId(String currentProcessingId) {
         this.currentProcessingId = currentProcessingId;
+    }
+
+    @Override
+    public boolean isFetchUnassignedJobs() {
+        return fetchUnassignedJobs;
+    }
+
+    @Override
+    public void setFetchUnassignedJobs(boolean fetchUnassignedJobs) {
+        this.fetchUnassignedJobs = fetchUnassignedJobs;
     }
 
     @Override

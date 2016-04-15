@@ -9,6 +9,8 @@ public interface DispatchSettingsMBean {
 
     String getCurrentProcessingId();
     void setCurrentProcessingId(String currentProcessingId);
+    boolean isFetchUnassignedJobs();
+    void setFetchUnassignedJobs(boolean fetchUnassignedJobs);
     int getMaxRetries();
     void setMaxRetries(int maxRetries);
     int getPrefetchSize();
