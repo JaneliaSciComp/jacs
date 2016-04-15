@@ -58,7 +58,7 @@ public class DomainUtils {
     private static final String DOMAIN_OBJECT_PACKAGE_NAME = "org.janelia.it.jacs.model.domain";
 
     private static final BiMap<String, Class<? extends DomainObject>> typeClasses = HashBiMap.create();
-    private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.<Class<? extends DomainObject>, Class<? extends DomainObject>>create();
+    private static final Multimap<Class<? extends DomainObject>, Class<? extends DomainObject>> subClasses = ArrayListMultimap.create();
     private static final List<Class<? extends DomainObject>> searchClasses = new ArrayList<>();
     private static final Map<String,String> searchTypeToClassName = new HashMap<>();
     private static final Map<String,String> simpleToQualifiedNames = new HashMap<>();
@@ -75,7 +75,7 @@ public class DomainUtils {
         Reflections reflections = new Reflections(DOMAIN_OBJECT_PACKAGE_NAME);
         for (Class<?> clazz : reflections.getTypesAnnotatedWith(MongoMapped.class)) {
             Class<? extends DomainObject> nodeClass = (Class<? extends DomainObject>)clazz;
-            MongoMapped annotation = (MongoMapped) nodeClass.getAnnotation(MongoMapped.class);
+            MongoMapped annotation = nodeClass.getAnnotation(MongoMapped.class);
             try {
                 String collectionName = annotation.collectionName();
                 if (typeClasses.containsKey(collectionName)) {
