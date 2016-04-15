@@ -14,9 +14,25 @@ import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
  */
 public class FileGroup implements HasRelativeFiles, Serializable {
 
+    private String key;
     private String filepath;
 	private Map<FileType, String> files = new HashMap<>();
     
+	public FileGroup() {
+	}
+	
+	public FileGroup(String key) {
+	    this.key = key;
+	}
+	
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
     @Override
     public String getFilepath() {
         return filepath;

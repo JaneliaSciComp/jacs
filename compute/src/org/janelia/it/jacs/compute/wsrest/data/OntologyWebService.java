@@ -97,7 +97,7 @@ public class OntologyWebService extends ResourceConfig {
     public void removeOntology(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("ontologyId") final String ontologyId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        Reference ontologyRef = new Reference (Ontology.class.getName(), new Long(ontologyId));
+        Reference ontologyRef = Reference.createFor(Ontology.class, new Long(ontologyId));
         try {
             log.debug("removeOntology({},{})",subjectKey,ontologyId);
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);

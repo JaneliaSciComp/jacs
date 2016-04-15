@@ -31,6 +31,6 @@ public class SampleDebuggerService extends AbstractDomainService {
         contextLogger.info("    Sample Id: "+sample.getId());
         contextLogger.info("    Name: "+sample.getName());
 		contextLogger.info("    Data Set: "+sample.getDataSet());
-		contextLogger.info("    Objectives: "+sample.getObjectives().keySet());
+		contextLogger.info("    Objectives: "+sample.getObjectives());
     }
 }

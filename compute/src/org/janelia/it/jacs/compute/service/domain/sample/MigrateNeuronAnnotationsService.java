@@ -189,7 +189,7 @@ public class MigrateNeuronAnnotationsService extends AbstractDomainService {
      */
     private void migrateAnnotation(Annotation annotationEntity, Long targetId) throws Exception {
         Annotation annotation = new Annotation(annotationEntity);
-        annotation.setTarget(new Reference(annotationEntity.getTarget().getTargetClassName(), targetId));
+        annotation.setTarget(Reference.createFor(annotationEntity.getTarget().getTargetClassName(), targetId));
         domainDao.save(ownerKey, annotation);
     }
     
