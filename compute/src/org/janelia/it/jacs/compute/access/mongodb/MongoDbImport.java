@@ -547,10 +547,13 @@ public class MongoDbImport extends AnnotationDAO {
         sample.setEffector(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_EFFECTOR));
         sample.setLine(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_LINE));
         sample.setSlideCode(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SLIDE_CODE));
-        sample.setStatus(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS));
         sample.setCompressionType(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMRESSION_TYPE));
         sample.setCompletionDate(ISO8601Utils.parse(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COMPLETION_DATE)));
         sample.setTmogDate(ISO8601Utils.parse(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_TMOG_DATE)));
+
+        String status = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_STATUS);
+        sample.setStatus(status);
+        sample.setSageSynced(!EntityConstants.VALUE_DESYNC.equals(status) && !EntityConstants.VALUE_RETIRED.equals(status));
         
         List<ObjectiveSample> objectiveSamples = new ArrayList<ObjectiveSample>();
         
@@ -1606,10 +1609,12 @@ public class MongoDbImport extends AnnotationDAO {
             screenSample.setEffector(lsmImage.getEffector());
             screenSample.setGender(lsmImage.getGender());
             screenSample.setDataSet(lsmImage.getDataSet());
+            screenSample.setSageSynced(true);
         }
         else {
             log.info("    Setting default data set for screen sample "+screenSample.getId());
             screenSample.setDataSet(SCREEN_DEFAULT_DATA_SET);
+            screenSample.setSageSynced(false);
         }
         
         // Even though the chacrm image family has VNC images, we can assume brain here because the screen data in the Workstation is just brains. 
