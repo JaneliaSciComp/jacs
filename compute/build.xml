@@ -175,6 +175,22 @@
         <delete dir="${build.unzipped.dir}"/>
     </target>
 
+    <target name="dashboard-war">
+        <war warfile="${basedir}/build/jars/compute-dashboard.war" webxml="${basedir}/../dashboard/web.xml">
+            <fileset dir="${basedir}/../dashboard/src">
+                <include name="index.html"/>
+                <include name="mouselight.html"/>
+                <include name="css/*"/>
+                <include name="img/*"/>
+                <include name="js/*"/>
+            </fileset>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
+            </manifest>
+        </war>
+    </target>
+
     <target name="build-war" depends="local-jar">
         <war warfile="${basedir}/build/jars/${localname}.war" webxml="${basedir}/WEB-INF/web.xml">
             <classes dir="${build.classes.dir}">
@@ -259,12 +275,13 @@
         </war>
     </target>
 
-    <target name="build-ear" depends="make-jars-dir, build-war" description="builds the ear file">
+    <target name="build-ear" depends="make-jars-dir, build-war, dashboard-war" description="builds the ear file">
         <delete file="${build.jars.dir}/*" verbose="true"/>
     	
         <ear destfile="${build.jars.dir}/${localname}.ear" appxml="${condesc.dir}/application.xml">
             <fileset file="${basedir}/lib/drmaa.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.war"/>
+            <fileset file="${basedir}/build/jars/compute-dashboard.war"/>
             <fileset file="${basedir}/build/jars/${rest-ws-war}"/>
             <fileset file="${basedir}/build/jars/${secure-ws-war}"/>
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
@@ -421,7 +438,7 @@
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
                    value="${server.address}.properties"
-                   else="jacs.properties" >
+                   else="notdefined.properties" >
             <available file="${jacs.properties.dir}/${server.address}.properties" />
         </condition>
 
@@ -449,7 +466,7 @@
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
                    value="${user.server.machine}.properties"
-                   else="jacs.properties" >
+                   else="notdefined.properties" >
             <available file="${jacs.properties.dir}/${server.address}.properties" />
         </condition>
 
@@ -492,7 +509,7 @@
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
                    value="${server.address}.properties"
-                   else="jacs.properties" >
+                   else="notdefined.properties" >
             <available file="${jacs.properties.dir}/${server.address}.properties" />
         </condition>
 

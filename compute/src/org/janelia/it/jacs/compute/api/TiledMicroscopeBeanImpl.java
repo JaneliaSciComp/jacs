@@ -13,6 +13,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -167,5 +168,30 @@ public class TiledMicroscopeBeanImpl implements TiledMicroscopeBeanLocal, TiledM
         }
         return transform;
     }
+
+    @Override
+    public Set<TmNeuron> getNeuronsFromProtobufDataByWorkspaceId(Long workspaceId) throws ComputeException {
+        Set<TmNeuron> neuronSet=null;
+        try {
+            neuronSet=_tiledMicroscopeDAO.getNeuronsFromProtobufDataByWorkspaceId(workspaceId);
+        } catch (Exception e) {
+            String errorString="Error calling getNeuronsFromProtobufDataByWorkspaceId: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(e);
+        }
+        return neuronSet;
+    }
+
+    @Override
+    public void saveProtobufNeuronBytesJDBC(Long entityDataId, byte[] serializedBytes) throws ComputeException {
+        try {
+            _tiledMicroscopeDAO.saveProtobufNeuronBytesJDBC(entityDataId, serializedBytes);
+        } catch (Exception e) {
+            String errorString="Error calling saveProtobufNeuronBytesJDBC: " + e.getMessage();
+            _logger.error(errorString);
+            throw new ComputeException(e);
+        }
+    }
+
 
 }

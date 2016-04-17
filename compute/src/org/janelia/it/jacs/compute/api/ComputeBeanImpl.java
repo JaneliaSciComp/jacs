@@ -615,10 +615,12 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     @Override
     public Task getTaskById(long taskId) {
         Task task = computeDAO.getTaskById(taskId);
-        // Init lazy-loading events
-        task.getEvents().size();
-        // Init lazy-loading messages
-        task.getMessages().size();
+        if (task != null) {
+            // Init lazy-loading events
+            task.getEvents().size();
+            // Init lazy-loading messages
+            task.getMessages().size();
+        }
         return task;
     }
 

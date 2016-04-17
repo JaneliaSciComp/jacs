@@ -59,5 +59,5 @@ public interface JobControlBeanRemote {
 
     public void updateDispatcherJob(DispatcherJob job) throws RemoteException;
 
-    public List<DispatcherJob> nextPendingJobs(String hostName, int maxRetries, int prefetchSize) throws RemoteException;
+    public List<DispatcherJob> nextPendingJobs(String hostName, boolean fetchUnassignedJobsFlag, int maxRetries, int prefetchSize) throws RemoteException;
 }

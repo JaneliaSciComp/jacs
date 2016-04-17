@@ -5,6 +5,7 @@ import org.janelia.it.jacs.compute.largevolume.model.TileBase;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
 import java.util.Map;
 import org.junit.Before;
@@ -19,12 +20,16 @@ public class TileWalkerTest {
 
     private static final String COMPUTE_SUBDIR= "/compute";
     private static final String STITCH1_DIR = "/test/resources/largevolume/2014-06-24-Descriptor-stitch1/";
+    public static final String JOHAN_FULL_DIR = "/test/resources/largevolume/2015-06-19-johan-full/";
+    private static final String TILEBASE_YML = "tilebase.cache.yml";
+    private static final String BOTHSTYLE_TILEBASE_YML = "tilebase.cache.yml_knit";
+    public static final String NEWSTYLE_TILEBASE_YML = "tilebase.cache.yml_new";
     private InputStream inputStream;
 
     public static final File getBaseLocationFile() {
         String userDir = System.getProperty("user.dir");
         String baseLoc = null;
-        if (! userDir.endsWith( COMPUTE_SUBDIR ) ) {
+        if (! userDir.replace('\\', '/').endsWith( COMPUTE_SUBDIR )  &&  ! userDir.endsWith( COMPUTE_SUBDIR + "/" )) {
             baseLoc = userDir + COMPUTE_SUBDIR + STITCH1_DIR;
         }
         else {
@@ -34,16 +39,52 @@ public class TileWalkerTest {
         return new File( baseLoc ); 
     }
 
+    public static final File getModernLocationFile() {
+        String userDir = System.getProperty("user.dir");
+        String baseLoc = null;
+        if (! userDir.replace('\\', '/').endsWith( COMPUTE_SUBDIR )  &&  ! userDir.endsWith( COMPUTE_SUBDIR + "/" )) {
+            baseLoc = userDir + COMPUTE_SUBDIR + STITCH1_DIR;
+        }
+        else {
+            baseLoc = userDir + JOHAN_FULL_DIR;
+        }
+        return new File( baseLoc ); 
+    }
+
     @Before
     public void setUp() throws Exception {
-        inputStream = LargeVolumeYamlTest.getTestFileStream();
+        inputStream = getTestFileStream();
     }
 
     @Test
-    public void walk() throws Exception {
+    public void walkOld() throws Exception {
+        walk(getBaseLocationFile());
+    }
+    
+    @Test
+    public void walkNew() throws Exception {
+        walk(getModernLocationFile());
+    }
+    
+    public static InputStream getTestFileStream() throws Exception {
+        File resourceFile = new File(TileWalkerTest.getBaseLocationFile(), TILEBASE_YML);
+        return new FileInputStream(resourceFile);
+    }
+
+    public static InputStream getKnitTestFileStream() throws Exception {
+        File resourceFile = new File(TileWalkerTest.getModernLocationFile(), BOTHSTYLE_TILEBASE_YML);
+        return new FileInputStream(resourceFile);
+    }
+
+    public static InputStream getNewStyleTestFileStream() throws Exception {
+        File resourceFile = new File(TileWalkerTest.getModernLocationFile(), NEWSTYLE_TILEBASE_YML);
+        return new FileInputStream(resourceFile);
+    }
+
+    private void walk(File locationFile) throws Exception {
         // Now, to find and parse the transform.txt file.
         //  Doing a directory drill-down.
-        CoordinateToRawTransform transformParameters = new CoordinateToRawTransform( getBaseLocationFile()  );
+        CoordinateToRawTransform transformParameters = new CoordinateToRawTransform( locationFile );
         System.out.println(
                 String.format(
                         "Transform origin: %,d %,d %,d.  Transform scale: %,f %,f %,f.",
