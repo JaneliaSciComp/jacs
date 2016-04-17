@@ -236,11 +236,6 @@ public class DomainDAO {
             Reference newRef = Reference.createFor(item.getClass(), item.getId());
             refList.add(newRef);
         }
-        MongoCursor<ObjectSet> objSetCursor = objectSetCollection.find("{children:#}", refStr).as(ObjectSet.class);
-        for (ObjectSet item : objSetCursor) {
-            Reference newRef = Reference.createFor(item.getClass(), item.getId());
-            refList.add(newRef);
-        }
         return refList;
     }
 

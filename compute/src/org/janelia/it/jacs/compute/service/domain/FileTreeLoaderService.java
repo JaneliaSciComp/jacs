@@ -17,7 +17,6 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -396,19 +395,19 @@ public class FileTreeLoaderService implements IService {
     }
 
     protected void verifyOrCreateFileEntityForFolder(TreeNode folder, File f, Integer index) throws Exception {
-        // if no object exists in this treenode, create an objectset
-        ObjectSet objectSet = null;
-        logger.info("ASDASDFAFDASFASDFASDFA" + folder.getChildren());
-        if (folder.getChildren()!=null) {
+        // if no folder exists in this treenode, create an treeNode
+        TreeNode treeNode = null;
+        logger.info("createFileObject=" + folder.getChildren());
+        if (folder.getNumChildren()>0) {
             for (Reference item: folder.getChildren()) {
-                if (item.getTargetClassName().equals(DomainHelper.OBJECTSET_CLASSNAME)) {
-                    objectSet = (ObjectSet) domainDAO.getDomainObject(ownerKey, item);
+                if (item.getTargetClassName().equals(DomainHelper.TREENODE_CLASSNAME)) {
+                    treeNode = (TreeNode) domainDAO.getDomainObject(ownerKey, item);
                     break;
                 }
             }
         }
-        if (objectSet==null) {
-            objectSet = domainHelper.createChildObjectSet(folder,ownerKey,"Image Set");
+        if (treeNode==null) {
+            treeNode = domainHelper.createChildFolder(folder, ownerKey, "Image Set", 0);
         }
 
         // create an image object, if it doesn't already exist
@@ -417,10 +416,8 @@ public class FileTreeLoaderService implements IService {
         imageFile.setName(f.getName());
         boolean alreadyExists=false;
 
-        if (objectSet.getMembers()!=null) {
-            for (Long imageId: objectSet.getMembers()) {
-                Reference imageRef = Reference.createFor(Image.class, imageId);
-
+        if (treeNode.getNumChildren()>0) {
+            for (Reference imageRef: treeNode.getChildren()) {
                 Image imageObj = (Image)domainDAO.getDomainObject(ownerKey,imageRef);
                 if (imageObj.getFilepath().equals(f.getAbsolutePath())) {
                     alreadyExists=true;
@@ -435,7 +432,7 @@ public class FileTreeLoaderService implements IService {
             Reference imageRef = Reference.createFor(Image.class, imageFile.getId());
             List<Reference> imageRefList = new ArrayList<>();
             imageRefList.add(imageRef);
-            domainDAO.addMembers(ownerKey, objectSet, imageRefList);
+            domainDAO.addChildren(ownerKey, treeNode, imageRefList);
         }
 
         // Handle artifacts

@@ -2,8 +2,6 @@ package org.janelia.it.jacs.shared.utils;
 
 import java.util.List;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -12,28 +10,17 @@ import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 /**
  * Created by schauderd on 8/24/15.
  */
-@ApiModel( value = "DomainQuery", description = "Parameter container for encapsulatin DomainObject queries" )
 public class DomainQuery {
 
-    @ApiModelProperty( value = "Subject Key (user/group:<ldapname>)", required = true )
     private String subjectKey;
-    @ApiModelProperty( value = "List of References (target class, target id) for lookup")
     private List<Reference> references;
-    @ApiModelProperty( value = "List of Object IDs")
     private List<Long> objectIds;
-    @ApiModelProperty( value = "Ordering of items, used for folder services")
     private List<Integer> ordering;
-    @ApiModelProperty( value = "Type of the Object (sample, annotation, etc.")
     private String objectType;
-    @ApiModelProperty( value = "Object Attribute Name, used for updating one thing in a domain object")
     private String propertyName;
-    @ApiModelProperty( value = "Object Attribute Value, used for updateing the value of an attribute")
     private String propertyValue;
-    @ApiModelProperty( value = "JSON Serialized Domain Object")
     private DomainObject domainObject;
-    @ApiModelProperty( value = "List of OntologyTerms, used for Ontology services")
     private List<OntologyTerm> objectList;
-    @ApiModelProperty( value = "Preference, used for user preferences")
     private Preference preference;
 
     public List<Reference> getReferences() {

@@ -123,13 +123,13 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject/references")
-    @ApiOperation(value = "Gets Folder and ObjectSet References to a DomainObject ",
+    @ApiOperation(value = "Gets Folder References to a DomainObject ",
             notes = "uses the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got a list of Container References", response=Reference.class,
+            @ApiResponse( code = 200, message = "Successfully got a list of Folder References", response=Reference.class,
                     responseContainer = "List"),
-            @ApiResponse( code = 500, message = "Internal Server Error getting list of Container References" )
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of Folder References" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -138,7 +138,7 @@ public class DomainObjectWebService extends ResourceConfig {
         try {
             return dao.getContainerReferences(query.getDomainObject());
         } catch (Exception e) {
-            log.error("Error occurred getting treenode/objectset references",e);
+            log.error("Error occurred getting folder references",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
