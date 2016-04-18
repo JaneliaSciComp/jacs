@@ -131,7 +131,7 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
 				archived = true;
 			}
 
-			String mergedFilepath = mergeResultNode == null ? null : new File(mergeResultNode.getDirectoryPath(), "tile-" + sample.getId() + "-" + sampleTile.getName() + ".v3draw").getAbsolutePath();
+			String mergedFilepath = mergeResultNode == null ? null : new File(mergeResultNode.getDirectoryPath(), "tile-" + domainDao.getNewId() + ".v3draw").getAbsolutePath();
 			MergedLsmPair mergedPair = new MergedLsmPair(lsmId1, lsmId2, lsmFilepath1, lsmFilepath2, lsmRealPath1, lsmRealPath2, mergedFilepath, sampleTile.getName());
 			mergedLsmPairs.add(mergedPair);
 		}
