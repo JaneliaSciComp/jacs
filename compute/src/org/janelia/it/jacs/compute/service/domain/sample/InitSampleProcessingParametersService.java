@@ -39,7 +39,7 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
         contextLogger.info("Running InitSampleProcessingParametersService for sample " + sample.getName());
         
 		AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
-		List<SampleTile> tiles = sampleHelper.getTilesForArea(objectiveSample, sampleArea.getName());
+		List<SampleTile> tiles = sampleHelper.getTilesForArea(objectiveSample, sampleArea);
 		contextLogger.info("Processing tiles for area " + sampleArea.getName()+": "+tiles);
 		
 		List<MergedLsmPair> mergedLsmPairs = new ArrayList<MergedLsmPair>();

@@ -41,7 +41,14 @@ public class LSMSummaryResult extends PipelineResult implements HasFileGroups {
         return null;
     }
 
-    @Override
+    @JsonIgnore
+    public void addGroup(FileGroup group) {
+        if (getGroupKeys().contains(group.getKey())) {
+            throw new IllegalArgumentException("Duplicate group key: "+group.getKey());
+        }
+        groups.add(group);
+    }
+
     public List<FileGroup> getGroups() {
         return groups;
     }
@@ -50,4 +57,6 @@ public class LSMSummaryResult extends PipelineResult implements HasFileGroups {
         if (groups==null) throw new IllegalArgumentException("Property cannot be null");
         this.groups = groups;
     }
+
+
 }

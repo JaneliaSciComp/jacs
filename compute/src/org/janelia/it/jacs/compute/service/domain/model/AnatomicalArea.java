@@ -1,8 +1,9 @@
 package org.janelia.it.jacs.compute.service.domain.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 
@@ -16,7 +17,7 @@ public class AnatomicalArea implements Serializable {
     private Long sampleId;
     private String objective;
     private String name;
-    private List<String> tileNames = new ArrayList<>();
+    private Set<String> tileNames = new HashSet<>();
     private List<MergedLsmPair> mergedLsmPairs;
     private String stitchedFilepath;
 
@@ -42,7 +43,7 @@ public class AnatomicalArea implements Serializable {
         return name;
     }
 
-    public List<String> getTileNames() {
+    public Set<String> getTileNames() {
         return tileNames;
     }
 
@@ -66,7 +67,8 @@ public class AnatomicalArea implements Serializable {
     public String toString() {
         return "AnatomicalArea{" +
                 "name='" + name + '\'' +
-                ", tileIds=" + tileNames +
+                ", tiles=" + tileNames +
+                ", filepath=" + stitchedFilepath +
                 '}';
     }
 }

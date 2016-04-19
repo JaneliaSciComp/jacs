@@ -78,7 +78,7 @@ public class GetLsmInputImagesService extends AbstractDomainService {
             String invalidColorspec = colorspec;
             colorspec = ChanSpecUtils.getDefaultColorSpec(chanSpec, "RGB", "1");
             divspec = chanSpec.replaceAll("r", "2").replaceAll("s", "1");
-            logger.warn("LSM "+lsmId+" has illegal color specification "+chanColors+" (interpreted as "+invalidColorspec+"). Defaulting to "+colorspec);
+            logger.warn("LSM "+lsmId+" has illegal color specification "+chanColors+" (interpreted as '"+invalidColorspec+"'). Defaulting to "+colorspec);
         }
         
         contextLogger.info("Input file: "+filepath);
