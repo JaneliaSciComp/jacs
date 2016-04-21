@@ -147,7 +147,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 	                else {
 	                    Entity image = result.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
 	                    alignedAreas.add(anatomicalArea);
-	                    input1 = new AlignmentInputFile();
+	                    input1 = new AlignmentInputFile(areaName);
 	                    input1.setPropertiesFromEntity(image);
 	                    input1.setSampleId(sampleEntity.getId());
 	                    input1.setObjective(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));

@@ -8,12 +8,18 @@ package org.janelia.it.jacs.compute.service.align;
 public class AlignmentInputFile extends ImageStack {
 
     protected Long sampleId;
+    protected String area;
     protected String inputSeparationFilename;
     
-    public AlignmentInputFile() {
+    public AlignmentInputFile(String area) {
+    	this.area = area==null?"":area;
     }
     
-    public Long getSampleId() {
+    public String getArea() {
+		return area;
+	}
+
+	public Long getSampleId() {
         return sampleId;
     }
     public void setSampleId(Long sampleId) {
@@ -30,6 +36,7 @@ public class AlignmentInputFile extends ImageStack {
     public String toString() {
         return "AlignmentInputFile{" +
                 "filepath=" + filepath +
+                ", area=" + area +
                 ", objective=" + objective +
                 ", opticalResolution=" + opticalResolution +
                 ", pixelResolution=" + pixelResolution + 
