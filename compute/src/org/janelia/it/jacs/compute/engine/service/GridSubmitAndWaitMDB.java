@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.engine.service;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.drmaa.JobStatusLogger;
+import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.data.QueueMessage;
 import org.janelia.it.jacs.compute.engine.def.OperationDef;
@@ -152,14 +153,20 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
         // generate a unique key per grid submission
         String submissionKey = String.valueOf(TimebasedIdentifierGenerator.generateIdList(1).get(0));
+        
         Process proc;
         try {
             queueMessage = new QueueMessage(message, false);
+
+            Long taskId = (Long) queueMessage.getMandatoryItem(IProcessData.PROCESS_ID);
+            
             logger = ProcessDataHelper.getLoggerForTask(queueMessage, this.getClass());
             if (logger.isDebugEnabled())
                 logger.debug("GridSubmitAndWaitMDB: processing submission request");
-
+            
             operationToProcess = (OperationDef) queueMessage.getActionToProcess();
+
+            logger.info("Task "+taskId+" created submission key "+submissionKey+" for grid job '"+operationToProcess.getName()+"'");
 
             if (!isExecutable(operationToProcess, queueMessage)) {  // If we're linking directly
                 return;

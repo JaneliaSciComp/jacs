@@ -64,6 +64,13 @@ public class ContextLogger {
     }
 
     /**
+     * @return true if debug logging is enabled; otherwise false.
+     */
+    public boolean isDebugEnabled() {
+        return logger.isDebugEnabled();
+    }
+    
+    /**
      * @return true if info logging is enabled; otherwise false.
      */
     public boolean isInfoEnabled() {

@@ -1,7 +1,16 @@
 
 package org.janelia.it.jacs.compute.service.common.grid.submit.sge;
 
-import com.google.common.base.Strings;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.log4j.Logger;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobTemplate;
@@ -22,22 +31,13 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.SubmitJobService;
 import org.janelia.it.jacs.compute.service.common.grid.submit.WaitForJobException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.status.GridJobStatus;
-import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.vo.ParameterException;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.common.base.Strings;
 
 /**
  * This service submit a job to the Grid.  It's entirely extracted from work done by Sean Murphy
@@ -98,7 +98,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             system.emulateCommandLine("rm -f " + resultDirectory + "/DrmaaTemplate*.oos", true);
         }
         catch (Exception e) {
-            logger.error("Error cleaning up after DRMAA job",e);
+        	contextLogger.error("Error cleaning up after DRMAA job",e);
         }
     }
 
@@ -122,8 +122,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             if (cancelled) {
                 return null;
             }
-            if (logger.isInfoEnabled()) {
-                logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
+            if (contextLogger.isInfoEnabled()) {
+            	contextLogger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for asyncronous DRMAA submission)");
             }
 
             DrmaaHelper drmaa = new DrmaaHelper(logger);
@@ -135,11 +135,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
             drmaa.setSubmissionKey(submissionKey);
             SerializableJobTemplate jt = prepareJobTemplate(drmaa);
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Calling drmaa.runBulkJobs() with jobIncrementStop=" + jobIncrementStop);
+            if (contextLogger.isDebugEnabled()) {
+            	contextLogger.debug("Calling drmaa.runBulkJobs() with jobIncrementStop=" + jobIncrementStop);
             }
 
-            logger.info("Running runBulkJobs with nativeSpec=" + jt.getNativeSpecification());
+            contextLogger.info("Running runBulkJobs with nativeSpec=" + jt.getNativeSpecification());
             Process proc = drmaa.runBulkJobsThroughShell(
                     task.getObjectId(), task.getOwner(), resultFileNode.getDirectoryPath(),
                     jt, 1, jobIncrementStop, 1, getJobTimeoutSeconds());
@@ -155,7 +155,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
 
     protected void setJobIncrementStop(int stop) {
-        if (logger.isDebugEnabled()) logger.debug("setJobIncrementStop() called with stop=" + stop);
+        if (contextLogger.isDebugEnabled()) contextLogger.debug("setJobIncrementStop() called with stop=" + stop);
         this.jobIncrementStop = stop;
     }
 
@@ -264,7 +264,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected String getAdditionalNativeSpecification() {
     	Object archiveFlag = processData.getItem("ARCHIVE_FLAG");
         if (archiveFlag!=null && Boolean.parseBoolean((String)archiveFlag)) {
-        	logger.info("ARCHIVE_FLAG is true, job will run on archive queue");
+        	contextLogger.info("ARCHIVE_FLAG is true, job will run on archive queue");
             return "-l archive=true";    
         }
         return null;
@@ -291,7 +291,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
         String nsOverride = getNativeSpecificationOverride();
         if (nsOverride != null) {
-        	logger.info("Setting native specification override: "+nsOverride);
+        	contextLogger.info("Setting native specification override: "+nsOverride);
         	jt.setNativeSpecification(nsOverride);
         }
         else {
@@ -312,7 +312,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	if (!Strings.isNullOrEmpty(ans)) {
         	    ns += " "+ans;
         	}
-        	logger.info("Setting native specification to accomodate "+mem+" GB of memory and "+slots+" slot(s): "+ns);
+        	contextLogger.info("Setting native specification to accomodate "+mem+" GB of memory and "+slots+" slot(s): "+ns);
         	jt.setNativeSpecification(ns);	
         }
         
@@ -322,19 +322,19 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         }
 
         File jobScript = new File(configDir, getGridServicePrefixName() + "Cmd.sh");
-        if (logger.isInfoEnabled()) {
-            logger.info("Set script location to:\n" + jobScript.getAbsolutePath());
+        if (contextLogger.isInfoEnabled()) {
+        	contextLogger.info("Set script location to: " + jobScript.getAbsolutePath());
         }
         FileWriter writer = new FileWriter(jobScript);
         String sgeCell = System.getenv("SGE_CELL");
-        logger.info("DRMAA using SGE_CELL=" + sgeCell);
+        contextLogger.info("DRMAA using SGE_CELL=" + sgeCell);
         try {
             createJobScriptAndConfigurationFiles(writer);
             verifyConfigurationFiles();
             
             boolean permissionsSuccessful = jobScript.setExecutable(true, false);
             if (!permissionsSuccessful) {
-                logger.error("Unsuccessful on setting permissions of job script "+jobScript.getAbsolutePath()+". Continuing...");
+            	contextLogger.error("Unsuccessful on setting permissions of job script "+jobScript.getAbsolutePath()+". Continuing...");
             }
             jt.setRemoteCommand("bash");
             jt.setArgs(Arrays.asList(jobScript.getAbsolutePath()));
@@ -359,8 +359,8 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     }
 
     protected Set<String> submitJob() throws Exception {
-        if (logger.isInfoEnabled()) {
-            logger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for DRMAA submission");
+        if (contextLogger.isInfoEnabled()) {
+        	contextLogger.info("Preparing " + task.getTaskName() + " (task id = " + this.task.getObjectId() + " for DRMAA submission");
         }
 
         DrmaaHelper drmaa = new DrmaaHelper(logger);
@@ -371,9 +371,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
 
         SerializableJobTemplate jt = prepareJobTemplate(drmaa);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Calling drmaa.runBulkJobs() with jobIncrementStop=" + jobIncrementStop);
-            logger.debug("Running runBulkJobs with nativeSpec=" + jt.getNativeSpecification());
+        if (contextLogger.isDebugEnabled()) {
+        	contextLogger.debug("Calling drmaa.runBulkJobs() with jobIncrementStop=" + jobIncrementStop);
+        	contextLogger.debug("Running runBulkJobs with nativeSpec=" + jt.getNativeSpecification());
         }
 
         /* DRMAA has a limitation of 75000 jobs in a single array
@@ -392,13 +392,13 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         jsl.bulkAdd(jobSet, getQueueName(jt), GridJobStatus.JobState.QUEUED);
 
         drmaa.deleteJobTemplate(jt);
-        logger.info("******** " + jobSet.size() + " jobs submitted to grid **********");
+        contextLogger.info("******** " + jobSet.size() + " jobs submitted to grid **********");
 
         // now wait for completion
         boolean gridActionSuccessful = drmaa.waitForJobs(jobSet, "Computing results for " + resultFileNode.getObjectId(), jsl, -1, getJobTimeoutSeconds());
         if (!gridActionSuccessful) {
-            String err = "Error ' \" + drmaa.getError() + \" ' executing grid jobs.";
-            logger.error("err");
+            String err = "Error ' " + drmaa.getError() + " ' executing grid jobs.";
+            contextLogger.error(err);
             throw new WaitForJobException(err);
         }
         return jobSet;
@@ -447,7 +447,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
      */
     protected void setQueue(SerializableJobTemplate jt) throws DrmaaException {
         String queue = getSGEQueue();
-        logger.info("setQueue queue=" + queue);
+        contextLogger.info("setQueue queue=" + queue);
         jt.setNativeSpecification(queue);
     }
 
@@ -477,7 +477,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         if (project != null) {
             project = project.trim();
             if (project.length() > 0) {
-                logger.info("setProject = -P " + project);
+            	contextLogger.info("setProject = -P " + project);
                 jt.setNativeSpecification("-P " + project);
             }
         }
@@ -500,7 +500,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
     protected void setAccount(SerializableJobTemplate jt) throws DrmaaException {
         String account = getAccount();
         if (account != null && account.length() > 0) {
-            logger.info("setaccount = -A " + account);
+        	contextLogger.info("setaccount = -A " + account);
             jt.setNativeSpecification("-A " + account);
         }
     }
@@ -562,11 +562,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         File configDir = new File(getSGEErrorDirectory());
         File[] errorFiles = configDir.listFiles(new StdErrorFilenameFilter());
         if (errorFiles==null) {
-            logger.warn("List of std error files came back null for dir=" + configDir.getAbsolutePath());
+        	contextLogger.warn("List of std error files came back null for dir=" + configDir.getAbsolutePath());
             return false;
         }
-        if (logger.isInfoEnabled())
-            logger.info("Found " + errorFiles.length + " stderr files in dir=" + configDir.getAbsolutePath());
+        if (contextLogger.isInfoEnabled())
+        	contextLogger.info("Found " + errorFiles.length + " stderr files in dir=" + configDir.getAbsolutePath());
         int numBytes = 0;
         for (File f : errorFiles) {
         	numBytes += f.length();

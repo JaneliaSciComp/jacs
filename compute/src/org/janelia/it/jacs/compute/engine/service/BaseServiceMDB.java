@@ -163,16 +163,11 @@ public class BaseServiceMDB implements MessageListener {
 
     protected void recordProcessError(QueueMessage queueMessage, OperationDef operationDef, Throwable e) {
         try {
-
             if (e instanceof ValidServiceException) {
                 logger.error("Process: " + queueMessage.getProcessDefName() + " failed due to user cancellation");
             }
-//            else {
-//                logger.error("Process: " + queueMessage.getProcessDef() + " failed", e);
-//            }
-            if (operationDef.updateProcessStatusOnFailure()) {
-            	logger.info("Not calling recordProcessError because it should be called elsewhere");
-//                EJBFactory.getLocalComputeBean().recordProcessError(queueMessage.getProcessDef(), queueMessage.getProcessId(), e);
+            else {
+                logger.error("Process: " + queueMessage.getProcessDefName() + " failed");
             }
         }
         catch (MissingDataException ee) {
