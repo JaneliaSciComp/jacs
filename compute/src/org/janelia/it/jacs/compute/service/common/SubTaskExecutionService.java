@@ -44,14 +44,17 @@ import org.janelia.it.jacs.model.user_data.Node;
 public class SubTaskExecutionService implements IService {
 	
     private Logger logger;
+    private ContextLogger contextLogger;
     
     public void execute(IProcessData processData) throws ServiceException {
         try {
-        	
-        	this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             Task task = ProcessDataHelper.getTask(processData);
             ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
 
+        	this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            this.contextLogger = new ContextLogger(this.logger);
+            this.contextLogger.appendToLogContext(task);
+            
             boolean waitForCompletion = false;
             String waitForCompletionStr = (String)processData.getItem("WAIT_FOR_COMPLETION");
         	if (waitForCompletionStr != null) {
@@ -107,11 +110,11 @@ public class SubTaskExecutionService implements IService {
                 }
             }
 
-            logger.info("Launching "+subtask.getJobName()+", task id="+task.getObjectId()+", subtask id="+subtask.getObjectId());
+            contextLogger.info("Launching "+subtask.getJobName()+", task id="+task.getObjectId()+", subtask id="+subtask.getObjectId());
             computeBean.submitJob(processDefName, processConfiguration);
             
             if (waitForCompletion) {
-                logger.info("Waiting for completion of subtask "+processDefName+" (id="+subtask.getObjectId()+")");
+            	contextLogger.info("Waiting for completion of subtask "+processDefName+" (id="+subtask.getObjectId()+")");
             	boolean complete = false;
 	            while (!complete) {
 	                
@@ -130,7 +133,7 @@ public class SubTaskExecutionService implements IService {
 	            }
             }
             
-            logger.info("Putting "+subtask.getObjectId()+" in SUBTASK_ID");
+            contextLogger.info("Putting "+subtask.getObjectId()+" in SUBTASK_ID");
             processData.putItem("SUBTASK_ID", subtask.getObjectId().toString());
         } 
         catch (ServiceException e) {
@@ -172,7 +175,7 @@ public class SubTaskExecutionService implements IService {
         if (printValue.length()>1000) {
             printValue = printValue.substring(0, 1000)+"...";
         }
-        logger.info("Setting subtask parameter "+key+" = '"+printValue+"'");
+        contextLogger.info("Setting subtask parameter "+key+" = '"+printValue+"'");
         subtask.setParameter(key, strValue);
     }
     
@@ -182,7 +185,7 @@ public class SubTaskExecutionService implements IService {
         if (printValue.length()>1000) {
             printValue = printValue.substring(0, 1000)+"...";
         }
-        logger.info("Setting process data parameter "+key+" = '"+printValue+"'");
+        contextLogger.info("Setting process data parameter "+key+" = '"+printValue+"'");
         processConfiguration.put(key, value);
     }
 }

@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
+import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.ReflectionUtils;
 
 
@@ -16,9 +17,14 @@ import org.janelia.it.jacs.shared.utils.ReflectionUtils;
  */
 public class InitVariablesFromBeanService implements IService {
 
+    private ContextLogger contextLogger;
+    
     public void execute(IProcessData processData) throws ServiceException {
         try {
             Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
+            Task task = ProcessDataHelper.getTask(processData);
+            this.contextLogger = new ContextLogger(logger);
+            contextLogger.appendToLogContext(task);
             
             Object bean = processData.getItem("BEAN");
             
@@ -46,7 +52,7 @@ public class InitVariablesFromBeanService implements IService {
         		if (printValue.length()>1000) {
         		    printValue = printValue.substring(0, 1000)+"...";
         		}
-            	logger.info("Putting value '"+printValue+"' in "+processVarName);
+            	contextLogger.info("Putting value '"+printValue+"' in "+processVarName);
             	processData.putItem(processVarName, value);
                 num++;
         	}

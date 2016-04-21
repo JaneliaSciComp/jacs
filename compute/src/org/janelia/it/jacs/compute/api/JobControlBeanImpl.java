@@ -10,7 +10,6 @@ import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.model.status.GridJobStatus;
 import org.janelia.it.jacs.model.status.TaskStatus;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
@@ -35,6 +34,7 @@ import java.util.*;
 @PoolClass(value = StrictMaxPool.class, maxSize = 20, timeout = 10000)
 public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRemote {
     private Logger logger = Logger.getLogger(this.getClass());
+    private DispatcherDAO dispatcherDao = new DispatcherDAO();
 
     public JobControlBeanImpl() {
     }
@@ -308,7 +308,6 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
     @Override
     public void updateDispatcherJob(DispatcherJob job) {
         try {
-            DispatcherDAO dispatcherDao = new DispatcherDAO();
             if (job.getDispatchStatus() == DispatcherJob.Status.SUBMITTED) {
                 dispatcherDao.archive(job);
             } else {
@@ -321,7 +320,7 @@ public class JobControlBeanImpl implements JobControlBeanLocal, JobControlBeanRe
 
     @Override
     public List<DispatcherJob> nextPendingJobs(String hostName, boolean fetchUnassignedJobsFlag, int maxRetries, int prefetchSize) {
-        DispatcherDAO dispatcherDao = new DispatcherDAO();
-        return dispatcherDao.nextPendingJobs(hostName, fetchUnassignedJobsFlag, maxRetries, prefetchSize);
+        List<DispatcherJob>  jobList = dispatcherDao.nextPendingJobs(hostName, fetchUnassignedJobsFlag, maxRetries, prefetchSize);
+        return jobList;
     }
 }

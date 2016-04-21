@@ -77,7 +77,8 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
 
         final Entity image = sampleProcessingResult.getChildByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_3D_IMAGE);
         if (image != null) {
-            inputFile = new AlignmentInputFile();
+        	String area = sampleProcessingResult.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+            inputFile = new AlignmentInputFile(area);
             inputFile.setPropertiesFromEntity(image);
             inputFile.setSampleId(objectiveSample.getId());
             inputFile.setObjective(objective);

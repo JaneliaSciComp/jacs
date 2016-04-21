@@ -5,6 +5,8 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.data.QueueMessage;
+import org.janelia.it.jacs.compute.engine.def.DefCache;
+import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 import org.janelia.it.jacs.compute.engine.def.SeriesDef;
 import org.janelia.it.jacs.compute.engine.launcher.ILauncher;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessLauncher;
@@ -62,7 +64,7 @@ public abstract class SeriesLauncherMDB implements MessageListener {
     }
 
     private ILauncher getLocalLauncher(SeriesDef sDef) throws ComputeException {
-        if (sDef.isProcess())
+        if (sDef==null || sDef.isProcess())
             return new ProcessLauncher();
         else if (sDef.isSequence())
             return new SequenceLauncher();
@@ -83,7 +85,12 @@ public abstract class SeriesLauncherMDB implements MessageListener {
 
     private SeriesDef getActionToProcess(QueueMessage queueMessage) {
         try {
-            return (SeriesDef) queueMessage.getActionToProcess();
+        	SeriesDef def = (SeriesDef) queueMessage.getActionToProcess();
+        	if (def==null) {
+        		logger.debug("Action to process is null, processing entire Process Def: "+queueMessage.getProcessDefName());
+        		def = DefCache.getProcessDef(queueMessage.getProcessDefName());
+        	}
+        	return def;
         }
         catch (MissingDataException e) {
             throw new EJBException(e);
