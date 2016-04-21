@@ -16,6 +16,7 @@ import javax.jms.ObjectMessage;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.def.ActionDef;
+import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 
 /**
  * This class encapsulates messages sent to and received from queues.  It's based on
@@ -235,10 +236,13 @@ public class QueueMessage implements IProcessData {
     }
 
     public ActionDef getActionToProcess() throws MissingDataException {
-        return (ActionDef) getMandatoryItem(IProcessData.ACTION_TO_PROCESS);
+        return (ActionDef) getItem(IProcessData.ACTION_TO_PROCESS);
     }
 
     public void setActionToProcess(ActionDef actionDef) {
+    	if (actionDef instanceof ProcessDef) {
+    		logger.error("Action to process is a process!!!", new Exception());
+    	}
         putItem(IProcessData.ACTION_TO_PROCESS, actionDef);
     }
 

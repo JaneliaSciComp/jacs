@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlType;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.def.ActionDef;
+import org.janelia.it.jacs.compute.engine.def.ProcessDef;
 
 
 /**
@@ -106,10 +107,13 @@ public class ProcessData implements IProcessData {
     }
 
     public ActionDef getActionToProcess() throws MissingDataException {
-        return (ActionDef) getMandatoryItem(IProcessData.ACTION_TO_PROCESS);
+        return (ActionDef) getItem(IProcessData.ACTION_TO_PROCESS);
     }
 
     public void setActionToProcess(ActionDef actionDef) {
+    	if (actionDef instanceof ProcessDef) {
+    		logger.error("Action to process is a process!!!", new Exception());
+    	}
         putItem(IProcessData.ACTION_TO_PROCESS, actionDef);
     }
 

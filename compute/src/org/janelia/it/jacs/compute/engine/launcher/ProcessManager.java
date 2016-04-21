@@ -43,7 +43,7 @@ public class ProcessManager {
             logger.info("\nLaunching " + processDef.getName() + " ....\n");
             initProcessData(processData, processDef);
             if (processDef.isProcessorAsync()) {
-                processData.setActionToProcess(processDef);
+                //processData.setActionToProcess(processDef);
                 AsyncMessageInterface messageInterface = JmsUtil.createAsyncMessageInterface();
                 JmsUtil.sendMessageToQueue(messageInterface, processData, null);
             }
