@@ -58,20 +58,24 @@ public class GridSubmitAndWaitMonitorMDB implements Job {
                             // try to get error from error stream
                             InputStream shellErr = proc.getErrorStream(); // this is actual process output!
                             String errorText = IOUtils.readInputStream(shellErr);
-                            logger.error("Detected child process exited with error " + exitVal + ". Will attempt to report error");
+                            logger.error("Detected child process exited with error " + exitVal + ". Will attempt to report error.");
                             // error in the proccess - it might not have posted a message - have to do it here
                             GridProcessResult gpr = new GridProcessResult(-1L, false);
                             gpr.setGridSubmissionKey(submissionKey);
                             gpr.setError(errorText);
                             if (!postFinishedMessage(gpr)) {
                                 // remove it from the monitoring set - it a ZOMBIE!
+                            	logger.trace("Removing zombie process: "+submissionKey);
                                 GridSubmitHelperMap.getInstance().removeFromDataMap(submissionKey);
                             }
                         }
-
+                        else {
+                        	// This state (exited but still in the map) might be okay for a while, but if a process gets stuck here for a while, 
+                        	// it means it has gotten stuck in the queue system. Last time that was caused by not having enough worker threads in the basic pool.
+                        }
                     }
                     catch (IllegalThreadStateException e) {
-                        // this exception is thrown if the proccess has not yet completed
+                        // this exception is thrown if the process has not yet completed
                         // perfectly good case for us
                     }
                 }
@@ -82,7 +86,7 @@ public class GridSubmitAndWaitMonitorMDB implements Job {
             }
         }
         catch (Exception e) {
-            logger.error("ERROR in child process monitor.", e);
+            logger.error("Error in child process monitor", e);
         }
         if (null != keySet && keySet.size() > 0) {
             logger.info("Child process monitor scanned " + keySet.size() + " processes");

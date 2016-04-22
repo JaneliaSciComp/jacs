@@ -50,10 +50,10 @@ import java.util.Map;
 @PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
-    //public static QueueMessage originalMessage = null;
     public void onMessage(Message message) {
         try {
-            logger = Logger.getLogger(GridSubmitAndWaitMDB.class);
+        	logger = Logger.getLogger(GridSubmitAndWaitMDB.class);
+        	logger.trace("Received message: "+message);
             if (message instanceof ObjectMessage) {
                 Object obj;
                 try {
@@ -64,9 +64,12 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
                     return;
                 }
                 if (obj instanceof GridProcessResult) {
-                    completeProcessing((GridProcessResult) obj);
+                	GridProcessResult gpr = (GridProcessResult)obj;
+                	logger.debug("Got grid process result for "+ gpr.getGridSubmissionKey());
+                    completeProcessing(gpr);
                 }
                 else {
+                	logger.debug("Got grid submission request");
                     submitToGrid((ObjectMessage) message);
                 }
             }
@@ -103,11 +106,13 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
             // Call postprocess method of the service so that the necessary information is set to the processData
             try {
+            	logger.debug("Post processing grid submission "+uniqueKey+" with "+originalservice.getClass().getSimpleName());
                 originalservice.cleanup();
                 originalservice.handleErrors();
                 originalservice.postProcess();
             }
             finally {
+            	logger.debug("Removing grid submission from data map: "+uniqueKey);
                 GridSubmitHelperMap.getInstance().removeFromDataMap(uniqueKey);
             }
 
@@ -131,14 +136,18 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
                 throw new ServiceException("GRID JOB FAILURES: operation " + operationToProcess.getName() +
                         " for task " + uniqueKey + " resulted in error '" + gpr.getError() + "'");
             }
+            
+            logger.debug("Forwarding message with operation: "+operationToProcess.getName());
             forwardOrReply(queueMessage, operationToProcess);
         }
         catch (Throwable e) {
             // update all non-done records in accounting to ERROR
             if (null == queueMessage || null == queueMessage.getObjectMap()
                     || null == queueMessage.getObjectMap().get("TASK")) {
+            	logger.error("Error processing grid result "+uniqueKey, e);
                 return;
             }
+        	logger.error("Error processing grid result "+uniqueKey);
             cleanUpAccounting((Task) queueMessage.getObjectMap().get("TASK"));
             recordProcessError(queueMessage, operationToProcess, e);
             JmsUtil.replyToReceivedFromQueue(queueMessage, operationToProcess, e);
@@ -157,15 +166,10 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
         Process proc;
         try {
             queueMessage = new QueueMessage(message, false);
-
             Long taskId = (Long) queueMessage.getMandatoryItem(IProcessData.PROCESS_ID);
-            
-            logger = ProcessDataHelper.getLoggerForTask(queueMessage, this.getClass());
-            if (logger.isDebugEnabled())
-                logger.debug("GridSubmitAndWaitMDB: processing submission request");
-            
             operationToProcess = (OperationDef) queueMessage.getActionToProcess();
 
+            logger = ProcessDataHelper.getLoggerForTask(queueMessage, this.getClass());
             logger.info("Task "+taskId+" created submission key "+submissionKey+" for grid job '"+operationToProcess.getName()+"'");
 
             if (!isExecutable(operationToProcess, queueMessage)) {  // If we're linking directly
@@ -180,10 +184,12 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
             tempT.getEvents();
 
             service = getJobService(queueMessage);
+            logger.debug("Executing service "+service.getClass().getName()+" for grid submission "+submissionKey);
             proc = executeService(queueMessage, operationToProcess, service, submissionKey);
             // add process to a set of monitored processes.
         }
         catch (Throwable e) {
+        	logger.error("Error processing grid result "+submissionKey);
             recordProcessError(queueMessage, operationToProcess, e);
             JmsUtil.replyToReceivedFromQueue(queueMessage, operationToProcess, e);
             return;
@@ -196,10 +202,12 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
             originalObjectMap.put(GridSubmitHelperMap.ORIGINAL_SERVICE_KEY, service);
             originalObjectMap.put(GridSubmitHelperMap.ORIGINAL_QUEUE_MESSAGE_KEY, queueMessage);
             originalObjectMap.put(GridSubmitHelperMap.PROCESS_OBJECT, proc);
+        	logger.debug("Adding grid submission to data map: "+submissionKey);
             GridSubmitHelperMap.getInstance().addToDataMap(submissionKey, originalObjectMap);
         }
         else {
             // Process is null, which means the job was cancelled and we should continue processing
+        	logger.debug("Job was cancelled:"+submissionKey);
             JmsUtil.replyToReceivedFromQueue(queueMessage, operationToProcess);
         }
 
@@ -214,7 +222,6 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
     private Process executeService(QueueMessage queueMessage, OperationDef operationToProcess,
                                    SubmitJobService service, String submissionKey)
             throws MissingDataException, ServiceException {
-        logger.debug("executeService : " + service.getClass().getName());
         if (operationToProcess.getForEachParam() != null) {
             // with a single submission key association to submission,
             // we cannot do iterative submissions.
@@ -234,7 +241,7 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
         Constructor constructor;
 
         String iServiceName = message.getString("iservice");
-        logger.debug("Instantiating the class " + iServiceName);
+        logger.trace("Instantiating service class: " + iServiceName);
 
         try {
             Class[] paramTypes = {};
@@ -244,12 +251,9 @@ public class GridSubmitAndWaitMDB extends BaseServiceMDB {
             service = (SubmitJobService) constructor.newInstance();
         }
         catch (Throwable e) {
-            logger.error(getClass().getName() + " Error in getService method ", e);
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            logger.error("Error instantiating "+ getClass().getName(), e);
         }
 
         return service;
     }
-
-
 }
