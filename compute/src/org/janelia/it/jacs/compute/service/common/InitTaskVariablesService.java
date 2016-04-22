@@ -15,10 +15,14 @@ import org.janelia.it.jacs.model.tasks.Task;
  */
 public class InitTaskVariablesService implements IService {
 
+    private ContextLogger contextLogger;
+    
     public void execute(IProcessData processData) throws ServiceException {
         try {
         	Logger logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());
             Task task = ProcessDataHelper.getTask(processData);
+            this.contextLogger = new ContextLogger(logger);
+            contextLogger.appendToLogContext(task);
             
         	int num = 1;
         	while (true) {
@@ -26,7 +30,7 @@ public class InitTaskVariablesService implements IService {
         		if (taskParamName == null || num>100) break;
         		Object value = processData.getItem("TASK_PARAMETER_VALUE_"+num);	
         		String strValue = value==null?"":value.toString();
-        		logger.info("Setting task parameter '"+taskParamName+"' = "+strValue);
+        		contextLogger.info("Setting task parameter '"+taskParamName+"' = "+strValue);
         		task.setParameter(taskParamName, strValue);
                 num++;
         	}

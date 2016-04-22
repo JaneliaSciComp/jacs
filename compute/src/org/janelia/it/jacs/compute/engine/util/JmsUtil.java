@@ -168,6 +168,12 @@ public class JmsUtil {
     public static QueueMessage sendMessageToQueue(AsyncMessageInterface messageInterface, IProcessData processData, Queue replyToQueue) throws LauncherException {
         try {
             ActionDef actionToProcess = processData.getActionToProcess();
+
+        	if (actionToProcess==null) {
+        		logger.debug("Action to process is null, processing entire Process Def: "+processData.getProcessDefName());
+        		actionToProcess = DefCache.getProcessDef(processData.getProcessDefName());
+        	}
+            
             // Check if we have a overriding queue preference in the process data
             String queueName = processData.getString(IProcessData.QUEUE_OVERRIDE);
             if (queueName==null) {
