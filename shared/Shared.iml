@@ -132,6 +132,16 @@
     <orderEntry type="library" name="Directory" level="project" />
     <orderEntry type="library" name="Spring" level="project" />
     <orderEntry type="library" name="Reflections" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../common/swagger" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/../common/swagger" recursive="false" />
+      </library>
+    </orderEntry>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">
