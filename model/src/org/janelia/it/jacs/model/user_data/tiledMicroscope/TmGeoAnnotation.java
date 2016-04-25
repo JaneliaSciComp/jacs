@@ -47,6 +47,14 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
     @Tag(11)
     private Double radius;
 
+
+    // what updates the modification date?  changes to x, y, z, and radius;
+    //  also comment and index, which are unused; also, outside routines may
+    //  update it (eg, change to attached note); connectivity changes do
+    //  not trigger (change in parent or children)
+    @Tag(12)
+    private Date modificationDate;
+
     // implementation note: at one point we stored the parent and child objects,
     //  but serializing them for calling remote server routines caused the
     //  whole tree to get walked recursively, overflowing the stack; so
@@ -86,6 +94,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public void setIndex(int index) {
         this.index=index;
+        updateModificationDate();
     }
 
     public Integer getIndex() {
@@ -98,6 +107,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public void setComment(String comment) {
         this.comment = comment;
+        updateModificationDate();
     }
 
     public Double getX() {
@@ -106,6 +116,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public void setX(Double x) {
         this.x = x;
+        updateModificationDate();
     }
 
     public Double getY() {
@@ -114,6 +125,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public void setY(Double y) {
         this.y = y;
+        updateModificationDate();
     }
 
     public Double getZ() {
@@ -122,6 +134,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
 
     public void setZ(Double z) {
         this.z = z;
+        updateModificationDate();
     }
 
     public void addChild(TmGeoAnnotation child) {
@@ -156,6 +169,22 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
         this.creationDate = creationDate;
     }
 
+    public Date getModificationDate () {
+        if (modificationDate != null) {
+            return modificationDate;
+        } else {
+            return creationDate;
+        }
+    }
+
+    public void setModificationDate(Date modificationDate) {
+        this.modificationDate = modificationDate;
+    }
+
+    public void updateModificationDate() {
+        this.modificationDate = new Date();
+    }
+
     public boolean isRoot() {
         return neuronId != null && parentId.equals(neuronId);
     }
@@ -184,6 +213,7 @@ public class TmGeoAnnotation implements IsSerializable, Serializable {
      */
     public void setRadius(Double radius) {
         this.radius = radius;
+        updateModificationDate();
     }
 
 }
