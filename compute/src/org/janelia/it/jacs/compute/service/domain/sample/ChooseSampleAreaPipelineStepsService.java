@@ -29,7 +29,7 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractDomainService 
 
         SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
         
-        List<SampleTile> tiles = sampleHelper.getTiles(objectiveSample, sampleArea.getTileNames());
+        List<SampleTile> tiles = sampleHelper.getTilesForArea(objectiveSample, sampleArea);
         
         Integer numImagesPerTile = null;
         Integer numTiles = tiles.size();
@@ -63,7 +63,7 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractDomainService 
         data.putItem("RUN_STITCH", runStitch);
         data.putItem("RUN_ANALYSIS", runAnalysis);
 
-        List<String> steps = new ArrayList<String>();
+        List<String> steps = new ArrayList<>();
         steps.add("processing"); // runProcessing is always true
 
         if (runMerge) {

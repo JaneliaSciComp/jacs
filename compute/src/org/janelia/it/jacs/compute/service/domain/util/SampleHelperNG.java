@@ -2,17 +2,10 @@ package org.janelia.it.jacs.compute.service.domain.util;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
@@ -27,34 +20,14 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.sample.DataSet;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
-import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
-import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.sample.PipelineError;
-import org.janelia.it.jacs.model.domain.sample.PipelineResult;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
-import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
-import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.sample.*;
 import org.janelia.it.jacs.model.domain.support.DomainObjectAttribute;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.reflections.ReflectionUtils;
-
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Ordering;
 
 
 /**
@@ -833,9 +806,8 @@ public class SampleHelperNG extends DomainHelper {
         	}
         	
         	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
-        	for(String tileName : sampleArea.getTileNames()) {
-        	    logger.trace("    Determining consensus for "+attrName+" in "+tileName+" tile");
-        	    SampleTile sampleTile = objectiveSample.getTileByName(tileName);
+        	for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
+        	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
             	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
 	        	
             	StringBuilder sb = new StringBuilder();
@@ -894,9 +866,8 @@ public class SampleHelperNG extends DomainHelper {
         	}
         	
         	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
-        	for(String tileName : sampleArea.getTileNames()) {
-        	    logger.trace("    Determining consensus for "+attrName+" in "+tileName+" tile");
-        	    SampleTile sampleTile = objectiveSample.getTileByName(tileName);
+                for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
+        	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
             	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
             	
                 for(LSMImage image : lsms) {
@@ -994,26 +965,16 @@ public class SampleHelperNG extends DomainHelper {
         }
     }
 
-    public List<SampleTile> getTilesForArea(ObjectiveSample objectiveSample, String area) {
+    public List<SampleTile> getTilesForArea(ObjectiveSample objectiveSample, AnatomicalArea area) {
         List<SampleTile> tiles = new ArrayList<>();
         for(SampleTile tile : objectiveSample.getTiles()) {
-            if (area.equals(tile.getAnatomicalArea())) {
+            if (area.getName().equals(tile.getAnatomicalArea()) && area.getTileNames().contains(tile.getName())) {
                 tiles.add(tile);
             }
         }
         return tiles;
     }
-    
-    public List<SampleTile> getTiles(ObjectiveSample objectiveSample, List<String> tileNames) {
-        List<SampleTile> tiles = new ArrayList<>();
-        for(SampleTile tile : objectiveSample.getTiles()) {
-            if (tileNames.contains(tile.getName())) {
-                tiles.add(tile);
-            }
-        }
-        return tiles;
-    }
-    
+
     /* --------------------------- */
 
     public void saveLsm(LSMImage lsm) throws Exception {

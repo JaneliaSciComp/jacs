@@ -47,9 +47,9 @@ public class InitSampleAttributesService extends AbstractDomainService {
 
     private List<AnatomicalArea> getSampleAreas(ObjectiveSample objectiveSample) throws Exception {
 
-        List<AnatomicalArea> sampleAreas = null;
+        List<AnatomicalArea> sampleAreas;
 
-        Map<String,AnatomicalArea> areaMap = new HashMap<String,AnatomicalArea>();
+        Map<String,AnatomicalArea> areaMap = new HashMap<>();
 
         for(SampleTile sampleTile : objectiveSample.getTiles()) {
             String area = null;
@@ -72,7 +72,7 @@ public class InitSampleAttributesService extends AbstractDomainService {
             anatomicalArea.addTileName(sampleTile.getName());
         }
 
-        sampleAreas = new ArrayList<AnatomicalArea>(areaMap.values());
+        sampleAreas = new ArrayList<>(areaMap.values());
 
         // A bit of a hack... sort brains last so that they are the default 2d images later on
         Collections.sort(sampleAreas, new Comparator<AnatomicalArea>() {

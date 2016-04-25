@@ -2913,7 +2913,18 @@ public class MongoDbImport extends AnnotationDAO {
     private void collectAnnotations(Long id) {
         Set<Annotation> annotations = getAnnotations(id);
         if (annotations!=null) {
-            currAnnotations.addAll(annotations);
+            for(Annotation annotation : annotations) {
+                boolean exists = false;
+                for (Annotation currAnnotation : currAnnotations) {
+                    if (currAnnotation.getName().equals(annotation.getName()) && currAnnotation.getOwnerKey().equals(annotation.getOwnerKey())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    currAnnotations.add(annotation);
+                }
+            }
         }
     }
 

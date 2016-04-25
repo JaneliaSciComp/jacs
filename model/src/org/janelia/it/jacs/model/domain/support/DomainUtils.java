@@ -29,6 +29,7 @@ import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.util.ModelStringUtil;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
@@ -207,6 +208,18 @@ public class DomainUtils {
      */
     public static String getClassNameForSearchType(String type) {
         return searchTypeToClassName.get(type);
+    }
+
+    public static String getTypeName(Class<? extends DomainObject> domainClass) {
+        SearchType searchType = domainClass.getAnnotation(SearchType.class);
+        if (searchType!=null) {
+            return searchType.label();
+        }
+        MongoMapped mongoMapped = domainClass.getAnnotation(MongoMapped.class);
+        if (mongoMapped!=null) {
+            return mongoMapped.label();
+        }
+        return ModelStringUtil.splitCamelCase(domainClass.getSimpleName());
     }
 
     /**
@@ -430,11 +443,11 @@ public class DomainUtils {
         Collections.sort(subjects, new Comparator<Subject>() {
             @Override
             public int compare(Subject o1, Subject o2) {
-                ComparisonChain chain = ComparisonChain.start()
+                return ComparisonChain.start()
                         .compare(getTypeFromSubjectKey(o1.getKey()), getTypeFromSubjectKey(o2.getKey()), Ordering.natural())
                         .compare(o1.getFullName(), o2.getFullName(), Ordering.natural().nullsLast())
-                        .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst());
-                return chain.result();
+                        .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst())
+                        .result();
             }
         });
     }

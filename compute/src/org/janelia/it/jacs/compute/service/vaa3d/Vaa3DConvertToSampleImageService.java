@@ -174,14 +174,14 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
             LSMMetadata lsm1Metadata = lsmMetadataMap.get(lsm1File.getName());
             contextLogger.info("Parsing file 1: "+lsm1File);
             
-            List<String> unmergedChannelList = new ArrayList<String>();
-            List<String> inputChannelList = new ArrayList<String>();
-            List<String> outputChannelList = new ArrayList<String>();
+            List<String> unmergedChannelList = new ArrayList<>();
+            List<String> inputChannelList = new ArrayList<>();
+            List<String> outputChannelList = new ArrayList<>();
             
             if (channelDyeSpec!=null && outputChannelOrder!=null) {
 
-                List<String> input1ChannelList = new ArrayList<String>();
-                List<String> input2ChannelList = new ArrayList<String>();
+                List<String> input1ChannelList = new ArrayList<>();
+                List<String> input2ChannelList = new ArrayList<>();
                 
                 // The dye-mapping method of channel ordering relies on a dye mapping and output channel order.
                 
@@ -205,9 +205,9 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
                     }
                 }
 
-                List<String> lsm1DyeArray = new ArrayList<String>();
-                List<String> lsm2DyeArray = new ArrayList<String>();
-                List<String> mergedDyeArray = new ArrayList<String>();
+                List<String> lsm1DyeArray = new ArrayList<>();
+                List<String> lsm2DyeArray = new ArrayList<>();
+                List<String> mergedDyeArray = new ArrayList<>();
                 
                 Collection<String> referenceDyes = tagToDyesMap.get("reference");
                 contextLogger.info("Reference dyes: "+referenceDyes);
@@ -297,12 +297,12 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
                         String blueTag = null;
                         String refTag = null;
                         
-                        List<String> tags = new ArrayList<String>(unmergedChannelList);
+                        List<String> tags = new ArrayList<>(unmergedChannelList);
 
                         // The RGB merge algorithm discards the second reference
                         tags.remove("r1");
                         
-                        List<Channel> allChannels = new ArrayList<Channel>();
+                        List<Channel> allChannels = new ArrayList<>();
                         allChannels.addAll(lsm1Metadata.getChannels());
                         allChannels.addAll(lsm2Metadata.getChannels());
                         
@@ -568,7 +568,7 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
         contextLogger.debug("Input channels: "+inputChannelList);
         contextLogger.debug("Output channels: "+outputChannelList);
         
-        Map<String,Integer> sourceIndexMap = new HashMap<String,Integer>();
+        Map<String,Integer> sourceIndexMap = new HashMap<>();
         int index = 0;
         for(String tag : inputChannelList) {
             sourceIndexMap.put(tag, index);
@@ -593,7 +593,7 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
     
     private void populateMaps() throws Exception {
 
-        for(SampleTile sampleTile : sampleHelper.getTiles(objectiveSample, sampleArea.getTileNames())) {
+        for(SampleTile sampleTile : sampleHelper.getTilesForArea(objectiveSample, sampleArea)) {
             contextLogger.info("Populating maps for tile: "+sampleTile.getName());
             
             List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
