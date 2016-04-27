@@ -72,6 +72,28 @@ public class DomainObjectWebService extends ResourceConfig {
         }
     }
 
+    /**
+     * Use for getting all examples of a given object type.  Only for small sets.
+     * @param subjectKey omissible. If given, constrains by ownership.
+     * @param domainClass required. constrains by collection/type.
+     * @return all existing examples of things of this type.
+     */
+    @GET
+    @Path("/domainobject/class")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<DomainObject> getObjectsByClass(@QueryParam("subjectKey") final String subjectKey,
+                                                @QueryParam("domainClass") final String domainClass) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        Class clazz = DomainUtils.getObjectClassByName(domainClass);
+        try {
+            return dao.getDomainObjects(subjectKey, clazz);
+        } catch (Exception e) {
+            log.error("Error occurred retrieving domain objects by class" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GET
     @Path("/domainobject/reverseLookup")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -160,5 +182,5 @@ public class DomainObjectWebService extends ResourceConfig {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
+    
 }

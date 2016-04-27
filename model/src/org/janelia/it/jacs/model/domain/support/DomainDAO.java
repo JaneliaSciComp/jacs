@@ -21,6 +21,7 @@ import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
 import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentContext;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.Category;
 import org.janelia.it.jacs.model.domain.ontology.EnumItem;
@@ -70,6 +71,7 @@ public class DomainDAO {
 
     protected MongoCollection preferenceCollection;
     protected MongoCollection alignmentBoardCollection;
+    protected MongoCollection alignmentContextCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection compartmentSetCollection;
     protected MongoCollection dataSetCollection;
@@ -88,7 +90,6 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
-
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
             members.add(new ServerAddress(serverMember));
@@ -111,6 +112,7 @@ public class DomainDAO {
                 .enable(MapperFeature.AUTO_DETECT_SETTERS)
                 .build());
         this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
+        this.alignmentContextCollection = getCollectionByClass(AlignmentContext.class);
         this.annotationCollection = getCollectionByClass(Annotation.class);
         this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
         this.dataSetCollection = getCollectionByClass(DataSet.class);
