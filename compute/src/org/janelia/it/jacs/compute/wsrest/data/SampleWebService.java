@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 
+import io.swagger.annotations.*;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
@@ -20,6 +21,7 @@ import java.util.*;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class SampleWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(SampleWebService.class);
 
@@ -32,10 +34,18 @@ public class SampleWebService extends ResourceConfig {
 
     @GET
     @Path("/sample/lsms")
+    @ApiOperation(value = "Gets a list of LSMImage stacks for a sample",
+            notes = "Uses the sample ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got list of LSMImage stacks", response=LSMImage.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of LSMImage Stacks" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<LSMImage> getLsmsForSample(@QueryParam("subjectKey") final String subjectKey,
-                                           @QueryParam("sampleId") final Long sampleId) {
+    public List<LSMImage> getLsmsForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                           @ApiParam @QueryParam("sampleId") final Long sampleId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
@@ -48,17 +58,25 @@ public class SampleWebService extends ResourceConfig {
 
     @GET
     @Path("/sample")
+    @ApiOperation(value = "Gets a List of Samples",
+            notes = "Uses the Sample Id or Sample Name to retrieve a list of samples"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got Samples", response=Sample.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of Samples" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List getSamples(@QueryParam("subjectKey") final String subjectKey,
-                                     @QueryParam("sampleId") final Long sampleId,
-                                     @QueryParam("sampleName") final String sampleName) {
+    public List getSamples(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                           @ApiParam @QueryParam("sampleId") final Long sampleId,
+                           @ApiParam @QueryParam("sampleName") final String sampleName) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             if (sampleId!=null) {
                 return dao.getDomainObjectsByName(subjectKey, Sample.class, sampleName);
             } else {
-                Reference ref = new Reference(Sample.class.getCanonicalName(), sampleId);
+                Reference ref = Reference.createFor(Sample.class, sampleId);
                 List<Reference> refList = new ArrayList<>();
                 refList.add(ref);
                 return dao.getDomainObjects(subjectKey, refList);

@@ -83,7 +83,11 @@ public class InitSeparationParametersService extends AbstractDomainService {
         if (prevResult!=null) {
             String previousResultFilename = DomainUtils.getFilepath(prevResult, FileType.NeuronSeparatorResult);
             if (previousResultFilename!=null) {
+                data.putItem("PREVIOUS_SEPARATION_ID", prevResult.getId());
                 data.putItem("PREVIOUS_RESULT_FILENAME", previousResultFilename);
+            }
+            else {
+            	logger.warn("Previous neuron separation has no result file: "+prevResult.getId());
             }
         }
     }

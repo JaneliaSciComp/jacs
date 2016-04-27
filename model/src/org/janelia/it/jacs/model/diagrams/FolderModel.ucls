@@ -74,7 +74,7 @@
       <operations public="false" package="false" protected="false" private="false" static="false"/>    
     </display>  
   </class>  
-  <class id="9" language="java" name="org.janelia.it.jacs.model.domain.gui.search.criteria.ObjectSetCriteria" 
+  <class id="9" language="java" name="org.janelia.it.jacs.model.domain.gui.search.criteria.TreeNodeCriteria"
     project="model" file="/model/src/org/janelia/it/jacs/model/domain/gui/search/criteria/ObjectSetCriteria.java" 
     binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="601" y="614"/>    

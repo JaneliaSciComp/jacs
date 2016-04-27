@@ -808,7 +808,7 @@
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
                    value="${server.address}.properties"
-                   else="jacs.properties" >
+                   else="notdefined.properties" >
             <available file="${jacs.properties.dir}/${server.address}.properties" />
         </condition>
 

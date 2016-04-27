@@ -1,5 +1,5 @@
  <!-- 
-      Fully process a Sample in the database. Potentially this can include merging LSMs, stitching and blending them, 
+      Fully process a single objective for a sample. Potentially this can include merging LSMs, stitching and blending them, 
       aligning, and running analysis algorithms such as neuron separation. 
  -->
  <process name="FlyLight Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">

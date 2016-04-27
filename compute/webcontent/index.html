@@ -41,7 +41,7 @@
         window.SwaggerTranslator.translate();
       }
       window.swaggerUi = new SwaggerUi({
-        url: "/api/swagger.json",
+        url: "/rest-v1/swagger.json",
         validatorUrl : null,
         docExpansion: "list",
         dom_id: "swagger-ui-container",
@@ -71,7 +71,8 @@
           log("Unable to Load SwaggerUI");
         },
         apisSorter: "alpha",
-        showRequestHeaders: false
+        showRequestHeaders: false,
+        docExpansion: "none"
       });
 
       function addApiKeyAuthorization(){

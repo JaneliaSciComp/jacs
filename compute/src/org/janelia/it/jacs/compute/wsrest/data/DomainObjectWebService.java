@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import io.swagger.annotations.*;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -21,6 +22,7 @@ import java.util.List;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class DomainObjectWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(DomainObjectWebService.class);
 
@@ -36,9 +38,17 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject/details")
+    @ApiOperation(value = "Gets an Domain Object's Details using either the references parameters or the objectType & objectIds",
+                    notes = ""
+            )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of DomainObjects" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<DomainObject> getObjectDetails(DomainQuery query) {
+    public List<DomainObject> getObjectDetails(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             List<DomainObject> detailObjects = null;
@@ -57,11 +67,19 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @GET
     @Path("/domainobject/name")
+    @ApiOperation(value = "Gets DomainObjects by Name and DomainClass",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of DomainObjects" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<DomainObject> getObjectsByName(@QueryParam("subjectKey") final String subjectKey,
-                                               @QueryParam("name") final String name,
-                                               @QueryParam("domainClass") final String domainClass) {
+    public List<DomainObject> getObjectsByName(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                               @ApiParam @QueryParam("name") final String name,
+                                               @ApiParam @QueryParam("domainClass") final String domainClass) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         Class clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
@@ -96,13 +114,21 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @GET
     @Path("/domainobject/reverseLookup")
+    @ApiOperation(value = "Gets a list of DomainObjects that are referring to this DomainObject",
+            notes = "Uses reference attribute and reference class to determine type of parent reference to find"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of DomainObjects" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<DomainObject> getObjectsByReverseRef(@QueryParam("subjectKey") final String subjectKey,
-                                                     @QueryParam("referenceId") final Long referenceId,
-                                                     @QueryParam("count") final Long count,
-                                                     @QueryParam("referenceAttr") final String referenceAttr,
-                                                     @QueryParam("referenceClass") final String referenceClass) {
+    public List<DomainObject> getObjectsByReverseRef(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                                     @ApiParam @QueryParam("referenceId") final Long referenceId,
+                                                     @ApiParam @QueryParam("count") final Long count,
+                                                     @ApiParam @QueryParam("referenceAttr") final String referenceAttr,
+                                                     @ApiParam @QueryParam("referenceClass") final String referenceClass) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         ReverseReference reverseRef = new ReverseReference();
         reverseRef.setCount(count);
@@ -119,24 +145,62 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject/references")
+    @ApiOperation(value = "Gets Folder References to a DomainObject ",
+            notes = "uses the DomainObject parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got a list of Folder References", response=Reference.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of Folder References" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Reference> getContainerReferences(DomainQuery query) {
+    public List<Reference> getContainerReferences(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             return dao.getContainerReferences(query.getDomainObject());
         } catch (Exception e) {
-            log.error("Error occurred getting treenode/objectset references",e);
+            log.error("Error occurred getting folder references",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
+    @POST
+    @Path("/domainobject/update")
+    @ApiOperation(value = "updates an exisitng DomainObject ",
+            notes = "uses the DomainObject parameter of the DomainQuery, checks if the object exists to prevent this method from being abused"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully update the value of an existing Domain Object", response=DomainObject.class),
+            @ApiResponse( code = 500, message = "Internal Server Error updating DomainObject" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public DomainObject updateDomainObject (@ApiParam DomainQuery query) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        try {
+            if (dao.getDomainObject(query.getSubjectKey(), Reference.createFor(query.getDomainObject()))!=null) {
+                return dao.save(query.getSubjectKey(), query.getDomainObject());
+            }
+        } catch (Exception e) {
+            log.error("Error occurred updating Domain Object",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return null;
+    }
 
     @POST
     @Path("/domainobject/remove")
+    @ApiOperation(value = "Removes a Domain Object",
+            notes = "uses the References parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed domain objects"),
+            @ApiResponse( code = 500, message = "Internal Server Error removing domain objects" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public void removeDomainObject(DomainQuery query) {
+    public void removeDomainObject(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             for (Reference objectRef : query.getReferences()) {
@@ -161,9 +225,16 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @POST
     @Path("/domainobject")
+    @ApiOperation(value = "Updates an Object's Attribute",
+            notes = "uses the ObjectType, ObjectId(first position), PropertyName, and PropertyValue parameters of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully updated a domain object's properties", response=DomainObject.class),
+            @ApiResponse( code = 500, message = "Internal Server Error updating a domain object's properties" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DomainObject updateObjectProperty(DomainQuery query) {
+    public DomainObject updateObjectProperty(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             DomainObject updateObj = null;

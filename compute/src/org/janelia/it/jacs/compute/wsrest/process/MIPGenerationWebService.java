@@ -1,6 +1,9 @@
 package org.janelia.it.jacs.compute.wsrest.process;
 
 import com.google.common.base.Joiner;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.apache.commons.httpclient.HttpStatus;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.image.InputImage;
@@ -27,6 +30,7 @@ import java.util.Map;
  * Created by goinac on 9/2/15.
  */
 @Path("/process")
+@Api(value = "Janelia Workstation Pipelines")
 public class MIPGenerationWebService extends AbstractComputationService<MIPGenerationTask, MIPGenerationResultNode> {
     private static final String RESOURCE_NAME = "MIPGeneration";
     private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationWebService.class);
@@ -45,6 +49,11 @@ public class MIPGenerationWebService extends AbstractComputationService<MIPGener
      */
     @POST
     @Path("/mips/images")
+    @ApiOperation(value = "Post request to trigger the Maximum Intensity Projection process.",
+            notes = "")
+    @ApiResponses(value = {
+
+    })
     @Consumes({
             MediaType.APPLICATION_JSON,
             MediaType.APPLICATION_XML

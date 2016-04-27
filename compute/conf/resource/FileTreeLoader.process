@@ -51,6 +51,7 @@
     			<input name="PBD_SIZE_THRESHOLD" value="5000000"/>
     			<input name="PBD_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW"/>
     			<input name="MIP_EXTENSIONS" value="LSM TIF RAW V3DRAW VAA3DRAW V3DPBD PBD"/>
+    			<input name="IMG_EXTENSIONS" value="PNG JPG TIF IMG"/>
     			<input name="GROUP_SIZE" value="200"/>
     			<output name="GROUP_SIZE"/>
     			<output name="RESULT_NODE"/>

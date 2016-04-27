@@ -60,9 +60,9 @@
             <input name="PROCESS_VARIABLE_MAP">
                 <entry key="20X_PIPELINE_NAME"                    value="Paired Sample Pipeline 20x"/>
                 <entry key="20X_MERGE_ALGORITHMS"                 value="FLYLIGHT_ORDERED"/>
-                <entry key="20X_ALIGNMENT_ALGORITHMS"             value="CONFIGURED,CONFIGURED_BRAIN_VNC"/>
-                <entry key="20X_ALIGNMENT_ALGORITHM_PARAMS"       value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh"/>
-                <entry key="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment,Brain/VNC Alignment"/>
+                <entry key="20X_ALIGNMENT_ALGORITHMS"             value="CONFIGURED,CONFIGURED_BRAIN_VNC,CONFIGURED_VNC"/>
+                <entry key="20X_ALIGNMENT_ALGORITHM_PARAMS"       value="flyalign20x_JBA_Qiscore.sh,brainalignPolarity20xBrainVNCRescale_dpx.sh,flyalign20xVNC_CMTK.sh"/>
+                <entry key="20X_ALIGNMENT_ALGORITHM_RESULT_NAMES" value="JBA Alignment,Brain/VNC Alignment,CMTK VNC Alignment"/>
                 <entry key="20X_ANALYSIS_ALGORITHMS"              value="NEURON_SEPARATOR"/>
                 <entry key="63X_PIPELINE_NAME"                    value="Paired Sample Pipeline 63x"/>
                 <entry key="63X_MERGE_ALGORITHMS"                 value="FLYLIGHT_ORDERED"/>

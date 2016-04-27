@@ -67,8 +67,8 @@ public class ComputeBaseDAO {
     }
 
     public Connection getJdbcConnection() throws DaoException {
-    	try {
-    	    Connection connection = null;
+        try {
+            Connection connection = null;
             if (!StringUtils.isEmpty(jndiPath)) {
                 if (log.isTraceEnabled()) {
                     log.trace("getJdbcConnection() using these parameters: jndiPath="+jndiPath);
@@ -86,17 +86,17 @@ public class ComputeBaseDAO {
             }
             connection.setAutoCommit(false);
             return connection;
-    	}
-    	catch (Exception e) {
-    		throw new DaoException(e);
-    	}
+        }
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
     }
 
     private SessionFactory getSessionFactory() {
         try {
-        	if (sessionFactory==null) {
-        		sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/ComputeSessionFactory");
-        	}
+            if (sessionFactory==null) {
+                sessionFactory = (SessionFactory) createInitialContext().lookup("java:/hibernate/ComputeSessionFactory");
+            }
             return sessionFactory;
         }
         catch (Exception e) {

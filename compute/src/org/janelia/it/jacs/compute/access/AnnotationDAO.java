@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.access;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -61,10 +62,9 @@ import com.fasterxml.jackson.databind.util.ISO8601Utils;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
-import java.io.InputStream;
+
 import sun.misc.BASE64Decoder;
 
-@Deprecated
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
 	
 	/** Batch fetch size for JDBC result sets */

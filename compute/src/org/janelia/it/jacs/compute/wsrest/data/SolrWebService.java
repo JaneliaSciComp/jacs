@@ -1,6 +1,11 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -25,6 +30,7 @@ import java.util.*;
 
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class SolrWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(SolrWebService.class);
 
@@ -37,9 +43,16 @@ public class SolrWebService extends ResourceConfig {
 
     @POST
     @Path("/search")
+    @ApiOperation(value = "Performs a SOLRSearch using a SolrParams class",
+            notes = "Refer to the API docs on SOLRQuery for an explanation of the serialized parameters in SolrParams"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully performed SOLR search", response=SolrJsonResults.class),
+            @ApiResponse( code = 500, message = "Internal Server Error performing SOLR Search" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public SolrJsonResults searchSolrIndices(SolrParams queryParams) {
+    public SolrJsonResults searchSolrIndices(@ApiParam SolrParams queryParams) {
         SolrConnector solr = WebServiceContext.getSolr();
         try {
             SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);

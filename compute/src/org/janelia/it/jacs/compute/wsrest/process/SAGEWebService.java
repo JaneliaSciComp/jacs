@@ -6,6 +6,9 @@ import java.util.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
@@ -43,6 +46,7 @@ import org.apache.log4j.Logger;
  * @author Eric Trautman
  */
 @Path("/process")
+@Api(value = "Janelia Workstation Pipelines")
 public class SAGEWebService extends ResourceConfig {
     private final Logger logger = Logger.getLogger(this.getClass());
 

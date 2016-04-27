@@ -17,7 +17,6 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -106,6 +105,7 @@ public class FileTreeLoaderService implements IService {
     final public String PBD_SIZE_THRESHOLD="PBD_SIZE_THRESHOLD";
     final public String PBD_EXTENSIONS="PBD_EXTENSIONS";
     final public String MIP_EXTENSIONS="MIP_EXTENSIONS";
+    final public String IMG_EXTENSIONS="IMG_EXTENSIONS";
 
     protected Logger logger;
     protected DomainDAO domainDAO;
@@ -134,6 +134,7 @@ public class FileTreeLoaderService implements IService {
     protected Map<Long, List<ArtifactInfo>> mipGroupMap;
     protected List<String> pbdExtensions;
     protected List<String> mipExtensions;
+    protected List<String> imgExtensions;
     protected Long pbdThreshold;
     protected List<String> nodeFilePaths;
 
@@ -191,7 +192,7 @@ public class FileTreeLoaderService implements IService {
                             "failed to parse PARENT_FOLDER_ID '" + topLevelFolderIdStr + "'", e);
                 }
                 parentFolder = (TreeNode)domainDAO.getDomainObject(ownerKey,
-                        new Reference(TreeNode.class.getCanonicalName(), topLevelFolderId));
+                        Reference.createFor(TreeNode.class, topLevelFolderId));
                 for (Reference parentChild: parentFolder.getChildren()) {
                     DomainObject parentChildObj = domainDAO.getDomainObject(ownerKey, parentChild);
                     if (parentChildObj.getName().equals(topLevelFolderName) && parentChildObj instanceof TreeNode) {
@@ -206,8 +207,7 @@ public class FileTreeLoaderService implements IService {
                     node.setName(topLevelFolderName);
                     topLevelFolder = domainDAO.save(ownerKey, node);
                     List<Reference> refList = new ArrayList<>();
-                    refList.add(new Reference(DomainHelper.TREENODE_CLASSNAME,
-                            topLevelFolder.getId()));
+                    refList.add(Reference.createFor(TreeNode.class, topLevelFolder.getId()));
                     domainDAO.addChildren(ownerKey,parentFolder,refList);
                 }
             }
@@ -315,6 +315,11 @@ public class FileTreeLoaderService implements IService {
             String[] extensions=mipExtensionString.split("\\s+");
             mipExtensions=Arrays.asList(extensions);
         }
+        String imgExtensionString=processData.getString(IMG_EXTENSIONS);
+        if (imgExtensionString!=null) {
+            String[] extensions=imgExtensionString.split("\\s+");
+            imgExtensions=Arrays.asList(extensions);
+        }
         String pbdThresholdString=processData.getString(PBD_SIZE_THRESHOLD);
         if (pbdThresholdString!=null) {
             pbdThreshold=new Long(pbdThresholdString.trim());
@@ -340,8 +345,9 @@ public class FileTreeLoaderService implements IService {
         // of the source entities to match these results.
 
         if (filesUploaded) {
-            moveUploadedFilesIntoFileStore();
+           // moveUploadedFilesIntoFileStore();
         } else {
+            // TO DO: filter through files, add media to different scality stores based off file-type
             addDirectoryAndContentsToFolder(topLevelFolder, rootDirectory, 0 /*index*/);
         }
 
@@ -361,17 +367,16 @@ public class FileTreeLoaderService implements IService {
     protected void addDirectoryAndContentsToFolder(TreeNode folder, File dir, Integer index) throws Exception {
         logger.info("addDirectoryAndContentsToFolder: entry, folder=" +
                     folder + ", dir="+ dir.getAbsolutePath());
-        TreeNode dirFolder=verifyOrCreateChildFolderFromDir(folder, dir, index);
         List<File> orderedFiles=FileUtils.getOrderedFilesInDir(dir);
         for (int i=0;i<orderedFiles.size();i++) {
             File f=orderedFiles.get(i);
             if (passesExclusionFilter(f)) {
                 if (f.isDirectory()) {
-                    addDirectoryAndContentsToFolder(dirFolder, f, i);
+                    addDirectoryAndContentsToFolder(folder, f, i);
                 } else {
-                    verifyOrCreateFileEntityForFolder(dirFolder, f, i);
-                    dirFolder = (TreeNode)domainDAO.getDomainObject(ownerKey,
-                            new Reference(DomainHelper.TREENODE_CLASSNAME, dirFolder.getId()));
+                    verifyOrCreateFileEntityForFolder(folder, f, i);
+                    folder = (TreeNode)domainDAO.getDomainObject(ownerKey,
+                            Reference.createFor(TreeNode.class, folder.getId()));
                 }
             }
         }
@@ -397,31 +402,14 @@ public class FileTreeLoaderService implements IService {
     }
 
     protected void verifyOrCreateFileEntityForFolder(TreeNode folder, File f, Integer index) throws Exception {
-        // if no object exists in this treenode, create an objectset
-        ObjectSet objectSet = null;
-        logger.info("ASDASDFAFDASFASDFASDFA" + folder.getChildren());
-        if (folder.getChildren()!=null) {
-            for (Reference item: folder.getChildren()) {
-                if (item.getTargetClassName().equals(DomainHelper.OBJECTSET_CLASSNAME)) {
-                    objectSet = (ObjectSet) domainDAO.getDomainObject(ownerKey, item);
-                    break;
-                }
-            }
-        }
-        if (objectSet==null) {
-            objectSet = domainHelper.createChildObjectSet(folder,ownerKey,"Image Set");
-        }
-
         // create an image object, if it doesn't already exist
         // add the image object
         Image imageFile = new Image();
         imageFile.setName(f.getName());
         boolean alreadyExists=false;
 
-        if (objectSet.getMembers()!=null) {
-            for (Long imageId: objectSet.getMembers()) {
-                Reference imageRef = new Reference(DomainHelper.IMAGE_CLASSNAME, imageId);
-
+        if (folder.getNumChildren()>0) {
+            for (Reference imageRef: folder.getChildren()) {
                 Image imageObj = (Image)domainDAO.getDomainObject(ownerKey,imageRef);
                 if (imageObj.getFilepath().equals(f.getAbsolutePath())) {
                     alreadyExists=true;
@@ -431,19 +419,22 @@ public class FileTreeLoaderService implements IService {
         }
 
         if (!alreadyExists) {
+            if (imageFile.getFiles()==null) {
+                imageFile.setFiles(new HashMap<FileType, String>());
+            }
             imageFile.setFilepath(f.getAbsolutePath());
+            if (shouldHaveArtifact(f, imgExtensions)) {
+                imageFile.getFiles().put(FileType.Unclassified2d, f.getAbsolutePath());
+            }
             imageFile = domainDAO.save(ownerKey, imageFile);
-            Reference imageRef = new Reference(DomainHelper.IMAGE_CLASSNAME, imageFile.getId());
+            Reference imageRef = Reference.createFor(Image.class, imageFile.getId());
             List<Reference> imageRefList = new ArrayList<>();
             imageRefList.add(imageRef);
-            domainDAO.addMembers(ownerKey, objectSet, imageRefList);
+            domainDAO.addChildren(ownerKey, folder, imageRefList);
         }
 
         // Handle artifacts
         boolean willHaveMipArtifactBecauseHasPbdArtifact=false;
-        if (imageFile.getFiles()==null) {
-            imageFile.setFiles(new HashMap<FileType, String>());
-        }
         if (shouldHaveArtifact(f, pbdExtensions) && shouldTifHavePbdArtifact(f)) {
             willHaveMipArtifactBecauseHasPbdArtifact=true;
             if (!imageFile.getFiles().containsKey(FileType.LosslessStack)) {
@@ -524,7 +515,7 @@ public class FileTreeLoaderService implements IService {
             ai.artifactPath=outputPath;
             outputPathList.add(outputPath);
             // Add mip entry
-            Image source = (Image)domainDAO.getDomainObject(ownerKey, new Reference(DomainHelper.IMAGE_CLASSNAME, ai.sourceDomainId));
+            Image source = (Image)domainDAO.getDomainObject(ownerKey, Reference.createFor(Image.class, ai.sourceDomainId));
             addToArtifactList(source, outputPath, mipGroupMap);
         }
         logger.info("doPbdList() putting vars in processData, inputListSize="+inputPathList.size()+" outputListSize="+outputPathList.size());
@@ -611,8 +602,7 @@ public class FileTreeLoaderService implements IService {
                     } else {
                         // First, get the source Image DomainObject and attach pbd results
                         logger.info("doComplete() creating pbdResult for source " + ai.sourceDomainId);
-                        Image sourceImage = (Image)domainDAO.getDomainObject(ownerKey, new Reference(DomainHelper.IMAGE_CLASSNAME,
-                                ai.sourceDomainId));
+                        Image sourceImage = (Image)domainDAO.getDomainObject(ownerKey, Reference.createFor(Image.class, ai.sourceDomainId));
                         if (sourceImage!=null) {
                             if (sourceImage.getFiles()==null) {
                                 sourceImage.setFiles(new HashMap<FileType, String>());
@@ -641,7 +631,7 @@ public class FileTreeLoaderService implements IService {
                         logger.error("Could not find expected mip result file="+mipResultFile.getAbsolutePath()+" for sourceDomainId="+ai.sourceDomainId);
                     } else {
                         // Create the mip filepath
-                        Image sourceImage = (Image)domainDAO.getDomainObject(ownerKey, new Reference(DomainHelper.IMAGE_CLASSNAME,
+                        Image sourceImage = (Image)domainDAO.getDomainObject(ownerKey, Reference.createFor(DomainHelper.IMAGE_CLASSNAME,
                                 ai.sourceDomainId));
                         if (sourceImage!=null) {
                             if (sourceImage.getFiles()==null) {
@@ -733,7 +723,7 @@ public class FileTreeLoaderService implements IService {
             for (File movedFile : movedFiles) {
                 verifyOrCreateFileEntityForFolder(topLevelFolder, movedFile, 1 /*index*/);
                 topLevelFolder = (TreeNode)domainDAO.getDomainObject(ownerKey,
-                        new Reference(DomainHelper.TREENODE_CLASSNAME, topLevelFolder.getId()));
+                        Reference.createFor(TreeNode.class, topLevelFolder.getId()));
             }
 
         } else {

@@ -1,10 +1,8 @@
 package org.janelia.it.jacs.model.domain;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Sets;
 import org.janelia.it.jacs.model.TestCategories;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.enums.SubjectRole;
@@ -12,22 +10,17 @@ import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.gui.search.criteria.AttributeValueCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.Image;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
+import org.janelia.it.jacs.model.domain.sample.*;
 import org.janelia.it.jacs.model.domain.support.DomainObjectAttribute;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Sets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Tests for the DomainUtils utility class.
@@ -65,19 +58,19 @@ public class DomainUtilsTest {
     @Test
     public void testGet2dTypeNames() throws Exception {
         
-        FileGroup group1 = new FileGroup();
+        FileGroup group1 = new FileGroup("group1");
         group1.setFilepath("/group1");
         group1.getFiles().put(FileType.AllMip, "allmip.png");
         group1.getFiles().put(FileType.SignalMip, "signalmip.png");
 
-        FileGroup group2 = new FileGroup();
+        FileGroup group2 = new FileGroup("group2");
         group2.setFilepath("/group2");
         group2.getFiles().put(FileType.AllMip, "allmip.png");
         group2.getFiles().put(FileType.ReferenceMip, "refmip.png");
         
         LSMSummaryResult result = new LSMSummaryResult();
-        result.getGroups().put("group1", group1);
-        result.getGroups().put("group2", group2);
+        result.getGroups().add(group1);
+        result.getGroups().add(group2);
         
         Multiset<String> names = DomainUtils.get2dTypeNames((HasFileGroups)result);
         Assert.assertEquals(3, names.elementSet().size());
@@ -129,8 +122,8 @@ public class DomainUtilsTest {
 
     @Test
     public void testGetClassNameForSearchType() throws Exception {
-        Assert.assertEquals(Sample.class.getName(), DomainUtils.getClassNameForSearchType("sample"));
-        Assert.assertEquals(LSMImage.class.getName(), DomainUtils.getClassNameForSearchType("lsmImage"));
+        Assert.assertEquals(Sample.class.getSimpleName(), DomainUtils.getClassNameForSearchType("sample"));
+        Assert.assertEquals(LSMImage.class.getSimpleName(), DomainUtils.getClassNameForSearchType("lsmImage"));
     }
 
     @Test
@@ -147,8 +140,8 @@ public class DomainUtilsTest {
     
     @Test
     public void testGetCollectionName3() throws Exception {
-        Assert.assertEquals("sample", DomainUtils.getCollectionName(Sample.class.getName()));
-        Assert.assertEquals("image", DomainUtils.getCollectionName(LSMImage.class.getName()));
+        Assert.assertEquals("sample", DomainUtils.getCollectionName(Sample.class.getSimpleName()));
+        Assert.assertEquals("image", DomainUtils.getCollectionName(LSMImage.class.getSimpleName()));
     }
 
     @Test
@@ -225,9 +218,9 @@ public class DomainUtilsTest {
         
         Map<Reference,Sample> map = DomainUtils.getMapByReference(Arrays.asList(d1, d2, d3));
         Assert.assertEquals(3, map.size());
-        Assert.assertEquals(d1, map.get(Reference.createFor(Sample.class.getName(), 1L)));
-        Assert.assertEquals(d2, map.get(Reference.createFor(Sample.class.getName(), 2L)));
-        Assert.assertEquals(d3, map.get(Reference.createFor(Sample.class.getName(), 3L)));
+        Assert.assertEquals(d1, map.get(Reference.createFor(Sample.class.getSimpleName(), 1L)));
+        Assert.assertEquals(d2, map.get(Reference.createFor(Sample.class.getSimpleName(), 2L)));
+        Assert.assertEquals(d3, map.get(Reference.createFor(Sample.class.getSimpleName(), 3L)));
     }
     
     @Test
@@ -264,28 +257,6 @@ public class DomainUtilsTest {
         d3.setId(3L);
         
         List<Reference> refs = DomainUtils.getReferences(Arrays.asList(d1, d2, d3));
-        Assert.assertEquals(Reference.createFor(d1), refs.get(0));
-        Assert.assertEquals(Reference.createFor(d2), refs.get(1));
-        Assert.assertEquals(Reference.createFor(d3), refs.get(2));
-    }
-
-    @Test
-    public void testGetReferencesForMembers() throws Exception {
-
-        Sample d1 = new Sample();
-        d1.setId(1L);
-        Sample d2 = new Sample();
-        d2.setId(2L);
-        Sample d3 = new Sample();
-        d3.setId(3L);
-        
-        ObjectSet objectSet = new ObjectSet();
-        objectSet.setClassName(Sample.class.getName());
-        objectSet.addMember(1L);
-        objectSet.addMember(2L);
-        objectSet.addMember(3L);
-        
-        List<Reference> refs = DomainUtils.getReferencesForMembers(objectSet);
         Assert.assertEquals(Reference.createFor(d1), refs.get(0));
         Assert.assertEquals(Reference.createFor(d2), refs.get(1));
         Assert.assertEquals(Reference.createFor(d3), refs.get(2));

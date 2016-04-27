@@ -40,8 +40,7 @@ public class ChoosePostSampleProcessingStepsService extends AbstractDomainServic
         final int numberOfAlignAlgorithmParams = alignAlgorithmParams.size();
         final int numberOfAlignAlgorithmResultNames = alignAlgorithmResultNames.size();
 
-        List<ParameterizedAlignmentAlgorithm> parameterizedAlignmentAlgorithms =
-                new ArrayList<ParameterizedAlignmentAlgorithm>();
+        List<ParameterizedAlignmentAlgorithm> parameterizedAlignmentAlgorithms = new ArrayList<>();
 
         AlignmentAlgorithm aa;
         String p;
@@ -94,7 +93,7 @@ public class ChoosePostSampleProcessingStepsService extends AbstractDomainServic
             if (sampleAreas != null) {
                 String tileName;
                 for (AnatomicalArea area : sampleAreas) {
-            	    for(SampleTile tile : sampleHelper.getTiles(objectiveSample, area.getTileNames())) {
+            	    for(SampleTile tile : sampleHelper.getTilesForArea(objectiveSample, area)) {
                         tileName = tile.getName();
                         final Matcher m = skipTileNamePattern.matcher(tileName);
                         if (m.matches()) {

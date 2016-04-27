@@ -59,14 +59,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         setJobIncrementStop(1);
 
         this.stitchedFilename = sampleArea.getStitchedFilepath();
-    	List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
-    	if (mergedLsmPairs.size()==1) {
-    		logger.warn("Creating stitching bypass script. This is an old code path that should not longer be exercised!");
-    		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
-    	}            
-    	else {
-        	createShellScript(writer, inputFileNode.getDirectoryPath(), stitchedFilename);
-    	}
+        createShellScript(writer, inputFileNode.getDirectoryPath(), stitchedFilename);
     }
 
     private void writeInstanceFiles() throws Exception {
@@ -74,29 +67,6 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         if (!configFile.createNewFile()) { 
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath()); 
     	}
-    }
-    
-    /**
-     * TODO: remove this method
-     * if there is just one merged file we have to bypass the stitcher altogether because otherwise we get a bogus 
-     * output from it. 
-     * @param writer
-     * @param mergedFilepath
-     * @param stitchedFilepath
-     * @throws Exception
-     */
-    private void createBypassShellScript(FileWriter writer, String mergedFilepath, String stitchedFilepath) throws Exception {
-        StringBuffer script = new StringBuffer();
-    	if ((mergedFilepath.endsWith("lsm")||mergedFilepath.endsWith("v3draw")) && stitchedFilepath.endsWith("v3dpbd")) {
-    		// need to convert
-    		script.append(Vaa3DHelper.getFormattedConvertCommand(mergedFilepath, stitchedFilepath));
-    	}
-    	else {
-    		// just copy 
-    		script.append("cp "+mergedFilepath+" "+stitchedFilepath);	
-    	}
-        script.append("\n");
-        writer.write(script.toString());
     }
 
     /**

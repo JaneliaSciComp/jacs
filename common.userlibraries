@@ -598,6 +598,20 @@
         <archive path="/common/protostuff-1.3.9/protostuff-runtime-view-1.3.9-SNAPSHOT.jar"/>
         <archive path="/common/protostuff-1.3.9/protostuff-xml-1.3.9-SNAPSHOT.jar"/>
     </library>
+    <library name="Protostuff" systemlibrary="false">
+        <archive path="/common/protostuff-1.3.9/protostuff-api-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-collectionschema-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-compiler-1.3.9-SNAPSHOT-jar-with-dependencies.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-compiler-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-core-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-it-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-parser-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-runtime-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-runtime-md-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-runtime-registry-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-runtime-view-1.3.9-SNAPSHOT.jar"/>
+        <archive path="/common/protostuff-1.3.9/protostuff-xml-1.3.9-SNAPSHOT.jar"/>
+    </library>
     <library name="Reflections" systemlibrary="false">
         <archive path="/common/Reflections/reflections-0.9.9-RC1.jar"/>
         <archive path="/common/Reflections/javassist-3.16.1-GA.jar"/>
@@ -674,11 +688,13 @@
         <archive path="/common/Spring-3/server-api-1.6.1.jar"/>
     </library>
     <library name="Swagger" systemlibrary="false">
-        <archive path="/common/swagger/swagger-annotations-1.5.0.jar"/>
-        <archive path="/common/swagger/swagger-core-1.5.0.jar"/>
-        <archive path="/common/swagger/swagger-jaxrs-1.5.0.jar"/>
-        <archive path="/common/swagger/swagger-jersey2-jaxrs-1.5.0.jar"/>
-        <archive path="/common/swagger/swagger-models-1.5.0.jar"/>
+        <archive path="/common/swagger/jackson-dataformat-yaml-2.4.5.jar"/>
+        <archive path="/common/swagger/jersey-media-multipart-2.1.jar"/>
+        <archive path="/common/swagger/swagger-annotations-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-core-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-jaxrs-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-jersey2-jaxrs-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-models-1.5.8.jar"/>
     </library>
     <library name="Xuggler" systemlibrary="false">
         <archive path="/common/Xuggler/xuggle-xuggler-5.4.jar"/>

@@ -83,7 +83,17 @@
                     <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 </operation>
             </sequence>
-            
+
+            <!-- Load the MIPs and movies into the database -->
+            <operation name="Discover Summary Results" processor="org.janelia.it.jacs.compute.service.domain.discovery.SummaryResultsDiscoveryService">
+                <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
+                <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
+                <input name="PIPELINE_RUN_ENTITY_ID"/>
+                <input name="RESULT_ENTITY_NAME" value="LSM Summary Result"/>
+                <output name="RESULT_ENTITY_ID"/>
+            </operation>
+
             <!-- Populate chanspec if necessary -->
             <operation name="Infer Channel Spec" processor="org.janelia.it.jacs.compute.service.domain.sample.InferChannelSpecificationService">
                 <input name="SAMPLE_AREA"/>
@@ -121,14 +131,14 @@
             <operation name="Remove Temp Result Nodes" processor="org.janelia.it.jacs.compute.service.domain.node.TrashFileNodeService">
                 <input name="FILE_NODE_ID" value="$V{LSM_FILE_NODE_ID}"/>
             </operation>
-           
+
             <!-- Load the MIPs and movies into the database -->
             <operation name="Discover Summary Results" processor="org.janelia.it.jacs.compute.service.domain.discovery.SummaryResultsDiscoveryService">
                 <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="OBJECTIVE"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
-                <input name="RESULT_ENTITY_NAME" value="LSM Summary Result"/>
+                <input name="RESULT_ENTITY_ID"/>
             </operation>
                 
         </sequence>

@@ -11,7 +11,7 @@ import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
  * Created by schauderd on 8/24/15.
  */
 public class DomainQuery {
-    
+
     private String subjectKey;
     private List<Reference> references;
     private List<Long> objectIds;

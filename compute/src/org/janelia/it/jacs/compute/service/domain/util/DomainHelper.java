@@ -27,9 +27,9 @@ import org.janelia.it.jacs.model.domain.workspace.Workspace;
  */
 public class DomainHelper {
 
-    public static final String OBJECTSET_CLASSNAME = ObjectSet.class.getCanonicalName();
-    public static final String TREENODE_CLASSNAME = TreeNode.class.getCanonicalName();
-    public static final String IMAGE_CLASSNAME = Image.class.getCanonicalName();
+    public static final String OBJECTSET_CLASSNAME = ObjectSet.class.getSimpleName();
+    public static final String TREENODE_CLASSNAME = TreeNode.class.getSimpleName();
+    public static final String IMAGE_CLASSNAME = Image.class.getSimpleName();
 
     protected Logger logger;
     protected ContextLogger contextLogger;
@@ -81,7 +81,7 @@ public class DomainHelper {
         set.setName(childName);
         set =  domainDao.save(subjectKey, set);
         List<Reference> childRef = new ArrayList<>();
-        childRef.add(new Reference(OBJECTSET_CLASSNAME, set.getId()));
+        childRef.add(Reference.createFor(ObjectSet.class, set.getId()));
         domainDao.addChildren(subjectKey, parentFolder,childRef);
         return set;
     }
@@ -111,7 +111,7 @@ public class DomainHelper {
         node.setName(childName);
         node =  domainDao.save(subjectKey, node);
         List<Reference> childRef = new ArrayList<>();
-        childRef.add(new Reference(TREENODE_CLASSNAME, node.getId()));
+        childRef.add(Reference.createFor(TreeNode.class, node.getId()));
         domainDao.addChildren(subjectKey, parentFolder, childRef, index);
         return node;
     }

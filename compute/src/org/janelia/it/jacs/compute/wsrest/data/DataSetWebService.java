@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import io.swagger.annotations.*;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -43,6 +44,7 @@ import static com.mongodb.client.model.Projections.include;
 import static java.util.Arrays.asList;
 
 @Path("/data")
+@Api(value = "Janelia Workstation Domain Data")
 public class DataSetWebService extends ResourceConfig {
     private static final Logger log = LoggerFactory.getLogger(DataSetWebService.class);
 
@@ -55,9 +57,17 @@ public class DataSetWebService extends ResourceConfig {
 
     @GET
     @Path("/dataset")
+    @ApiOperation(value = "Gets a List of DataSets for the User",
+            notes = "Uses the subject key to return a list of DataSets for the user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched the list of datasets",  response = DataSet.class,
+                    responseContainer = "List" ),
+            @ApiResponse( code = 500, message = "Internal Server Error fetching teh datasets" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<DataSet> getDataSets(@QueryParam("subjectKey") final String subjectKey) {
+    public List<DataSet> getDataSets(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             Collection<DataSet> dataSets = dao.getDataSets(subjectKey);
@@ -70,6 +80,13 @@ public class DataSetWebService extends ResourceConfig {
 
     @GET
     @Path("/dataset/pipeline")
+    @ApiOperation(value = "Gets the default pipelines for datasets",
+            notes = "Uses the subject key to return a list of DataSets for the user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched list of dataset-pipeline matches",  response = Map.class),
+            @ApiResponse( code = 500, message = "Internal Server Error list of dataset-pipeline matches" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String,String> getDatasetPipelines() {
@@ -94,10 +111,18 @@ public class DataSetWebService extends ResourceConfig {
 
     @GET
     @Path("/dataset/sage")
+    @ApiOperation(value = "Gets Sage sync Data Set",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched list of datasets synced with SAGE",   response = DataSet.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error list of dataset synced with SAGE" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public List<DataSet> getSageSyncDataSets(@QueryParam("owners") final List<String> owners,
-                                             @QueryParam("sageSync") final Boolean sageSync) {
+    public List<DataSet> getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
+                                             @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             List<DataSet> listDataSets = new ArrayList<>();
@@ -128,6 +153,14 @@ public class DataSetWebService extends ResourceConfig {
 
     @PUT
     @Path("/dataset")
+    @ApiOperation(value = "Creates a DataSet using the DomainObject parameter of the DomainQuery",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully created a DataSet",
+                    response = DataSet.class),
+            @ApiResponse( code = 500, message = "Internal Server Error creating a dataset" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet createDataSet(DomainQuery query) {
@@ -144,9 +177,17 @@ public class DataSetWebService extends ResourceConfig {
 
     @POST
     @Path("/dataset")
+    @ApiOperation(value = "Updates a DataSet using the DomainObject parameter of the DomainQuery",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully updated a DataSet",
+                    response = DataSet.class),
+            @ApiResponse( code = 500, message = "Internal Server Error updating a dataset" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DataSet updateDataSet(DomainQuery query) {
+    public DataSet updateDataSet(@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             DataSet updateDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
@@ -161,11 +202,18 @@ public class DataSetWebService extends ResourceConfig {
 
     @DELETE
     @Path("/dataset")
+    @ApiOperation(value = "Removes the DataSet using the DataSet Id",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed a DataSet"),
+            @ApiResponse( code = 500, message = "Internal Server Error removing a dataset" )
+    })
     @Consumes(MediaType.APPLICATION_JSON)
-    public void removeDataSet(@QueryParam("subjectKey") final String subjectKey,
-                              @QueryParam("dataSetId") final String dataSetId) {
+    public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                              @ApiParam @QueryParam("dataSetId") final String dataSetId) {
         DomainDAO dao = WebServiceContext.getDomainManager();
-        Reference dataSetRef = new Reference (Annotation.class.getName(), new Long(dataSetId));
+        Reference dataSetRef = Reference.createFor(Annotation.class, new Long(dataSetId));
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
             IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());

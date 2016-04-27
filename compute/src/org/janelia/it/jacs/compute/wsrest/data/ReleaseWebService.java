@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.wsrest.data;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import io.swagger.annotations.*;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -13,6 +14,7 @@ import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
@@ -31,6 +33,7 @@ import java.util.*;
 
 
 @Path("/process")
+@Api(value = "Janelia Workstation Domain Data")
 public class ReleaseWebService extends ResourceConfig {
     private final Logger logger = Logger.getLogger(this.getClass());
 
@@ -46,10 +49,17 @@ public class ReleaseWebService extends ResourceConfig {
      * Get release information.
      */
     @GET
-    @Path("release")
+    @Path("releases")
+    @ApiOperation(value = "Gets Release Information",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got release information", response=Response.class),
+            @ApiResponse( code = 500, message = "Internal Server Error getting Release Information" )
+    })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    public Response getReleaseInfo() {
+    public Response getReleasesInfo() {
 
         List<JsonRelease> releaseList = new ArrayList<>();
 
@@ -72,10 +82,17 @@ public class ReleaseWebService extends ResourceConfig {
      */
     @GET
     @Path("release/{releaseName}")
+    @ApiOperation(value = "Gets Release Information given release information",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got release information", response=Response.class),
+            @ApiResponse( code = 500, message = "Internal Server Error getting Release Information" )
+    })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
     public Response getReleaseInfo(
-            @PathParam("releaseName")String releaseName) {
+            @ApiParam @PathParam("releaseName")String releaseName) {
 
         List<JsonRelease> releaseList = new ArrayList<>();
 
@@ -98,10 +115,17 @@ public class ReleaseWebService extends ResourceConfig {
      */
     @GET
     @Path("release/{releaseName}/status")
+    @ApiOperation(value = "Gets status of annotations for a release",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got status of annotations", response=Response.class),
+            @ApiResponse( code = 500, message = "Internal Server Error got status of annotations" )
+    })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
     public Response getReleaseStatus(
-            @PathParam("releaseName")String releaseName) {
+            @ApiParam @PathParam("releaseName")String releaseName) {
 
         final String context = "getReleaseStatus: ";
 

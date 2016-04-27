@@ -14,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * A static set of objects in a single collection. 
  * 
+ * @deprecated Object sets will not be supported, migrate to TreeNodes
+ * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="objectSet",label="Object Set")

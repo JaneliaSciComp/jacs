@@ -348,40 +348,6 @@ public class AnnotationCollector {
         return neuron;
     }
 
-    public TmNeuron pushGuaranteedNewNeuron(Entity collectionEntity, TmNeuron neuron, EntityBeanLocal entityBean) throws Exception {
-        // Must now create a new entity data
-        EntityData entityData = new EntityData();
-        entityData.setOwnerKey(neuron.getOwnerKey());
-        entityData.setCreationDate(neuron.getCreationDate());
-        entityData.setEntityAttrName(EntityConstants.ATTRIBUTE_PROTOBUF_NEURON);
-        entityData.setParentEntity(collectionEntity);
-
-        // save back.
-        log.debug("Saving back the neuron " + entityData.getId());
-        EntityData savedEntityData = entityBean.saveOrUpdateEntityData(entityData);
-        log.debug("Adding neuron to its collection.");
-        collectionEntity.getEntityData().add(savedEntityData);
-        log.debug("Saved back the neuron " + entityData.getId());
-
-        log.debug("Re-saving neuron with neuron id embedded in geo annotations.");
-        // Now that the neuron has been db-dipped, we can get its ID, and 
-        // push that into all points.
-        Long id = savedEntityData.getId();
-        for (TmGeoAnnotation anno : neuron.getGeoAnnotationMap().values()) {
-            anno.setNeuronId(id);
-            if (anno.getParentId().equals(-1L)) {
-                anno.setParentId(id);
-            }
-        }
-        // Need to make serializable version of the data.
-        neuron.setId(id);
-        createEntityData(entityData, neuron);
-        EntityData savedEd = entityBean.saveOrUpdateEntityData(entityData);
-        neuron.setId(id);
-
-        return neuron;
-    }
-
     private TmNeuron createNeuron(Long id, Long collectionGUID) throws Exception {
         TmNeuron neuron = new TmNeuron();
         neuron.setId(id);

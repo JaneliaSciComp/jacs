@@ -61,7 +61,7 @@
     	    </operation>
     	    
             <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is empty">
-                <sequence if="PREVIOUS_RESULT_FILENAME is not empty">
+                <sequence if="PREVIOUS_SEPARATION_ID is not empty">
                 
                     <!-- Migrate existing annotations if this is not a aligned separation -->
                     <operation name="Discover Neuron Separation Results" processor="org.janelia.it.jacs.compute.service.domain.sample.MigrateNeuronAnnotationsService">

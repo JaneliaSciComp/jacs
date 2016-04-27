@@ -2,17 +2,10 @@ package org.janelia.it.jacs.compute.service.domain.util;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
@@ -27,21 +20,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.sample.DataSet;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
-import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
-import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.sample.PipelineError;
-import org.janelia.it.jacs.model.domain.sample.PipelineResult;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
-import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
-import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.sample.*;
 import org.janelia.it.jacs.model.domain.support.DomainObjectAttribute;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
@@ -49,11 +28,6 @@ import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.reflections.ReflectionUtils;
-
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Ordering;
 
 
 /**
@@ -292,10 +266,6 @@ public class SampleHelperNG extends DomainHelper {
             
             tileNum++;
         }
-    	        
-        if (lsmDirty) {
-        	logger.info("  LSMs changed, will mark sample for reprocessing");
-        }
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
                 
@@ -353,7 +323,10 @@ public class SampleHelperNG extends DomainHelper {
 
         // TODO: Auto-share sample if necessary 
 
-        if (needsReprocessing) {
+        if (needsReprocessing && sample.getId()!=null) {
+		    if (lsmDirty) {
+		    	logger.info("  LSMs changed, will mark sample for reprocessing");
+		    }
         	markForProcessing(sample);
         	sampleDirty = true;
         }
@@ -526,8 +499,8 @@ public class SampleHelperNG extends DomainHelper {
         
         ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
         if (objectiveSample==null) {
-            objectiveSample = new ObjectiveSample();
-            sample.addObjectiveSample(objective, objectiveSample);
+            objectiveSample = new ObjectiveSample(objective);
+            sample.addObjectiveSample(objectiveSample);
             synchronizeTiles(objectiveSample, tileGroupList);
             dirty = true;
         }
@@ -590,7 +563,7 @@ public class SampleHelperNG extends DomainHelper {
             // Ensure each tile is in the sample
             SampleTile sampleTile = objectiveSample.getTileByName(tileGroup.getTag());
             if (sampleTile==null) {
-            	logger.info("  No such tile: "+tileGroup.getTag());
+            	logger.info("  Existing sample does not contain tile: "+tileGroup.getTag());
                 return false;
             }
             seenTiles.add(sampleTile);
@@ -796,6 +769,67 @@ public class SampleHelperNG extends DomainHelper {
         }
         return sampleNumSignals;
     }
+
+    /**
+     * Go through a sample area's tiles and look for a concatenated LSM attribute with a given name. If a consensus can 
+     * be reached across all the Tiles in the area, then return that consensus. Otherwise log a warning and return null.
+     * @param sampleArea
+     * @param attrName
+     * @return
+     * @throws Exception
+     */
+    public String getConsensusTileAttributeValue(AnatomicalArea sampleArea, String attrName, String delimiter) throws Exception {
+        List<AnatomicalArea> sampleAreas = new ArrayList<>();
+        sampleAreas.add(sampleArea);
+        return getConsensusTileAttributeValue(sampleAreas, attrName, delimiter);
+    }
+
+    /**
+     * Go through a set of sample areas' tiles and look for an attribute with a given name. If a consensus
+     * can be reached across all the LSM's in the area then return that consensus. Otherwise log a warning and return null.
+     * @param attrName
+     * @return
+     * @throws Exception
+     */
+    public String getConsensusTileAttributeValue(List<AnatomicalArea> sampleAreas, String attrName, String delimiter) throws Exception {
+        Sample sample = null;
+        String consensus = null;
+        logger.trace("Determining consensus for "+attrName+" for sample areas: "+getSampleAreasCSV(sampleAreas));
+        for(AnatomicalArea sampleArea : sampleAreas) {
+        	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
+		
+        	if (sample==null) {
+            	sample = domainDao.getDomainObject(null, Sample.class, sampleArea.getSampleId());
+        	}
+        	else if (!sample.getId().equals(sampleArea.getSampleId())) {
+        	    throw new IllegalStateException("All sample areas must come from the same sample");
+        	}
+        	
+        	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
+        	for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
+        	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
+            	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
+	        	
+            	StringBuilder sb = new StringBuilder();
+                for(LSMImage image : lsms) {
+                    Object value = DomainUtils.getAttributeValue(image, attrName);
+                    if (sb.length()>0) sb.append(delimiter);
+                    if (value!=null) sb.append(value);
+                }
+                
+                String tileValue = sb.toString();
+                if (consensus!=null && !StringUtils.areEqual(consensus,tileValue)) {
+                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
+                    return null;
+                }
+                else {
+                    consensus = tileValue==null?null:tileValue.toString();
+                }
+        	}
+        
+        }
+        return consensus;
+    }
     
     /**
      * Go through a sample area's LSM supporting files and look for an attribute with a given name. If a consensus
@@ -832,9 +866,8 @@ public class SampleHelperNG extends DomainHelper {
         	}
         	
         	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
-        	for(String tileName : sampleArea.getTileNames()) {
-        	    logger.trace("    Determining consensus for "+attrName+" in "+tileName+" tile");
-        	    SampleTile sampleTile = objectiveSample.getTileByName(tileName);
+                for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
+        	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
             	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
             	
                 for(LSMImage image : lsms) {
@@ -932,16 +965,16 @@ public class SampleHelperNG extends DomainHelper {
         }
     }
 
-    public List<SampleTile> getTiles(ObjectiveSample objectiveSample, List<String> tileNames) {
+    public List<SampleTile> getTilesForArea(ObjectiveSample objectiveSample, AnatomicalArea area) {
         List<SampleTile> tiles = new ArrayList<>();
         for(SampleTile tile : objectiveSample.getTiles()) {
-            if (tileNames.contains(tile.getName())) {
+            if (area.getName().equals(tile.getAnatomicalArea()) && area.getTileNames().contains(tile.getName())) {
                 tiles.add(tile);
             }
         }
         return tiles;
     }
-    
+
     /* --------------------------- */
 
     public void saveLsm(LSMImage lsm) throws Exception {
@@ -1014,7 +1047,7 @@ public class SampleHelperNG extends DomainHelper {
         separation.setFiles(new HashMap<FileType,String>());
 
         ReverseReference fragmentsReference = new ReverseReference();
-        fragmentsReference.setReferringClassName(NeuronFragment.class.getName());
+        fragmentsReference.setReferringClassName(NeuronFragment.class.getSimpleName());
         fragmentsReference.setReferenceAttr("separationId");
         fragmentsReference.setReferenceId(separation.getId());
         separation.setFragmentsReference(fragmentsReference);
@@ -1049,7 +1082,7 @@ public class SampleHelperNG extends DomainHelper {
         return result;
     }
 
-    public Map<String,FileGroup> createFileGroups(HasFilepath parent, List<String> filepaths) throws Exception {
+    public List<FileGroup> createFileGroups(HasFilepath parent, List<String> filepaths) throws Exception {
 
         Map<String,FileGroup> groups = new HashMap<>();
     
@@ -1129,7 +1162,7 @@ public class SampleHelperNG extends DomainHelper {
             
             FileGroup group = groups.get(key);
             if (group==null) {
-                group = new FileGroup();
+                group = new FileGroup(key);
                 group.setFilepath(parent.getFilepath());
                 group.setFiles(new HashMap<FileType,String>());
                 groups.put(key, group);
@@ -1137,8 +1170,8 @@ public class SampleHelperNG extends DomainHelper {
             
             DomainUtils.setFilepath(group, fileType, filepath);
         }
-        
-        return groups;
+
+        return new ArrayList<>(groups.values());
     }
 
     public void sortMembersByName(ObjectSet objectSet) throws Exception {
