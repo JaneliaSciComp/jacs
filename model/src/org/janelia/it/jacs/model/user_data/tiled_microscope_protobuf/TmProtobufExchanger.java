@@ -13,6 +13,8 @@ import io.protostuff.runtime.RuntimeSchema;
 import javax.annotation.concurrent.ThreadSafe;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
 
+import java.util.logging.Logger;
+
 /**
  * Exchanges data between byte array and Tile Microscope.  At time of writing,
  * all contents of a TmNeuron are supported.
@@ -23,6 +25,9 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
  */
 @ThreadSafe
 public class TmProtobufExchanger {
+
+    Logger logger = Logger.getLogger(TmProtobufExchanger.class.getName());
+
     private Schema<TmNeuron> schema = null;
     
     public TmProtobufExchanger() {
@@ -85,13 +90,39 @@ public class TmProtobufExchanger {
      * @throws Exception from any called methods.
      */
     public byte[] serializeNeuron( TmNeuron neuron ) throws Exception {
-        byte[] protobuf = null;
-        final LinkedBuffer buffer = LinkedBuffer.allocate();
         // Populate a byte array from serialized data.
-        try {
-            protobuf = ProtobufIOUtil.toByteArray(neuron, schema, buffer);
-        } finally {
-            buffer.clear();
+
+        // NOTE: there is an oocasional sporadic concurrent modification
+        // exception thrown my io.protostuff.MapSchema, line 341. It looks
+        // like there might be a bug in the code whereby the collection is
+        // modifying itself. To deal with this, a re-try loop is given
+        // here.
+
+        int retries=5;
+        byte[] protobuf=null;
+
+        for (;retries>0;retries--) {
+            try {
+                protobuf = null;
+                final LinkedBuffer buffer = LinkedBuffer.allocate();
+                logger.info("serializeNeuron - starting with retries="+retries);
+                try {
+                    protobuf = ProtobufIOUtil.toByteArray(neuron, schema, buffer);
+                }
+                finally {
+                    buffer.clear();
+                }
+                if (protobuf!=null) {
+                    break;
+                }
+            }
+            catch (Throwable t) {
+                logger.warning("serializeNeuron failed: " + t.getMessage() + ", retries left=" + retries);
+            }
+            Thread.sleep(5);
+        }
+        if (protobuf==null) {
+            throw new Exception("serializeNeuron failed and exhausted all retries");
         }
         return protobuf;
     }
