@@ -105,7 +105,9 @@ public class TmProtobufExchanger {
             try {
                 protobuf = null;
                 final LinkedBuffer buffer = LinkedBuffer.allocate();
-                logger.info("serializeNeuron - starting with retries="+retries);
+                if (retries<5) {
+                    logger.info("serializeNeuron - starting with retries=" + retries);
+                }
                 try {
                     protobuf = ProtobufIOUtil.toByteArray(neuron, schema, buffer);
                 }
