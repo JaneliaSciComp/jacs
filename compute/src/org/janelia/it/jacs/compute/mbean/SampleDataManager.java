@@ -343,19 +343,18 @@ public class SampleDataManager implements SampleDataManagerMBean {
                         log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
                     }
+                    else if (child instanceof Sample) {
+                        log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
+                        runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
+                        Thread.sleep(1000); // Sleep so that the logs are a little cleaner
+                    }
                     else {
                         log.info("runSampleFolder - Ignore child "+child.getType()+": "+child.getName());
                     }
                 }
             }
             else {
-                TreeNode folder = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
-                if (folder==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
-                for(Sample child : dao.getDomainObjectsAs(null, folder.getChildren(), Sample.class)) {
-                    log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
-                    Thread.sleep(1000); // Sleep so that the logs are a little cleaner
-                }
+                throw new IllegalArgumentException("Folder with id "+folderId+" does not exist");
             }
         } catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -468,19 +467,18 @@ public class SampleDataManager implements SampleDataManagerMBean {
                         log.info("applyProcessToSamplesInFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParams);
                     }
+                    else if (child instanceof Sample) {
+                        log.info("applyProcessToSamplesInFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
+                        applyProcessToSample(child.getId().toString(), processName, extraParams);
+                        Thread.sleep(1000); // Sleep so that the logs are a little cleaner
+                    }
                     else {
                         log.info("applyProcessToSamplesInFolder - Ignore child "+child.getType()+": "+child.getName());
                     }
                 }
             }
             else {
-                TreeNode folder = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
-                if (folder==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
-                for(Sample child : dao.getDomainObjectsAs(null, folder.getChildren(), Sample.class)) {
-                    log.info("applyProcessToSamplesInFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    applyProcessToSample(child.getId().toString(), processName, extraParams);  
-                    Thread.sleep(1000); // Sleep so that the logs are a little cleaner
-                }
+                throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
             }
         } 
         catch (Exception ex) {
