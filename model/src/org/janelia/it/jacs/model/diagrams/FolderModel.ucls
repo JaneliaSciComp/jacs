@@ -9,16 +9,7 @@
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="false" package="false" protected="false" private="false" static="false"/>    
     </display>  
-  </class>  
-  <class id="2" language="java" name="org.janelia.it.jacs.model.domain.workspace.ObjectSet" project="model" 
-    file="/model/src/org/janelia/it/jacs/model/domain/workspace/ObjectSet.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="124" y="337"/>    
-    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
-      visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
-      <operations public="false" package="false" protected="false" private="false" static="false"/>    
-    </display>  
-  </class>  
+  </class>
   <class id="3" language="java" name="org.janelia.it.jacs.model.domain.workspace.TreeNode" project="model" 
     file="/model/src/org/janelia/it/jacs/model/domain/workspace/TreeNode.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="351" y="320"/>    

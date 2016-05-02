@@ -24,7 +24,6 @@ import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -340,7 +339,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
             if (treeNode!=null) {
                 for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
-                    if (child instanceof TreeNode || child instanceof ObjectSet) {
+                    if (child instanceof TreeNode) {
                         log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
                     }
@@ -350,9 +349,9 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 }
             }
             else {
-                ObjectSet objectSet = dao.getDomainObject(null, ObjectSet.class, new Long(folderId));
-                if (objectSet==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
-                for(Sample child : dao.getDomainObjects(null, Sample.class, objectSet.getMembers())) {
+                TreeNode folder = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
+                if (folder==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
+                for(Sample child : dao.getDomainObjectsAs(null, folder.getChildren(), Sample.class)) {
                     log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
                     runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner
@@ -465,7 +464,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
             TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
             if (treeNode!=null) {
                 for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
-                    if (child instanceof TreeNode || child instanceof ObjectSet) {
+                    if (child instanceof TreeNode) {
                         log.info("applyProcessToSamplesInFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParams);
                     }
@@ -475,9 +474,9 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 }
             }
             else {
-                ObjectSet objectSet = dao.getDomainObject(null, ObjectSet.class, new Long(folderId));
-                if (objectSet==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
-                for(Sample child : dao.getDomainObjects(null, Sample.class, objectSet.getMembers())) {
+                TreeNode folder = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
+                if (folder==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
+                for(Sample child : dao.getDomainObjectsAs(null, folder.getChildren(), Sample.class)) {
                     log.info("applyProcessToSamplesInFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
                     applyProcessToSample(child.getId().toString(), processName, extraParams);  
                     Thread.sleep(1000); // Sleep so that the logs are a little cleaner

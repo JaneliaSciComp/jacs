@@ -24,7 +24,6 @@ import org.janelia.it.jacs.model.domain.sample.*;
 import org.janelia.it.jacs.model.domain.support.DomainObjectAttribute;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.reflections.ReflectionUtils;
@@ -1174,18 +1173,18 @@ public class SampleHelperNG extends DomainHelper {
         return new ArrayList<>(groups.values());
     }
 
-    public void sortMembersByName(ObjectSet objectSet) throws Exception {
-        if (objectSet==null || !objectSet.hasMembers()) return;
-        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getMembers(ownerKey, objectSet));
-        Collections.sort(objectSet.getMembers(), new Comparator<Long>() {
+    public void sortMembersByName(TreeNode folder) throws Exception {
+        if (folder ==null || !folder.hasChildren()) return;
+        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getChildren(ownerKey, folder));
+        Collections.sort(folder.getChildren(), new Comparator<Reference>() {
             @Override
-            public int compare(Long o1, Long o2) {
-                DomainObject d1 = map.get(o1);
-                DomainObject d2 = map.get(o2);
+            public int compare(Reference o1, Reference o2) {
+                DomainObject d1 = map.get(o1.getTargetId());
+                DomainObject d2 = map.get(o2.getTargetId());
                 return d1.getName().compareTo(d2.getName());
             }
         });
-        domainDao.save(ownerKey, objectSet);
+        domainDao.save(ownerKey, folder);
     }
     
     public void sortChildrenByName(TreeNode treeNode) throws Exception {

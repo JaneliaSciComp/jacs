@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
@@ -33,7 +35,6 @@ import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.Objective;
@@ -46,9 +47,6 @@ import org.janelia.it.jacs.model.sage.Observation;
 import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.model.tasks.Task;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 /**
  * Synchronizes workstation artifacts into the SAGE database for all annotated samples. 
@@ -168,7 +166,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         // Walk through release folder and export samples and line annotations
         TreeNode releaseFolder = findReleaseFolder();
 
-        for(ObjectSet flyLineFolder : domainDao.getDomainObjectsAs(releaseFolder.getChildren(), ObjectSet.class)) {
+        for(TreeNode flyLineFolder : domainDao.getDomainObjectsAs(releaseFolder.getChildren(), TreeNode.class)) {
         
             currLineAnnotationMap.clear();
             for(Annotation annotation : domainDao.getAnnotations(null, Reference.createFor(flyLineFolder))) {
@@ -178,7 +176,7 @@ public class SageArtifactExportService extends AbstractDomainService {
             logger.info("Processing line "+flyLineFolder.getName());
             
             int reps = 0;
-            for (Sample sample : domainDao.getDomainObjects(ownerKey, Sample.class, flyLineFolder.getMembers())) {
+            for (Sample sample : domainDao.getDomainObjectsAs(ownerKey, flyLineFolder.getChildren(), Sample.class)) {
                 String line = sample.getLine();
                 if (!line.equals(flyLineFolder.getName())) {
                     logger.warn("Ignoring sample "+sample.getName()+" that is categorized in folder "+flyLineFolder.getName()+" but should be "+line+".");

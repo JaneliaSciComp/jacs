@@ -12,30 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.gui.search.Filter;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.*;
-import org.janelia.it.jacs.model.domain.gui.search.criteria.TreeNodeCriteria;
-import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
-import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
-import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
-import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.PipelineResult;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
-import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.model.util.ModelStringUtil;
-import org.janelia.it.jacs.model.util.ReflectionHelper;
-import org.reflections.ReflectionUtils;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ComparisonChain;
@@ -45,6 +21,31 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Ordering;
+import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.gui.search.Filter;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.AttributeValueCriteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.Criteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.DateRangeCriteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.FacetCriteria;
+import org.janelia.it.jacs.model.domain.gui.search.criteria.TreeNodeCriteria;
+import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
+import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
+import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.util.ModelStringUtil;
+import org.janelia.it.jacs.model.util.ReflectionHelper;
+import org.reflections.ReflectionUtils;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for dealing with the domain model. 
@@ -480,20 +481,6 @@ public class DomainUtils {
         return refs;
     }
 
-    /**
-     * Generate a list of references for the members of an object set.
-     * @param objectSet
-     * @return
-     */
-    public static List<Reference> getReferencesForMembers(ObjectSet objectSet) {
-        // TODO: I feel like I already wrote this code somewhere else, so when I find it I'll de-dup
-        List<Reference> refs = new ArrayList<>();
-        for(Long id : objectSet.getMembers()) {
-            refs.add(Reference.createFor(objectSet.getClassName(), id));
-        }
-        return refs;
-    }
-    
     /**
      * Generate a map by reference to the given domain objects.
      * @param objects collection of domain objects
