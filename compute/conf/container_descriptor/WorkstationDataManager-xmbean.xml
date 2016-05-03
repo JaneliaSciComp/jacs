@@ -20,7 +20,12 @@
            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
-    
+
+    <operation>
+        <description>Periodic maintenance for the MongoDb database</description>
+        <name>runMongoDbMaintenance</name>
+    </operation>
+
     <operation>
         <description>Synchronize the SOLR indexes to the database</description>
         <name>runSolrIndexSync</name>

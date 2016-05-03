@@ -17,4 +17,6 @@ public interface SolrBeanLocal extends SolrBeanRemote {
 	
     public void mongoAllDomainObjects(boolean clearDb) throws ComputeException;
 
+	public void mongoMaintenance() throws ComputeException;
+
 }

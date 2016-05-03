@@ -88,6 +88,18 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
+    public void runMongoDbMaintenance() {
+        try {
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
+            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
+                    taskParameters, "mongoDbMaintenance", "MongoDb Maintenance");
+            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
+            EJBFactory.getLocalComputeBean().submitJob("MongoDbMaintenance", task.getObjectId());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void runSolrIndexSync(Boolean clearIndex) {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<>();

@@ -115,6 +115,18 @@ public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
         }
     }
 
+	public void mongoMaintenance() throws ComputeException {
+		try {
+			MongoDbMaintainer refresh = new MongoDbMaintainer();
+			refresh.ensureIndexes();
+			refresh.refreshPermissions();
+		}
+		catch (Exception e) {
+			log.error("Error running MongoDB maintenance",e);
+			throw new ComputeException("Error running MongoDB maintenance",e);
+		}
+	}
+
 	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException {
 		SolrDAO solrDAO = new SolrDAO(log, false, false);
 		QueryResponse response = solrDAO.search(query);

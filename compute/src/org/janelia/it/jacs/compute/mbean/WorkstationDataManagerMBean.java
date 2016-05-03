@@ -11,6 +11,7 @@ public interface WorkstationDataManagerMBean {
     
 	// ETL
 	public void runMongoDbSync(Boolean clearDb);
+    public void runMongoDbMaintenance();
 	
 	// SOLR Indexing
 	public void runSolrIndexSync(Boolean clearIndex); 	
