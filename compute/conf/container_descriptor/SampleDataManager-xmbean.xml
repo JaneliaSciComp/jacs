@@ -217,6 +217,11 @@
     </operation>
 
     <operation>
+        <description>Synchronize the LSM files for a given user to Scality</description>
+        <name>runSyncAllLSMsToScality</name>
+    </operation>
+
+    <operation>
         <description>Cancel all incomplete user tasks</description>
         <name>cancelAllIncompleteUserTasks</name>
         <parameter>
