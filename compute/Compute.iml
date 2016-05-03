@@ -53,8 +53,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="JBoss" level="project" />
-    <orderEntry type="library" name="Lucene" level="project" />
+    <orderEntry type="library" name="WildFly-10.0.0.Final" level="project" />
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="Spring" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
@@ -134,6 +133,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Lucene" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

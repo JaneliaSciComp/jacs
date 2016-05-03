@@ -154,8 +154,8 @@
             <zipfileset src="${common.dir}/Spring/commons-logging.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/Spring/spring.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/GWT/gwt-servlet.jar" excludes="META-INF/** meta-inf/**"/>
-            <zipfileset src="${common.dir}/JBoss-Server-4.2.3.GA/jbossall-client.jar" excludes="META-INF/** meta-inf/**"/>
-            <zipfileset src="${common.dir}/JBoss-Server-4.2.3.GA/concurrent.jar" excludes="META-INF/** meta-inf/**"/>
+            <!--<zipfileset src="${common.dir}/WildFly-10.0.0.Final/jbossall-client.jar" excludes="META-INF/** meta-inf/**"/>-->
+            <!--<zipfileset src="${common.dir}/WildFly-10.0.0.Final/concurrent.jar" excludes="META-INF/** meta-inf/**"/>-->
         	
             <fileset dir="${build.unzipped.dir}">
                 <include name="**/*.properties"/>
@@ -518,7 +518,7 @@
 
         <!-- read in properties -->
         <property file="${temp.dir}/jacs.properties" prefix="FromPropFile"/>
-        <property name="jboss.home" value="${FromPropFile.ServerRoot.Dir}/jboss-4.2.3.GA" />
+        <property name="jboss.home" value="${FromPropFile.ServerRoot.Dir}/wildfly-10.0.0.Final" />
 	    <property name="startjbossscript" value="${FromPropFile.ServerStartScript}" />
 
         <echo message="computeserver.ejb.service = ${FromPropFile.computeserver.ejb.service}" />
@@ -537,10 +537,10 @@
 
          <!--stop jboss server and give it time to shutdown-->
         <sequential >
-            <echo message="Shutting down JBoss...(/groups/jacs/jacsHosts/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service})" />
+            <echo message="Shutting down JBoss...(/groups/jacs/jacsHosts/bin/stopwildfly.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service})" />
             <exec executable="${ssh}" description="Shutting down Jboss"
                   outputproperty="exec.output" errorproperty="exec.error">
-                <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/stopjboss.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service}"/>
+                <arg line="${ssh.common.params} /groups/jacs/jacsHosts/bin/stopwildfly.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service}"/>
             </exec>
             <echo message="Done : ${exec.output}"  />
             <echo message="Done : ${exec.error}"  />
@@ -553,7 +553,7 @@
         <!--clean out files -->
         <echo message="Removing remote ear file" />
         <exec executable="${ssh}" description="Removing application directory">
-            <arg line="${ssh.common.params} rm -fr ${jboss.home}/server/default/deploy/${localname}.ear"/>
+            <arg line="${ssh.common.params} rm -fr ${jboss.home}/standalone/deployments/${localname}.ear"/>
         </exec>
         <echo message="Removing libs: ${ssh} ${ssh.common.params} rm -fr ${Grid.Jar.Path} ${Drmaa.Submitter.Jar.Path} ${Drmaa.Submitter.Script.Path} "/>
         <exec executable="${ssh}" description="Removing GridMergeSort jar">
@@ -563,7 +563,7 @@
          <!--copy ear file -->
         <echo message="Copying ${localname}.ear file to server" />
         <exec executable="${scp}" description="Publishing ear file">
-            <arg line="${scp.common.params} ${temp.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/server/default/deploy/${localname}.ear"/>
+            <arg line="${scp.common.params} ${temp.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/standalone/deployments/${localname}.ear"/>
         </exec>
          <!--copy jars -->
         <echo message="Copying libs to server: ${scp} ${scp.common.params} ${shared.module}/build/jars/jacs-grid.jar ${server.username}@${server.address}:${Grid.Jar.Path}" />

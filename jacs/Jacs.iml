@@ -139,7 +139,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="JBoss" level="project" />
+    <orderEntry type="library" name="WildFly-10.0.0.Final" level="project" />
     <orderEntry type="library" name="GWT" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
     <orderEntry type="library" name="Spring" level="project" />
@@ -338,4 +338,3 @@
     </option>
   </component>
 </module>
-
