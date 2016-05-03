@@ -1126,7 +1126,7 @@ public class DomainDAO {
                     }
 
                     if (node.hasChildren()) {
-                        Multimap<String, Long> groupedIds = HashMultimap.<String, Long>create();
+                        Multimap<String, Long> groupedIds = HashMultimap.create();
                         for (Reference ref : node.getChildren()) {
                             groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
                         }
@@ -1142,10 +1142,15 @@ public class DomainDAO {
 
                 log.info("Changing permissions on all fragments and lsms associated with samples: {}", logIds);
 
-                WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}", ids, subjectKey).multi().with(withClause, keys);
+                List<String> sampleRefs = new ArrayList<>();
+                for(Long id : ids) {
+                    sampleRefs.add("Sample#"+id);
+                }
+
+                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
                 log.info("Updated permissions on {} fragments", wr1.getN());
 
-                WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}", ids, subjectKey).multi().with(withClause, keys);
+                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
                 log.info("Updated permissions on {} lsms", wr2.getN());
 
             }
