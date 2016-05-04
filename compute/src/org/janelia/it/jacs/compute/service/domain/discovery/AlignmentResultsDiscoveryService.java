@@ -90,10 +90,9 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 logger.info("Processing alignment result: " + filename);
                 Properties properties = new Properties();
                 properties.load(new FileReader(file));
-                String stackFilename = properties.getProperty("alignment.stack.filename");
-                
-                File stackFile = fileMap.get(stackFilename);
 
+                String stackFilename = properties.getProperty("alignment.stack.filename");
+                File stackFile = fileMap.get(stackFilename);
                 if (stackFile==null) {
                     logger.warn("Could not find item with filename: " + stackFilename);
                     continue;
@@ -105,14 +104,16 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 logger.info("Created new alignment result: "+alignment.getId());
                 alignmentIds.add(alignment.getId());
 
-            	String prefix = FilenameUtils.getPrefix(filename);
+            	String prefix = FilenameUtils.getBaseName(stackFilename);
+                logger.info("Using MIPs with prefix: "+prefix);
             	String refMip = refMips.get(prefix);
             	String signalMip = signalMips.get(prefix);
             	
             	DomainUtils.setFilepath(alignment, FileType.ReferenceMip, refMip);
             	DomainUtils.setFilepath(alignment, FileType.SignalMip, signalMip);
             	
-                // TODO: there should be a better way of determining the area
+                // TODO: there should be a better way of determining the area.
+                // It should be provided as one of the output properties.
                 if (stackFilename.contains("VNC")) {
                     alignment.setAnatomicalArea("VNC");    
                 }
