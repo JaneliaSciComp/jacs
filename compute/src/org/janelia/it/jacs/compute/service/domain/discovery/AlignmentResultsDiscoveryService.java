@@ -108,7 +108,8 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 logger.info("Using MIPs with prefix: "+prefix);
             	String refMip = refMips.get(prefix);
             	String signalMip = signalMips.get(prefix);
-            	
+
+                DomainUtils.setFilepath(alignment, FileType.LosslessStack, stackFile.getAbsolutePath());
             	DomainUtils.setFilepath(alignment, FileType.ReferenceMip, refMip);
             	DomainUtils.setFilepath(alignment, FileType.SignalMip, signalMip);
             	
