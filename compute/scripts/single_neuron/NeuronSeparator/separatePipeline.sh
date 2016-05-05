@@ -153,16 +153,24 @@ if [ -s SeparationResultUnmapped.nsp ]; then
         echo "~ Generating reference"
         cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
 
-        echo "~ Moving final output to: $OUTDIR"
-        mv *.nsp $OUTDIR 
+        echo "~ Moving intermediate outputs to: $OUTDIR"
+        mv *.nsp $OUTDIR
         mv *.pbd $OUTDIR
         mv *.txt $OUTDIR
-        
-        echo "~ Compressing final output to: $OUTDIR"
-        $Vaa3D -cmd image-loader -convert $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3dpbd
-        $Vaa3D -cmd image-loader -convert ConsolidatedSignal.v3draw $OUTDIR/ConsolidatedSignal.v3dpbd
-        $Vaa3D -cmd image-loader -convert ConsolidatedLabel.v3draw $OUTDIR/ConsolidatedLabel.v3dpbd
-        $Vaa3D -cmd image-loader -convert Reference.v3draw $OUTDIR/Reference.v3dpbd
+        mv $CONSIGNAL $OUTDIR/ConsolidatedSignal3.v3draw
+        mv ConsolidatedSignal.v3draw $OUTDIR
+        mv ConsolidatedLabel.v3draw $OUTDIR
+        mv Reference.v3draw $OUTDIR
+
+        echo "~ Launching artifact pipeline..."
+        $DIR/artifactPipeline.sh $OUTDIR $NAME $INPUT_FILE "$SIGNAL_CHAN" "$REF_CHAN"
+
+        echo "~ Compressing final outputs in: $OUTDIR"
+        cd $OUTDIR
+        for fin in *.v3draw; do
+            fout=${fin%.v3draw}.v3dpbd
+            $Vaa3D -cmd image-loader -convert $fin $fout && rm $fin
+        done
     fi
 fi
 
@@ -172,11 +180,6 @@ if ls core* &> /dev/null; then
 fi
 
 echo "~ Finished with separation pipeline"
-
-if [ -s "$OUTDIR/ConsolidatedLabel.v3draw" ]; then
-    echo "~ Launching artifact pipeline..."
-    $DIR/artifactPipeline.sh $OUTDIR $NAME $INPUT_FILE "$SIGNAL_CHAN" "$REF_CHAN"
-fi
 
 echo "~ Removing working files: $WORKING_DIR"
 rm -rf $WORKING_DIR
