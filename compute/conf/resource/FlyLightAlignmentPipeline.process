@@ -194,7 +194,7 @@
                                     <input name="SAMPLE_ENTITY_ID"/>
                                     <input name="OBJECTIVE"/>
                                     <input name="PIPELINE_RUN_ENTITY_ID"/>
-                                    <input name="ROOT_ENTITY_ID" value="${ALIGNMENT_ID}"/>
+                                    <input name="ROOT_ENTITY_ID" value="$V{ALIGNMENT_ID}"/>
                                     <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
                                 </include>
                             
