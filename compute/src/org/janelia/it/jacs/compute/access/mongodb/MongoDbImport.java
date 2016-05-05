@@ -766,6 +766,7 @@ public class MongoDbImport extends AnnotationDAO {
                 error.setFilepath(getFilepath(errorEntity));
                 error.setDescription(errorEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DESCRIPTION));
                 error.setClassification(errorEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CLASSIFICATION));
+                error.setCreationDate(errorEntity.getCreationDate());
                 run.setError(error);
             }
 

@@ -1069,6 +1069,7 @@ public class SampleHelperNG extends DomainHelper {
     
     public PipelineError setPipelineRunError(SamplePipelineRun run, String filepath, String description, String classification) {
         PipelineError error = new PipelineError();
+        error.setCreationDate(new Date());
         error.setFilepath(filepath);
         error.setDescription(description);
         error.setClassification(classification);
