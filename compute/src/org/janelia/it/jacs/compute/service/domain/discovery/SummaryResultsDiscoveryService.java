@@ -126,7 +126,7 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
                     String filepath = DomainUtils.getFilepath(lsmSummaryGroup, fileType);
                     String existingFilepath = DomainUtils.getFilepath(lsm, fileType);
                     if (!StringUtils.areEqual(filepath, existingFilepath)) {
-                        contextLogger.info("  Updating LSM with: "+filepath);
+                        contextLogger.debug("  Updating LSM with: "+filepath);
                         DomainUtils.setFilepath(lsm, fileType, filepath);
                         dirty = true;
                     }
