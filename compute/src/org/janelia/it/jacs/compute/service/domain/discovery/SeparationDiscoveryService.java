@@ -117,8 +117,7 @@ public class SeparationDiscoveryService extends AbstractDomainService {
         
         logger.info("Saving sample "+sample.getId()+" with neuron separation "+separation.getId());
         sampleHelper.saveSample(sample);
-        
-        contextLogger.info("Putting "+separation.getId()+" in RESULT_ENTITY_ID");
+
         data.putItem("RESULT_ENTITY_ID", separation.getId());
     }
     

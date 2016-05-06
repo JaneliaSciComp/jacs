@@ -53,6 +53,9 @@ public class InitAnalysisParametersService extends AbstractDomainService {
 	            contextLogger.info("Putting '"+alignedConsolidatedLabel+"' in ALIGNED_CONSOLIDATED_LABEL_FILEPATH");
 	            data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", alignedConsolidatedLabel);
 	        }
+			else {
+				data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", null);
+			}
 		}
     }
 }

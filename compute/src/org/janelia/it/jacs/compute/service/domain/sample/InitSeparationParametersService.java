@@ -78,18 +78,25 @@ public class InitSeparationParametersService extends AbstractDomainService {
                 throw new IllegalStateException("Separation of aligned stack without warped neurons is currently prohibited");
             }
         }
+        else {
+            data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", null);
+        }
 
+        String previousResultFilename = null;
+        Long prevResultId = null;
         NeuronSeparation prevResult = findPrevResult();
         if (prevResult!=null) {
-            String previousResultFilename = DomainUtils.getFilepath(prevResult, FileType.NeuronSeparatorResult);
+            previousResultFilename = DomainUtils.getFilepath(prevResult, FileType.NeuronSeparatorResult);
             if (previousResultFilename!=null) {
-                data.putItem("PREVIOUS_SEPARATION_ID", prevResult.getId());
-                data.putItem("PREVIOUS_RESULT_FILENAME", previousResultFilename);
+                prevResultId = prevResult.getId();
             }
             else {
             	logger.warn("Previous neuron separation has no result file: "+prevResult.getId());
             }
         }
+
+        data.putItem("PREVIOUS_SEPARATION_ID", prevResultId);
+        data.putItem("PREVIOUS_RESULT_FILENAME", previousResultFilename);
     }
     
     protected NeuronSeparation findPrevResult() throws Exception {
