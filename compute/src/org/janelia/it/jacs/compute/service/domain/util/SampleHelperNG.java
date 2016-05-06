@@ -1043,6 +1043,7 @@ public class SampleHelperNG extends DomainHelper {
         NeuronSeparation separation = new NeuronSeparation();
         separation.setId(domainDao.getNewId());
         separation.setCreationDate(new Date());
+        separation.setName(resultName);
         separation.setFiles(new HashMap<FileType,String>());
 
         ReverseReference fragmentsReference = new ReverseReference();
