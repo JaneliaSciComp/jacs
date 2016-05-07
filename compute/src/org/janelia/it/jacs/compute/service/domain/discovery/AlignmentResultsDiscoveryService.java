@@ -81,6 +81,8 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
             }
         }
 
+        int numResults = 0;
+
         for(String filepath : filepaths) {
             File file = new File(filepath);
             String filename = file.getName();
@@ -97,7 +99,9 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                     logger.warn("Could not find item with filename: " + stackFilename);
                     continue;
                 }
-                
+
+                numResults++;
+
                 SampleAlignmentResult alignment = sampleHelper.addNewAlignmentResult(run, resultName);
                 alignment.setFilepath(rootPath);
                 
@@ -210,7 +214,11 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 
             }
         }  
-        
+
+        if (numResults<1) {
+            throw new IllegalStateException("No alignment results found in: "+rootPath);
+        }
+
         sampleHelper.saveSample(sample);
 
         data.putItem("ALIGNMENT_ID", alignmentIds);
