@@ -167,10 +167,12 @@ if [ -s SeparationResultUnmapped.nsp ]; then
 
         echo "~ Compressing final outputs in: $OUTDIR"
         cd $OUTDIR
+        shopt -s nullglob
         for fin in *.v3draw; do
             fout=${fin%.v3draw}.v3dpbd
             $Vaa3D -cmd image-loader -convert $fin $fout && rm $fin
         done
+        shopt -u nullglob
     fi
 fi
 
