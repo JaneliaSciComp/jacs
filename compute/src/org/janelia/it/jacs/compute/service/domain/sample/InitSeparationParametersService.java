@@ -79,16 +79,16 @@ public class InitSeparationParametersService extends AbstractDomainService {
             }
         }
         else {
-            data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", null);
+            data.putItem("ALIGNED_CONSOLIDATED_LABEL_FILEPATH", "");
         }
 
-        String previousResultFilename = null;
-        Long prevResultId = null;
+        String previousResultFilename = "";
+        String prevResultId = "";
         NeuronSeparation prevResult = findPrevResult();
         if (prevResult!=null) {
             previousResultFilename = DomainUtils.getFilepath(prevResult, FileType.NeuronSeparatorResult);
             if (previousResultFilename!=null) {
-                prevResultId = prevResult.getId();
+                prevResultId = prevResult.getId().toString();
             }
             else {
             	logger.warn("Previous neuron separation has no result file: "+prevResult.getId());
