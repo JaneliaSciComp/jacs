@@ -32,7 +32,7 @@
         
         <sequence if="RUN_POST=true">
         
-            <!-- TODO: Right now, post-processing only works if processing is run. To fix this, we need to populate SAMPLE_AREAS and other variables when processing is reused. -->
+            <!-- TODO: Right now, post-processing only works if processing is run. To support running post only, we would need to regenerate the merged tiles in lossless format. -->
             <sequence if="RUN_PROCESSING=true">
             
                 <!-- Create a result node for this group -->

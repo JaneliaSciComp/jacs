@@ -410,7 +410,14 @@
                     </sequence>
                 
                 </sequence>
-                
+
+                <!-- Update SAMPLE_AREAS list -->
+                <operation name="Update sample areas" processor="org.janelia.it.jacs.compute.service.domain.sample.UpdateSampleAreasList">
+                    <input name="SAMPLE_AREAS"/>
+                    <input name="SAMPLE_AREA"/>
+                    <output name="SAMPLE_AREAS"/>
+                </operation>
+
             </sequence>
                 
         </sequence>
