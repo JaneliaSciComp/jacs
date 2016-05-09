@@ -58,9 +58,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
     protected void createShellScript(FileWriter writer) throws IOException, ParameterException, MissingDataException,
             InterruptedException, ServiceException {
 
-        contextLogger.info("Running configured aligner " + ALIGNER_SCRIPT_CMD + " (" + " resultNodeId=" +
-                           resultFileNode.getObjectId() + " outputDir=" + resultFileNode.getDirectoryPath() + ")");
-
+		contextLogger.info("Running configured aligner: " + ALIGNER_SCRIPT_CMD);
+		contextLogger.info("Output dir: "+resultFileNode.getDirectoryPath());
+        
         final String script = Vaa3DHelper.getVaa3DGridCommandPrefix() + "\n" +
                               Vaa3DHelper.getVaa3dLibrarySetupCmd() + "\n" +
                               "cd " + resultFileNode.getDirectoryPath() + "\n" +

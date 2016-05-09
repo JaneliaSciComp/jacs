@@ -72,14 +72,16 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
             String filename = file.getName();
         
             if (filename.endsWith("_reference.png")) {
-            	logger.info("Found reference MIP: "+file);
+                contextLogger.info("Found reference MIP: "+file);
             	refMips.put(filename.replace("_reference.png", ""), file.getAbsolutePath());
             }
             else if (filename.endsWith("_signal.png")) {
-            	logger.info("Found signal MIP: "+file);
+                contextLogger.info("Found signal MIP: "+file);
             	signalMips.put(filename.replace("_signal.png", ""), file.getAbsolutePath());
             }
         }
+
+        int numResults = 0;
 
         for(String filepath : filepaths) {
             File file = new File(filepath);
@@ -87,32 +89,36 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
         
             if (filename.endsWith(".properties")) {
 
-                logger.info("Processing alignment result: " + filename);
+                contextLogger.info("Processing alignment result: " + filename);
                 Properties properties = new Properties();
                 properties.load(new FileReader(file));
-                String stackFilename = properties.getProperty("alignment.stack.filename");
-                
-                File stackFile = fileMap.get(stackFilename);
 
+                String stackFilename = properties.getProperty("alignment.stack.filename");
+                File stackFile = fileMap.get(stackFilename);
                 if (stackFile==null) {
-                    logger.warn("Could not find item with filename: " + stackFilename);
+                    contextLogger.warn("Could not find item with filename: " + stackFilename);
                     continue;
                 }
-                
+
+                numResults++;
+
                 SampleAlignmentResult alignment = sampleHelper.addNewAlignmentResult(run, resultName);
                 alignment.setFilepath(rootPath);
-                
-                logger.info("Created new alignment result: "+alignment.getId());
+
+                contextLogger.info("Created new alignment result: "+alignment.getId());
                 alignmentIds.add(alignment.getId());
 
-            	String prefix = FilenameUtils.getPrefix(filename);
+            	String prefix = FilenameUtils.getBaseName(stackFilename);
+                contextLogger.info("Using MIPs with prefix: "+prefix);
             	String refMip = refMips.get(prefix);
             	String signalMip = signalMips.get(prefix);
-            	
+
+                DomainUtils.setFilepath(alignment, FileType.LosslessStack, stackFile.getAbsolutePath());
             	DomainUtils.setFilepath(alignment, FileType.ReferenceMip, refMip);
             	DomainUtils.setFilepath(alignment, FileType.SignalMip, signalMip);
             	
-                // TODO: there should be a better way of determining the area
+                // TODO: there should be a better way of determining the area.
+                // It should be provided as one of the output properties.
                 if (stackFilename.contains("VNC")) {
                     alignment.setAnatomicalArea("VNC");    
                 }
@@ -127,20 +133,20 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                         DomainUtils.setFilepath(alignment, FileType.AlignmentVerificationMovie, verifyFile.getAbsolutePath());
                     }
                     else {
-                        logger.warn("Result referenced by alignment.verify.filename="+verifyFilename+" does not exist. Cannot continue processing.");
+                        contextLogger.warn("Result referenced by alignment.verify.filename="+verifyFilename+" does not exist. Cannot continue processing.");
                         continue;
                     }
                 }
 
                 String channels = properties.getProperty("alignment.image.channels");
                 if (channels==null) {
-                	logger.warn("Alignment output does not contain 'alignment.image.channels' property, cannot continue processing.");
+                    contextLogger.warn("Alignment output does not contain 'alignment.image.channels' property, cannot continue processing.");
                 	continue;
                 }
                 
                 String refchan = properties.getProperty("alignment.image.refchan");
                 if (refchan==null) {
-                	logger.warn("Alignment output does not contain 'alignment.image.refchan' property, cannot continue processing.");
+                    contextLogger.warn("Alignment output does not contain 'alignment.image.refchan' property, cannot continue processing.");
                 	continue;
                 }
 
@@ -208,7 +214,11 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 
             }
         }  
-        
+
+        if (numResults<1) {
+            throw new IllegalStateException("No alignment results found in: "+rootPath);
+        }
+
         sampleHelper.saveSample(sample);
 
         data.putItem("ALIGNMENT_ID", alignmentIds);
@@ -227,7 +237,7 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 inconsistencyScores.add(1-d_scoresQi);
             }
             catch (NumberFormatException e) {
-                logger.error("Error parsing double: "+e);
+                contextLogger.error("Error parsing double: "+e);
             }
         }
         
@@ -267,7 +277,7 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
      */
     private Double getJBAWeightedAverage(List<Double> scores) {
     	if (scores.size()!=3) {
-    		logger.info("Expected three scores for computing weighted average, but got "+scores.size());
+            contextLogger.info("Expected three scores for computing weighted average, but got "+scores.size());
     		return null;
     	}
     	return getJBAWeightedAverage(scores.get(0), scores.get(1), scores.get(2));

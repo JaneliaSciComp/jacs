@@ -3,18 +3,15 @@ package org.janelia.it.jacs.compute.access.mongodb;
 import java.net.UnknownHostException;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.jongo.MongoCollection;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.mongodb.WriteConcern;
 
 /**
  * Data maintenance for the MongoDB data store. For example, denormalization operations. 
@@ -25,21 +22,10 @@ public class MongoDbMaintainer {
 
     private static final Logger log = Logger.getLogger(MongoDbMaintainer.class);
 
-    private static String MONGO_SERVER_URL = SystemConfigurationProperties.getString("MongoDB.ServerURL");
-    private static String MONGO_DATABASE = SystemConfigurationProperties.getString("MongoDB.Database");
-    private static String MONGO_USERNAME = SystemConfigurationProperties.getString("MongoDB.Username");
-    private static String MONGO_PASSWORD = SystemConfigurationProperties.getString("MongoDB.Password");
-
     protected DomainDAO dao;
 
     public MongoDbMaintainer() throws UnknownHostException {
-    	// We don't use DomainDAOManager here, so that we can customize the write concern below
-        this.dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE, MONGO_USERNAME, MONGO_PASSWORD);
-        // To load as fast as possible, we don't wait to be acknowledged.
-        // This can introduce subtle problems, so it's important to verify the
-        // integrity of the load manually (e.g. cross check the entity counts).
-        // TODO: We should disable this for the eventual production load.
-        dao.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+        this.dao = DomainDAOManager.getInstance().getDao();
     }
 
     public void refreshPermissions() throws DaoException {
@@ -47,7 +33,7 @@ public class MongoDbMaintainer {
         long start = System.currentTimeMillis();
         log.info("Refreshing denormalized permissions");
 
-        Multimap<String, String> groupMap = HashMultimap.<String, String> create();
+        Multimap<String, String> groupMap = HashMultimap.create();
         for (Subject subject : dao.getCollectionByName("subject").find().as(Subject.class)) {
             for (String groupKey : subject.getGroups()) {
                 groupMap.put(groupKey, subject.getKey());
@@ -92,9 +78,8 @@ public class MongoDbMaintainer {
 
         MongoCollection annotationCollection = dao.getCollectionByName("annotation");
         ensureDomainIndexes(annotationCollection);
-        annotationCollection.ensureIndex("{targetId:1}");
-        annotationCollection.ensureIndex("{targetId:1,readers:1}");
-        annotationCollection.ensureIndex("{text:1}");
+        annotationCollection.ensureIndex("{target:1}");
+        annotationCollection.ensureIndex("{target:1,readers:1}");
         
         MongoCollection compartmentSetCollection = dao.getCollectionByName("compartmentSet");
         ensureDomainIndexes(compartmentSetCollection);
@@ -107,28 +92,25 @@ public class MongoDbMaintainer {
         MongoCollection flyLineCollection = dao.getCollectionByName("flyLine");
         ensureDomainIndexes(flyLineCollection);
         flyLineCollection.ensureIndex("{robotId:1}");
-        flyLineCollection.ensureIndex("{'balancedLine.targetId':1,readers:1}");
-        flyLineCollection.ensureIndex("{'originalLine.targetId':1,readers:1}");
-        flyLineCollection.ensureIndex("{'representativeScreenSample.targetId':1,readers:1}");
+        flyLineCollection.ensureIndex("{balancedLine:1,readers:1}");
+        flyLineCollection.ensureIndex("{originalLine:1,readers:1}");
+        flyLineCollection.ensureIndex("{representativeScreenSample:1,readers:1}");
 
         MongoCollection fragmentCollection = dao.getCollectionByName("fragment");
         ensureDomainIndexes(fragmentCollection);
         fragmentCollection.ensureIndex("{separationId:1}");
         fragmentCollection.ensureIndex("{separationId:1,readers:1}");
-        fragmentCollection.ensureIndex("{'sample.targetId':1}");
-        fragmentCollection.ensureIndex("{'sample.targetId':1,readers:1}");
+        fragmentCollection.ensureIndex("{sampleRef:1}");
+        fragmentCollection.ensureIndex("{sampleRef:1,readers:1}");
 
         MongoCollection imageCollection = dao.getCollectionByName("image");
         ensureDomainIndexes(imageCollection);
         imageCollection.ensureIndex("{sageId:1}");
         imageCollection.ensureIndex("{slideCode:1}");
         imageCollection.ensureIndex("{filepath:1}");
-        imageCollection.ensureIndex("{'sample.targetId':1}");
-        imageCollection.ensureIndex("{'sample.targetId':1,readers:1}");
+        imageCollection.ensureIndex("{sampleRef:1}");
+        imageCollection.ensureIndex("{sampleRef:1,readers:1}");
 
-        MongoCollection objectSetCollection = dao.getCollectionByName("objectSet");
-        ensureDomainIndexes(objectSetCollection);
-        
         MongoCollection ontologyCollection = dao.getCollectionByName("ontology");
         ensureDomainIndexes(ontologyCollection);
 

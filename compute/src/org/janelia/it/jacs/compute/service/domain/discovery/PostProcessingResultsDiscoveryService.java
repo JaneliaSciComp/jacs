@@ -48,6 +48,7 @@ public class PostProcessingResultsDiscoveryService extends AbstractDomainService
         
         Map<String,String> keyToCorrectedKeyMap = new HashMap<>();
         for(InputImage inputImage : inputImages) {
+            contextLogger.info("Will replace output prefix "+inputImage.getOutputPrefix()+" with key "+inputImage.getKey());
         	keyToCorrectedKeyMap.put(inputImage.getOutputPrefix(), inputImage.getKey());
         }
         
@@ -56,9 +57,10 @@ public class PostProcessingResultsDiscoveryService extends AbstractDomainService
             String key = fileGroup.getKey();
         	String correctedKey = keyToCorrectedKeyMap.get(key);
         	if (correctedKey==null) {
-        		logger.warn("Unrecognized output prefix: "+key);
+                contextLogger.warn("Unrecognized output prefix: "+key);
         		continue;
         	}
+            fileGroup.setKey(correctedKey);
         	groups.put(correctedKey, fileGroup);
         }
         

@@ -2,6 +2,7 @@
 	<sequence>
 	
         <include name="Pipeline" process="FlyLightSamplePipeline">
+            <input name="OBJECTIVE" value="40x"/>
             <input name="PIPELINE_NAME" value="FlyLight Pipeline"/>
             <input name="MERGE_ALGORITHMS" value=""/>
             <input name="STITCH_ALGORITHMS" value="FLYLIGHT"/>

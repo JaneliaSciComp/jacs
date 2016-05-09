@@ -24,7 +24,6 @@ import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -340,9 +339,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
             TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
             if (treeNode!=null) {
                 for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
-                    if (child instanceof TreeNode || child instanceof ObjectSet) {
+                    if (child instanceof TreeNode) {
                         log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
+                    }
+                    else if (child instanceof Sample) {
+                        log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
+                        runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
+                        Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                     }
                     else {
                         log.info("runSampleFolder - Ignore child "+child.getType()+": "+child.getName());
@@ -350,13 +354,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 }
             }
             else {
-                ObjectSet objectSet = dao.getDomainObject(null, ObjectSet.class, new Long(folderId));
-                if (objectSet==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
-                for(Sample child : dao.getDomainObjects(null, Sample.class, objectSet.getMembers())) {
-                    log.info("runSampleFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    runSamplePipelines(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);  
-                    Thread.sleep(1000); // Sleep so that the logs are a little cleaner
-                }
+                throw new IllegalArgumentException("Folder with id "+folderId+" does not exist");
             }
         } catch (Exception ex) {
             log.error("Error running pipeline", ex);
@@ -465,9 +463,14 @@ public class SampleDataManager implements SampleDataManagerMBean {
             TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
             if (treeNode!=null) {
                 for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
-                    if (child instanceof TreeNode || child instanceof ObjectSet) {
+                    if (child instanceof TreeNode) {
                         log.info("applyProcessToSamplesInFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParams);
+                    }
+                    else if (child instanceof Sample) {
+                        log.info("applyProcessToSamplesInFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
+                        applyProcessToSample(child.getId().toString(), processName, extraParams);
+                        Thread.sleep(1000); // Sleep so that the logs are a little cleaner
                     }
                     else {
                         log.info("applyProcessToSamplesInFolder - Ignore child "+child.getType()+": "+child.getName());
@@ -475,13 +478,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 }
             }
             else {
-                ObjectSet objectSet = dao.getDomainObject(null, ObjectSet.class, new Long(folderId));
-                if (objectSet==null) throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
-                for(Sample child : dao.getDomainObjects(null, Sample.class, objectSet.getMembers())) {
-                    log.info("applyProcessToSamplesInFolder - Running sample: "+child.getName()+" (id="+child.getId()+")");
-                    applyProcessToSample(child.getId().toString(), processName, extraParams);  
-                    Thread.sleep(1000); // Sleep so that the logs are a little cleaner
-                }
+                throw new IllegalArgumentException("Object set with id "+folderId+" does not exist");
             }
         } 
         catch (Exception ex) {
@@ -601,7 +598,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 //      *
 //     */
 //    public static void main(String[] args) {
-//        String filePath = "/Users/saffordt/Desktop/AllStrandedTaskswolfft03042016.txt";
+//        String filePath = "/Users/saffordt/Desktop/AllStrandedTasksnerna04252016.txt";
 //        File tmpFile = new File(filePath);
 //        try (FileWriter writer = new FileWriter(new File(filePath+".update.sql"))){
 //            Scanner scanner = new Scanner(tmpFile);

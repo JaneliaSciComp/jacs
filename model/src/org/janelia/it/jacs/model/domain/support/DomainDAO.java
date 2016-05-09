@@ -3,6 +3,17 @@ package org.janelia.it.jacs.model.domain.support;
 import java.net.UnknownHostException;
 import java.util.*;
 
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
+import com.mongodb.WriteResult;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.DomainConstants;
@@ -13,6 +24,7 @@ import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
 import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentContext;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.Category;
 import org.janelia.it.jacs.model.domain.ontology.EnumItem;
@@ -26,7 +38,6 @@ import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.jongo.Jongo;
@@ -35,18 +46,6 @@ import org.jongo.MongoCursor;
 import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
 
 /**
  * Data access object for the domain object model.
@@ -62,6 +61,7 @@ public class DomainDAO {
 
     protected MongoCollection preferenceCollection;
     protected MongoCollection alignmentBoardCollection;
+    protected MongoCollection alignmentContextCollection;
     protected MongoCollection annotationCollection;
     protected MongoCollection compartmentSetCollection;
     protected MongoCollection dataSetCollection;
@@ -69,7 +69,6 @@ public class DomainDAO {
     protected MongoCollection flyLineCollection;
     protected MongoCollection fragmentCollection;
     protected MongoCollection imageCollection;
-    protected MongoCollection objectSetCollection;
     protected MongoCollection ontologyCollection;
     protected MongoCollection sampleCollection;
     protected MongoCollection subjectCollection;
@@ -80,7 +79,6 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
-
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
             members.add(new ServerAddress(serverMember));
@@ -103,6 +101,7 @@ public class DomainDAO {
                 .enable(MapperFeature.AUTO_DETECT_SETTERS)
                 .build());
         this.alignmentBoardCollection = getCollectionByClass(AlignmentBoard.class);
+        this.alignmentContextCollection = getCollectionByClass(AlignmentContext.class);
         this.annotationCollection = getCollectionByClass(Annotation.class);
         this.compartmentSetCollection = getCollectionByClass(CompartmentSet.class);
         this.dataSetCollection = getCollectionByClass(DataSet.class);
@@ -110,7 +109,6 @@ public class DomainDAO {
         this.flyLineCollection = getCollectionByClass(FlyLine.class);
         this.fragmentCollection = getCollectionByClass(NeuronFragment.class);
         this.imageCollection = getCollectionByClass(Image.class);
-        this.objectSetCollection = getCollectionByClass(ObjectSet.class);
         this.ontologyCollection = getCollectionByClass(Ontology.class);
         this.sampleCollection = getCollectionByClass(Sample.class);
         this.subjectCollection = getCollectionByClass(Subject.class);
@@ -1039,63 +1037,6 @@ public class DomainDAO {
         return getDomainObject(subjectKey, treeNode);
     }
 
-    public List<DomainObject> getMembers(String subjectKey, ObjectSet objectSet) {
-        return getDomainObjects(subjectKey, objectSet.getClassName(), objectSet.getMembers());
-    }
-
-    public <T extends DomainObject> List<T> getMembersAs(String subjectKey, ObjectSet objectSet, Class<T> clazz) {
-        return getDomainObjects(subjectKey, clazz, objectSet.getMembers());
-    }
-
-    public ObjectSet addMembers(String subjectKey, ObjectSet objectSetArg, Collection<Reference> references) throws Exception {
-        if (references == null) {
-            throw new IllegalArgumentException("Cannot add null members");
-        }
-        ObjectSet objectSet = getDomainObject(subjectKey, ObjectSet.class, objectSetArg.getId());
-        if (objectSet == null) {
-            throw new IllegalArgumentException("Object Set not found: " + objectSetArg.getId());
-        }
-        for (Reference ref : references) {
-            if (ref.getTargetId() == null) {
-                throw new IllegalArgumentException("Cannot add member without an id");
-            }
-            String className = ref.getTargetClassName();
-            if (objectSet.getClassName() == null) {
-                if (ref.getTargetClassName() == null) {
-                    throw new IllegalArgumentException("Cannot add member without a class name");
-                }
-                objectSet.setClassName(className);
-            }
-            else if (!className.equals(objectSet.getClassName())) {
-                throw new IllegalArgumentException("Cannot add " + className + " to object set of " + objectSet.getClassName());
-            }
-            objectSet.addMember(ref.getTargetId());
-        }
-        log.info("Adding " + references.size() + " objects to " + objectSet.getName());
-        saveImpl(subjectKey, objectSet);
-        return getDomainObject(subjectKey, objectSet);
-    }
-
-    public ObjectSet removeMembers(String subjectKey, ObjectSet objectSetArg, Collection<Reference> references) throws Exception {
-        if (references == null) {
-            throw new IllegalArgumentException("Cannot remove null members");
-        }
-        ObjectSet objectSet = getDomainObject(subjectKey, ObjectSet.class, objectSetArg.getId());
-        if (objectSet == null) {
-            throw new IllegalArgumentException("Object Set not found: " + objectSetArg.getId());
-        }
-
-        for (Reference ref : references) {
-            if (ref.getTargetId() == null) {
-                throw new IllegalArgumentException("Cannot remove member without an id");
-            }
-            objectSet.removeMember(ref.getTargetId());
-        }
-        log.info("Removing " + references.size() + " objects from " + objectSet.getName());
-        saveImpl(subjectKey, objectSet);
-        return getDomainObject(subjectKey, objectSet);
-    }
-
     public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) {
         return (T) updateProperty(subjectKey, clazz.getName(), id, propName, propValue);
     }
@@ -1185,7 +1126,7 @@ public class DomainDAO {
                     }
 
                     if (node.hasChildren()) {
-                        Multimap<String, Long> groupedIds = HashMultimap.<String, Long>create();
+                        Multimap<String, Long> groupedIds = HashMultimap.create();
                         for (Reference ref : node.getChildren()) {
                             groupedIds.put(ref.getTargetClassName(), ref.getTargetId());
                         }
@@ -1197,26 +1138,19 @@ public class DomainDAO {
                     }
                 }
             }
-            else if ("objectSet".equals(collectionName)) {
-                log.info("Changing permissions on all members of the object sets: {}", logIds);
-                for (Long id : ids) {
-                    ObjectSet set = collection.findOne("{_id:#,writers:#}", id, subjectKey).as(ObjectSet.class);
-                    if (set == null) {
-                        throw new IllegalArgumentException("Could not find object set with id=" + id);
-                    }
-                    if (set.hasMembers()) {
-                        changePermissions(subjectKey, set.getClassName(), set.getMembers(), granteeKey, rights, grant);
-                    }
-                }
-            }
             else if ("sample".equals(collectionName)) {
 
                 log.info("Changing permissions on all fragments and lsms associated with samples: {}", logIds);
 
-                WriteResult wr1 = fragmentCollection.update("{sampleId:{$in:#},writers:#}", ids, subjectKey).multi().with(withClause, keys);
+                List<String> sampleRefs = new ArrayList<>();
+                for(Long id : ids) {
+                    sampleRefs.add("Sample#"+id);
+                }
+
+                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
                 log.info("Updated permissions on {} fragments", wr1.getN());
 
-                WriteResult wr2 = imageCollection.update("{sampleId:{$in:#},writers:#}", ids, subjectKey).multi().with(withClause, keys);
+                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
                 log.info("Updated permissions on {} lsms", wr2.getN());
 
             }

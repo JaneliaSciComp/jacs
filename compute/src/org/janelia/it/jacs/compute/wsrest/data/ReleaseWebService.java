@@ -1,8 +1,28 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -12,24 +32,15 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.domain.SageArtifactExportService;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.model.domain.DomainConstants;
-import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
-import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
 import org.janelia.it.jacs.model.entity.json.JsonRelease;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.rmi.RemoteException;
-import java.util.*;
 
 
 @Path("/process")
@@ -156,13 +167,11 @@ public class ReleaseWebService extends ResourceConfig {
                 annotatorKeys.add(release.getOwnerKey());
 
                 // Walk the release folder hierarchy
-                for(ObjectSet sampleSet : dao.getDomainObjectsAs(releaseFolder.getChildren(), ObjectSet.class)) {
-
-                    List<Reference> refs = DomainUtils.getReferencesForMembers(sampleSet);
+                for(TreeNode lineFolder : dao.getDomainObjectsAs(releaseFolder.getChildren(), TreeNode.class)) {
 
                     // Get all sample annotations
                     Multimap<Long, Annotation> annotationsByTarget = HashMultimap.<Long, Annotation>create();
-                    for (Annotation annotation : dao.getAnnotations(null, refs)) {
+                    for (Annotation annotation : dao.getAnnotations(null, lineFolder.getChildren())) {
                         annotationsByTarget.put(annotation.getTarget().getTargetId(), annotation);
                     }
 
@@ -171,7 +180,7 @@ public class ReleaseWebService extends ResourceConfig {
                     // Count of representative samples marked for export
                     int numRepresentatives = 0;
 
-                    for(Sample sample : dao.getDomainObjectsAs(refs, Sample.class)) {
+                    for(Sample sample : dao.getDomainObjectsAs(lineFolder.getChildren(), Sample.class)) {
                         boolean export = false;
                         for(Annotation annotation : annotationsByTarget.get(sample.getId())) {
                             if (!annotatorKeys.contains(annotation.getOwnerKey())) {
@@ -190,10 +199,10 @@ public class ReleaseWebService extends ResourceConfig {
                         numSamples++;
                     }
 
-                    JsonLineStatus status = lines.get(sampleSet.getName());
+                    JsonLineStatus status = lines.get(lineFolder.getName());
                     if (status==null) {
                         status = new JsonLineStatus();
-                        lines.put(sampleSet.getName(), status);
+                        lines.put(lineFolder.getName(), status);
                     }
 
                     status.addSamples(numSamples);

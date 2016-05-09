@@ -62,7 +62,7 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         }
 
         // Create an input image for each sample processing result
-        List<InputImage> inputImages = new ArrayList<InputImage>();
+        List<InputImage> inputImages = new ArrayList<>();
         for(SampleProcessingResult resultEntity : run.getSampleProcessingResults()) {
             inputImages.add(getInputImage(resultEntity));
         }
@@ -113,7 +113,7 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         String filepath = DomainUtils.getDefault3dImageFilePath(resultEntity);
         String tileName = tileNames.get(filepath);
         
-        String key = null;
+        String key;
         if (filepath.contains("stitched-")) {
             if (StringUtils.isEmpty(area)) {
             	key = "stitched";

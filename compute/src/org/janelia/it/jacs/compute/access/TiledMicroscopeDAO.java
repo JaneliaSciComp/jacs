@@ -1135,9 +1135,13 @@ public class TiledMicroscopeDAO extends ComputeBaseDAO {
                 conn.rollback();
             }
             catch (SQLException se) {
-                se.printStackTrace();
+                log.error(se.getMessage(),se);
             }
             throw new DaoException(ex);
+        }
+        finally {
+            if (statement!=null) {statement.close();}
+            if (conn!=null) {conn.close();}
         }
     }
 

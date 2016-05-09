@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 
@@ -15,6 +16,7 @@ public class PipelineError implements HasFilepath, Serializable {
     private String filepath;
     private String classification;
     private String description;
+    private Date creationDate;
 
     public String getFilepath() {
         return filepath;
@@ -38,5 +40,13 @@ public class PipelineError implements HasFilepath, Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 }

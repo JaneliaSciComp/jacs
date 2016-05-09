@@ -1,6 +1,25 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
-import io.swagger.annotations.*;
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
@@ -10,15 +29,10 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.util.List;
 
 
 @Path("/data")
@@ -86,6 +100,28 @@ public class DomainObjectWebService extends ResourceConfig {
             return dao.getDomainObjectsByName(subjectKey, clazz, name);
         } catch (Exception e) {
             log.error("Error occurred retrieving domain objects using name" + e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Use for getting all examples of a given object type.  Only for small sets.
+     * @param subjectKey omissible. If given, constrains by ownership.
+     * @param domainClass required. constrains by collection/type.
+     * @return all existing examples of things of this type.
+     */
+    @GET
+    @Path("/domainobject/class")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<DomainObject> getObjectsByClass(@QueryParam("subjectKey") final String subjectKey,
+                                                @QueryParam("domainClass") final String domainClass) {
+        DomainDAO dao = WebServiceContext.getDomainManager();
+        Class clazz = DomainUtils.getObjectClassByName(domainClass);
+        try {
+            return dao.getDomainObjects(subjectKey, clazz);
+        } catch (Exception e) {
+            log.error("Error occurred retrieving domain objects by class" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -182,9 +218,9 @@ public class DomainObjectWebService extends ResourceConfig {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
             for (Reference objectRef : query.getReferences()) {
-                // first check that it is an objectset or treeNode
+                // first check that it is a treeNode
                 Class<? extends DomainObject> objClass = DomainUtils.getObjectClassByName(objectRef.getTargetClassName());
-                if (objClass==TreeNode.class || objClass==ObjectSet.class) {
+                if (objClass==TreeNode.class) {
                     String subjectKey = query.getSubjectKey();
                     DomainObject domainObj = dao.getDomainObject(subjectKey, objectRef);
                     // check whether this subject has permissions to write to this object
@@ -231,5 +267,5 @@ public class DomainObjectWebService extends ResourceConfig {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
+    
 }

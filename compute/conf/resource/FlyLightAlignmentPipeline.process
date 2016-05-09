@@ -74,17 +74,8 @@
 	                    
 	            </sequence>
 	                    
-                <sequence forEach="REGENERATE_INPUT">
-        
-                    <operation name="Get Input Properties" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromBeanService">
-                        <input name="BEAN" value="$V{REGENERATE_INPUT}"/>
-                        <input name="BEAN_PROPERTY_1" value="sampleId"/>
-                        <input name="PROCESS_VARIABLE_1" value="REGENERATE_SAMPLE_ID"/>
-                        <output name="REGENERATE_SAMPLE_ID"/>
-                    </operation>
-                
-                    <operation name="Get Pipeline Process Name" processor="org.janelia.it.jacs.compute.service.domain.sample.GetPipelineForSampleService">
-                        <input name="SAMPLE_ENTITY_ID" value="$V{REGENERATE_SAMPLE_ID}"/>
+                <sequence if="REGENERATE_INPUT is not empty">
+                        <input name="SAMPLE_ENTITY_ID"/>
                         <output name="PROCESS_DEF_NAME"/>
                     </operation>
                     
@@ -93,7 +84,7 @@
                         <input name="PROCESS_DEF_NAME"/>
                         <input name="DISPLAY_NAME" value="Input Sample Regeneration"/>
                         <input name="PARAMETER_1_KEY" value="sample entity id"/>
-                        <input name="PARAMETER_1_VALUE" value="$V{REGENERATE_SAMPLE_ID}"/>
+                        <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
                         <input name="PROCESS_DATA_MAP">
                             <entry key="QUEUE_OVERRIDE" value="queue/sampleSecondaryPipelineLauncher"/>
                         </input>
@@ -115,7 +106,7 @@
                     
                     <operation name="Update aligned input to use the regenerated file" processor="org.janelia.it.jacs.compute.service.domain.alignment.InjectRegeneratedInputService">
                         <input name="TASK_ID" value="$V{SUBTASK_ID}"/>
-                        <input name="ALIGNMENT_INPUT" value="$V{REGENERATE_INPUT}"/>
+                        <input name="ALIGNMENT_INPUTS" value="$V{REGENERATE_INPUT}"/>
                     </operation>
                 
                 </sequence>
@@ -194,7 +185,7 @@
                                     <input name="SAMPLE_ENTITY_ID"/>
                                     <input name="OBJECTIVE"/>
                                     <input name="PIPELINE_RUN_ENTITY_ID"/>
-                                    <input name="ROOT_ENTITY_ID" value="${ALIGNMENT_ID}"/>
+                                    <input name="ROOT_ENTITY_ID" value="$V{ALIGNMENT_ID}"/>
                                     <input name="RESULT_ENTITY_NAME" value="Aligned Neuron Separation"/>
                                 </include>
                             

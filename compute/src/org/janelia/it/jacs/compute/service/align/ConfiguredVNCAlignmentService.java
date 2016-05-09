@@ -20,7 +20,7 @@ public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
             if (result!=null) {
                 if (VNC_AREA.equalsIgnoreCase(areaName)) {
                     alignedAreas.add(anatomicalArea);
-                    input1 = new AlignmentInputFile();
+                    input1 = new AlignmentInputFile(areaName);
                     input1.setPropertiesFromEntity(result);
                     input1.setSampleId(sample.getId());
                     input1.setObjective(objectiveSample.getObjective());

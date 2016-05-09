@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.model.domain.DomainConstants;
@@ -16,13 +18,9 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 
 /**
  * Synchronize the folder hierarchy for a Fly Line Release. 
@@ -135,7 +133,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
                 continue;
             }
             
-            ObjectSet lineFolder = verifyOrCreateChildFolder(releaseFolder, line);
+            TreeNode lineFolder = verifyOrCreateChildFolder(releaseFolder, line);
     	    
     	    // Sort samples
     	    Collections.sort(samples, new Comparator<Sample>() {
@@ -150,9 +148,9 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	    // Add missing samples
     	    for(Sample sample : samples) {
     	        logger.debug("    Processing sample "+sample.getName());
-    	        if (!lineFolder.getMembers().contains(sample.getId())) {
+                if (!lineFolder.hasChild(sample)) {
                     logger.debug("      Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");
-                    domainDao.addMembers(ownerKey, lineFolder, Arrays.asList(Reference.createFor(sample)));
+                    domainDao.addChildren(ownerKey, lineFolder, Arrays.asList(Reference.createFor(sample)));
                     numAdded++;
     	        }
     	    }
@@ -181,17 +179,16 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
         return sample.getObjectives().contains("63x");
     }
 
-    public ObjectSet verifyOrCreateChildFolder(TreeNode parentFolder, String childName) throws Exception {
+    public TreeNode verifyOrCreateChildFolder(TreeNode parentFolder, String childName) throws Exception {
 
-        for(ObjectSet flyLineFolder : domainDao.getDomainObjectsAs(releaseFolder.getChildren(), ObjectSet.class)) {
+        for(TreeNode flyLineFolder : domainDao.getDomainObjectsAs(releaseFolder.getChildren(), TreeNode.class)) {
             if (flyLineFolder.getName().equals(childName)) {
                 return flyLineFolder;
             }
         }
         
-        ObjectSet childSet = new ObjectSet();
+        TreeNode childSet = new TreeNode();
         childSet.setName(childName);
-        childSet.setClassName(Sample.class.getName());
         childSet = domainDao.save(ownerKey, childSet);
         
         domainDao.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(childSet)));

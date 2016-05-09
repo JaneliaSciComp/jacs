@@ -10,17 +10,8 @@ import org.janelia.it.jacs.model.domain.support.SearchTraversal;
  */
 public class NeuronSeparation extends PipelineResult {
 
-    private String name;
     @SearchTraversal({Sample.class})
     private ReverseReference fragments;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public ReverseReference getFragmentsReference() {
         return fragments;

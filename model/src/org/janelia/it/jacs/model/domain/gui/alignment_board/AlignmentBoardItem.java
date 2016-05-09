@@ -42,7 +42,7 @@ public class AlignmentBoardItem implements Serializable{
     public String getColor() {
         return color;
     }
-
+    
     public void setColor(String color) {
         this.color = color;
     }
@@ -62,5 +62,5 @@ public class AlignmentBoardItem implements Serializable{
     public void setChildren(List<AlignmentBoardItem> children) {
         if (children==null) throw new IllegalArgumentException("Property cannot be null");
         this.children = children;
-    }
+    }    
 }

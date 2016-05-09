@@ -16,7 +16,6 @@ import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
-import org.janelia.it.jacs.model.domain.workspace.ObjectSet;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 
@@ -27,7 +26,6 @@ import org.janelia.it.jacs.model.domain.workspace.Workspace;
  */
 public class DomainHelper {
 
-    public static final String OBJECTSET_CLASSNAME = ObjectSet.class.getSimpleName();
     public static final String TREENODE_CLASSNAME = TreeNode.class.getSimpleName();
     public static final String IMAGE_CLASSNAME = Image.class.getSimpleName();
 
@@ -51,39 +49,10 @@ public class DomainHelper {
         this.logger = logger;
         if (contextLogger == null) {
             this.contextLogger = new ContextLogger(logger);
-        } else {
+        }
+        else {
             this.contextLogger = contextLogger;
         }
-    }
-    
-    /**
-     * Create/return a child ObjetSet.
-     * @param parentFolder
-     * @param childName
-     * @return
-     * @throws Exception
-     */
-    public ObjectSet createChildObjectSet(TreeNode parentFolder, String subjectKey, String childName) throws Exception {
-        if (parentFolder.getChildren()!=null) {
-            for (Reference childReference : parentFolder.getChildren()) {
-                if (!childReference.getTargetClassName().equals(OBJECTSET_CLASSNAME)) {
-                    continue;
-                }
-                DomainObject child = domainDao.getDomainObject(subjectKey, childReference);
-                if (child.getName().equals(childName)) {
-                    return (ObjectSet) child;
-                }
-            }
-        }
-
-        // We need to create a new folder
-        ObjectSet set = new ObjectSet();
-        set.setName(childName);
-        set =  domainDao.save(subjectKey, set);
-        List<Reference> childRef = new ArrayList<>();
-        childRef.add(Reference.createFor(ObjectSet.class, set.getId()));
-        domainDao.addChildren(subjectKey, parentFolder,childRef);
-        return set;
     }
 
     /**
