@@ -20,7 +20,7 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
             if (result!=null) {
                 if (BRAIN_AREA.equalsIgnoreCase(areaName)) {
                 	alignedAreas.add(anatomicalArea);
-                    input1 = new AlignmentInputFile();
+                    input1 = new AlignmentInputFile(areaName);
                     input1.setPropertiesFromEntity(result);
                     input1.setSampleId(sample.getId());
                     input1.setObjective(objectiveSample.getObjective());
@@ -28,7 +28,7 @@ public class ConfiguredBrainVNCAlignmentService extends ConfiguredAlignmentServi
                 }
                 else if (VNC_AREA.equalsIgnoreCase(areaName)) {
                 	alignedAreas.add(anatomicalArea);
-                    input2 = new AlignmentInputFile();
+                    input2 = new AlignmentInputFile(areaName);
                     input2.setPropertiesFromEntity(result);
                     input2.setSampleId(sample.getId());
                     input2.setObjective(objectiveSample.getObjective());

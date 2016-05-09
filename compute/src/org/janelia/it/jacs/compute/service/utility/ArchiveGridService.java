@@ -30,8 +30,6 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  */
 public class ArchiveGridService extends SubmitDrmaaJobService {
 
-	protected Logger logger = Logger.getLogger(ArchiveGridService.class);
-
 	private static final int TIMEOUT_SECONDS = 1800; // 30 minutes
 
 	public static final String PARAM_sourceFilePaths = "source file paths";
@@ -75,7 +73,7 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
             }
             
             if (sourcePaths.isEmpty()) {
-                logger.info("SOURCE_FILE_PATHS is empty, nothing to do.");
+                contextLogger.info("SOURCE_FILE_PATHS is empty, nothing to do.");
                 return;
             }
             
@@ -131,11 +129,11 @@ public class ArchiveGridService extends SubmitDrmaaJobService {
         for(String sourceFilepath : sourcePaths) {
             String targetFilepath = targets.remove();
             if (sourceFilepath!=null && targetFilepath!=null) {
-                logger.info("Will copy "+sourceFilepath+" to "+targetFilepath);
+            	contextLogger.info("Will copy "+sourceFilepath+" to "+targetFilepath);
                 writeInstanceFiles(sourceFilepath, targetFilepath, configIndex++);
             }
             else {
-                logger.warn("Null source or target filepath. Source:"+sourceFilepath+", Target:"+targetFilepath);
+            	contextLogger.warn("Null source or target filepath. Source:"+sourceFilepath+", Target:"+targetFilepath);
             }
         }
         writeShellScript(writer);

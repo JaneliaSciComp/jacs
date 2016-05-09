@@ -59,7 +59,7 @@ public class ConfiguredPairAlignmentService extends ConfiguredAlignmentService {
     private AlignmentInputFile buildInputFromResult(String inputType, SampleProcessingResult result, ObjectiveSample objectiveSample, String objective) throws Exception {
 
         if (result==null) return null;
-        AlignmentInputFile inputFile = new AlignmentInputFile();
+        AlignmentInputFile inputFile = new AlignmentInputFile(result.getAnatomicalArea());
         inputFile.setPropertiesFromEntity(result);
         inputFile.setSampleId(sample.getId());
         inputFile.setObjective(objective);        

@@ -53,7 +53,9 @@ public class GridSubmitHelperMap {
     public synchronized void removeFromDataMap(String key) {
         HashMap<String, Object> originalObjectMap = (HashMap<String, Object>) dataMap.get(key);
         Process proc = (Process) originalObjectMap.get(PROCESS_OBJECT);
-        proc.destroy();
+        if (proc!=null) {
+        	proc.destroy();
+        }
         dataMap.remove(key);
         System.gc();
     }
