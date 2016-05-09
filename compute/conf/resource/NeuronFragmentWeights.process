@@ -1,0 +1,61 @@
+<!--
+
+	This pipeline will search the neuron fragments collection and look for any neuron separations without existing weights.
+    For separations that don't have weights, it kicks off an analysis of the ConsolidatedLabel file and counts the pixel weights for each
+    labeled fragment.
+
+    It stores this information in a file that gets added to the neuron fragment model.
+	The twist is that two kinds of artifacts will be generated:
+-->
+
+<process name="Neuron Fragment Weights Loader Pipeline" processor="queue/neuronFragmentWeights" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    <sequence>
+
+    	    <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+                <input name="TASK_PARAMETER_1" value="folder where neuron fragment data will be written"/>
+                <input name="PROCESS_VARIABLE_1" value="FRAGMENT_WEIGHTS_DIR"/>
+                <output name="FRAGMENT_WEIGHTS_DIR"/>
+    	    </operation>
+
+	    	<operation name="Initial Neuron Separation Analysis" processor="org.janelia.it.jacs.compute.service.domain.NeuronFragmentWeightsService" startEvent="running">
+	    	    <input name="MODE" value="SEPARATIONLIST"/>
+    			<output name="NEURON_SEPARATION_INDEX"/>
+    			<output name="NEURON_SEPARATION_MAP"/>
+    		</operation>
+
+	        <!-- Generate the neuron separation weights -->
+	        <sequence name="Generating Weights for Neuron Separation" forEach="NEURON_SEPARATION_INDEX" waitForAsync="true" startEvent="running">
+	            <sequence async="true">
+	                <sequence>
+	                    <!-- Service instance for processing each MIP Group -->
+                    	<operation name="Create Neuron Separation Data" processor="org.janelia.it.jacs.compute.service.domain.NeuronFragmentWeightsService">
+                    	    <input name="MODE" value="WEIGHTSPRELOAD"/>
+                     		<input name="NEURON_SEPARATION_INDEX"/>
+    			            <input name="NEURON_SEPARATION_MAP"/>
+                    		<output name="NEURON_SEPARATION_DIR"/>
+                    	</operation>
+
+                        <sequence name="Fragment Pixel Weight Generation" waitForAsync="true">
+        		            <operation name="PBD Generation" processor="queue/gridSubmitAndWait">
+        				        <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronFragmentsWeightGridTask"/>
+                        	    <input name="FRAGMENT_WEIGHTS_DIR"/>
+        		                <input name="NEURON_SEPARATION_DIR" value="$V{NEURON_SEPARATION_DIR}"/>
+        				    </operation>
+        			    </sequence>
+
+        	        </sequence>
+        	    </sequence>
+            </sequence>
+
+            <sequence name="Processing of neuron separation weights into Model" startEvent="running">
+                <operation name="Updating Neuron Separations and Fragments" processor="org.janelia.it.jacs.compute.service.domain.NeuronFragmentWeightsService" startEvent="running">
+                    <input name="MODE" value="PROCESSRESULTS"/>
+                    <input name="FRAGMENT_WEIGHTS_DIR"/>
+                </operation>
+        
+            </sequence>
+
+     	</sequence>
+    </sequence>
+</process>
