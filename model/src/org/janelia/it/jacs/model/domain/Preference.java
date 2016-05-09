@@ -22,12 +22,12 @@ public class Preference implements HasIdentifier, Serializable {
     private String subjectKey;
     private String category;
     private String key;
-    private String value;
+    private Object value;
 
     public Preference() {
     }
     
-    public Preference(String subjectKey, String category, String key, String value) {
+    public Preference(String subjectKey, String category, String key, Object value) {
         this.subjectKey = subjectKey;
         this.category = category;
         this.key = key;
@@ -66,11 +66,11 @@ public class Preference implements HasIdentifier, Serializable {
         this.key = key;
     }
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 

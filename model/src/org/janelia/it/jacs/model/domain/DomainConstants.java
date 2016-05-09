@@ -34,6 +34,7 @@ public class DomainConstants {
     public static final String PREFERENCE_CATEGORY_IMAGE_TYPE = "ImageType";
     public static final String PREFERENCE_VALUE_LATEST = "Latest";
     public static final String PREFERENCE_CATEGORY_TABLE_COLUMNS = "TableColumns";
+    public static final String PREFERENCE_CATEGORY_NEURON_SEPARATION_VISIBILITY = "NeuronSepVisibility";
 
     public static final String GENERAL_USER_GROUP_KEY = "group:workstation_users";
     
