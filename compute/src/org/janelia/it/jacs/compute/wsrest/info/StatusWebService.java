@@ -99,15 +99,47 @@ public class StatusWebService extends ResourceConfig {
             notes = "")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getBlockView() {
+    public String getBlockView(@QueryParam("startDate") final String startDate,
+                               @QueryParam("endDate") final String endDate) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
         List<Document> jsonResult = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         try {
-            jsonResult = sample.find().batchSize(1000000).projection(fields(include("tmogDate", "status", "dataSet", "name")))
-                    .into(new ArrayList());
+            if (startDate!=null || endDate!=null) {
+                if (startDate==null) {
+                    Date endDateTime = sdf.parse(endDate);
+                    jsonResult = sample.find(lte("tmogDate", endDateTime))
+                            .batchSize(1000000)
+                            .projection(fields(include("tmogDate", "status", "dataSet", "name")))
+                            .sort(orderBy(ascending("tmogDate"),ascending("_id")))
+                            .into(new ArrayList());
+                } else if (endDate==null) {
+                    Date startDateTime = sdf.parse(startDate);
+                    jsonResult = sample.find(gte("tmogDate", startDateTime))
+                            .batchSize(1000000)
+                            .projection(fields(include("tmogDate", "status", "dataSet", "name")))
+                            .sort(orderBy(ascending("tmogDate"), ascending("_id")))
+                            .into(new ArrayList());
+                } else {
+                    Date endDateTime = sdf.parse(endDate);
+                    Date startDateTime = sdf.parse(startDate);
+                    jsonResult = sample.find(and(
+                            gte("tmogDate", startDateTime),
+                            lte("tmogDate", endDateTime)))
+                            .batchSize(1000000)
+                            .projection(fields(include("tmogDate", "status", "dataSet", "name")))
+                            .sort(orderBy(ascending("tmogDate"), ascending("_id")))
+                            .into(new ArrayList());
+                }
+            } else {
+                jsonResult = sample.find().batchSize(1000000)
+                        .projection(fields(include("tmogDate", "status", "dataSet", "name")))
+                        .sort(orderBy(ascending("tmogDate"), ascending("_id")))
+                        .into(new ArrayList());
+            }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             String samples =  objectMapper.writeValueAsString(jsonResult);
