@@ -4,7 +4,7 @@
 <process name="Upgrade User Data" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
-		<operation name="MCFO Data Upgrade" processor="org.janelia.it.jacs.compute.service.entity.UpgradeUserDataService">
+		<operation name="MCFO Data Upgrade" processor="org.janelia.it.jacs.compute.service.domain.UpgradeUserDataService">
 		</operation>
 		
     </sequence>

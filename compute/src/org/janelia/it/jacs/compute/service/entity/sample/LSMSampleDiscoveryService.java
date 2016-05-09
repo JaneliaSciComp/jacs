@@ -8,6 +8,8 @@ import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -54,25 +56,26 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
 
         SageDAO sageDao = new SageDAO(logger);
 
-        Multimap<String, SlideImage> slideGroups = LinkedListMultimap.create();
-        for (String lsmName : lsmNames) {
-            try {
-                SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
-                if (slideImage.getSlideCode() != null)
-                    slideGroups.put(slideImage.getSlideCode(), slideImage);
-                else
-                    throw new IllegalArgumentException("Invalid slide code value - slideCode should not be null");
-            } catch (DaoException e) {
-                logger.warn("Error while retrieving image for " + lsmName, e);
-            }
-        }
-
-        Set<String> sampleIds = new LinkedHashSet<>();
-        prepareSlideImageGroupsForCurrentDataset(sampleHelper, dataset, slideGroups, sampleIds);
-        sampleHelper.annexSamples();
-
-        logger.info("Setting the sample ids output: " + sampleIds);
-        processData.putItem("SAMPLE_ID", ImmutableList.copyOf(sampleIds));
+        // TODO: this code needs to be ported to NG
+//        Multimap<String, SlideImage> slideGroups = LinkedListMultimap.create();
+//        for (String lsmName : lsmNames) {
+//            try {
+//                SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
+//                if (slideImage.getSlideCode() != null)
+//                    slideGroups.put(slideImage.getSlideCode(), slideImage);
+//                else
+//                    throw new IllegalArgumentException("Invalid slide code value - slideCode should not be null");
+//            } catch (DaoException e) {
+//                logger.warn("Error while retrieving image for " + lsmName, e);
+//            }
+//        }
+//
+//        Set<String> sampleIds = new LinkedHashSet<>();
+//        prepareSlideImageGroupsForCurrentDataset(sampleHelper, dataset, slideGroups, sampleIds);
+//        sampleHelper.annexSamples();
+//
+//        logger.info("Setting the sample ids output: " + sampleIds);
+//        processData.putItem("SAMPLE_ID", ImmutableList.copyOf(sampleIds));
     }
 
     private void prepareSlideImageGroupsForCurrentDataset(SampleHelper sampleHelper,
@@ -99,21 +102,22 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
         Map<String, SlideImageGroup> tileGroups = new LinkedHashMap<>();
 
         int tileNum = 0;
-        for (SlideImage slideImage : slideImages) {
-            String area = slideImage.getArea();
-            String tag = slideImage.getTileType();
-            if (tag==null) {
-                tag = "Tile "+(tileNum+1);
-            }
-            String groupKey = area+"_"+tag;
-            SlideImageGroup tileGroup = tileGroups.get(groupKey);
-            if (tileGroup==null) {
-                tileGroup = new SlideImageGroup(area, tag);
-                tileGroups.put(groupKey, tileGroup);
-            }
-            tileGroup.addFile(slideImage);
-            tileNum++;
-        }
+        // TODO: this code needs to be ported to use LSMImages
+//        for (SlideImage slideImage : slideImages) {
+//            String area = slideImage.getArea();
+//            String tag = slideImage.getTileType();
+//            if (tag==null) {
+//                tag = "Tile "+(tileNum+1);
+//            }
+//            String groupKey = area+"_"+tag;
+//            SlideImageGroup tileGroup = tileGroups.get(groupKey);
+//            if (tileGroup==null) {
+//                tileGroup = new SlideImageGroup(area, tag);
+//                tileGroups.put(groupKey, tileGroup);
+//            }
+//            tileGroup.addFile(slideImage);
+//            tileNum++;
+//        }
         List<SlideImageGroup> tileGroupList = new ArrayList<>(tileGroups.values());
 
         // Sort the pairs by their tag name

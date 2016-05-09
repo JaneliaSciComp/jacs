@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.access;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -61,7 +62,7 @@ import com.fasterxml.jackson.databind.util.ISO8601Utils;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
-import java.io.InputStream;
+
 import sun.misc.BASE64Decoder;
 
 public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoader {
@@ -1472,12 +1473,12 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         i = 1;
         
         for(String type : upProjection) {
-            sql.append("and e"+i+".entity_type = '"+type+"' \n"); 
+            sql.append("and (e"+i+".entity_type = '"+type+"' || ed"+i+".entity_att = '"+type+"') \n"); 
             i++;
         }
 
         for(String type : downProjection) {
-            sql.append("and e"+i+".entity_type = '"+type+"' \n"); 
+            sql.append("and (e"+i+".entity_type = '"+type+"' || ed"+i+".entity_att = '"+type+"') \n"); 
             i++;
         }
         
@@ -1716,6 +1717,27 @@ public class AnnotationDAO extends ComputeBaseDAO implements AbstractEntityLoade
         }
     }
 
+    /**
+     * Auth-less / optimized version of getParentEntities for use in Mongo ETL.
+     */
+    public Set<Entity> getParentEntities(Long entityId) throws DaoException {
+        try {
+            if (log.isTraceEnabled()) {
+                log.trace("getParentEntitiesNoPerms(entityId="+entityId+")");
+            }
+            
+            Session session = getCurrentSession();
+            StringBuffer hql = new StringBuffer("select ed.parentEntity from EntityData ed ");
+            hql.append("join ed.parentEntity ");
+            hql.append("where ed.childEntity.id=? ");
+            Query query = session.createQuery(hql.toString()).setLong(0, entityId);
+            return new HashSet(filter(query.list()));
+        } 
+        catch (Exception e) {
+            throw new DaoException(e);
+        }
+    }
+    
     public Set<Entity> getParentEntities(String subjectKey, Long entityId) throws DaoException {
         try {
             if (log.isTraceEnabled()) {

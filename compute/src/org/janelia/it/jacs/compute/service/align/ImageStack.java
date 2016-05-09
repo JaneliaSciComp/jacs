@@ -3,8 +3,8 @@ package org.janelia.it.jacs.compute.service.align;
 import java.io.Serializable;
 
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 
 /**
  * All the metadata needed for an image stack.
@@ -23,13 +23,12 @@ public class ImageStack implements Serializable {
     protected Integer refChannelOneIndexed;
     protected Integer numChannels;
 
-    public void setPropertiesFromEntity(Entity image) {
-        setFilepath(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
-        setObjective(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE));
-        setChannelColors(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_COLORS));
-        setChannelSpec(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHANNEL_SPECIFICATION));
-        setOpticalResolution(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION));
-        setPixelResolution(image.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION));
+    public void setPropertiesFromEntity(SampleProcessingResult result) {
+        setFilepath(DomainUtils.getDefault3dImageFilePath(result));
+        setChannelColors(result.getChannelColors());
+        setChannelSpec(result.getChannelSpec());
+        setOpticalResolution(result.getOpticalResolution());
+        setPixelResolution(result.getImageSize());
     }
 
     public String getFilepath() {

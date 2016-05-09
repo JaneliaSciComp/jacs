@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.service.tiledMicroscope;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.FileNode;
@@ -13,6 +12,7 @@ import java.io.IOException;
 import java.util.Date;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanLocal;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.Event;
 
 /**
@@ -21,7 +21,7 @@ import org.janelia.it.jacs.model.tasks.Event;
  * Created by fosterl on 6/17/14.
  */
 @SuppressWarnings("unused")
-public class SwcImportService extends AbstractEntityService {
+public class SwcImportService extends AbstractDomainService {
     private Logger logger = Logger.getLogger(SwcImportService.class);
 
     public static final String FOLDER_NAME_PARAM = "FOLDER_NAME";

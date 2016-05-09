@@ -39,7 +39,7 @@
         </operation>
 	    
 	    <!-- Find all the Sample Entities in the database -->
-		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
+		<operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.domain.sample.SampleTraversalService">
 			<input name="RUN_MODE" value="ALL"/>
 			<input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
             <input name="DATA_SET_NAME"/>

@@ -3,6 +3,8 @@ package org.janelia.it.jacs.shared.solr;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.janelia.it.jacs.shared.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -13,6 +15,7 @@ import java.util.*;
  */
 public class SolrQueryBuilder {
 
+    private static final Logger log = LoggerFactory.getLogger(SolrQueryBuilder.class);
     private String searchString;
     private String auxString;
     private String auxAnnotationQueryString;
@@ -123,10 +126,6 @@ public class SolrQueryBuilder {
             qs.append(" AND (ancestor_ids:").append(rootId).append(")");
         }
 
-        qs.append(" +doc_type:").append(SolrDocTypeEnum.ENTITY.toString());
-
-        qs.append(" -entity_type:Ontology*");
-
         if (!StringUtils.isEmpty(auxString)) {
             qs.append(" +(");
             qs.append(auxString);
@@ -177,14 +176,23 @@ public class SolrQueryBuilder {
             query.setSortField(sortField, ascending ? ORDER.asc : ORDER.desc);
         }
 
+        boolean entityTypeFiltered = false;
         for (String fieldName : filters.keySet()) {
             Set<String> values = filters.get(fieldName);
             if (values == null || values.isEmpty()) {
                 continue;
             }
             query.addFilterQuery(getFilterQuery(fieldName, values));
+            if ("type".equals(fieldName)) {
+                entityTypeFiltered = true;
+            }
         }
-
+        
+        query.addFilterQuery("+doc_type:"+SolrDocTypeEnum.DOCUMENT.toString());
+        if (!entityTypeFiltered) {
+            query.addFilterQuery("-type:Ontology*");
+        }
+        
         for (String facet : facets) {
             // Exclude the facet field from itself, to support multi-valued faceting
             query.addFacetField("{!ex=" + facet + "}" + facet);
@@ -210,6 +218,35 @@ public class SolrQueryBuilder {
             query.append(")");
         }
         return query.toString();
+    }
+
+    public static SolrParams serializeSolrQuery(SolrQuery query) {
+        SolrParams queryParams = new SolrParams();
+        queryParams.setQuery(query.getQuery());
+        queryParams.setSortField(query.getSortField());
+        queryParams.setFilterQueries(query.getFilterQueries());
+        queryParams.setFacetField(query.getFacetFields());
+        queryParams.setRows(query.getRows());
+        queryParams.setStart(query.getStart());
+        return queryParams;
+    }
+
+    public static SolrQuery deSerializeSolrQuery(SolrParams queryParams) {
+        SolrQuery query = new SolrQuery();
+        query.setQuery(queryParams.getQuery());
+        if (queryParams.getSortField()!=null) {
+            String[] sortParams = queryParams.getSortField().split(" ");
+            ORDER sortOrder = (sortParams[1].equals("asc")?ORDER.asc:ORDER.desc);
+            query.setSortField(sortParams[0],sortOrder);
+        }
+        query.setFilterQueries(queryParams.getFilterQueries());
+        String[] facetFields = queryParams.getFacetField();
+        for (int i=0; i<facetFields.length; i++) {
+             query.addFacetField(facetFields[i]);
+        }
+        query.setStart(queryParams.getStart());
+        query.setRows(queryParams.getRows());
+        return query;
     }
 
     /**

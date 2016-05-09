@@ -18,6 +18,7 @@ import java.util.Set;
  * @see EntityBeanRemote
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Deprecated
 @Local
 public interface EntityBeanLocal extends EntityBeanRemote {
 

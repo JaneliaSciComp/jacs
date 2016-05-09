@@ -34,6 +34,7 @@
     <property name="webServices.dir" value="${basedir}/conf/webServices"/>
 
     <property name="rest-ws-war" value="${localname}-rest-ws.war"/>
+    <property name="secure-ws-war" value="${localname}-secure-ws.war"/>
 
     <!-- Compiles all src code from other than the src area into ${build.classes.dir} -->
 	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
@@ -68,16 +69,15 @@
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
         <path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
-            <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
-            <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
-            <fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Neo4j" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/jama-1.0.1" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Scality" includes="**/*.jar"/>
+		    <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
+		    <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
+			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/jama-1.0.1" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Scality" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
             <fileset dir="${common.dir}/snakeyaml-1.11" includes="**/*.jar"/>
             <fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
@@ -215,19 +215,59 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </war>
-        <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
+        <war warfile="${basedir}/build/jars/${secure-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
-                <include name="org/**/wsrest/RestfulWebService.class"/>
-                <include name="org/**/wsrest/computeresources/**/*.class"/>
-                <include name="org/**/wsrest/mouselight/**/*.class"/>
-                <include name="org/**/wsrest/dataresources/**/*.class"/>
-                <include name="org/**/annotation/api/*.class"/>
-                <include name="org/**/annotation/to/*.class"/>
+                <include name="org/**/wsrest/**/*.class"/>
+                <include name="org/**/wsrest/WebServiceContext.class"/>
+                <include name="org/**/access/**/*.class"/>
+                <include name="org/**/api/ComputeException.class"/>
+                <include name="org/**/compute/engine/service/ServiceException.class"/>
+                <include name="org/**/compute/engine/service/ValidServiceException.class"/>
+                <include name="org/**/compute/launcher/indexing/IndexingHelper.class"/>
+                <include name="org/**/compute/util/**/*.class"/>
+                <include name="org/**/shared/**/*.class"/>
+                <include name="org/**/model/**/*.class"/>
             </classes>
-            <lib dir="${basedir}/lib/resteasy-2.3.4">
+            <fileset dir="${jacs.properties.dir}">
+                <include name="jacs.properties"/>
+            </fileset>
+            <fileset dir="${basedir}/conf">
+                <include name="ehcache2-jacs.xml"/>
+                <include name="c3p0-nosql.json"/>
+            </fileset>
+            <fileset dir="${basedir}/webcontent">
+                <include name="**/*"/>
+            </fileset>
+            <lib dir="${common.dir}/Directory">
                 <include name="**/*.jar"/>
             </lib>
-            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
+            <lib dir="${common.dir}/Hibernate-3.2">
+                <include name="antlr-2.7.6.jar"/>
+            </lib>
+            <lib dir="${common.dir}/MongoDB">
+                <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${common.dir}/Apache-Commons">
+                <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${common.dir}/Solrj">
+                <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${common.dir}/Solrj">
+                <include name="dom4j-1.6.1.jar"/>
+            </lib>
+            <lib dir="${common.dir}/swagger">
+                <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${common.dir}/ehcache">
+                <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${common.dir}/JAX-RS-2.0.1">
+                <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${common.dir}/Jersey-2.19">
+                <include name="**/*.jar"/>
+            </lib>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
@@ -243,6 +283,7 @@
             <fileset file="${basedir}/build/jars/${localname}.war"/>
             <fileset file="${basedir}/build/jars/compute-dashboard.war"/>
             <fileset file="${basedir}/build/jars/${rest-ws-war}"/>
+            <fileset file="${basedir}/build/jars/${secure-ws-war}"/>
             <fileset file="${basedir}/build/jars/${localname}.jar"/>
             <fileset file="${basedir}/build/jars/${localname}.sar"/>
             <fileset file="${basedir}/build/jars/${localname}.har"/>
@@ -252,7 +293,6 @@
             </fileset>
             <fileset dir="${basedir}/conf">
             	<include name="ehcache2-jacs.xml"/>
-            	<include name="neo4j-beans.xml"/>
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
@@ -581,6 +621,7 @@
         </exec>
 
          <!--restart JBoss -->
+    	<sleep seconds="2"/>
         <echo message="Starting JBoss" />
         <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} default)"
               outputproperty="exec.output" errorproperty="exec.error">

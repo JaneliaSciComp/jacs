@@ -14,7 +14,7 @@
             <output name="SAMPLE_ENTITY_ID"/>
         </operation>
 	    
-        <operation name="Purge and Block" processor="org.janelia.it.jacs.compute.service.entity.sample.PurgeAndBlockSampleService">
+        <operation name="Purge and Block" processor="org.janelia.it.jacs.compute.service.domain.sample.PurgeAndBlockSampleService">
             <input name="SAMPLE_ENTITY_ID"/>
         </operation>
         

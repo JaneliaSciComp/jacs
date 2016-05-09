@@ -1,8 +1,10 @@
 
 package org.janelia.it.jacs.model;
 
-import org.janelia.it.jacs.model.entity.DataSetTest;
-import org.janelia.it.jacs.model.entity.EntityTypeTest;
+import org.janelia.it.jacs.model.domain.DomainObjectTests;
+import org.janelia.it.jacs.model.domain.DomainUtilsTest;
+import org.janelia.it.jacs.model.domain.OntologyTests;
+import org.janelia.it.jacs.model.domain.SampleTests;
 import org.junit.experimental.categories.Categories;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -16,7 +18,9 @@ import org.junit.runners.Suite;
 @RunWith(Categories.class)
 @Categories.IncludeCategory(TestCategories.FastTests.class)
 @Suite.SuiteClasses({
-        DataSetTest.class,
-        EntityTypeTest.class
+        DomainObjectTests.class,
+        DomainUtilsTest.class,
+        OntologyTests.class,
+        SampleTests.class
 })
 public class ModelModuleFastTestsSuite {}

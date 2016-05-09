@@ -4,21 +4,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.ImageType;
-import org.janelia.it.jacs.model.domain.LSMImage;
-import org.janelia.it.jacs.model.domain.NeuronSeparation;
-import org.janelia.it.jacs.model.domain.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.PipelineResult;
 import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.Sample;
-import org.janelia.it.jacs.model.domain.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.SampleTile;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.TreeNode;
-import org.janelia.it.jacs.model.domain.Workspace;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
+import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -120,7 +119,7 @@ public class SampleTest extends MongoDbTest {
 //    }
     
 
-    @Test
+    //@Test
     public void test() {
     
     	
@@ -183,49 +182,49 @@ public class SampleTest extends MongoDbTest {
     }
     
     public void testSubjects() {
-        for(Subject subject : dao.getCollection("subject").find().as(Subject.class)) {
+        for(Subject subject : dao.getCollectionByName("subject").find().as(Subject.class)) {
             Assert.assertNotNull(subject.getId());
             Assert.assertNotNull(subject.getKey());
         }
     }
     
-    //@Test
+    @Test
     public void runBenchmarks() throws Exception {
 
         long start = System.currentTimeMillis();
 
         int roots = 0;
-        String subjectKey = "group:leetlab";
+        String subjectKey = "user:nerna";
         for(Workspace workspace : dao.getWorkspaces(subjectKey)) {
             System.out.println("Got workspace: "+workspace.getName()+" for "+workspace.getOwnerKey());
             roots += dao.getDomainObjects(subjectKey, workspace.getChildren()).size();
         }
-        System.out.println("getCommonRootEntities('group:leetlab') took "+(System.currentTimeMillis()-start)+" ms and returned "+roots);
+        System.out.println("getCommonRootEntities('user:nerna') took "+(System.currentTimeMillis()-start)+" ms and returned "+roots);
         
         start = System.currentTimeMillis();
-        dao.changePermissions("group:leetlab","sample",1759767174932594786L,"user:rokickik","r",true);
-        System.out.println("grantPermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
+        dao.changePermissions("user:nerna","sample",1977172557152911458L,"user:rokickik","r",true);
+        System.out.println("grantPermissions('GMR_MB122B-20140131_19_A1') took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
-        dao.changePermissions("group:leetlab","sample",1759767174932594786L,"user:rokickik","r",false);
-        System.out.println("revokePermissions('TZL_stg14-Hey01328_Y1') took "+(System.currentTimeMillis()-start)+" ms");
+        dao.changePermissions("user:nerna","sample",1977172557152911458L,"user:rokickik","r",false);
+        System.out.println("revokePermissions('GMR_MB122B-20140131_19_A1') took "+(System.currentTimeMillis()-start)+" ms");
 
         // Count the number of items in the "Pan Lineage 40x" tree
         start = System.currentTimeMillis();
         
-        int c = count("group:leetlab", 1803555221738094690L);
-        System.out.println("countTree('Pan Lineage 40x') took "+(System.currentTimeMillis()-start)+" ms and returned "+c);
+        int c = count("user:nerna", 2047918390982475874L);
+        System.out.println("countTree('OL Split MCFO Case 1') took "+(System.currentTimeMillis()-start)+" ms and returned "+c);
         
         System.out.println("getProjectedResults(Sample->LSM Stack) ...");
         
-        Long retiredDataId = 1870629090470396002L;
-        subjectKey = "group:heberleinlab";
+        Long folderId = 1988022805484011618L;
+        subjectKey = "user:asoy";
 
         start = System.currentTimeMillis();
-        TreeNode retiredDataFolder = dao.getTreeNodeById(subjectKey, retiredDataId);
+        TreeNode polarityCase1Folder = dao.getTreeNodeById(subjectKey, folderId);
         Map<Long,Sample> sampleMap = new HashMap<Long,Sample>();
         
-        for(DomainObject obj : dao.getDomainObjects(subjectKey, retiredDataFolder.getChildren())) {
+        for(DomainObject obj : dao.getDomainObjects(subjectKey, polarityCase1Folder.getChildren())) {
             Sample sample = (Sample)obj;
             sampleMap.put(sample.getId(), sample);
         }
@@ -242,15 +241,14 @@ public class SampleTest extends MongoDbTest {
                 lsmMap.put(lsm.getId(), lsm);
             }
             
-            for(String objective : sample.getObjectives().keySet()) {
-                ObjectiveSample osample = sample.getObjectives().get(objective);
-                for(SampleTile tile : osample.getTiles()) {
+            for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+                for(SampleTile tile : objectiveSample.getTiles()) {
                     for(Reference lsmRef : tile.getLsmReferences()) {
                         LSMImage image = lsmMap.get(lsmRef.getTargetId());
                         if (image==null) {
                             throw new IllegalStateException("Missing LSM: "+lsmRef.getTargetId());
                         }
-                        System.out.println(sample.getName()+" -> "+image.getImages().get(ImageType.Stack));
+                        //System.out.println(sample.getName()+" -> "+image.getFiles().get(FileType.Stack));
                         mappedLsms++;
                     }
                 }
@@ -260,16 +258,16 @@ public class SampleTest extends MongoDbTest {
         System.out.println("2+3) mapping and retrieval of "+mappedLsms+" LSMs took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
-        int count = count(subjectKey, retiredDataId);
+        int count = count(subjectKey, folderId);
         System.out.println("4) count entity tree returned "+count+" and took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","treeNode",1938712577584398434L,"user:rokickik","r",true);
-        System.out.println("Grant on VT MCFO Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
+        dao.changePermissions("user:nerna","treeNode",1889491952735354978L,"user:rokickik","r",true);
+        System.out.println("Grant on nerna's Polarity Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
         
         start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","treeNode",1938712577584398434L,"user:rokickik","r",false);
-        System.out.println("Revoke on VT MCFO Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
+        dao.changePermissions("user:nerna","treeNode",1889491952735354978L,"user:rokickik","r",false);
+        System.out.println("Revoke on nerna's Polarity Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
     }
     
     private int count(String subjectKey, Long nodeId) {
@@ -282,13 +280,12 @@ public class SampleTest extends MongoDbTest {
         }
         for(DomainObject obj : dao.getDomainObjects(subjectKey, treeNode.getChildren())) {
             Sample sample = (Sample)obj;
-            for(String objective : sample.getObjectives().keySet()) {
-                ObjectiveSample osample = sample.getObjectives().get(objective);
-                for(SampleTile tile : osample.getTiles()) {
+            for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+                for(SampleTile tile : objectiveSample.getTiles()) {
                     for(Reference lsm : tile.getLsmReferences()) {
                     }
                 }
-                for(SamplePipelineRun run : osample.getPipelineRuns()) {
+                for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
                     if (run.getResults()==null) continue;
                     for(PipelineResult result : run.getResults()) {
                         if (result.getResults()==null) continue;

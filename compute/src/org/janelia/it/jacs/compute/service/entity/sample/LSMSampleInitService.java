@@ -1,11 +1,26 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.*;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -13,8 +28,11 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 
-import javax.annotation.Nullable;
-import java.util.*;
+import com.google.common.base.Function;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 
 /**
  * Discovers the SAGE samples associated with the given LSM and processes the corresponding samples.
@@ -35,12 +53,13 @@ public class LSMSampleInitService extends AbstractEntityService {
 
         Multimap<String, SlideImage> slideGroups = LinkedListMultimap.create();
         for (String lsmName : lsmNames) {
-            try {
-                SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
-                slideGroups.put(slideImage.getSlideCode(), slideImage);
-            } catch (DaoException e) {
-                logger.warn("Error while retrieving image for " + lsmName, e);
-            }
+            // TODO: this code needs to be ported to use LSMImages
+            //try {
+            //    SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
+            //    slideGroups.put(slideImage.getSlideCode(), slideImage);
+            //} catch (DaoException e) {
+            //    logger.warn("Error while retrieving image for " + lsmName, e);
+            //}
         }
 
         List<Task> sageLoadingTasks = new ArrayList<>();
@@ -132,6 +151,14 @@ public class LSMSampleInitService extends AbstractEntityService {
                 logger.warn("Line value for " + slideImage.getImageName() + " - " + slideImage.getLine()
                         + "  does not match " + line);
             }
+            // TODO: this code needs to be ported to use LSMImages
+            //String groupKey = area+"_"+tag;
+            //SlideImageGroup tileGroup = tileGroups.get(groupKey);
+            //if (tileGroup==null) {
+            //    tileGroup = new SlideImageGroup(area, tag);
+            //    tileGroups.put(groupKey, tileGroup);
+            //}
+            //tileNum++;
         }
         return new String[] {lab, line};
     }

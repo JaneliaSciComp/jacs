@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.compute.api;
 
 import org.apache.solr.client.solrj.SolrQuery;
+import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrResults;
 
@@ -25,6 +26,12 @@ public interface SolrBeanRemote {
 	 * @throws ComputeException
 	 */
 	public SolrResults search(String subjectKey, SolrQuery query, boolean mapToEntities) throws ComputeException;
+
+	public void updateIndex(DomainObject domainObj) throws ComputeException;
+
+	public void removeFromIndex(Long domainObjId) throws ComputeException;
+
+	public void addAncestorToIndex(Long domainObjId, Long ancestorId) throws ComputeException;
 	
 	/**
 	 * Returns the imagery vocabulary from Sage.

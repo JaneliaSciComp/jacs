@@ -1,8 +1,11 @@
 package org.janelia.it.jacs.model.domain.ontology;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Custom extends Text {
 
-    public String getName() {
+    @JsonIgnore
+    public String getTypeName() {
         return "Custom";
     }
 }

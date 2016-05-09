@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.shared.utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Helper methods for dealing with reflection.
@@ -41,13 +42,43 @@ public class ReflectionUtils {
             throw new RuntimeException("Field cannot be accessed",e);
         }
     }
+
+    /**
+     * Set the given field on the specified object. If the field is
+     * private, this subverts the security manager to set the value anyway.
+     */
+    public static Object getFieldValue(Object obj, Field field) 
+            throws NoSuchFieldException {
+        try {
+            field.setAccessible(true);
+            return field.get(obj); 
+        }
+        catch (IllegalAccessException e) {
+            throw new RuntimeException("Field cannot be accessed",e);
+        }
+    }
+    
+    /**
+     * Set the given field on the specified object. If the field is
+     * private, this subverts the security manager to set the value anyway.
+     */
+    public static void setFieldValue(Object obj, Field field, Object value) 
+            throws NoSuchFieldException {
+        try {
+            field.setAccessible(true);
+            field.set(obj, value);    
+        }
+        catch (IllegalAccessException e) {
+            throw new RuntimeException("Field cannot be accessed",e);
+        }
+    }
     
     /**
      * Get the given attribute from the specified object, 
      * using the public getter method.
      */
     public static Object get(Object obj, String attributeName) 
-            throws Exception {
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         String methodName = getAccessor("get", attributeName);
         return obj.getClass().getMethod(methodName, EMPTY_ARGS_TYPES).invoke(
             obj, EMPTY_ARGS_VALUES);
@@ -58,7 +89,7 @@ public class ReflectionUtils {
      * using the public setter method.
      */
     public static void set(Object obj, String attributeName, Object value) 
-            throws Exception {
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Class[] argTypes = {value.getClass()};
         Object[] argValues = {value};
         String methodName = getAccessor("set", attributeName);
@@ -80,8 +111,7 @@ public class ReflectionUtils {
         throw new NoSuchFieldException(fieldName);
     }
     
-    private static String getAccessor(String prefix, String attributeName) 
-            throws NoSuchMethodException {
+    private static String getAccessor(String prefix, String attributeName) {
         String firstChar = attributeName.substring(0, 1).toUpperCase();
         return prefix+firstChar+attributeName.substring(1);
     }

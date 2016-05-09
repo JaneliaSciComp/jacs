@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
@@ -24,7 +24,7 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SetTaskFileResultsService extends AbstractEntityService {
+public class SetTaskFileResultsService extends AbstractDomainService {
 
 	public static final String RESULT_TOKEN = "RESULT!";
 	
@@ -39,7 +39,7 @@ public class SetTaskFileResultsService extends AbstractEntityService {
             	if (sb.length()>0) sb.append(",");
             	sb.append(sampleArea.getName());
             	sb.append("=");
-                sb.append(sampleArea.getStitchedFilename());
+                sb.append(sampleArea.getStitchedFilepath());
             }
             setResultMessage(RESULT_TOKEN+sb.toString());
             return;

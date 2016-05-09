@@ -50,7 +50,15 @@ echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
 
-CONSOLIDATED_LABEL=$OUTDIR/ConsolidatedLabel.v3draw
+CONSOLIDATED_LABEL="$OUTDIR/ConsolidatedLabel.v3draw"
+if [ ! -s "$CONSOLIDATED_LABEL" ]; then
+    CONSOLIDATED_LABEL="$OUTDIR/ConsolidatedLabel.v3dpbd"
+    if [ ! -s "$CONSOLIDATED_LABEL" ]; then
+        echo "ConsolidatedLabel file not found in output directory"
+        exit 1
+    fi
+fi
+
 CONSOLIDATED_SIGNAL=$OUTDIR/ConsolidatedSignal.v3draw
 REFERENCE=$OUTDIR/Reference.v3draw
 

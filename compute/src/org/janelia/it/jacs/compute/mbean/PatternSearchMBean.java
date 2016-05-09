@@ -10,8 +10,6 @@ package org.janelia.it.jacs.compute.mbean;
 
 public interface PatternSearchMBean {
 
-    public void changePatternAnnotationFolderName();
-
     public void runCompartmentAnnotation3DService(String user, String configurationName, String sampleIdListFilePath,
                                                   String patternChannelString);
 

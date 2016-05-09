@@ -12,96 +12,6 @@
     </constructor>
 
     <operation>
-        <description>Load in Arnim's annotations from Picasa.</description>
-        <name>runAnnotationImport</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Path to annotations file which annotates fly specimens with a list of annotations (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/SplitPicking/annotations.txt")</description>
-           <name>annotationsPath</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of the ontology to use, or create if it doesn't exist (e.g. "Picasa Imported Ontology")</description>
-           <name>ontologyName</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Load in the screen intensity and distribution scores as annotations, and create a folder structure to organize them.</description>
-        <name>runScreenScoresLoading</name>
-        <parameter>
-           <description>User to run as (e.g. "jenetta")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Full path of accepts file to read from (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/ScreenEvaluation/finalAccepts.txt")</description>
-           <name>acceptsPath</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Full path of file to write to (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/ScreenEvaluation/loaded.txt")</description>
-           <name>loadedFile</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Export the screen intensity and distribution scores.</description>
-        <name>runScreenScoresExport</name>
-        <parameter>
-           <description>User to run as (e.g. "jenetta")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Full path for the output file (e.g. "/groups/jacs/jacsShare/rokickiTest/scoreExport.txt")</description>
-           <name>outputFilepath</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Load in Arnim's representatives and split constructs spreadsheets and combine them with the screen data into a new hierarchy for split line representative determination.</description>
-        <name>runSplitLinesLoading</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Name of top level folder for split lines (e.g. "FlyLight Screen Split Constructs")</description>
-           <name>topLevelFolderName</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Path to representatives file which picks a representative specimen for each flyline (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/SplitPicking/representatives.txt")</description>
-           <name>representativesPath</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Path to split constructs file which annotates flylines with an AD or DBD designation (e.g. "/groups/jacs/jacsShare/PipelineInputFiles/SplitPicking/splitReps.txt")</description>
-           <name>splitConstructsPath</name>
-           <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Synchronize Neo4j to the database</description>
-        <name>runNeo4jSync</name>
-        <parameter>
-           <description>Clear the Neo4j database first?</description>
-           <name>clearDb</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-    
-    <operation>
         <description>Synchronize the MongoDb to the database</description>
         <name>runMongoDbSync</name>
         <parameter>
@@ -110,7 +20,12 @@
            <type>java.lang.Boolean</type>
         </parameter>
     </operation>
-    
+
+    <operation>
+        <description>Periodic maintenance for the MongoDb database</description>
+        <name>runMongoDbMaintenance</name>
+    </operation>
+
     <operation>
         <description>Synchronize the SOLR indexes to the database</description>
         <name>runSolrIndexSync</name>
@@ -214,46 +129,6 @@
            <description>Identifier of the root entity (e.g. "1679282451010027618")</description>
            <name>entityId</name>
            <type>java.lang.String</type>
-        </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run the FlyScreen Pipeline</description>
-        <name>runFlyScreenPipeline</name>
-        <parameter>
-           <description>User to run as (e.g. "flylight")</description>
-           <name>user</name>
-           <type>java.lang.String</type>
-        </parameter>
-        <parameter>
-           <description>Re-run the Samples that already have results?</description>
-           <name>refresh</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-
-    <operation>
-         <description>Run the FlyScreen Pattern Annotation Pipeline</description>
-         <name>runFlyScreenPatternAnnotationPipeline</name>
-         <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
-         </parameter>
-         <parameter>
-            <description>Re-run the Samples that already have results?</description>
-            <name>refresh</name>
-            <type>java.lang.Boolean</type>
-         </parameter>
-     </operation>
-
-    <operation>
-        <description>Perform custom surgery on Screen Pipeline results, by user</description>
-        <name>performScreenPipelineSurgery</name>
-        <parameter>
-            <description>User to run as (e.g. "flylight")</description>
-            <name>user</name>
-            <type>java.lang.String</type>
         </parameter>
     </operation>
 
@@ -501,11 +376,6 @@
            <name>entityId</name>
            <type>java.lang.String</type>
         </parameter>
-    </operation>
-    
-    <operation>
-        <description>Run cleanup for nerna retired data</description>
-        <name>runNernaRetiredDataCleanup</name>
     </operation>
 
     <operation>

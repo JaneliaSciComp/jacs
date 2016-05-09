@@ -1,37 +1,31 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
 import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.jongo.MongoCollection;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.mongodb.WriteConcern;
-
 /**
- * Data access to the MongoDB data store.
+ * Data maintenance for the MongoDB data store. For example, denormalization operations. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class MongoDbMaintainer {
-    
+
     private static final Logger log = Logger.getLogger(MongoDbMaintainer.class);
-	
-    protected DomainDAO domainDao;
-    
-    public MongoDbMaintainer(String serverUrl, String databaseName) throws UnknownHostException {
-        this.domainDao = new DomainDAO(serverUrl, databaseName);
-        // To load as fast as possible, we don't wait to be acknowledged. 
-        // This can introduce subtle problems, so it's important to verify the integrity of the load manually (e.g. cross check the entity counts). 
-        // TODO: Maybe we should disable this for the eventual production load. 
-        domainDao.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+
+    protected DomainDAO dao;
+
+    public MongoDbMaintainer() throws UnknownHostException {
+        this.dao = DomainDAOManager.getInstance().getDao();
     }
 
     public void refreshPermissions() throws DaoException {
@@ -39,112 +33,119 @@ public class MongoDbMaintainer {
         long start = System.currentTimeMillis();
         log.info("Refreshing denormalized permissions");
 
-        Multimap<String,String> groupMap = HashMultimap.<String,String>create();
-        for(Subject subject : domainDao.getCollection("subject").find().as(Subject.class)) {
-            for(String groupKey : subject.getGroups()) {
+        Multimap<String, String> groupMap = HashMultimap.create();
+        for (Subject subject : dao.getCollectionByName("subject").find().as(Subject.class)) {
+            for (String groupKey : subject.getGroups()) {
                 groupMap.put(groupKey, subject.getKey());
             }
         }
-        
-        Map<String,Class<? extends DomainObject>> domainClassMap = domainDao.getDomainClassMap();
-        for(String domainType : domainClassMap.keySet()) {
-            log.info("Refreshing denormalized permissions for "+domainType);
-            
-            MongoCollection collection = domainDao.getCollection(domainType);
-            Class domainClass = domainClassMap.get(domainType);
-            Iterable iterable = collection.find().as(domainClass);
-            
-            if (iterable==null) {
-                log.info("Could not iterate collection "+domainType+" as "+domainClass);
+
+        Set<String> collectionNames = DomainUtils.getCollectionNames();
+        for (String collectionName : collectionNames) {
+            log.info("Refreshing denormalized permissions for " + collectionName);
+
+            MongoCollection collection = dao.getCollectionByName(collectionName);
+            Class<?> domainClass = DomainUtils.getBaseClass(collectionName);
+            if (!DomainObject.class.isAssignableFrom(domainClass))
+                continue;
+            Iterable<?> iterable = collection.find().as(domainClass);
+
+            if (iterable == null) {
+                log.info("Could not iterate collection " + collectionName + " as " + domainClass);
                 continue;
             }
-            
-            for(Object obj : iterable) {
-                DomainObject domainObject = (DomainObject)obj;
+
+            for (Object obj : iterable) {
+                DomainObject domainObject = (DomainObject) obj;
                 String ownerKey = domainObject.getOwnerKey();
-                if (ownerKey==null) continue;
-                collection.update("{_id:#}",domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}",ownerKey,ownerKey);
-                
+                if (ownerKey == null)
+                    continue;
+                collection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
+
             }
         }
-        log.info("Refreshing permissions took "+(System.currentTimeMillis()-start) + " ms");
+
+        log.info("Refreshing permissions took " + (System.currentTimeMillis() - start) + " ms");
     }
 
     public void ensureIndexes() throws DaoException {
-        
+
         long start = System.currentTimeMillis();
         log.info("Ensuring indexes");
 
-        MongoCollection treeNodeCollection = domainDao.getCollection("treeNode");
-        ensureDomainIndexes(treeNodeCollection);
-        treeNodeCollection.ensureIndex("{name:1}");
-        treeNodeCollection.ensureIndex("{class:1}");
-        treeNodeCollection.ensureIndex("{class:1,writers:1}");
-        treeNodeCollection.ensureIndex("{class:1,readers:1}");
+        MongoCollection alignmentBoardCollection = dao.getCollectionByName("alignmentBoard");
+        ensureDomainIndexes(alignmentBoardCollection);
 
-        MongoCollection ontologyCollection = domainDao.getCollection("ontology");
-        ensureDomainIndexes(ontologyCollection);
-        ontologyCollection.ensureIndex("{name:1}");
-
-        MongoCollection sampleCollection = domainDao.getCollection("sample");
-        ensureDomainIndexes(sampleCollection);
-        sampleCollection.ensureIndex("{name:1}");
-        sampleCollection.ensureIndex("{dataSet:1}");
-        sampleCollection.ensureIndex("{line:1}");
+        MongoCollection annotationCollection = dao.getCollectionByName("annotation");
+        ensureDomainIndexes(annotationCollection);
+        annotationCollection.ensureIndex("{target:1}");
+        annotationCollection.ensureIndex("{target:1,readers:1}");
         
-        MongoCollection fragmentCollection = domainDao.getCollection("fragment");
-        ensureDomainIndexes(fragmentCollection);
-        fragmentCollection.ensureIndex("{separationId:1}");
-        fragmentCollection.ensureIndex("{sampleId:1}");
-        fragmentCollection.ensureIndex("{sampleId:1,writers:1}");
-        fragmentCollection.ensureIndex("{sampleId:1,readers:1}");
+        MongoCollection compartmentSetCollection = dao.getCollectionByName("compartmentSet");
+        ensureDomainIndexes(compartmentSetCollection);
 
-        MongoCollection lsmCollection = domainDao.getCollection("lsm");
-        ensureDomainIndexes(lsmCollection);
-        lsmCollection.ensureIndex("{sageId:1}");
-        lsmCollection.ensureIndex("{slideCode:1}");
-        lsmCollection.ensureIndex("{filepath:1}");
-        lsmCollection.ensureIndex("{sampleId:1}");
-        lsmCollection.ensureIndex("{sampleId:1,writers:1}");
-        lsmCollection.ensureIndex("{sampleId:1,readers:1}");
+        MongoCollection dataSetCollection = dao.getCollectionByName("dataSet");
+        ensureDomainIndexes(dataSetCollection);
+        dataSetCollection.ensureIndex("{identifier:1}","{unique:true}");
+        dataSetCollection.ensureIndex("{pipelineProcesses:1}");
 
-        MongoCollection flyLineCollection = domainDao.getCollection("flyLine");
+        MongoCollection flyLineCollection = dao.getCollectionByName("flyLine");
         ensureDomainIndexes(flyLineCollection);
         flyLineCollection.ensureIndex("{robotId:1}");
+        flyLineCollection.ensureIndex("{balancedLine:1,readers:1}");
+        flyLineCollection.ensureIndex("{originalLine:1,readers:1}");
+        flyLineCollection.ensureIndex("{representativeScreenSample:1,readers:1}");
 
-        MongoCollection screenSampleCollection = domainDao.getCollection("screenSample");
-        ensureDomainIndexes(screenSampleCollection);
-        screenSampleCollection.ensureIndex("{flyLine:1}");
+        MongoCollection fragmentCollection = dao.getCollectionByName("fragment");
+        ensureDomainIndexes(fragmentCollection);
+        fragmentCollection.ensureIndex("{separationId:1}");
+        fragmentCollection.ensureIndex("{separationId:1,readers:1}");
+        fragmentCollection.ensureIndex("{sampleRef:1}");
+        fragmentCollection.ensureIndex("{sampleRef:1,readers:1}");
 
-        MongoCollection patternMaskCollection = domainDao.getCollection("patternMask");
+        MongoCollection imageCollection = dao.getCollectionByName("image");
+        ensureDomainIndexes(imageCollection);
+        imageCollection.ensureIndex("{sageId:1}");
+        imageCollection.ensureIndex("{slideCode:1}");
+        imageCollection.ensureIndex("{filepath:1}");
+        imageCollection.ensureIndex("{sampleRef:1}");
+        imageCollection.ensureIndex("{sampleRef:1,readers:1}");
+
+        MongoCollection ontologyCollection = dao.getCollectionByName("ontology");
+        ensureDomainIndexes(ontologyCollection);
+
+        MongoCollection patternMaskCollection = dao.getCollectionByName("patternMask");
         ensureDomainIndexes(patternMaskCollection);
-        patternMaskCollection.ensureIndex("{screenSampleId:1}");
-        patternMaskCollection.ensureIndex("{screenSampleId:1,writers:1}");
-        patternMaskCollection.ensureIndex("{screenSampleId:1,readers:1}");
 
-        MongoCollection annotationCollection = domainDao.getCollection("annotation");
-        ensureDomainIndexes(annotationCollection);
-        annotationCollection.ensureIndex("{targetId:1}");
-        annotationCollection.ensureIndex("{targetId:1,writers:1}");
-        annotationCollection.ensureIndex("{targetId:1,readers:1}");
-        annotationCollection.ensureIndex("{text:1}");
+        MongoCollection sampleCollection = dao.getCollectionByName("sample");
+        ensureDomainIndexes(sampleCollection);
+        sampleCollection.ensureIndex("{dataSet:1}");
         
-        log.info("Indexing MongoDB took "+(System.currentTimeMillis()-start)+" ms");
+        MongoCollection subjectCollection = dao.getCollectionByName("subject");
+        subjectCollection.ensureIndex("{key:1}","{unique:true}");
+        subjectCollection.ensureIndex("{name:1}");
+        subjectCollection.ensureIndex("{groups:1}");
+
+        MongoCollection treeNodeCollection = dao.getCollectionByName("treeNode");
+        ensureDomainIndexes(treeNodeCollection);
+        
+        log.info("Indexing MongoDB took " + (System.currentTimeMillis() - start) + " ms");
     }
 
     private void ensureDomainIndexes(MongoCollection mc) {
         mc.ensureIndex("{ownerKey:1}");
         mc.ensureIndex("{writers:1}");
         mc.ensureIndex("{readers:1}");
+        mc.ensureIndex("{name:1}");
         mc.ensureIndex("{_id:1,writers:1}");
         mc.ensureIndex("{_id:1,readers:1}");
     }
-    
+
     /**
      * Test harness
      */
     public static void main(String[] args) throws Exception {
-        MongoDbMaintainer refresh = new MongoDbMaintainer("rokicki-ws", "jacs");
+        MongoDbMaintainer refresh = new MongoDbMaintainer();
         refresh.refreshPermissions();
         refresh.ensureIndexes();
     }

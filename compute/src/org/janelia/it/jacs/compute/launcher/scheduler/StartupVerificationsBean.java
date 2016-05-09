@@ -61,7 +61,7 @@ public class StartupVerificationsBean implements StartupVerificationService {
             }
         }
         if (missingFields) {
-            throw new Exception("EntityConstants do not match the values in the database.  Check the warning messages in the log above.");
+            log.warn("EntityConstants do not match the values in the database.  Check the warning messages in the log above.");
         }
         else {
             log.info("Verified all EntityConstants: "+dbTypeSet.size()+" types, "+dbAttributeSet.size()+" attributes");

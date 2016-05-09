@@ -63,15 +63,9 @@
         </operation>
 
         <sequence if="RUN_SAMPLE_DISCOVERY=true">
-                
-            <!-- Automatically retire samples if there are only a few --> 
-            <operation name="Sample Retirement" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleRetirementService">
-                <input name="DATA_SET_NAME"/>
-                <input name="MAX_SAMPLES" value="5"/>
-            </operation>
-        
+                        
             <!-- Discover samples in Sage and load them into the database as Entities -->
-            <operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.fileDiscovery.SageDataSetDiscoveryService">
+            <operation name="Initial Image Discovery" processor="org.janelia.it.jacs.compute.service.domain.discovery.SageDataSetDiscoveryService">
                 <input name="DEFAULT_CHANNEL_SPECIFICATION" value="sssr"/>
                 <input name="DATA_SET_NAME"/>
             </operation>
@@ -79,7 +73,7 @@
         </sequence>
 
         <!-- Find all the Sample Entities in the database -->
-        <operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleTraversalService">
+        <operation name="Sample Traversal" processor="org.janelia.it.jacs.compute.service.domain.sample.SampleTraversalService">
             <input name="RUN_MODE"/>
             <input name="OUTVAR_ENTITY_ID" value="SAMPLE_ENTITY_ID"/>
             <input name="DATA_SET_NAME"/>

@@ -13,7 +13,7 @@
             <output name="RELEASE_ENTITY_ID"/>
         </operation>
     	    
-        <operation name="Synchronize Release Folders" processor="org.janelia.it.jacs.compute.service.entity.sample.SyncReleaseFoldersService">
+        <operation name="Synchronize Release Folders" processor="org.janelia.it.jacs.compute.service.domain.sample.SyncReleaseFoldersService">
             <input name="RELEASE_ENTITY_ID"/>
             <output name="RELEASE_FOLDER_ID"/>
         </operation>
