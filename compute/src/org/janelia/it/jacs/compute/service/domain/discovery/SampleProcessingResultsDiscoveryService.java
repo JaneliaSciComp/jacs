@@ -46,17 +46,17 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         String resultName = data.getRequiredItemAsString("RESULT_ENTITY_NAME");
         FileNode resultFileNode = (FileNode)data.getRequiredItem("ROOT_FILE_NODE");
         String rootPath = resultFileNode.getDirectoryPath();
-        
-        logger.info("Creating result named '"+resultName+"' with type 'SampleProcessingResult'");
+
+        contextLogger.info("Creating result named '"+resultName+"' with type 'SampleProcessingResult'");
         SampleProcessingResult result = sampleHelper.addNewSampleProcessingResult(run, resultName);
-        logger.info("Setting result anatomical area to "+sampleArea.getName());
+        contextLogger.info("Setting result anatomical area to "+sampleArea.getName());
         result.setAnatomicalArea(sampleArea.getName());
-        logger.info("Setting result channel specification to "+channelSpec);
+        contextLogger.info("Setting result channel specification to "+channelSpec);
         result.setChannelSpec(channelSpec);
-        logger.info("Setting result filepath to "+rootPath);
+        contextLogger.info("Setting result filepath to "+rootPath);
         result.setFilepath(rootPath);
-        
-        logger.info("Discovering supporting files in "+rootPath);
+
+        contextLogger.info("Discovering supporting files in "+rootPath);
         FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
         
@@ -66,22 +66,22 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         for(String filepath : filepaths) {
             File file = new File(filepath);
             if (file.getName().endsWith("_reference.png")) {
-            	logger.info("Found reference MIP: "+file);
+                contextLogger.info("Found reference MIP: "+file);
             	DomainUtils.setFilepath(result, FileType.ReferenceMip, file.getAbsolutePath());
             }
             else if (file.getName().endsWith("_signal.png")) {
-            	logger.info("Found signal MIP: "+file);
+                contextLogger.info("Found signal MIP: "+file);
             	DomainUtils.setFilepath(result, FileType.SignalMip, file.getAbsolutePath());
             }
             else if (file.getName().endsWith(".tc")) {
-            	logger.info("Found stitched tile configuration: "+file);
+                contextLogger.info("Found stitched tile configuration: "+file);
                 pixelRes = getStitchedDimensions(filepath);
             }
             else if (filepath.equals(stitchedFilepath)) {
                 if (image3d!=null) {
-                    logger.warn("More than one 3d image result detected for sample processing "+result.getId());
-                }   
-                logger.info("Found main 3d image: "+file.getName());
+                    contextLogger.warn("More than one 3d image result detected for sample processing "+result.getId());
+                }
+                contextLogger.info("Found main 3d image: "+file.getName());
                 image3d = file;
             }
         }
@@ -97,7 +97,7 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
 
         // TODO: should determine consensus pixel resolution for all tiles (not just the main image), if we didn't stitch them
         if (pixelRes!=null) {
-            logger.info("Setting result pixel resolution to "+pixelRes);
+            contextLogger.info("Setting result pixel resolution to "+pixelRes);
             result.setImageSize(pixelRes);
         }
         else {
@@ -109,17 +109,17 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         // Find consensus optical res    
         String opticalRes = sampleHelper.getConsensusLsmAttributeValue(sampleArea, "opticalResolution");
         if (opticalRes!=null) {
-            logger.info("Setting result optic resolution to "+opticalRes);
+            contextLogger.info("Setting result optic resolution to "+opticalRes);
             result.setOpticalResolution(opticalRes);
         }
      
         // Find consensus channel colors
-        logger.debug("channelMapping="+channelMapping);
+        contextLogger.debug("channelMapping="+channelMapping);
         String channelColors = sampleHelper.getConsensusTileAttributeValue(sampleArea, "channelColors", ",");
         
         if (channelColors!=null) {
             List<String> consensusLsmColors = Task.listOfStringsFromCsvString(channelColors);
-            logger.debug("consensusLsmColors="+consensusLsmColors);
+            contextLogger.debug("consensusLsmColors="+consensusLsmColors);
         
             List<String> resultColors = new ArrayList<String>();
             for(String indexStr : channelMapping) {
@@ -135,7 +135,7 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
             
             if (!resultColors.isEmpty()) {
                 String resultColorsStr = Task.csvStringFromCollection(resultColors);
-                logger.info("Setting result image colors: "+resultColorsStr);
+                contextLogger.info("Setting result image colors: "+resultColorsStr);
                 result.setChannelColors(resultColorsStr);
             }
         }

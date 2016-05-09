@@ -62,7 +62,7 @@ public class SeparationDiscoveryService extends AbstractDomainService {
             else {
                 result.addResult(separation);
             }
-            logger.info("Created new separation result: "+separation.getId());
+            contextLogger.info("Created new separation result: "+separation.getId());
         }
         
         FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
@@ -104,7 +104,7 @@ public class SeparationDiscoveryService extends AbstractDomainService {
         List<NeuronFragment> neuronFragments = new ArrayList<>();
         for(Integer index : Ordering.natural().sortedCopy(neuronMap.keySet())) {
             NeuronFiles files = neuronMap.get(index);
-            logger.debug("Processing neuron #"+index+" with MIP "+files.mip);
+            contextLogger.debug("Processing neuron #"+index+" with MIP "+files.mip);
             NeuronFragment neuron = sampleHelper.addNewNeuronFragment(separation, index);
             DomainUtils.setFilepath(neuron, FileType.SignalMip, files.mip);
             DomainUtils.setFilepath(neuron, FileType.MaskFile, files.mask);
@@ -115,7 +115,7 @@ public class SeparationDiscoveryService extends AbstractDomainService {
         
         separation.getFragmentsReference().setCount(new Long(neuronFragments.size()));
         
-        logger.info("Saving sample "+sample.getId()+" with neuron separation "+separation.getId());
+        contextLogger.info("Saving sample "+sample.getId()+" with neuron separation "+separation.getId());
         sampleHelper.saveSample(sample);
 
         data.putItem("RESULT_ENTITY_ID", separation.getId());
@@ -146,7 +146,7 @@ public class SeparationDiscoveryService extends AbstractDomainService {
                 return Integer.parseInt(mipNum);
             }
             catch (NumberFormatException e) {
-                logger.warn("Error parsing neuron index from filename: "+mipNum);
+                contextLogger.warn("Error parsing neuron index from filename: "+mipNum);
             }
         }
         return null;

@@ -67,7 +67,7 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
                 throw new IllegalStateException("Result not found: "+resultId);
             }
             if (results.size()>1) {
-                logger.warn("More than one result with id: "+resultId+". Only the latest will be updated.");
+                contextLogger.warn("More than one result with id: "+resultId+". Only the latest will be updated.");
             }
 
             result = results.get(results.size()-1);
@@ -79,11 +79,11 @@ public class SummaryResultsDiscoveryService extends AbstractDomainService {
 
             FileGroup existingGroup = result.getGroup(group.getKey());
             if (existingGroup==null) {
-                logger.info("Discovered group "+group.getKey());
+                contextLogger.info("Discovered group "+group.getKey());
                 result.addGroup(group);
             }
             else {
-                logger.info("Discovered update for group "+group.getKey());
+                contextLogger.info("Discovered update for group "+group.getKey());
                 for(FileType fileType : group.getFiles().keySet()) {
                     String filepath = DomainUtils.getFilepath(group, fileType);
                     DomainUtils.setFilepath(existingGroup, fileType, filepath);
