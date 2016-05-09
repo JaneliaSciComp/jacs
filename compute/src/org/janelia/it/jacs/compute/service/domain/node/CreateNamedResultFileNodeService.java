@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.entity.NamedFileNode;
@@ -15,7 +16,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CreateNamedResultFileNodeService extends AbstractEntityService {
+public class CreateNamedResultFileNodeService extends AbstractDomainService {
 
     private NamedFileNode resultFileNode;
     private String visibility;

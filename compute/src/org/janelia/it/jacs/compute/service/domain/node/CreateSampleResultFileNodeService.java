@@ -7,6 +7,7 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
@@ -19,7 +20,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class CreateSampleResultFileNodeService extends AbstractEntityService {
+public class CreateSampleResultFileNodeService extends AbstractDomainService {
 
     private SampleResultNode resultFileNode;
     private String sessionName;
