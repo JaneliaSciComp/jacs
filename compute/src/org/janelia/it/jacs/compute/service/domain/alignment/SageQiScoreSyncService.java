@@ -23,6 +23,7 @@ import org.janelia.it.jacs.model.sage.Image;
 import org.janelia.it.jacs.model.sage.ImageProperty;
 
 import com.google.common.collect.Ordering;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Synchronizes Qi scores (for 20x JBA alignments) into the SAGE database. 
@@ -47,8 +48,8 @@ public class SageQiScoreSyncService extends AbstractDomainService {
     private CvTerm qmScoreTerm;
     
     private int numAlignments = 0;
-    private Map<String,Integer> numUpdated = new HashMap<String,Integer>();
-    private Map<String,Integer> numInserted = new HashMap<String,Integer>();
+    private Map<String,Integer> numUpdated = new HashMap<>();
+    private Map<String,Integer> numInserted = new HashMap<>();
     
     /**
      * Process all alignments.
@@ -104,8 +105,8 @@ public class SageQiScoreSyncService extends AbstractDomainService {
         
     	for(SampleTile tile : objectiveSample.getTiles()) {
     	    for(LSMImage lsm : domainDao.getDomainObjectsAs(tile.getLsmReferences(), LSMImage.class)) {
-    	        
-    	        if (!lsm.getAnatomicalArea().equals(alignment.getAnatomicalArea())) {
+
+    	        if (!StringUtils.areEqual(lsm.getAnatomicalArea(),alignment.getAnatomicalArea())) {
     	            logger.info("Skipping LSM which has area "+lsm.getAnatomicalArea());
     	            continue;
     	        }
@@ -143,7 +144,7 @@ public class SageQiScoreSyncService extends AbstractDomainService {
 
 	private void setImageProperty(Image image, CvTerm type, String value) throws Exception {
 		
-		Set<ImageProperty> toDelete = new HashSet<ImageProperty>();
+		Set<ImageProperty> toDelete = new HashSet<>();
 		boolean found = false;
     	for(ImageProperty property : image.getImageProperties()) {
     		if (property.getType().equals(type)) {

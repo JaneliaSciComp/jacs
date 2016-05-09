@@ -218,7 +218,12 @@ public class SampleHelperNG extends DomainHelper {
                 dirty = true;
             }
         }
-        
+
+        if (lsm.getAnatomicalArea()==null) {
+            lsm.setAnatomicalArea("");
+            dirty = true;
+        }
+
         return dirty;
     }
         

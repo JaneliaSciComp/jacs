@@ -644,7 +644,14 @@ public class MongoDbImport extends AnnotationDAO {
             
             SampleTile tile = new SampleTile();
             tile.setName(tileEntity.getName());
-            tile.setAnatomicalArea(tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA));
+            String area = tileEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ANATOMICAL_AREA);
+            if (!StringUtils.isEmpty(area)) {
+                tile.setAnatomicalArea(area);
+            }
+            else {
+                tile.setAnatomicalArea("");
+            }
+
             tile.setLsmReferences(lsmReferences);
             tile.setFiles(images);
             tiles.add(tile);
@@ -871,10 +878,10 @@ public class MongoDbImport extends AnnotationDAO {
             result.setAnatomicalArea(area);
         }
         else {
-            result.setAnatomicalArea("Brain");
+            result.setAnatomicalArea("");
         }
         
-        Map<FileType,String> files = new HashMap<FileType,String>();
+        Map<FileType,String> files = new HashMap<>();
 
         // In some cases, the stack no longer has access to the MIPs (e.g. GMR_33A12_AE_01-57C10PEST_attp8_3stop1-A-20120608_20_A3), so we need to take them from the result itself
         addImage(files,FileType.ReferenceMip,getRelativeFilename(result,resultEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_REFERENCE_MIP_IMAGE)));
@@ -919,10 +926,10 @@ public class MongoDbImport extends AnnotationDAO {
         result.setFilepath(getFilepath(resultEntity));
         Set<String> keys = new HashSet<>();
         for(SampleTile tile : objectiveSample.getTiles()) {
-            keys.add(tile.getName());
-            keys.add(tile.getAnatomicalArea());
+            keys.add(tile.getName().replaceAll(" ", "_"));
+            keys.add(tile.getAnatomicalArea().replaceAll(" ", "_"));
         }
-        keys.add("montage");
+        keys.add("stitched");
         result.setGroups(createFileGroups(result, resultEntity, keys));
         return result;
     }
@@ -947,7 +954,7 @@ public class MongoDbImport extends AnnotationDAO {
                 
                 FileType fileType = null;
 
-                String key = null;
+                String key;
                 if (childName.endsWith(".lsm.json")) {
                 	key = FilenameUtils.getBaseName(name);
                 	fileType = FileType.LsmMetadata;
@@ -1017,7 +1024,7 @@ public class MongoDbImport extends AnnotationDAO {
                         translatedKey = trueKey;
                         break;
                     }
-                    else if (key.contains("-"+trueKey+"-")) {
+                    else if (key.contains("-"+trueKey)) {
                         translatedKey = trueKey;
                         break;
                     }
@@ -1298,6 +1305,10 @@ public class MongoDbImport extends AnnotationDAO {
         if (lsm.getGender()!=null) {
             lsm.setGender(sanitizeGender(lsm.getGender()));
         }
+
+        if (lsm.getAnatomicalArea()==null) {
+            lsm.setAnatomicalArea("");
+        }
         
         if (genderConsensus==null) {
             genderConsensus = lsm.getGender();
@@ -1311,7 +1322,7 @@ public class MongoDbImport extends AnnotationDAO {
 
     private Image getImage(Entity imageEntity) throws Exception {
 
-    	Image image = null;
+    	Image image;
     	if (imageEntity.getEntityTypeName().equals(EntityConstants.TYPE_LSM_STACK)) {
     		image = new LSMImage();
     	}
