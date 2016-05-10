@@ -228,10 +228,9 @@ public class TmModelManipulator {
     }
 
     // @todo may need to add create, update dates + ownerKey
-    public TmStructuredTextAnnotation addStructuredTextAnnotation(TmNeuron oldTmNeuron, Long parentID, int parentType, int formatVersion,
+    public TmStructuredTextAnnotation addStructuredTextAnnotation(TmNeuron neuron, Long parentID, int parentType, int formatVersion,
             String data) throws Exception {
         
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         // parent must be neuron or geoann:
         if (parentType != TmStructuredTextAnnotation.GEOMETRIC_ANNOTATION
                 && parentType != TmStructuredTextAnnotation.NEURON) {
@@ -239,7 +238,7 @@ public class TmModelManipulator {
         }
 
         // parent must not already have a structured text annotation
-        if (tmNeuron.getStructuredTextAnnotationMap().containsKey(parentID)) {
+        if (neuron.getStructuredTextAnnotationMap().containsKey(parentID)) {
             throw new Exception("parent ID already has a structured text annotation; use update, not add");
         }
 
@@ -247,7 +246,7 @@ public class TmModelManipulator {
                 idSource.next(), parentID, parentType, data
         );
         
-        tmNeuron.getStructuredTextAnnotationMap().put( parentID, annotation );
+        neuron.getStructuredTextAnnotationMap().put( parentID, annotation );
 
         return annotation;
     }
