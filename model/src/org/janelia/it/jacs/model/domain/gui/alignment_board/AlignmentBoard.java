@@ -56,4 +56,9 @@ public class AlignmentBoard extends AbstractDomainObject {
         if (children==null) throw new IllegalArgumentException("Property cannot be null");
         this.children = children;
     }
+    
+    @Override
+    public String toString() {
+        return alignmentSpace + ": " + imageSize + " " + opticalResolution;
+    }
 }
