@@ -106,7 +106,7 @@ public class DomainObjectWebService extends ResourceConfig {
 
     /**
      * Use for getting all examples of a given object type.  Only for small sets.
-     * @param subjectKey omissible. If given, constrains by ownership.
+     * @param subjectKey constrains by ownership.
      * @param domainClass required. constrains by collection/type.
      * @return all existing examples of things of this type.
      */
