@@ -415,6 +415,24 @@ public class WorkspaceRestService {
         return wi;
     }
 
+    @GET
+    @Path("/sample2DTile")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public byte[] getSample2DTile(
+            @QueryParam("x") String xString,
+            @QueryParam("y") String yString,
+            @QueryParam("z") String zString) {
+        log.info("getSample2DTile() invoked, x=" + xString + " y=" + yString + " z=" + zString);
+
+        byte[] testArr = new byte[10];
+
+        for (int i = 0; i < 10; i++) {
+            testArr[i] = (byte) i;
+        }
+
+        return testArr;
+    }
+
     //=================================================================================================//
     // UTILITIES
     //=================================================================================================//
