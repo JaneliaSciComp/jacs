@@ -170,7 +170,7 @@ public class SampleDataCompressionService extends AbstractDomainService {
         }
         
         if (!file.exists()) {
-            contextLogger.warn("Entity file does not exist: "+filepath);
+            contextLogger.warn("File does not exist: "+filepath);
             return;
         }
         

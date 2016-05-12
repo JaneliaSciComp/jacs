@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -179,28 +180,25 @@ public class DomainObjectWebService extends ResourceConfig {
         }
     }
 
-    @POST
-    @Path("/domainobject/update")
-    @ApiOperation(value = "updates an exisitng DomainObject ",
-            notes = "uses the DomainObject parameter of the DomainQuery, checks if the object exists to prevent this method from being abused"
+    @PUT
+    @Path("/domainobject")
+    @ApiOperation(value = "creates or updates a DomainObject ",
+            notes = "uses the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully update the value of an existing Domain Object", response=DomainObject.class),
+            @ApiResponse( code = 200, message = "Successfully created/updated the value of an existing Domain Object", response=DomainObject.class),
             @ApiResponse( code = 500, message = "Internal Server Error updating DomainObject" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DomainObject updateDomainObject (@ApiParam DomainQuery query) {
+    public DomainObject saveDomainObject (@ApiParam DomainQuery query) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            if (dao.getDomainObject(query.getSubjectKey(), Reference.createFor(query.getDomainObject()))!=null) {
-                return dao.save(query.getSubjectKey(), query.getDomainObject());
-            }
+            return dao.save(query.getSubjectKey(), query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred updating Domain Object",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
     @POST
