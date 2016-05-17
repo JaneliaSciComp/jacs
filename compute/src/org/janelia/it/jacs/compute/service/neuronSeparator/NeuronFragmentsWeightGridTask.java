@@ -5,7 +5,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.align.ImageStack;
@@ -22,9 +25,9 @@ import org.janelia.it.jacs.compute.util.ChanSpecUtils;
  */
 public class NeuronFragmentsWeightGridTask extends SubmitDrmaaJobService {
 
-    private static final int TIMEOUT_SECONDS = 600;  // 10 minutes
-    private String outputFileDir;
-    private String inputFileDir;
+    private static final int TIMEOUT_SECONDS = 7200;  // 2 hours
+    private static final int BATCH_SEPARATIONS = 1000;
+    private List<String> neuronSepBatch;
     
     @Override
     protected String getGridServicePrefixName() {
@@ -36,29 +39,30 @@ public class NeuronFragmentsWeightGridTask extends SubmitDrmaaJobService {
     protected void init(IProcessData processData) throws Exception {
         super.init(processData);
 
-        inputFileDir = processData.getString("NEURON_SEPARATION_DIR");
-        if (inputFileDir==null) {
-            throw new IllegalArgumentException("All of the following may not be null: NEURON_SEPARATION_DIR, FRAGMENT_WEIGHTS_DIR");
-        }
-        outputFileDir = processData.getString("FRAGMENT_WEIGHTS_DIR");
-        if (inputFileDir==null) {
-            throw new IllegalArgumentException("All of the following may not be null: NEURON_SEPARATION_DIR, FRAGMENT_WEIGHTS_DIR");
+        neuronSepBatch = (List)processData.getItem("NEURON_SEPARATION_BATCH_LIST");
+        if (neuronSepBatch==null) {
+            throw new IllegalArgumentException("The following may not be null: NEURON_SEPARATION_BATCH_LIST");
         }
     }
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
         int configIndex = 1;
-
-        File configFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Configuration."+configIndex);
-        FileWriter fw = new FileWriter(configFile);
-        File inputDir = new File(inputFileDir);
-        File outputDir = new File(outputFileDir);
-
-        writeInstanceFile(fw, inputDir, outputDir, configIndex);
+        File outputDir = new File(resultFileNode.getDirectoryPath()+File.separator);
+        for (; configIndex<=neuronSepBatch.size(); configIndex++) {
+            File dataFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Data."+configIndex);
+            String dataFilePath = dataFile.getAbsolutePath();
+            FileWriter dfw = new FileWriter(dataFile);
+            dfw.write(neuronSepBatch.get(configIndex-1));
+            File configFile = new File(getSGEConfigurationDirectory(), getGridServicePrefixName()+"Configuration."+configIndex);
+            FileWriter fw = new FileWriter(configFile);
+            fw.write (dataFilePath + "\n");
+            fw.write(outputDir.getAbsolutePath());
+            dfw.close();
+            fw.close();
+        }
         writeShellScript(writer);
-
-        setJobIncrementStop(1);
+        setJobIncrementStop(configIndex-1);
     }
 
 
@@ -66,37 +70,19 @@ public class NeuronFragmentsWeightGridTask extends SubmitDrmaaJobService {
     public int getJobTimeoutSeconds() {
         return TIMEOUT_SECONDS;
     }
-    
-    /**
-     * Write out the parameters passed to a given instance in the job array. The default implementation writes 
-     * the input file path and the output file path.
-     * @param fw
-     * @param inputFile
-     * @param outputFile
-     * @param configIndex
-     * @throws IOException
-     */
-    private void writeInstanceFile(FileWriter fw, File inputFile, File outputFile, int configIndex) throws IOException {
-        fw.write(outputFile.getAbsolutePath() + "\n");
-        fw.write(inputFile.getAbsolutePath() + "\n");
-    }
 
-    /**
-     * Write the shell script used for all instances in the job array. The default implementation read INPUT_FILENAME
-     * and OUTPUT_FILENAME.
-     */
+
     private void writeShellScript(FileWriter writer) throws Exception {
         StringBuffer script = new StringBuffer();
+        script.append("read CONFIG_FILE\n");
         script.append("read OUTPUT_DIR\n");
-        script.append("read INPUT_DIR\n");
-        script.append("\n");
-        script.append(NeuronSeparatorHelper.getNeuronWeightsCommands(getGridResourceSpec().getSlots()));
-        script.append("\n");
+        script.append(NeuronSeparatorHelper.getNeuronWeightsCommands(1));
         writer.write(script.toString());
     }
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 12;
+        return 8;
     }
+
 }

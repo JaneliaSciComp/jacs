@@ -63,7 +63,7 @@ public class NeuronSeparatorHelper {
     public static String getNeuronWeightsCommands(int numThreads) {
         StringBuilder script = new StringBuilder();
         script.append("export NFE_MAX_THREAD_COUNT="+numThreads+"\n");
-        script.append("sh "+NEURON_WEIGHTS_SCRIPT+" $OUTPUT_DIR $INPUT_DIR");
+        script.append("sh "+NEURON_WEIGHTS_SCRIPT+ " $CONFIG_FILE $OUTPUT_DIR");
         return script.toString();
     }
     

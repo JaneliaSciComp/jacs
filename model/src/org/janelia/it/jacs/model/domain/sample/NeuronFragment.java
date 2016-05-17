@@ -30,6 +30,8 @@ public class NeuronFragment extends AbstractDomainObject implements HasRelativeF
     
     @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
+
+    private Integer voxelWeight;
     
     private Map<FileType, String> files = new HashMap<>();
     
@@ -72,6 +74,14 @@ public class NeuronFragment extends AbstractDomainObject implements HasRelativeF
     public void setFiles(Map<FileType, String> files) {
         if (files==null) throw new IllegalArgumentException("Property cannot be null");
         this.files = files;
+    }
+
+    public Integer getVoxelWeight() {
+        return voxelWeight;
+    }
+
+    public void setVoxelWeight(Integer voxelWeight) {
+        this.voxelWeight = voxelWeight;
     }
 
 }
