@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.domain;
 import org.janelia.it.jacs.model.TestCategories;
 import org.janelia.it.jacs.model.domain.compartments.CompartmentSet;
 import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentContext;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
@@ -30,6 +31,7 @@ public class DomainObjectTests {
     @Test
     public void testGetType() throws Exception {
         Assert.assertEquals("Alignment Board",(new AlignmentBoard()).getType());
+        Assert.assertEquals("Alignment Context", (new AlignmentContext()).getType());
         Assert.assertEquals("Annotation",(new Annotation()).getType());
         Assert.assertEquals("Compartment Set",(new CompartmentSet()).getType());
         Assert.assertEquals("Data Set",(new DataSet()).getType());
