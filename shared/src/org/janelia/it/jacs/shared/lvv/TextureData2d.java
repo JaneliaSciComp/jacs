@@ -7,9 +7,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.ShortBuffer;
+import java.nio.*;
 
 /**
  * Created by murphys on 5/13/2016.
@@ -295,6 +293,47 @@ public class TextureData2d
             ex.printStackTrace();
         }
         return;
+    }
+
+    public byte[] copyToByteArray() {
+        int byteBufferSize = (Integer.SIZE / 8) * 8 + (Float.SIZE / 8) + pixels.capacity();
+        byte[] textureData2dArray=new byte[byteBufferSize];
+        ByteBuffer byteBuffer = ByteBuffer.wrap(textureData2dArray);
+        byteBuffer.putInt(mipmapLevel);
+        byteBuffer.putInt(width);
+        byteBuffer.putInt(usedWidth);
+        byteBuffer.putInt(height);
+        byteBuffer.putInt(border);
+        byteBuffer.putInt(srgb ? 1 : 0);
+        byteBuffer.putInt(bitDepth);
+        byteBuffer.putInt(channelCount);
+        byteBuffer.putFloat(textureCoordX);
+        byteBuffer.put(pixels);
+        return textureData2dArray;
+    }
+
+    public TextureData2d() {}
+
+    public TextureData2d(byte[] bytes) {
+        ByteBuffer byteBuffer=ByteBuffer.wrap(bytes);
+        mipmapLevel=byteBuffer.getInt();
+        width=byteBuffer.getInt();
+        usedWidth=byteBuffer.getInt();
+        height=byteBuffer.getInt();
+        border=byteBuffer.getInt();
+        int srgbProxy=byteBuffer.getInt();
+        if (srgbProxy>0) {
+            srgb=true;
+        } else {
+            srgb=false;
+        }
+        bitDepth=byteBuffer.getInt();
+        channelCount=byteBuffer.getInt();
+        textureCoordX=byteBuffer.getFloat();
+        int remainingBytes=byteBuffer.remaining();
+        byte[] pixelArray=new byte[remainingBytes];
+        byteBuffer.get(pixelArray);
+        pixels=ByteBuffer.wrap(pixelArray);
     }
 
 }
