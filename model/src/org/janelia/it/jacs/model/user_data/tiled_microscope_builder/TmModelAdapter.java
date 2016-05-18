@@ -18,6 +18,5 @@ import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
 public interface TmModelAdapter {
     void loadNeurons(TmWorkspace workspace) throws Exception;
     void saveNeuron(TmNeuron neuron) throws Exception;
-    TmNeuron refreshFromEntityData(TmNeuron neuron) throws Exception;
     void deleteEntityData(TmNeuron neuron) throws Exception;
 }
