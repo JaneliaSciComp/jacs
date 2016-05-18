@@ -36,6 +36,7 @@ import sun.misc.BASE64Encoder;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
+import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -526,6 +527,63 @@ public class WorkspaceRestService {
             ex.printStackTrace();
         }
         return textureData2dBytes;
+    }
+
+    @GET
+    @Path("/fileBytes")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public byte[] getFileBytes(@QueryParam("path") String path) {
+        File file=new File(path);
+        log.info("getFileBytes() file="+file.getAbsolutePath());
+        byte[] fileBytes=null;
+        try {
+            fileBytes=Files.readAllBytes(file.toPath());
+        } catch (Exception ex) {
+            log.error("Error in getFileBytes() ="+ex.getMessage());
+            ex.printStackTrace();
+        }
+        return fileBytes;
+    }
+
+    @GET
+    @Path("/mouseLightTiffBytes")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public byte[] getMouseLightTiffBytes(@QueryParam("suggestedPath") String suggestedPath) {
+        File suggestedFile=new File(suggestedPath);
+        File actualFile=null;
+        if (suggestedFile.exists()) {
+            actualFile=suggestedFile;
+        } else {
+            String suggestedName=suggestedFile.getName();
+            int lastDot=suggestedName.lastIndexOf(".");
+            String suggestedSuffix=suggestedName;
+            if (lastDot>-1) {
+                suggestedSuffix = suggestedName.substring(lastDot);
+            }
+            File parentDir=suggestedFile.getParentFile();
+            File[] childFiles=parentDir.listFiles();
+            log.info("getMouseLightTiffBytes() using suggestedSuffix="+suggestedSuffix);
+            for (File childFile : childFiles) {
+                if (childFile.getName().endsWith(suggestedSuffix) ||
+                        childFile.getName().endsWith(suggestedSuffix+".tif")) {
+                    actualFile=childFile;
+                    break;
+                }
+            }
+        }
+        if (actualFile!=null) {
+            log.info("getMouseLightTiffBytes() file=" + actualFile.getAbsolutePath());
+            byte[] fileBytes=null;
+            try {
+                fileBytes=Files.readAllBytes(actualFile.toPath());
+            } catch (Exception ex) {
+                log.error("Error in getMouseLightTiffBytes() =" + ex.getMessage());
+                ex.printStackTrace();
+            }
+            return fileBytes;
+        } else {
+            return null;
+        }
     }
 
     //=================================================================================================//
