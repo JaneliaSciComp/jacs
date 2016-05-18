@@ -35,6 +35,7 @@ import sun.misc.BASE64Encoder;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.nio.file.Files;
 import java.sql.Timestamp;
@@ -549,28 +550,7 @@ public class WorkspaceRestService {
     @Path("/mouseLightTiffBytes")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public byte[] getMouseLightTiffBytes(@QueryParam("suggestedPath") String suggestedPath) {
-        File suggestedFile=new File(suggestedPath);
-        File actualFile=null;
-        if (suggestedFile.exists()) {
-            actualFile=suggestedFile;
-        } else {
-            String suggestedName=suggestedFile.getName();
-            int lastDot=suggestedName.lastIndexOf(".");
-            String suggestedSuffix=suggestedName;
-            if (lastDot>-1) {
-                suggestedSuffix = suggestedName.substring(lastDot);
-            }
-            File parentDir=suggestedFile.getParentFile();
-            File[] childFiles=parentDir.listFiles();
-            log.info("getMouseLightTiffBytes() using suggestedSuffix="+suggestedSuffix);
-            for (File childFile : childFiles) {
-                if (childFile.getName().endsWith(suggestedSuffix) ||
-                        childFile.getName().endsWith(suggestedSuffix+".tif")) {
-                    actualFile=childFile;
-                    break;
-                }
-            }
-        }
+        File actualFile=getMouseLightTiffFileBySuggestion(suggestedPath);
         if (actualFile!=null) {
             log.info("getMouseLightTiffBytes() file=" + actualFile.getAbsolutePath());
             byte[] fileBytes=null;
@@ -586,9 +566,49 @@ public class WorkspaceRestService {
         }
     }
 
+    @GET
+    @Path("/mouseLightTiffStream")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response getMouseLightTiffStream(@QueryParam("suggestedPath") String suggestedPath) {
+        File actualFile=getMouseLightTiffFileBySuggestion(suggestedPath);
+        if (actualFile!=null) {
+            Response.ResponseBuilder responseBuilder=Response.ok(actualFile);
+            responseBuilder.header("Content-Disposition", "attachment;filename="+actualFile.getName());
+            return responseBuilder.build();
+        } else {
+            return null;
+        }
+    }
+
     //=================================================================================================//
     // UTILITIES
     //=================================================================================================//
+
+    private File getMouseLightTiffFileBySuggestion(String suggestedPath) {
+        File suggestedFile=new File(suggestedPath);
+        File actualFile=null;
+        if (suggestedFile.exists()) {
+            actualFile=suggestedFile;
+        } else {
+            String suggestedName=suggestedFile.getName();
+            int lastDot=suggestedName.lastIndexOf(".");
+            String suggestedSuffix=suggestedName;
+            if (lastDot>-1) {
+                suggestedSuffix = suggestedName.substring(lastDot);
+            }
+            File parentDir=suggestedFile.getParentFile();
+            File[] childFiles=parentDir.listFiles();
+            log.info("getMouseLightTiffFileBySuggestion() using suggestedSuffix="+suggestedSuffix);
+            for (File childFile : childFiles) {
+                if (childFile.getName().endsWith(suggestedSuffix) ||
+                        childFile.getName().endsWith(suggestedSuffix+".tif")) {
+                    actualFile=childFile;
+                    break;
+                }
+            }
+        }
+        return actualFile;
+    }
 
     private void findWorkspaceDataTypeAndNeuronCount(WorkspaceInfo wi, Entity e) {
         Set<EntityData> entityDataSet=e.getEntityData();

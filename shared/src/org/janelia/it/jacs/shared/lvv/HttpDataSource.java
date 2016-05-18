@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.shared.lvv;
 
+import com.sun.media.jai.codec.ByteArraySeekableStream;
+import com.sun.media.jai.codec.SeekableStream;
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
@@ -7,8 +9,12 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 
 /**
@@ -145,6 +151,29 @@ public class HttpDataSource {
             getMethod.releaseConnection();
         }
         return bytes;
+    }
+
+    public static InputStream getMouseLightTiffStream(String filepath) throws Exception {
+        String url="http://"+interactiveServer+":8180/rest-v1/mouselight/mouseLightTiffStream?suggestedPath="+filepath;
+        GetMethod getMethod=new GetMethod(url);
+        try {
+            int statusCode = httpClient.executeMethod(getMethod);
+            if (statusCode != HttpStatus.SC_OK) {
+                throw new Exception("HTTP status not OK");
+            }
+            // NOTE: if I try simply returning the inputStream, it shows up as closed in the decoder.
+            // If I inefficiently convert the stream to a byte array and then create another stream
+            // it works. Need to figure out how to make this more efficient.
+            InputStream inputStream=getMethod.getResponseBodyAsStream();
+            byte[] bytes = IOUtils.toByteArray(inputStream);
+            SeekableStream s = new ByteArraySeekableStream(bytes);
+            return s;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            getMethod.releaseConnection();
+        }
+        return null;
     }
 
 }
