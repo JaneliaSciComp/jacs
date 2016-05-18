@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.shared.img_3d_loader;
 
+import org.apache.commons.httpclient.methods.GetMethod;
+
 import java.io.InputStream;
 
 /**
@@ -7,5 +9,5 @@ import java.io.InputStream;
  */
 public interface FileStreamSource {
 
-    public InputStream getStreamForFile(String filepath) throws Exception;
+    public GetMethod getStreamForFile(String filepath) throws Exception;
 }

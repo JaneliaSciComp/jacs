@@ -13,6 +13,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
@@ -153,7 +154,7 @@ public class HttpDataSource {
         return bytes;
     }
 
-    public static InputStream getMouseLightTiffStream(String filepath) throws Exception {
+    public static GetMethod getMouseLightTiffStream(String filepath) throws Exception {
         String url="http://"+interactiveServer+":8180/rest-v1/mouselight/mouseLightTiffStream?suggestedPath="+filepath;
         GetMethod getMethod=new GetMethod(url);
         try {
@@ -161,16 +162,23 @@ public class HttpDataSource {
             if (statusCode != HttpStatus.SC_OK) {
                 throw new Exception("HTTP status not OK");
             }
+
+            return getMethod;
             // NOTE: if I try simply returning the inputStream, it shows up as closed in the decoder.
             // If I inefficiently convert the stream to a byte array and then create another stream
             // it works. Need to figure out how to make this more efficient.
-            InputStream inputStream=getMethod.getResponseBodyAsStream();
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-            SeekableStream s = new ByteArraySeekableStream(bytes);
-            return s;
+
+            // THE PROBLEM IS THE RELEASE CONNECTION!!!!!!! WE NEED A CALLBACK TO SHUT THIS
+
+            // InputStream inputStream=getMethod.getResponseBodyAsStream();
+
+//            byte[] bytes = IOUtils.toByteArray(inputStream);
+//            SeekableStream s = new ByteArraySeekableStream(bytes);
+
+//            return new BufferedInputStream(getMethod.getResponseBodyAsStream());
+
         } catch (Exception ex) {
             ex.printStackTrace();
-        } finally {
             getMethod.releaseConnection();
         }
         return null;
