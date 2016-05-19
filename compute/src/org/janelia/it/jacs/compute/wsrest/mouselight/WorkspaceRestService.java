@@ -28,6 +28,7 @@ import org.janelia.it.jacs.shared.lvv.BlockTiffOctreeLoadAdapter;
 import org.janelia.it.jacs.shared.lvv.CoordinateToRawTransformFileSource;
 import org.janelia.it.jacs.shared.lvv.TextureData2d;
 import org.janelia.it.jacs.shared.lvv.TileIndex;
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -569,6 +570,7 @@ public class WorkspaceRestService {
     @GET
     @Path("/mouseLightTiffStream")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @GZIP
     public Response getMouseLightTiffStream(@QueryParam("suggestedPath") String suggestedPath) {
         File actualFile=getMouseLightTiffFileBySuggestion(suggestedPath);
         if (actualFile!=null) {

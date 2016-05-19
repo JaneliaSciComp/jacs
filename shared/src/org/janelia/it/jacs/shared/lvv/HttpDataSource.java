@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Date;
 
 
 /**
@@ -99,6 +100,8 @@ public class HttpDataSource {
         TextureData2d textureData2d=null;
 
         try {
+
+            long startTime=new Date().getTime();
             int statusCode=httpClient.executeMethod(getMethod);
 
             if (statusCode!= HttpStatus.SC_OK) {
@@ -109,6 +112,10 @@ public class HttpDataSource {
             if (responseBytes!=null) {
                 textureData2d = new TextureData2d(responseBytes);
             }
+
+            long getTime=new Date().getTime()-startTime;
+
+            logger.info("getSample2DTile() ms="+getTime);
 
         } catch (Exception ex) {
             ex.printStackTrace();
