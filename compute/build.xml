@@ -220,7 +220,7 @@
                 <include name="org/**/wsrest/**/*.class"/>
                 <include name="org/**/wsrest/WebServiceContext.class"/>
                 <include name="org/**/access/**/*.class"/>
-                <include name="org/**/api/ComputeException.class"/>
+                <include name="org/**/api/*.class"/>
                 <include name="org/**/compute/engine/service/ServiceException.class"/>
                 <include name="org/**/compute/engine/service/ValidServiceException.class"/>
                 <include name="org/**/compute/launcher/indexing/IndexingHelper.class"/>
