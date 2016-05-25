@@ -312,7 +312,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	if (!Strings.isNullOrEmpty(ans)) {
         	    ns += " "+ans;
         	}
-        	ns += " -l sandy=true";
+        	if (!ns.contains("sandy=true")) {
+        		ns += " -l sandy=true";
+        	}
         	contextLogger.info("Setting native specification to accomodate "+mem+" GB of memory and "+slots+" slot(s): "+ns);
         	jt.setNativeSpecification(ns);	
         }
