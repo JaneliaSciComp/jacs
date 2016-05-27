@@ -66,15 +66,14 @@ public class SampleWebService extends ResourceConfig {
                     responseContainer = "List"),
             @ApiResponse( code = 500, message = "Internal Server Error getting list of Samples" )
     })
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List getSamples(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                            @ApiParam @QueryParam("sampleId") final Long sampleId,
-                           @ApiParam @QueryParam("sampleName") final String sampleName) {
+                           @ApiParam @QueryParam("name") final String name) {
         DomainDAO dao = WebServiceContext.getDomainManager();
         try {
-            if (sampleId!=null) {
-                return dao.getDomainObjectsByName(subjectKey, Sample.class, sampleName);
+            if (sampleId==null) {
+                return dao.getDomainObjectsByName(null, Sample.class, name);
             } else {
                 Reference ref = Reference.createFor(Sample.class, sampleId);
                 List<Reference> refList = new ArrayList<>();
