@@ -362,7 +362,7 @@ public class SolrConnector {
 		if (object==null) return;
 		Class<?> clazz = object.getClass();
 				
-        log.info(indent+"indexing "+clazz.getName());
+        log.debug(indent+"indexing "+clazz.getName());
         
         if (object instanceof DomainObject) {
             DomainObject domainObject = (DomainObject)object;
