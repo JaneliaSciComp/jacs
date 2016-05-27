@@ -478,7 +478,7 @@ public class SampleHelperNG extends DomainHelper {
     public String getSampleName(DataSet dataSet, Sample sample) {
         
     	Map<String,DomainObjectAttribute> sampleAttrs = getSampleAttrs();
-        Map<String,String> valueMap = new HashMap<>();
+        Map<String,Object> valueMap = new HashMap<>();
         for(String key : sampleAttrs.keySet()) {
         	DomainObjectAttribute attr = sampleAttrs.get(key);
         	Object obj = null;
