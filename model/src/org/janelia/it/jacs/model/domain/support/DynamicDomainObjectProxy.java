@@ -1,4 +1,4 @@
-package org.janelia.it.workstation.gui.browser.gui.support;
+package org.janelia.it.jacs.model.domain.support;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -6,16 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.support.DomainObjectAttribute;
-import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * A wrapper around a DomainObject which provides a facade with dynamic access to its properties by UI label. This is
  * useful for user-driven user interface configuration.
- *
- * TODO: move to model
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */

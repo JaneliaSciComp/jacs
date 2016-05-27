@@ -538,7 +538,6 @@ public class DomainUtils {
                 newFilter.addCriteria(cloneCriteria(criteria));
             }
         }
-        
         return newFilter;
     }
     
