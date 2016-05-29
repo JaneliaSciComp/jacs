@@ -223,7 +223,7 @@ public class StringUtils {
      * @param values
      * @return
      */
-    public static String replaceVariablePattern(String variablePattern, Map<String,String> values) {
+    public static String replaceVariablePattern(String variablePattern, Map<String,Object> values) {
 
         log.debug("Replacing variables in pattern: "+variablePattern);
         
@@ -240,7 +240,8 @@ public class StringUtils {
                 	replacement = attrLabel.substring(1, attrLabel.length()-1);
                 }
                 else {
-                    replacement = values.get(attrLabel);
+                    Object value = values.get(attrLabel);
+                    replacement = value==null?null:value.toString();
                 }
                 if (replacement != null) {
                     matcher.appendReplacement(buffer, replacement);
@@ -250,7 +251,7 @@ public class StringUtils {
             }
 
             if (replacement==null) {
-                log.warn("      Cannot find a replacement for: "+template);
+                log.trace("      Cannot find a replacement for: "+template);
                 matcher.appendReplacement(buffer, "null");
             }
         }

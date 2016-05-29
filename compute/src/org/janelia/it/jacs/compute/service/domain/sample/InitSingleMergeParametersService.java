@@ -21,18 +21,19 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
  */
 public class InitSingleMergeParametersService extends AbstractDomainService {
 
-	public void execute() throws Exception {
-	    
-        AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
+	public void execute() throws ServiceException {
+
+        AnatomicalArea sampleArea = (AnatomicalArea) data.getItem("SAMPLE_AREA");
         if (sampleArea==null) {
         	throw new ServiceException("Input parameter SAMPLE_AREA may not be null");
         }
         
         List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
     	if (mergedLsmPairs.size() != 1) {
-    		throw new ServiceException("SAMPLE_AREA must contain exactly one merged pair");
+    		throw new ServiceException("SAMPLE_AREA must contain exactly one merged pair, but has "+mergedLsmPairs.size());
     	}
-    	String stitchedFilepath = mergedLsmPairs.get(0).getMergedFilepath();
-    	sampleArea.setStitchedFilepath(stitchedFilepath);
+    	String stitchedFilename = mergedLsmPairs.get(0).getMergedFilepath();
+    	sampleArea.setStitchedFilepath(stitchedFilename);
+        data.putItem("SAMPLE_AREA", sampleArea);
     }
 }
