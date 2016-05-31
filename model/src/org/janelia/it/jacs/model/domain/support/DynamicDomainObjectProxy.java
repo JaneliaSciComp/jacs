@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +57,19 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
     public Object get(Object key) {
         DomainObjectAttribute attr = attrs.get(key);
         if (attr==null) {
+
+            if (domainObject instanceof Sample) {
+                Sample sample = (Sample) domainObject;
+                Map<AlignmentScoreType, String> scores = SampleUtils.getLatestAlignmentScores(sample);
+                for (AlignmentScoreType alignmentScoreType : AlignmentScoreType.values()) {
+                    if (alignmentScoreType.getLabel().equals(key)) {
+                        String value = scores.get(alignmentScoreType);
+                        if (value != null) return value;
+                        break;
+                    }
+                }
+            }
+
             log.trace("No such attribute: "+key);
         }
         try {

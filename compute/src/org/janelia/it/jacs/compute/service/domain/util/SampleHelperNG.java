@@ -171,7 +171,7 @@ public class SampleHelperNG extends DomainHelper {
                 Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(lsm, attr.field);
                 if (!StringUtils.areEqual(currValue, trueValue)) {
                     org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(lsm, attr.field, trueValue);
-	                logger.info("  Setting "+fieldName+"="+trueValue);
+	                logger.debug("  Setting "+fieldName+"="+trueValue);
 	                dirty = true;
 	            }
 	            else {
@@ -446,7 +446,7 @@ public class SampleHelperNG extends DomainHelper {
                     Object consensusValue = consensusValues.get(fieldName);
                     if (!StringUtils.areEqual(currValue, consensusValue)) {
                     	org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(sample, sampleAttr.field, consensusValue);
-                        logger.info("  Setting "+fieldName+"="+consensusValue);
+                        logger.debug("  Setting "+fieldName+"="+consensusValue);
                         dirty = true;
                     }
                     else {
