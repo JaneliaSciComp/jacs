@@ -15,6 +15,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -47,6 +48,9 @@ import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.mongodb.client.model.Projections.fields;
+import static com.mongodb.client.model.Projections.include;
+
 /**
  * Data access object for the domain object model.
  *
@@ -58,6 +62,8 @@ public class DomainDAO {
 
     protected MongoClient m;
     protected Jongo jongo;
+
+    protected String databaseName;
 
     protected MongoCollection preferenceCollection;
     protected MongoCollection alignmentBoardCollection;
@@ -79,6 +85,9 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
+
+        this.databaseName = databaseName;
+
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
             members.add(new ServerAddress(serverMember));
@@ -1114,7 +1123,7 @@ public class DomainDAO {
 
         MongoCollection collection = getCollectionByName(collectionName);
         WriteResult wr = collection.update("{_id:{$in:#},writers:#}", ids, subjectKey).multi().with(withClause, keys);
-        log.info("Changed permissions on " + wr.getN() + " documents");
+        log.info("Changed permissions on {} documents",wr.getN());
 
         if (wr.getN() > 0) {
             if ("treeNode".equals(collectionName)) {
@@ -1154,7 +1163,48 @@ public class DomainDAO {
                 log.info("Updated permissions on {} lsms", wr2.getN());
 
             }
+            if ("dataSet".equals(collectionName)) {
+                log.info("Changing permissions on all samples and LSMs of the data sets: {}", logIds);
+                for (Long id : ids) {
+                    DataSet dataSet = collection.findOne("{_id:#,writers:#}", id, subjectKey).as(DataSet.class);
+                    if (dataSet == null) {
+                        throw new IllegalArgumentException("Could not find data set with id=" + id);
+                    }
+
+                    // Get all sample ids for a given data set
+                    List<String> sampleRefs = new ArrayList<>();
+                    List<Document> sampleIdDocs = m.getDatabase(databaseName)
+                            .getCollection(DomainUtils.getCollectionName(Sample.class))
+                            .find(new Document("dataSet",dataSet.getIdentifier()))
+                            .projection(fields(include("_id")))
+                            .into(new ArrayList());
+                    for(Document doc : sampleIdDocs) {
+                        sampleRefs.add("Sample#"+doc.get("_id"));
+                    }
+
+                    // This could just call changePermissions recursively, but batching is far more efficient.
+                    WriteResult wr1 = sampleCollection.update("{dataSet:#,writers:#}", dataSet.getIdentifier(), subjectKey).multi().with(withClause, keys);
+                    log.info("Changed permissions on {} samples",wr1.getN());
+
+                    WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
+                    log.info("Updated permissions on {} fragments", wr2.getN());
+
+                    WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
+                    log.info("Updated permissions on {} lsms", wr3.getN());
+                }
+            }
         }
+    }
+
+    public void syncPermissions(String ownerKey, String simpleName, Long id, DomainObject permissionTemplate) throws Exception {
+        // TODO: this could be optimized to do both r/w at the same time
+        for(String reader : permissionTemplate.getReaders()) {
+            changePermissions(ownerKey, simpleName, id, reader, "r", true);
+        }
+        for(String reader : permissionTemplate.getWriters()) {
+            changePermissions(ownerKey, simpleName, id, reader, "w", true);
+        }
+        // TODO: should be deleted if they dont exist in the permission template?
     }
 
     // Copy and pasted from ReflectionUtils in shared module

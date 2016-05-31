@@ -109,7 +109,6 @@ public class MongoDbImport extends AnnotationDAO {
 
     private static final Logger log = Logger.getLogger(MongoDbImport.class);
 
-	protected static final int INSERTION_BATCH_SIZE = 1000;
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
 	protected static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
 	protected static final boolean TRANSLATE_ENTITIES = true;
@@ -412,7 +411,7 @@ public class MongoDbImport extends AnnotationDAO {
         return loaded;
     }
 
-    private DataSet getDataSetObject(Entity dataSetEntity) {
+    private DataSet getDataSetObject(Entity dataSetEntity) throws Exception {
     	DataSet dataset = new DataSet();
         dataset.setId(dataSetEntity.getId());
         dataset.setName(dataSetEntity.getName());
@@ -436,7 +435,7 @@ public class MongoDbImport extends AnnotationDAO {
         
         String pipelineProcess = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
         if (pipelineProcess!=null) {
-        	List<String> processNames = new ArrayList<String>();
+        	List<String> processNames = new ArrayList<>();
         	for(String processName : pipelineProcess.split(",")) {
         		if (!StringUtils.isEmpty(processName)) {
         			processNames.add(processName);
@@ -446,7 +445,23 @@ public class MongoDbImport extends AnnotationDAO {
         		dataset.setPipelineProcesses(processNames);
         	}
         }
-        
+
+        // Look up data set folder and apply the same permissions to the data set object, since the folders will not be migrated
+
+        List<Entity> folders = getEntitiesByNameAndTypeName(dataSetEntity.getOwnerKey(), dataSetEntity.getName(), EntityConstants.TYPE_FOLDER);
+        if (folders.isEmpty()) {
+            log.warn("Could not find data set folder for "+dataSetEntity.getName());
+        }
+        else {
+            if (folders.size()>1) {
+                log.warn("More than one data set folder with name "+dataSetEntity.getName());
+            }
+
+            Entity dataSetFolder = folders.get(0);
+            dataset.setReaders(getSubjectKeysWithPermission(dataSetFolder, "r"));
+            dataset.setWriters(getSubjectKeysWithPermission(dataSetFolder, "w"));
+        }
+
         return dataset;
     }
     
