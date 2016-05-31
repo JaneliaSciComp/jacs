@@ -252,7 +252,7 @@ public class StringUtils {
 
             if (replacement==null) {
                 log.trace("      Cannot find a replacement for: "+template);
-                matcher.appendReplacement(buffer, "null");
+                matcher.appendReplacement(buffer, "");
             }
         }
         matcher.appendTail(buffer);
