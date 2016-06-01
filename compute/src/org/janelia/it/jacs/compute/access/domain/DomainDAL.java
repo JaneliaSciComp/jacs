@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
  * Data Abstraction Layer to merge domain db access with SOLR updates.  For now merging this into one class to reduce object bloat.
  * Will refactor based off usage patterns.  Both REST and pipelines services will talk to this layer to coordinate CRUD operations
  */
-
 public class DomainDAL {
+
     private static final Logger logger = LoggerFactory.getLogger(DomainDAL.class);
 
     private static DomainDAL instance;
@@ -80,6 +80,14 @@ public class DomainDAL {
 
     public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, String domainClass, List<Long> ids)  {
         return dao.getDomainObjects(subjectKey, domainClass, ids);
+    }
+
+    public <T extends DomainObject> List<T> getUserDomainObjects(String subjectKey, Class<T> domainClass) {
+        return dao.getUserDomainObjects(subjectKey, domainClass);
+    }
+
+    public <T extends DomainObject> List<T> getUserDomainObjects(String subjectKey, Class<T> domainClass, Collection<Long> ids) {
+        return dao.getUserDomainObjects(subjectKey, domainClass, null);
     }
 
     public List<Reference> getContainerReferences(DomainObject domainObject) throws Exception {
@@ -199,11 +207,11 @@ public class DomainDAL {
 
     public List<Ontology> getOntologies(String subjectKey) throws Exception {
         Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
-        return new ArrayList<Ontology>(ontologies);
+        return new ArrayList<>(ontologies);
     }
 
     public Ontology addOntologyTerm(String subjectKey, Long ontologyId, Long parentId, List<OntologyTerm> terms, int index) throws Exception {
-        Ontology updateOntology = (Ontology) dao.addTerms(subjectKey, ontologyId, parentId, terms, index);
+        Ontology updateOntology = dao.addTerms(subjectKey, ontologyId, parentId, terms, index);
         IndexingHelper.sendReindexingMessage(updateOntology);
         return updateOntology;
     }
@@ -213,13 +221,13 @@ public class DomainDAL {
     }
 
     public Ontology removeOntologyTerm(String subjectKey, Long ontologyId, Long parentId, Long termId) throws Exception {
-        Ontology updateOntology = (Ontology)dao.removeTerm(subjectKey, ontologyId, parentId, termId);
+        Ontology updateOntology = dao.removeTerm(subjectKey, ontologyId, parentId, termId);
         IndexingHelper.sendReindexingMessage(updateOntology);
         return updateOntology;
     }
 
     public TreeNode reorderChildren (String subjectKey, TreeNode treeNode, int[] order) throws Exception {
-        TreeNode updatedNode = (TreeNode)dao.reorderChildren(subjectKey, treeNode, order);
+        TreeNode updatedNode = dao.reorderChildren(subjectKey, treeNode, order);
         return updatedNode;
     }
 
@@ -236,7 +244,7 @@ public class DomainDAL {
     }
 
     public TreeNode addChildren (String subjectKey, TreeNode treeNode, List<Reference> references, Integer index) throws Exception {
-        TreeNode updatedNode = (TreeNode)dao.addChildren(subjectKey, treeNode, references, index);
+        TreeNode updatedNode = dao.addChildren(subjectKey, treeNode, references, index);
         List<DomainObject> children = dao.getDomainObjects(subjectKey,references);
         for (DomainObject child: children) {
             IndexingHelper.sendAddAncestorMessage(child.getId(), updatedNode.getId());
@@ -245,7 +253,7 @@ public class DomainDAL {
     }
 
     public TreeNode removeChildren (String subjectKey, TreeNode treeNode, List<Reference> references) throws Exception {
-        TreeNode updatedNode = (TreeNode)dao.removeChildren(subjectKey, treeNode, references);
+        TreeNode updatedNode = dao.removeChildren(subjectKey, treeNode, references);
         List<DomainObject> children = dao.getDomainObjects(subjectKey,references);
         for (DomainObject child: children) {
             IndexingHelper.sendReindexingMessage(child);
@@ -261,10 +269,10 @@ public class DomainDAL {
         dao.changePermissions(subjectKey, targetClass, targetId, granteeKey, rights, grant);
     }
 
-    public void syncPermissions (String subjectKey, String sampleClassName, Long sampleId, DataSet dataSet) throws Exception {
-        dao.syncPermissions(dataSet.getOwnerKey(), sampleClassName, sampleId, dataSet);
+    public void syncPermissions(String subjectKey, String className, Long id, DomainObject permissionTemplate) throws Exception {
+        dao.syncPermissions(subjectKey, className, id, permissionTemplate);
     }
-    public List<Preference> getPreferences (String subjectKey) throws Exception {
+    public List<Preference> getPreferences(String subjectKey) throws Exception {
         return dao.getPreferences(subjectKey);
     }
 
@@ -272,11 +280,11 @@ public class DomainDAL {
         return dao.getSubjects();
     }
 
-    public Subject getSubjectByNameOrKey (String subjectKey) {
+    public Subject getSubjectByNameOrKey(String subjectKey) {
         return dao.getSubjectByNameOrKey(subjectKey);
     }
 
-    public Subject getSubjectByName (String name) {
+    public Subject getSubjectByName(String name) {
         return dao.getSubjectByName(name);
     }
 
@@ -288,13 +296,8 @@ public class DomainDAL {
         return dao.getWorkspaces(subjectKey);
     }
 
-    public Workspace getDefaultWorkspace (String subjectKey) throws Exception {
+    public Workspace getDefaultWorkspace(String subjectKey) throws Exception {
         return dao.getDefaultWorkspace(subjectKey);
-    }
-
-    public int bulkUpdatePathPrefix(String originalPath, String archivePath) {
-        // TODO: this is only used by the SyncToArchiveService. Maybe we can get rid of it entirely? It would be tricky to implement in Mongo.
-        throw new UnsupportedOperationException();
     }
 
 }

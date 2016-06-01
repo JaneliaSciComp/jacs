@@ -383,7 +383,6 @@ public class DomainDAO {
         return getDomainObjects(subjectKey, clazz, ids);
     }
 
-
     /**
      * Get the domain objects in the given collection name with the specified ids.
      */
@@ -1213,10 +1212,10 @@ public class DomainDAO {
         }
     }
 
-    public void syncPermissions(String ownerKey, String simpleName, Long id, DomainObject permissionTemplate) throws Exception {
+    public void syncPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate) throws Exception {
         // TODO: this could be optimized to do both r/w at the same time
-        changePermissions(ownerKey, simpleName, id, permissionTemplate.getReaders(), "r", true);
-        changePermissions(ownerKey, simpleName, id, permissionTemplate.getWriters(), "w", true);
+        changePermissions(ownerKey, className, id, permissionTemplate.getReaders(), "r", true);
+        changePermissions(ownerKey, className, id, permissionTemplate.getWriters(), "w", true);
         // TODO: should be deleted if they dont exist in the permission template?
     }
 
