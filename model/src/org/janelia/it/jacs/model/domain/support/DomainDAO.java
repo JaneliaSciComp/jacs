@@ -422,6 +422,36 @@ public class DomainDAO {
         return list;
     }
 
+    public <T extends DomainObject> List<T> getUserDomainObjects(String subjectKey, Class<T> domainClass) {
+        return getUserDomainObjects(subjectKey, domainClass, null);
+    }
+
+    /**
+     * Get the domain objects owned by the given user, in the given collection name, with the specified ids.
+     */
+    public <T extends DomainObject> List<T> getUserDomainObjects(String subjectKey, Class<T> domainClass, Collection<Long> ids) {
+
+        if (domainClass == null) {
+            return new ArrayList<>();
+        }
+
+        long start = System.currentTimeMillis();
+        log.trace("getUserDomainObjects(subjectKey={},className=" + domainClass.getName() + ",ids=" + ids + ")");
+
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCursor<T> cursor = null;
+        if (ids == null) {
+            cursor = getCollectionByName(collectionName).find("{ownerKey:#}", subjectKey).as(domainClass);
+        }
+        else {
+            cursor = getCollectionByName(collectionName).find("{_id:{$in:#},ownerKey:#", ids, subjectKey).as(domainClass);
+        }
+
+        List<T> list = toList(cursor, ids);
+        log.trace("Getting " + list.size() + " " + collectionName + " objects took " + (System.currentTimeMillis() - start) + " ms");
+        return list;
+    }
+
     /**
      * Get the domain objects referenced by the given reverse reference.
      *

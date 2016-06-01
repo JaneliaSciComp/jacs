@@ -41,10 +41,10 @@ public class SampleCleaningService extends AbstractDomainService {
         }            
 
         this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
-        
+
         logger.info("Cleaning old results from samples for user: "+ownerKey);
         
-        List<Sample> samples = domainDao.getDomainObjects(ownerKey, Sample.class);
+        List<Sample> samples = domainDao.getUserDomainObjects(ownerKey, Sample.class);
 
         logger.info("Will process "+samples.size()+" samples...");
         
@@ -58,7 +58,7 @@ public class SampleCleaningService extends AbstractDomainService {
     
     private void processSample(Sample sample) throws Exception {
     	
-    	logger.info("Cleaning up sample "+sample.getName());
+    	logger.info("Cleaning up sample "+sample.getName()+" (id="+sample.getId()+")");
     	int runsDeleted = 0;
     	for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
     	    runsDeleted += processSample(objectiveSample);
@@ -78,7 +78,7 @@ public class SampleCleaningService extends AbstractDomainService {
     	if (runs.isEmpty()) return 0;
     	
     	// Group by pipeline process
-    	Map<String,List<SamplePipelineRun>> processRunMap = new HashMap<String,List<SamplePipelineRun>>();
+    	Map<String,List<SamplePipelineRun>> processRunMap = new HashMap<>();
 
         for(SamplePipelineRun pipelineRun : runs) {
             String process = pipelineRun.getPipelineProcess();
@@ -96,7 +96,7 @@ public class SampleCleaningService extends AbstractDomainService {
             List<SamplePipelineRun> processRuns = processRunMap.get(process);
             if (processRuns.isEmpty()) continue;
             
-            logger.info("  Processing pipeline runs for process: "+process);
+            logger.info("  Processing "+objectiveSample.getObjective()+" pipeline runs for process: "+process);
             
             // Remove latest run, we don't want to touch it
             SamplePipelineRun lastRun = processRuns.remove(processRuns.size()-1);
