@@ -54,12 +54,12 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
 
-        FileNode inputFileNode = (FileNode)processData.getItem("INPUT_FILE_NODE");
+        FileNode inputFileNode = (FileNode)data.getItem("INPUT_FILE_NODE");
         if (inputFileNode==null) {
         	throw new ServiceException("Input parameter INPUT_FILE_NODE may not be null");
         }
 
-        String referenceChannelIndexStr = (String)processData.getItem("REFERENCE_CHANNEL");
+        String referenceChannelIndexStr = (String)data.getItem("REFERENCE_CHANNEL");
         if (referenceChannelIndexStr!=null) {
         	referenceChannelIndex = Integer.parseInt(referenceChannelIndexStr)+1;	
         }
@@ -118,8 +118,9 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
         List<List<String>> groups = new ArrayList<List<String>>();
         List<String> currGroup = new ArrayList<String>();
         	
+        BufferedReader reader = null;
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(groupedFile));
+            reader = new BufferedReader(new FileReader(groupedFile));
             String line;
             while((line = reader.readLine()) != null) {
             	line = line.trim();
@@ -145,7 +146,14 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
         catch (IOException e) {
     		throw new MissingGridResultException(file.getAbsolutePath(), "Error reading grouped output file at "+groupedFile.getAbsolutePath(), e);
         }
-    	
+    	finally {
+    		try {
+    			if (reader!=null) reader.close();
+    		}
+    		catch (IOException e) {
+    			logger.error("Error closing grouped file",e);
+    		}
+    	}
         int maxSizeIndex = 0;
         int maxSize = 0;
         
@@ -198,7 +206,7 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
         }
         
         // Replace the pairs with only the pairs in the largest group
-        sampleArea.setMergedLsmPairs(mergedLsmPairs);
+        sampleArea.setMergedLsmPairs(newMergedLsmPairs);
 
         logger.debug("Validating sample area tiles");
 
@@ -235,11 +243,11 @@ public class Vaa3DStitchGroupingService extends AbstractEntityGridService {
             }
         }
         
-        processData.putItem("SAMPLE_AREA", sampleArea);
+        data.putItem("SAMPLE_AREA", sampleArea);
 
     	if (newMergedLsmPairs.size()==1) {
     		// No stitching to run
-    		processData.putItem("RUN_STITCH", Boolean.FALSE);
+    		data.putItem("RUN_STITCH", Boolean.FALSE);
     	}
     }
     

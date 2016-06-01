@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
-import org.janelia.it.jacs.compute.util.JFSUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
