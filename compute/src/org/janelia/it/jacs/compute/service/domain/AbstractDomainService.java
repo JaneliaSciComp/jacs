@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.domain;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -29,7 +30,7 @@ public abstract class AbstractDomainService implements IService {
     protected ProcessDataAccessor data;
     protected ComputeBeanLocal computeBean;
     protected DomainHelper domainHelper;
-    protected DomainDAO domainDao;
+    protected DomainDAL domainDao;
     protected String ownerKey;
 
     public void execute(IProcessData processData) throws ServiceException {
@@ -42,7 +43,7 @@ public abstract class AbstractDomainService implements IService {
             this.data = new ProcessDataAccessor(processData, contextLogger);
             this.computeBean = EJBFactory.getLocalComputeBean();
             this.domainHelper = new DomainHelper(computeBean, ownerKey, logger, contextLogger);
-            this.domainDao = DomainDAOManager.getInstance().getDao();
+            this.domainDao = DomainDAL.getInstance();
             
             final String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             final Subject subject = computeBean.getSubjectByNameOrKey(ownerName);

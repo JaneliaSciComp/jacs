@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -65,7 +66,7 @@ public class SyncToArchiveService extends AbstractDomainService {
             this.logger = Logger.getLogger(this.getClass());
             this.contextLogger = new ContextLogger(logger);
             this.computeBean = EJBFactory.getLocalComputeBean();
-            this.domainDao = DomainDAOManager.getInstance().getDao();
+            this.domainDao = DomainDAL.getInstance();
             List<String> paths = new ArrayList<String>();
             paths.add(filepath);
             syncPaths(paths);
@@ -83,7 +84,7 @@ public class SyncToArchiveService extends AbstractDomainService {
             this.logger = Logger.getLogger(this.getClass());
             this.contextLogger = new ContextLogger(logger);
             this.computeBean = EJBFactory.getLocalComputeBean();
-            this.domainDao = DomainDAOManager.getInstance().getDao();
+            this.domainDao = DomainDAL.getInstance();
             syncPaths(filepaths);
         } 
         catch (Exception e) {

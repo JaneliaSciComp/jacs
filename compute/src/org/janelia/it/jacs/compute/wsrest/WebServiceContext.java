@@ -17,8 +17,6 @@ import org.slf4j.LoggerFactory;
 @javax.servlet.annotation.WebListener
 public class WebServiceContext implements ServletContextListener  {
     private static final Logger log = LoggerFactory.getLogger(WebServiceContext.class);
-
-    private static DomainDAO mongo;
     private static SolrConnector solr;
 
     @Override
@@ -27,25 +25,9 @@ public class WebServiceContext implements ServletContextListener  {
     }
 
     public static void init() {
-        if (WebServiceContext.mongo==null) {
-            WebServiceContext.mongo = DomainDAOManager.getInstance().getDao();
-        }
         if (WebServiceContext.solr==null) {
-            try {
-                WebServiceContext.solr = new SolrConnector(WebServiceContext.mongo, false, false);
-            } catch (IOException e) {
-                log.error("Couldn't initialize solr server connection", e);
-            }
+           WebServiceContext.solr = new SolrConnector(DomainDAOManager.getInstance().getDao(), false, false);
         }
-    }
-
-    public static DomainDAO getDomainManager() {
-        init();
-        return mongo;
-    }
-
-    public static void setDomainManager(DomainDAO mongo) {
-        WebServiceContext.mongo = mongo;
     }
 
     public static SolrConnector getSolr() {

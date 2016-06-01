@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -48,7 +49,7 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Annotation createAnnotation(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("createAnnotation({})",query);
             Annotation newAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
@@ -72,7 +73,7 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Annotation updateAnnotation(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("updateAnnotation({})",query);
             Annotation updateAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
@@ -97,7 +98,7 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Annotation> getAnnotations(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getAnnotations({})",query);
             List<Annotation> annotations = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
@@ -120,13 +121,13 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     public void removeAnnotations(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("annotationId") final String annotationId) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         Reference annotationRef = Reference.createFor(Annotation.class, new Long(annotationId));
         try {
             log.debug("removeAnnotations({},{})",subjectKey,annotationId);
             DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);
             IndexingHelper.sendRemoveFromIndexMessage(deleteAnnotation.getId());
-            dao.remove(subjectKey, deleteAnnotation);
+            dao.deleteDomainObject(subjectKey, deleteAnnotation);
         } catch (Exception e) {
             log.error("Error occurred removing annotations" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

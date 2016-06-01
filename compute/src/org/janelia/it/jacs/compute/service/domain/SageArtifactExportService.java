@@ -204,7 +204,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         }
     }
 
-    private Ontology getPublicationOntology() {
+    private Ontology getPublicationOntology() throws Exception {
 
         Ontology publicationOntology = null;
         for(Ontology ontology : domainDao.getDomainObjectsByName(PUBLICATION_OWNER, Ontology.class, PUBLICATION_ONTOLOGY_NAME)) {
@@ -780,7 +780,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     
     /**
      * Set to_publish=0 for all the images related to the given sample, and then delete any "Published" annotations on it.
-     * @param sample
+     * @param objectiveSample
      * @throws Exception
      */
     private void unpublishSample(ObjectiveSample objectiveSample) throws Exception {
@@ -800,7 +800,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         boolean stillPublished = false;
         for(Annotation annotation : domainDao.getAnnotations(null, Reference.createFor(sample))) {
             if (annotation.getOwnerKey().equals(PUBLICATION_OWNER) && annotation.getKeyTerm().getOntologyTermId().equals(publishedTerm.getId())) {
-                domainDao.remove(PUBLICATION_OWNER, annotation);
+                domainDao.deleteDomainObject(PUBLICATION_OWNER, annotation);
             }
             else if (annotation.getKeyTerm().getOntologyTermId().equals(publishedTerm20x.getId())) {
                 stillPublished = true;

@@ -4,6 +4,7 @@ package org.janelia.it.jacs.compute.wsrest.data;
 import io.swagger.annotations.*;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
@@ -46,7 +47,7 @@ public class SampleWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<LSMImage> getLsmsForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                            @ApiParam @QueryParam("sampleId") final Long sampleId) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
             return new ArrayList<LSMImage>(lsms);
@@ -70,7 +71,7 @@ public class SampleWebService extends ResourceConfig {
     public List getSamples(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                            @ApiParam @QueryParam("sampleId") final Long sampleId,
                            @ApiParam @QueryParam("name") final String name) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             if (sampleId==null) {
                 return dao.getDomainObjectsByName(null, Sample.class, name);

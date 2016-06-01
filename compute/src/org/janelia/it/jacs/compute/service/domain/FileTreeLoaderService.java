@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.domain;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -108,7 +109,7 @@ public class FileTreeLoaderService implements IService {
     final public String IMG_EXTENSIONS="IMG_EXTENSIONS";
 
     protected Logger logger;
-    protected DomainDAO domainDAO;
+    protected DomainDAL domainDAO;
     protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
     protected DomainHelper domainHelper;
@@ -156,7 +157,7 @@ public class FileTreeLoaderService implements IService {
    @Override
     public void execute(IProcessData processData) throws ServiceException {
         try {
-            this.domainDAO = DomainDAOManager.getInstance().getDao();
+            this.domainDAO = DomainDAL.getInstance();
             this.computeBean = EJBFactory.getLocalComputeBean();
             this.processData=processData;
             this.logger = ProcessDataHelper.getLoggerForTask(processData, this.getClass());

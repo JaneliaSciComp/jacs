@@ -3,7 +3,10 @@ package org.janelia.it.jacs.compute.wsrest.info;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -23,28 +26,23 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.Image;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.shared.utils.DateUtil;
+import org.jongo.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Filters.lte;
-import static com.mongodb.client.model.Filters.not;
-import static com.mongodb.client.model.Filters.regex;
-import static com.mongodb.client.model.Projections.excludeId;
-import static com.mongodb.client.model.Projections.fields;
-import static com.mongodb.client.model.Projections.include;
-import static com.mongodb.client.model.Sorts.ascending;
-import static com.mongodb.client.model.Sorts.descending;
-import static com.mongodb.client.model.Sorts.orderBy;
 import static java.util.Arrays.asList;
 
 @Path("/info")
@@ -67,7 +65,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getImageCycleTime() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> image = db.getCollection("image");
@@ -81,7 +79,9 @@ public class ImageStatusWebService extends ResourceConfig {
                             .append("creationDate", "$creationDate")
                             .append("completionDate", "$completionDate")
                             .append("cycleTime",
-                                    new Document("$subtract", asList("$creationDate", "$tmogDate"))))))
+                                    new Document ("$divide", asList(
+                                            new Document("$subtract", asList("$creationDate", "$tmogDate")),
+                                            360000))))))
                     .into(new ArrayList());
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -94,7 +94,7 @@ public class ImageStatusWebService extends ResourceConfig {
     }
 
     private MongoCollection<Document> getNativeCollection(String collectionName) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         return db.getCollection(collectionName);
@@ -108,7 +108,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Image getLsmStackByName(@QueryParam("name") final String name) {
         try {
-            DomainDAO dao = WebServiceContext.getDomainManager();
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
             List<Image> images = (List<Image>)dao.getDomainObjectsByName(null, Image.class, name);
             if (images!=null && images.size()>0) {
                 return images.get(0);
@@ -131,7 +131,7 @@ public class ImageStatusWebService extends ResourceConfig {
         if (name==null || type==null) {
             return "Both name and type are required parameters";
         }
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> image = db.getCollection("image");
@@ -145,7 +145,10 @@ public class ImageStatusWebService extends ResourceConfig {
                             .append("creationDate", "$creationDate")
                             .append("completionDate", "$completionDate")
                             .append("cycleTime",
-                                    new Document("$subtract", asList("$creationDate", "$tmogDate"))))))
+                                    new Document ("$divide", asList(
+                                            new Document("$subtract", asList("$creationDate", "$tmogDate")),
+                                            3600000)))),
+                    new Document("$sort", new Document ("tmogDate", 1))))
                     .into(new ArrayList());
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -169,60 +172,79 @@ public class ImageStatusWebService extends ResourceConfig {
         List<Document> jsonResult = new ArrayList<>();
 
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             if (startDate!=null || endDate!=null) {
                 if (startDate==null) {
-                    Date endDateTime = sdf.parse(endDate);
+                    Date endDateTime = DateUtil.createEndDate(endDate);
                     jsonResult = image.aggregate(asList(
                             new Document("$match", new Document("tmogDate",new Document("$lte", endDateTime))),
-                            new Document("$project", new Document("line", "$line")
+                            new Document("$project",  new Document ("_id", 0)
+                                    .append("name", "$name")
+                                    .append("line", "$line")
                                     .append("slideCode", "$slideCode")
                                     .append("dataSet", "$dataSet")
                                     .append("tmogDate", "$tmogDate")
                                     .append("creationDate", "$creationDate")
                                     .append("completionDate", "$completionDate")
                                     .append("cycleTime",
-                                            new Document("$subtract", asList("$creationDate", "$tmogDate"))))))
+                                            new Document ("$divide", asList(
+                                                    new Document("$subtract", asList("$creationDate", "$tmogDate")),
+                                                    3600000)))),
+                            new Document("$sort", new Document ("tmogDate", 1))))
                             .into(new ArrayList());
                 } else if (endDate==null) {
-                    Date startDateTime = sdf.parse(startDate);
+                    Date startDateTime = DateUtil.createStartDate(startDate);
                     jsonResult = image.aggregate(asList(
                             new Document("$match", new Document("tmogDate",new Document("$gte", startDateTime))),
-                            new Document("$project", new Document("line", "$line")
+                            new Document("$project", new Document ("_id", 0)
+                                    .append("name", "$name")
+                                    .append("line", "$line")
                                     .append("slideCode", "$slideCode")
                                     .append("dataSet", "$dataSet")
                                     .append("tmogDate", "$tmogDate")
                                     .append("creationDate", "$creationDate")
                                     .append("completionDate", "$completionDate")
                                     .append("cycleTime",
-                                            new Document("$subtract", asList("$creationDate", "$tmogDate"))))))
+                                            new Document ("$divide", asList(
+                                                    new Document("$subtract", asList("$creationDate", "$tmogDate")),
+                                                    3600000)))),
+                            new Document("$sort", new Document ("tmogDate", 1))))
                             .into(new ArrayList());
                 } else {
-                    Date endDateTime = sdf.parse(endDate);
-                    Date startDateTime = sdf.parse(startDate);
+                    Date endDateTime = DateUtil.createEndDate(endDate);
+                    Date startDateTime = DateUtil.createStartDate(startDate);
                     jsonResult = image.aggregate(asList(
                             new Document("$match", new Document("tmogDate",new Document("$gte", startDateTime))),
                             new Document("$match", new Document("tmogDate",new Document("$lte", endDateTime))),
-                            new Document("$project", new Document("line", "$line")
+                            new Document("$project",  new Document ("_id", 0)
+                                    .append("name", "$name")
+                                    .append("line", "$line")
                                     .append("slideCode", "$slideCode")
                                     .append("dataSet", "$dataSet")
                                     .append("tmogDate", "$tmogDate")
                                     .append("creationDate", "$creationDate")
                                     .append("completionDate", "$completionDate")
                                     .append("cycleTime",
-                                            new Document("$subtract", asList("$creationDate", "$tmogDate"))))))
+                                            new Document ("$divide", asList(
+                                                    new Document("$subtract", asList("$creationDate", "$tmogDate")),
+                                                    3600000)))),
+                            new Document("$sort", new Document ("tmogDate", 1))))
                             .into(new ArrayList());
                 }
             } else {
                 jsonResult = image.aggregate(asList(
-                        new Document("$project", new Document("line", "$line")
+                        new Document("$project", new Document ("_id", 0)
+                                .append("name", "$name")
+                                .append("line", "$line")
                                 .append("slideCode", "$slideCode")
                                 .append("dataSet", "$dataSet")
                                 .append("tmogDate", "$tmogDate")
                                 .append("creationDate", "$creationDate")
                                 .append("completionDate", "$completionDate")
                                 .append("cycleTime",
-                                        new Document("$subtract", asList("$creationDate", "$tmogDate"))))))
+                                        new Document ("$divide", asList(
+                                                new Document("$subtract", asList("$creationDate", "$tmogDate")),
+                                                3600000)))),
+                        new Document("$sort", new Document ("tmogDate", 1))))
                         .into(new ArrayList());
             }
             ObjectMapper objectMapper = new ObjectMapper();
@@ -247,16 +269,18 @@ public class ImageStatusWebService extends ResourceConfig {
         List<Document> jsonResult = new ArrayList<>();
 
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             if (compareDate==null) {
                 return "You need to provide the compareDate parameter for this call to work properly";
             } else {
-                Date compareDateTime = sdf.parse(compareDate);
+                Date compareDateTime = DateUtil.createStartDate(compareDate);
                 jsonResult = image.aggregate(asList(
                         new Document("$match", new Document("name",name)),
                         new Document("$project", new Document("completionDate", "$completionDate")
                                 .append("elapsedTime",
-                                        new Document("$subtract", asList("$completionDate", compareDateTime))))))
+                                        new Document("$divide", asList(
+                                                new Document("$subtract", asList("$completionDate", compareDateTime)),
+                                                3600000)))),
+                        new Document("$sort", new Document ("completionDate", 1))))
                         .into(new ArrayList());
             }
             ObjectMapper objectMapper = new ObjectMapper();
@@ -266,5 +290,42 @@ public class ImageStatusWebService extends ResourceConfig {
             log.error("Error occurred getting image cycle times",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GET
+    @Path("/lsmstack/images")
+    @ApiOperation(value = "Gets a LsmStack's Images",
+            notes = "Uses the Sample Id or Sample Name to retrieve a list of samples"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got Samples", response=Sample.class,
+                    responseContainer = "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting list of Samples" )
+    })
+    @Produces(MediaType.APPLICATION_JSON)
+    public LSMImage getImage(@ApiParam @QueryParam("name") final String name) {
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+        org.jongo.MongoCollection image = dao.getCollectionByName("image");
+
+        try {
+            MongoCursor<LSMImage> results;
+
+            results = image.find("{name:'" + name + "'}").as(LSMImage.class);
+            if (results.hasNext()) {
+                LSMImage result = results.next();
+                Map labelMap = new HashMap<String, String>();
+                Iterator<FileType> files = result.getFiles().keySet().iterator();
+                while (files.hasNext()) {
+                    FileType moo = files.next();
+                    labelMap.put(moo.getLabel(), result.getFiles().get(moo));
+                }
+                result.setFiles(labelMap);
+                return result;
+            }
+        } catch (Exception e) {
+            log.error("Error occurred getting LSM image information",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return null;
     }
 }

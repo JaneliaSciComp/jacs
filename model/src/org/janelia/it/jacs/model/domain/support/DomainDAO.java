@@ -374,9 +374,6 @@ public class DomainDAO {
         return getDomainObjects(subjectKey, clazz, ids);
     }
 
-    public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, Class<T> domainClass) {
-        return getDomainObjects(subjectKey, domainClass, null);
-    }
 
     /**
      * Get the domain objects in the given collection name with the specified ids.
@@ -499,10 +496,6 @@ public class DomainDAO {
         List<T> list = toList(cursor);
         log.trace("Getting " + list.size() + " " + collectionName + " objects took " + (System.currentTimeMillis() - start) + " ms");
         return list;
-    }
-
-    public List<Annotation> getAnnotations(String subjectKey, Reference reference) {
-        return getAnnotations(subjectKey, Arrays.asList(reference));
     }
 
     public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
@@ -1173,11 +1166,6 @@ public class DomainDAO {
 
     public Long getNewId() {
         return TimebasedIdentifierGenerator.generateIdList(1).get(0);
-    }
-
-    public int bulkUpdatePathPrefix(String originalPath, String archivePath) {
-        // TODO: this is only used by the SyncToArchiveService. Maybe we can get rid of it entirely? It would be tricky to implement in Mongo. 
-        throw new UnsupportedOperationException();
     }
 
     public List<LineRelease> getLineReleases(String subjectKey) {

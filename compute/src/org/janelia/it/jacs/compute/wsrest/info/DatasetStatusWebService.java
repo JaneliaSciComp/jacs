@@ -27,6 +27,7 @@ import io.swagger.annotations.ApiResponses;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
@@ -64,7 +65,7 @@ public class DatasetStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Returns a count of sample errors by dataset",
             notes = "")
     public String getDataSetErrors() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
@@ -93,7 +94,7 @@ public class DatasetStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets All the DataSets for an Owner",
             notes = "")
     public String getDatasetsByOwner() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> dataSet = db.getCollection("dataSet");

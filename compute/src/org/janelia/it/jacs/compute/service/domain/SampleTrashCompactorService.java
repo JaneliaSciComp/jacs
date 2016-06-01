@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
@@ -53,7 +54,7 @@ public class SampleTrashCompactorService extends AbstractDomainService {
         }
         
         this.username = DomainUtils.getNameFromSubjectKey(ownerKey);
-        this.solr = new SolrConnector(domainDao);
+        this.solr = new SolrConnector(DomainDAOManager.getInstance().getDao());
         this.userFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_DIR_PROP) + File.separator + username + File.separator);
         this.archiveFilestore = new File(SystemConfigurationProperties.getString(CENTRAL_ARCHIVE_DIR_PROP) + File.separator + username + File.separator);
         

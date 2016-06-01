@@ -83,7 +83,7 @@ public class SolrConnector {
         this(dao, false, false);
     }
 
-    public SolrConnector(DomainDAO dao, boolean useBuildCore, boolean streamingUpdates) throws UnknownHostException {
+    public SolrConnector(DomainDAO dao, boolean useBuildCore, boolean streamingUpdates) {
         this.dao = dao;
         this.useBuildCore = useBuildCore;
 		this.streamingUpdates = streamingUpdates;

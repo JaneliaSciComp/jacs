@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -64,7 +65,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectDetails(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             List<DomainObject> detailObjects = null;
             if (query.getReferences()!=null) {
@@ -95,7 +96,7 @@ public class DomainObjectWebService extends ResourceConfig {
     public List<DomainObject> getObjectsByName(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                @ApiParam @QueryParam("name") final String name,
                                                @ApiParam @QueryParam("domainClass") final String domainClass) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         Class clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
             return dao.getDomainObjectsByName(subjectKey, clazz, name);
@@ -117,7 +118,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectsByClass(@QueryParam("subjectKey") final String subjectKey,
                                                 @QueryParam("domainClass") final String domainClass) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         Class clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
             return dao.getDomainObjects(subjectKey, clazz);
@@ -144,7 +145,7 @@ public class DomainObjectWebService extends ResourceConfig {
                                                      @ApiParam @QueryParam("count") final Long count,
                                                      @ApiParam @QueryParam("referenceAttr") final String referenceAttr,
                                                      @ApiParam @QueryParam("referenceClass") final String referenceClass) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         ReverseReference reverseRef = new ReverseReference();
         reverseRef.setCount(count);
         reverseRef.setReferenceAttr(referenceAttr);
@@ -171,7 +172,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Reference> getContainerReferences(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getContainerReferences(query.getDomainObject());
         } catch (Exception e) {
@@ -192,7 +193,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DomainObject saveDomainObject (@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), query.getDomainObject());
         } catch (Exception e) {
@@ -213,7 +214,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public void removeDomainObject(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             for (Reference objectRef : query.getReferences()) {
                 // first check that it is a treeNode
@@ -221,10 +222,10 @@ public class DomainObjectWebService extends ResourceConfig {
                 if (objClass==TreeNode.class) {
                     String subjectKey = query.getSubjectKey();
                     DomainObject domainObj = dao.getDomainObject(subjectKey, objectRef);
+
                     // check whether this subject has permissions to write to this object
                     if (domainObj.getWriters().contains(subjectKey)) {
-                        IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
-                        dao.remove(subjectKey, domainObj);
+                        dao.deleteDomainObject(subjectKey, domainObj);
                     }
                 }
 
@@ -247,16 +248,16 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DomainObject updateObjectProperty(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             DomainObject updateObj = null;
             // TO DO: add check that parameters are valid
             List<Long> objIds = query.getObjectIds();
             if (objIds!=null && objIds.size()>0) {
-                updateObj = dao.updateProperty(query.getSubjectKey(), query.getObjectType(), objIds.get(0),
+                DomainObject currObj = dao.getDomainObject(query.getSubjectKey(), query.getObjectType(), objIds.get(0));
+                updateObj = dao.updateProperty(query.getSubjectKey(), currObj,
                         query.getPropertyName(), query.getPropertyValue());
             }
-            IndexingHelper.sendReindexingMessage(updateObj);
 
             return updateObj;
 

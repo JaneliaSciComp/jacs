@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
@@ -47,7 +48,7 @@ public class WorkspaceWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Workspace getWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getAllWorkspace({})", subjectKey);
             return dao.getDefaultWorkspace(subjectKey);
@@ -69,10 +70,10 @@ public class WorkspaceWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public List<Workspace> getAllWorkspace(@QueryParam("subjectKey") String subjectKey) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getAllWorkspace({})",subjectKey);
-            return new ArrayList<Workspace>(dao.getWorkspaces(subjectKey));
+            return new ArrayList<Workspace>(dao.getUserWorkspaces(subjectKey));
         } catch (Exception e) {
             log.error("Error occurred getting default workspace",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

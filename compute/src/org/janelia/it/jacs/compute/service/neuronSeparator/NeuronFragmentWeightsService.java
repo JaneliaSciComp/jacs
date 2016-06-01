@@ -19,6 +19,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.apache.log4j.Logger;
 import org.bson.Document;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.blast.BlastProcessDataConstants;
@@ -143,6 +144,8 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         lastVal = lastVal.substring(0,lastVal.length()-1) + "}";
         neuronSeparationsToProcess.add(lastVal);
 
+
+        // TEST CODE, remove for full processing
         neuronSeparationsToProcess = new ArrayList();
         neuronSeparationsToProcess.add("{\"1757349385634578530\":\"/nrs/jacs/jacsData/filestore/system/Separation/230/754/1757348710796230754/separate\"}");
 
@@ -150,7 +153,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         processData.putItem("NEURON_SEPARATION_BATCH_LIST", neuronSeparationsToProcess);
     }
 
-    private NeuronSeparation getNeuronSeparation(Sample parentSample, long separationId, org.jongo.MongoCollection sampleCollection) {
+    private NeuronSeparation getNeuronSeparation(Sample parentSample, long separationId) {
         List<ObjectiveSample> objSamples = parentSample.getObjectiveSamples();
         for (ObjectiveSample objSample : objSamples) {
             for (SamplePipelineRun sampleRun : objSample.getPipelineRuns()) {
@@ -167,7 +170,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         return null;
     }
 
-    private void updateFragments (Map fragWeights, Long separationId, org.jongo.MongoCollection fragmentCollection) {
+    private void updateFragments (Map fragWeights, Long separationId, org.jongo.MongoCollection fragmentCollection) throws Exception {
         Iterator fragKeys = fragWeights.keySet().iterator();
         while (fragKeys.hasNext()) {
             String key = (String)fragKeys.next();
@@ -175,7 +178,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
             NeuronFragment fragment = fragmentCollection.findOne("{separationId:#,number:#}",separationId, number)
                     .as(NeuronFragment.class);
             fragment.setVoxelWeight(Integer.parseInt((String) fragWeights.get(key)));
-            fragmentCollection.save(fragment);
+            DomainDAL.getInstance().save(null, fragment);
         }
     }
 
@@ -186,7 +189,6 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         String outputDir = processData.getString("RESULT_FILE_NODE_DIR") + File.separator + "sge_output";
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection fragmentCollection = dao.getCollectionByName("fragment");
-        org.jongo.MongoCollection sampleCollection = dao.getCollectionByName("sample");
 
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(outputDir))) {
             ObjectMapper mapper = new ObjectMapper();
@@ -203,10 +205,10 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
                         Reference sampleRef = baseFrag.getSample();
                         Sample neuronSepSample = (Sample)dao.getDomainObject(null, sampleRef);
                         if (neuronSepSample!=null) {
-                            NeuronSeparation neuronSep = getNeuronSeparation(neuronSepSample, separationId, sampleCollection);
+                            NeuronSeparation neuronSep = getNeuronSeparation(neuronSepSample, separationId);
                             if (neuronSep!=null) {
                                 neuronSep.setHasWeights(true);
-                                sampleCollection.save(neuronSepSample);
+                                DomainDAL.getInstance().save(null,neuronSepSample);
                                 updateFragments(fragWeights,separationId, fragmentCollection);
                             }
                         }
@@ -221,12 +223,11 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         logger.info("Generating weights for a single neuron separation and persist to the DB");
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection fragmentCollection = dao.getCollectionByName("fragment");
-        org.jongo.MongoCollection sampleCollection = dao.getCollectionByName("sample");
 
         Long sampleId = Long.parseLong(processData.getString("SAMPLE_ENTITY_ID"));
-        Long separationId = Long.parseLong(processData.getString("RESULT_ENTITY_ID"));
+        Long separationId = processData.getLong("RESULT_ENTITY_ID");
         Sample sample = (Sample)dao.getDomainObject(null, Reference.createFor(Sample.class, sampleId));
-        NeuronSeparation neuronSep = getNeuronSeparation(sample, separationId, sampleCollection);
+        NeuronSeparation neuronSep = getNeuronSeparation(sample, separationId);
 
         String filepath = neuronSep.getFilepath();
         V3dMaskFileLoader neuronFragments = new V3dMaskFileLoader();
@@ -246,7 +247,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
 
         // update each neuron fragment with voxel size
         neuronSep.setHasWeights(true);
-        sampleCollection.save(sample);
+        DomainDAL.getInstance().save(null,sample);
         updateFragments(finalFragmentCounts,separationId, fragmentCollection);
     }
 

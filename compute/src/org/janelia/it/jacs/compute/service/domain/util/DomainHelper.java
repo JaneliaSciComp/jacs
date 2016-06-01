@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
@@ -32,7 +33,7 @@ public class DomainHelper {
     protected Logger logger;
     protected ContextLogger contextLogger;
     protected ComputeBeanRemote computeBean;
-    protected DomainDAO domainDao;
+    protected DomainDAL domainDao;
     protected String ownerKey;
    
     public DomainHelper(ComputeBeanRemote computeBean, String ownerKey, Logger logger) {
@@ -45,7 +46,7 @@ public class DomainHelper {
                         ContextLogger contextLogger) {
         this.computeBean  = computeBean;
         this.ownerKey = ownerKey;
-        this.domainDao = DomainDAOManager.getInstance().getDao();
+        this.domainDao = DomainDAL.getInstance();
         this.logger = logger;
         if (contextLogger == null) {
             this.contextLogger = new ContextLogger(logger);
@@ -124,7 +125,6 @@ public class DomainHelper {
      * Create the given top level object set, or verify it exists and return it. 
      * @param topLevelFolderName
      * @param createIfNecessary
-     * @param loadTree
      * @return
      * @throws Exception
      */

@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -47,7 +48,7 @@ public class FilterWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Filter createFilter(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
             IndexingHelper.sendReindexingMessage(newFilter);
@@ -70,7 +71,7 @@ public class FilterWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Filter updateFilter(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             Filter updateFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
             IndexingHelper.sendReindexingMessage(updateFilter);

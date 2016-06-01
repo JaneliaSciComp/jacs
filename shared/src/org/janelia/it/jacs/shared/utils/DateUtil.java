@@ -1,6 +1,9 @@
 
 package org.janelia.it.jacs.shared.utils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by IntelliJ IDEA.
  * User: tnabeel
@@ -58,5 +61,17 @@ public class DateUtil {
         }
 
         return fullMsgBuff.toString();
+    }
+
+
+    public static Date createEndDate (String endDate) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HHmmss");
+        return sdf.parse(endDate + "-235959");
+    }
+
+
+    public static Date createStartDate (String startDate) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HHmmss");
+        return sdf.parse(startDate + "-000000");
     }
 }

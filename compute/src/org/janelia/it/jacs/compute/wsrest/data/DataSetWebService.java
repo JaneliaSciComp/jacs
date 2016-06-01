@@ -26,6 +26,7 @@ import io.swagger.annotations.*;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -68,7 +69,7 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DataSet> getDataSets(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<DataSet> dataSets = dao.getDataSets(subjectKey);
             return new ArrayList<DataSet>(dataSets);
@@ -90,7 +91,7 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String,String> getDatasetPipelines() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<DataSet> dataSets = dao.getDataSets(null);
             Map<String,String> results = new HashMap<>();
@@ -123,7 +124,7 @@ public class DataSetWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<DataSet> getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
                                              @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             List<DataSet> listDataSets = new ArrayList<>();
             if (owners==null) {
@@ -164,7 +165,7 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet createDataSet(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             DataSet newDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
             IndexingHelper.sendReindexingMessage(newDataSet);
@@ -188,7 +189,7 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet updateDataSet(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             DataSet updateDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
             IndexingHelper.sendReindexingMessage(updateDataSet);
@@ -212,12 +213,12 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("dataSetId") final String dataSetId) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         Reference dataSetRef = Reference.createFor(Annotation.class, new Long(dataSetId));
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
             IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
-            dao.remove(subjectKey, domainObj);
+            dao.deleteDomainObject(subjectKey, domainObj);
         } catch (Exception e) {
             log.error("Error occurred removing dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.service.domain;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
@@ -33,7 +34,7 @@ public abstract class AbstractDomainGridService extends SubmitDrmaaJobService {
 //    protected EntityBeanLocal entityBean;
     protected ComputeBeanLocal computeBean;
 //    protected AnnotationBeanLocal annotationBean;
-    protected DomainDAO domainDao;
+    protected DomainDAL domainDao;
     protected String ownerKey;
     protected EntityBeanEntityLoader entityLoader;
 
@@ -48,7 +49,7 @@ public abstract class AbstractDomainGridService extends SubmitDrmaaJobService {
 //            this.entityBean = EJBFactory.getLocalEntityBean();
             this.computeBean = EJBFactory.getLocalComputeBean();
 //            this.annotationBean = EJBFactory.getLocalAnnotationBean();
-            this.domainDao = DomainDAOManager.getInstance().getDao();
+            this.domainDao = DomainDAL.getInstance();
             
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);

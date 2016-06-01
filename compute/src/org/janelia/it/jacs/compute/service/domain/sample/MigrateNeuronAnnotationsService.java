@@ -117,7 +117,7 @@ public class MigrateNeuronAnnotationsService extends AbstractDomainService {
         }    
     }
 
-    public Multimap<Integer,Annotation> getNeuronAnnotations(List<NeuronFragment> fragments) {
+    public Multimap<Integer,Annotation> getNeuronAnnotations(List<NeuronFragment> fragments) throws Exception {
         Map<Number,Number> sourceNeuronNumByEntityId = getNeuronNumMap(fragments, false);
         Multimap<Integer,Annotation> map = HashMultimap.<Integer,Annotation>create();
         for(Annotation annotation : domainDao.getAnnotations(null, DomainUtils.getReferences(fragments))) {

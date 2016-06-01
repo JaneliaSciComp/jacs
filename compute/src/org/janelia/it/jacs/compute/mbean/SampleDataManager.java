@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.domain.SampleTrashCompactorService;
@@ -335,10 +336,10 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSampleFolder(String folderId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
+            DomainDAL dal = DomainDAL.getInstance();
+            TreeNode treeNode = dal.getDomainObject(null, TreeNode.class, new Long(folderId));
             if (treeNode!=null) {
-                for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
+                for(DomainObject child : dal.getDomainObjects(null, treeNode.getChildren())) {
                     if (child instanceof TreeNode) {
                         log.info("runSampleFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         runSampleFolder(child.getId().toString(), reuseSummary, reuseProcessing, reusePost, reuseAlignment, extraParams);
@@ -364,8 +365,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runSamplePipelines(String sampleId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams) {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleId));
+            Sample sample = DomainDAL.getInstance().getDomainObject(null, Sample.class, new Long(sampleId));
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
@@ -392,8 +392,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment) {
         try {
             String processName = "PipelineConfig_"+configurationName;
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleEntityId));
+            Sample sample = DomainDAL.getInstance().getDomainObject(null, Sample.class, new Long(sampleEntityId));
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
@@ -419,11 +418,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void applyProcessToDataset(String user, String dataSetName, String processName, String extraParams) {
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            DomainDAL dal = DomainDAL.getInstance();
             if (!StringUtils.isEmpty(dataSetName)) {
-                Subject subject = dao.getSubjectByNameOrKey(user);
+                Subject subject = dal.getSubjectByNameOrKey(user);
                 if (subject==null) throw new IllegalArgumentException("User with name "+user+" does not exist");
-                List<DataSet> dataSets = dao.getDomainObjectsByName(subject.getKey(), DataSet.class, dataSetName);
+                List<DataSet> dataSets = dal.getDomainObjectsByName(subject.getKey(), DataSet.class, dataSetName);
                 if (dataSets.isEmpty()) throw new IllegalArgumentException("Data set with name "+dataSetName+" does not exist");
                 if (dataSets.size()>1) throw new IllegalArgumentException("More than one data set with name "+dataSetName+" exists");   
             }
@@ -442,9 +441,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void applyProcessToSample(String sampleEntityId, String processName, String extraParams) {
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
             String displayName = "Apply Process To Sample";
-            Sample sample = dao.getDomainObject(null, Sample.class, new Long(sampleEntityId));
+            Sample sample = DomainDAL.getInstance().getDomainObject(null, Sample.class, new Long(sampleEntityId));
             if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleEntityId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleEntityId, null)); 
@@ -459,10 +457,10 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParams) {
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            TreeNode treeNode = dao.getDomainObject(null, TreeNode.class, new Long(folderId));
+            DomainDAL dal =  DomainDAL.getInstance();
+            TreeNode treeNode = dal.getDomainObject(null, TreeNode.class, new Long(folderId));
             if (treeNode!=null) {
-                for(DomainObject child : dao.getDomainObjects(null, treeNode.getChildren())) {
+                for(DomainObject child : dal.getDomainObjects(null, treeNode.getChildren())) {
                     if (child instanceof TreeNode) {
                         log.info("applyProcessToSamplesInFolder - Running folder: "+child.getName()+" (id="+child.getId()+")");
                         applyProcessToSamplesInFolder(child.getId().toString(), processName, extraParams);
@@ -640,10 +638,10 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSageArtifactExport(String owner, String releaseName) {
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            Subject subject = dao.getSubjectByNameOrKey(owner);
+            DomainDAL dal = DomainDAL.getInstance();
+            Subject subject = dal.getSubjectByNameOrKey(owner);
             if (subject==null) throw new IllegalArgumentException("User with name "+owner+" does not exist");
-            List<LineRelease> releases = dao.getDomainObjectsByName(subject.getKey(), LineRelease.class, releaseName);
+            List<LineRelease> releases = dal.getDomainObjectsByName(subject.getKey(), LineRelease.class, releaseName);
             if (releases.isEmpty()) throw new IllegalArgumentException("Release with name "+releaseName+" does not exist");
             if (releases.size()>1) throw new IllegalArgumentException("More than one release with name "+releaseName);
             LineRelease release = releases.get(0);
@@ -660,8 +658,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
 
     public void runSageArtifactExport() {
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            for(LineRelease release : dao.getLineReleases(null)) {
+            for(LineRelease release : DomainDAL.getInstance().getLineReleases(null)) {
                 String processName = "SageArtifactExport";
                 String displayName = "Sage Artifact Export";
                 HashSet<TaskParameter> taskParameters = new HashSet<>();
