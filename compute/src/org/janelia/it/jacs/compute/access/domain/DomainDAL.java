@@ -261,6 +261,9 @@ public class DomainDAL {
         dao.changePermissions(subjectKey, targetClass, targetId, granteeKey, rights, grant);
     }
 
+    public void syncPermissions (String subjectKey, String sampleClassName, Long sampleId, DataSet dataSet) throws Exception {
+        dao.syncPermissions(dataSet.getOwnerKey(), sampleClassName, sampleId, dataSet);
+    }
     public List<Preference> getPreferences (String subjectKey) throws Exception {
         return dao.getPreferences(subjectKey);
     }

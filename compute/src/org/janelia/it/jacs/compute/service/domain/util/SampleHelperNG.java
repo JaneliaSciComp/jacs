@@ -73,7 +73,7 @@ public class SampleHelperNG extends DomainHelper {
     	logger.debug("createOrUpdateLSM("+slideImage.getName()+")");
         boolean dirty = false;
         
-        LSMImage lsm = domainDao.getLsmBySageId(ownerKey, slideImage.getSageId());
+        LSMImage lsm = domainDAL.getLsmBySageId(ownerKey, slideImage.getSageId());
         if (lsm==null) {
             lsm = new LSMImage();
             lsm.setFiles(new HashMap<FileType,String>());
@@ -87,11 +87,11 @@ public class SampleHelperNG extends DomainHelper {
         }
         
         if (dirty) {
-            lsm = domainDao.save(ownerKey, lsm);
+            lsm = domainDAL.save(ownerKey, lsm);
             updatedLsmIds.add(lsm.getId());
         }
         else if (!lsm.getSageSynced()) {
-            domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", true);
+            domainDAL.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", true);
         }
         
         lsmCache.put(lsm.getId(), lsm);
@@ -171,7 +171,7 @@ public class SampleHelperNG extends DomainHelper {
                 Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(lsm, attr.field);
                 if (!StringUtils.areEqual(currValue, trueValue)) {
                     org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(lsm, attr.field, trueValue);
-	                logger.debug("  Setting "+fieldName+"="+trueValue);
+	                logger.debug("  Setting " + fieldName + "=" + trueValue);
 	                dirty = true;
 	            }
 	            else {
@@ -337,12 +337,12 @@ public class SampleHelperNG extends DomainHelper {
         
         if (sampleDirty) {
         	sample.setSageSynced(true);
-            sample = domainDao.save(ownerKey, sample);
+            sample = domainDAL.save(ownerKey, sample);
             logger.info("  Saving sample: "+sample.getName()+" (id="+sample.getId()+")");
             numSamplesUpdated++;
         }
         else if (!sample.getSageSynced()) {
-            domainDao.updateProperty(ownerKey, Sample.class, sample.getId(), "sageSynced", true);
+            domainDAL.updateProperty(ownerKey, Sample.class, sample.getId(), "sageSynced", true);
         }
 
         // Update all back-references from the sample's LSMs
@@ -362,7 +362,7 @@ public class SampleHelperNG extends DomainHelper {
         }
 
         if (sampleNew) { // We could disable this check to refresh all sample permissions
-            domainDao.syncPermissions(dataSet.getOwnerKey(), Sample.class.getSimpleName(), sample.getId(), dataSet);
+            domainDAL.syncPermissions(dataSet.getOwnerKey(), Sample.class.getSimpleName(), sample.getId(), dataSet);
         }
 
         return sample;
@@ -370,7 +370,7 @@ public class SampleHelperNG extends DomainHelper {
     
     private Sample getOrCreateSample(String slideCode, DataSet dataSet) {
         
-        Sample sample = domainDao.getSampleBySlideCode(ownerKey, dataSet.getIdentifier(), slideCode);
+        Sample sample = domainDAL.getSampleBySlideCode(ownerKey, dataSet.getIdentifier(), slideCode);
         if (sample != null) {
         	logger.info("  Found existing sample "+sample.getId()+" with status "+sample.getStatus());
         	return sample;
@@ -446,7 +446,7 @@ public class SampleHelperNG extends DomainHelper {
                     Object consensusValue = consensusValues.get(fieldName);
                     if (!StringUtils.areEqual(currValue, consensusValue)) {
                     	org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(sample, sampleAttr.field, consensusValue);
-                        logger.debug("  Setting "+fieldName+"="+consensusValue);
+                        logger.debug("  Setting " + fieldName + "=" + consensusValue);
                         dirty = true;
                     }
                     else {
@@ -807,7 +807,7 @@ public class SampleHelperNG extends DomainHelper {
         	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
 		
         	if (sample==null) {
-            	sample = domainDao.getDomainObject(null, Sample.class, sampleArea.getSampleId());
+            	sample = domainDAL.getDomainObject(null, Sample.class, sampleArea.getSampleId());
         	}
         	else if (!sample.getId().equals(sampleArea.getSampleId())) {
         	    throw new IllegalStateException("All sample areas must come from the same sample");
@@ -816,7 +816,7 @@ public class SampleHelperNG extends DomainHelper {
         	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
         	for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
         	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
-            	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
+            	List<LSMImage> lsms = domainDAL.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
 	        	
             	StringBuilder sb = new StringBuilder();
                 for(LSMImage image : lsms) {
@@ -867,7 +867,7 @@ public class SampleHelperNG extends DomainHelper {
         	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
 		
         	if (sample==null) {
-            	sample = domainDao.getDomainObject(null, Sample.class, sampleArea.getSampleId());
+            	sample = domainDAL.getDomainObject(null, Sample.class, sampleArea.getSampleId());
         	}
         	else if (!sample.getId().equals(sampleArea.getSampleId())) {
         	    throw new IllegalStateException("All sample areas must come from the same sample");
@@ -876,7 +876,7 @@ public class SampleHelperNG extends DomainHelper {
         	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
                 for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
         	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
-            	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
+            	List<LSMImage> lsms = domainDAL.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
             	
                 for(LSMImage image : lsms) {
     	        	logger.trace("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
@@ -940,7 +940,7 @@ public class SampleHelperNG extends DomainHelper {
         if (dataSets!=null) return;
         
         this.dataSetByIdentifier = new HashMap<>();
-        this.dataSets = domainDao.getDomainObjects(ownerKey, DataSet.class);
+        this.dataSets = domainDAL.getDomainObjects(ownerKey, DataSet.class);
 
         if (dataSetNameFilter != null) {
             List<DataSet> filteredDataSets = new ArrayList<>();
@@ -986,20 +986,20 @@ public class SampleHelperNG extends DomainHelper {
     /* --------------------------- */
 
     public void saveLsm(LSMImage lsm) throws Exception {
-        domainDao.save(ownerKey, lsm);
+        domainDAL.save(ownerKey, lsm);
     }
     
     public void saveSample(Sample sample) throws Exception {
-        domainDao.save(ownerKey, sample);
+        domainDAL.save(ownerKey, sample);
     }
 
     public void saveNeuron(NeuronFragment neuron) throws Exception {
-        domainDao.save(ownerKey, neuron);
+        domainDAL.save(ownerKey, neuron);
     }
 
     public SamplePipelineRun addNewPipelineRun(ObjectiveSample objectiveSample, String name, String pipelineProcess, int pipelineVersion) {
         SamplePipelineRun run = new SamplePipelineRun();
-        run.setId(domainDao.getNewId());
+        run.setId(domainDAL.getNewId());
         run.setCreationDate(new Date());
         run.setName(name);
         run.setPipelineProcess(pipelineProcess);
@@ -1010,7 +1010,7 @@ public class SampleHelperNG extends DomainHelper {
 
     public LSMSummaryResult addNewLSMSummaryResult(SamplePipelineRun run, String resultName) {
         LSMSummaryResult result = new LSMSummaryResult();
-        result.setId(domainDao.getNewId());
+        result.setId(domainDAL.getNewId());
         result.setCreationDate(new Date());
         result.setName(resultName);
         result.setFiles(new HashMap<FileType,String>());
@@ -1020,7 +1020,7 @@ public class SampleHelperNG extends DomainHelper {
     
     public SampleProcessingResult addNewSampleProcessingResult(SamplePipelineRun run, String resultName) {
         SampleProcessingResult result = new SampleProcessingResult();
-        result.setId(domainDao.getNewId());
+        result.setId(domainDAL.getNewId());
         result.setCreationDate(new Date());
         result.setName(resultName);
         result.setFiles(new HashMap<FileType,String>());
@@ -1030,7 +1030,7 @@ public class SampleHelperNG extends DomainHelper {
 
     public SampleAlignmentResult addNewAlignmentResult(SamplePipelineRun run, String resultName) {
         SampleAlignmentResult result = new SampleAlignmentResult();
-        result.setId(domainDao.getNewId());
+        result.setId(domainDAL.getNewId());
         result.setCreationDate(new Date());
         result.setName(resultName);
         result.setFiles(new HashMap<FileType,String>());
@@ -1040,7 +1040,7 @@ public class SampleHelperNG extends DomainHelper {
     
     public SamplePostProcessingResult addNewSamplePostProcessingResult(SamplePipelineRun run, String resultName) {
         SamplePostProcessingResult result = new SamplePostProcessingResult();
-        result.setId(domainDao.getNewId());
+        result.setId(domainDAL.getNewId());
         result.setCreationDate(new Date());
         result.setName(resultName);
         result.setFiles(new HashMap<FileType,String>());
@@ -1050,7 +1050,7 @@ public class SampleHelperNG extends DomainHelper {
     
     public NeuronSeparation addNewNeuronSeparation(PipelineResult result, String resultName) {
         NeuronSeparation separation = new NeuronSeparation();
-        separation.setId(domainDao.getNewId());
+        separation.setId(domainDAL.getNewId());
         separation.setCreationDate(new Date());
         separation.setName(resultName);
         separation.setFiles(new HashMap<FileType,String>());
@@ -1186,7 +1186,7 @@ public class SampleHelperNG extends DomainHelper {
 
     public void sortMembersByName(TreeNode folder) throws Exception {
         if (folder ==null || !folder.hasChildren()) return;
-        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getChildren(ownerKey, folder));
+        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDAL.getChildren(ownerKey, folder));
         Collections.sort(folder.getChildren(), new Comparator<Reference>() {
             @Override
             public int compare(Reference o1, Reference o2) {
@@ -1195,12 +1195,12 @@ public class SampleHelperNG extends DomainHelper {
                 return d1.getName().compareTo(d2.getName());
             }
         });
-        domainDao.save(ownerKey, folder);
+        domainDAL.save(ownerKey, folder);
     }
     
     public void sortChildrenByName(TreeNode treeNode) throws Exception {
         if (treeNode==null || !treeNode.hasChildren()) return;
-        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getChildren(ownerKey, treeNode));
+        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDAL.getChildren(ownerKey, treeNode));
         Collections.sort(treeNode.getChildren(), new Comparator<Reference>() {
             @Override
             public int compare(Reference o1, Reference o2) {
@@ -1209,6 +1209,6 @@ public class SampleHelperNG extends DomainHelper {
                 return d1.getName().compareTo(d2.getName());
             }
         });
-        domainDao.save(ownerKey, treeNode);
+        domainDAL.save(ownerKey, treeNode);
     }
 }
