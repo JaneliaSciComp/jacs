@@ -383,10 +383,6 @@ public class DomainDAO {
         return getDomainObjects(subjectKey, clazz, ids);
     }
 
-    public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, Class<T> domainClass) {
-        return getDomainObjects(subjectKey, domainClass, null);
-    }
-
     /**
      * Get the domain objects in the given collection name with the specified ids.
      */
@@ -418,6 +414,36 @@ public class DomainDAO {
             else {
                 cursor = getCollectionByName(collectionName).find("{_id:{$in:#},readers:{$in:#}}", ids, subjects).as(domainClass);
             }
+        }
+
+        List<T> list = toList(cursor, ids);
+        log.trace("Getting " + list.size() + " " + collectionName + " objects took " + (System.currentTimeMillis() - start) + " ms");
+        return list;
+    }
+
+    public <T extends DomainObject> List<T> getUserDomainObjects(String subjectKey, Class<T> domainClass) {
+        return getUserDomainObjects(subjectKey, domainClass, null);
+    }
+
+    /**
+     * Get the domain objects owned by the given user, in the given collection name, with the specified ids.
+     */
+    public <T extends DomainObject> List<T> getUserDomainObjects(String subjectKey, Class<T> domainClass, Collection<Long> ids) {
+
+        if (domainClass == null) {
+            return new ArrayList<>();
+        }
+
+        long start = System.currentTimeMillis();
+        log.trace("getUserDomainObjects(subjectKey={},className=" + domainClass.getName() + ",ids=" + ids + ")");
+
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCursor<T> cursor = null;
+        if (ids == null) {
+            cursor = getCollectionByName(collectionName).find("{ownerKey:#}", subjectKey).as(domainClass);
+        }
+        else {
+            cursor = getCollectionByName(collectionName).find("{_id:{$in:#},ownerKey:#", ids, subjectKey).as(domainClass);
         }
 
         List<T> list = toList(cursor, ids);
@@ -508,10 +534,6 @@ public class DomainDAO {
         List<T> list = toList(cursor);
         log.trace("Getting " + list.size() + " " + collectionName + " objects took " + (System.currentTimeMillis() - start) + " ms");
         return list;
-    }
-
-    public List<Annotation> getAnnotations(String subjectKey, Reference reference) {
-        return getAnnotations(subjectKey, Arrays.asList(reference));
     }
 
     public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
@@ -1190,10 +1212,10 @@ public class DomainDAO {
         }
     }
 
-    public void syncPermissions(String ownerKey, String simpleName, Long id, DomainObject permissionTemplate) throws Exception {
+    public void syncPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate) throws Exception {
         // TODO: this could be optimized to do both r/w at the same time
-        changePermissions(ownerKey, simpleName, id, permissionTemplate.getReaders(), "r", true);
-        changePermissions(ownerKey, simpleName, id, permissionTemplate.getWriters(), "w", true);
+        changePermissions(ownerKey, className, id, permissionTemplate.getReaders(), "r", true);
+        changePermissions(ownerKey, className, id, permissionTemplate.getWriters(), "w", true);
         // TODO: should be deleted if they dont exist in the permission template?
     }
 

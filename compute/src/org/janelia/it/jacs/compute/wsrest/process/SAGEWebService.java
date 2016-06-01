@@ -11,6 +11,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
@@ -284,13 +285,13 @@ public class SAGEWebService extends ResourceConfig {
 
             final String subjectKey = subject.getKey();
 
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            final Sample slideCodeSample = dao.getSampleBySlideCode(subjectKey, dataSet, slideCode);
+            DomainDAL dal = DomainDAL.getInstance();
+            final Sample slideCodeSample = DomainDAL.getInstance().getSampleBySlideCode(subjectKey, dataSet, slideCode);
 
             logger.info(context + "found " + slideCodeSample + " for slide code " + slideCode +
                     " (subjectKey is " + subjectKey + ")");
 
-            dao.remove(subjectKey, slideCodeSample);
+            dal.deleteDomainObject(subjectKey, slideCodeSample);
             logger.info(context + "deleted sample entity " + slideCodeSample.getId());
             response = Response.status(Response.Status.OK).build();
 

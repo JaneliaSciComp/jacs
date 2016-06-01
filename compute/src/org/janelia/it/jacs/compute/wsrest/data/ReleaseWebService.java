@@ -26,6 +26,7 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -75,8 +76,7 @@ public class ReleaseWebService extends ResourceConfig {
         List<JsonRelease> releaseList = new ArrayList<>();
 
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            for(LineRelease release : dao.getDomainObjects(null, LineRelease.class)) {
+            for(LineRelease release : DomainDAL.getInstance().getDomainObjects(null, LineRelease.class)) {
                 releaseList.add(new JsonRelease(release));
             }
         }
@@ -108,8 +108,7 @@ public class ReleaseWebService extends ResourceConfig {
         List<JsonRelease> releaseList = new ArrayList<>();
 
         try {
-            DomainDAO dao = DomainDAOManager.getInstance().getDao();
-            for(LineRelease release : dao.getDomainObjectsByName(null, LineRelease.class, releaseName)) {
+            for(LineRelease release : DomainDAL.getInstance().getDomainObjectsByName(null, LineRelease.class, releaseName)) {
                 releaseList.add(new JsonRelease(release));
             }
         }
@@ -143,12 +142,12 @@ public class ReleaseWebService extends ResourceConfig {
         final Map<String,JsonLineStatus> lines = new HashMap<>();
 
         try {
-            final DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            final DomainDAL dal = DomainDAL.getInstance();
             final ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
             final SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, null, logger);
 
             // Consider all releases with a given name
-            for(LineRelease release : dao.getLineReleases(null)) {
+            for(LineRelease release : DomainDAL.getInstance().getLineReleases(null)) {
 
                 // Find the release folder
                 TreeNode topLevelFolder = sampleHelper.createOrVerifyRootEntity(release.getOwnerKey(), DomainConstants.NAME_FLY_LINE_RELEASES, false);
@@ -167,11 +166,11 @@ public class ReleaseWebService extends ResourceConfig {
                 annotatorKeys.add(release.getOwnerKey());
 
                 // Walk the release folder hierarchy
-                for(TreeNode lineFolder : dao.getDomainObjectsAs(releaseFolder.getChildren(), TreeNode.class)) {
+                for(TreeNode lineFolder : dal.getDomainObjectsAs(releaseFolder.getChildren(), TreeNode.class)) {
 
                     // Get all sample annotations
                     Multimap<Long, Annotation> annotationsByTarget = HashMultimap.<Long, Annotation>create();
-                    for (Annotation annotation : dao.getAnnotations(null, lineFolder.getChildren())) {
+                    for (Annotation annotation : dal.getAnnotations(null, lineFolder.getChildren())) {
                         annotationsByTarget.put(annotation.getTarget().getTargetId(), annotation);
                     }
 
@@ -180,7 +179,7 @@ public class ReleaseWebService extends ResourceConfig {
                     // Count of representative samples marked for export
                     int numRepresentatives = 0;
 
-                    for(Sample sample : dao.getDomainObjectsAs(lineFolder.getChildren(), Sample.class)) {
+                    for(Sample sample : dal.getDomainObjectsAs(lineFolder.getChildren(), Sample.class)) {
                         boolean export = false;
                         for(Annotation annotation : annotationsByTarget.get(sample.getId())) {
                             if (!annotatorKeys.contains(annotation.getOwnerKey())) {

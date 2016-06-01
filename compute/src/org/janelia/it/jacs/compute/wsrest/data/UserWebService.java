@@ -8,6 +8,7 @@ import io.swagger.annotations.*;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.internal.util.Base64;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.security.LDAPProvider;
@@ -58,7 +59,7 @@ public class UserWebService extends ResourceConfig {
         if (authenticator.login(userInfo)) {
             // check subjects, if subject doesn't exist for this user and they are in jacsdata,
             // create the account
-            DomainDAO dao = WebServiceContext.getDomainManager();
+            DomainDAL dao = DomainDAL.getInstance();
             try {
                 Subject user = dao.getSubjectByKey("user:" + userInfo.getUsername());
                 if (user==null) {
@@ -100,7 +101,7 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Subject> getSubjects() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.trace("getSubjects()");
             return dao.getSubjects();
@@ -125,7 +126,7 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Subject getSubjectByKey(@QueryParam("subjectKey") String subjectKey) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getSubjectByKey({})",subjectKey);
             return dao.getSubjectByKey(subjectKey);
@@ -149,7 +150,7 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Preference> getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getPreferences({})",subjectKey);
             return dao.getPreferences(subjectKey);
@@ -172,7 +173,7 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Preference setPreferences(DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("setPreferences({},{})",query.getSubjectKey(),query.getPreference());
             return dao.save(query.getSubjectKey(), query.getPreference());
@@ -197,7 +198,7 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public void changePermissions(@ApiParam Map<String, Object> params) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("changePermissions({})",params);
             dao.changePermissions((String) params.get("subjectKey"), (String) params.get("targetClass"), (Long)params.get("targetId"),

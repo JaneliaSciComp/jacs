@@ -9,6 +9,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.apache.log4j.Logger;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.util.DedupingDelayQueue;
@@ -37,7 +38,6 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 	private ConcurrentSkipListMap<Long, DedupingDelayQueue<Long>> ancestorQueues;
 	
 	private SolrConnector solr;
-	private DomainDAO dao;
 	private boolean processing = false;
 	
 	public void create() throws Exception {
@@ -48,7 +48,7 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 					if (domainObjs.isEmpty()) return;
 					List<DomainObject> domainObjList = new ArrayList<>();
 					for (WorkItem item: domainObjs) {
-						DomainObject domainObj = dao.getDomainObject(null, DomainUtils.getObjectClassByName(item.className), item.domainObjectId);
+						DomainObject domainObj = DomainDAL.getInstance().getDomainObject(null, item.className, item.domainObjectId);
 						if (domainObj!=null) {
 							domainObjList.add(domainObj);
 						}
@@ -135,17 +135,10 @@ public class IndexingManagerImpl implements IndexingManagerManagement {
 			}
 			this.processing = true;
 		}
-		
-		dao = DomainDAOManager.getInstance().getDao();
-		
-		try {
-			solr = new SolrConnector(dao, false, false);
-		}
-		catch (UnknownHostException e) {
-			logger.error("Error connecting to SOLR",e);
-            return 0;
-		}
-		
+
+		DomainDAO dao = DomainDAOManager.getInstance().getDao();
+	    solr = new SolrConnector(dao, false, false);
+
 		int numQueued = queue.getQueueSize();
 		int numIndexed = queue.process(MAX_BATCH_SIZE);
 		if (numIndexed>0) {

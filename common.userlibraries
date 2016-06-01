@@ -499,10 +499,10 @@
         <archive path="/common/MongoDB/jackson-core-2.4.1.jar"/>
         <archive path="/common/MongoDB/jackson-databind-2.4.1.jar"/>
         <archive path="/common/MongoDB/jsr305-1.3.9.jar"/>
-        <archive path="/common/MongoDB/jongo-1.2.jar"/>
-        <archive path="/common/MongoDB/mongodb-driver-3.1.0.jar" source="/common/MongoDB/mongodb-driver-3.1.0-sources.jar"/>
-        <archive path="/common/MongoDB/mongodb-driver-core-3.1.0.jar"/>
-        <archive path="/common/MongoDB/bson-3.1.0.jar"/>
+        <archive path="/common/MongoDB/bson-3.2.2.jar"/>
+        <archive path="/common/MongoDB/jongo-1.3.0.jar"/>
+        <archive path="/common/MongoDB/mongodb-driver-3.2.2.jar"/>
+        <archive path="/common/MongoDB/mongodb-driver-core-3.2.2.jar"/>
     </library>
     <library name="MySQL" systemlibrary="false">
         <archive path="/common/MySQL/mysql-connector-java-5.1.35-bin.jar"/>
@@ -598,23 +598,13 @@
         <archive path="/common/protostuff-1.3.9/protostuff-runtime-view-1.3.9-SNAPSHOT.jar"/>
         <archive path="/common/protostuff-1.3.9/protostuff-xml-1.3.9-SNAPSHOT.jar"/>
     </library>
-    <library name="Protostuff" systemlibrary="false">
-        <archive path="/common/protostuff-1.3.9/protostuff-api-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-collectionschema-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-compiler-1.3.9-SNAPSHOT-jar-with-dependencies.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-compiler-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-core-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-it-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-parser-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-runtime-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-runtime-md-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-runtime-registry-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-runtime-view-1.3.9-SNAPSHOT.jar"/>
-        <archive path="/common/protostuff-1.3.9/protostuff-xml-1.3.9-SNAPSHOT.jar"/>
-    </library>
     <library name="Reflections" systemlibrary="false">
         <archive path="/common/Reflections/reflections-0.9.9-RC1.jar"/>
         <archive path="/common/Reflections/javassist-3.16.1-GA.jar"/>
+    </library>
+    <library name="RSyntaxTextArea" systemlibrary="false">
+        <archive path="/common/RSyntaxTextArea/autocomplete-2.6.0-SNAPSHOT.jar"/>
+        <archive path="/common/RSyntaxTextArea/rsyntaxtextarea-2.6.0-SNAPSHOT.jar"/>
     </library>
     <library name="SAAJ" systemlibrary="false">
         <archive path="/common/SAAJ/saaj-impl-1.3.2.jar"/>

@@ -25,6 +25,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -60,7 +61,7 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Ontology> getOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getOntologies({})",subjectKey);
             Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
@@ -83,7 +84,7 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology createOntology(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("createOntology({})",query);
             Ontology updateOntology = (Ontology)dao.save(query.getSubjectKey(), query.getDomainObject());
@@ -108,13 +109,13 @@ public class OntologyWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public void removeOntology(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("ontologyId") final String ontologyId) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         Reference ontologyRef = Reference.createFor(Ontology.class, new Long(ontologyId));
         try {
             log.debug("removeOntology({},{})",subjectKey,ontologyId);
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);
             IndexingHelper.sendRemoveFromIndexMessage(ont.getId());
-            dao.remove(subjectKey, ont);
+            dao.deleteDomainObject(subjectKey, ont);
         } catch (Exception e) {
             log.error("Error occurred removing ontology" + e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -135,7 +136,7 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology addTermsToOntology(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("addTermsToOntology({})",query);
             List<Long> objectIds = query.getObjectIds();
@@ -145,7 +146,7 @@ public class OntologyWebService extends ResourceConfig {
             for (OntologyTerm term : query.getObjectList()) {
                 terms.add((OntologyTerm)term);
             }
-            Ontology updateOntology = (Ontology)dao.addTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
+            Ontology updateOntology = (Ontology)dao.addOntologyTerm(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
             IndexingHelper.sendReindexingMessage(updateOntology);
             return updateOntology;
         } catch (Exception e) {
@@ -167,7 +168,7 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology reorderOntology(@ApiParam DomainQuery query) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("reorderOntology({})",query);
             List<Long> objectIds = query.getObjectIds();
@@ -177,7 +178,7 @@ public class OntologyWebService extends ResourceConfig {
             for (int i=0; i<order.length; i++) {
                 order[i] = query.getOrdering().get(i);
             }
-            Ontology updateOntology =  dao.reorderTerms(query.getSubjectKey(), ontologyId, parentId, order);
+            Ontology updateOntology = dao.reorderOntologyTerms(query.getSubjectKey(), ontologyId, parentId, order);
             return updateOntology;
         } catch (Exception e) {
             log.error("Error occurred reordering ontology" + e);
@@ -202,10 +203,10 @@ public class OntologyWebService extends ResourceConfig {
                                             @ApiParam @QueryParam("ontologyId") final Long ontologyId,
                                             @ApiParam @QueryParam("parentTermId") final Long parentTermId,
                                             @ApiParam @QueryParam("termId") final Long termId) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("removeTermsFromOntology({},{},{},{})",subjectKey,ontologyId,parentTermId,termId);
-            Ontology updateOntology = dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
+            Ontology updateOntology = dao.removeOntologyTerm(subjectKey, ontologyId, parentTermId, termId);
             IndexingHelper.sendReindexingMessage(updateOntology);
             return updateOntology;
         } catch (Exception e) {

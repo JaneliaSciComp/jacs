@@ -677,6 +677,10 @@ public class MongoDbImport extends AnnotationDAO {
         
         List<SamplePipelineRun> runs = new ArrayList<>();
         for(Entity runEntity : EntityUtils.getChildrenOfType(sampleEntity, EntityConstants.TYPE_PIPELINE_RUN)) {
+
+            // Skip old MBEW results
+            if (runEntity.getName().startsWith("MBEW Pipeline")) continue;
+
             populateChildren(runEntity);
             collectAnnotations(runEntity.getId());
             

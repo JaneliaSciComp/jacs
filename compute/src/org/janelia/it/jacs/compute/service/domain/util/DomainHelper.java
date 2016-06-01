@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
@@ -15,7 +15,6 @@ import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 
@@ -32,7 +31,7 @@ public class DomainHelper {
     protected Logger logger;
     protected ContextLogger contextLogger;
     protected ComputeBeanRemote computeBean;
-    protected DomainDAO domainDao;
+    protected DomainDAL domainDAL;
     protected String ownerKey;
    
     public DomainHelper(ComputeBeanRemote computeBean, String ownerKey, Logger logger) {
@@ -45,7 +44,7 @@ public class DomainHelper {
                         ContextLogger contextLogger) {
         this.computeBean  = computeBean;
         this.ownerKey = ownerKey;
-        this.domainDao = DomainDAOManager.getInstance().getDao();
+        this.domainDAL = DomainDAL.getInstance();
         this.logger = logger;
         if (contextLogger == null) {
             this.contextLogger = new ContextLogger(logger);
@@ -68,7 +67,7 @@ public class DomainHelper {
                 if (!childReference.getTargetClassName().equals(TREENODE_CLASSNAME)) {
                     continue;
                 }
-                DomainObject child = domainDao.getDomainObject(subjectKey, childReference);
+                DomainObject child = domainDAL.getDomainObject(subjectKey, childReference);
                 if (child.getName().equals(childName)) {
                     return (TreeNode) child;
                 }
@@ -78,10 +77,10 @@ public class DomainHelper {
         // We need to create a new folder
         TreeNode node = new TreeNode();
         node.setName(childName);
-        node =  domainDao.save(subjectKey, node);
+        node =  domainDAL.save(subjectKey, node);
         List<Reference> childRef = new ArrayList<>();
         childRef.add(Reference.createFor(TreeNode.class, node.getId()));
-        domainDao.addChildren(subjectKey, parentFolder, childRef, index);
+        domainDAL.addChildren(subjectKey, parentFolder, childRef, index);
         return node;
     }
 
@@ -95,7 +94,7 @@ public class DomainHelper {
     public TreeNode createOrVerifyChildFolder(TreeNode parentFolder, String childName, boolean createIfNecessary) throws Exception {
         
         TreeNode folder = null;
-        for(DomainObject domainObject : domainDao.getDomainObjects(ownerKey, parentFolder.getChildren())) {
+        for(DomainObject domainObject : domainDAL.getDomainObjects(ownerKey, parentFolder.getChildren())) {
             if (domainObject instanceof TreeNode && domainObject.getName().equals(childName)) {
                 TreeNode child = (TreeNode)domainObject;
                 if (child.getName().equals(childName)) {
@@ -112,8 +111,8 @@ public class DomainHelper {
         if (folder == null) {
             folder = new TreeNode();
             folder.setName(childName);
-            domainDao.save(ownerKey, folder);
-            domainDao.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(folder)));
+            domainDAL.save(ownerKey, folder);
+            domainDAL.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(folder)));
         }
 
         logger.debug("Using childFolder with id=" + folder.getId());
@@ -124,15 +123,14 @@ public class DomainHelper {
      * Create the given top level object set, or verify it exists and return it. 
      * @param topLevelFolderName
      * @param createIfNecessary
-     * @param loadTree
      * @return
      * @throws Exception
      */
     public TreeNode createOrVerifyRootEntity(String ownerKey, String topLevelFolderName, boolean createIfNecessary) throws Exception {
         TreeNode topLevelFolder = null;
-        Workspace workspace = domainDao.getDefaultWorkspace(ownerKey);
+        Workspace workspace = domainDAL.getDefaultWorkspace(ownerKey);
         
-        for(DomainObject domainObject : domainDao.getDomainObjects(ownerKey, workspace.getChildren())) {
+        for(DomainObject domainObject : domainDAL.getDomainObjects(ownerKey, workspace.getChildren())) {
             if (domainObject instanceof TreeNode && domainObject.getName().equals(topLevelFolderName)) {
                 topLevelFolder = (TreeNode)domainObject;
                 logger.debug("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
@@ -145,8 +143,8 @@ public class DomainHelper {
                 logger.debug("Creating new topLevelFolder with name=" + topLevelFolderName);
                 topLevelFolder = new TreeNode();
                 topLevelFolder.setName(topLevelFolderName);
-                domainDao.save(ownerKey, topLevelFolder);
-                domainDao.addChildren(ownerKey, workspace, Arrays.asList(Reference.createFor(topLevelFolder)));
+                domainDAL.save(ownerKey, topLevelFolder);
+                domainDAL.addChildren(ownerKey, workspace, Arrays.asList(Reference.createFor(topLevelFolder)));
                 logger.debug("Saved top level folder as " + topLevelFolder.getId());
             } 
             else {
@@ -160,7 +158,7 @@ public class DomainHelper {
 
 
     private Sample getRequiredSample(String key, Long sampleId) throws Exception {
-        Sample sample = domainDao.getDomainObject(ownerKey, Sample.class, new Long(sampleId));
+        Sample sample = domainDAL.getDomainObject(ownerKey, Sample.class, new Long(sampleId));
         if (sample == null) {
             throw new IllegalArgumentException("Sample not found: " + sampleId);
         }

@@ -1,11 +1,13 @@
 package org.janelia.it.jacs.compute.wsrest.info;
 
-import java.text.SimpleDateFormat;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -27,19 +29,20 @@ import io.swagger.annotations.ApiResponses;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
-import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import static com.mongodb.client.model.Projections.*;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Sorts.*;
 import static java.util.Arrays.asList;
 
+import org.janelia.it.jacs.shared.utils.DateUtil;
 import org.jongo.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +65,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getLSMImageInfo(@QueryParam("totals") final Boolean totals,
                                   @QueryParam("status") final String status) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
@@ -96,31 +99,30 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getBlockView(@QueryParam("startDate") final String startDate,
                                @QueryParam("endDate") final String endDate) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
         List<Document> jsonResult = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         try {
             if (startDate!=null || endDate!=null) {
                 if (startDate==null) {
-                    Date endDateTime = sdf.parse(endDate);
+                    Date endDateTime = DateUtil.createEndDate(endDate);
                     jsonResult = sample.find(lte("tmogDate", endDateTime))
                             .batchSize(1000000)
                             .projection(fields(include("tmogDate", "status", "dataSet", "name")))
                             .sort(orderBy(ascending("tmogDate"),ascending("_id")))
                             .into(new ArrayList());
                 } else if (endDate==null) {
-                    Date startDateTime = sdf.parse(startDate);
+                    Date startDateTime = DateUtil.createStartDate(startDate);
                     jsonResult = sample.find(gte("tmogDate", startDateTime))
                             .batchSize(1000000)
                             .projection(fields(include("tmogDate", "status", "dataSet", "name")))
                             .sort(orderBy(ascending("tmogDate"), ascending("_id")))
                             .into(new ArrayList());
                 } else {
-                    Date endDateTime = sdf.parse(endDate);
-                    Date startDateTime = sdf.parse(startDate);
+                    Date endDateTime = DateUtil.createEndDate(endDate);
+                    Date startDateTime = DateUtil.createStartDate(startDate);
                     jsonResult = sample.find(and(
                             gte("tmogDate", startDateTime),
                             lte("tmogDate", endDateTime)))
@@ -151,7 +153,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getSampleInformation(@QueryParam("sampleId") final Long sampleId,
                                      @QueryParam("attribute") final String attribute) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
@@ -174,7 +176,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets Sample data projection ordered and sorted by attribute",
             notes = "")
     public String getSampleInformation(@QueryParam("attribute") final String attribute) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
         try {
@@ -199,7 +201,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getImageCompletion(@QueryParam("line") final String line,
                                      @QueryParam("slideCode") final String slideCode) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
@@ -225,7 +227,7 @@ public class SampleStatusWebService extends ResourceConfig {
     }
 
     private MongoCollection<Document> getNativeCollection(String collectionName) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         return db.getCollection(collectionName);
@@ -236,7 +238,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets pipeline status for a sample",
             notes = "")
     public String getSamplePipelineStatus() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
@@ -265,7 +267,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Bins all the samples by status",
             notes = "")
     public String getSampleStatus() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
@@ -289,30 +291,59 @@ public class SampleStatusWebService extends ResourceConfig {
     @Path("/sample/errormips")
     @ApiOperation(value = "Returns samples by error and their mips",
             notes = "")
-    public String getSampleErrorMips(@QueryParam("dataset") final String dataset) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
-        MongoClient m = dao.getMongo();
-        MongoDatabase db = m.getDatabase("jacs");
-        MongoCollection<Document> sample = db.getCollection("sample");
-        List<Document> jsonResult = new ArrayList<>();
-        List<Document> aggregateCommands = new ArrayList<Document>();
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<String> getSampleErrorMips(@QueryParam("dataset") final String dataset) {
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+        org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
+        StringWriter query = new StringWriter();
+        query.append("{");
+
+        List<String> formattedResults = new ArrayList<String>();
         if (dataset!=null) {
-            aggregateCommands.add(new Document("$match", new Document("dataSet",dataset)));
+            query.append("'dataSet':'" + dataset + "',");
         }
         try {
-            aggregateCommands.add(new Document("$match", new Document("objectiveSamples.pipelineRuns.error",
-                    new Document("$exists", true))));
-            aggregateCommands.add(new Document("$match", new Document("objectiveSamples.tiles.files.SignalMip",
-                            new Document("$exists", true))));
-            aggregateCommands.add(new Document("$project", new Document("_id",0)
-                            .append("sampleName", "$name")
-                            .append("dataSet", "$dataSet")
-                            .append("image", "$objectiveSamples.tiles.files.SignalMip")));
-            aggregateCommands.add(new Document("$sort", new Document ("sampleName", 1)));
-            jsonResult = sample.aggregate(aggregateCommands).into(new ArrayList());
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-            return objectMapper.writeValueAsString(jsonResult);
+            query.append("'objectiveSamples.pipelineRuns.error': {$exists: true}}");
+            MongoCursor<Sample> results = sample.find(query.toString()).as(Sample.class);
+            while (results.hasNext()) {
+                Sample result = results.next();
+                for (ObjectiveSample objective : result.getObjectiveSamples()) {
+                    if (objective.getLatestRun().getError() != null) {
+                        List<SamplePipelineRun> sampleProcResult = objective.getPipelineRuns();
+                        if (sampleProcResult!=null) {
+                            if (sampleProcResult.get(sampleProcResult.size()-1).getError()!=null) {
+                                SamplePipelineRun foo = sampleProcResult.get(sampleProcResult.size()-1);
+                                List<SampleProcessingResult> moo = foo.getSampleProcessingResults();
+                                log.info(moo.get(moo.size() - 1).getFiles().toString());
+                                Map<FileType, String> files = moo.get(moo.size() - 1).getFiles();
+                                log.info("ASSDFSGDFG");
+                                log.info(files.toString());
+                                Map<String, String> labelMap = new HashMap<String, String>();
+                                Iterator<FileType> poo = files.keySet().iterator();
+                                while (poo.hasNext()) {
+                                    FileType goo = poo.next();
+                                    labelMap.put(goo.getLabel(), files.get(goo));
+                                }
+                                if (files != null) {
+                                    ObjectMapper objectMapper = new ObjectMapper();
+                                    String fileResults = objectMapper.writeValueAsString(labelMap);
+                                    formattedResults.add("{sampleName:'" + result.getName() + "'," +
+                                                    "dataSet:'" + result.getDataSet() + "'," +
+                                                    "image:" + fileResults + "}"
+                                    );
+                                } else {
+                                    formattedResults.add("{sampleName:'" + result.getName() + "'," +
+                                            "dataSet:'" + result.getDataSet() + "'}");
+                                }
+                            }
+
+                        }
+                    }
+
+
+                }
+            }
+            return formattedResults;
         } catch (Exception e) {
             log.error("Error occurred getting sample status counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -324,7 +355,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "returns information about pipeline errors by sample",
             notes = "")
     public String getSampleErrors() {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
@@ -369,7 +400,7 @@ public class SampleStatusWebService extends ResourceConfig {
                                               @QueryParam("slideCode") final String slideCode,
                                               @QueryParam("line") final String line,
                                               @QueryParam("dataSet") final String dataSet) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
 
         List<String> formattedResults = new ArrayList<String>();
@@ -395,17 +426,23 @@ public class SampleStatusWebService extends ResourceConfig {
             while (results.hasNext()) {
                 Sample result = results.next();
                 for (ObjectiveSample objective : result.getObjectiveSamples()) {
-                    String defaultFilepath = objective.getLatestRun().getLatestResult().getFiles().get(FileType.SignalMip);
-                    if (defaultFilepath==null) {
-                        defaultFilepath = objective.getLatestRun().getLatestResult().getFiles().get(FileType.AllMip);
+                    Map<FileType, String> files = objective.getLatestRun().getLatestResult().getFiles();
+                    Map labelMap = new HashMap<String, String>();
+                    Iterator<FileType> foo = files.keySet().iterator();
+                    while (foo.hasNext()) {
+                        FileType moo = foo.next();
+                        labelMap.put(moo.getLabel(), files.get(moo));
                     }
-                    if (defaultFilepath!=null) {
+                    if (files!=null) {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        String fileResults = objectMapper.writeValueAsString(labelMap);
                         formattedResults.add("{name:'" + result.getName() + "'," +
                                         "line:'" + result.getLine() + "'," +
                                         "slideCode:'" + result.getSlideCode()  + "'," +
                                         "effector:'" + result.getEffector()  + "'," +
                                         "dataSet:'" + result.getDataSet()  + "'," +
-                                        "image:'" + defaultFilepath + "'}"
+                                        "objective:'" + objective.getObjective()  + "'," +
+                                        "image:" + fileResults + "}"
                         );
                     } else {
                         formattedResults.add("{name:'" + result.getName() + "'," +
@@ -433,29 +470,28 @@ public class SampleStatusWebService extends ResourceConfig {
     })
     public String getSampleStatusByDate(@QueryParam("startDate") final String startDate,
                                         @QueryParam("endDate") final String endDate) {
-        DomainDAO dao = WebServiceContext.getDomainManager();
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
         List<Document> jsonResult = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         try {
             if (startDate!=null || endDate!=null) {
                 if (startDate==null) {
-                    Date endDateTime = sdf.parse(endDate);
+                    Date endDateTime = DateUtil.createEndDate(endDate);
                     jsonResult = sample.find(lte("tmogDate", endDateTime))
                             .batchSize(1000000)
                             .projection(fields(include("name", "line", "slideCode", "status")))
                             .into(new ArrayList());
                 } else if (endDate==null) {
-                    Date startDateTime = sdf.parse(startDate);
+                    Date startDateTime = DateUtil.createStartDate(startDate);
                     jsonResult = sample.find(gte("tmogDate", startDateTime))
                             .batchSize(1000000)
                             .projection(fields(include("name", "line", "slideCode", "status")))
                             .into(new ArrayList());
                 } else {
-                    Date endDateTime = sdf.parse(endDate);
-                    Date startDateTime = sdf.parse(startDate);
+                    Date endDateTime = DateUtil.createEndDate(endDate);
+                    Date startDateTime = DateUtil.createStartDate(startDate);
                     jsonResult = sample.find(and(
                             gte("tmogDate", startDateTime),
                             lte("tmogDate", endDateTime)))
