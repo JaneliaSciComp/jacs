@@ -499,6 +499,8 @@
         </sequence>
         
         <operation name="Set Results as Task Message" processor="org.janelia.it.jacs.compute.service.utility.SetTaskFileResultsService">
+            <input name="SAMPLE_ENTITY_ID"/>
+            <input name="OBJECTIVE"/>
             <input name="SAMPLE_AREAS"/>
         </operation>
         
