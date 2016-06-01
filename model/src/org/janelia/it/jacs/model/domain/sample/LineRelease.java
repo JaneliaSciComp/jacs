@@ -14,7 +14,6 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapped(collectionName="release",label="Line Release")
-@SearchType(key="release",label="Line Release")
 public class LineRelease extends AbstractDomainObject {
 
     private Date releaseDate;

@@ -31,6 +31,7 @@ public class NeuronFragment extends AbstractDomainObject implements HasRelativeF
     @SearchAttribute(key="filepath_txt",label="File Path")
     private String filepath;
 
+    @SearchAttribute(key="voxel_weight_i",label="Voxel Weight")
     private Integer voxelWeight;
     
     private Map<FileType, String> files = new HashMap<>();

@@ -15,6 +15,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -47,6 +48,9 @@ import org.jongo.marshall.jackson.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.mongodb.client.model.Projections.fields;
+import static com.mongodb.client.model.Projections.include;
+
 /**
  * Data access object for the domain object model.
  *
@@ -58,6 +62,8 @@ public class DomainDAO {
 
     protected MongoClient m;
     protected Jongo jongo;
+
+    protected String databaseName;
 
     protected MongoCollection preferenceCollection;
     protected MongoCollection alignmentBoardCollection;
@@ -79,6 +85,9 @@ public class DomainDAO {
     }
 
     public DomainDAO(String serverUrl, String databaseName, String username, String password) throws UnknownHostException {
+
+        this.databaseName = databaseName;
+
         List<ServerAddress> members = new ArrayList<>();
         for (String serverMember : serverUrl.split(",")) {
             members.add(new ServerAddress(serverMember));
@@ -1073,32 +1082,26 @@ public class DomainDAO {
     }
 
     public void changePermissions(String subjectKey, String className, Collection<Long> ids, String granteeKey, String rights, boolean grant) throws Exception {
+        changePermissions(subjectKey, className, ids, Arrays.asList(granteeKey), rights, grant);
+    }
+
+    public void changePermissions(String subjectKey, String className, Long id, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
+        changePermissions(subjectKey, className, Arrays.asList(id), granteeKeys, rights, grant);
+    }
+
+    public void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
 
         String collectionName = DomainUtils.getCollectionName(className);
 
-        String op = grant ? "addToSet" : "pull";
+        String op = grant ? "$addToSet" : "$pull";
+        String iter = grant ? "$each" : "$in";
+        String withClause = "{"+op+":{readers:{"+iter+":#},writers:{"+iter+":#}}}";
 
-        int numKeys = 1;
-        StringBuilder sb = new StringBuilder("{");
-        sb.append("$").append(op).append(":{");
-
-        if (rights.contains("r")) {
-            sb.append("readers:#");
-        }
-        if (rights.contains("w")) {
-            if (sb.length() > 0) {
-                numKeys++;
-                sb.append(",");
-            }
-            sb.append("writers:#");
-        }
-
-        sb.append("}}");
-        String withClause = sb.toString();
-
-        Object[] keys = new String[numKeys];
-        for (int i = 0; i < numKeys; i++) {
-            keys[i] = granteeKey;
+        List<String> readers = new ArrayList<>();
+        List<String> writers = new ArrayList<>();
+        for(String granteeKey : granteeKeys) {
+            if (rights.contains("r")) readers.add(granteeKey);
+            if (rights.contains("w")) writers.add(granteeKey);
         }
 
         log.debug("withClause: " + withClause);
@@ -1106,15 +1109,15 @@ public class DomainDAO {
         String logIds = ids.size() < 6 ? "" + ids : ids.size() + " ids";
 
         if (grant) {
-            log.info("Granting {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKey);
+            log.info("Granting {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKeys);
         }
         else {
-            log.info("Revoking {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKey);
+            log.info("Revoking {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKeys);
         }
 
         MongoCollection collection = getCollectionByName(collectionName);
-        WriteResult wr = collection.update("{_id:{$in:#},writers:#}", ids, subjectKey).multi().with(withClause, keys);
-        log.info("Changed permissions on " + wr.getN() + " documents");
+        WriteResult wr = collection.update("{_id:{$in:#},writers:#}", ids, subjectKey).multi().with(withClause, readers, writers);
+        log.info("Changed permissions on {} documents",wr.getN());
 
         if (wr.getN() > 0) {
             if ("treeNode".equals(collectionName)) {
@@ -1133,7 +1136,7 @@ public class DomainDAO {
 
                         for (String refClassName : groupedIds.keySet()) {
                             Collection<Long> refIds = groupedIds.get(refClassName);
-                            changePermissions(subjectKey, refClassName, refIds, granteeKey, rights, grant);
+                            changePermissions(subjectKey, refClassName, refIds, granteeKeys, rights, grant);
                         }
                     }
                 }
@@ -1147,14 +1150,51 @@ public class DomainDAO {
                     sampleRefs.add("Sample#"+id);
                 }
 
-                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
+                WriteResult wr1 = fragmentCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, readers, writers);
                 log.info("Updated permissions on {} fragments", wr1.getN());
 
-                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, keys);
+                WriteResult wr2 = imageCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, readers, writers);
                 log.info("Updated permissions on {} lsms", wr2.getN());
 
             }
+            if ("dataSet".equals(collectionName)) {
+                log.info("Changing permissions on all samples and LSMs of the data sets: {}", logIds);
+                for (Long id : ids) {
+                    DataSet dataSet = collection.findOne("{_id:#,writers:#}", id, subjectKey).as(DataSet.class);
+                    if (dataSet == null) {
+                        throw new IllegalArgumentException("Could not find data set with id=" + id);
+                    }
+
+                    // Get all sample ids for a given data set
+                    List<String> sampleRefs = new ArrayList<>();
+                    List<Document> sampleIdDocs = m.getDatabase(databaseName)
+                            .getCollection(DomainUtils.getCollectionName(Sample.class))
+                            .find(new Document("dataSet",dataSet.getIdentifier()))
+                            .projection(fields(include("_id")))
+                            .into(new ArrayList());
+                    for(Document doc : sampleIdDocs) {
+                        sampleRefs.add("Sample#"+doc.get("_id"));
+                    }
+
+                    // This could just call changePermissions recursively, but batching is far more efficient.
+                    WriteResult wr1 = sampleCollection.update("{dataSet:#,writers:#}", dataSet.getIdentifier(), subjectKey).multi().with(withClause, readers, writers);
+                    log.info("Changed permissions on {} samples",wr1.getN());
+
+                    WriteResult wr2 = fragmentCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, readers, writers);
+                    log.info("Updated permissions on {} fragments", wr2.getN());
+
+                    WriteResult wr3 = imageCollection.update("{sampleRef:{$in:#},writers:#}", sampleRefs, subjectKey).multi().with(withClause, readers, writers);
+                    log.info("Updated permissions on {} lsms", wr3.getN());
+                }
+            }
         }
+    }
+
+    public void syncPermissions(String ownerKey, String simpleName, Long id, DomainObject permissionTemplate) throws Exception {
+        // TODO: this could be optimized to do both r/w at the same time
+        changePermissions(ownerKey, simpleName, id, permissionTemplate.getReaders(), "r", true);
+        changePermissions(ownerKey, simpleName, id, permissionTemplate.getWriters(), "w", true);
+        // TODO: should be deleted if they dont exist in the permission template?
     }
 
     // Copy and pasted from ReflectionUtils in shared module
@@ -1173,11 +1213,6 @@ public class DomainDAO {
 
     public Long getNewId() {
         return TimebasedIdentifierGenerator.generateIdList(1).get(0);
-    }
-
-    public int bulkUpdatePathPrefix(String originalPath, String archivePath) {
-        // TODO: this is only used by the SyncToArchiveService. Maybe we can get rid of it entirely? It would be tricky to implement in Mongo. 
-        throw new UnsupportedOperationException();
     }
 
     public List<LineRelease> getLineReleases(String subjectKey) {
@@ -1205,17 +1240,19 @@ public class DomainDAO {
         String MONGO_DATABASE = "jacs";
         DomainDAO dao = new DomainDAO(MONGO_SERVER_URL, MONGO_DATABASE);
 
-        String owner = "user:rokickik";
-        for(Workspace workspace : dao.getWorkspaces(owner)) {
-            System.out.println(""+workspace.getName());
-            for(DomainObject topLevelObj : dao.getDomainObjects(owner, workspace.getChildren())) {
-                System.out.println("  "+topLevelObj.getName());
-                if (topLevelObj instanceof TreeNode) {
-                    for(DomainObject domainObject : dao.getDomainObjects(owner, ((TreeNode)topLevelObj).getChildren())) {
-                        System.out.println("    "+domainObject.getName());
-                    }
-                }   
-            }
-        }
+//        String owner = "user:rokickik";
+//        for(Workspace workspace : dao.getWorkspaces(owner)) {
+//            System.out.println(""+workspace.getName());
+//            for(DomainObject topLevelObj : dao.getDomainObjects(owner, workspace.getChildren())) {
+//                System.out.println("  "+topLevelObj.getName());
+//                if (topLevelObj instanceof TreeNode) {
+//                    for(DomainObject domainObject : dao.getDomainObjects(owner, ((TreeNode)topLevelObj).getChildren())) {
+//                        System.out.println("    "+domainObject.getName());
+//                    }
+//                }
+//            }
+//        }
+
+        dao.changePermissions("group:heberleinlab", DataSet.class.getSimpleName(), 1831437750079848537L, Arrays.asList("user:rokickik", "user:saffordt"), "r", false);
     }
 }

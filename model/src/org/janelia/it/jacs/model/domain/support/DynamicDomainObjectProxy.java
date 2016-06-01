@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +21,8 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
 
     private static final Logger log = LoggerFactory.getLogger(DynamicDomainObjectProxy.class);
 
-    private DomainObject domainObject;
-    private HashMap<String,DomainObjectAttribute> attrs;
+    private final DomainObject domainObject;
+    private final HashMap<String,DomainObjectAttribute> attrs;
 
     public DynamicDomainObjectProxy(DomainObject domainObject) {
         this.domainObject = domainObject;
@@ -55,13 +57,25 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
     public Object get(Object key) {
         DomainObjectAttribute attr = attrs.get(key);
         if (attr==null) {
+            if (domainObject instanceof Sample) {
+                Sample sample = (Sample) domainObject;
+                // Is this key an alignment score type?
+                Map<AlignmentScoreType, String> scores = SampleUtils.getLatestAlignmentScores(sample);
+                for (AlignmentScoreType alignmentScoreType : AlignmentScoreType.values()) {
+                    if (alignmentScoreType.getLabel().equals(key)) {
+                        return scores.get(alignmentScoreType);
+                    }
+                }
+            }
             log.trace("No such attribute: "+key);
         }
-        try {
-            return attr.getGetter().invoke(domainObject);
-        }
-        catch (Exception e) {
-            log.error("Error getting sample attribute value for: "+key,e);
+        else {
+            try {
+                return attr.getGetter().invoke(domainObject);
+            }
+            catch (Exception e) {
+                log.error("Error getting sample attribute value for: "+key,e);
+            }
         }
         return null;
     }
@@ -72,11 +86,13 @@ public class DynamicDomainObjectProxy implements Map<String,Object> {
         if (attr==null) {
             log.trace("No such attribute: "+key);
         }
-        try {
-            return attr.getSetter().invoke(domainObject, value);
-        }
-        catch (Exception e) {
-            log.error("Error setting sample attribute value for: "+key,e);
+        else {
+            try {
+                return attr.getSetter().invoke(domainObject, value);
+            }
+            catch (Exception e) {
+                log.error("Error setting sample attribute value for: "+key,e);
+            }
         }
         return null;
     }

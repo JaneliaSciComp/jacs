@@ -1,10 +1,10 @@
-package org.janelia.it.workstation.gui.browser.model;
+package org.janelia.it.jacs.model.domain.support;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
-import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * Identifies a particular result within a Sample.

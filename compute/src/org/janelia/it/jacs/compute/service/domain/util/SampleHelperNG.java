@@ -171,7 +171,7 @@ public class SampleHelperNG extends DomainHelper {
                 Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(lsm, attr.field);
                 if (!StringUtils.areEqual(currValue, trueValue)) {
                     org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(lsm, attr.field, trueValue);
-	                logger.info("  Setting "+fieldName+"="+trueValue);
+	                logger.debug("  Setting "+fieldName+"="+trueValue);
 	                dirty = true;
 	            }
 	            else {
@@ -272,7 +272,8 @@ public class SampleHelperNG extends DomainHelper {
         }
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
-                
+
+        boolean sampleNew = false;
         boolean sampleDirty = false;
         boolean needsReprocessing = lsmDirty;
         
@@ -280,6 +281,7 @@ public class SampleHelperNG extends DomainHelper {
         if (sample.getId()==null) {
             sampleDirty = true;
             needsReprocessing = true;
+            sampleNew = true;
         }
                 
         if (setSampleAttributes(dataSet, sample, objectiveGroups.values())) {
@@ -325,8 +327,6 @@ public class SampleHelperNG extends DomainHelper {
             sampleDirty = true;
         }
 
-        // TODO: Auto-share sample if necessary 
-
         if (needsReprocessing && sample.getId()!=null) {
 		    if (lsmDirty) {
 		    	logger.info("  LSMs changed, will mark sample for reprocessing");
@@ -360,7 +360,11 @@ public class SampleHelperNG extends DomainHelper {
         		logger.info("Updated sample reference for LSM#"+lsm.getId());
         	}
         }
-        
+
+        if (sampleNew) { // We could disable this check to refresh all sample permissions
+            domainDao.syncPermissions(dataSet.getOwnerKey(), Sample.class.getSimpleName(), sample.getId(), dataSet);
+        }
+
         return sample;
     }
     
@@ -442,7 +446,7 @@ public class SampleHelperNG extends DomainHelper {
                     Object consensusValue = consensusValues.get(fieldName);
                     if (!StringUtils.areEqual(currValue, consensusValue)) {
                     	org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(sample, sampleAttr.field, consensusValue);
-                        logger.info("  Setting "+fieldName+"="+consensusValue);
+                        logger.debug("  Setting "+fieldName+"="+consensusValue);
                         dirty = true;
                     }
                     else {
