@@ -1,9 +1,6 @@
 package org.janelia.it.jacs.model.domain.support;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 
 /**
@@ -28,63 +25,26 @@ import org.janelia.it.jacs.model.domain.sample.PipelineResult;
  */
 public class ResultDescriptor {
 
-    public static final String KEY_LATEST = "Latest";
-    
-    public static final ResultDescriptor LATEST = new ResultDescriptor(KEY_LATEST);
-    
-    private final String resultKey;
-    private final String objective;
-    private final String resultName;
-    private final String resultNamePrefix;
-    private final String groupName;
+    public static final ResultDescriptor LATEST = ResultDescriptor.create();
+    public static final ResultDescriptor LATEST_ALIGNED = ResultDescriptor.create().setAligned(true);
+    public static final ResultDescriptor LATEST_UNALIGNED = ResultDescriptor.create().setAligned(false);
 
-    public ResultDescriptor(String objective, String resultNamePrefix, String groupName) {
-        this.objective = objective;
-        this.resultNamePrefix = resultNamePrefix;
-        this.groupName = groupName;
-        
-        String name = resultNamePrefix;
-        if (!StringUtils.isEmpty(groupName)) {
-            name += " - "+groupName;
-        }
-        this.resultName = name;
-        
-        String key = name;
-        if (!StringUtils.isEmpty(objective)) {
-            key = objective+"  "+key;
-        }
-        this.resultKey = key;
+    private String objective;
+    private String resultName;
+    private String groupName;
+    private Boolean aligned;
+
+    public ResultDescriptor() {
     }
 
-    public ResultDescriptor(String resultKey) {
-        this.resultKey = resultKey;
-        if (!KEY_LATEST.equals(resultKey)) {
-            String[] parts = resultKey.split(" ", 2);
-            this.objective = parts[0];
-            this.resultName = parts[1];
-
-            Pattern p = Pattern.compile("^(.*?)(\\s+\\(([^()]+)\\))?$");
-            Matcher m = p.matcher(resultName);
-            if (!m.matches()) {
-                throw new IllegalStateException("Result name cannot be parsed: " + parts[1]);
-            }
-            this.resultNamePrefix = m.matches() ? m.group(1) : null;
-            this.groupName = m.matches() ? m.group(3) : null;
-        } 
-        else {
-            this.objective = null;
-            this.resultName = null;
-            this.resultNamePrefix = null;
-            this.groupName = null;
-        }
+    public ResultDescriptor(String objective, String resultName, String groupName) {
+        this.objective = objective;
+        this.resultName = resultName;
+        this.groupName = groupName;
     }
 
     public ResultDescriptor(PipelineResult result) {
-        this(result.getParentRun().getParent().getObjective()+" "+result.getName());
-    }
-    
-    public String getResultKey() {
-        return resultKey;
+        this(result.getParentRun().getParent().getObjective(), result.getName(), null);
     }
 
     public String getObjective() {
@@ -95,16 +55,95 @@ public class ResultDescriptor {
         return resultName;
     }
 
-    public String getResultNamePrefix() {
-        return resultNamePrefix;
-    }
-
     public String getGroupName() {
         return groupName;
     }
 
+    public Boolean isAligned() {
+        return aligned;
+    }
+
+    public static ResultDescriptor create() {
+        return new ResultDescriptor();
+    }
+
+    public ResultDescriptor setObjective(String objective) {
+        this.objective = objective;
+        return this;
+    }
+
+    public ResultDescriptor setResultName(String resultName) {
+        this.resultName = resultName;
+        return this;
+    }
+
+    public ResultDescriptor setGroupName(String groupName) {
+        this.groupName = groupName;
+        return this;
+    }
+
+    public ResultDescriptor setAligned(Boolean aligned) {
+        this.aligned = aligned;
+        return this;
+    }
+
     @Override
     public String toString() {
-        return resultKey;
+        StringBuilder sb =  new StringBuilder();
+        if (objective!=null) {
+            sb.append(objective).append(" ");
+        }
+        if (resultName!=null) {
+            sb.append(resultName).append(" ");
+        }
+        else {
+            sb.append("Latest ");
+        }
+        if (aligned!=null) {
+            String alignment = aligned ? "Aligned" : "Unaligned";
+            if (resultName==null) {
+                sb.append(alignment).append(" ");
+            }
+            else {
+                sb.append("(").append(alignment).append(") ");
+            }
+        }
+        if (groupName!=null) {
+            sb.append("- ").append(groupName).append(" ");
+        }
+        if (sb.length()>0 && sb.charAt(sb.length()-1)==' ') {
+            sb.deleteCharAt(sb.length()-1);
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ResultDescriptor that = (ResultDescriptor) o;
+        if (objective != null ? !objective.equals(that.objective) : that.objective != null) return false;
+        if (resultName != null ? !resultName.equals(that.resultName) : that.resultName != null) return false;
+        if (groupName != null ? !groupName.equals(that.groupName) : that.groupName != null) return false;
+        return aligned != null ? aligned.equals(that.aligned) : that.aligned == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = objective != null ? objective.hashCode() : 0;
+        result = 31 * result + (resultName != null ? resultName.hashCode() : 0);
+        result = 31 * result + (groupName != null ? groupName.hashCode() : 0);
+        result = 31 * result + (aligned != null ? aligned.hashCode() : 0);
+        return result;
+    }
+
+    public static String serialize(ResultDescriptor resultDescriptor) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(resultDescriptor);
+    }
+
+    public static ResultDescriptor deserialize(String json) throws Exception  {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(json, ResultDescriptor.class);
     }
 }
