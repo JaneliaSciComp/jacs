@@ -44,7 +44,7 @@ import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 
 
-@Path("/process")
+@Path("/info")
 @Api(value = "Janelia Workstation Domain Data")
 public class ReleaseWebService extends ResourceConfig {
     private final Logger logger = Logger.getLogger(this.getClass());
