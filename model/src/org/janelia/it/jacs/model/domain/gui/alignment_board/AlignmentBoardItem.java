@@ -4,22 +4,29 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.janelia.it.jacs.model.domain.Reference;
+public class AlignmentBoardItem implements Serializable {
 
-public class AlignmentBoardItem implements Serializable{
-
-    private Reference target;
+    private String name;
+    private AlignmentBoardReference target;
     private boolean visible = true;
     private String inclusionStatus;
     private String color;
     private String renderMethod;
     private List<AlignmentBoardItem> children = new ArrayList<>();
 
-    public Reference getTarget() {
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public AlignmentBoardReference getTarget() {
         return target;
     }
 
-    public void setTarget(Reference target) {
+    public void setTarget(AlignmentBoardReference target) {
         this.target = target;
     }
 

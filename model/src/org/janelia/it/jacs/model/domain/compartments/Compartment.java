@@ -4,23 +4,46 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
-public class Compartment implements HasFiles, Serializable {
+public class Compartment implements HasIdentifier, HasFiles, Serializable {
 
+    private Long id;
     private String name;
     private String code;
     private String color;
     private Integer number;
     private Map<FileType, String> files = new HashMap<>();
+    private transient CompartmentSet parent;
 
-    public String getName() {
-        return name;
+    @JsonIgnore
+    public CompartmentSet getParent() {
+        return parent;
+    }
+
+    @JsonIgnore
+    void setParent(CompartmentSet parent) {
+        this.parent = parent;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getCode() {

@@ -44,8 +44,7 @@ public abstract class OntologyTerm implements HasIdentifier, Serializable {
     }
 
     /**
-     * Return true if the given ontology term has the specified ontology term as a child. 
-     * @param ontologyTerm parent term
+     * Return true if the given ontology term has the specified ontology term as a child.
      * @param childTerm child term
      * @return
      */
@@ -63,7 +62,6 @@ public abstract class OntologyTerm implements HasIdentifier, Serializable {
 
     /**
      * Find the ontology term with the given id in the specified ontology tree.
-     * @param term ontololgy term tree structure
      * @param termId GUID of the term to find 
      * @return term with the given termId, or null if it cannot be found
      */

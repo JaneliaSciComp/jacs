@@ -15,7 +15,6 @@ public class AlignmentBoard extends AbstractDomainObject {
     private String encodedUserSettings;
     private List<AlignmentBoardItem> children = new ArrayList<>();
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     public String getImageSize() {
         return imageSize;
     }
