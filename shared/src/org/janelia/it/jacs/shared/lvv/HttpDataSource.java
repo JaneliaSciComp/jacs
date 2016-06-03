@@ -27,7 +27,7 @@ public class HttpDataSource {
     private static Logger logger= LoggerFactory.getLogger(HttpDataSource.class);
     private static String interactiveServer;
     private static Long mouseLightCurrentSampleId;
-    private static boolean useHttp=false;
+    private static boolean useHttp=true;
 
     private static HttpClient httpClient;
     static {
@@ -115,7 +115,7 @@ public class HttpDataSource {
 
             long getTime=new Date().getTime()-startTime;
 
-            logger.info("getSample2DTile() ms="+getTime);
+            //logger.info("getSample2DTile() ms="+getTime);
 
         } catch (Exception ex) {
             ex.printStackTrace();
