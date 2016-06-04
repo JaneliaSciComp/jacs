@@ -62,9 +62,13 @@ public class SampleUtils {
             }
         }
 
-        if (chosenResult instanceof HasFileGroups) {
+        if (chosenResult instanceof HasFiles) {
+            // The chosen result already has files
+        }
+        else if (chosenResult instanceof HasFileGroups) {
+            // The chosen result doesn't have files itself, but it does have file groups
             HasFileGroups hasGroups = (HasFileGroups)chosenResult;
-            // Pick the first group, since there is no way to tell which is latest
+            // We pick the first group, since there is no way to tell which is latest
             for(String groupKey : hasGroups.getGroupKeys()) {
                 log.debug("Picking first group: "+groupKey);
                 chosenResult = hasGroups.getGroup(groupKey);
