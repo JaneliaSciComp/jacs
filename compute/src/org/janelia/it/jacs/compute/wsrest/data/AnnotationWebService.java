@@ -100,7 +100,8 @@ public class AnnotationWebService extends ResourceConfig {
     public List<Annotation> getAnnotations(@ApiParam DomainQuery query) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getAnnotations({})",query);
+            log.debug("getAnnotations(DomainQuery [subjectKey={}, references={} items])",query.getSubjectKey(),query.getReferences().size());
+            log.trace("getAnnotations({})",query);
             List<Annotation> annotations = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
             return annotations;
         } catch (Exception e) {
