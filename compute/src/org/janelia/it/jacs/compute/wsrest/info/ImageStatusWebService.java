@@ -65,10 +65,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getImageCycleTime() {
-        DomainDAO dao = DomainDAOManager.getInstance().getDao();
-        MongoClient m = dao.getMongo();
-        MongoDatabase db = m.getDatabase("jacs");
-        MongoCollection<Document> image = db.getCollection("image");
+        MongoCollection<Document> image = getNativeCollection("image");
         List<Document> jsonResult = new ArrayList<>();
         try {
             jsonResult = image.aggregate(asList(
@@ -131,10 +128,7 @@ public class ImageStatusWebService extends ResourceConfig {
         if (name==null || type==null) {
             return "Both name and type are required parameters";
         }
-        DomainDAO dao = DomainDAOManager.getInstance().getDao();
-        MongoClient m = dao.getMongo();
-        MongoDatabase db = m.getDatabase("jacs");
-        MongoCollection<Document> image = db.getCollection("image");
+        MongoCollection<Document> image = getNativeCollection("image");
         List<Document> jsonResult = new ArrayList<>();
         try {
             jsonResult = image.aggregate(asList(
@@ -150,6 +144,11 @@ public class ImageStatusWebService extends ResourceConfig {
                                             3600000)))),
                     new Document("$sort", new Document ("tmogDate", 1))))
                     .into(new ArrayList());
+            for (Document result : jsonResult) {
+                result.put("tmogDate", DateUtil.formatDate(result.getDate("tmogDate")));
+                result.put("creationDate", DateUtil.formatDate(result.getDate("creationDate")));
+                result.put("completionDate", DateUtil.formatDate(result.getDate("completionDate")));
+            }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             String images =  objectMapper.writeValueAsString(jsonResult);
@@ -247,6 +246,11 @@ public class ImageStatusWebService extends ResourceConfig {
                         new Document("$sort", new Document ("tmogDate", 1))))
                         .into(new ArrayList());
             }
+            for (Document result : jsonResult) {
+                result.put("tmogDate", DateUtil.formatDate(result.getDate("tmogDate")));
+                result.put("creationDate", DateUtil.formatDate(result.getDate("creationDate")));
+                result.put("completionDate", DateUtil.formatDate(result.getDate("completionDate")));
+            }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             String images =  objectMapper.writeValueAsString(jsonResult);
@@ -282,6 +286,9 @@ public class ImageStatusWebService extends ResourceConfig {
                                                 3600000)))),
                         new Document("$sort", new Document ("completionDate", 1))))
                         .into(new ArrayList());
+            }
+            for (Document result : jsonResult) {
+                result.put("completionDate", DateUtil.formatDate(result.getDate("completionDate")));
             }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);

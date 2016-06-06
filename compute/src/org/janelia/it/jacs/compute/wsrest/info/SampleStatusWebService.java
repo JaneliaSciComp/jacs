@@ -30,7 +30,6 @@ import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -137,6 +136,10 @@ public class SampleStatusWebService extends ResourceConfig {
                         .sort(orderBy(ascending("tmogDate"), ascending("_id")))
                         .into(new ArrayList());
             }
+
+            for (Document result : jsonResult) {
+                result.put("tmogDate", DateUtil.formatDate(result.getDate("tmogDate")));
+            }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             String samples =  objectMapper.writeValueAsString(jsonResult);
@@ -158,10 +161,19 @@ public class SampleStatusWebService extends ResourceConfig {
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
         try {
-            Document jsonResult = sample.find(eq("_id", sampleId))
-                    .batchSize(1000000)
-                    .projection(fields(include("name", "tmogDate", "status", "dataSet", "slideCode", "line", attribute)))
-                     .first();
+            Document jsonResult;
+            if (attribute==null) {
+                jsonResult = sample.find(eq("_id", sampleId))
+                        .batchSize(1000000)
+                        .first();
+            } else {
+                jsonResult = sample.find(eq("_id", sampleId))
+                        .batchSize(1000000)
+                        .projection(fields(include("name", "tmogDate", "status", "dataSet", "slideCode", "line", attribute)))
+                        .first();
+            }
+            jsonResult.put("tmogDate", DateUtil.formatDate(jsonResult.getDate("tmogDate")));
+
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             return objectMapper.writeValueAsString(jsonResult);
@@ -216,6 +228,9 @@ public class SampleStatusWebService extends ResourceConfig {
                     .projection(fields(include("tmogDate", "status", "dataSet", "name")))
                     .sort(orderBy(descending("_id")))
                     .into(new ArrayList());
+            for (Document result : jsonResult) {
+                result.put("tmogDate", DateUtil.formatDate(result.getDate("tmogDate")));
+            }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             String samples =  objectMapper.writeValueAsString(jsonResult);
@@ -250,8 +265,14 @@ public class SampleStatusWebService extends ResourceConfig {
                             .append("creationDate", "$creationDate")
                             .append("completionDate", "$completionDate")
                             .append("pipelineTime",
-                                    new Document("$subtract", asList(new Date(), "$creationDate"))))))
+                                    new Document("$divide", asList(
+                                            new Document("$subtract", asList(new Date(), "$creationDate")),
+                                            360000))))))
                     .into(new ArrayList());
+            for (Document result : jsonResult) {
+                result.put("creationDate", DateUtil.formatDate(result.getDate("creationDate")));
+                result.put("completionDate", DateUtil.formatDate(result.getDate("completionDate")));
+            }
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             String images =  objectMapper.writeValueAsString(jsonResult);
@@ -314,10 +335,7 @@ public class SampleStatusWebService extends ResourceConfig {
                             if (sampleProcResult.get(sampleProcResult.size()-1).getError()!=null) {
                                 SamplePipelineRun foo = sampleProcResult.get(sampleProcResult.size()-1);
                                 List<SampleProcessingResult> moo = foo.getSampleProcessingResults();
-                                log.info(moo.get(moo.size() - 1).getFiles().toString());
                                 Map<FileType, String> files = moo.get(moo.size() - 1).getFiles();
-                                log.info("ASSDFSGDFG");
-                                log.info(files.toString());
                                 Map<String, String> labelMap = new HashMap<String, String>();
                                 Iterator<FileType> poo = files.keySet().iterator();
                                 while (poo.hasNext()) {
@@ -396,14 +414,14 @@ public class SampleStatusWebService extends ResourceConfig {
 
     })
     @Produces(MediaType.APPLICATION_JSON)
-    public List<String> getSampleBySearchParameters(@QueryParam("name") final String name,
+    public String getSampleBySearchParameters(@QueryParam("name") final String name,
                                               @QueryParam("slideCode") final String slideCode,
                                               @QueryParam("line") final String line,
                                               @QueryParam("dataSet") final String dataSet) {
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
 
-        List<String> formattedResults = new ArrayList<String>();
+        List<Document> formattedResults = new ArrayList<Document>();
         try {
             MongoCursor<Sample> results;
             String query = null;
@@ -426,34 +444,51 @@ public class SampleStatusWebService extends ResourceConfig {
             while (results.hasNext()) {
                 Sample result = results.next();
                 for (ObjectiveSample objective : result.getObjectiveSamples()) {
-                    Map<FileType, String> files = objective.getLatestRun().getLatestResult().getFiles();
+                    Map<FileType, String> files = null;
                     Map labelMap = new HashMap<String, String>();
-                    Iterator<FileType> foo = files.keySet().iterator();
-                    while (foo.hasNext()) {
-                        FileType moo = foo.next();
-                        labelMap.put(moo.getLabel(), files.get(moo));
+                    if (objective.getLatestSuccessfulRun()!=null &&
+                            objective.getLatestSuccessfulRun().getLatestProcessingResult()!=null) {
+                        String filepath = objective.getLatestSuccessfulRun().getLatestProcessingResult().getFilepath();
+                        files = objective.getLatestSuccessfulRun().getLatestProcessingResult().getFiles();
+
+                        Iterator<FileType> foo = files.keySet().iterator();
+
+                        while (foo.hasNext()) {
+                            FileType moo = foo.next();
+                            String fullPath = files.get(moo);
+                            if (!fullPath.startsWith("/")) {
+                                fullPath = filepath + "/" + fullPath;
+                            }
+                            labelMap.put(moo.getLabel(), fullPath);
+                        }
                     }
-                    if (files!=null) {
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        String fileResults = objectMapper.writeValueAsString(labelMap);
-                        formattedResults.add("{name:'" + result.getName() + "'," +
-                                        "line:'" + result.getLine() + "'," +
-                                        "slideCode:'" + result.getSlideCode()  + "'," +
-                                        "effector:'" + result.getEffector()  + "'," +
-                                        "dataSet:'" + result.getDataSet()  + "'," +
-                                        "objective:'" + objective.getObjective()  + "'," +
-                                        "image:" + fileResults + "}"
-                        );
-                    } else {
-                        formattedResults.add("{name:'" + result.getName() + "'," +
-                                "line:'" + result.getLine() + "'," +
-                                "slideCode:'" + result.getSlideCode()  + "'," +
-                                "effector:'" + result.getEffector()  + "'," +
-                                "dataSet:'" + result.getDataSet()  + "'}");
+                    Document newDoc = new Document();
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    if (result.getName()!=null) {
+                        newDoc.put("name", result.getName());
                     }
+                    if (result.getLine()!=null) {
+                        newDoc.put("line", result.getLine());
+                    }
+                    if (result.getSlideCode()!=null) {
+                        newDoc.put("slideCode", result.getSlideCode());
+                    }
+                    if (result.getEffector()!=null) {
+                        newDoc.put("effector", result.getEffector());
+                    }
+                    if (result.getDataSet()!=null) {
+                        newDoc.put("dataSet", result.getDataSet());
+                    }
+                    newDoc.put("objective", objective.getObjective());
+                    if (files != null) {
+                        newDoc.put("image", labelMap);
+                    }
+                    formattedResults.add(newDoc);
                 }
             }
-            return formattedResults;
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            return objectMapper.writeValueAsString(formattedResults);
         } catch (Exception e) {
             log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

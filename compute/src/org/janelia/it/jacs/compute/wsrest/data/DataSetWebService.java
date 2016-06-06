@@ -27,6 +27,7 @@ import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
@@ -221,6 +222,29 @@ public class DataSetWebService extends ResourceConfig {
             dao.deleteDomainObject(subjectKey, domainObj);
         } catch (Exception e) {
             log.error("Error occurred removing dataset",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("/dataset/all")
+    @ApiOperation(value = "Gets a distinct list of all datasets",
+            notes = "")
+    public String getAllDatasets() {
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> dataSet = db.getCollection("dataSet");
+        List<String> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = dataSet.distinct("name",String.class)
+                    .into(new ArrayList());
+            jsonResult.remove(0);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            return objectMapper.writeValueAsString(jsonResult);
+        } catch (Exception e) {
+            log.error("Error occurred getting list of datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

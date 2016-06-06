@@ -114,4 +114,27 @@ public class DatasetStatusWebService extends ResourceConfig {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GET
+    @Path("/dataset/all")
+    @ApiOperation(value = "Gets a distinct list of all datasets",
+            notes = "")
+    public String getDatasets() {
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> dataSet = db.getCollection("dataSet");
+        List<String> jsonResult = new ArrayList<>();
+        try {
+            jsonResult = dataSet.distinct("name",String.class)
+                    .into(new ArrayList());
+            jsonResult.remove(0);
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            return objectMapper.writeValueAsString(jsonResult);
+        } catch (Exception e) {
+            log.error("Error occurred getting list of datasets",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

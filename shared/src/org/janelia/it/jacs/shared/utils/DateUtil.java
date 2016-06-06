@@ -74,4 +74,12 @@ public class DateUtil {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HHmmss");
         return sdf.parse(startDate + "-000000");
     }
+
+    public static String formatDate (Date complexDate) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if (complexDate!=null) {
+            return sdf.format(complexDate);
+        }
+        return "";
+    }
 }
