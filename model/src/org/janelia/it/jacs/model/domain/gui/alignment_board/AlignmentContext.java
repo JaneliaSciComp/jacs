@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.model.domain.gui.alignment_board;
 
+import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.support.MongoMapped;
+
 /**
  * Collection of alignment contexts.  No combination of these values
  * should be used in any other collection (they are denormalized) if
@@ -7,10 +10,6 @@ package org.janelia.it.jacs.model.domain.gui.alignment_board;
  *
  * @author fosterl
  */
-
-import org.janelia.it.jacs.model.domain.AbstractDomainObject;
-import org.janelia.it.jacs.model.domain.support.MongoMapped;
-
 @MongoMapped(collectionName="alignmentContext",label="Alignment Context")
 public class AlignmentContext extends AbstractDomainObject {
     private String imageSize;

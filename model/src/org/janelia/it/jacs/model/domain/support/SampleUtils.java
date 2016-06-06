@@ -1,12 +1,9 @@
 package org.janelia.it.jacs.model.domain.support;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
@@ -21,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Utilities for dealing with Samples, Neuron Fragments, and other related objects.
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleUtils {
@@ -31,69 +30,90 @@ public class SampleUtils {
         return result.getParentRun().getParent().getObjective() + " " + result.getName();
     }
 
+    public static boolean equals(PipelineResult o1, PipelineResult o2) {
+        if (o1==null || o2==null) return false;
+        if (o1.getId()==null || o2.getId()==null) return false;
+        return o1.getId().equals(o2.getId());
+    }
+
     public static HasFiles getResult(Sample sample, ResultDescriptor result) {
 
         log.debug("Getting result '{}' from {}",result,sample.getName());
-        log.trace("  Result name prefix: {}",result.getResultNamePrefix());
+        log.trace("  Objective: {}",result.getObjective());
+        log.trace("  Result name: {}",result.getResultName());
         log.trace("  Group name: {}",result.getGroupName());
+        log.trace("  Is aligned: {}",result.isAligned());
 
         HasFiles chosenResult = null;
-
-        if (DomainConstants.PREFERENCE_VALUE_LATEST.equals(result.getResultKey())) {
+        if (result.getObjective()==null) {
             List<ObjectiveSample> objectiveSamples = sample.getObjectiveSamples();
-            if (objectiveSamples==null || objectiveSamples.isEmpty()) return null;
-            int i = objectiveSamples.size()-1;
-            while (chosenResult==null && i>=0) {
-                log.debug("Testing objective with index "+i);
-                ObjectiveSample objSample = objectiveSamples.get(i--);
-                if (objSample!=null) {
-                    log.debug("Testing objective: "+objSample.getObjective());
-                    List<SamplePipelineRun> runs = new ArrayList<>(objSample.getPipelineRuns());
-                    Collections.reverse(runs);
-                    for(SamplePipelineRun run : runs) {
-                        log.debug("Testing run: "+run.getName());
-                        chosenResult = run.getLatestResult();
-                        if (chosenResult!=null) break;
-                    }
-
-                }
-            }
-
-            if (chosenResult instanceof HasFileGroups) {
-                HasFileGroups hasGroups = (HasFileGroups)chosenResult;
-                // Pick the first group, since there is no way to tell which is latest
-                for(String groupKey : hasGroups.getGroupKeys()) {
-                    chosenResult = hasGroups.getGroup(groupKey);
-                    break;
-                }
+            for(int i=objectiveSamples.size()-1; chosenResult==null && i>=0; i--) {
+                ObjectiveSample objectiveSample = objectiveSamples.get(i);
+                log.debug("Testing objective: "+objectiveSample.getObjective());
+                chosenResult = getResult(objectiveSample, result);
+                if (chosenResult!=null) break;
             }
         }
         else {
-            ObjectiveSample objSample = sample.getObjectiveSample(result.getObjective());
-            if (objSample==null) return null;
-            SamplePipelineRun run = objSample.getLatestSuccessfulRun();
-            if (run==null || run.getResults()==null) return null;
-            for(PipelineResult pipelineResult : run.getResults()) {
-                if (result.getGroupName() != null && pipelineResult instanceof HasFileGroups) {
-                    HasFileGroups hasGroups = (HasFileGroups)pipelineResult;
-                    for(String groupKey : hasGroups.getGroupKeys()) {
-                        if (pipelineResult.getName().equals(result.getResultNamePrefix()) && groupKey.equals(result.getGroupName())) {
-                            chosenResult = hasGroups.getGroup(groupKey);
-                            break;
-                        }
-                    }
-                }
-                else {
-                    if (pipelineResult.getName().equals(result.getResultName())) {
-                        chosenResult = pipelineResult;
-                        break;
-                    }
-                }
+            ObjectiveSample objectiveSample = sample.getObjectiveSample(result.getObjective());
+            if (objectiveSample!=null) {
+                log.debug("Testing objective: "+objectiveSample.getObjective());
+                chosenResult = getResult(objectiveSample, result);
+            }
+        }
+
+        if (chosenResult instanceof HasFiles) {
+            // The chosen result already has files
+        }
+        else if (chosenResult instanceof HasFileGroups) {
+            // The chosen result doesn't have files itself, but it does have file groups
+            HasFileGroups hasGroups = (HasFileGroups)chosenResult;
+            // We pick the first group, since there is no way to tell which is latest
+            for(String groupKey : hasGroups.getGroupKeys()) {
+                log.debug("Picking first group: "+groupKey);
+                chosenResult = hasGroups.getGroup(groupKey);
+                break;
             }
         }
 
         log.debug("Got result: "+chosenResult);
         return chosenResult;
+    }
+
+    public static HasFiles getResult(ObjectiveSample objectiveSample, ResultDescriptor result) {
+
+        HasFiles chosenResult = null;
+
+        SamplePipelineRun run = objectiveSample.getLatestSuccessfulRun();
+        if (run==null || run.getResults()==null) return null;
+        List<PipelineResult> results = run.getResults();
+
+        for(int i=results.size()-1; chosenResult==null && i>=0; i--) {
+            PipelineResult pipelineResult = results.get(i);
+            log.debug("  Testing result: " + pipelineResult.getId());
+
+            if (result.isAligned()==null
+                    || (result.isAligned() && pipelineResult instanceof SampleAlignmentResult)
+                    || (!result.isAligned() && !(pipelineResult instanceof SampleAlignmentResult))) {
+
+                if (result.getResultName() == null || pipelineResult.getName().equals(result.getResultName())) {
+                    log.debug("    Found matching result");
+                    if (result.getGroupName() == null) {
+                        return pipelineResult;
+                    }
+                    else if (pipelineResult instanceof HasFileGroups) {
+                        HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
+                        HasFiles hasFiles = hasGroups.getGroup(result.getGroupName());
+                        if (hasFiles != null) {
+                            log.debug("    Found group: " + result.getGroupName());
+                            return hasFiles;
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public static ResultDescriptor getLatestResultDescriptor(Sample sample) {

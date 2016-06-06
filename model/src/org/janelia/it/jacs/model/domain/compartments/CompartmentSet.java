@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.domain.compartments;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
@@ -16,7 +17,6 @@ public class CompartmentSet extends AbstractDomainObject implements HasFilepath 
     private String alignmentSpace;
     private List<Compartment> compartments = new ArrayList<>();
 
-    /* EVERYTHING BELOW IS AUTO-GENERATED */
     @Override
     public String getFilepath() {
         return filepath;
@@ -50,13 +50,38 @@ public class CompartmentSet extends AbstractDomainObject implements HasFilepath 
         this.alignmentSpace = alignmentSpace;
     }
 
+    @JsonProperty
     public List<Compartment> getCompartments() {
         return compartments;
     }
 
+    @JsonProperty
     public void setCompartments(List<Compartment> compartments) {
         if (compartments==null) throw new IllegalArgumentException("Property cannot be null");
         this.compartments = compartments;
+        for (Compartment compartment : compartments) {
+            compartment.setParent(this);
+        }
+    }
+
+    public Compartment getCompartment(Long id) {
+        if (id==null) return null;
+        for(Compartment compartment : compartments) {
+            if (compartment.getId().equals(id)) {
+                return compartment;
+            }
+        }
+        return null;
+    }
+
+    public Compartment getCompartmentByName(String name) {
+        if (name==null) return null;
+        for(Compartment compartment : compartments) {
+            if (compartment.getName().equals(name)) {
+                return compartment;
+            }
+        }
+        return null;
     }
 
 }

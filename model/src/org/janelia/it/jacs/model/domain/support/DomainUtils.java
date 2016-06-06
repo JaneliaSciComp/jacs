@@ -36,9 +36,6 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.PipelineResult;
-import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.util.ModelStringUtil;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
@@ -307,13 +304,6 @@ public class DomainUtils {
         if (o1.getId()==null || o2.getId()==null) return false;
         return o1.getId().equals(o2.getId());
     }
-
-    public static boolean equals(PipelineResult o1, PipelineResult o2) {
-        if (o1==null || o2==null) return false;
-        if (o1.getId()==null || o2.getId()==null) return false;
-        return o1.getId().equals(o2.getId());
-    }
-    
     
     /**
      * Returns a string uniquely identifying the object instance. 
@@ -469,7 +459,7 @@ public class DomainUtils {
     
     /**
      * Generate a list of references to the given domain objects.
-     * @param objects collection of domain objects
+     * @param domainObjects collection of domain objects
      * @return a list of references, one for each domain object
      */
     public static <T extends DomainObject> List<Reference> getReferences(Collection<T> domainObjects) {
@@ -591,8 +581,5 @@ public class DomainUtils {
         System.out.println("getObjectClass(image): "+DomainUtils.getBaseClass("image"));
         System.out.println("getSubClasses(TreeNode.class): " + DomainUtils.getSubClasses(TreeNode.class));
         System.out.println("getObjectClasses(image): "+DomainUtils.getObjectClasses("image"));
-        System.out.println("getObjectClasses(LSMImage): " + DomainUtils.getObjectClasses(LSMImage.class));
-        System.out.println("getCollectionName(Sample.class): "+DomainUtils.getCollectionName(Sample.class));
-        System.out.println("getCollectionName(LSMImage): "+DomainUtils.getCollectionName(new LSMImage()));
     }
 }

@@ -8,23 +8,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Sets;
+import com.mongodb.WriteConcern;
+import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.hibernate.FlushMode;
@@ -36,6 +28,7 @@ import org.janelia.it.jacs.compute.access.SubjectDAO;
 import org.janelia.it.jacs.compute.access.large.MongoLargeOperations;
 import org.janelia.it.jacs.compute.api.support.MappedId;
 import org.janelia.it.jacs.compute.util.ArchiveUtils;
+import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -48,6 +41,8 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.enums.SampleImageType;
 import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoard;
 import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoardItem;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentBoardReference;
+import org.janelia.it.jacs.model.domain.gui.alignment_board.AlignmentContext;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.model.domain.gui.search.criteria.FacetCriteria;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
@@ -57,27 +52,7 @@ import org.janelia.it.jacs.model.domain.ontology.Interval;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTermReference;
-import org.janelia.it.jacs.model.domain.sample.CuratedNeuron;
-import org.janelia.it.jacs.model.domain.sample.DataSet;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.Image;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
-import org.janelia.it.jacs.model.domain.sample.LineRelease;
-import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
-import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.sample.PipelineError;
-import org.janelia.it.jacs.model.domain.sample.PipelineResult;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
-import org.janelia.it.jacs.model.domain.sample.SampleCellCountingResult;
-import org.janelia.it.jacs.model.domain.sample.SamplePatternAnnotationNormalizedResult;
-import org.janelia.it.jacs.model.domain.sample.SamplePatternAnnotationResult;
-import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
-import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.sample.*;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
@@ -92,13 +67,6 @@ import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.MongoCollection;
 import org.reflections.ReflectionUtils;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Sets;
-import com.mongodb.WriteConcern;
-
-import net.sf.ehcache.Cache;
 
 /**
  * Data access to the MongoDB data store.
@@ -144,6 +112,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected final MongoCollection ontologyCollection;
     protected final MongoCollection compartmentSetCollection;
     protected final MongoCollection alignmentBoardCollection;
+    protected final MongoCollection alignmentContextsCollection;
     protected final MongoCollection filterCollection;
     
     // Load state
@@ -174,6 +143,7 @@ public class MongoDbImport extends AnnotationDAO {
         this.ontologyCollection = dao.getCollectionByClass(Ontology.class);
         this.compartmentSetCollection = dao.getCollectionByClass(CompartmentSet.class);
         this.alignmentBoardCollection = dao.getCollectionByClass(AlignmentBoard.class);
+        this.alignmentContextsCollection = dao.getCollectionByClass(AlignmentContext.class);
         this.filterCollection = dao.getCollectionByClass(Filter.class);
     }
 
@@ -197,7 +167,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         log.info("Loading data into MongoDB");
         getSession().setFlushMode(FlushMode.MANUAL);
-        
+
         long startAll = System.currentTimeMillis();
 
         log.info("Adding subjects");
@@ -226,12 +196,15 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Adding compartment sets");
         loadCompartmentSets();
 
+        log.info("Adding alignment board contexts");
+        loadAlignmentBoardContexts();
+
         log.info("Adding alignment boards");
         loadAlignmentBoards();
 
         log.info("Adding folders");
         loadWorkspaces();
-        
+
         log.info("Verify annotations");
         verifyAnnotations();
         
@@ -2188,6 +2161,7 @@ public class MongoDbImport extends AnnotationDAO {
     	List<Compartment> compartments = new ArrayList<>();
     	for(Entity compartmentEntity : compartmentSetEntity.getOrderedChildren()) {
     		Compartment compartment = new Compartment();
+            compartment.setId(compartmentEntity.getId());
     		compartment.setColor(compartmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
     	    Matcher m = p.matcher(compartmentEntity.getName());
     		if (m.matches()) {
@@ -2289,6 +2263,35 @@ public class MongoDbImport extends AnnotationDAO {
         return c;
     }
 
+    private void loadAlignmentBoardContexts() {
+
+        String[][] contextDatas = {
+                {"Unified 20x Alignment Space", "0.62x0.62x0.62", "1024x512x218"},
+                {"Unified 20x Alignment Space", "0.38x0.38x0.38", "1712x1370x492"},
+                {"Yoshi 20x Alignment Space", "0.46x0.46x0.46", "1184x592x218"},
+                {"Yoshi 63x Subsampled Alignment Space", "0.38x0.38x0.38", "1450x725x436"}
+        };
+
+        Date now = new Date();
+
+        for(String[] contextData : contextDatas) {
+            AlignmentContext context = new AlignmentContext();
+            context.setId(dao.getNewId());
+            context.setOwnerKey(DomainConstants.GENERAL_USER_GROUP_KEY);
+            context.setReaders(getDefaultSubjectKeys(DomainConstants.GENERAL_USER_GROUP_KEY));
+            context.setWriters(getDefaultSubjectKeys(DomainConstants.GENERAL_USER_GROUP_KEY));
+            context.setCreationDate(now);
+            context.setUpdatedDate(now);
+            context.setAlignmentSpace(contextData[0]);
+            context.setOpticalResolution(contextData[1]);
+            context.setImageSize(contextData[2]);
+            context.setName(context.getAlignmentSpace()+" "+context.getOpticalResolution()+" "+context.getImageSize());
+            log.info("  Loading "+context.getName());
+            alignmentContextsCollection.insert(context);
+
+        }
+    }
+
     private AlignmentBoard getAlignmentBoard(Entity alignmentBoardEntity) throws Exception {
     	AlignmentBoard alignmentBoard = new AlignmentBoard();
     	alignmentBoard.setId(alignmentBoardEntity.getId());
@@ -2301,13 +2304,13 @@ public class MongoDbImport extends AnnotationDAO {
     	alignmentBoard.setAlignmentSpace(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_SPACE));
     	alignmentBoard.setImageSize(sanitizeCSV(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIXEL_RESOLUTION)));
     	alignmentBoard.setOpticalResolution(sanitizeCSV(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OPTICAL_RESOLUTION)));
+        alignmentBoard.setEncodedUserSettings(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS));
     	List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardEntity);
     	if (!children.isEmpty()) alignmentBoard.setChildren(children);
-    	
         return alignmentBoard;
     }
     
-    private List<AlignmentBoardItem> getAlignmentBoardChildren(Entity alignmentBoardItem) {
+    private List<AlignmentBoardItem> getAlignmentBoardChildren(Entity alignmentBoardItem) throws Exception {
 
     	List<AlignmentBoardItem> items = new ArrayList<>();
     	
@@ -2318,18 +2321,31 @@ public class MongoDbImport extends AnnotationDAO {
     		}
     		else {
         		AlignmentBoardItem item = new AlignmentBoardItem();
+                item.setName(alignmentBoardItemEntity.getName());
         		item.setInclusionStatus(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_INCLUSION_STATUS));
         		item.setVisible("true".equalsIgnoreCase(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY)));
         		item.setColor(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
         		item.setRenderMethod(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RENDER_METHOD));
-        		// TODO: Fix this. It creates references to samples and neurons just fine, but compartments are not domain objects so the reference type is null. We need some way to reference compartments. 
-        		if (!targetEntity.getEntityTypeName().equals(EntityConstants.TYPE_COMPARTMENT)) {
-             		Reference target = getReference(targetEntity);
-            		item.setTarget(target);
-            		List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
-            		if (!children.isEmpty()) item.setChildren(children);	
-            		items.add(item);
-        		}
+
+                if (!targetEntity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                    if (targetEntity.getEntityTypeName().equals(EntityConstants.TYPE_COMPARTMENT)) {
+
+                        Entity compartmentSetEntity = getAncestorWithType(targetEntity.getOwnerKey(), targetEntity.getId(), EntityConstants.TYPE_COMPARTMENT_SET);
+                        if (compartmentSetEntity!=null) {
+                            item.setTarget(new AlignmentBoardReference(getReference(compartmentSetEntity), targetEntity.getId()));
+                        }
+                        else {
+                            log.warn("    Unable to find compartment set for compartment: "+targetEntity.getId());
+                        }
+                    }
+                    else {
+                        item.setTarget(new AlignmentBoardReference(getReference(targetEntity), null));
+                    }
+                }
+
+                List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
+                if (!children.isEmpty()) item.setChildren(children);
+                items.add(item);
     		}
     	}
     	
