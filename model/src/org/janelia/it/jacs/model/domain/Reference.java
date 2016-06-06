@@ -93,7 +93,7 @@ public class Reference implements Serializable {
     }
     
     public static Reference createFor(DomainObject domainObject) {
-        if (domainObject==null) throw new IllegalArgumentException("Null domain object reference");
+        if (domainObject==null) throw new IllegalArgumentException("Null domain object");
         return new Reference(domainObject.getClass().getSimpleName(), domainObject.getId());
     }
 
