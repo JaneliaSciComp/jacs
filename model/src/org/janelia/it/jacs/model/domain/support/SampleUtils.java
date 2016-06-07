@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.domain.support;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFileGroups;
@@ -61,15 +62,12 @@ public class SampleUtils {
                 chosenResult = getResult(objectiveSample, result);
             }
         }
-
-        if (chosenResult instanceof HasFiles) {
-            // The chosen result already has files
-        }
-        else if (chosenResult instanceof HasFileGroups) {
+        
+        if (chosenResult!=null && chosenResult.getFiles().isEmpty() && chosenResult instanceof HasFileGroups) {
             // The chosen result doesn't have files itself, but it does have file groups
             HasFileGroups hasGroups = (HasFileGroups)chosenResult;
             // We pick the first group, since there is no way to tell which is latest
-            for(String groupKey : hasGroups.getGroupKeys()) {
+            for(String groupKey : new TreeSet<>(hasGroups.getGroupKeys())) {
                 log.debug("Picking first group: "+groupKey);
                 chosenResult = hasGroups.getGroup(groupKey);
                 break;
