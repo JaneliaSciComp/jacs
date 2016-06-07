@@ -1202,7 +1202,9 @@ public class MongoDbImport extends AnnotationDAO {
             log.warn("    Cannot find LSM#"+lsm.getId()+" in SAGE with name: "+name);
         }
         else {
-            
+
+            //log.info("    Loading LSM#"+lsm.getId()+" from SAGE with name: "+name);
+
             // Use the current path from SAGE
             String path = (String)sageProps.get("image_query_path");
             if (path!=null) {
@@ -1236,7 +1238,7 @@ public class MongoDbImport extends AnnotationDAO {
                         }
                         else if (fieldType.equals(Long.class)) {
                             if (value instanceof Long) {
-                                trueValue = (Long)value;
+                                trueValue = value;
                             }
                             else {
                                 if (!StringUtils.isEmpty(strValue)) {
@@ -1246,7 +1248,7 @@ public class MongoDbImport extends AnnotationDAO {
                         }
                         else if (fieldType.equals(Integer.class)) {
                             if (value instanceof Integer) {
-                                trueValue = (Integer)value;
+                                trueValue = value;
                             }
                             else {
                                 if (!StringUtils.isEmpty(strValue)) {

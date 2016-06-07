@@ -88,7 +88,7 @@ public class MongoLargeOperations {
     		Long targetId = annotation.getTarget().getTargetId();
             Set<SimpleAnnotation> annots = (Set<SimpleAnnotation>)getValue(annotationMapCache, targetId);
 			if (annots == null) {
-				annots = new HashSet<SimpleAnnotation>();
+				annots = new HashSet<>();
 			}
 			annots.add(new SimpleAnnotation(annotation.getName(), annotation.getOwnerKey()));
 			putValue(annotationMapCache, targetId, annots);
@@ -201,7 +201,9 @@ public class MongoLargeOperations {
                 lineIterator = sage.getAllLineProperties();
                 while (lineIterator.hasNext()) {
                     Map<String,Object> lineProperties = lineIterator.next();
-                    lineMap.put((String)lineProperties.get(SageDAO.LINE_PROP_LINE_TERM),lineProperties);
+                    String line = (String)lineProperties.get(SageDAO.LINE_PROP_LINE_TERM);
+                    lineMap.put(line,lineProperties);
+                    //log.info("Adding "+lineProperties.size()+" properties for line "+line);
                 }
             }
             catch (RuntimeException e) {
@@ -244,6 +246,8 @@ public class MongoLargeOperations {
                         if (line!=null) {
                             Map<String,Object> lineProperties = lineMap.get(line);
                             if (lineProperties!=null) {
+                                String name = imageProperties.get("image_query_name").toString();
+                                //log.info("    Adding "+lineProperties.size()+" line properties to "+name);
                                 allProps.putAll(lineProperties);
                             }
                         }
