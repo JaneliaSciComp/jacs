@@ -4,12 +4,17 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Element;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
+import org.janelia.it.jacs.compute.access.mongodb.MongoDbImport;
 import org.janelia.it.jacs.compute.access.solr.AncestorSet;
 import org.janelia.it.jacs.compute.access.solr.SimpleAnnotation;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
@@ -22,10 +27,6 @@ import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
 
 /**
  * Large, memory-bound operations which need to be done on disk using EhCache, lest we run out of heap space.
@@ -217,10 +218,16 @@ public class MongoLargeOperations {
 
             log.info("Building property map for all SAGE images");
 
-            int i = 0;
+            Set<String> dataSetNames = new LinkedHashSet<>();
+            dataSetNames.add(MongoDbImport.SCREEN_DEFAULT_DATA_SET_GAL4);
+            dataSetNames.add(MongoDbImport.SCREEN_DEFAULT_DATA_SET_LEXA);
             for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-
                 String dataSetIdentifier = dataSet.getValueByAttributeName(EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER);
+                dataSetNames.add(dataSetIdentifier);
+            }
+
+            int i = 0;
+            for(String dataSetIdentifier : dataSetNames) {
 
                 log.info("  Building property map for all SAGE images in Data Set '"+dataSetIdentifier+"'");
 
