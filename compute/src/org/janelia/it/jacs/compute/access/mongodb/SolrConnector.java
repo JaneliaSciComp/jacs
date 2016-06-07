@@ -109,6 +109,7 @@ public class SolrConnector {
 			catch (SolrServerException e) {
 				throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
 			}
+			this.largeOp = new MongoLargeOperations(dao);
 		}
 	}
     
@@ -309,6 +310,7 @@ public class SolrConnector {
 	public void updateIndices(List<DomainObject> domainObjects) throws DaoException {
 		log.trace("updateIndex(domainObj.size="+domainObjects.size()+")");
 
+		init();
 		// Get all Solr documents
 		List<Long> domainObjIds = new ArrayList<>();
 		for (DomainObject domainObject : domainObjects) {

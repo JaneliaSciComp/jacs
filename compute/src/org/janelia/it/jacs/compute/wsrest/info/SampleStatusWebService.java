@@ -417,7 +417,8 @@ public class SampleStatusWebService extends ResourceConfig {
     public String getSampleBySearchParameters(@QueryParam("name") final String name,
                                               @QueryParam("slideCode") final String slideCode,
                                               @QueryParam("line") final String line,
-                                              @QueryParam("dataSet") final String dataSet) {
+                                              @QueryParam("dataSet") final String dataSet,
+                                              @QueryParam("wildcard") final Boolean wildcard) {
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
 
@@ -425,19 +426,26 @@ public class SampleStatusWebService extends ResourceConfig {
         try {
             MongoCursor<Sample> results;
             String query = null;
+            String val = null;
             String field = null;
+
             if (name!=null) {
                 field = "name";
-                query = "{name:'" + name + "'}";
+                val = name;
             } else if (slideCode!=null) {
                 field = "slideCode";
-                query = "{slideCode:'" + slideCode + "'}";
+                val = slideCode;
             } else if (line!=null) {
                 field = "line";
-                query = "{line:'" + line + "'}";
+                val = line;
             } else if (dataSet!=null) {
                 field = "dataSet";
-                query = "{dataSet:'" + dataSet + "'}";
+                val = dataSet;
+            }
+            if (wildcard!=null && wildcard) {
+                query = "{" + field + ":{$regex: \".*" + val + ".*\"}}";
+            } else {
+                query = "{" + field + ":\"" + val + "\"}";
             }
 
             results = sample.find(query).as(Sample.class);

@@ -126,10 +126,9 @@ public class TaskStatusWebService extends ResourceConfig {
                             .append("description", "$events.description")
                             .append("timestamp", "$events.eventTimestamp")
                             .append("taskTime",
-                                    new Document("$subtract", asList(new Date(), "$events.eventTimestamp")))),
-                    new Document("$sort", new Document("taskTime", 1))))
-                    .batchSize(1000000)
-                    .allowDiskUse(true)
+                                    new Document("$subtract", asList(new Date(), "$events.eventTimestamp"))))
+                   ))
+                    .batchSize(500000)
                     .into(new ArrayList());
             // lookup Sample
             for (Document result: jsonResult) {
