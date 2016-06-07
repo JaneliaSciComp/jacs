@@ -32,11 +32,12 @@ public class InjectRegeneratedInputService extends AbstractEntityService {
 
                 contextLogger.info("Got result message: "+text);
             	for(String result : Task.listOfStringsFromCsvString(text.replace(SetTaskFileResultsService.RESULT_TOKEN, ""))) {
-            		String[] resultArr = result.split("=");
-            		String area = resultArr[0];
-            		String filepath = resultArr[1];
+            		String[] resultArr = result.split(":");
+            		String objective = resultArr[0];
+            		String area = resultArr[1];
+            		String filepath = resultArr[2];
                 	for(AlignmentInputFile alignmentInputFile : alignmentInputFiles) {
-                		if (area.equals(alignmentInputFile.getArea())) {
+                		if (objective.equals(alignmentInputFile.getObjective()) && area.equals(alignmentInputFile.getArea())) {
                             alignmentInputFile.setFilepath(filepath);
                             contextLogger.info("Updated input filepath for: "+alignmentInputFile);
                 		}

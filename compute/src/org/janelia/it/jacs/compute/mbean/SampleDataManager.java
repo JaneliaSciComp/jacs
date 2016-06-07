@@ -59,15 +59,8 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleMaintenancePipelines() {
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity sample : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(sample.getOwnerKey());
-            }
-            List<String> sortedKeys = new ArrayList<>(subjectKeys);
-            Collections.sort(sortedKeys);
-            log.info("Found users with data sets: " + sortedKeys);
-            for(String subjectKey : sortedKeys) {
+            Set<String> subjectKeys = getUsersWithDataSets();
+            for(String subjectKey : subjectKeys) {
                 log.info("Queuing maintenance pipelines for "+subjectKey);
                 runUserSampleMaintenancePipelines(subjectKey);
             }
@@ -75,6 +68,26 @@ public class SampleDataManager implements SampleDataManagerMBean {
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
         }
+    }
+
+    /**
+     * This method does the basic query to get a list of people/groups with Data Sets (and by extension, they have
+     * LSMs, samples, etc.)
+     * @return a sorted list of subject keys ("user:saffordt" or "group:flylight")
+     */
+    private Set<String> getUsersWithDataSets() {
+        Set<String> subjectKeys = new TreeSet<>();
+        try {
+            log.info("Building list of users with data sets...");
+            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
+                subjectKeys.add(dataSet.getOwnerKey());
+            }
+            log.info("Found users with data sets: " + subjectKeys);
+        }
+        catch (Exception ex) {
+            log.error("Error building list of users with Data Sets", ex);
+        }
+        return subjectKeys;
     }
 
     public void runUserSampleMaintenancePipelines(String user) {
@@ -116,12 +129,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleDataCompression(String compressionType){
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
-            log.info("Found users with data sets: " + subjectKeys);
+            Set<String> subjectKeys = getUsersWithDataSets();
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing sample data compression for "+subjectKey);
                 runSampleDataCompression(subjectKey, null, compressionType);
@@ -192,10 +200,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void runAllSampleRetirement(String maxSamplesPerUser, Boolean testRun) {
         try {
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
+            Set<String> subjectKeys = getUsersWithDataSets();
             for(String subjectKey : subjectKeys) {
                 runSampleRetirement(subjectKey, null, maxSamplesPerUser, testRun);
             }
@@ -245,7 +250,20 @@ public class SampleDataManager implements SampleDataManagerMBean {
             log.error("Error running pipeline", ex);
         }
     }
-    
+
+    public void runSyncAllLSMsToScality() {
+        try {
+            Set<String> subjectKeys = getUsersWithDataSets();
+            for(String subjectKey : subjectKeys) {
+                log.info("Queuing scality sync for "+subjectKey);
+                runSyncDataSetToScality(subjectKey, null, "lsm", true);
+            }
+        }
+        catch (Exception e) {
+            log.error("Error running Sync All LSMs to Scality",e);
+        }
+    }
+
     public void runSyncDataSetToScality(String user, String dataSetName, String filetypes, Boolean deleteSourceFiles) {
         try {
             if ("".equals(dataSetName)) {dataSetName=null;}
@@ -265,12 +283,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     // todo Proved to be too slow.  Used the commented out main method below to generate insert statements adding canceled event (insanely faster)
     public void cancelAllIncompleteUserTasks(String user){
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
-            log.info("Found users with data sets: " + subjectKeys);
+            Set<String> subjectKeys = getUsersWithDataSets();
             log.info("Canceling incomplete tasks");
             for(String subjectKey : subjectKeys) {
                 if (null!=user && !EntityUtils.getNameFromSubjectKey(subjectKey).equals(user)) {continue;}
@@ -293,11 +306,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public void cancelAllIncompleteDataSetPipelineTasks() {
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
+            Set<String> subjectKeys = getUsersWithDataSets();
             String processName = "GSPS_UserDataSetPipelines";
             log.info("Cancelling incomplete "+processName+" tasks");
             for(String subjectKey : subjectKeys) {
@@ -316,12 +325,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
     
     public String runAllDataSetPipelines(String runMode, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, Boolean force) {
         try {
-            log.info("Building list of users with data sets...");
-            Set<String> subjectKeys = new TreeSet<>();
-            for(Entity dataSet : EJBFactory.getLocalEntityBean().getEntitiesByTypeName(EntityConstants.TYPE_DATA_SET)) {
-                subjectKeys.add(dataSet.getOwnerKey());
-            }
-            log.info("Found users with data sets: "+subjectKeys);
+            Set<String> subjectKeys = getUsersWithDataSets();
             StringBuilder sb = new StringBuilder();
             for(String subjectKey : subjectKeys) {
                 log.info("Queuing data set pipelines for "+subjectKey);

@@ -2,8 +2,6 @@ package org.janelia.it.jacs.compute.service.entity;
 
 import java.util.List;
 
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
@@ -20,20 +18,21 @@ import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class InitSingleMergeParametersService implements IService {
+public class InitSingleMergeParametersService extends AbstractEntityService {
 
-	public void execute(IProcessData processData) throws ServiceException {
+	public void execute() throws ServiceException {
 	    
-        AnatomicalArea sampleArea = (AnatomicalArea) processData.getItem("SAMPLE_AREA");
+        AnatomicalArea sampleArea = (AnatomicalArea) data.getItem("SAMPLE_AREA");
         if (sampleArea==null) {
         	throw new ServiceException("Input parameter SAMPLE_AREA may not be null");
         }
         
         List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
     	if (mergedLsmPairs.size() != 1) {
-    		throw new ServiceException("SAMPLE_AREA must contain exactly one merged pair");
+    		throw new ServiceException("SAMPLE_AREA must contain exactly one merged pair, but has "+mergedLsmPairs.size());
     	}
     	String stitchedFilename = mergedLsmPairs.get(0).getMergedFilepath();
     	sampleArea.setStitchedFilename(stitchedFilename);
+        data.putItem("SAMPLE_AREA", sampleArea);
     }
 }
