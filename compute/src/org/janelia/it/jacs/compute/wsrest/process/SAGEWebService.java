@@ -201,7 +201,7 @@ public class SAGEWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    @Path("owner/{owner}/dataSet/{dataSet}/lsmPipelines")
+    @Path("/owner/{owner}/dataSet/{dataSet}/lsmPipelines")
     public Response launchLsmPipelines(
             @PathParam("owner")String owner,
             @PathParam("dataSet")String dataSet,
