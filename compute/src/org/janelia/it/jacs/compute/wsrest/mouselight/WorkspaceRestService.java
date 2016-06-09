@@ -10,6 +10,7 @@ import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote;
+import org.janelia.it.jacs.compute.largevolume.RawFileFetcher;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
@@ -17,10 +18,17 @@ import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
+import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
 import org.janelia.it.jacs.model.user_data.tiled_microscope_protobuf.TmProtobufExchanger;
+import org.janelia.it.jacs.shared.geom.CoordinateAxis;
+import org.janelia.it.jacs.shared.lvv.BlockTiffOctreeLoadAdapter;
+import org.janelia.it.jacs.shared.lvv.CoordinateToRawTransformFileSource;
+import org.janelia.it.jacs.shared.lvv.TextureData2d;
+import org.janelia.it.jacs.shared.lvv.TileIndex;
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +36,9 @@ import sun.misc.BASE64Encoder;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -38,6 +49,14 @@ import java.util.*;
 
 @Path("/mouselight")
 public class WorkspaceRestService {
+
+    public static class ExpirableLoadAdapter {
+        public BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter;
+        public long setupTime;
+    }
+
+    private static Map<Long, ExpirableLoadAdapter> sampleLoadAdapterMap=new HashMap<>();
+    public static final long LOAD_ADAPTER_TIMEOUT_MS=600000;
 
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
 
@@ -415,9 +434,183 @@ public class WorkspaceRestService {
         return wi;
     }
 
+    private static synchronized BlockTiffOctreeLoadAdapter getStashedLoadAdapterForSample(Long sampleId) {
+        BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter=null;
+        ExpirableLoadAdapter expirableLoadAdapter=sampleLoadAdapterMap.get(sampleId);
+        if (expirableLoadAdapter==null) {
+            log.info("getting new BlockTiffOctreeAdapter for sampleId="+sampleId);
+            ExpirableLoadAdapter newAdapter=new ExpirableLoadAdapter();
+            try {
+                newAdapter.blockTiffOctreeLoadAdapter=getLoadAdapterForSample(sampleId);
+                newAdapter.setupTime=new Date().getTime();
+                sampleLoadAdapterMap.put(sampleId, newAdapter);
+                blockTiffOctreeLoadAdapter=newAdapter.blockTiffOctreeLoadAdapter;
+            } catch (Exception ex) {
+                log.error("Error in getBlocTiffOctreeLoadAdapterForSample() sampleId="+sampleId+":"+ex.getMessage());
+            }
+        } else {
+            long elapsedMs=new Date().getTime()-expirableLoadAdapter.setupTime;
+            if (elapsedMs>LOAD_ADAPTER_TIMEOUT_MS) {
+                log.info("Refreshing BlockTiffOctreeLoadAdapter for sampleId="+sampleId);
+                expirableLoadAdapter.blockTiffOctreeLoadAdapter=getLoadAdapterForSample(sampleId);
+                expirableLoadAdapter.setupTime=new Date().getTime();
+                blockTiffOctreeLoadAdapter=expirableLoadAdapter.blockTiffOctreeLoadAdapter;
+            } else {
+                blockTiffOctreeLoadAdapter=expirableLoadAdapter.blockTiffOctreeLoadAdapter;
+            }
+        }
+        return blockTiffOctreeLoadAdapter;
+    }
+
+    private static BlockTiffOctreeLoadAdapter getLoadAdapterForSample(Long sampleId) {
+        BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter=null;
+        try {
+            blockTiffOctreeLoadAdapter = new BlockTiffOctreeLoadAdapter();
+            Entity sampleEntity = EJBFactory.getLocalEntityBean().getEntityById(sampleId);
+            String sampleTopLevelDirPath = sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH);
+            blockTiffOctreeLoadAdapter.setTopFolderAndCoordinateSource(new File(sampleTopLevelDirPath), new CoordinateToRawTransformFileSource() {
+                @Override
+                public CoordinateToRawTransform getCoordToRawTransform(String filePath) throws Exception {
+                    RawFileFetcher fetcher = RawFileFetcher.getRawFileFetcher(filePath);
+                    return fetcher.getTransform();
+                }
+            });
+        } catch (Exception ex) {
+            log.error("Error in getLoadAdapterForSample() sampleId="+sampleId+" ex="+ex.getMessage());
+        }
+        return blockTiffOctreeLoadAdapter;
+    }
+
+    @GET
+    @Path("/sample2DTile")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public byte[] getSample2DTile(
+            @QueryParam("sampleId") String sampleIdString,
+            @QueryParam("x") String xString,
+            @QueryParam("y") String yString,
+            @QueryParam("z") String zString,
+            @QueryParam("zoom") String zoomString,
+            @QueryParam("maxZoom") String maxZoomString,
+            @QueryParam("index") String indexString,
+            @QueryParam("axis") String axisString) {
+        byte[] textureData2dBytes = null;
+        try {
+            //log.info("getSample2DTile() invoked, sampleId=" + sampleIdString + " x=" + xString + " y=" + yString + " z=" + zString + " zoom=" + zoomString + " maxZoom=" + maxZoomString + " index=" + indexString + " axis=" + axisString);
+            BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter=null;
+            ExpirableLoadAdapter expirableLoadAdapter=sampleLoadAdapterMap.get(new Long(sampleIdString));
+            if (expirableLoadAdapter!=null &&  ((new Date().getTime()-expirableLoadAdapter.setupTime)<LOAD_ADAPTER_TIMEOUT_MS)) {
+                // THIS IS NOT SYNCHRONIZED
+                blockTiffOctreeLoadAdapter=expirableLoadAdapter.blockTiffOctreeLoadAdapter;
+            } else {
+                // THIS IS SYNCHRONIZED
+                blockTiffOctreeLoadAdapter=getStashedLoadAdapterForSample(new Long(sampleIdString));
+            }
+            TileIndex.IndexStyle indexStyle = null;
+            if (indexString.equals("QUADTREE")) {
+                indexStyle = TileIndex.IndexStyle.QUADTREE;
+            } else {
+                indexStyle = TileIndex.IndexStyle.OCTREE;
+            }
+            CoordinateAxis axis = null;
+            if (axisString.equals("X")) {
+                axis = CoordinateAxis.X;
+            } else if (axisString.equals("Y")) {
+                axis = CoordinateAxis.Y;
+            } else if (axisString.equals("Z")) {
+                axis = CoordinateAxis.Z;
+            }
+            TileIndex tileIndex = new TileIndex(new Integer(xString), new Integer(yString), new Integer(zString), new Integer(zoomString), new Integer(maxZoomString), indexStyle, axis);
+            TextureData2d textureData2d = blockTiffOctreeLoadAdapter.loadToRam(tileIndex);
+            if (textureData2d!=null) {
+                textureData2dBytes = textureData2d.copyToByteArray();
+            }
+        } catch (Exception ex) {
+            log.error("getSample2DTile() error: "+ex.getMessage());
+            ex.printStackTrace();
+        }
+        return textureData2dBytes;
+    }
+
+    @GET
+    @Path("/fileBytes")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public byte[] getFileBytes(@QueryParam("path") String path) {
+        File file=new File(path);
+        log.info("getFileBytes() file="+file.getAbsolutePath());
+        byte[] fileBytes=null;
+        try {
+            fileBytes=Files.readAllBytes(file.toPath());
+        } catch (Exception ex) {
+            log.error("Error in getFileBytes() ="+ex.getMessage());
+            ex.printStackTrace();
+        }
+        return fileBytes;
+    }
+
+    @GET
+    @Path("/mouseLightTiffBytes")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public byte[] getMouseLightTiffBytes(@QueryParam("suggestedPath") String suggestedPath) {
+        File actualFile=getMouseLightTiffFileBySuggestion(suggestedPath);
+        if (actualFile!=null) {
+            log.info("getMouseLightTiffBytes() file=" + actualFile.getAbsolutePath());
+            byte[] fileBytes=null;
+            try {
+                fileBytes=Files.readAllBytes(actualFile.toPath());
+            } catch (Exception ex) {
+                log.error("Error in getMouseLightTiffBytes() =" + ex.getMessage());
+                ex.printStackTrace();
+            }
+            return fileBytes;
+        } else {
+            return null;
+        }
+    }
+
+    @GET
+    @Path("/mouseLightTiffStream")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @GZIP
+    public Response getMouseLightTiffStream(@QueryParam("suggestedPath") String suggestedPath) {
+        File actualFile=getMouseLightTiffFileBySuggestion(suggestedPath);
+        if (actualFile!=null) {
+            Response.ResponseBuilder responseBuilder=Response.ok(actualFile);
+            responseBuilder.header("Content-Disposition", "attachment;filename="+actualFile.getName());
+            return responseBuilder.build();
+        } else {
+            return null;
+        }
+    }
+
     //=================================================================================================//
     // UTILITIES
     //=================================================================================================//
+
+    private File getMouseLightTiffFileBySuggestion(String suggestedPath) {
+        File suggestedFile=new File(suggestedPath);
+        File actualFile=null;
+        if (suggestedFile.exists()) {
+            actualFile=suggestedFile;
+        } else {
+            String suggestedName=suggestedFile.getName();
+            int lastDot=suggestedName.lastIndexOf(".");
+            String suggestedSuffix=suggestedName;
+            if (lastDot>-1) {
+                suggestedSuffix = suggestedName.substring(lastDot);
+            }
+            File parentDir=suggestedFile.getParentFile();
+            File[] childFiles=parentDir.listFiles();
+            log.info("getMouseLightTiffFileBySuggestion() using suggestedSuffix="+suggestedSuffix);
+            for (File childFile : childFiles) {
+                if (childFile.getName().endsWith(suggestedSuffix) ||
+                        childFile.getName().endsWith(suggestedSuffix+".tif")) {
+                    actualFile=childFile;
+                    break;
+                }
+            }
+        }
+        return actualFile;
+    }
 
     private void findWorkspaceDataTypeAndNeuronCount(WorkspaceInfo wi, Entity e) {
         Set<EntityData> entityDataSet=e.getEntityData();

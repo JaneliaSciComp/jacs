@@ -19,7 +19,8 @@ public interface SampleDataManagerMBean {
     // File management
     public void runSyncSampleToScality(String sampleEntityId, String filetypes, Boolean deleteSourceFiles);  
     public void runSyncDataSetToScality(String user, String dataSet, String filetypes, Boolean deleteSourceFiles);
-    
+    public void runSyncAllLSMsToScality();
+
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void cancelAllIncompleteDataSetPipelineTasks();
     public void cancelAllIncompleteUserTasks(String user);

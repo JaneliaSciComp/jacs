@@ -1,24 +1,31 @@
 package org.janelia.it.jacs.compute.wsrest.process;
 
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
 
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponses;
+import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.status.CurrentTaskStatus;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
@@ -28,7 +35,7 @@ import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
-import org.apache.log4j.Logger;
+import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 
 /**
  * Defines RESTful web service entry points.
@@ -193,12 +200,20 @@ public class SAGEWebService extends ResourceConfig {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/lsmPipelines")
+    @Formatted
+    @Path("/owner/{owner}/dataSet/{dataSet}/lsmPipelines")
     public Response launchLsmPipelines(
-            @QueryParam("owner") String owner,
-            LSMProcessingTask lsmProcessingParams) {
+            @PathParam("owner")String owner,
+            @PathParam("dataSet")String dataSet,
+            LSMProcessingTask lsmProcessingParams,
+            @Context UriInfo uriInfo) {
 
         final String context = "launchLsmPipelines: ";
+        logger.info(context +"entry, owner=" + owner +
+                ", dataset=" + dataSet +
+                ", lsms=" + lsmProcessingParams.getLsmNames().toString());
+
+        Response response;
         LSMProcessingTask lsmProcessingTask;
         try {
             final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
@@ -212,24 +227,29 @@ public class SAGEWebService extends ResourceConfig {
                 }
             }
             lsmProcessingParams.setOwner(owner);
+            lsmProcessingParams.setDataSetName(dataSet);
             lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingParams);
             remoteComputeBean.dispatchJob(lsmProcessingTask.getJobName(), lsmProcessingTask.getObjectId());
+
+            JsonTask result = new JsonTask(lsmProcessingTask);
+            result.setTaskStatusUrl(getNormalizedBaseUrlString(uriInfo) + "task/" + lsmProcessingTask.getObjectId() + "/currentStatus");
+            result.setTaskUrl(getNormalizedBaseUrlString(uriInfo) + "tasks/" + lsmProcessingTask.getObjectId());
+
+            response = Response
+                    .status(Response.Status.CREATED)
+                    .entity(result)
+                    .build();
+
         } catch (IllegalArgumentException e) {
-            logger.error("Illegal argument", e);
-            Response response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
-            return response;
+            response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
         } catch (RemoteException | ComputeException e) {
-            logger.error("LSM Processing exception", e);
-            Response response = getErrorResponse(context,
+            response = getErrorResponse(context,
                     Response.Status.INTERNAL_SERVER_ERROR,
                     "failed to run lsm processing for " + owner + ":" + lsmProcessingParams,
                     e);
-            return response;
         }
-        return Response
-                .status(Response.Status.CREATED)
-                .entity(new JsonTask(lsmProcessingTask))
-                .build();
+
+        return response;
     }
 
     /**

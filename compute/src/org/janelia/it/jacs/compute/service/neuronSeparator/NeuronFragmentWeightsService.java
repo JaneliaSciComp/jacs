@@ -126,8 +126,8 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         StringBuilder batchArgs;
         batchArgs = new StringBuilder("{");
         for (Document neuronSep : jsonResult) {
-            if (neuronSep.get("hasWeights")==null) {
-                batchArgs.append(neuronSep.get("separationId") + ":\"" + neuronSep.get("filepath")+"\"");
+            if (!neuronSep.getBoolean("hasWeights")) {
+                batchArgs.append("\"" + neuronSep.get("separationId") + "\":\"" + neuronSep.get("filepath")+"\"");
                 if (count==BATCH_SIZE) {
                     count = 1;
                     batchArgs.append("}");
@@ -143,11 +143,6 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         String lastVal = batchArgs.toString();
         lastVal = lastVal.substring(0,lastVal.length()-1) + "}";
         neuronSeparationsToProcess.add(lastVal);
-
-
-        // TEST CODE, remove for full processing
-        neuronSeparationsToProcess = new ArrayList();
-        neuronSeparationsToProcess.add("{\"1757349385634578530\":\"/nrs/jacs/jacsData/filestore/system/Separation/230/754/1757348710796230754/separate\"}");
 
         logger.info("findUnprocessedNeuronSeparations() putting vars in processData, separationListSize=" + neuronSeparationsToProcess.size());
         processData.putItem("NEURON_SEPARATION_BATCH_LIST", neuronSeparationsToProcess);

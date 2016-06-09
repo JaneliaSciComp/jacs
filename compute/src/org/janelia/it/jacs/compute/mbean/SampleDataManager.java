@@ -78,7 +78,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
         return subjectKeys;
     }
-    
+
     // -----------------------------------------------------------------------------------------------------
     // Maintenance Pipelines    
     // -----------------------------------------------------------------------------------------------------
@@ -214,6 +214,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
         catch (Exception ex) {
             log.error("Error running pipeline", ex);
         }
+    }
+
+    @Override
+    public void runSyncAllLSMsToScality() {
+
     }
 
     // todo Proved to be too slow.  Used the commented out main method below to generate insert statements adding canceled event (insanely faster)
@@ -662,7 +667,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
                 String processName = "SageArtifactExport";
                 String displayName = "Sage Artifact Export";
                 HashSet<TaskParameter> taskParameters = new HashSet<>();
-                taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null)); 
+                taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null));
                 saveAndRunTask(release.getOwnerKey(), processName, displayName, taskParameters);
             }
         } 
