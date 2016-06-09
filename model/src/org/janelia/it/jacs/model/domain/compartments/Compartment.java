@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
-import org.janelia.it.jacs.model.domain.support.MongoMapped;
 
 public class Compartment implements HasIdentifier, HasFiles, Serializable {
 

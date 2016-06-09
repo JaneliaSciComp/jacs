@@ -19,7 +19,6 @@ import com.mongodb.WriteConcern;
 import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
-import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -159,57 +158,57 @@ public class MongoDbImport extends AnnotationDAO {
 
     public void loadAllEntities() throws DaoException {
 
-        log.info("Building disk-based SAGE property map");
-        this.largeOp = new MongoLargeOperations(dao);
-
-        log.info("Building LSM property map");
-        largeOp.buildSageImagePropMap();
-        buildLsmAttributeMap();
-
-        log.info("Loading data into MongoDB");
-        getSession().setFlushMode(FlushMode.MANUAL);
-
-        long startAll = System.currentTimeMillis();
-
-        log.info("Adding subjects");
-        loadSubjects();
-
-        log.info("Adding ontologies");
-        loadOntologies(); // must come before buildAnnotationMap to preload the necessary maps
-
-        log.info("Building disk-based Annotation map");
-        buildAnnotationMap();
-
-        log.info("Adding data sets");
-        loadDataSets();
-
-        log.info("Adding fly lines");
-        loadFlyLines();
-
-        log.info("Adding samples");
-        // TODO: handle deleted (i.e. "hidden") neurons
-        // TODO: handle pattern mask results in samples (knappj)
-        loadSamples();
-
-        log.info("Adding screen samples");
-        loadScreenData();
-
+//        log.info("Building disk-based SAGE property map");
+//        this.largeOp = new MongoLargeOperations(dao);
+//
+//        log.info("Building LSM property map");
+//        largeOp.buildSageImagePropMap();
+//        buildLsmAttributeMap();
+//
+//        log.info("Loading data into MongoDB");
+//        getSession().setFlushMode(FlushMode.MANUAL);
+//
+//        long startAll = System.currentTimeMillis();
+//
+//        log.info("Adding subjects");
+//        loadSubjects();
+//
+//        log.info("Adding ontologies");
+//        loadOntologies(); // must come before buildAnnotationMap to preload the necessary maps
+//
+//        log.info("Building disk-based Annotation map");
+//        buildAnnotationMap();
+//
+//        log.info("Adding data sets");
+//        loadDataSets();
+//
+//        log.info("Adding fly lines");
+//        loadFlyLines();
+//
+//        log.info("Adding samples");
+//        // TODO: handle deleted (i.e. "hidden") neurons
+//        // TODO: handle pattern mask results in samples (knappj)
+//        loadSamples();
+//
+//        log.info("Adding screen samples");
+//        loadScreenData();
+//
         log.info("Adding compartment sets");
         loadCompartmentSets();
-
-        log.info("Adding alignment board contexts");
-        loadAlignmentBoardContexts();
-
-        log.info("Adding alignment boards");
-        loadAlignmentBoards();
-
-        log.info("Adding folders");
-        loadWorkspaces();
-
-        log.info("Verify annotations");
-        verifyAnnotations();
-        
-        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
+//
+//        log.info("Adding alignment board contexts");
+//        loadAlignmentBoardContexts();
+//
+//        log.info("Adding alignment boards");
+//        loadAlignmentBoards();
+//
+//        log.info("Adding folders");
+//        loadWorkspaces();
+//
+//        log.info("Verify annotations");
+//        verifyAnnotations();
+//
+//        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
     }
 
     Map<String,LsmSageAttribute> lsmSageAttrs = new HashMap<>();
@@ -2220,8 +2219,16 @@ public class MongoDbImport extends AnnotationDAO {
             addImage(files,FileType.MaskFile,maskFile);
             addImage(files,FileType.ChanFile,chanFile);
             compartment.setFiles(files);
-            
-    		compartments.add(compartment);
+
+            String maskFilename = new File(maskFile).getName();
+            // Expecting maskFilename to be a string like compartment_59.mask
+            int underPos = maskFilename.indexOf("_");
+            if (underPos > -1) {
+                int dotPos = maskFilename.indexOf('.', underPos);
+                compartment.setNumber(Integer.parseInt(maskFilename.substring(underPos + 1, dotPos)));
+            }
+
+            compartments.add(compartment);
     	}
     	
     	compartmentSet.setFilepath(rootDir);
@@ -2233,8 +2240,19 @@ public class MongoDbImport extends AnnotationDAO {
     		}
             compartment.setFiles(relativeFiles);
     	}
-    	
-    	if (!compartments.isEmpty()) compartmentSet.setCompartments(compartments);
+
+    	if (!compartments.isEmpty()) {
+            Collections.sort(compartments, new Comparator<Compartment>() {
+                @Override
+                public int compare(Compartment o1, Compartment o2) {
+                    return o1.getNumber().compareTo(o2.getNumber());
+                }
+            });
+            for(Compartment comparment : compartments) {
+                log.info("    Loading "+comparment.getName()+" ("+comparment.getNumber()+")");
+            }
+            compartmentSet.setCompartments(compartments);
+        }
     	
         return compartmentSet;
     }
@@ -2330,6 +2348,7 @@ public class MongoDbImport extends AnnotationDAO {
         alignmentBoard.setEncodedUserSettings(alignmentBoardEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_ALIGNMENT_BOARD_USER_SETTINGS));
     	List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardEntity);
     	if (!children.isEmpty()) alignmentBoard.setChildren(children);
+        log.info("  Loading "+alignmentBoardEntity.getName()+" ("+alignmentBoardEntity.getId()+")");
         return alignmentBoard;
     }
     
@@ -2337,38 +2356,56 @@ public class MongoDbImport extends AnnotationDAO {
 
     	List<AlignmentBoardItem> items = new ArrayList<>();
     	
-    	for(Entity alignmentBoardItemEntity : EntityUtils.getChildrenForAttribute(alignmentBoardItem, EntityConstants.ATTRIBUTE_ITEM)) {
-    		Entity targetEntity = alignmentBoardItemEntity.getChildByAttributeName(EntityConstants.ATTRIBUTE_ENTITY);
-    		if (targetEntity==null) {
-    			log.info("    Target no longer exists for alignment board item: "+alignmentBoardItemEntity.getId());
+    	for(Entity alignmentBoardChildItem : EntityUtils.getChildrenForAttribute(alignmentBoardItem, EntityConstants.ATTRIBUTE_ITEM)) {
+
+    		Entity childTargetEntity = alignmentBoardChildItem.getChildByAttributeName(EntityConstants.ATTRIBUTE_ENTITY);
+    		if (childTargetEntity==null) {
+    			log.warn("    Target no longer exists for alignment board item: "+ alignmentBoardChildItem.getId());
     		}
     		else {
         		AlignmentBoardItem item = new AlignmentBoardItem();
-                item.setName(alignmentBoardItemEntity.getName());
-        		item.setInclusionStatus(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_INCLUSION_STATUS));
-        		item.setVisible("true".equalsIgnoreCase(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY)));
-        		item.setColor(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
-        		item.setRenderMethod(alignmentBoardItemEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_RENDER_METHOD));
+                item.setName(alignmentBoardChildItem.getName());
+        		item.setInclusionStatus(alignmentBoardChildItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_INCLUSION_STATUS));
+        		item.setVisible("true".equalsIgnoreCase(alignmentBoardChildItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_VISIBILITY)));
+        		item.setColor(alignmentBoardChildItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_COLOR));
+        		item.setRenderMethod(alignmentBoardChildItem.getValueByAttributeName(EntityConstants.ATTRIBUTE_RENDER_METHOD));
 
-                if (!targetEntity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
-                    if (targetEntity.getEntityTypeName().equals(EntityConstants.TYPE_COMPARTMENT)) {
-
-                        Entity compartmentSetEntity = getAncestorWithType(targetEntity.getOwnerKey(), targetEntity.getId(), EntityConstants.TYPE_COMPARTMENT_SET);
-                        if (compartmentSetEntity!=null) {
-                            item.setTarget(new AlignmentBoardReference(getReference(compartmentSetEntity), targetEntity.getId()));
+                if (childTargetEntity.getEntityTypeName().equals(EntityConstants.TYPE_IMAGE_3D)) {
+                    Entity parentTargetEntity = alignmentBoardItem.getChildByAttributeName(EntityConstants.ATTRIBUTE_ENTITY);
+                    if (parentTargetEntity.getEntityTypeName().equals(EntityConstants.TYPE_SAMPLE)) {
+                        Entity ns = getAncestorWithType(childTargetEntity.getOwnerKey(), childTargetEntity.getId(), EntityConstants.TYPE_NEURON_SEPARATOR_PIPELINE_RESULT);
+                        if (ns!=null) {
+                            item.setTarget(new AlignmentBoardReference(getReference(parentTargetEntity), ns.getId()));
                         }
                         else {
-                            log.warn("    Unable to find compartment set for compartment: "+targetEntity.getId());
+                            log.warn("    Reference stack has no ancestor neuron separation: "+parentTargetEntity.getId());
                         }
                     }
                     else {
-                        item.setTarget(new AlignmentBoardReference(getReference(targetEntity), null));
+                        log.warn("    Parent of stack item is not a sample: "+parentTargetEntity.getId());
                     }
                 }
+                else if (childTargetEntity.getEntityTypeName().equals(EntityConstants.TYPE_COMPARTMENT)) {
+                    Entity compartmentSetEntity = getAncestorWithType(childTargetEntity.getOwnerKey(), childTargetEntity.getId(), EntityConstants.TYPE_COMPARTMENT_SET);
+                    if (compartmentSetEntity!=null) {
+                        item.setTarget(new AlignmentBoardReference(getReference(compartmentSetEntity), childTargetEntity.getId()));
+                    }
+                    else {
+                        log.warn("    Unable to find compartment set for compartment: "+childTargetEntity.getId());
+                    }
+                }
+                else {
+                    item.setTarget(new AlignmentBoardReference(getReference(childTargetEntity), null));
+                }
 
-                List<AlignmentBoardItem> children = getAlignmentBoardChildren(alignmentBoardItemEntity);
-                if (!children.isEmpty()) item.setChildren(children);
-                items.add(item);
+                if (item.getTarget()!=null) {
+                    item.setChildren(getAlignmentBoardChildren(alignmentBoardChildItem));
+                    items.add(item);
+                    //log.trace("    Loading "+alignmentBoardChildItem.getName()+" with "+item.getChildren().size()+" children");
+                }
+                else {
+                    log.warn("    No target found for item: "+ alignmentBoardChildItem.getId());
+                }
     		}
     	}
     	
