@@ -2,11 +2,11 @@ package org.janelia.it.jacs.compute.wsrest.mouselight;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.janelia.it.jacs.compute.access.AnnotationDAO;
-import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
+
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote;
@@ -48,7 +48,12 @@ import java.util.*;
  */
 
 @Path("/mouselight")
-public class WorkspaceRestService {
+public class WorkspaceRestService extends ResourceConfig {
+
+    public WorkspaceRestService() {
+        register(JacksonFeature.class);
+    }
+
 
     public static class ExpirableLoadAdapter {
         public BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter;
