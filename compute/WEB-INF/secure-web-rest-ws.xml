@@ -20,6 +20,7 @@
                 org.janelia.it.jacs.compute.wsrest.data,
                 org.janelia.it.jacs.compute.wsrest.process,
                 org.janelia.it.jacs.compute.wsrest.info,
+                org.janelia.it.jacs.compute.wsrest.mouselight,
                 com.fasterxml.jackson.jaxrs.json</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
