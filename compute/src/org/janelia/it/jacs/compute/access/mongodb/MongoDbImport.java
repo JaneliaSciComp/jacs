@@ -89,7 +89,8 @@ public class MongoDbImport extends AnnotationDAO {
     private static final String SCREEN_ALIGNMENT_RESULT_NAME = "JBA Alignment";
     private static final String SCREEN_ALIGNMENT_SPACE = "Unified 20x Alignment Space";
     private static final String SCREEN_ANATOMICAL_AREA = "Brain";
-    private static final String SCREEN_DEFAULT_DATA_SET = "flylight_gen1_gal4";
+    public static final String SCREEN_DEFAULT_DATA_SET_GAL4 = "flylight_gen1_gal4";
+    public static final String SCREEN_DEFAULT_DATA_SET_LEXA = "flylight_gen1_lexa";
     private static final NumberFormat ALIGNMENT_SCORE_FORMATTER = new DecimalFormat("#0.00000");
 
     private static final String TEMP_REF_CLASS = "TEMP_REF";
@@ -1201,7 +1202,9 @@ public class MongoDbImport extends AnnotationDAO {
             log.warn("    Cannot find LSM#"+lsm.getId()+" in SAGE with name: "+name);
         }
         else {
-            
+
+            //log.info("    Loading LSM#"+lsm.getId()+" from SAGE with name: "+name);
+
             // Use the current path from SAGE
             String path = (String)sageProps.get("image_query_path");
             if (path!=null) {
@@ -1235,7 +1238,7 @@ public class MongoDbImport extends AnnotationDAO {
                         }
                         else if (fieldType.equals(Long.class)) {
                             if (value instanceof Long) {
-                                trueValue = (Long)value;
+                                trueValue = value;
                             }
                             else {
                                 if (!StringUtils.isEmpty(strValue)) {
@@ -1245,7 +1248,7 @@ public class MongoDbImport extends AnnotationDAO {
                         }
                         else if (fieldType.equals(Integer.class)) {
                             if (value instanceof Integer) {
-                                trueValue = (Integer)value;
+                                trueValue = value;
                             }
                             else {
                                 if (!StringUtils.isEmpty(strValue)) {
@@ -1575,9 +1578,8 @@ public class MongoDbImport extends AnnotationDAO {
         screenSample.setLine(flyLineEntity.getName());
         screenSample.setStatus(EntityConstants.VALUE_COMPLETE);
         screenSample.setCompressionType(EntityConstants.VALUE_COMPRESSION_LOSSLESS);
-        
-        
-        List<Reference> lsmReferences = new ArrayList<Reference>();
+
+        List<Reference> lsmReferences = new ArrayList<>();
     
         Entity lsmEntity = new Entity();
         lsmEntity.setId(dao.getNewId());
@@ -1596,11 +1598,24 @@ public class MongoDbImport extends AnnotationDAO {
         
         // Put the LSM into Mongo
         LSMImage lsmImage = getLSMImage(sampleEntity, lsmEntity);
-        
+
+        // Infer data set from line name
+        String inferredDataSet = null;
+        Pattern p = Pattern.compile("GMR_([^_]+)_([^_]+)_.*");
+        Matcher m = p.matcher(screenSampleEntity.getName());
+        if (m.matches()) {
+            if (m.group(2).startsWith("L")) {
+                inferredDataSet = SCREEN_DEFAULT_DATA_SET_LEXA;
+            }
+            else {
+                inferredDataSet = SCREEN_DEFAULT_DATA_SET_GAL4;
+            }
+        }
+
         if (lsmImage!=null) {
             if (lsmImage.getDataSet()==null) {
-                log.info("    Setting default data set for screen LSM "+lsmImage.getId());
-                lsmImage.setDataSet(SCREEN_DEFAULT_DATA_SET);
+                log.info("    Setting inferred data set for screen LSM "+lsmImage.getId());
+                lsmImage.setDataSet(inferredDataSet);
             }
             
             imageCollection.insert(lsmImage);
@@ -1616,8 +1631,8 @@ public class MongoDbImport extends AnnotationDAO {
             screenSample.setSageSynced(true);
         }
         else {
-            log.info("    Setting default data set for screen sample "+screenSample.getId());
-            screenSample.setDataSet(SCREEN_DEFAULT_DATA_SET);
+            log.info("    Setting inferred data set for screen sample "+screenSample.getId());
+            screenSample.setDataSet(inferredDataSet);
             screenSample.setSageSynced(false);
         }
         
@@ -1627,7 +1642,7 @@ public class MongoDbImport extends AnnotationDAO {
         tile.setAnatomicalArea(SCREEN_ANATOMICAL_AREA);
         tile.setLsmReferences(lsmReferences);
         
-        List<SampleTile> tiles = new ArrayList<SampleTile>();
+        List<SampleTile> tiles = new ArrayList<>();
         tiles.add(tile);
         
         SamplePipelineRun run = new SamplePipelineRun();
@@ -1758,6 +1773,14 @@ public class MongoDbImport extends AnnotationDAO {
         for(Entity maskEntity : EntityUtils.getChildrenOfType(patternAnnotationEntity, EntityConstants.TYPE_ALIGNED_BRAIN_STACK)) {
 
             String paFilepath = getFilepath(patternAnnotationEntity);
+            if (paFilepath!=null) {
+                File paFile = new File(paFilepath);
+                if (paFile.getName().equals("normalized")) {
+                    // MIPs are stored in a sister directory, so we need to go up to the parent to get the right "least common denominator"
+                    paFile = paFile.getParentFile();
+                }
+                paFilepath = paFile.getAbsolutePath();
+            }
 
             String default2dImageFilepath = maskEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH);
             if (default2dImageFilepath==null) {
