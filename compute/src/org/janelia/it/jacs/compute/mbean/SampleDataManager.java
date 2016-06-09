@@ -216,6 +216,11 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
+    @Override
+    public void runSyncAllLSMsToScality() {
+
+    }
+
     // todo Proved to be too slow.  Used the commented out main method below to generate insert statements adding canceled event (insanely faster)
     public void cancelAllIncompleteUserTasks(String user){
         try {
