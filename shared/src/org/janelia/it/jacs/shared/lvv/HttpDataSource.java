@@ -85,7 +85,7 @@ public class HttpDataSource {
             indexStyleString="OCTREE";
         }
 
-        String url="http://"+interactiveServer+":8180/rest-v1/mouselight/sample2DTile?"+
+        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/sample2DTile?"+
                 "sampleId="+mouseLightCurrentSampleId+
                 "&x="+tileIndex.getX()+
                 "&y="+tileIndex.getY()+
@@ -126,7 +126,7 @@ public class HttpDataSource {
     }
 
     public static byte[] fileToBytesByPath(String filepath) throws Exception {
-        String url="http://"+interactiveServer+":8180/rest-v1/mouselight/fileBytes?path="+filepath;
+        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/fileBytes?path="+filepath;
         GetMethod getMethod=new GetMethod(url);
         byte[] bytes=null;
         try {
@@ -144,7 +144,7 @@ public class HttpDataSource {
     }
 
     public static byte[] getMouseLightTiffBytes(String filepath) throws Exception {
-        String url="http://"+interactiveServer+":8180/rest-v1/mouselight/mouseLightTiffBytes?suggestedPath="+filepath;
+        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/mouseLightTiffBytes?suggestedPath="+filepath;
         GetMethod getMethod=new GetMethod(url);
         byte[] bytes=null;
         try {
@@ -162,7 +162,7 @@ public class HttpDataSource {
     }
 
     public static GetMethod getMouseLightTiffStream(String filepath) throws Exception {
-        String url="http://"+interactiveServer+":8180/rest-v1/mouselight/mouseLightTiffStream?suggestedPath="+filepath;
+        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/mouseLightTiffStream?suggestedPath="+filepath;
         GetMethod getMethod=new GetMethod(url);
         try {
             int statusCode = httpClient.executeMethod(getMethod);

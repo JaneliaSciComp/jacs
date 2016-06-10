@@ -215,6 +215,24 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </war>
+        <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
+            <classes dir="${build.classes.dir}">
+                <include name="org/**/wsrest/RestfulWebService.class"/>
+                <include name="org/**/wsrest/computeresources/**/*.class"/>
+                <include name="org/**/wsrest/mouselight/**/*.class"/>
+                <include name="org/**/wsrest/dataresources/**/*.class"/>
+                <include name="org/**/annotation/api/*.class"/>
+                <include name="org/**/annotation/to/*.class"/>
+            </classes>
+            <lib dir="${basedir}/lib/resteasy-2.3.4">
+                <include name="**/*.jar"/>
+            </lib>
+            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+            </manifest>
+        </war>
         <war warfile="${basedir}/build/jars/${secure-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/**/*.class"/>

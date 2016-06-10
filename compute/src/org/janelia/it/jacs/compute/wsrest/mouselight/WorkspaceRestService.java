@@ -2,11 +2,11 @@ package org.janelia.it.jacs.compute.wsrest.mouselight;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.hibernate.Query;
 import org.hibernate.Session;
-
+import org.janelia.it.jacs.compute.access.AnnotationDAO;
+import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
+import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote;
@@ -30,8 +30,7 @@ import org.janelia.it.jacs.shared.lvv.TextureData2d;
 import org.janelia.it.jacs.shared.lvv.TileIndex;
 import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import sun.misc.BASE64Encoder;
 
 import javax.ws.rs.*;
@@ -48,12 +47,7 @@ import java.util.*;
  */
 
 @Path("/mouselight")
-public class WorkspaceRestService extends ResourceConfig {
-
-    public WorkspaceRestService() {
-        register(JacksonFeature.class);
-    }
-
+public class WorkspaceRestService {
 
     public static class ExpirableLoadAdapter {
         public BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter;
@@ -63,7 +57,7 @@ public class WorkspaceRestService extends ResourceConfig {
     private static Map<Long, ExpirableLoadAdapter> sampleLoadAdapterMap=new HashMap<>();
     public static final long LOAD_ADAPTER_TIMEOUT_MS=600000;
 
-    private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
+    private static final Logger log = Logger.getLogger(WorkspaceRestService.class);
 
     private static long quasiTimebasedGuid=0L;
 
@@ -605,7 +599,7 @@ public class WorkspaceRestService extends ResourceConfig {
             }
             File parentDir=suggestedFile.getParentFile();
             File[] childFiles=parentDir.listFiles();
-            log.info("getMouseLightTiffFileBySuggestion() using suggestedSuffix="+suggestedSuffix);
+            //log.info("getMouseLightTiffFileBySuggestion() using suggestedSuffix="+suggestedSuffix);
             for (File childFile : childFiles) {
                 if (childFile.getName().endsWith(suggestedSuffix) ||
                         childFile.getName().endsWith(suggestedSuffix+".tif")) {
