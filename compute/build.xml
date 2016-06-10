@@ -242,9 +242,6 @@
             <lib dir="${common.dir}/Directory">
                 <include name="**/*.jar"/>
             </lib>
-            <lib dir="${common.dir}/Hibernate-3.2">
-                <include name="antlr-2.7.6.jar"/>
-            </lib>
             <lib dir="${common.dir}/MongoDB">
                 <include name="**/*.jar"/>
             </lib>
