@@ -1,13 +1,13 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 
@@ -44,16 +44,17 @@ public class Vaa3DNeuronMergeService extends SubmitDrmaaJobService {
 
     @Override
     protected void createJobScriptAndConfigurationFiles(FileWriter writer) throws Exception {
-        EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
         ArrayList<Integer> tmpFragmentNumberList = new ArrayList<Integer>();
         String commaSeparatedFragmentIdList=task.getParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList);
+        DomainDAL dal = DomainDAL.getInstance();
         for (String tmpFragmentOid : Task.listOfStringsFromCsvString(commaSeparatedFragmentIdList)) {
+            NeuronFragment fragment = (NeuronFragment)dal.getDomainObject(null, Reference.createFor(NeuronFragment.class.getSimpleName(), Long.parseLong(tmpFragmentOid)));
             // TAS 4/17/2014 At some point the neuron-fragment-editor vaa3d plug-in was off by one.  Adding 1 to the values going into the fragment list
-            tmpFragmentNumberList.add(Integer.valueOf(entityBean.getEntityById(tmpFragmentOid).getValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER))+1);
+            tmpFragmentNumberList.add(fragment.getNumber()+1);
         }
         String commaSeparatedFragmentList = Task.csvStringFromCollection(tmpFragmentNumberList);
-        Entity separationEntity = entityBean.getEntityById(task.getParameter(NeuronMergeTask.PARAM_separationEntityId));
-        String tmpPath = separationEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).getValue();
+        NeuronSeparation separation = dal.getNeuronSeparation(null, Long.parseLong(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
+        String tmpPath = separation.getFilepath();
         String originalImageFilePath = tmpPath+File.separator+"ConsolidatedSignal.v3dpbd";
         String consolidatedSignalLabelIndexFilePath=tmpPath+File.separator+"ConsolidatedLabel.v3dpbd";
 

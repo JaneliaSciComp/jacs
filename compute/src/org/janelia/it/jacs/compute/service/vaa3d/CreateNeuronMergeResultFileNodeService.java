@@ -2,14 +2,14 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.exceptions.CreateFileNodeException;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 import org.janelia.it.jacs.model.user_data.Node;
@@ -43,9 +43,10 @@ public class CreateNeuronMergeResultFileNodeService implements IService {
             visibility = User.SYSTEM_USER_LOGIN.equalsIgnoreCase(task.getOwner()) ? Node.VISIBILITY_PUBLIC : Node.VISIBILITY_PRIVATE;
 
             // Find the parent location
-            Entity separationEntity = EJBFactory.getLocalEntityBean().getEntityById(task.getParameter(NeuronMergeTask.PARAM_separationEntityId));
-            if (null!=separationEntity && null!=separationEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH)) {
-                String tmpPath = separationEntity.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH).getValue();
+            Long separationId = Long.parseLong(task.getParameter(NeuronMergeTask.PARAM_separationEntityId));
+            NeuronSeparation separation = DomainDAL.getInstance().getNeuronSeparation(null, separationId);
+            if (null!=separation && null!=separation.getFilepath()) {
+                String tmpPath = separation.getFilepath();
                 separationDir = new File(tmpPath).getParentFile();
             }
             createResultFileNode();

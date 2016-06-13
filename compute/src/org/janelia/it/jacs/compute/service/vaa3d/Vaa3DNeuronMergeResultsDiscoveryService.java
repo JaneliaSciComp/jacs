@@ -2,24 +2,26 @@ package org.janelia.it.jacs.compute.service.vaa3d;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
-import org.janelia.it.jacs.compute.service.entity.EntityHelper;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.CuratedNeuron;
+import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
-import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.neuron.NeuronMergeResultNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * File discovery service for neuron merge results.
@@ -28,11 +30,9 @@ import org.janelia.it.jacs.shared.utils.EntityUtils;
  */
 public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
 
-	protected Entity sampleEntity;
-	protected EntityHelper entityHelper;
+	protected Sample sample;
+	protected DomainDAL domainDAL;
     protected Logger logger;
-    protected EntityBeanLocal entityBean;
-    protected ComputeBeanLocal computeBean;
     protected String ownerKey;
     protected Date createDate;
     protected IProcessData processData;
@@ -41,90 +41,63 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
     public void execute(IProcessData processData) throws ServiceException {
         try {
             logger = ProcessDataHelper.getLoggerForTask(processData, Vaa3DNeuronMergeResultsDiscoveryService.class);
-            entityBean = EJBFactory.getLocalEntityBean();
-            computeBean = EJBFactory.getLocalComputeBean();
+            domainDAL = DomainDAL.getInstance();
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
-            Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
+            Subject subject = domainDAL.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            entityHelper = new EntityHelper(entityBean, computeBean, ownerKey, logger);
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
-            Entity separationResultEntity = entityBean.getEntityTree(Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
+            NeuronSeparation separation = domainDAL.getNeuronSeparation(null, Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
             // if the collection doesn't exist add it
-            Entity tmpCuratedNeuronCollection = verifyOrCreateCuratedNeuronCollection(separationResultEntity);
+            CuratedNeuron curatedNeuron = createCuratedNeuronCollection(separation);
 
-            // Put the Curated Neuron in the collection
-            Entity tmpCuratedNeuron =  createCuratedNeuronEntity(tmpCuratedNeuronCollection);
+            // set neuron fragments and weights
+            List<Reference> fragmentList = new ArrayList<>();
+            String commaSeparatedFragmentIdList=task.getParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList);
+            int voxelWeight = 0;
+            for (String tmpFragmentOid : Task.listOfStringsFromCsvString(commaSeparatedFragmentIdList)) {
+                NeuronFragment fragment = (NeuronFragment) domainDAL.getDomainObject(null, Reference.createFor(NeuronFragment.class.getSimpleName(), Long.parseLong(tmpFragmentOid)));
+                fragmentList.add(Reference.createFor(fragment));
+                if (fragment.getVoxelWeight()!=null) {
+                    voxelWeight += fragment.getVoxelWeight();
+                }
+            }
+            curatedNeuron.setComponentFragments(fragmentList);
+            curatedNeuron.setVoxelWeight(voxelWeight);
 
-            addToParent(tmpCuratedNeuronCollection, tmpCuratedNeuron, tmpCuratedNeuronCollection.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-            
+            // set image locations
             NeuronMergeResultNode tmpNode = (NeuronMergeResultNode)ProcessDataHelper.getResultFileNode(processData);
-            Entity tmp2DMIP = entityHelper.create2dImage(tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_MIP));
-            Entity tmp3DStack = entityHelper.create3dImage(tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_STACK));
-            entityHelper.setDefault2dImage(tmp3DStack, tmp2DMIP);
-            entityHelper.setDefault3dImage(tmpCuratedNeuron, tmp3DStack);
+            curatedNeuron.setFilepath(tmpNode.getDirectoryPath());
+            Map<FileType, String> images = new HashMap<>();
+            images.put(FileType.SignalMip, tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_MIP));
+            images.put(FileType.LosslessStack, tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_STACK));
+
+            domainDAL.save(ownerKey, curatedNeuron);
         }
         catch (Exception e) {
             throw new ServiceException("Unable to process the entities from the neuron merge step.",e);
         }
     }
 
-    private Entity verifyOrCreateCuratedNeuronCollection(Entity separationResultEntity) throws Exception {
-        if (null==separationResultEntity) {
+    protected CuratedNeuron createCuratedNeuronCollection(NeuronSeparation separation) throws Exception {
+        if (null==separation) {
             throw new ServiceException("Cannot add Curated Neurons to a null Separation Result");
         }
-        List<Entity> tmpCuratedNeuronCollectionItems = EntityUtils.getChildrenOfType(separationResultEntity, EntityConstants.TYPE_CURATED_NEURON_COLLECTION);
-        if (null!=tmpCuratedNeuronCollectionItems && 1==tmpCuratedNeuronCollectionItems.size()) {
-            return tmpCuratedNeuronCollectionItems.get(0);
+        CuratedNeuron curatedNeuron = new CuratedNeuron();
+        Sample sample = separation.getParentRun().getParent().getParent();
+        curatedNeuron.setSample(Reference.createFor(Sample.class.getSimpleName(), sample.getId()));
+
+        // find the previous curated neurons to get number
+        List<NeuronFragment> existingFragments = domainDAL.getNeuronFragmentsBySeparationId(null, separation.getId());
+        int numCurated = 0;
+        for (NeuronFragment fragment: existingFragments) {
+            if (fragment instanceof CuratedNeuron) {
+                numCurated++;
+            }
         }
-        // if the collection doesn't exist create it
-        Entity tmpCuratedNeuronCollection = createCuratedNeuronCollection(separationResultEntity);
-        addToParent(separationResultEntity, tmpCuratedNeuronCollection, separationResultEntity.getMaxOrderIndex()+1, EntityConstants.ATTRIBUTE_ENTITY);
-        return tmpCuratedNeuronCollection;
+        curatedNeuron.setName("Curated Neuron " + numCurated);
+        curatedNeuron = domainDAL.save(sample.getOwnerKey(), curatedNeuron);
+        logger.info("Saved curated neuron as " + curatedNeuron.getId());
+        return curatedNeuron;
     }
-
-    protected Integer getNextAvailableIndex(Entity parentEntity) {
-        List<Entity> children = EntityUtils.getChildrenOfType(parentEntity, EntityConstants.TYPE_CURATED_NEURON);
-        if (null==children) {return 1;}
-        return children.size()+1;
-    }
-    
-    protected Entity createCuratedNeuronEntity(Entity tmpCuratedNeuronCollection) throws Exception {
-        String tmpIndex = getNextAvailableIndex(tmpCuratedNeuronCollection).toString();
-        Entity curatedNeuronEntity = new Entity();
-        curatedNeuronEntity.setOwnerKey(ownerKey);
-        curatedNeuronEntity.setEntityTypeName(EntityConstants.TYPE_CURATED_NEURON);
-        curatedNeuronEntity.setCreationDate(createDate);
-        curatedNeuronEntity.setUpdatedDate(createDate);
-        curatedNeuronEntity.setName("Curated Neuron " + tmpIndex);
-        curatedNeuronEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, tmpIndex);
-        curatedNeuronEntity = entityBean.saveOrUpdateEntity(curatedNeuronEntity);
-        logger.info("Saved curated neuron entity as " + curatedNeuronEntity.getId());
-        ArrayList<Long> tmpFragmentOidList = new ArrayList<Long>();
-        for (String tmpFragmentOid : Task.listOfStringsFromCsvString(task.getParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList))) {
-            tmpFragmentOidList.add(Long.valueOf(tmpFragmentOid));
-        }
-        entityBean.addChildren(ownerKey, curatedNeuronEntity.getId(), tmpFragmentOidList,EntityConstants.ATTRIBUTE_ENTITY);
-        return curatedNeuronEntity;
-    }
-	
-    protected Entity createCuratedNeuronCollection(Entity separationResultEntity) throws Exception {
-        Entity curatedNeuronCollectionEntity = new Entity();
-        curatedNeuronCollectionEntity.setOwnerKey(separationResultEntity.getOwnerKey());
-        curatedNeuronCollectionEntity.setEntityTypeName(EntityConstants.TYPE_CURATED_NEURON_COLLECTION);
-        curatedNeuronCollectionEntity.setCreationDate(createDate);
-        curatedNeuronCollectionEntity.setUpdatedDate(createDate);
-        curatedNeuronCollectionEntity.setName("Curated Neurons");
-        curatedNeuronCollectionEntity = entityBean.saveOrUpdateEntity(curatedNeuronCollectionEntity);
-        logger.info("Saved curated neuron collection as " + curatedNeuronCollectionEntity.getId());
-        return curatedNeuronCollectionEntity;
-    }
-
-    protected void addToParent(Entity parent, Entity entity, Integer index, String attrName) throws Exception {
-        entityBean.addEntityToParent(parent, entity, index, attrName);
-        logger.info("Added "+entity.getEntityTypeName()+"#"+entity.getId()+
-                " as child of "+parent.getEntityTypeName()+"#"+parent.getId());
-    }
-
-
 }
