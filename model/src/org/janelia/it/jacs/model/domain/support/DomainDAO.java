@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -14,6 +15,7 @@ import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
+import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
@@ -37,6 +39,7 @@ import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
@@ -50,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
+import static java.util.Arrays.asList;
 
 /**
  * Data access object for the domain object model.
@@ -738,6 +742,32 @@ public class DomainDAO {
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long separationId) {
         Set<String> subjects = getSubjectSet(subjectKey);
         return toList(fragmentCollection.find("{separationId:#,readers:{$in:#}}", separationId, subjects).as(NeuronFragment.class));
+    }
+
+    public Sample getSampleBySeparationId(String subjectKey, Long separationId) {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        return sampleCollection.findOne("{objectiveSamples.pipelineRuns.results.results.id:#,readers:{$in:#}}", separationId, subjects).as(Sample.class);
+    }
+
+    public NeuronSeparation getNeuronSeparation(String subjectKey, Long separationId) throws Exception {
+        Set<String> subjects = getSubjectSet(subjectKey);
+        MongoDatabase db = m.getDatabase("jacs");
+        com.mongodb.client.MongoCollection<Document> sample = db.getCollection("sample");
+        List<Document> jsonResult = new ArrayList<>();
+        jsonResult = sample.aggregate(asList(
+                new Document("$match", new Document("objectiveSamples.pipelineRuns.results.results.id", separationId)),
+                new Document("$unwind", "$objectiveSamples"),
+                new Document("$unwind", "$objectiveSamples.pipelineRuns"),
+                new Document("$unwind", "$objectiveSamples.pipelineRuns.results"),
+                new Document("$unwind", "$objectiveSamples.pipelineRuns.results.results"),
+                new Document("$match", new Document("objectiveSamples.pipelineRuns.results.results.id", separationId)),
+                new Document("project", new Document("neuronSeparation", "objectiveSamples.pipelineRuns.results.results"))))
+                .into(new ArrayList());
+        if (jsonResult.size()>0) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(jsonResult.get(0).toJson(), NeuronSeparation.class);
+        }
+        return null;
     }
 
     public TreeNode getTreeNodeById(String subjectKey, Long id) {

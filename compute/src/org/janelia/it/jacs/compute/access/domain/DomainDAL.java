@@ -22,6 +22,7 @@ import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
@@ -149,6 +150,7 @@ public class DomainDAL {
     }
 
     // specific custom DomainObject operations
+
     public Subject save(Subject user) throws Exception {
         return dao.save(user);
     }
@@ -183,6 +185,14 @@ public class DomainDAL {
 
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long id) throws Exception {
         return dao.getNeuronFragmentsBySeparationId(subjectKey, id);
+    }
+
+    public Sample getSampleBySeparationId(String subjectKey, Long id) throws Exception {
+        return dao.getSampleBySeparationId(subjectKey, id);
+    }
+
+    public NeuronSeparation getNeuronSeparation(String subjectKey, Long id) throws Exception {
+        return dao.getNeuronSeparation(subjectKey, id);
     }
 
     public Long getNewId() {
