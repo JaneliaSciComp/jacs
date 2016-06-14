@@ -20,6 +20,8 @@ e = f.e;
 c = f.c;
 SolrBeanRemote s = f.s;
 
+int c = 0
+Set<String> unique = new HashSet<>()
 Entity folder = f.e.getEntityById(username, folderId)
 f.loadChildren(folder)
 for(Entity child : folder.getOrderedChildren()) {
@@ -28,5 +30,10 @@ for(Entity child : folder.getOrderedChildren()) {
 	println filepath
 	File file = new File(filepath)
 	File copy = new File("/misc/public/ForWyatt/", file.getName())
-	FileUtils.copyFile(file, copy)
+	//FileUtils.copyFile(file, copy)
+	unique.add(file.getName())
+	c++
 }
+
+println unique.size()
+println c
