@@ -229,7 +229,7 @@ public class SAGEWebService extends ResourceConfig {
             lsmProcessingParams.setOwner(owner);
             lsmProcessingParams.setDataSetName(dataSet);
             lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingParams);
-            remoteComputeBean.dispatchJob(lsmProcessingTask.getJobName(), lsmProcessingTask.getObjectId());
+            remoteComputeBean.submitJob(lsmProcessingTask.getJobName(), lsmProcessingTask.getObjectId());
 
             JsonTask result = new JsonTask(lsmProcessingTask);
             result.setTaskStatusUrl(getNormalizedBaseUrlString(uriInfo) + "task/" + lsmProcessingTask.getObjectId() + "/currentStatus");
