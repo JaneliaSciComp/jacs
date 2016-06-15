@@ -105,7 +105,7 @@ public class HttpDataSource {
             int statusCode=httpClient.executeMethod(getMethod);
 
             if (statusCode!= HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             byte[] responseBytes=getMethod.getResponseBody();
 
@@ -132,7 +132,7 @@ public class HttpDataSource {
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             bytes=getMethod.getResponseBody();
         } catch (Exception ex) {
@@ -150,7 +150,7 @@ public class HttpDataSource {
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             bytes=getMethod.getResponseBody();
         } catch (Exception ex) {
@@ -167,7 +167,7 @@ public class HttpDataSource {
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
 
             return getMethod;
