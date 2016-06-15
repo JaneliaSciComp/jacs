@@ -4,7 +4,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -20,12 +19,9 @@ import io.swagger.annotations.Api;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.status.CurrentTaskStatus;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
@@ -33,7 +29,6 @@ import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
 import org.janelia.it.jacs.model.tasks.utility.SageLoaderTask;
-import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 
@@ -248,83 +243,6 @@ public class SAGEWebService extends ResourceConfig {
                     "failed to run lsm processing for " + owner + ":" + lsmProcessingParams,
                     e);
         }
-
-        return response;
-    }
-
-    /**
-     * Deletes all samples associated with the specifed data set and slide code.
-     * This supports a temporary solution that allows tmog to delete projecttechres samples once the techs
-     * have completed their quality control checks.
-     * In the future, we expect to manage the quality control workflow inside the workstation (without tmog).
-     * This API can be removed at that time.
-     *
-     * @param  owner      id of the person or system submitting this request
-     *                    (currently must be 'projtechres' to ensure we don't inadvertently remove important data).
-     *
-     * @param  dataSet    data set for the sample(s) to be removed.
-     *
-     * @param  slideCode  slide code for the sample(s) to be removed.
-     */
-    @DELETE
-    @Produces(MediaType.APPLICATION_XML)
-    @Path("/samplesWithSlideCode")
-    public Response removeSlideCodeSamplesFromDataSet(
-            @QueryParam("owner")String owner,
-            @QueryParam("dataSet")String dataSet,
-            @QueryParam("slideCode")String slideCode) {
-
-        final String context = "removeSlideCodeSamplesFromDataSet: ";
-
-        logger.info(context + "entry, owner=" + owner +
-                ", dataSet=" + dataSet + ", slideCode=" + slideCode);
-
-        Response response;
-        try {
-
-            if (owner == null) {
-                throw new IllegalArgumentException("owner parameter is not defined");
-            } else if (! owner.equals("projtechres")) {
-                throw new IllegalArgumentException("only projtechres samples may be removecd");
-            }
-
-            if (dataSet == null) {
-                throw new IllegalArgumentException("dataSet parameter is not defined");
-            }
-
-            if (slideCode == null) {
-                throw new IllegalArgumentException("slideCode parameter is not defined");
-            }
-
-            final ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
-            final Subject subject = computeBean.getSubjectByNameOrKey(owner);
-
-            if (subject == null) {
-                throw new IllegalArgumentException("owner '" + owner + "' does not exist");
-            }
-
-            final String subjectKey = subject.getKey();
-
-            DomainDAL dal = DomainDAL.getInstance();
-            final Sample slideCodeSample = DomainDAL.getInstance().getSampleBySlideCode(subjectKey, dataSet, slideCode);
-
-            logger.info(context + "found " + slideCodeSample + " for slide code " + slideCode +
-                    " (subjectKey is " + subjectKey + ")");
-
-            dal.deleteDomainObject(subjectKey, slideCodeSample);
-            logger.info(context + "deleted sample entity " + slideCodeSample.getId());
-            response = Response.status(Response.Status.OK).build();
-
-        } catch (IllegalArgumentException e) {
-            response = getErrorResponse(context, Response.Status.BAD_REQUEST, e.getMessage(), e);
-        } catch (Exception e) {
-            response = getErrorResponse(context,
-                    Response.Status.INTERNAL_SERVER_ERROR,
-                    "failed to remove " + dataSet + " samples for slideCode " + slideCode,
-                    e);
-        }
-
-        logger.info(context + "exit, returning " + getResponseString(response));
 
         return response;
     }
