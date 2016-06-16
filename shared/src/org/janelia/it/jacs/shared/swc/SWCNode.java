@@ -99,9 +99,13 @@ public class SWCNode {
     /**
      * returns a string (no newline) that is suitable for writing the node
      * into an SWC file
+     *
+     * note: apparently some SWC readers are picky about the separator;
+     * single-space is apparently the best choice for compatibility
+     * (we will import any number of whitespace as separator)
      */
     public String toSWCline () {
-        return String.format("%d\t%d\t%f\t%f\t%f\t%f\t%d",
+        return String.format("%d %d %f %f %f %f %d",
                 index,
                 segmentType.decode(),
                 x, y, z,
