@@ -70,7 +70,17 @@ public enum FileType {
     public String getLabel() {
         return label;
     }
-    
+
+    public static FileType getByLabel(String label) {
+        FileType[] values = FileType.values();
+        for (int i=0; i<values.length; i++) {
+            if (values[i].getLabel().equals(label)) {
+                return values[i];
+            }
+        }
+        return null;
+    }
+
     public boolean is2dImage() {
         return is2dImage;
     }
