@@ -104,8 +104,10 @@ public class HttpDataSource {
             long startTime=new Date().getTime();
             int statusCode=httpClient.executeMethod(getMethod);
 
-            if (statusCode!= HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+            // note: not all tiff tiles exist, so some will return
+            //  no content (204), and that's OK
+            if (statusCode!= HttpStatus.SC_OK && statusCode != HttpStatus.SC_NO_CONTENT) {
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             byte[] responseBytes=getMethod.getResponseBody();
 
@@ -132,7 +134,7 @@ public class HttpDataSource {
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             bytes=getMethod.getResponseBody();
         } catch (Exception ex) {
@@ -150,7 +152,7 @@ public class HttpDataSource {
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             bytes=getMethod.getResponseBody();
         } catch (Exception ex) {
@@ -167,7 +169,7 @@ public class HttpDataSource {
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
 
             return getMethod;

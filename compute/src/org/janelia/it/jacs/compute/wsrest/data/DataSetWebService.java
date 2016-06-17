@@ -1,6 +1,10 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -16,14 +20,16 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -38,11 +44,6 @@ import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.mongodb.client.model.Projections.*;
-import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Sorts.*;
-import static java.util.Arrays.asList;
 
 @Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
@@ -111,7 +112,7 @@ public class DataSetWebService extends ResourceConfig {
     }
 
     @GET
-    @Path("/dataset/sage")
+    @Path("/dataSet/sage")
     @ApiOperation(value = "Gets Sage sync Data Set",
             notes = ""
     )
@@ -120,40 +121,34 @@ public class DataSetWebService extends ResourceConfig {
                     responseContainer = "List"),
             @ApiResponse( code = 500, message = "Internal Server Error list of dataset synced with SAGE" )
     })
-    public String getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<DataSet> getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
                                              @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
-        DomainDAO dao = DomainDAOManager.getInstance().getDao();
-        MongoClient m = dao.getMongo();
-        MongoDatabase db = m.getDatabase("jacs");
-        MongoCollection<Document> dataset = db.getCollection("dataSet");
+        DomainDAL dao = DomainDAL.getInstance();
         try {
-            List<Document> results = new ArrayList<>();
-            List<Document> formattedResults = new ArrayList<>();
-
-            if (owners!=null && owners.size()>0) {
-                results = dataset.find(in("ownerKey", owners))
-                                .into(new ArrayList());
+            List<DataSet> listDataSets = new ArrayList<>();
+            if (owners==null) {
+                listDataSets = dao.getDataSets(null);
             } else {
-                results = dataset.find()
-                        .into(new ArrayList());
-            }
-            log.info(results.toString());
-            for (Document result: results) {
-                if (sageSync!=null && sageSync && !result.getBoolean(("sageSync")))
-                    continue;
-                Document newDoc = new Document();
-                newDoc.put("dataSetIdentifier", result.get("identifier"));
-                newDoc.put("name", result.get("name"));
-                if (sageSync!=null && sageSync) {
-                    newDoc.put("sageSync", "SAGE Sync");
+                for (String owner: owners) {
+                    List<DataSet> ownerDataSets = dao.getDataSets(owner);
+                    if (ownerDataSets!=null) {
+                        if (sageSync) {
+                            for (DataSet dataSet: ownerDataSets) {
+                                if (dataSet.isSageSync()) {
+                                    listDataSets.add(dataSet);
+                                }
+                            }
+                        } else {
+                            listDataSets.addAll(ownerDataSets);
+                        }
+                    }
                 }
-                newDoc.put("user", result.get("ownerKey"));
-                formattedResults.add(newDoc);
             }
-            ObjectMapper mapper = new XmlMapper();
-            return mapper.writeValueAsString(formattedResults).replace("item>","dataSet>").replace("ArrayList","dataSetList");
+            return listDataSets;
         } catch (Exception e) {
-            log.error("Error occurred getting lsms for sample",e);
+            log.error("Error occurred getting datasets using sageSync filter",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
