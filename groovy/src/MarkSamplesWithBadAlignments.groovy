@@ -10,8 +10,9 @@ import com.google.common.io.Files
 
 class MarkSamplesWithBadAlignmentsScript {
     
-    private static final boolean DEBUG = true;
-    
+    private static final boolean DEBUG = false
+	
+    private static final double SCORE_CUTOFF = 0.8
 	private int numMarked = 0 
 	private int numTested = 0 
 	private int numRecentTested = 0 
@@ -34,9 +35,8 @@ class MarkSamplesWithBadAlignmentsScript {
 		    subjectKeys.add(dataSet.getOwnerKey());
 		}
 		
-		println "Found users with data sets: "+subjectKeys
+		println "Marking all samples after "+cutoff+" with alignment scores less than "+SCORE_CUTOFF
 		for(String subjectKey : subjectKeys) {
-			//println "Processing "+subjectKey;
 			processUser(subjectKey)
 		}
 		
@@ -63,17 +63,17 @@ class MarkSamplesWithBadAlignmentsScript {
 			//println "Testing "+subjectKey+" alignment on "+alignedFile.creationDate+" with ncc="+nccStr
 			if (alignedFile.creationDate.after(cutoff)) {
 				numRecentTested++;
-				if (Double.parseDouble(nccStr)<0.8) {
+				if (Double.parseDouble(nccStr)<SCORE_CUTOFF) {
 					Entity sample = f.e.getAncestorWithType(alignedFile.ownerKey, alignedFile.id, TYPE_SAMPLE)
 					if (sample!=null) {
 						if (sample.name.contains("~")) {
 							sample = f.e.getAncestorWithType(sample.ownerKey, sample.id, TYPE_SAMPLE)
 						}
-						//println "--> Reprocess "+sample
+						println "Marking "+sample.ownerKey+" sample "+sample.name+" (status was "+sample.getValueByAttributeName(ATTRIBUTE_STATUS)+", score was "+nccStr+")"
 						numMarked++
 						dataSets.add(sample.getValueByAttributeName(ATTRIBUTE_DATA_SET_IDENTIFIER))
 						if (!DEBUG) {
-							f.e.setOrUpdateValue(sample.ownerKey, sample.id, EntityConstants.ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
+							f.e.setOrUpdateValue(sample.ownerKey, sample.id, ATTRIBUTE_STATUS, EntityConstants.VALUE_MARKED)
 						}
 					}
 				}
@@ -82,7 +82,7 @@ class MarkSamplesWithBadAlignmentsScript {
 		}
 		
 		if (numMarked>0) {
-			println "Marked "+numMarked+" for "+subjectKey+" with data sets: "+dataSets
+			println "Marked "+numMarked+" samples for "+subjectKey+" in data sets: "+dataSets
 			this.numMarked += numMarked
 		}
 	}
