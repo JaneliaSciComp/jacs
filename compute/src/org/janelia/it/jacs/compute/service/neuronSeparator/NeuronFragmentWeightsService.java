@@ -173,7 +173,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
             NeuronFragment fragment = fragmentCollection.findOne("{separationId:#,number:#}",separationId, number)
                     .as(NeuronFragment.class);
             fragment.setVoxelWeight(Integer.parseInt((String) fragWeights.get(key)));
-            DomainDAL.getInstance().save(null, fragment);
+            DomainDAL.getInstance().save(fragment.getOwnerKey(), fragment);
         }
     }
 
@@ -242,7 +242,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
 
         // update each neuron fragment with voxel size
         neuronSep.setHasWeights(true);
-        DomainDAL.getInstance().save(null,sample);
+        DomainDAL.getInstance().save(sample.getOwnerKey(),sample);
         updateFragments(finalFragmentCounts,separationId, fragmentCollection);
     }
 
