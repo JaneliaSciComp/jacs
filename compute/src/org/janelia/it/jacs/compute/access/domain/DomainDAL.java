@@ -187,8 +187,8 @@ public class DomainDAL {
         return dao.getNeuronFragmentsBySeparationId(subjectKey, id);
     }
 
-    public Sample getSampleBySeparationId(String subjectKey, Long id) throws Exception {
-        return dao.getSampleBySeparationId(subjectKey, id);
+    public Sample getSampleBySeparationId(Long id) throws Exception {
+        return dao.getSampleBySeparationId(id);
     }
 
     public NeuronSeparation getNeuronSeparation(String subjectKey, Long id) throws Exception {

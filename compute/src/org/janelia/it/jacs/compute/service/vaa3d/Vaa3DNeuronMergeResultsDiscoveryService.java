@@ -30,10 +30,10 @@ import org.janelia.it.jacs.model.user_data.neuron.NeuronMergeResultNode;
  */
 public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
 
-	protected Sample sample;
 	protected DomainDAL domainDAL;
     protected Logger logger;
     protected String ownerKey;
+    protected Sample sample;
     protected Date createDate;
     protected IProcessData processData;
     protected Task task;
@@ -47,13 +47,16 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             this.ownerKey = subject.getKey();
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
-            NeuronSeparation separation = domainDAL.getNeuronSeparation(null, Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
+            NeuronSeparation separation = domainDAL.getNeuronSeparation(subject.getKey(), Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
+            sample = domainDAL.getSampleBySeparationId(separation.getId());
+            logger.info("Separation Id is " + separation.getId());
             // if the collection doesn't exist add it
             CuratedNeuron curatedNeuron = createCuratedNeuronCollection(separation);
 
             // set neuron fragments and weights
             List<Reference> fragmentList = new ArrayList<>();
             String commaSeparatedFragmentIdList=task.getParameter(NeuronMergeTask.PARAM_commaSeparatedNeuronFragmentList);
+            logger.info("fragmentList is " + commaSeparatedFragmentIdList);
             int voxelWeight = 0;
             for (String tmpFragmentOid : Task.listOfStringsFromCsvString(commaSeparatedFragmentIdList)) {
                 NeuronFragment fragment = (NeuronFragment) domainDAL.getDomainObject(null, Reference.createFor(NeuronFragment.class.getSimpleName(), Long.parseLong(tmpFragmentOid)));
@@ -71,8 +74,10 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             Map<FileType, String> images = new HashMap<>();
             images.put(FileType.SignalMip, tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_MIP));
             images.put(FileType.LosslessStack, tmpNode.getFilePathByTag(NeuronMergeResultNode.TAG_STACK));
+            curatedNeuron.setFiles(images);
 
-            domainDAL.save(ownerKey, curatedNeuron);
+            domainDAL.save(sample.getOwnerKey(), curatedNeuron);
+            logger.info("Saved curated neuron as " + curatedNeuron.getId());
         }
         catch (Exception e) {
             throw new ServiceException("Unable to process the entities from the neuron merge step.",e);
@@ -84,11 +89,11 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             throw new ServiceException("Cannot add Curated Neurons to a null Separation Result");
         }
         CuratedNeuron curatedNeuron = new CuratedNeuron();
-        Sample sample = separation.getParentRun().getParent().getParent();
+
         curatedNeuron.setSample(Reference.createFor(Sample.class.getSimpleName(), sample.getId()));
 
         // find the previous curated neurons to get number
-        List<NeuronFragment> existingFragments = domainDAL.getNeuronFragmentsBySeparationId(null, separation.getId());
+        List<NeuronFragment> existingFragments = domainDAL.getNeuronFragmentsBySeparationId(ownerKey, separation.getId());
         int numCurated = 0;
         for (NeuronFragment fragment: existingFragments) {
             if (fragment instanceof CuratedNeuron) {
@@ -96,8 +101,6 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             }
         }
         curatedNeuron.setName("Curated Neuron " + numCurated);
-        curatedNeuron = domainDAL.save(sample.getOwnerKey(), curatedNeuron);
-        logger.info("Saved curated neuron as " + curatedNeuron.getId());
         return curatedNeuron;
     }
 }

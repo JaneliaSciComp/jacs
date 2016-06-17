@@ -44,6 +44,7 @@ import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
+import org.jongo.Aggregate;
 import org.jongo.Jongo;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
@@ -645,9 +646,9 @@ public class DomainDAO {
             return dataSetCollection.findOne("{readers:{$in:#},identifier:#}", subjects, dataSetIdentifier).as(DataSet.class);
         }
     }
-    
+
     public List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
-    	
+
         long start = System.currentTimeMillis();
         log.trace("getSampleBySlideCode(subjectKey={},dataSetIdentifier={})", subjectKey, dataSetIdentifier);
 
@@ -685,7 +686,7 @@ public class DomainDAO {
         log.trace("Getting " + list.size() + " LSMImage objects took " + (System.currentTimeMillis() - start) + " ms");
         return list;
     }
-    
+
     public Sample getSampleBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
 
         long start = System.currentTimeMillis();
@@ -744,28 +745,28 @@ public class DomainDAO {
         return toList(fragmentCollection.find("{separationId:#,readers:{$in:#}}", separationId, subjects).as(NeuronFragment.class));
     }
 
-    public Sample getSampleBySeparationId(String subjectKey, Long separationId) {
-        Set<String> subjects = getSubjectSet(subjectKey);
-        return sampleCollection.findOne("{objectiveSamples.pipelineRuns.results.results.id:#,readers:{$in:#}}", separationId, subjects).as(Sample.class);
+    public Sample getSampleBySeparationId(Long separationId) {
+        return sampleCollection.findOne("{objectiveSamples.pipelineRuns.results.results.id:#}", separationId).as(Sample.class);
     }
 
     public NeuronSeparation getNeuronSeparation(String subjectKey, Long separationId) throws Exception {
         Set<String> subjects = getSubjectSet(subjectKey);
-        MongoDatabase db = m.getDatabase("jacs");
-        com.mongodb.client.MongoCollection<Document> sample = db.getCollection("sample");
-        List<Document> jsonResult = new ArrayList<>();
-        jsonResult = sample.aggregate(asList(
-                new Document("$match", new Document("objectiveSamples.pipelineRuns.results.results.id", separationId)),
-                new Document("$unwind", "$objectiveSamples"),
-                new Document("$unwind", "$objectiveSamples.pipelineRuns"),
-                new Document("$unwind", "$objectiveSamples.pipelineRuns.results"),
-                new Document("$unwind", "$objectiveSamples.pipelineRuns.results.results"),
-                new Document("$match", new Document("objectiveSamples.pipelineRuns.results.results.id", separationId)),
-                new Document("project", new Document("neuronSeparation", "objectiveSamples.pipelineRuns.results.results"))))
-                .into(new ArrayList());
-        if (jsonResult.size()>0) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(jsonResult.get(0).toJson(), NeuronSeparation.class);
+        Aggregate.ResultsIterator<NeuronSeparation> results = sampleCollection.aggregate("{$match: {\"objectiveSamples.pipelineRuns.results.results.id\": " + separationId + "}}")
+                .and("{$unwind: \"$objectiveSamples\"}")
+                .and("{$unwind: \"$objectiveSamples.pipelineRuns\"}")
+                .and("{$unwind: \"$objectiveSamples.pipelineRuns.results\"}")
+                .and("{$unwind: \"$objectiveSamples.pipelineRuns.results.results\"}")
+                .and("{$match: {\"objectiveSamples.pipelineRuns.results.results.id\": "+separationId + "}}")
+                .and("{$project: {class : \"$objectiveSamples.pipelineRuns.results.results.class\" ," +
+                        "id : \"$objectiveSamples.pipelineRuns.results.results.id\"," +
+                        "name : \"$objectiveSamples.pipelineRuns.results.results.name\"," +
+                        "filepath : \"$objectiveSamples.pipelineRuns.results.results.filepath\"," +
+                        "creationDate : \"$objectiveSamples.pipelineRuns.results.results.creationDate\"," +
+                        "fragments : \"$objectiveSamples.pipelineRuns.results.results.fragments\"," +
+                        "hasWeights : \"$objectiveSamples.pipelineRuns.results.results.hasWeights\"}}")
+                .as(NeuronSeparation.class);
+        if (results.hasNext()) {
+            return results.next();
         }
         return null;
     }
