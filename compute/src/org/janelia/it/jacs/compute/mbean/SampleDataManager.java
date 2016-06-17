@@ -371,7 +371,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
             Sample sample = DomainDAL.getInstance().getDomainObject(null, Sample.class, new Long(sampleId));
-            if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
+            if (sample==null) throw new IllegalArgumentException("Sample with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
             if (reuseSummary!=null) {
