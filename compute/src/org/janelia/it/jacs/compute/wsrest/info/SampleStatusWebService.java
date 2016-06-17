@@ -1,7 +1,9 @@
 package org.janelia.it.jacs.compute.wsrest.info;
 
+import java.io.File;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,6 +33,7 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
@@ -41,7 +44,11 @@ import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Sorts.*;
 import static java.util.Arrays.asList;
 
+import org.janelia.it.jacs.model.domain.support.ResultDescriptor;
+import org.janelia.it.jacs.model.domain.support.SampleUtils;
+import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.utils.DateUtil;
+import org.jongo.Jongo;
 import org.jongo.MongoCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,32 +158,40 @@ public class SampleStatusWebService extends ResourceConfig {
     }
 
     @GET
-    @Path("/sample/attribute")
-    @ApiOperation(value = "Gets Sample Completion statistics",
+    @Path("/sample/image")
+    @ApiOperation(value = "Gets a Sample image path based on image parameter",
             notes = "")
     public String getSampleInformation(@QueryParam("sampleId") final Long sampleId,
-                                     @QueryParam("attribute") final String attribute) {
+                                     @QueryParam("image") final String image) {
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
-        MongoClient m = dao.getMongo();
-        MongoDatabase db = m.getDatabase("jacs");
-        MongoCollection<Document> sample = db.getCollection("sample");
+        org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
         try {
-            Document jsonResult;
-            if (attribute==null) {
-                jsonResult = sample.find(eq("_id", sampleId))
-                        .batchSize(1000000)
-                        .first();
-            } else {
-                jsonResult = sample.find(eq("_id", sampleId))
-                        .batchSize(1000000)
-                        .projection(fields(include("name", "tmogDate", "status", "dataSet", "slideCode", "line", attribute)))
-                        .first();
+            if (image==null) {
+                return "'image' is a required parameter for this method; please use the image label.";
             }
-            jsonResult.put("tmogDate", DateUtil.formatDate(jsonResult.getDate("tmogDate")));
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-            return objectMapper.writeValueAsString(jsonResult);
+            Sample result = sample.findOne("{_id:#}", sampleId).as(Sample.class);
+            if (result!=null) {
+                Map<FileType, String> files = findDefaultImageStack(result);
+                FileType newType = FileType.getByLabel(image);
+                String imagePath = null;
+                if (newType!=null) {
+                    imagePath = files.get(newType);
+                }
+                Document newDoc = new Document();
+                newDoc.put("name", result.getName());
+                newDoc.put("tmogDate", DateUtil.formatDate(result.getTmogDate()));
+                newDoc.put("status", result.getStatus());
+                newDoc.put("dataSet", result.getDataSet());
+                newDoc.put("slideCode", result.getSlideCode());
+                newDoc.put("line", result.getLine());
+                if (image!=null) {
+                    newDoc.put("image", imagePath);
+                }
+                ObjectMapper objectMapper = new ObjectMapper();
+                objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+                return objectMapper.writeValueAsString(newDoc);
+            }
+            return null;
         } catch (Exception e) {
             log.error("Error occurred getting image completion",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -313,15 +328,15 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Returns samples by error and their mips",
             notes = "")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<String> getSampleErrorMips(@QueryParam("dataset") final String dataset) {
+    public List<String> getSampleErrorMips(@QueryParam("dataSet") final String dataSet) {
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
         StringWriter query = new StringWriter();
         query.append("{");
 
         List<String> formattedResults = new ArrayList<String>();
-        if (dataset!=null) {
-            query.append("'dataSet':'" + dataset + "',");
+        if (dataSet!=null) {
+            query.append("'dataSet':'" + dataSet + "',");
         }
         try {
             query.append("'objectiveSamples.pipelineRuns.error': {$exists: true}}");
@@ -418,7 +433,7 @@ public class SampleStatusWebService extends ResourceConfig {
                                               @QueryParam("slideCode") final String slideCode,
                                               @QueryParam("line") final String line,
                                               @QueryParam("dataSet") final String dataSet,
-                                              @QueryParam("wildcard") final Boolean wildcard) {
+                                              @QueryParam("wildCard") final Boolean wildCard) {
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
 
@@ -442,67 +457,94 @@ public class SampleStatusWebService extends ResourceConfig {
                 field = "dataSet";
                 val = dataSet;
             }
-            if (wildcard!=null && wildcard) {
+            if (wildCard!=null && wildCard) {
                 query = "{" + field + ":{$regex: \".*" + val + ".*\"}}";
             } else {
-                query = "{" + field + ":\"" + val + "\"}";
+                query = "{" + field + ":\"" + val + "\", status: {$exists: true}}";
             }
 
             results = sample.find(query).as(Sample.class);
+            Map<String, Sample> sampleDistinctMap = new HashMap<>();
             while (results.hasNext()) {
                 Sample result = results.next();
-                for (ObjectiveSample objective : result.getObjectiveSamples()) {
-                    Map<FileType, String> files = null;
-                    Map labelMap = new HashMap<String, String>();
-                    if (objective.getLatestSuccessfulRun()!=null &&
-                            objective.getLatestSuccessfulRun().getLatestProcessingResult()!=null) {
-                        String filepath = objective.getLatestSuccessfulRun().getLatestProcessingResult().getFilepath();
-                        files = objective.getLatestSuccessfulRun().getLatestProcessingResult().getFiles();
-
-                        Iterator<FileType> foo = files.keySet().iterator();
-
-                        while (foo.hasNext()) {
-                            FileType moo = foo.next();
-                            String fullPath = files.get(moo);
-                            if (!fullPath.startsWith("/")) {
-                                fullPath = filepath + "/" + fullPath;
-                            }
-                            labelMap.put(moo.getLabel(), fullPath);
-                        }
-                    }
-                    Document newDoc = new Document();
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    if (result.getName()!=null) {
-                        newDoc.put("name", result.getName());
-                    }
-                    if (result.getLine()!=null) {
-                        newDoc.put("line", result.getLine());
-                    }
-                    if (result.getSlideCode()!=null) {
-                        newDoc.put("slideCode", result.getSlideCode());
-                    }
-                    if (result.getEffector()!=null) {
-                        newDoc.put("effector", result.getEffector());
-                    }
-                    if (result.getDataSet()!=null) {
-                        newDoc.put("dataSet", result.getDataSet());
-                    }
-                    newDoc.put("objective", objective.getObjective());
-                    if (files != null) {
-                        newDoc.put("image", labelMap);
-                    }
-                    formattedResults.add(newDoc);
+                if (!sampleDistinctMap.containsKey(result.getName())) {
+                    sampleDistinctMap.put(result.getName(), result);
                 }
             }
+
+            for (Sample result : sampleDistinctMap.values()) {
+                Document newDoc = new Document();
+                ObjectMapper objectMapper = new ObjectMapper();
+                if (result.getName()!=null) {
+                    newDoc.put("name", result.getName());
+                }
+                if (result.getLine()!=null) {
+                    newDoc.put("line", result.getLine());
+                }
+                if (result.getSlideCode() !=null) {
+                    newDoc.put("slideCode", result.getSlideCode());
+                }
+                if (result.getEffector()!=null) {
+                    newDoc.put("effector", result.getEffector());
+                }
+                if (result.getDataSet()!=null) {
+                    newDoc.put("dataSet", result.getDataSet());
+                }
+                HasFiles files = SampleUtils.getResult(result, ResultDescriptor.LATEST);
+                if (files!=null && files instanceof SampleProcessingResult) {
+                    SampleProcessingResult latestResult = (SampleProcessingResult)files;
+                    String imagePath = latestResult.getFiles().get(FileType.SignalMip);
+                    if (imagePath==null) {
+                        imagePath = latestResult.getFiles().get(FileType.AllMip);
+                    }
+                    newDoc.put("defaultImage", latestResult.getFilepath() + File.separator + imagePath);
+                } else {
+                    Date latestDate = null;
+                    Calendar latestCal = Calendar.getInstance();
+                    String defaultImage= null;
+                    for (ObjectiveSample objective : result.getObjectiveSamples()) {
+                        Map<FileType, String> possibleAnswerImages = null;
+                        if (objective.getLatestSuccessfulRun() != null &&
+                                objective.getLatestSuccessfulRun().getLatestProcessingResult() != null) {
+                            String filepath = objective.getLatestSuccessfulRun().getLatestProcessingResult().getFilepath();
+                            SampleProcessingResult possibleAnswer = objective.getLatestSuccessfulRun().getLatestProcessingResult();
+
+                            possibleAnswerImages = possibleAnswer.getFiles();
+                            if (possibleAnswerImages != null) {
+                                String fullPath = possibleAnswerImages.get(FileType.SignalMip);
+                                if (fullPath==null) {
+                                    fullPath = possibleAnswerImages.get(FileType.AllMip);
+                                }
+                                if (fullPath!=null && !fullPath.startsWith("/")) {
+                                    fullPath = filepath + File.separator + fullPath;
+
+                                    // compare SignalMips for different objectiveSamples
+                                    Calendar cal1 = Calendar.getInstance();
+                                    cal1.setTime(possibleAnswer.getCreationDate());
+                                    if (latestDate == null || cal1.after(latestCal)) {
+                                        latestDate = possibleAnswer.getCreationDate();
+                                        latestCal.setTime(latestDate);
+                                        defaultImage = fullPath;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (defaultImage!=null) {
+                        newDoc.put("defaultImage", defaultImage);
+                    }
+                }
+
+                formattedResults.add(newDoc);
+            }
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+                objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             return objectMapper.writeValueAsString(formattedResults);
         } catch (Exception e) {
             log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     @GET
     @Path("/sample/workstationstatus")
@@ -556,5 +598,49 @@ public class SampleStatusWebService extends ResourceConfig {
             log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
+    }
+
+    private Map<FileType, String> findDefaultImageStack (Sample result) {
+        HasFiles files = SampleUtils.getResult(result, ResultDescriptor.LATEST);
+        Map<FileType, String> defaultImageStack= null;
+        String defaultFilepath = null;
+        if (files!=null && files instanceof SampleProcessingResult) {
+            SampleProcessingResult latestResult = (SampleProcessingResult)files;
+            defaultImageStack =  latestResult.getFiles();
+        } else {
+            Date latestDate = null;
+            Calendar latestCal = Calendar.getInstance();
+            for (ObjectiveSample objective : result.getObjectiveSamples()) {
+                Map<FileType, String> possibleAnswerImages = null;
+                if (objective.getLatestSuccessfulRun() != null &&
+                        objective.getLatestSuccessfulRun().getLatestProcessingResult() != null) {
+                    SampleProcessingResult possibleAnswer = objective.getLatestSuccessfulRun().getLatestProcessingResult();
+                    possibleAnswerImages = possibleAnswer.getFiles();
+
+                    if (possibleAnswerImages != null) {
+                        Calendar cal1 = Calendar.getInstance();
+                        cal1.setTime(possibleAnswer.getCreationDate());
+                        if (latestDate == null || cal1.after(latestCal)) {
+                            latestDate = possibleAnswer.getCreationDate();
+                            latestCal.setTime(latestDate);
+                            defaultFilepath = possibleAnswer.getFilepath();
+                            defaultImageStack = possibleAnswerImages;
+                        }
+                    }
+                }
+            }
+
+        }
+
+        if (defaultImageStack!=null) {
+            Map<FileType, String> replaceMap = new HashMap<>();
+            Iterator<FileType> keys = defaultImageStack.keySet().iterator();
+            while (keys.hasNext()) {
+                FileType key = keys.next();
+                replaceMap.put (key, defaultFilepath + File.separator + defaultImageStack.get(key));
+            }
+            return replaceMap;
+        }
+        return null;
     }
 }
