@@ -216,7 +216,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
     // given a newly created neuron separation, generate the voxel weights from the separation
     private void generateWeightsForSingleNeuronSeparation() throws Exception {
         logger.info("Generating weights for a single neuron separation and persist to the DB");
-        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+       /* DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection fragmentCollection = dao.getCollectionByName("fragment");
 
         Long sampleId = Long.parseLong(processData.getString("SAMPLE_ENTITY_ID"));
@@ -243,7 +243,7 @@ public class NeuronFragmentWeightsService extends AbstractDomainService {
         // update each neuron fragment with voxel size
         neuronSep.setHasWeights(true);
         DomainDAL.getInstance().save(sample.getOwnerKey(),sample);
-        updateFragments(finalFragmentCounts,separationId, fragmentCollection);
+        updateFragments(finalFragmentCounts,separationId, fragmentCollection);*/
     }
 
 
