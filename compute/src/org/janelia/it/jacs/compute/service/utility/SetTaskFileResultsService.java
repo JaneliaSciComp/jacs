@@ -33,18 +33,15 @@ public class SetTaskFileResultsService extends AbstractDomainService {
 
 	public static final String RESULT_TOKEN = "RESULT!";
 
-    private Sample sample;
-    private ObjectiveSample objectiveSample;
-
     public void execute() throws Exception {
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
-        this.sample = sampleHelper.getRequiredSample(data);
-        this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
-        
         List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) processData.getItem("SAMPLE_AREAS");
         if (sampleAreas != null) {
-        	StringBuilder sb = new StringBuilder();
+            SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+            Sample sample = sampleHelper.getRequiredSample(data);
+            ObjectiveSample objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+
+            StringBuilder sb = new StringBuilder();
             for(AnatomicalArea sampleArea : sampleAreas) {
             	if (sb.length()>0) sb.append(",");
             	sb.append(objectiveSample.getObjective());
