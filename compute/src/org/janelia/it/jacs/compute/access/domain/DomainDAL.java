@@ -220,7 +220,7 @@ public class DomainDAL {
         return new ArrayList<>(ontologies);
     }
 
-    public Ontology addOntologyTerm(String subjectKey, Long ontologyId, Long parentId, List<OntologyTerm> terms, int index) throws Exception {
+    public Ontology addOntologyTerms(String subjectKey, Long ontologyId, Long parentId, List<OntologyTerm> terms, Integer index) throws Exception {
         Ontology updateOntology = dao.addTerms(subjectKey, ontologyId, parentId, terms, index);
         IndexingHelper.sendReindexingMessage(updateOntology);
         return updateOntology;

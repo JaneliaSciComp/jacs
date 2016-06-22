@@ -101,7 +101,7 @@ public class DomainObjectWebService extends ResourceConfig {
         try {
             return dao.getDomainObjectsByName(subjectKey, clazz, name);
         } catch (Exception e) {
-            log.error("Error occurred retrieving domain objects using name" + e);
+            log.error("Error occurred retrieving domain objects using name",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -123,7 +123,7 @@ public class DomainObjectWebService extends ResourceConfig {
         try {
             return dao.getDomainObjects(subjectKey, clazz);
         } catch (Exception e) {
-            log.error("Error occurred retrieving domain objects by class" + e);
+            log.error("Error occurred retrieving domain objects by class",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -154,7 +154,7 @@ public class DomainObjectWebService extends ResourceConfig {
         try {
             return dao.getDomainObjects(subjectKey, reverseRef);
         } catch (Exception e) {
-            log.error("Error occurred retrieving domain objects using reverse ref" + e);
+            log.error("Error occurred retrieving domain objects using reverse ref",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -262,7 +262,7 @@ public class DomainObjectWebService extends ResourceConfig {
             return updateObj;
 
         } catch (Exception e) {
-            log.error("Error occurred processing Domain Object Update Property ",e);
+            log.error("Error occurred processing Domain Object Update Property",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

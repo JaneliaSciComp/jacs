@@ -56,7 +56,7 @@ public class AnnotationWebService extends ResourceConfig {
             IndexingHelper.sendReindexingMessage(newAnnotation);
             return newAnnotation;
         } catch (Exception e) {
-            log.error("Error occurred creating annotations " + e);
+            log.error("Error occurred creating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -80,7 +80,7 @@ public class AnnotationWebService extends ResourceConfig {
             IndexingHelper.sendReindexingMessage(updateAnnotation);
             return updateAnnotation;
         } catch (Exception e) {
-            log.error("Error occurred updating annotations" + e);
+            log.error("Error occurred updating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -105,7 +105,7 @@ public class AnnotationWebService extends ResourceConfig {
             List<Annotation> annotations = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
             return annotations;
         } catch (Exception e) {
-            log.error("Error occurred getting annotations" + e);
+            log.error("Error occurred getting annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -130,7 +130,7 @@ public class AnnotationWebService extends ResourceConfig {
             IndexingHelper.sendRemoveFromIndexMessage(deleteAnnotation.getId());
             dao.deleteDomainObject(subjectKey, deleteAnnotation);
         } catch (Exception e) {
-            log.error("Error occurred removing annotations" + e);
+            log.error("Error occurred removing annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
