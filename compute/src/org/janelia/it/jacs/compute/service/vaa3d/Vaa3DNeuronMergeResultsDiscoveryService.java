@@ -6,8 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import static com.mongodb.client.model.Filters.*;
+import static java.util.Arrays.asList;
 import org.apache.log4j.Logger;
+import org.bson.Document;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.engine.service.IService;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
@@ -19,9 +26,12 @@ import org.janelia.it.jacs.model.domain.sample.CuratedNeuron;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 import org.janelia.it.jacs.model.user_data.neuron.NeuronMergeResultNode;
+
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * File discovery service for neuron merge results.
@@ -89,17 +99,19 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             throw new ServiceException("Cannot add Curated Neurons to a null Separation Result");
         }
         CuratedNeuron curatedNeuron = new CuratedNeuron();
-
+        curatedNeuron.setSeparationId(separation.getId());
         curatedNeuron.setSample(Reference.createFor(Sample.class.getSimpleName(), sample.getId()));
 
         // find the previous curated neurons to get number
-        List<NeuronFragment> existingFragments = domainDAL.getNeuronFragmentsBySeparationId(ownerKey, separation.getId());
-        int numCurated = 0;
-        for (NeuronFragment fragment: existingFragments) {
-            if (fragment instanceof CuratedNeuron) {
-                numCurated++;
-            }
-        }
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> fragment = db.getCollection("fragment");
+        List<Document> jsonResult = fragment.find(and(
+                eq("class", "org.janelia.it.jacs.model.domain.sample.CuratedNeuron"),
+                eq("separationId", separation.getId()))).into(new ArrayList());
+
+        int numCurated = jsonResult.size();
         curatedNeuron.setName("Curated Neuron " + numCurated);
         return curatedNeuron;
     }
