@@ -21,7 +21,7 @@ class AnalyzeZeissMetadataScript {
     private final JacsUtils f;
     private PrintWriter file;
     private List<Entity> tiles = new ArrayList<Entity>();
-    
+	
     def dyeMapping = [
         
         YoshiMBPolarityCase1_20x : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
@@ -48,8 +48,8 @@ class AnalyzeZeissMetadataScript {
         NernaMCFOCase1Without20xMerge_20x : "reference=Alexa Fluor 488,Cy2;membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568",
         NernaMCFOCase1Without20xMerge_63x : "reference=Alexa Fluor 488,Cy2;membrane_ha=Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568;membrane_flag=Alexa Fluor 594",
         
-        WolfftMCFOCase1_20x          : "reference=Alexa Fluor 488,Cy2;membrane=Alexa Fluor 594",
-        WolfftMCFOCase1_63x          : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=DY-547,Alexa Fluor 568,Alexa Fluor 546;membrane_flag=Alexa Fluor 594",
+        WolfftMCFOCase1_20x          : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594",
+        WolfftMCFOCase1_63x          : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594",
         WolfftMCFOCase1Unaligned_20x : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594",
         WolfftMCFOCase1Unaligned_63x : "reference=Alexa Fluor 488,Cy2;membrane_ha=,Alexa Fluor 633,Alexa Fluor 647,Cy5;membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;membrane_flag=Alexa Fluor 594"
     
@@ -92,6 +92,7 @@ class AnalyzeZeissMetadataScript {
         wolfft_jenetta_case_4  : "YoshiMBPolarityCase4",
         namikis_polarity_case_4 : "YoshiMBPolarityCase4",
         asoy_mb_split_mcfo_case_1  : "YoshiMBSplitMCFOCase1",
+        asoy_split_mcfo_case_1  : "NernaMCFOCase1",
         
     ]
     
@@ -110,7 +111,7 @@ class AnalyzeZeissMetadataScript {
                 Entity dataSet = it
                 String dataSetIdentifier = dataSet.getValueByAttributeName(ATTRIBUTE_DATA_SET_IDENTIFIER)
                 String pipeline = dataSetMapping[dataSetIdentifier]
-                if (pipeline!=null) {
+                if (pipeline!=null && dataSet.ownerKey.equals("user:asoy")) {
                     println "Processing "+dataSetIdentifier
                     for(Entity entity : f.e.getEntitiesWithAttributeValue(dataSet.ownerKey, EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER, dataSetIdentifier)) {
                         if (entity.entityTypeName.equals("Sample")) {
@@ -220,7 +221,7 @@ class AnalyzeZeissMetadataScript {
         
         def dyeNames = lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES)
         def chanspec = lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_SPECIFICATION)
-        def newspec = getNewSpec(lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES), dyeToTagMap)
+        def newspec = getNewSpec(lsm.id, lsm.getValueByAttributeName(ATTRIBUTE_CHANNEL_DYE_NAMES), dyeToTagMap)
         file.print "\t"
         file.print lsm.name
         file.print "\t"
@@ -251,14 +252,14 @@ class AnalyzeZeissMetadataScript {
         return dyeToTagMap
     }
     
-    private String getNewSpec(String dyeNames, Map<String,String> dyeToTagMap) {
+    private String getNewSpec(Long lsmId, String dyeNames, Map<String,String> dyeToTagMap) {
         if (dyeNames==null) return null
         StringBuilder newSpec = new StringBuilder()
         for(String dye : dyeNames.split(",")) {
             String tag = dyeToTagMap.get(dye);
             if (tag==null) { 
-                println "   No mapping for dye: "+dye
-                newSpec.append("m")
+                println "   No mapping for dye '"+dye+"' in LSM#"+lsmId
+                newSpec.append("?")
             }
             else if (tag.startsWith("membrane")) {
                 newSpec.append("m")
@@ -273,8 +274,8 @@ class AnalyzeZeissMetadataScript {
                 newSpec.append("x")
             }
             else {
-                println "   Unrecognized tag: "+tag
-                newSpec.append("?")
+                println "   Unrecognized tag '"+tag+"' in LSM#"+lsmId
+                newSpec.append("!")
             }
         }
         return newSpec.toString();
