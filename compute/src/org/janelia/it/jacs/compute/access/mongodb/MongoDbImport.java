@@ -15,10 +15,13 @@ import java.util.regex.Pattern;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Sets;
+import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.MongoDatabase;
 import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
+import org.bson.Document;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -67,6 +70,8 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.MongoCollection;
 import org.reflections.ReflectionUtils;
 
+import static com.mongodb.client.model.Filters.*;
+
 /**
  * Data access to the MongoDB data store.
  * 
@@ -108,6 +113,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected final MongoCollection flyLineCollection;
     protected final MongoCollection imageCollection;
     protected final MongoCollection fragmentCollection;
+    protected final com.mongodb.client.MongoCollection<Document> fragmentWeightsCollection;
     protected final MongoCollection annotationCollection;
     protected final MongoCollection ontologyCollection;
     protected final MongoCollection compartmentSetCollection;
@@ -139,6 +145,7 @@ public class MongoDbImport extends AnnotationDAO {
     	this.flyLineCollection = dao.getCollectionByClass(FlyLine.class);
         this.imageCollection = dao.getCollectionByClass(Image.class);
         this.fragmentCollection = dao.getCollectionByClass(NeuronFragment.class);
+        this.fragmentWeightsCollection = dao.getMongo().getDatabase("jacs").getCollection("fragmentWeights");
         this.annotationCollection = dao.getCollectionByClass(Annotation.class);
         this.ontologyCollection = dao.getCollectionByClass(Ontology.class);
         this.compartmentSetCollection = dao.getCollectionByClass(CompartmentSet.class);
@@ -1366,8 +1373,11 @@ public class MongoDbImport extends AnnotationDAO {
         
         populateChildren(nfCollectionEntity);
         collectAnnotations(nfCollectionEntity.getId());
+        boolean hasWeights = false;
         for(Entity fragmentEntity : EntityUtils.getChildrenOfType(nfCollectionEntity, EntityConstants.TYPE_NEURON_FRAGMENT)) {
             NeuronFragment neuronFragment = getNeuronFragment(sampleEntity, separationEntity, fragmentEntity);
+            if (neuronFragment.getVoxelWeight()!=null)
+                hasWeights = true;
             neuronFragments.add(neuronFragment);
             insertAnnotations(getAnnotations(neuronFragment.getId()), neuronFragment);
         }
@@ -1440,8 +1450,15 @@ public class MongoDbImport extends AnnotationDAO {
             neuronFragment.setSeparationId(separationEntity.getId());
             neuronFragment.setFilepath(getFilepath(separationEntity));
         }
-        
-        Map<FileType,String> images = new HashMap<>();
+
+        List<Document> fragmentWeight = fragmentWeightsCollection.find(and(
+                eq("separationId", separationEntity.getId()),
+                eq("fragmentId", fragmentEntity.getId()))).into(new ArrayList());
+        if (fragmentWeight!=null && fragmentWeight.size()>0) {
+            neuronFragment.setVoxelWeight(fragmentWeight.get(0).getInteger("voxelWeight"));
+        }
+
+        Map < FileType, String > images = new HashMap<>();
         addImage(images,FileType.SignalMip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
         addImage(images,FileType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
         addImage(images,FileType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
