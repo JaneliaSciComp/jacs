@@ -114,7 +114,6 @@ public class DomainDAL {
 
     public void deleteDomainObjects(String subjectKey, List<Reference> references) throws Exception {
         List<DomainObject> domainObjList = dao.getDomainObjects(null, references);
-
         for (DomainObject domainObj: domainObjList) {
             IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
             dao.remove(subjectKey, domainObj);
@@ -124,11 +123,25 @@ public class DomainDAL {
     public void deleteDomainObject(String subjectKey, DomainObject domainObject) throws Exception {
         dao.remove(subjectKey, domainObject);
         IndexingHelper.sendRemoveFromIndexMessage(domainObject.getId());
+        if (domainObject instanceof Annotation) {
+            Annotation annotation = (Annotation)domainObject;
+            DomainObject targetObject = dao.getDomainObject(null, annotation.getTarget());
+            if (targetObject!=null) {
+                IndexingHelper.sendReindexingMessage(targetObject);
+            }
+        }
     }
 
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
         T savedObj =  dao.save(subjectKey, domainObject);
         IndexingHelper.sendReindexingMessage(savedObj);
+        if (domainObject instanceof Annotation) {
+            Annotation annotation = (Annotation)domainObject;
+            DomainObject targetObject = dao.getDomainObject(null, annotation.getTarget());
+            if (targetObject!=null) {
+                IndexingHelper.sendReindexingMessage(targetObject);
+            }
+        }
         return savedObj;
     }
 

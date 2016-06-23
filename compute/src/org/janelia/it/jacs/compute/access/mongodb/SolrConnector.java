@@ -8,6 +8,7 @@ import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +42,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
+import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
@@ -338,7 +340,7 @@ public class SolrConnector {
 
 			if (existingDoc!=null) {
 				// generate ancestor list
-				Set<Long> ancestorIds = new HashSet<Long>();
+				Set<Long> ancestorIds = new HashSet<>();
 				TreeNode treeNode = null;
 				DomainObject testObj = domainObject;
 				int depth = 0;
@@ -378,17 +380,24 @@ public class SolrConnector {
         if (object instanceof DomainObject) {
             DomainObject domainObject = (DomainObject)object;
             Long id = domainObject.getId();
-			String key = Reference.createFor(domainObject).toString();
+			Reference ref = Reference.createFor(domainObject);
+			String key = ref.toString();
             if (visited.contains(key)) {
                 return;
             }
             visited.add(key);
 			if (largeOp!=null) {
-				// TODO: this doesn't seem to account for annotations in the case of index updates?? Annotation map is only generated in the case of a full load.
 				Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>) largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, id);
 				if (objectAnnotations != null) {
 					annotations.addAll(objectAnnotations);
 				}
+			}
+			else {
+				Set<SimpleAnnotation> objectAnnotations = new HashSet<>();
+				for(Annotation annotation : dao.getAnnotations(null, Arrays.asList(ref))) {
+					annotations.add(new SimpleAnnotation(annotation.getName(), annotation.getOwnerKey()));
+				}
+				annotations.addAll(objectAnnotations);
 			}
         }
 		
