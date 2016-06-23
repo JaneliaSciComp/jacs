@@ -22,6 +22,7 @@ import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.bson.Document;
+import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -165,57 +166,57 @@ public class MongoDbImport extends AnnotationDAO {
 
     public void loadAllEntities() throws DaoException {
 
-//        log.info("Building disk-based SAGE property map");
-//        this.largeOp = new MongoLargeOperations(dao);
-//
-//        log.info("Building LSM property map");
-//        largeOp.buildSageImagePropMap();
-//        buildLsmAttributeMap();
-//
-//        log.info("Loading data into MongoDB");
-//        getSession().setFlushMode(FlushMode.MANUAL);
-//
-//        long startAll = System.currentTimeMillis();
-//
-//        log.info("Adding subjects");
-//        loadSubjects();
-//
-//        log.info("Adding ontologies");
-//        loadOntologies(); // must come before buildAnnotationMap to preload the necessary maps
-//
-//        log.info("Building disk-based Annotation map");
-//        buildAnnotationMap();
-//
-//        log.info("Adding data sets");
-//        loadDataSets();
-//
-//        log.info("Adding fly lines");
-//        loadFlyLines();
-//
-//        log.info("Adding samples");
-//        // TODO: handle deleted (i.e. "hidden") neurons
-//        // TODO: handle pattern mask results in samples (knappj)
-//        loadSamples();
-//
-//        log.info("Adding screen samples");
-//        loadScreenData();
-//
+        log.info("Building disk-based SAGE property map");
+        this.largeOp = new MongoLargeOperations(dao);
+
+        log.info("Building LSM property map");
+        largeOp.buildSageImagePropMap();
+        buildLsmAttributeMap();
+
+        log.info("Loading data into MongoDB");
+        getSession().setFlushMode(FlushMode.MANUAL);
+
+        long startAll = System.currentTimeMillis();
+
+        log.info("Adding subjects");
+        loadSubjects();
+
+        log.info("Adding ontologies");
+        loadOntologies(); // must come before buildAnnotationMap to preload the necessary maps
+
+        log.info("Building disk-based Annotation map");
+        buildAnnotationMap();
+
+        log.info("Adding data sets");
+        loadDataSets();
+
+        log.info("Adding fly lines");
+        loadFlyLines();
+
+        log.info("Adding samples");
+        // TODO: handle deleted (i.e. "hidden") neurons
+        // TODO: handle pattern mask results in samples (knappj)
+        loadSamples();
+
+        log.info("Adding screen samples");
+        loadScreenData();
+
         log.info("Adding compartment sets");
         loadCompartmentSets();
-//
-//        log.info("Adding alignment board contexts");
-//        loadAlignmentBoardContexts();
-//
-//        log.info("Adding alignment boards");
-//        loadAlignmentBoards();
-//
-//        log.info("Adding folders");
-//        loadWorkspaces();
-//
-//        log.info("Verify annotations");
-//        verifyAnnotations();
-//
-//        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
+
+        log.info("Adding alignment board contexts");
+        loadAlignmentBoardContexts();
+
+        log.info("Adding alignment boards");
+        loadAlignmentBoards();
+
+        log.info("Adding folders");
+        loadWorkspaces();
+
+        log.info("Verify annotations");
+        verifyAnnotations();
+
+        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
     }
 
     Map<String,LsmSageAttribute> lsmSageAttrs = new HashMap<>();
