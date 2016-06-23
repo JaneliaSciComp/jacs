@@ -62,7 +62,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	this.releaseFolder = sampleHelper.createOrVerifyChildFolder(topLevelFolder, release.getName(), true);
     	logger.info("Release folder: "+releaseFolder);
     	
-    	Set<String> includedDataSets = new HashSet<String>(release.getDataSets());
+    	Set<String> includedDataSets = new HashSet<>(release.getDataSets());
     	
     	List<DataSet> dataSets = new ArrayList<>();
     	for(DataSet dataSet : domainDao.getDataSets(ownerKey)) {

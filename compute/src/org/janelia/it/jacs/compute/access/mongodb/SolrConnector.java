@@ -1,5 +1,21 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.mongodb.Bytes;
@@ -25,8 +41,11 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.sample.DataSet;
-import org.janelia.it.jacs.model.domain.support.*;
+import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchTraversal;
+import org.janelia.it.jacs.model.domain.support.SearchType;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.util.ReflectionHelper;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
@@ -34,15 +53,6 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-import java.util.*;
 
 /**
  * A connector for loading the full text Solr index from the data in the Mongo Database. 
@@ -109,7 +119,6 @@ public class SolrConnector {
 			catch (SolrServerException e) {
 				throw new DaoException("Problem pinging SOLR at: "+SOLR_SERVER_URL);
 			}
-			this.largeOp = new MongoLargeOperations(dao);
 		}
 	}
     
@@ -120,7 +129,7 @@ public class SolrConnector {
     	if (!useBuildCore || !streamingUpdates) {
     		throw new IllegalStateException("indexAllEntities called on SolrConnector which has useBuildCore=false or streamingUpdates=false");
     	}
-    	
+
     	log.info("Building disk-based entity maps");
     	this.largeOp = new MongoLargeOperations(dao);
     	largeOp.buildAncestorMap();
@@ -374,10 +383,13 @@ public class SolrConnector {
                 return;
             }
             visited.add(key);
-            Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>)largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, id);
-            if (objectAnnotations!=null) {
-                annotations.addAll(objectAnnotations);
-            }
+			if (largeOp!=null) {
+				// TODO: this doesn't seem to account for annotations in the case of index updates?? Annotation map is only generated in the case of a full load.
+				Set<SimpleAnnotation> objectAnnotations = (Set<SimpleAnnotation>) largeOp.getValue(MongoLargeOperations.ANNOTATION_MAP, id);
+				if (objectAnnotations != null) {
+					annotations.addAll(objectAnnotations);
+				}
+			}
         }
 		
 		List<Field> fields = classFields.get(clazz);
