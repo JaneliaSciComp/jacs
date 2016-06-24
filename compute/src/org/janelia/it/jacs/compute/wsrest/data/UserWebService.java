@@ -1,27 +1,39 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
-import java.util.*;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import java.util.List;
+import java.util.Map;
 
-import io.swagger.annotations.*;
-import org.glassfish.jersey.jackson.JacksonFeature;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.internal.util.Base64;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
-import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.shared.security.LDAPProvider;
-import org.janelia.it.jacs.shared.security.Token;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.janelia.it.jacs.model.domain.Preference;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.user_data.UserToolEvent;
 import org.janelia.it.jacs.shared.security.BasicAuthToken;
-import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.shared.security.LDAPProvider;
+import org.janelia.it.jacs.shared.security.Token;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @Path("/data")

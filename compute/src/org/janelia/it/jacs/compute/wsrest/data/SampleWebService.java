@@ -56,7 +56,7 @@ public class SampleWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
-            return new ArrayList<LSMImage>(lsms);
+            return new ArrayList<>(lsms);
         } catch (Exception e) {
             log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -83,7 +83,6 @@ public class SampleWebService extends ResourceConfig {
         MongoCollection<Document> sample = db.getCollection("sample");
         MongoCollection<Document> image = db.getCollection("image");
 
-        List<Document> formattedResults = new ArrayList<Document>();
         try {
             List<Document> results;
             List<Document> imageResults;

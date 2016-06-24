@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -26,7 +25,6 @@ import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
@@ -62,8 +60,7 @@ public class OntologyWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getOntologies({})",subjectKey);
-            Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
-            return new ArrayList<Ontology>(ontologies);
+            return dao.getOntologies(subjectKey);
         } catch (Exception e) {
             log.error("Error occurred getting ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -85,9 +82,7 @@ public class OntologyWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("createOntology({})",query);
-            Ontology updateOntology = (Ontology)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(updateOntology);
-            return updateOntology;
+            return dao.save(query.getSubjectKey(), (Ontology)query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred creating ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -112,7 +107,6 @@ public class OntologyWebService extends ResourceConfig {
         try {
             log.debug("removeOntology({},{})",subjectKey,ontologyId);
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);
-            IndexingHelper.sendRemoveFromIndexMessage(ont.getId());
             dao.deleteDomainObject(subjectKey, ont);
         } catch (Exception e) {
             log.error("Error occurred removing ontology",e);
@@ -144,9 +138,7 @@ public class OntologyWebService extends ResourceConfig {
             for (OntologyTerm term : query.getObjectList()) {
                 terms.add(term);
             }
-            Ontology updateOntology = dao.addOntologyTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
-            IndexingHelper.sendReindexingMessage(updateOntology);
-            return updateOntology;
+            return dao.addOntologyTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
         } catch (Exception e) {
             log.error("Error occurred adding ontology terms",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -176,8 +168,7 @@ public class OntologyWebService extends ResourceConfig {
             for (int i=0; i<order.length; i++) {
                 order[i] = query.getOrdering().get(i);
             }
-            Ontology updateOntology = dao.reorderOntologyTerms(query.getSubjectKey(), ontologyId, parentId, order);
-            return updateOntology;
+            return dao.reorderOntologyTerms(query.getSubjectKey(), ontologyId, parentId, order);
         } catch (Exception e) {
             log.error("Error occurred reordering ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -204,9 +195,7 @@ public class OntologyWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("removeTermsFromOntology({},{},{},{})",subjectKey,ontologyId,parentTermId,termId);
-            Ontology updateOntology = dao.removeOntologyTerm(subjectKey, ontologyId, parentTermId, termId);
-            IndexingHelper.sendReindexingMessage(updateOntology);
-            return updateOntology;
+            return dao.removeOntologyTerm(subjectKey, ontologyId, parentTermId, termId);
         } catch (Exception e) {
             log.error("Error occurred removing ontology terms",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

@@ -1,25 +1,28 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.TaskDAO;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
-import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
+import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by goinac on 9/2/15.

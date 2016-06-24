@@ -7,10 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -27,20 +24,22 @@ import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.domain.SageArtifactExportService;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.model.domain.DomainConstants;
+import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
 import org.janelia.it.jacs.model.entity.json.JsonRelease;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
+import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 
 
@@ -56,12 +55,11 @@ public class ReleaseWebService extends ResourceConfig {
         register(JacksonFeature.class);
     }
 
-
     /**
      * Get release information.
      */
     @GET
-    @Path("releases")
+    @Path("release")
     @ApiOperation(value = "Gets Release Information",
             notes = ""
     )
@@ -118,6 +116,74 @@ public class ReleaseWebService extends ResourceConfig {
         }
 
         return Response.status(Response.Status.OK).entity(releaseList).build();
+    }
+
+    @PUT
+    @Path("release")
+    @ApiOperation(value = "Creates a Line Release using the DomainObject parameter of the DomainQuery",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully created a new release",
+                    response = DataSet.class),
+            @ApiResponse( code = 500, message = "Internal Server Error creating a release" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public LineRelease createRelease(DomainQuery query) {
+        DomainDAL dao = DomainDAL.getInstance();
+        try {
+            LineRelease release = (LineRelease)query.getDomainObject();
+            return dao.createLineRelease(query.getSubjectKey(), release.getName(), release.getReleaseDate(), release.getLagTimeMonths(), release.getDataSets());
+        } catch (Exception e) {
+            logger.error("Error occurred creating release",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @POST
+    @Path("release")
+    @ApiOperation(value = "Updates a Line Release using the DomainObject parameter of the DomainQuery",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully updated a release",
+                    response = DataSet.class),
+            @ApiResponse( code = 500, message = "Internal Server Error updating a release" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public LineRelease updateRelease(@ApiParam DomainQuery query) {
+        DomainDAL dao = DomainDAL.getInstance();
+        try {
+            return dao.save(query.getSubjectKey(), (LineRelease)query.getDomainObject());
+        } catch (Exception e) {
+            logger.error("Error occurred updating data set",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DELETE
+    @Path("release")
+    @ApiOperation(value = "Removes the Line Release using the release Id",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed a release"),
+            @ApiResponse( code = 500, message = "Internal Server Error removing a release" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                              @ApiParam @QueryParam("releaseId") final String releaseId) {
+        DomainDAL dao = DomainDAL.getInstance();
+        Reference releaseRef = Reference.createFor(LineRelease.class, new Long(releaseId));
+        try {
+            DomainObject domainObj = dao.getDomainObject(subjectKey, releaseRef);
+            dao.deleteDomainObject(subjectKey, domainObj);
+        } catch (Exception e) {
+            logger.error("Error occurred removing release",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**

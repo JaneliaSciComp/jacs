@@ -35,10 +35,8 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
@@ -72,8 +70,7 @@ public class DataSetWebService extends ResourceConfig {
     public List<DataSet> getDataSets(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            Collection<DataSet> dataSets = dao.getDataSets(subjectKey);
-            return new ArrayList<DataSet>(dataSets);
+            return dao.getDataSets(subjectKey);
         } catch (Exception e) {
             log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -168,9 +165,7 @@ public class DataSetWebService extends ResourceConfig {
     public DataSet createDataSet(DomainQuery query) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            DataSet newDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(newDataSet);
-            return newDataSet;
+            return dao.save(query.getSubjectKey(), (DataSet)query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred creating DataSet ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -192,9 +187,7 @@ public class DataSetWebService extends ResourceConfig {
     public DataSet updateDataSet(@ApiParam DomainQuery query) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            DataSet updateDataSet = (DataSet)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(updateDataSet);
-            return updateDataSet;
+            return dao.save(query.getSubjectKey(), (DataSet)query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred updating data set ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -215,10 +208,9 @@ public class DataSetWebService extends ResourceConfig {
     public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("dataSetId") final String dataSetId) {
         DomainDAL dao = DomainDAL.getInstance();
-        Reference dataSetRef = Reference.createFor(Annotation.class, new Long(dataSetId));
+        Reference dataSetRef = Reference.createFor(DataSet.class, new Long(dataSetId));
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
-            IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
             dao.deleteDomainObject(subjectKey, domainObj);
         } catch (Exception e) {
             log.error("Error occurred removing dataset",e);
@@ -235,9 +227,8 @@ public class DataSetWebService extends ResourceConfig {
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> dataSet = db.getCollection("dataSet");
-        List<String> jsonResult = new ArrayList<>();
         try {
-            jsonResult = dataSet.distinct("name",String.class)
+            List<String> jsonResult = dataSet.distinct("name",String.class)
                     .into(new ArrayList());
             jsonResult.remove(0);
             ObjectMapper objectMapper = new ObjectMapper();
