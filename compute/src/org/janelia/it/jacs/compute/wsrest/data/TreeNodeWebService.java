@@ -23,7 +23,6 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.shared.security.LDAPProvider;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +38,6 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @Context
     HttpHeaders headers;
-
-    LDAPProvider authenticator;
 
     public TreeNodeWebService() {
         register(JacksonFeature.class);
