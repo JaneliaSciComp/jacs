@@ -72,10 +72,6 @@ public class SolrWebService extends ResourceConfig {
 
             SolrDocumentList results = response.getResults();
             log.debug("searchSolrIndices called with {} and found {} results",queryParams,results.getNumFound());
-            // TODO: why this reverse? 
-//            if (query.getSortField()!=null && query.getSortField().endsWith("asc")) {
-//                Collections.reverse(results);
-//            }
             return new SolrJsonResults(results, facetValues, response.getResults().getNumFound());
 
         } catch (Exception e) {

@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.access.domain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
@@ -113,7 +114,6 @@ public class DomainDAL {
 
     public void deleteDomainObjects(String subjectKey, List<Reference> references) throws Exception {
         List<DomainObject> domainObjList = dao.getDomainObjects(null, references);
-
         for (DomainObject domainObj: domainObjList) {
             IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
             dao.remove(subjectKey, domainObj);
@@ -121,13 +121,27 @@ public class DomainDAL {
     }
 
     public void deleteDomainObject(String subjectKey, DomainObject domainObject) throws Exception {
-        IndexingHelper.sendRemoveFromIndexMessage(domainObject.getId());
         dao.remove(subjectKey, domainObject);
+        IndexingHelper.sendRemoveFromIndexMessage(domainObject.getId());
+        if (domainObject instanceof Annotation) {
+            Annotation annotation = (Annotation)domainObject;
+            DomainObject targetObject = dao.getDomainObject(null, annotation.getTarget());
+            if (targetObject!=null) {
+                IndexingHelper.sendReindexingMessage(targetObject);
+            }
+        }
     }
 
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
         T savedObj =  dao.save(subjectKey, domainObject);
         IndexingHelper.sendReindexingMessage(savedObj);
+        if (domainObject instanceof Annotation) {
+            Annotation annotation = (Annotation)domainObject;
+            DomainObject targetObject = dao.getDomainObject(null, annotation.getTarget());
+            if (targetObject!=null) {
+                IndexingHelper.sendReindexingMessage(targetObject);
+            }
+        }
         return savedObj;
     }
 
@@ -216,8 +230,7 @@ public class DomainDAL {
     }
 
     public List<Ontology> getOntologies(String subjectKey) throws Exception {
-        Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
-        return new ArrayList<>(ontologies);
+        return dao.getOntologies(subjectKey);
     }
 
     public Ontology addOntologyTerms(String subjectKey, Long ontologyId, Long parentId, List<OntologyTerm> terms, Integer index) throws Exception {
@@ -243,6 +256,10 @@ public class DomainDAL {
 
     public List<LineRelease> getLineReleases (String subjectKey) throws Exception {
         return dao.getLineReleases(subjectKey);
+    }
+
+    public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
+        return dao.createLineRelease(subjectKey, name, releaseDate, lagTimeMonths, dataSets);
     }
 
     public List<DomainObject> getChildren(String subjectKey, TreeNode treeNode) throws Exception {

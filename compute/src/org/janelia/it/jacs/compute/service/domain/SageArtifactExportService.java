@@ -72,7 +72,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     private SampleHelperNG sampleHelper;
     
     private LineRelease release;
-    private Map<String,Line> lines = new HashMap<String,Line>();
+    private Map<String,Line> lines = new HashMap<>();
     private Set<String> dataSetIds = new HashSet<>();
     private Set<String> annotatorKeys = new HashSet<>();
     

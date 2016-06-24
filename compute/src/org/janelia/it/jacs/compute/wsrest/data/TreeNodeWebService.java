@@ -1,5 +1,19 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -8,19 +22,10 @@ import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
-import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.shared.security.LDAPProvider;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.util.List;
 
 
 @Path("/data")
@@ -33,8 +38,6 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @Context
     HttpHeaders headers;
-
-    LDAPProvider authenticator;
 
     public TreeNodeWebService() {
         register(JacksonFeature.class);
@@ -55,9 +58,7 @@ public class TreeNodeWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("createTreeNode({})",query);
-            TreeNode updatedNode = (TreeNode)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(updatedNode);
-            return updatedNode;
+            return dao.save(query.getSubjectKey(), (TreeNode)query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred creating tree node",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -84,8 +85,7 @@ public class TreeNodeWebService extends ResourceConfig {
             for (int i=0; i<orderList.size(); i++) {
                 order[i] = orderList.get(i).intValue();
             }
-            TreeNode updatedNode = (TreeNode)dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
-            return updatedNode;
+            return dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
         } catch (Exception e) {
             log.error("Error occurred reordering Tree Node",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -108,12 +108,7 @@ public class TreeNodeWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("addChildren({})",query);
-            TreeNode updatedNode = (TreeNode)dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
-            List<DomainObject> children = dao.getDomainObjects(query.getSubjectKey(),query.getReferences());
-            for (DomainObject child: children) {
-                IndexingHelper.sendAddAncestorMessage(child.getId(), updatedNode.getId());
-            }
-            return updatedNode;
+            return dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
             log.error("Error occurred add children to tree node ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -137,12 +132,7 @@ public class TreeNodeWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("removeChildren({})",query);
-            TreeNode updatedNode = (TreeNode)dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
-            List<DomainObject> children = dao.getDomainObjects(query.getSubjectKey(),query.getReferences());
-            for (DomainObject child: children) {
-                IndexingHelper.sendReindexingMessage(child);
-            }
-            return updatedNode;
+            return dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
         } catch (Exception e) {
             log.error("Error occurred removing children from tree node ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

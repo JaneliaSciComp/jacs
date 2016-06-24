@@ -50,9 +50,7 @@ public class FilterWebService extends ResourceConfig {
     public Filter createFilter(@ApiParam DomainQuery query) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            Filter newFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(newFilter);
-            return newFilter;
+            return dao.save(query.getSubjectKey(), (Filter)query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred creating Search Filter ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -73,9 +71,7 @@ public class FilterWebService extends ResourceConfig {
     public Filter updateFilter(@ApiParam DomainQuery query) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            Filter updateFilter = (Filter)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(updateFilter);
-            return updateFilter;
+            return dao.save(query.getSubjectKey(), (Filter)query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred updating search filter ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

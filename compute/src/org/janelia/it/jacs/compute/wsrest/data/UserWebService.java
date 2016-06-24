@@ -9,18 +9,15 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.internal.util.Base64;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
-import org.janelia.it.jacs.model.domain.workspace.TreeNode;
-import org.janelia.it.jacs.shared.security.LDAPProvider;
-import org.janelia.it.jacs.shared.security.Token;
+import org.janelia.it.jacs.compute.wsrest.security.LDAPProvider;
+import org.janelia.it.jacs.compute.wsrest.security.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.user_data.UserToolEvent;
-import org.janelia.it.jacs.shared.security.BasicAuthToken;
+import org.janelia.it.jacs.compute.wsrest.security.BasicAuthToken;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 
 

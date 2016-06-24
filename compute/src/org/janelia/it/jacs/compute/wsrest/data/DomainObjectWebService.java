@@ -228,7 +228,9 @@ public class DomainObjectWebService extends ResourceConfig {
                         dao.deleteDomainObject(subjectKey, domainObj);
                     }
                 }
-
+                else {
+                    throw new IllegalArgumentException("Attempt to delete a non-TreeNode");
+                }
             }
         } catch (Exception e) {
             log.error("Error occurred removing object references",e);
