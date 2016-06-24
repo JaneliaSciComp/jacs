@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.shared.security;
+package org.janelia.it.jacs.compute.wsrest.security;
 
 /**
  * Created by schauderd on 6/30/15.

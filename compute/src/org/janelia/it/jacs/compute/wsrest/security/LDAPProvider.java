@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.shared.security;
+package org.janelia.it.jacs.compute.wsrest.security;
 
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.SearchCursor;

@@ -236,16 +236,6 @@
         <war warfile="${basedir}/build/jars/${secure-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
             <classes dir="${build.classes.dir}">
                 <include name="org/**/wsrest/**/*.class"/>
-                <include name="org/**/access/**/*.class"/>
-                <include name="org/**/api/*.class"/>
-                <include name="org/**/compute/engine/service/ServiceException.class"/>
-                <include name="org/**/compute/engine/service/ValidServiceException.class"/>
-                <include name="org/**/compute/launcher/indexing/IndexingHelper.class"/>
-                <include name="org/**/compute/util/**/*.class"/>
-                <include name="org/**/shared/**/*.class"/>
-                <include name="org/**/model/**/*.class"/>
-                <include name="org/**/annotation/api/*.class"/>
-                <include name="org/**/annotation/to/*.class"/>
             </classes>
             <fileset dir="${jacs.properties.dir}">
                 <include name="jacs.properties"/>
@@ -283,6 +273,15 @@
             </lib>
             <lib dir="${common.dir}/Jersey-2.19">
                 <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${shared.module}/build/jars">
+                <include name="jacs-shared.jar"/>
+            </lib>
+            <lib dir="${model.module}/build/jars">
+                <include name="jacs-model.jar"/>
+            </lib>
+            <lib dir="${build.jars.dir}">
+                <include name="compute.jar"/>
             </lib>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
