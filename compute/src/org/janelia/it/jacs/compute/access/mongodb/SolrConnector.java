@@ -55,6 +55,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.QueryModifier;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
+import scala.annotation.target.field;
 
 /**
  * A connector for loading the full text Solr index from the data in the Mongo Database. 
@@ -332,17 +333,24 @@ public class SolrConnector {
 		// Create updated Solr documents
 		List<SolrInputDocument> inputDocs = new ArrayList<>();
 		for (DomainObject domainObject : domainObjects) {
-			SolrInputDocument inputDoc = null;
-			SolrDocument existingDoc = solrDocMap.get(domainObject.getId());
+
+
 			Class clazz = domainObject.getClass();
+			if (clazz.getAnnotation(SearchType.class)==null) {
+				log.trace("Cannot index domain object without @SearchType annotation: "+domainObject);
+				continue;
+			}
+
+			SolrDocument existingDoc = solrDocMap.get(domainObject.getId());
 			Set<Field> fields = ReflectionUtils.getAllFields(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
 			Set<Method> methods = ReflectionUtils.getAllMethods(clazz, ReflectionUtils.withAnnotation(SearchAttribute.class));
 
+			SolrInputDocument inputDoc;
 			if (existingDoc!=null) {
 				// generate ancestor list
 				Set<Long> ancestorIds = new HashSet<>();
-				TreeNode treeNode = null;
 				DomainObject testObj = domainObject;
+				TreeNode treeNode;
 				int depth = 0;
 				while (depth<10 && (treeNode=dao.getParentTreeNodes(null, Reference.createFor(testObj)))!=null) {
 					ancestorIds.add(treeNode.getId());
