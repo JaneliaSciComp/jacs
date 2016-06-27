@@ -429,7 +429,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         // Look up data set folder and apply the same permissions to the data set object, since the folders will not be migrated
 
-        List<Entity> folders = getEntitiesByNameAndTypeName(dataSetEntity.getOwnerKey(), dataSetEntity.getName(), EntityConstants.TYPE_FOLDER);
+        List<Entity> folders = getUserEntitiesByNameAndTypeName(dataSetEntity.getOwnerKey(), dataSetEntity.getName(), EntityConstants.TYPE_FOLDER);
         if (folders.isEmpty()) {
             log.warn("Could not find data set folder for "+dataSetEntity.getName());
         }
@@ -437,7 +437,6 @@ public class MongoDbImport extends AnnotationDAO {
             if (folders.size()>1) {
                 log.warn("More than one data set folder with name "+dataSetEntity.getName());
             }
-
             Entity dataSetFolder = folders.get(0);
             dataset.setReaders(getSubjectKeysWithPermission(dataSetFolder, "r"));
             dataset.setWriters(getSubjectKeysWithPermission(dataSetFolder, "w"));
