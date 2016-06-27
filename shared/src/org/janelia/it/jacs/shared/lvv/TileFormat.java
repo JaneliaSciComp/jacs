@@ -560,7 +560,7 @@ public class TileFormat
 		int xyz[] = {z.getX(), z.getY(), z.getZ()};
 		int depthAxis = sliceAxis.index();
 		for (int i = 0; i < 3; ++i) {
-			if ( (i == depthAxis) && (indexStyle == TileIndex.IndexStyle.QUADTREE) )
+			if ( (i == depthAxis) && (indexStyle == TileIndex.IndexStyle.QUADTREE  ||  indexStyle == TileIndex.IndexStyle.OCTREE) )
 				continue; // don't zoom on slice axis in quadtree mode
 			xyz[i] *= zoomFactor;
 		}
@@ -594,7 +594,7 @@ public class TileFormat
 		int xyz[] = {v.getX(), v.getY(), v.getZ()};
 		int depthAxis = sliceAxis.index();
 		for (int i = 0; i < 3; ++i) {
-			if ( (i == depthAxis) && (indexStyle == TileIndex.IndexStyle.QUADTREE) )
+			if ( (i == depthAxis) && (indexStyle == TileIndex.IndexStyle.QUADTREE  ||  indexStyle == TileIndex.IndexStyle.OCTREE) )
 				continue; // don't zoom on slice axis in quadtree mode
 			xyz[i] /= zoomFactor;
 		}
