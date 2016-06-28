@@ -479,6 +479,21 @@
     </operation>
 
     <operation>
+        <description>Synchronize the line release folders for the given release</description>
+        <name>runSyncReleaseFolders</name>
+        <parameter>
+            <description>User to run as (e.g. "nerna")</description>
+            <name>owner</name>
+            <type>java.lang.String</type>
+        </parameter>
+        <parameter>
+            <description>Name of the release to export (e.g. "2016.1")</description>
+            <name>releaseName</name>
+            <type>java.lang.String</type>
+        </parameter>
+    </operation>
+
+    <operation>
         <description>Export artifacts for all annotated samples of the given release to SAGE</description>
         <name>runSageArtifactExport</name>
         <parameter>
