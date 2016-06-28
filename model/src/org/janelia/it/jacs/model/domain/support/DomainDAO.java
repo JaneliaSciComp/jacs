@@ -1032,6 +1032,7 @@ public class DomainDAO {
             refs.add(reference.toString());
         }
         int i = 0;
+        List<Reference> added = new ArrayList<>();
         for (Reference ref : references) {
             if (ref.getTargetId() == null) {
                 throw new IllegalArgumentException("Cannot add child without an id");
@@ -1049,12 +1050,15 @@ public class DomainDAO {
             else {
                 treeNode.addChild(ref);
             }
+            added.add(ref);
             i++;
         }
         log.info("Adding {} children to TreeNode#{}",i,treeNode.getId());
         saveImpl(subjectKey, treeNode);
 
-        syncPermissions(treeNode.getOwnerKey(), treeNode.getClass().getSimpleName(), treeNode.getId(), treeNode);
+        for (Reference ref : added) {
+            syncPermissions(treeNode.getOwnerKey(), ref.getTargetClassName(), ref.getTargetId(), treeNode);
+        }
 
         return getDomainObject(subjectKey, treeNode);
     }
@@ -1138,17 +1142,13 @@ public class DomainDAO {
         changePermissions(subjectKey, className, ids, Arrays.asList(granteeKey), rights, grant);
     }
 
-    public void changePermissions(String subjectKey, String className, Long id, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
-        changePermissions(subjectKey, className, Arrays.asList(id), granteeKeys, rights, grant);
-    }
-
-    public void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
+    private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
         Collection<String> readers = rights.contains("r") ? granteeKeys : new ArrayList<String>();
         Collection<String> writers = rights.contains("w") ? granteeKeys : new ArrayList<String>();
         changePermissions(subjectKey, className, ids, readers, writers, grant);
     }
 
-    public void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers,  Collection<String> writers, boolean grant) throws Exception {
+    private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers, boolean grant) throws Exception {
 
         String collectionName = DomainUtils.getCollectionName(className);
 
@@ -1241,10 +1241,8 @@ public class DomainDAO {
     }
 
     public void syncPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate) throws Exception {
-        // TODO: this could be optimized to do both r/w at the same time
-        changePermissions(ownerKey, className, id, permissionTemplate.getReaders(), "r", true);
-        changePermissions(ownerKey, className, id, permissionTemplate.getWriters(), "w", true);
-        // TODO: should be deleted if they dont exist in the permission template?
+        changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true);
+        // TODO: should permissions be deleted if they dont exist in the permission template (true sync)?
     }
 
     // Copy and pasted from ReflectionUtils in shared module
@@ -1303,6 +1301,6 @@ public class DomainDAO {
 //            }
 //        }
 
-        dao.changePermissions("group:heberleinlab", DataSet.class.getSimpleName(), 1831437750079848537L, Arrays.asList("user:rokickik", "user:saffordt"), "r", false);
+//        dao.changePermissions("group:heberleinlab", DataSet.class.getSimpleName(), 1831437750079848537L, Arrays.asList("user:rokickik", "user:saffordt"), "r", false);
     }
 }
