@@ -80,7 +80,10 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
 	            Date completionDate = sample.getCompletionDate();
 	            if (completionDate!=null) {
 	                String status = sample.getStatus();
-	                if (DomainConstants.VALUE_BLOCKED.equals(status)) {
+                    if (sample.getSageSynced()!=null && sample.getSageSynced()==false) {
+                        logger.info("    Sample is not synchronized to SAGE");
+                    }
+	                else if (DomainConstants.VALUE_BLOCKED.equals(status)) {
 	                    logger.info("    Sample is blocked");
 	                }
 	                else if (DomainConstants.VALUE_RETIRED.equals(status)) {
