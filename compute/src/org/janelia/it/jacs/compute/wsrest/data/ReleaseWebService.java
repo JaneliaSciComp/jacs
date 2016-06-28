@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,8 +36,6 @@ import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
-import org.janelia.it.jacs.model.entity.json.JsonRelease;
-import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 
@@ -69,21 +66,15 @@ public class ReleaseWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    public Response getReleasesInfo() {
-
-        List<JsonRelease> releaseList = new ArrayList<>();
-
+    public List<LineRelease> getReleasesInfo() {
+        DomainDAL dao = DomainDAL.getInstance();
         try {
-            for(LineRelease release : DomainDAL.getInstance().getDomainObjects(null, LineRelease.class)) {
-                releaseList.add(new JsonRelease(release));
-            }
+            return dao.getDomainObjects(null, LineRelease.class);
         }
         catch (Exception e) {
-            logger.error("Problem getting releases",e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            logger.error("Error occurred getting datasets",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-
-        return Response.status(Response.Status.OK).entity(releaseList).build();
     }
 
     /**
@@ -100,22 +91,16 @@ public class ReleaseWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    public Response getReleaseInfo(
+    public List<LineRelease> getReleaseInfo(
             @ApiParam @PathParam("releaseName")String releaseName) {
-
-        List<JsonRelease> releaseList = new ArrayList<>();
-
+        DomainDAL dao = DomainDAL.getInstance();
         try {
-            for(LineRelease release : DomainDAL.getInstance().getDomainObjectsByName(null, LineRelease.class, releaseName)) {
-                releaseList.add(new JsonRelease(release));
-            }
+            return dao.getDomainObjectsByName(null, LineRelease.class, releaseName);
         }
         catch (Exception e) {
-            logger.error("Problem getting releases",e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            logger.error("Error occurred getting datasets",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
-
-        return Response.status(Response.Status.OK).entity(releaseList).build();
     }
 
     @PUT
@@ -135,7 +120,8 @@ public class ReleaseWebService extends ResourceConfig {
         try {
             LineRelease release = (LineRelease)query.getDomainObject();
             return dao.createLineRelease(query.getSubjectKey(), release.getName(), release.getReleaseDate(), release.getLagTimeMonths(), release.getDataSets());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error occurred creating release",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -157,7 +143,8 @@ public class ReleaseWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (LineRelease)query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error occurred updating data set",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -180,7 +167,8 @@ public class ReleaseWebService extends ResourceConfig {
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, releaseRef);
             dao.deleteDomainObject(subjectKey, domainObj);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error occurred removing release",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -235,7 +223,7 @@ public class ReleaseWebService extends ResourceConfig {
                 for(TreeNode lineFolder : dal.getDomainObjectsAs(releaseFolder.getChildren(), TreeNode.class)) {
 
                     // Get all sample annotations
-                    Multimap<Long, Annotation> annotationsByTarget = HashMultimap.<Long, Annotation>create();
+                    Multimap<Long, Annotation> annotationsByTarget = HashMultimap.create();
                     for (Annotation annotation : dal.getAnnotations(null, lineFolder.getChildren())) {
                         annotationsByTarget.put(annotation.getTarget().getTargetId(), annotation);
                     }
@@ -277,22 +265,10 @@ public class ReleaseWebService extends ResourceConfig {
             }
         }
         catch (Exception e) {
-            return getErrorResponse(context, Response.Status.INTERNAL_SERVER_ERROR,
-                    "Problem getting release status" + releaseName);
+            logger.error("Error occurred getting release status",e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         return Response.status(Response.Status.OK).entity(lines).build();
-    }
-
-    private Response getErrorResponse(String context, Response.Status status, String errorMessage)  {
-        return getErrorResponse(context, status, errorMessage, null);
-    }
-
-    private Response getErrorResponse(String context, Response.Status status, String errorMessage, Exception e)  {
-        final RestfulWebServiceFailure failure = new RestfulWebServiceFailure(errorMessage, e);
-        if (e != null) {
-            logger.error(context + errorMessage, e);
-        }
-        return Response.status(status).entity(failure).build();
     }
 }

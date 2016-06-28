@@ -337,7 +337,7 @@ public class DomainDAO {
                 list.add((T) object);
             }
             else {
-                throw new IllegalArgumentException("Referenced object is " + object.getClass().getSimpleName() + " not " + clazz.getSimpleName());
+                log.warn("Referenced object is " + object.getClass().getSimpleName() + " not " + clazz.getSimpleName());
             }
         }
         return list;

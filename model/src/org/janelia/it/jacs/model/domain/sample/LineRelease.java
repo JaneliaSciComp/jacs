@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.support.MongoMapped;
-import org.janelia.it.jacs.model.domain.support.SearchType;
 
 /**
  * A release definition which controls how Samples are released and published to the external website. 
@@ -16,6 +16,7 @@ import org.janelia.it.jacs.model.domain.support.SearchType;
 @MongoMapped(collectionName="release",label="Line Release")
 public class LineRelease extends AbstractDomainObject {
 
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     private Date releaseDate;
     private Integer lagTimeMonths;
     private boolean sageSync;    
