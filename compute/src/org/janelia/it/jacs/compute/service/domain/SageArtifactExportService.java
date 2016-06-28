@@ -98,7 +98,7 @@ public class SageArtifactExportService extends AbstractDomainService {
 
     private Experiment releaseExperiment;
     private Map<Long,Annotation> currLineAnnotationMap = new HashMap<>();
-    private List<String> exportedNames = new ArrayList<String>();
+    private List<String> exportedNames = new ArrayList<>();
     
     private Date createDate;
     
@@ -123,7 +123,6 @@ public class SageArtifactExportService extends AbstractDomainService {
         logger.info("Data sets: "+dataSetIds);
 
         annotatorKeys.addAll(release.getAnnotators());
-        annotatorKeys.add(release.getOwnerKey());
         logger.info("Annotators: "+annotatorKeys);
         
         this.publicationOntology = getPublicationOntology();
@@ -459,7 +458,7 @@ public class SageArtifactExportService extends AbstractDomainService {
                     logger.info("    Using existing primary image: "+tileSourceImage.getId());
                 }
                 
-                synchronizeSecondaryImages(postResult, tileSourceImage, imageTile.tileName, objective);
+                synchronizeSecondaryImages(postResult, tileSourceImage, imageTile.tileName);
                 exportedNames.add(tileSourceImage.getName());
             }
             
@@ -467,7 +466,7 @@ public class SageArtifactExportService extends AbstractDomainService {
                 logger.debug("      Synchronizing stitched image for area '"+imageArea.areaName+"'");
                 // Merged LSM, create new primary image for the merged tile
                 Image areaSourceImage = getOrCreatePrimaryImage(objectiveSample, imageArea.stitchedImage, line, areaSageImages, publishingUser);
-                synchronizeSecondaryImages(postResult, areaSourceImage, imageArea.stitchedImage.tag, objective);
+                synchronizeSecondaryImages(postResult, areaSourceImage, imageArea.stitchedImage.tag);
                 exportedNames.add(areaSourceImage.getName());
             }
         }
@@ -573,7 +572,7 @@ public class SageArtifactExportService extends AbstractDomainService {
             logger.debug("      Created SAGE primary image "+image.getId());
         }
         
-        List<CvTerm> keys = new ArrayList<CvTerm>(consensusValues.keySet());
+        List<CvTerm> keys = new ArrayList<>(consensusValues.keySet());
         Collections.sort(keys, new Comparator<CvTerm>() {
 			@Override
 			public int compare(CvTerm o1, CvTerm o2) {
@@ -593,7 +592,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         return image;
     }
 
-    private void synchronizeSecondaryImages(SamplePostProcessingResult artifactRun, Image sourceImage, String tag, String objective) throws Exception {
+    private void synchronizeSecondaryImages(SamplePostProcessingResult artifactRun, Image sourceImage, String tag) throws Exception {
         logger.debug("    Synchronizing secondary images for image: "+sourceImage.getName());
         List<Integer> sageIds = new ArrayList<>();
         
@@ -658,7 +657,7 @@ public class SageArtifactExportService extends AbstractDomainService {
             currObservationMap.put(observation.getType().getName(), observation);
         }
 
-        Multimap<Long,Annotation> annotationDeduper = HashMultimap.<Long,Annotation>create();
+        Multimap<Long,Annotation> annotationDeduper = HashMultimap.create();
         for(Annotation annotation : currLineAnnotationMap.values()) {
             if (!annotatorKeys.contains(annotation.getOwnerKey())) {
                 continue;
