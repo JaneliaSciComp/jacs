@@ -4,7 +4,6 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -15,7 +14,6 @@ import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
@@ -54,7 +52,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
-import static java.util.Arrays.asList;
 
 /**
  * Data access object for the domain object model.
@@ -1056,6 +1053,9 @@ public class DomainDAO {
         }
         log.info("Adding {} children to TreeNode#{}",i,treeNode.getId());
         saveImpl(subjectKey, treeNode);
+
+        syncPermissions(treeNode.getOwnerKey(), treeNode.getClass().getSimpleName(), treeNode.getId(), treeNode);
+
         return getDomainObject(subjectKey, treeNode);
     }
 
@@ -1143,6 +1143,12 @@ public class DomainDAO {
     }
 
     public void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
+        Collection<String> readers = rights.contains("r") ? granteeKeys : new ArrayList<String>();
+        Collection<String> writers = rights.contains("w") ? granteeKeys : new ArrayList<String>();
+        changePermissions(subjectKey, className, ids, readers, writers, grant);
+    }
+
+    public void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers,  Collection<String> writers, boolean grant) throws Exception {
 
         String collectionName = DomainUtils.getCollectionName(className);
 
@@ -1150,22 +1156,13 @@ public class DomainDAO {
         String iter = grant ? "$each" : "$in";
         String withClause = "{"+op+":{readers:{"+iter+":#},writers:{"+iter+":#}}}";
 
-        List<String> readers = new ArrayList<>();
-        List<String> writers = new ArrayList<>();
-        for(String granteeKey : granteeKeys) {
-            if (rights.contains("r")) readers.add(granteeKey);
-            if (rights.contains("w")) writers.add(granteeKey);
-        }
-
-        log.debug("withClause: " + withClause);
-
         String logIds = ids.size() < 6 ? "" + ids : ids.size() + " ids";
 
         if (grant) {
-            log.info("Granting {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKeys);
+            log.info("Granting permissions on {} documents with ids {} to readers:{}, writers:{}", collectionName, logIds, readers, writers);
         }
         else {
-            log.info("Revoking {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKeys);
+            log.info("Revoking permissions on {} documents with ids {} to readers:{}, writers:{}", collectionName, logIds, readers, writers);
         }
 
         MongoCollection collection = getCollectionByName(collectionName);
@@ -1189,7 +1186,7 @@ public class DomainDAO {
 
                         for (String refClassName : groupedIds.keySet()) {
                             Collection<Long> refIds = groupedIds.get(refClassName);
-                            changePermissions(subjectKey, refClassName, refIds, granteeKeys, rights, grant);
+                            changePermissions(subjectKey, refClassName, refIds, readers, writers, grant);
                         }
                     }
                 }
