@@ -172,7 +172,7 @@ public class BasicMIPandMovieGenerationService extends AbstractDomainGridService
         
         // Monitor Fiji and take periodic screenshots, killing it eventually
         script.append("fpid=$!\n");
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 1800));
         
         // Encode avi movies as mp4 and delete the input avi's
         script.append("cd $TEMP_DIR\n");
@@ -193,7 +193,7 @@ public class BasicMIPandMovieGenerationService extends AbstractDomainGridService
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 20;
+    	return 50;
     }
 
 	@Override
