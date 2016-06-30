@@ -790,11 +790,10 @@ public class DomainDAO {
         try {
             Date now = new Date();
             if (domainObject.getId() == null) {
-                Set<String> subjects = Sets.newHashSet(subjectKey);
                 domainObject.setId(getNewId());
                 domainObject.setOwnerKey(subjectKey);
-                domainObject.setReaders(subjects);
-                domainObject.setWriters(subjects);
+                domainObject.getReaders().add(subjectKey);
+                domainObject.getWriters().add(subjectKey);
                 domainObject.setCreationDate(now);
                 domainObject.setUpdatedDate(now);
                 collection.save(domainObject);
