@@ -2645,17 +2645,25 @@ public class MongoDbImport extends AnnotationDAO {
     
     private Filter getDataSetFilter(String name, String ownerKey, String dataSetIdentifier) {
         Date now = new Date();
+
         Filter filter = new Filter();
         filter.setId(dao.getNewId());
         filter.setName(name);
         filter.setOwnerKey(ownerKey); // Important: the new filter is owned by the parent owner
-        filter.setSearchClass(Sample.class.getName());
+        filter.setSearchClass(Sample.class.getSimpleName());
         filter.setCreationDate(now);
         filter.setUpdatedDate(now);
+
         FacetCriteria dataSetCriteria = new FacetCriteria();
         dataSetCriteria.setAttributeName("dataSet");
         dataSetCriteria.setValues(Sets.newHashSet(dataSetIdentifier));
         filter.addCriteria(dataSetCriteria);
+
+        FacetCriteria syncFacet = new FacetCriteria();
+        syncFacet.setAttributeName("sageSynced");
+        syncFacet.setValues(Sets.newHashSet("true"));
+        filter.addCriteria(syncFacet);
+
         filterCollection.insert(filter);
         return filter;
     }
