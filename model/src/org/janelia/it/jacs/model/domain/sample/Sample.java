@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.interfaces.IsParent;
@@ -16,11 +18,6 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Ordering;
 
 /**
  * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 
@@ -70,7 +67,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="visited_b",label="Visited")
     private Boolean visited = false;
     
-    @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized")
+    @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private Boolean sageSynced = false;
 
     @SearchAttribute(key="compression_txt",label="Compression Type")
