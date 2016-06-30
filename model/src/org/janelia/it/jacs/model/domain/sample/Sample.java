@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.interfaces.IsParent;
@@ -75,9 +76,11 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="compression_txt",label="Compression Type")
     private String compressionType;
 
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     @SearchAttribute(key="tmog_dt",label="TMOG Date")
     private Date tmogDate;
-    
+
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
     

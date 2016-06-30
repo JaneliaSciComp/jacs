@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.interfaces.HasAnatomicalArea;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
@@ -32,11 +33,13 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="bcomp_txt",label="Brightness Compensation")
     private String brightnessCompensation;
 
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
     
     // SAGE Terms
 
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     @SAGEAttribute(cvName="image_query", termName="create_date")
     @SearchAttribute(key="tmog_dt",label="TMOG Date")
     private Date tmogDate;
@@ -77,6 +80,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="bps_s",label="Bits/Sample")
     private Integer bitsPerSample;
 
+    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
     @SAGEAttribute(cvName="light_imagery", termName="capture_date")
     @SearchAttribute(key="capture_dt",label="Capture Date")
     private Date captureDate;

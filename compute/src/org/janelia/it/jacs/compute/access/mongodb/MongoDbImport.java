@@ -15,9 +15,7 @@ import java.util.regex.Pattern;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Sets;
-import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.MongoDatabase;
 import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
@@ -71,7 +69,8 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.MongoCollection;
 import org.reflections.ReflectionUtils;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * Data access to the MongoDB data store.
@@ -429,7 +428,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         // Look up data set folder and apply the same permissions to the data set object, since the folders will not be migrated
 
-        List<Entity> folders = getEntitiesByNameAndTypeName(dataSetEntity.getOwnerKey(), dataSetEntity.getName(), EntityConstants.TYPE_FOLDER);
+        List<Entity> folders = getUserEntitiesByNameAndTypeName(dataSetEntity.getOwnerKey(), dataSetEntity.getName(), EntityConstants.TYPE_FOLDER);
         if (folders.isEmpty()) {
             log.warn("Could not find data set folder for "+dataSetEntity.getName());
         }
@@ -437,7 +436,6 @@ public class MongoDbImport extends AnnotationDAO {
             if (folders.size()>1) {
                 log.warn("More than one data set folder with name "+dataSetEntity.getName());
             }
-
             Entity dataSetFolder = folders.get(0);
             dataset.setReaders(getSubjectKeysWithPermission(dataSetFolder, "r"));
             dataset.setWriters(getSubjectKeysWithPermission(dataSetFolder, "w"));
@@ -1447,16 +1445,16 @@ public class MongoDbImport extends AnnotationDAO {
         if (number!=null) {
             neuronFragment.setNumber(Integer.parseInt(number));
         }
+
         if (separationEntity!=null) {
             neuronFragment.setSeparationId(separationEntity.getId());
             neuronFragment.setFilepath(getFilepath(separationEntity));
-        }
-
-        List<Document> fragmentWeight = fragmentWeightsCollection.find(and(
-                eq("separationId", separationEntity.getId()),
-                eq("fragmentId", fragmentEntity.getId()))).into(new ArrayList());
-        if (fragmentWeight!=null && fragmentWeight.size()>0) {
-            neuronFragment.setVoxelWeight(Integer.parseInt(fragmentWeight.get(0).getString("voxelWeight")));
+            List<Document> fragmentWeight = fragmentWeightsCollection.find(and(
+                    eq("separationId", separationEntity.getId()),
+                    eq("fragmentId", fragmentEntity.getId()))).into(new ArrayList());
+            if (fragmentWeight!=null && fragmentWeight.size()>0) {
+                neuronFragment.setVoxelWeight(Integer.parseInt(fragmentWeight.get(0).getString("voxelWeight")));
+            }
         }
 
         Map < FileType, String > images = new HashMap<>();
@@ -2542,7 +2540,7 @@ public class MongoDbImport extends AnnotationDAO {
     	}
 
         // Dump all user search results, because it takes forever to import them all (due to translation), and they don't really jive with the new way of Filtering anyway.
-        if ("Search Results".equals(folderEntity.getName()) && EntityUtils.isProtected(folderEntity)) {
+        if (folderEntity.getName().startsWith("Search Results #") && EntityUtils.isProtected(folderEntity)) {
             return null;
         }
         

@@ -51,10 +51,4 @@
             <context-root>/rest-v1</context-root>
         </web>
     </module>
-    <module>
-        <web>
-            <web-uri>compute-rest-ws.war</web-uri>
-            <context-root>/rest-ml</context-root>
-        </web>
-    </module>
 </application>

@@ -43,6 +43,7 @@ public interface SampleDataManagerMBean {
     
     // SAGE database
     public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab, String debug, String lock);
+    public void runSyncReleaseFolders(String owner, String releaseName);
     public void runSageArtifactExport(String owner, String releaseName);
     public void runSageArtifactExport();
     public void runSageQiScoreSync(Boolean testRun);

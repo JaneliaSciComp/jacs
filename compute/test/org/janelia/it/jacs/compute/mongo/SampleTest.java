@@ -201,13 +201,13 @@ public class SampleTest extends MongoDbTest {
         }
         System.out.println("getCommonRootEntities('user:nerna') took "+(System.currentTimeMillis()-start)+" ms and returned "+roots);
         
-        start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","sample",1977172557152911458L,"user:rokickik","r",true);
-        System.out.println("grantPermissions('GMR_MB122B-20140131_19_A1') took "+(System.currentTimeMillis()-start)+" ms");
-        
-        start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","sample",1977172557152911458L,"user:rokickik","r",false);
-        System.out.println("revokePermissions('GMR_MB122B-20140131_19_A1') took "+(System.currentTimeMillis()-start)+" ms");
+//        start = System.currentTimeMillis();
+//        dao.changePermissions("user:nerna","sample",1977172557152911458L,"user:rokickik","r",true);
+//        System.out.println("grantPermissions('GMR_MB122B-20140131_19_A1') took "+(System.currentTimeMillis()-start)+" ms");
+//
+//        start = System.currentTimeMillis();
+//        dao.changePermissions("user:nerna","sample",1977172557152911458L,"user:rokickik","r",false);
+//        System.out.println("revokePermissions('GMR_MB122B-20140131_19_A1') took "+(System.currentTimeMillis()-start)+" ms");
 
         // Count the number of items in the "Pan Lineage 40x" tree
         start = System.currentTimeMillis();
@@ -261,13 +261,13 @@ public class SampleTest extends MongoDbTest {
         int count = count(subjectKey, folderId);
         System.out.println("4) count entity tree returned "+count+" and took "+(System.currentTimeMillis()-start)+" ms");
         
-        start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","treeNode",1889491952735354978L,"user:rokickik","r",true);
-        System.out.println("Grant on nerna's Polarity Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
-        
-        start = System.currentTimeMillis();
-        dao.changePermissions("user:nerna","treeNode",1889491952735354978L,"user:rokickik","r",false);
-        System.out.println("Revoke on nerna's Polarity Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
+//        start = System.currentTimeMillis();
+//        dao.changePermissions("user:nerna","treeNode",1889491952735354978L,"user:rokickik","r",true);
+//        System.out.println("Grant on nerna's Polarity Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
+//
+//        start = System.currentTimeMillis();
+//        dao.changePermissions("user:nerna","treeNode",1889491952735354978L,"user:rokickik","r",false);
+//        System.out.println("Revoke on nerna's Polarity Case 1 and took "+(System.currentTimeMillis()-start)+" ms");
     }
     
     private int count(String subjectKey, Long nodeId) {

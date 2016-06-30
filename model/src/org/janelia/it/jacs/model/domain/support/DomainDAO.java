@@ -4,7 +4,6 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -15,7 +14,6 @@ import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
@@ -54,7 +52,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.mongodb.client.model.Projections.fields;
 import static com.mongodb.client.model.Projections.include;
-import static java.util.Arrays.asList;
 
 /**
  * Data access object for the domain object model.
@@ -340,7 +337,7 @@ public class DomainDAO {
                 list.add((T) object);
             }
             else {
-                throw new IllegalArgumentException("Referenced object is " + object.getClass().getSimpleName() + " not " + clazz.getSimpleName());
+                log.warn("Referenced object is " + object.getClass().getSimpleName() + " not " + clazz.getSimpleName());
             }
         }
         return list;
@@ -1035,6 +1032,7 @@ public class DomainDAO {
             refs.add(reference.toString());
         }
         int i = 0;
+        List<Reference> added = new ArrayList<>();
         for (Reference ref : references) {
             if (ref.getTargetId() == null) {
                 throw new IllegalArgumentException("Cannot add child without an id");
@@ -1052,10 +1050,16 @@ public class DomainDAO {
             else {
                 treeNode.addChild(ref);
             }
+            added.add(ref);
             i++;
         }
         log.info("Adding {} children to TreeNode#{}",i,treeNode.getId());
         saveImpl(subjectKey, treeNode);
+
+        for (Reference ref : added) {
+            syncPermissions(treeNode.getOwnerKey(), ref.getTargetClassName(), ref.getTargetId(), treeNode);
+        }
+
         return getDomainObject(subjectKey, treeNode);
     }
 
@@ -1138,11 +1142,13 @@ public class DomainDAO {
         changePermissions(subjectKey, className, ids, Arrays.asList(granteeKey), rights, grant);
     }
 
-    public void changePermissions(String subjectKey, String className, Long id, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
-        changePermissions(subjectKey, className, Arrays.asList(id), granteeKeys, rights, grant);
+    private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
+        Collection<String> readers = rights.contains("r") ? granteeKeys : new ArrayList<String>();
+        Collection<String> writers = rights.contains("w") ? granteeKeys : new ArrayList<String>();
+        changePermissions(subjectKey, className, ids, readers, writers, grant);
     }
 
-    public void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> granteeKeys, String rights, boolean grant) throws Exception {
+    private void changePermissions(String subjectKey, String className, Collection<Long> ids, Collection<String> readers, Collection<String> writers, boolean grant) throws Exception {
 
         String collectionName = DomainUtils.getCollectionName(className);
 
@@ -1150,22 +1156,13 @@ public class DomainDAO {
         String iter = grant ? "$each" : "$in";
         String withClause = "{"+op+":{readers:{"+iter+":#},writers:{"+iter+":#}}}";
 
-        List<String> readers = new ArrayList<>();
-        List<String> writers = new ArrayList<>();
-        for(String granteeKey : granteeKeys) {
-            if (rights.contains("r")) readers.add(granteeKey);
-            if (rights.contains("w")) writers.add(granteeKey);
-        }
-
-        log.debug("withClause: " + withClause);
-
         String logIds = ids.size() < 6 ? "" + ids : ids.size() + " ids";
 
         if (grant) {
-            log.info("Granting {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKeys);
+            log.info("Granting permissions on {} documents with ids {} to readers:{}, writers:{}", collectionName, logIds, readers, writers);
         }
         else {
-            log.info("Revoking {} permissions on all {} documents with ids {} to {}", rights, collectionName, logIds, granteeKeys);
+            log.info("Revoking permissions on {} documents with ids {} to readers:{}, writers:{}", collectionName, logIds, readers, writers);
         }
 
         MongoCollection collection = getCollectionByName(collectionName);
@@ -1189,7 +1186,7 @@ public class DomainDAO {
 
                         for (String refClassName : groupedIds.keySet()) {
                             Collection<Long> refIds = groupedIds.get(refClassName);
-                            changePermissions(subjectKey, refClassName, refIds, granteeKeys, rights, grant);
+                            changePermissions(subjectKey, refClassName, refIds, readers, writers, grant);
                         }
                     }
                 }
@@ -1244,10 +1241,8 @@ public class DomainDAO {
     }
 
     public void syncPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate) throws Exception {
-        // TODO: this could be optimized to do both r/w at the same time
-        changePermissions(ownerKey, className, id, permissionTemplate.getReaders(), "r", true);
-        changePermissions(ownerKey, className, id, permissionTemplate.getWriters(), "w", true);
-        // TODO: should be deleted if they dont exist in the permission template?
+        changePermissions(ownerKey, className, Arrays.asList(id), permissionTemplate.getReaders(), permissionTemplate.getWriters(), true);
+        // TODO: should permissions be deleted if they dont exist in the permission template (true sync)?
     }
 
     // Copy and pasted from ReflectionUtils in shared module
@@ -1306,6 +1301,6 @@ public class DomainDAO {
 //            }
 //        }
 
-        dao.changePermissions("group:heberleinlab", DataSet.class.getSimpleName(), 1831437750079848537L, Arrays.asList("user:rokickik", "user:saffordt"), "r", false);
+//        dao.changePermissions("group:heberleinlab", DataSet.class.getSimpleName(), 1831437750079848537L, Arrays.asList("user:rokickik", "user:saffordt"), "r", false);
     }
 }
