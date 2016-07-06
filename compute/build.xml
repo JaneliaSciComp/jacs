@@ -146,7 +146,6 @@
                 <include name="org/janelia/it/jacs/compute/service/common/grid/submit/GridProcessResult.class"/>
                 <include name="org/janelia/it/jacs/compute/service/common/grid/submit/sge/RemoteJobStatusLogger.class"/>
                 <include name="org/janelia/it/jacs/compute/api/JobControlBeanRemote.class"/>
-                <include name="org/janelia/it/jacs/model/**/*.class"/>
             </fileset>
             <fileset dir="${basedir}/conf/drmaa">
                 <include name="**"/>
@@ -154,13 +153,13 @@
             <fileset dir="${jacs.properties.dir}">
                 <include name="jacs.properties"/>
             </fileset>
+            <zipfileset src="${model.module}/build/jars/jacs-model.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/Spring/log4j-1.2.14.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/Spring/commons-logging.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/Spring/spring.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/GWT/gwt-servlet.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/JBoss-Server-4.2.3.GA/jbossall-client.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/JBoss-Server-4.2.3.GA/concurrent.jar" excludes="META-INF/** meta-inf/**"/>
-        	
             <fileset dir="${build.unzipped.dir}">
                 <include name="**/*.properties"/>
                 <include name="com/**"/>
@@ -468,7 +467,6 @@
         <!--build drmaa file -->
         <antcall target="build">
            <param name="jacs.properties.dir" value="${temp.dir}"/>
-           <param name="build.jars.dir" value="${temp.dir}"/>
         </antcall>
  
         <!--stop jboss server and give it time to shutdown-->
@@ -499,7 +497,7 @@
          <!--copy ear file -->
         <echo message="Copying ${localname}.ear file to server" />
         <exec executable="${scp}" description="Publishing ear file">
-            <arg line="${scp.common.params} ${temp.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/server/default/deploy/${localname}.ear"/>
+            <arg line="${scp.common.params} ${build.jars.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/server/default/deploy/${localname}.ear"/>
         </exec>
     	
          <!--copy jars -->
@@ -508,7 +506,7 @@
             <arg line="${scp.common.params} ${shared.module}/build/jars/jacs-grid.jar ${server.username}@${server.address}:${Grid.Jar.Path}"/>
         </exec>
         <exec executable="${scp}">
-            <arg line="${scp.common.params} ${temp.dir}/${drmaa.jar.name} ${server.username}@${server.address}:${Drmaa.Submitter.Jar.Path}"/>
+            <arg line="${scp.common.params} ${build.jars.dir}/${drmaa.jar.name} ${server.username}@${server.address}:${Drmaa.Submitter.Jar.Path}"/>
         </exec>
         <exec executable="${scp}">
             <arg line="${scp.common.params} ${basedir}/scripts/${FromPropFile.Drmaa.Submitter.Script.Name} ${server.username}@${server.address}:${Drmaa.Submitter.Script.Path}"/>
