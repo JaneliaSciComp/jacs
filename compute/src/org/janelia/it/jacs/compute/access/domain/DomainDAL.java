@@ -294,10 +294,14 @@ public class DomainDAL {
     public void changePermissions(String subjectKey, String targetClass, Long targetId, String granteeKey, String rights,
                                   Boolean grant) throws Exception {
         dao.changePermissions(subjectKey, targetClass, targetId, granteeKey, rights, grant);
+        DomainObject domainObj = dao.getDomainObject(subjectKey, Reference.createFor(targetClass, targetId));
+        IndexingHelper.sendReindexingMessage(domainObj);
     }
 
     public void syncPermissions(String subjectKey, String className, Long id, DomainObject permissionTemplate) throws Exception {
         dao.syncPermissions(subjectKey, className, id, permissionTemplate);
+        DomainObject domainObj = dao.getDomainObject(subjectKey, Reference.createFor(className, id));
+        IndexingHelper.sendReindexingMessage(domainObj);
     }
     public List<Preference> getPreferences(String subjectKey) throws Exception {
         return dao.getPreferences(subjectKey);
