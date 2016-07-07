@@ -412,7 +412,17 @@ public class MongoDbImport extends AnnotationDAO {
         if (sampleNamePattern!=null) {
             dataset.setSampleNamePattern(sampleNamePattern);
         }
-        
+
+        String sageConfigPath = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_CONFIG_PATH);
+        if (sageConfigPath!=null) {
+            dataset.setSageConfigPath(sageConfigPath);
+        }
+
+        String sageGrammarPath = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_GRAMMAR_PATH);
+        if (sageGrammarPath!=null) {
+            dataset.setSageGrammarPath(sageGrammarPath);
+        }
+
         String pipelineProcess = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
         if (pipelineProcess!=null) {
         	List<String> processNames = new ArrayList<>();
