@@ -322,8 +322,12 @@
         
     </target>
 
-    <target name="clear">
-        <delete file="${basedir}/build/*" verbose="true"/>
+    <target name="clean">
+        <delete includeEmptyDirs="true">
+            <fileset dir="${basedir}/build">
+                <include name="*/**" />
+            </fileset>
+        </delete>
     </target>
     	
     <!-- Defines the set of targets that should be run to completely build this module. -->
