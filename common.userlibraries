@@ -420,7 +420,6 @@
         <archive path="/common/Jersey-2.19/commons-io-2.4.jar"/>
         <archive path="/common/Jersey-2.19/commons-lang-2.6.jar"/>
         <archive path="/common/Jersey-2.19/commons-logging-1.2.jar"/>
-        <archive path="/common/Jersey-2.19/guava-11.0.2.jar"/>
         <archive path="/common/Jersey-2.19/gwt-user-2.7.0.jar"/>
         <archive path="/common/Jersey-2.19/hk2-api-2.4.0-b25.jar"/>
         <archive path="/common/Jersey-2.19/hk2-locator-2.4.0-b25.jar"/>
