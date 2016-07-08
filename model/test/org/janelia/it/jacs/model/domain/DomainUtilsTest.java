@@ -36,7 +36,6 @@ public class DomainUtilsTest {
         filter.setName("New Filter");
         filter.setSearchString("GMR");
         filter.setSearchClass("org.janelia.it.jacs.model.domain.sample.Sample");
-        filter.setSort("id");
 
         AttributeValueCriteria criteria = new AttributeValueCriteria();
         criteria.setAttributeName("age");
@@ -48,7 +47,6 @@ public class DomainUtilsTest {
         Assert.assertEquals("New Filter", clone.getName());
         Assert.assertEquals("GMR", clone.getSearchString());
         Assert.assertEquals("org.janelia.it.jacs.model.domain.sample.Sample", clone.getSearchClass());
-        Assert.assertEquals("id", clone.getSort());
         Assert.assertEquals(1, clone.getCriteriaList().size());
         AttributeValueCriteria clonedCriteria = (AttributeValueCriteria)clone.getCriteriaList().get(0);
         Assert.assertEquals("age", clonedCriteria.getAttributeName());

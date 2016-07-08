@@ -36,6 +36,7 @@ public class DomainConstants {
     public static final String PREFERENCE_CATEGORY_DOMAIN_OBJECT_SUBTITLES = "DomainObjectSubtitles";
     public static final String PREFERENCE_CATEGORY_NEURON_SEPARATION_VISIBILITY = "NeuronSepVisibility";
     public static final String PREFERENCE_CATEGORY_KEYBINDS_ONTOLOGY = "Keybind:Ontology:";
+    public static final String PREFERENCE_CATEGORY_SORT_CRITERIA = "SortCriteria";
 
     public static final String GENERAL_USER_GROUP_KEY = "group:workstation_users";
     

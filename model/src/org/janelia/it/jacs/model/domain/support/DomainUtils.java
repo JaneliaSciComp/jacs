@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.support;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Ordering;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -445,6 +447,41 @@ public class DomainUtils {
     }
 
     /**
+     * Sort the given list of domain objects by the given sort criteria. The sort criteria is a name of a field found
+     * on all the domain objects. If any of the domain objects are missing the field, then they will be treated as having
+     * a null sort value, and will be sorted to the end of the list. The sortCriteria may be prepended with a + or - to
+     * indicate sorting direction.
+     * @param domainObjects
+     * @param sortCriteria
+     */
+    public static void sortDomainObjects(List<? extends DomainObject> domainObjects, String sortCriteria) {
+
+        if (StringUtils.isEmpty(sortCriteria)) return;
+        final String sortField = (sortCriteria.startsWith("-") || sortCriteria.startsWith("+")) ? sortCriteria.substring(1) : sortCriteria;
+        final boolean ascending = !sortCriteria.startsWith("-");
+
+        final Map<DomainObject, Object> fieldValues = new HashMap<>();
+        for (DomainObject domainObject : domainObjects) {
+            Object value = getFieldValue(domainObject, sortField);
+            fieldValues.put(domainObject, value);
+        }
+
+        Collections.sort(domainObjects, new Comparator<DomainObject>() {
+            @Override
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            public int compare(DomainObject o1, DomainObject o2) {
+                Comparable v1 = (Comparable) fieldValues.get(o1);
+                Comparable v2 = (Comparable) fieldValues.get(o2);
+                Ordering ordering = Ordering.natural().nullsLast();
+                if (!ascending) {
+                    ordering = ordering.reverse();
+                }
+                return ComparisonChain.start().compare(v1, v2, ordering).result();
+        }
+        });
+    }
+
+    /**
      * Generate a list of ids for the given domain objects.
      * @param domainObjects
      * @return
@@ -522,7 +559,6 @@ public class DomainUtils {
         newFilter.setName(filter.getName());
         newFilter.setSearchString(filter.getSearchString());
         newFilter.setSearchClass(filter.getSearchClass());
-        newFilter.setSort(filter.getSort());
         if (filter.hasCriteria()) {
             for(Criteria criteria : filter.getCriteriaList()) {
                 newFilter.addCriteria(cloneCriteria(criteria));
@@ -581,5 +617,46 @@ public class DomainUtils {
         System.out.println("getObjectClass(image): "+DomainUtils.getBaseClass("image"));
         System.out.println("getSubClasses(TreeNode.class): " + DomainUtils.getSubClasses(TreeNode.class));
         System.out.println("getObjectClasses(image): "+DomainUtils.getObjectClasses("image"));
+    }
+
+    public static Object getFieldValue(DomainObject o1, String fieldName) {
+        try {
+            return org.janelia.it.jacs.shared.utils.ReflectionUtils.get(o1, fieldName);
+        }
+        catch (Exception e) {
+            log.error("Error getting field value "+fieldName,e);
+            return null;
+        }
+    }
+
+    public static List<DomainObjectAttribute> getUniqueAttributes(Collection<DomainObject> domainObjects) {
+        Set<Class<? extends DomainObject>> domainClasses = new HashSet<>();
+        for(DomainObject domainObject : domainObjects) {
+            domainClasses.add(domainObject.getClass());
+        }
+        return getUniqueAttributes(domainClasses.toArray(new Class[domainClasses.size()]));
+    }
+
+    public static List<DomainObjectAttribute> getUniqueAttributes(Class<? extends DomainObject>... domainClasses) {
+
+        Set<DomainObjectAttribute> attrSet = new HashSet<>();
+
+        for(Class<? extends DomainObject> domainClass : domainClasses) {
+            for (DomainObjectAttribute attr : getSearchAttributes(domainClass)) {
+                if (attr.isDisplay()) {
+                    attrSet.add(attr);
+                }
+            }
+        }
+
+        List<DomainObjectAttribute> attrs = new ArrayList<>(attrSet);
+        Collections.sort(attrs, new Comparator<DomainObjectAttribute>() {
+            @Override
+            public int compare(DomainObjectAttribute o1, DomainObjectAttribute o2) {
+                return o1.getLabel().compareTo(o2.getLabel());
+            }
+        });
+
+        return attrs;
     }
 }
