@@ -3048,6 +3048,7 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     private Set<Annotation> getAnnotations(Long id) {
+        if (largeOp==null) return new HashSet<>();
         return (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ETL_ANNOTATION_MAP, id);
     }
     
