@@ -21,7 +21,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchTraversal({})
     private Reference sampleRef;
 
-    @SearchAttribute(key="sage_synced_b",label="Synchronized to SAGE")
+    @SearchAttribute(key="sage_synced_b",label="Synchronized to SAGE",facet="sage_synced_b")
     private Boolean sageSynced = false;
     
     @SearchAttribute(key="chancolors_txt",label="Channel Colors")
