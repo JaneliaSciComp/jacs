@@ -1,4 +1,4 @@
-import static org.janelia.it.jacs.model.entity.EntityConstants.*
+package entity
 
 import org.apache.log4j.Logger
 import org.janelia.it.jacs.compute.api.AnnotationBeanRemote
@@ -6,7 +6,6 @@ import org.janelia.it.jacs.compute.api.ComputeBeanRemote
 import org.janelia.it.jacs.compute.api.EntityBeanRemote
 import org.janelia.it.jacs.compute.api.SolrBeanRemote
 import org.janelia.it.jacs.model.entity.Entity
-import org.janelia.it.jacs.model.entity.EntityConstants
 import org.janelia.it.jacs.model.entity.EntityData
 import org.janelia.it.jacs.model.user_data.Subject
 import org.janelia.it.jacs.shared.solr.SolrResults
@@ -17,6 +16,8 @@ import org.janelia.it.workstation.api.facade.concrete_facade.ejb.EJBFactory
 import org.janelia.it.workstation.api.facade.facade_mgr.FacadeManager
 import org.janelia.it.workstation.gui.framework.exception_handlers.ExitHandler
 import org.janelia.it.workstation.gui.framework.session_mgr.SessionMgr
+
+import static org.janelia.it.jacs.model.entity.EntityConstants.*
 
 public class JacsUtils {
 
