@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.compute.access.domain;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -104,6 +103,10 @@ public class DomainDAL {
         return dao.getDomainObjectsByName(subjectKey, clazz, name);
     }
 
+    public <T extends DomainObject> List<T> getUserDomainObjectsByName(String subjectKey, Class<T> clazz,  String name) throws Exception {
+        return dao.getUserDomainObjectsByName(subjectKey, clazz, name);
+    }
+    
     public <T extends DomainObject> List<T> getDomainObjectsAs(List<Reference> references, Class<T> clazz) throws Exception {
         return getDomainObjectsAs(null, references, clazz);
     }
@@ -181,7 +184,7 @@ public class DomainDAL {
         return dao.getDataSetByIdentifier(subjectKey, identifier);
     }
 
-    public List getLsmsBySampleId(String subjectKey, Long sampleId) {
+    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
         return dao.getLsmsBySampleId(subjectKey, sampleId);
     }
 

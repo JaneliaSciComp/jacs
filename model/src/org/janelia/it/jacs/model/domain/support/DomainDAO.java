@@ -511,6 +511,26 @@ public class DomainDAO {
     }
 
     /**
+     * Get the domain object by name.
+     */
+    public <T extends DomainObject> List<T> getUserDomainObjectsByName(String subjectKey, Class<T> domainClass, String name) {
+
+        if (domainClass == null || name == null) {
+            return null;
+        }
+
+        long start = System.currentTimeMillis();
+        log.trace("getUserDomainObjectsByName(subjectKey={},className=" + domainClass.getName() + ",name=" + name + ")");
+
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCursor<T> cursor = getCollectionByName(collectionName).find("{ownerKey:#,name:#}", subjectKey, name).as(domainClass);
+
+        List<T> list = toList(cursor);
+        log.trace("Getting " + list.size() + " " + collectionName + " objects took " + (System.currentTimeMillis() - start) + " ms");
+        return list;
+    }
+
+    /**
      * Get domain objects of a given type with a given specified property value.
      */
     public <T extends DomainObject> List<T> getDomainObjectsWithProperty(String subjectKey, Class<T> domainClass, String propName, String propValue) {
