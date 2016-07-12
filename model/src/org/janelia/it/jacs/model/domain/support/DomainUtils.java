@@ -12,6 +12,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.LinkedHashMultiset;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Ordering;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -35,16 +44,6 @@ import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.LinkedHashMultiset;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Ordering;
 
 /**
  * Utility methods for dealing with the domain model. 
@@ -317,8 +316,14 @@ public class DomainUtils {
         return "("+domainObject.getName()+", @"+System.identityHashCode(domainObject)+")";
     }
     
-    public static String getFilepath(HasFiles hasFiles, String role) {
-        return getFilepath(hasFiles, FileType.valueOf(role));
+    public static String getFilepath(HasFiles hasFiles, String fileTypeName) {
+        try {
+            return getFilepath(hasFiles, FileType.valueOf(fileTypeName));
+        }
+        catch (IllegalArgumentException e) {
+            log.error("No such file type: "+fileTypeName,e);
+            return null;
+        }
     }
     
     public static String getFilepath(HasFiles hasFiles, FileType fileType) {
@@ -326,7 +331,22 @@ public class DomainUtils {
         if (hasFiles==null) return null;
         Map<FileType,String> files = hasFiles.getFiles();
         if (files==null) return null;
-        String filepath = files.get(fileType);
+
+        log.trace("getFilepath(files:{}, fileType:{})",files,fileType);
+
+        String filepath = null;
+        if (fileType.equals(FileType.FirstAvailable2d) || fileType.equals(FileType.FirstAvailable3d)) {
+            for(FileType type : FileType.values()) {
+                if ((fileType.equals(FileType.FirstAvailable2d) && type.is2dImage()) || (fileType.equals(FileType.FirstAvailable3d) && !type.is2dImage())) {
+                    filepath = files.get(type);
+                    if (filepath!=null) break;
+                }
+            }
+        }
+        else {
+            filepath = files.get(fileType);
+        }
+
         if (filepath==null) return null;
 
         if (filepath.startsWith("/")) {
