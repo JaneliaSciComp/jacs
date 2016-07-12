@@ -101,10 +101,14 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
                 }
 
                 numResults++;
-
-                SampleAlignmentResult alignment = sampleHelper.addNewAlignmentResult(run, resultName);
+                
+                // TODO: there should be a better way of determining the area. It should be provided as one of the output properties.
+                String aa = stackFilename.contains("VNC") ? "VNC" : "Brain";
+                
+                SampleAlignmentResult alignment = sampleHelper.addNewAlignmentResult(run, resultName + " ("+aa+")");
                 alignment.setFilepath(rootPath);
-
+                alignment.setAnatomicalArea(aa);    
+                
                 contextLogger.info("Created new alignment result: "+alignment.getId());
                 alignmentIds.add(alignment.getId());
 
@@ -117,15 +121,6 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
             	DomainUtils.setFilepath(alignment, FileType.ReferenceMip, refMip);
             	DomainUtils.setFilepath(alignment, FileType.SignalMip, signalMip);
             	
-                // TODO: there should be a better way of determining the area.
-                // It should be provided as one of the output properties.
-                if (stackFilename.contains("VNC")) {
-                    alignment.setAnatomicalArea("VNC");    
-                }
-                else {
-                    alignment.setAnatomicalArea("Brain");
-                }
-                
                 String verifyFilename = properties.getProperty("alignment.verify.filename");
                 if (verifyFilename!=null) {
                     File verifyFile = fileMap.get(verifyFilename);
