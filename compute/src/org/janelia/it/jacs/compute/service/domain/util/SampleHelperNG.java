@@ -272,7 +272,6 @@ public class SampleHelperNG extends DomainHelper {
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
 
-        boolean sampleNew = false;
         boolean sampleDirty = false;
         boolean needsReprocessing = lsmDirty;
         
@@ -280,7 +279,6 @@ public class SampleHelperNG extends DomainHelper {
         if (sample.getId()==null) {
             sampleDirty = true;
             needsReprocessing = true;
-            sampleNew = true;
         }
                 
         if (setSampleAttributes(dataSet, sample, objectiveGroups.values())) {
@@ -932,7 +930,7 @@ public class SampleHelperNG extends DomainHelper {
 
         if (dataSets!=null) return;
 
-        this.dataSets = domainDAL.getDomainObjects(ownerKey, DataSet.class);
+        this.dataSets = domainDAL.getUserDomainObjects(ownerKey, DataSet.class);
 
         if (dataSetNameFilter != null) {
             List<DataSet> filteredDataSets = new ArrayList<>();
