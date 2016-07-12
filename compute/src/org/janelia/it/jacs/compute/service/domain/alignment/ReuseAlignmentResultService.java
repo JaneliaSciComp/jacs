@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.service.domain.alignment;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.janelia.it.jacs.compute.service.align.ParameterizedAlignmentAlgorithm;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
@@ -7,7 +10,6 @@ import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.support.DomainUtils;
 
 /**
  * Find the latest alignment entity in the given sample, and add it to the given pipeline run.
@@ -28,20 +30,25 @@ public class ReuseAlignmentResultService extends AbstractDomainService {
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
 
-        SampleAlignmentResult latestAr = objectiveSample.getLatestResultOfType(SampleAlignmentResult.class, paa.getResultName());
-        if (latestAr!=null) {
+        boolean reuse = false;
+        Set<String> alignmentNames = new HashSet<>();
+        
+        for(SampleAlignmentResult latestAr : objectiveSample.getLatestResultsOfType(SampleAlignmentResult.class)) {
+        	if (!alignmentNames.contains(latestAr.getName()) && latestAr.getName().startsWith(paa.getResultName())) {
                 sampleHelper.addResult(run, latestAr);
                 contextLogger.info("Reusing alignment result "+latestAr.getId()+" for "+latestAr.getName()+" in new pipeline run "+run.getId());
-                String alignedFilename = DomainUtils.getDefault3dImageFilePath(latestAr);
-                processData.putItem("ALIGNED_FILENAME", alignedFilename);    
-                contextLogger.info("Putting '"+alignedFilename+"' in ALIGNED_FILENAME");
-                processData.putItem("RUN_ALIGNMENT", Boolean.FALSE);    
-                contextLogger.info("Putting '"+Boolean.FALSE+"' in RUN_ALIGNMENT");
+                alignmentNames.add(latestAr.getName());
+                reuse = true;
+        	}
+        }
+
+        if (reuse) {
+	        sampleHelper.saveSample(sample);
+	        processData.putItem("RUN_ALIGNMENT", Boolean.FALSE);    
+	        contextLogger.info("Putting '"+Boolean.FALSE+"' in RUN_ALIGNMENT");
         }
         else {
             contextLogger.info("No existing alignment with name '"+paa.getResultName()+"' available for reuse for sample: "+sample.getId());
         }
-        
-        sampleHelper.saveSample(sample);
     }
 }
