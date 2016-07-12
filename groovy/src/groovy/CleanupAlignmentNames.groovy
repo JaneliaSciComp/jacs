@@ -1,4 +1,5 @@
 import org.janelia.it.jacs.model.domain.sample.*
+import org.janelia.it.jacs.model.domain.support.DomainDAO
 
 /**
  * Walk all samples and change the sample alignment names to append the anatomical area to each one.
@@ -7,8 +8,8 @@ import org.janelia.it.jacs.model.domain.sample.*
  */
 class CleanupAlignmentNamesScript {
 
-    def DEBUG = false
-    def dao = DomainDAOManager.instance.dao
+    boolean DEBUG = true
+    DomainDAO dao = DomainDAOManager.instance.dao
 
     public void run() {
 
