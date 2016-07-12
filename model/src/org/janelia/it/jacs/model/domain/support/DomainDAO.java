@@ -385,6 +385,10 @@ public class DomainDAO {
         return getDomainObjects(subjectKey, clazz, ids);
     }
 
+    public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, Class<T> domainClass) {
+        return getDomainObjects(subjectKey, domainClass, null);
+    }
+    
     /**
      * Get the domain objects in the given collection name with the specified ids.
      */
