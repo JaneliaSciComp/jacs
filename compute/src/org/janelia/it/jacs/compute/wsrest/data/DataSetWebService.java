@@ -138,7 +138,7 @@ public class DataSetWebService extends ResourceConfig {
                 results = dataset.find()
                         .into(new ArrayList());
             }
-            log.info(results.toString());
+            log.trace(results.toString());
             for (Document result: results) {
                 if (sageSync!=null && sageSync && !result.getBoolean(("sageSync")))
                     continue;
