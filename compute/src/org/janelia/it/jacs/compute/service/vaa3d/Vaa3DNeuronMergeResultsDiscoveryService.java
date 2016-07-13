@@ -58,7 +58,7 @@ public class Vaa3DNeuronMergeResultsDiscoveryService implements IService{
             createDate = new Date();
             task = ProcessDataHelper.getTask(processData);
             NeuronSeparation separation = domainDAL.getNeuronSeparation(subject.getKey(), Long.valueOf(task.getParameter(NeuronMergeTask.PARAM_separationEntityId)));
-            sample = domainDAL.getSampleBySeparationId(separation.getId());
+            sample = domainDAL.getSampleBySeparationId(subject.getKey(), separation.getId());
             logger.info("Separation Id is " + separation.getId());
             // if the collection doesn't exist add it
             CuratedNeuron curatedNeuron = createCuratedNeuronCollection(separation);

@@ -55,11 +55,12 @@ public class TreeNodeWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode createTreeNode(@ApiParam DomainQuery query) {
+        log.debug("createTreeNode({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("createTreeNode({})",query);
             return dao.save(query.getSubjectKey(), (TreeNode)query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred creating tree node",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -77,16 +78,17 @@ public class TreeNodeWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode reorderTreeNode(@ApiParam DomainQuery query) {
+        log.debug("reorderTreeNode({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("reorderTreeNode({})",query);
             List<Integer> orderList = query.getOrdering();
             int[] order = new int[orderList.size()];
             for (int i=0; i<orderList.size(); i++) {
                 order[i] = orderList.get(i).intValue();
             }
             return dao.reorderChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), order);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred reordering Tree Node",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -105,11 +107,12 @@ public class TreeNodeWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode addChildren(@ApiParam DomainQuery query) {
+        log.debug("addChildren({})",query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("addChildren({})",query);
             return dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred add children to tree node ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -129,11 +132,12 @@ public class TreeNodeWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode removeChildren(@ApiParam DomainQuery query) {
+        log.debug("removeChildren({})",query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("removeChildren({})",query);
             return dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred removing children from tree node ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

@@ -30,8 +30,7 @@ import org.slf4j.LoggerFactory;
 @Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
 public class TaskWebService {
-    private static final Logger LOG = LoggerFactory.getLogger(TaskWebService.class);
-    private static final int DEFAULT_MAX_LENGTH = 100;
+    private static final Logger log = LoggerFactory.getLogger(TaskWebService.class);
     private TaskDAO taskDAO = new TaskDAO();
 
     @GET
@@ -49,6 +48,7 @@ public class TaskWebService {
                                       @QueryParam("offset") Integer offset,
                                       @QueryParam("length") Integer length,
                                       @Context UriInfo uriInfo) {
+        log.debug("getAllTasks({}, offset={}, length={})", owner, offset, length);
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -61,7 +61,8 @@ public class TaskWebService {
                 jsonTasks.add(jsonTask);
             }
             return jsonTasks;
-        } finally {
+        }
+        finally {
             HibernateSessionUtils.closeSession(dbSession);
         }
     }
@@ -79,6 +80,7 @@ public class TaskWebService {
     })
     public JsonTask getTask(@QueryParam("owner") String owner,
                             @QueryParam("task-id") Long taskId, @Context UriInfo uriInfo) {
+        log.debug("getTask({}, taskId={})", owner, taskId);
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -96,7 +98,8 @@ public class TaskWebService {
                 }
                 return mainTask;
             }
-        } finally {
+        }
+        finally {
             HibernateSessionUtils.closeSession(dbSession);
         }
         throw new IllegalArgumentException("Record not found");
@@ -115,6 +118,7 @@ public class TaskWebService {
     })
     public List<JsonTaskEvent> getTaskEvents(@QueryParam("owner") String owner,
                                              @QueryParam("task-id") Long taskId) {
+        log.debug("getTaskEvents({}, taskId={})", owner, taskId);
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -126,7 +130,8 @@ public class TaskWebService {
                 }
                 return taskEvents;
             }
-        } finally {
+        }
+        finally {
             HibernateSessionUtils.closeSession(dbSession);
         }
         throw new IllegalArgumentException("Record not found");

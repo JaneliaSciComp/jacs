@@ -1,24 +1,39 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
-import java.util.*;
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import java.util.List;
+import java.util.Map;
 
-import io.swagger.annotations.*;
-import org.glassfish.jersey.jackson.JacksonFeature;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.internal.util.Base64;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.wsrest.security.BasicAuthToken;
 import org.janelia.it.jacs.compute.wsrest.security.LDAPProvider;
 import org.janelia.it.jacs.compute.wsrest.security.Token;
+import org.janelia.it.jacs.model.domain.Preference;
+import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.user_data.UserToolEvent;
+import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.janelia.it.jacs.model.domain.Preference;
-import org.janelia.it.jacs.model.user_data.UserToolEvent;
-import org.janelia.it.jacs.compute.wsrest.security.BasicAuthToken;
-import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.shared.utils.DomainQuery;
 
 
 @Path("/data")
@@ -50,9 +65,10 @@ public class UserWebService extends ResourceConfig {
             @ApiResponse( code = 500, message = "Internal Server Error trying to login" )
     })
     @Produces(MediaType.APPLICATION_JSON)
-    public Subject loginSubject () {
+    public Subject loginSubject() {
         // user authentication
         BasicAuthToken userInfo = (BasicAuthToken)getCredentials();
+        log.debug("loginSubject({})", userInfo.getUsername());
         if (authenticator.login(userInfo)) {
             // check subjects, if subject doesn't exist for this user and they are in jacsdata,
             // create the account
@@ -65,7 +81,8 @@ public class UserWebService extends ResourceConfig {
                     return dao.save(newUser);
                 }
                 return user;
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 log.error("Error occurred authenticating user",e);
                 throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
             }
@@ -98,9 +115,9 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Subject> getSubjects() {
+        log.debug("getSubjects()");
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.trace("getSubjects()");
             return dao.getSubjects();
         }
         catch (Exception e) {
@@ -123,9 +140,9 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Subject getSubjectByKey(@QueryParam("subjectKey") String subjectKey) {
+        log.debug("getSubjectByKey({})", subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getSubjectByKey({})",subjectKey);
             return dao.getSubjectByKey(subjectKey);
         }
         catch (Exception e) {
@@ -147,9 +164,9 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Preference> getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+        log.debug("getPreferences({})",subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getPreferences({})",subjectKey);
             return dao.getPreferences(subjectKey);
         }
         catch (Exception e) {
@@ -170,9 +187,9 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Preference setPreferences(DomainQuery query) {
+        log.debug("setPreferences({})",query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("setPreferences({},{})",query.getSubjectKey(),query.getPreference());
             return dao.save(query.getSubjectKey(), query.getPreference());
         }
         catch (Exception e) {
@@ -195,9 +212,9 @@ public class UserWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public void changePermissions(@ApiParam Map<String, Object> params) {
+        log.debug("changePermissions({})",params);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("changePermissions({})",params);
             dao.changePermissions((String) params.get("subjectKey"), (String) params.get("targetClass"), (Long)params.get("targetId"),
                     (String) params.get("granteeKey"), (String) params.get("rights"), ((Boolean) params.get("grant")).booleanValue());
         }
@@ -206,7 +223,6 @@ public class UserWebService extends ResourceConfig {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     private Token getCredentials() {
         List<String> authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION);

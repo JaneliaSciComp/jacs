@@ -76,4 +76,15 @@ public class Subject implements HasIdentifier, Serializable {
         this.groups = groups;
     }
 
+    @Override
+    public String toString() {
+        return "Subject[" +
+                "id=" + id +
+                ", key='" + key + '\'' +
+                ", name='" + name + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", groups=" + groups +
+                ']';
+    }
 }
