@@ -698,7 +698,7 @@ public class SageArtifactExportService extends AbstractDomainService {
                 value = annotationEntity.getValue();
             }
             else if (keyTerm instanceof Tag) {
-                value = "1";
+                value = "Y";
             }
             else {
                 logger.warn("    Unsupported annotation type: "+keyTerm.getClass().getName());

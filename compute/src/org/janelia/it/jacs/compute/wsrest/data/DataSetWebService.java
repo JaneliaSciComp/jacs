@@ -22,6 +22,7 @@ import javax.ws.rs.core.SecurityContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -42,6 +43,8 @@ import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.mongodb.client.model.Filters.*;
 
 @Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
@@ -118,34 +121,40 @@ public class DataSetWebService extends ResourceConfig {
                     responseContainer = "List"),
             @ApiResponse( code = 500, message = "Internal Server Error list of dataset synced with SAGE" )
     })
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<DataSet> getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
-                                             @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
-        DomainDAL dao = DomainDAL.getInstance();
+    public String getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
+                                      @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
+        DomainDAO dao = DomainDAOManager.getInstance().getDao();
+        MongoClient m = dao.getMongo();
+        MongoDatabase db = m.getDatabase("jacs");
+        MongoCollection<Document> dataset = db.getCollection("dataSet");
         try {
-            List<DataSet> listDataSets = new ArrayList<>();
-            if (owners==null) {
-                listDataSets = dao.getDataSets(null);
+            List<Document> results = new ArrayList<>();
+            List<Document> formattedResults = new ArrayList<>();
+
+            if (owners!=null && owners.size()>0) {
+                results = dataset.find(in("ownerKey", owners))
+                        .into(new ArrayList());
             } else {
-                for (String owner: owners) {
-                    List<DataSet> ownerDataSets = dao.getDataSets(owner);
-                    if (ownerDataSets!=null) {
-                        if (sageSync) {
-                            for (DataSet dataSet: ownerDataSets) {
-                                if (dataSet.isSageSync()) {
-                                    listDataSets.add(dataSet);
-                                }
-                            }
-                        } else {
-                            listDataSets.addAll(ownerDataSets);
-                        }
-                    }
-                }
+                results = dataset.find()
+                        .into(new ArrayList());
             }
-            return listDataSets;
+            log.info(results.toString());
+            for (Document result: results) {
+                if (sageSync!=null && sageSync && !result.getBoolean(("sageSync")))
+                    continue;
+                Document newDoc = new Document();
+                newDoc.put("dataSetIdentifier", result.get("identifier"));
+                newDoc.put("name", result.get("name"));
+                if (sageSync!=null && sageSync) {
+                    newDoc.put("sageSync", "SAGE Sync");
+                }
+                newDoc.put("user", result.get("ownerKey"));
+                formattedResults.add(newDoc);
+            }
+            ObjectMapper mapper = new XmlMapper();
+            return mapper.writeValueAsString(formattedResults).replace("item>","dataSet>").replace("ArrayList","dataSetList");
         } catch (Exception e) {
-            log.error("Error occurred getting datasets using sageSync filter",e);
+            log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

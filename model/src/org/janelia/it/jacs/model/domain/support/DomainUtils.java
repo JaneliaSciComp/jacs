@@ -1,7 +1,6 @@
 package org.janelia.it.jacs.model.domain.support;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -317,8 +316,14 @@ public class DomainUtils {
         return "("+domainObject.getName()+", @"+System.identityHashCode(domainObject)+")";
     }
     
-    public static String getFilepath(HasFiles hasFiles, String role) {
-        return getFilepath(hasFiles, FileType.valueOf(role));
+    public static String getFilepath(HasFiles hasFiles, String fileTypeName) {
+        try {
+            return getFilepath(hasFiles, FileType.valueOf(fileTypeName));
+        }
+        catch (IllegalArgumentException e) {
+            log.error("No such file type: "+fileTypeName,e);
+            return null;
+        }
     }
     
     public static String getFilepath(HasFiles hasFiles, FileType fileType) {
@@ -326,7 +331,22 @@ public class DomainUtils {
         if (hasFiles==null) return null;
         Map<FileType,String> files = hasFiles.getFiles();
         if (files==null) return null;
-        String filepath = files.get(fileType);
+
+        log.trace("getFilepath(files:{}, fileType:{})",files,fileType);
+
+        String filepath = null;
+        if (fileType.equals(FileType.FirstAvailable2d) || fileType.equals(FileType.FirstAvailable3d)) {
+            for(FileType type : FileType.values()) {
+                if ((fileType.equals(FileType.FirstAvailable2d) && type.is2dImage()) || (fileType.equals(FileType.FirstAvailable3d) && !type.is2dImage())) {
+                    filepath = files.get(type);
+                    if (filepath!=null) break;
+                }
+            }
+        }
+        else {
+            filepath = files.get(fileType);
+        }
+
         if (filepath==null) return null;
 
         if (filepath.startsWith("/")) {
@@ -373,9 +393,7 @@ public class DomainUtils {
     }
     
     public static String getDefault3dImageFilePath(HasFiles hasFiles) {
-        String path = DomainUtils.getFilepath(hasFiles, FileType.LosslessStack);
-        if (path==null) path = DomainUtils.getFilepath(hasFiles, FileType.VisuallyLosslessStack);
-        return path;
+        return DomainUtils.getFilepath(hasFiles, FileType.FirstAvailable3d);
     }
 
     public static Multiset<String> get2dTypeNames(HasFileGroups hasGroups) {

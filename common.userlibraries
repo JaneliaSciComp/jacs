@@ -429,6 +429,7 @@
         <archive path="/common/Jersey-2.19/jackson-annotations-2.5.1.jar"/>
         <archive path="/common/Jersey-2.19/jackson-core-2.5.1.jar"/>
         <archive path="/common/Jersey-2.19/jackson-databind-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-dataformat-xml-2.5.1.jar"/>
         <archive path="/common/Jersey-2.19/jackson-jaxrs-base-2.5.1.jar"/>
         <archive path="/common/Jersey-2.19/jackson-jaxrs-json-provider-2.5.1.jar"/>
         <archive path="/common/Jersey-2.19/jackson-module-jaxb-annotations-2.5.1.jar"/>
@@ -445,7 +446,9 @@
         <archive path="/common/Jersey-2.19/jersey-server-2.19.jar"/>
         <archive path="/common/Jersey-2.19/osgi-resource-locator-1.0.1.jar"/>
         <archive path="/common/Jersey-2.19/reflections-0.9.9-RC1.jar"/>
+        <archive path="/common/Jersey-2.19/stax2-api-3.1.1.jar"/>
         <archive path="/common/Jersey-2.19/validation-api-1.1.0.Final.jar"/>
+        <archive path="/common/Jersey-2.19/woodstox-core-asl-4.2.0.jar"/>
         <archive path="/common/Jersey-2.19/xml-apis-1.0.b2.jar"/>
     </library>
     <library name="Jetty" systemlibrary="false">

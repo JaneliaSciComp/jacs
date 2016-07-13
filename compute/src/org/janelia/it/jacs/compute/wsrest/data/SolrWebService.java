@@ -73,9 +73,10 @@ public class SolrWebService extends ResourceConfig {
             SolrDocumentList results = response.getResults();
             log.debug("searchSolrIndices called with {} and found {} results",queryParams,results.getNumFound());
             return new SolrJsonResults(results, facetValues, response.getResults().getNumFound());
-
-        } catch (Exception e) {
-            log.error("Error occurred executing search against SOLR",e);
+        }
+        catch (Exception e) {
+            // No need to log exception because Solr helpfully prints the stack trace to STDERR (Grrrr...)
+            log.error("Error occurred executing search against SOLR");
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

@@ -128,9 +128,8 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
 					}
 				}
                 
-                SlideImage slideImage = new SlideImage(allProps);
-                LSMImage lsm = sampleHelper.createOrUpdateLSM(slideImage);
-                slideGroups.put(slideImage.getSlideCode(), lsm);
+                LSMImage lsm = sampleHelper.createOrUpdateLSM(new SlideImage(allProps));
+                slideGroups.put(lsm.getSlideCode(), lsm);
                 sageRowsProcessed++;
             }
         }

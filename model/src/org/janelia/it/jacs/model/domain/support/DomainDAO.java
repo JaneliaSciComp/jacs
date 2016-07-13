@@ -385,6 +385,10 @@ public class DomainDAO {
         return getDomainObjects(subjectKey, clazz, ids);
     }
 
+    public <T extends DomainObject> List<T> getDomainObjects(String subjectKey, Class<T> domainClass) {
+        return getDomainObjects(subjectKey, domainClass, null);
+    }
+    
     /**
      * Get the domain objects in the given collection name with the specified ids.
      */
@@ -504,6 +508,26 @@ public class DomainDAO {
         else {
             cursor = getCollectionByName(collectionName).find("{name:#,readers:{$in:#}}", name, subjects).as(domainClass);
         }
+
+        List<T> list = toList(cursor);
+        log.trace("Getting " + list.size() + " " + collectionName + " objects took " + (System.currentTimeMillis() - start) + " ms");
+        return list;
+    }
+
+    /**
+     * Get the domain object by name.
+     */
+    public <T extends DomainObject> List<T> getUserDomainObjectsByName(String subjectKey, Class<T> domainClass, String name) {
+
+        if (domainClass == null || name == null) {
+            return null;
+        }
+
+        long start = System.currentTimeMillis();
+        log.trace("getUserDomainObjectsByName(subjectKey={},className=" + domainClass.getName() + ",name=" + name + ")");
+
+        String collectionName = DomainUtils.getCollectionName(domainClass);
+        MongoCursor<T> cursor = getCollectionByName(collectionName).find("{ownerKey:#,name:#}", subjectKey, name).as(domainClass);
 
         List<T> list = toList(cursor);
         log.trace("Getting " + list.size() + " " + collectionName + " objects took " + (System.currentTimeMillis() - start) + " ms");
