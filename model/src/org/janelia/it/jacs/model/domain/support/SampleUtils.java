@@ -80,37 +80,41 @@ public class SampleUtils {
 
     public static HasFiles getResult(ObjectiveSample objectiveSample, ResultDescriptor result) {
 
-        HasFiles chosenResult = null;
+        List<SamplePipelineRun> runs = objectiveSample.getPipelineRuns();
 
-        SamplePipelineRun run = objectiveSample.getLatestSuccessfulRun();
-        if (run==null || run.getResults()==null) return null;
-        List<PipelineResult> results = run.getResults();
+        // TODO: test latest successful run first?
 
-        for(int i=results.size()-1; chosenResult==null && i>=0; i--) {
-            PipelineResult pipelineResult = results.get(i);
-            log.debug("  Testing result: " + pipelineResult.getId());
+        for(int i=runs.size()-1; i>=0; i--) {
+            SamplePipelineRun run = runs.get(i);
+            log.debug("  Testing run: " + run.getId());
 
-            if (result.isAligned()==null
-                    || (result.isAligned() && pipelineResult instanceof SampleAlignmentResult)
-                    || (!result.isAligned() && !(pipelineResult instanceof SampleAlignmentResult))) {
+            List<PipelineResult> results = run.getResults();
 
-                if (result.getResultName() == null || pipelineResult.getName().equals(result.getResultName())) {
-                    log.debug("    Found matching result");
-                    if (result.getGroupName() == null) {
-                        return pipelineResult;
-                    }
-                    else if (pipelineResult instanceof HasFileGroups) {
-                        HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
-                        HasFiles hasFiles = hasGroups.getGroup(result.getGroupName());
-                        if (hasFiles != null) {
-                            log.debug("    Found group: " + result.getGroupName());
-                            return hasFiles;
+            for (int j = results.size() - 1; j >= 0; j--) {
+                PipelineResult pipelineResult = results.get(j);
+                log.debug("  Testing result: " + pipelineResult.getId());
+
+                if (result.isAligned() == null
+                        || (result.isAligned() && pipelineResult instanceof SampleAlignmentResult)
+                        || (!result.isAligned() && !(pipelineResult instanceof SampleAlignmentResult))) {
+
+                    if (result.getResultName() == null || pipelineResult.getName().equals(result.getResultName())) {
+                        log.debug("    Found matching result");
+                        if (result.getGroupName() == null) {
+                            return pipelineResult;
+                        }
+                        else if (pipelineResult instanceof HasFileGroups) {
+                            HasFileGroups hasGroups = (HasFileGroups) pipelineResult;
+                            HasFiles hasFiles = hasGroups.getGroup(result.getGroupName());
+                            if (hasFiles != null) {
+                                log.debug("    Found group: " + result.getGroupName());
+                                return hasFiles;
+                            }
                         }
                     }
                 }
             }
         }
-
         return null;
     }
 

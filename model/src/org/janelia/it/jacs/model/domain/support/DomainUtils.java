@@ -393,9 +393,7 @@ public class DomainUtils {
     }
     
     public static String getDefault3dImageFilePath(HasFiles hasFiles) {
-        String path = DomainUtils.getFilepath(hasFiles, FileType.LosslessStack);
-        if (path==null) path = DomainUtils.getFilepath(hasFiles, FileType.VisuallyLosslessStack);
-        return path;
+        return DomainUtils.getFilepath(hasFiles, FileType.FirstAvailable3d);
     }
 
     public static Multiset<String> get2dTypeNames(HasFileGroups hasGroups) {
