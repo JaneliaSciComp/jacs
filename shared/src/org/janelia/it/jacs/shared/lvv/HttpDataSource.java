@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Date;
 
 
@@ -56,6 +57,7 @@ public class HttpDataSource {
 
     public static void setRestServer(String restServer) {
         HttpDataSource.restServer = restServer;
+        logger.info("HttpDataSource is using server " + restServer);
     }
 
     public static Long getMouseLightCurrentSampleId() {
