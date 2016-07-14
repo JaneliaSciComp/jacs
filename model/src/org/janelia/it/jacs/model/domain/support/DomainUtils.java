@@ -397,23 +397,31 @@ public class DomainUtils {
     }
 
     public static Multiset<String> get2dTypeNames(HasFileGroups hasGroups) {
+        return getTypeNames(hasGroups, true);
+    }
+
+    public static Multiset<String> get2dTypeNames(HasFiles hasFiles) {
+        return getTypeNames(hasFiles, true);
+    }
+
+    public static Multiset<String> getTypeNames(HasFileGroups hasGroups, boolean only2d) {
         Multiset<String> countedTypeNames = LinkedHashMultiset.create();
         for(String groupKey : hasGroups.getGroupKeys()) {
             log.trace("Checking group {}",groupKey);
             HasFiles hasFiles = hasGroups.getGroup(groupKey);
             if (hasFiles.getFiles()!=null) {
-                countedTypeNames.addAll(get2dTypeNames(hasFiles));
+                countedTypeNames.addAll(getTypeNames(hasFiles, only2d));
             }
         }
         return countedTypeNames;
     }
     
-    public static Multiset<String> get2dTypeNames(HasFiles hasFiles) {
+    public static Multiset<String> getTypeNames(HasFiles hasFiles, boolean only2d) {
         Multiset<String> countedTypeNames = LinkedHashMultiset.create();
         if (hasFiles.getFiles()!=null) {
             log.trace("Checking files");
             for(FileType fileType : hasFiles.getFiles().keySet()) {
-                if (!fileType.is2dImage()) continue;
+                if (only2d && !fileType.is2dImage()) continue;
                 log.trace("  Adding {}",fileType.name());
                 countedTypeNames.add(fileType.name());
             }
