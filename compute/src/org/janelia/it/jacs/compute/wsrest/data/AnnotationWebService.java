@@ -30,6 +30,8 @@ import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.janelia.it.jacs.model.domain.support.DomainUtils.abbr;
+
 @Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
 public class AnnotationWebService extends ResourceConfig {
@@ -58,7 +60,8 @@ public class AnnotationWebService extends ResourceConfig {
         try {
             log.debug("createAnnotation({})",query);
             return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred creating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -80,7 +83,8 @@ public class AnnotationWebService extends ResourceConfig {
         try {
             log.debug("updateAnnotation({})",query);
             return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred updating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -101,10 +105,10 @@ public class AnnotationWebService extends ResourceConfig {
     public List<Annotation> getAnnotations(@ApiParam DomainQuery query) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getAnnotations(DomainQuery [subjectKey={}, references={} items])",query.getSubjectKey(),query.getReferences().size());
-            log.trace("getAnnotations({})",query);
+            log.debug("getAnnotations({})",query);
             return dao.getAnnotations(query.getSubjectKey(), query.getReferences());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -128,7 +132,8 @@ public class AnnotationWebService extends ResourceConfig {
             log.debug("removeAnnotations({},{})",subjectKey,annotationId);
             DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);
             dao.deleteDomainObject(subjectKey, deleteAnnotation);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred removing annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

@@ -53,11 +53,12 @@ public class WorkspaceWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Workspace getWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+        log.debug("getWorkspace({})", subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getAllWorkspace({})", subjectKey);
             return dao.getDefaultWorkspace(subjectKey);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting default workspace",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -75,11 +76,12 @@ public class WorkspaceWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public List<Workspace> getAllWorkspace(@QueryParam("subjectKey") String subjectKey) {
+        log.debug("getAllWorkspace({})",subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getAllWorkspace({})",subjectKey);
             return dao.getUserWorkspaces(subjectKey);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting default workspace",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

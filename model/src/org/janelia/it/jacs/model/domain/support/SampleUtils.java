@@ -139,11 +139,12 @@ public class SampleUtils {
 
         String name = (chosenResult==null)?null:chosenResult.getName();
         return new ResultDescriptor(objSample.getObjective(), name, null);
-
     }
 
     public static NeuronSeparation getNeuronSeparation(Sample sample, NeuronFragment neuronFragment) {
+
         if (neuronFragment==null) return null;
+
         for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
             for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
                 if (run!=null && run.getResults()!=null) {
@@ -162,6 +163,7 @@ public class SampleUtils {
                 }
             }
         }
+
         return null;
     }
 
@@ -180,6 +182,5 @@ public class SampleUtils {
         }
 
         return scores;
-
     }
 }

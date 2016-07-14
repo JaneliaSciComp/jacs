@@ -677,4 +677,8 @@ public class DomainUtils {
 
         return attrs;
     }
+
+    public static String abbr(Collection ids) {
+        return ids.size() < 6 ? "" + ids : ids.size() + " items";
+    }
 }

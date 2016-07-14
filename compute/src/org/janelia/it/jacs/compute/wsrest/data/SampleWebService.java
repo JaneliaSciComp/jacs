@@ -1,10 +1,33 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -17,14 +40,9 @@ import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static com.mongodb.client.model.Filters.*;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.util.*;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 
 @Path("/data")
@@ -53,6 +71,7 @@ public class SampleWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<LSMImage> getLsmsForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                            @ApiParam @QueryParam("sampleId") final Long sampleId) {
+        log.debug("getLsmsForSample({}, {})", subjectKey, sampleId);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
@@ -77,6 +96,7 @@ public class SampleWebService extends ResourceConfig {
     public List<Document> getSamples(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                            @ApiParam @QueryParam("sampleId") final Long sampleId,
                            @ApiParam @QueryParam("name") final String name) {
+        log.debug("getSamples({}, {}, {})", subjectKey, sampleId, name);
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -121,7 +141,8 @@ public class SampleWebService extends ResourceConfig {
             }
 
             return results;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

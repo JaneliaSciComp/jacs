@@ -7,6 +7,8 @@ import org.janelia.it.jacs.model.domain.Preference;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
 
+import static org.janelia.it.jacs.model.domain.support.DomainUtils.abbr;
+
 /**
  * Created by schauderd on 8/24/15.
  */
@@ -109,13 +111,13 @@ public class DomainQuery {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("DomainQuery [subjectKey=");
+        StringBuilder sb = new StringBuilder("DomainQuery[subjectKey=");
         sb.append(subjectKey);
         if (references!=null) {
-            sb.append(", references=").append(references);
+            sb.append(", references=").append(abbr(references));
         }
         if (objectIds!=null) {
-            sb.append(", objectIds=").append(objectIds);
+            sb.append(", objectIds=").append(abbr(objectIds));
         }
         if (ordering!=null) {
             sb.append(", ordering=").append(ordering);
@@ -133,7 +135,7 @@ public class DomainQuery {
             sb.append(", domainObject=").append(domainObject);
         }
         if (objectList!=null) {
-            sb.append(", objectList=").append(objectList);
+            sb.append(", objectList=").append(abbr(objectList));
         }
         if (preference!=null) {
             sb.append(", preference=").append(preference);

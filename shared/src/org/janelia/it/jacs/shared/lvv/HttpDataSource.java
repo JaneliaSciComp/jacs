@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Date;
 
 
@@ -56,6 +57,7 @@ public class HttpDataSource {
 
     public static void setRestServer(String restServer) {
         HttpDataSource.restServer = restServer;
+        logger.info("HttpDataSource is using server " + restServer);
     }
 
     public static Long getMouseLightCurrentSampleId() {
@@ -103,6 +105,10 @@ public class HttpDataSource {
 
             long startTime=new Date().getTime();
             int statusCode=httpClient.executeMethod(getMethod);
+
+            // debug: sometimes you want to see all the results...comment
+            //  in and out as needed
+            // System.out.println("HttpDataSource: " + statusCode + " from " + url);
 
             // note: not all tiff tiles exist, so some will return
             //  no content (204), and that's OK
