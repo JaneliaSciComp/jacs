@@ -104,6 +104,10 @@ public class HttpDataSource {
             long startTime=new Date().getTime();
             int statusCode=httpClient.executeMethod(getMethod);
 
+            // debug: sometimes you want to see all the results...comment
+            //  in and out as needed
+            // System.out.println("HttpDataSource: " + statusCode + " from " + url);
+
             // note: not all tiff tiles exist, so some will return
             //  no content (204), and that's OK
             if (statusCode!= HttpStatus.SC_OK && statusCode != HttpStatus.SC_NO_CONTENT) {
