@@ -142,7 +142,6 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
 	                    contextLogger.warn("Found more than one default brain area to align. Using: "+alignedAreas.get(0).getName());
 	                }
 	                else {
-	                    String imagePath = DomainUtils.getDefault3dImageFilePath(result);
 	                    alignedAreas.add(anatomicalArea);
 	                    input1 = new AlignmentInputFile(areaName);
 	                    input1.setPropertiesFromEntity(result);

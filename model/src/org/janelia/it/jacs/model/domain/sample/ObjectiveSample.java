@@ -104,6 +104,17 @@ public class ObjectiveSample implements Serializable {
     }
 
     @JsonIgnore
+    public<T extends PipelineResult> List<T> getLatestResultsOfType(Class<T> resultClass) {
+        List<T> results = new ArrayList<>();
+        for(SamplePipelineRun run : Lists.reverse(getPipelineRuns())) {
+            for(T result : Lists.reverse(run.getResultsOfType(resultClass))) {
+            	results.add(result);
+            }
+        }
+        return results;
+    }
+
+    @JsonIgnore
     public <T extends PipelineResult> T getLatestResultOfType(Class<T> resultClass) {
         return getLatestResultOfType(resultClass, null);
     }

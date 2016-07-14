@@ -57,11 +57,12 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Ontology> getOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
+        log.debug("getOntologies({})", subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getOntologies({})",subjectKey);
             return dao.getOntologies(subjectKey);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -79,11 +80,12 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology createOntology(@ApiParam DomainQuery query) {
+        log.debug("createOntology({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("createOntology({})",query);
             return dao.save(query.getSubjectKey(), (Ontology)query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred creating ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -102,13 +104,14 @@ public class OntologyWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public void removeOntology(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("ontologyId") final String ontologyId) {
+        log.debug("removeOntology({}, {})", subjectKey, ontologyId);
         DomainDAL dao = DomainDAL.getInstance();
         Reference ontologyRef = Reference.createFor(Ontology.class, new Long(ontologyId));
         try {
-            log.debug("removeOntology({},{})",subjectKey,ontologyId);
             Ontology ont = (Ontology)dao.getDomainObject(subjectKey, ontologyRef);
             dao.deleteDomainObject(subjectKey, ont);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred removing ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -128,9 +131,9 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology addTermsToOntology(@ApiParam DomainQuery query) {
+        log.debug("addTermsToOntology({})",query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("addTermsToOntology({})",query);
             List<Long> objectIds = query.getObjectIds();
             Long ontologyId = objectIds.get(0);
             Long parentId = objectIds.get(1);
@@ -139,7 +142,8 @@ public class OntologyWebService extends ResourceConfig {
                 terms.add(term);
             }
             return dao.addOntologyTerms(query.getSubjectKey(), ontologyId, parentId, terms, query.getOrdering().get(0));
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred adding ontology terms",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -158,9 +162,9 @@ public class OntologyWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology reorderOntology(@ApiParam DomainQuery query) {
+        log.debug("reorderOntology({})",query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("reorderOntology({})",query);
             List<Long> objectIds = query.getObjectIds();
             Long ontologyId = objectIds.get(0);
             Long parentId = objectIds.get(1);
@@ -169,7 +173,8 @@ public class OntologyWebService extends ResourceConfig {
                 order[i] = query.getOrdering().get(i);
             }
             return dao.reorderOntologyTerms(query.getSubjectKey(), ontologyId, parentId, order);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred reordering ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -192,11 +197,12 @@ public class OntologyWebService extends ResourceConfig {
                                             @ApiParam @QueryParam("ontologyId") final Long ontologyId,
                                             @ApiParam @QueryParam("parentTermId") final Long parentTermId,
                                             @ApiParam @QueryParam("termId") final Long termId) {
+        log.debug("removeTermsFromOntology({}, ontologyId={}, parentTermId={}, termId={})",subjectKey,ontologyId,parentTermId,termId);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("removeTermsFromOntology({},{},{},{})",subjectKey,ontologyId,parentTermId,termId);
             return dao.removeOntologyTerm(subjectKey, ontologyId, parentTermId, termId);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred removing ontology terms",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

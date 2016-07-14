@@ -38,11 +38,13 @@ import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.entity.json.JsonLineStatus;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
+import org.slf4j.LoggerFactory;
 
 
 @Path("/process")
 @Api(value = "Janelia Workstation Domain Data")
 public class ReleaseWebService extends ResourceConfig {
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(DomainObjectWebService.class);
     private final Logger logger = Logger.getLogger(this.getClass());
 
     @Context
@@ -67,12 +69,13 @@ public class ReleaseWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
     public List<LineRelease> getReleasesInfo() {
+        log.debug("getReleasesInfo()");
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getDomainObjects(null, LineRelease.class);
         }
         catch (Exception e) {
-            logger.error("Error occurred getting datasets",e);
+            log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -91,14 +94,14 @@ public class ReleaseWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    public List<LineRelease> getReleaseInfo(
-            @ApiParam @PathParam("releaseName")String releaseName) {
+    public List<LineRelease> getReleaseInfo(@ApiParam @PathParam("releaseName")String releaseName) {
+        log.debug("getReleaseInfo({})", releaseName);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getDomainObjectsByName(null, LineRelease.class, releaseName);
         }
         catch (Exception e) {
-            logger.error("Error occurred getting datasets",e);
+            log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -116,13 +119,14 @@ public class ReleaseWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public LineRelease createRelease(DomainQuery query) {
+        log.debug("createRelease({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             LineRelease release = (LineRelease)query.getDomainObject();
             return dao.createLineRelease(query.getSubjectKey(), release.getName(), release.getReleaseDate(), release.getLagTimeMonths(), release.getDataSets());
         }
         catch (Exception e) {
-            logger.error("Error occurred creating release",e);
+            log.error("Error occurred creating release",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -140,12 +144,13 @@ public class ReleaseWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public LineRelease updateRelease(@ApiParam DomainQuery query) {
+        log.debug("updateRelease({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (LineRelease)query.getDomainObject());
         }
         catch (Exception e) {
-            logger.error("Error occurred updating data set",e);
+            log.error("Error occurred updating data set",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -162,6 +167,7 @@ public class ReleaseWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("releaseId") final String releaseId) {
+        log.debug("removeDataSet({}, {})", subjectKey, releaseId);
         DomainDAL dao = DomainDAL.getInstance();
         Reference releaseRef = Reference.createFor(LineRelease.class, new Long(releaseId));
         try {
@@ -169,7 +175,7 @@ public class ReleaseWebService extends ResourceConfig {
             dao.deleteDomainObject(subjectKey, domainObj);
         }
         catch (Exception e) {
-            logger.error("Error occurred removing release",e);
+            log.error("Error occurred removing release",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -191,7 +197,7 @@ public class ReleaseWebService extends ResourceConfig {
     public Response getReleaseStatus(
             @ApiParam @PathParam("releaseName")String releaseName) {
 
-        final String context = "getReleaseStatus: ";
+        log.debug("getReleaseStatus({})", releaseName);
 
         final Map<String,JsonLineStatus> lines = new HashMap<>();
 
@@ -206,12 +212,12 @@ public class ReleaseWebService extends ResourceConfig {
                 // Find the release folder
                 TreeNode topLevelFolder = sampleHelper.createOrVerifyRootEntity(release.getOwnerKey(), DomainConstants.NAME_FLY_LINE_RELEASES, false);
                 if (topLevelFolder==null) {
-                    logger.error("User "+release.getOwnerKey()+" is missing top-level folder '"+DomainConstants.NAME_FLY_LINE_RELEASES+"'");
+                    log.error("User "+release.getOwnerKey()+" is missing top-level folder '"+DomainConstants.NAME_FLY_LINE_RELEASES+"'");
                     continue;
                 }
                 TreeNode releaseFolder = sampleHelper.createOrVerifyChildFolder(topLevelFolder, release.getName(), false);
                 if (releaseFolder==null) {
-                    logger.error("User "+release.getOwnerKey()+" is missing release folder '"+release.getName()+"'");
+                    log.error("User "+release.getOwnerKey()+" is missing release folder '"+release.getName()+"'");
                     continue;
                 }
 
@@ -265,7 +271,7 @@ public class ReleaseWebService extends ResourceConfig {
             }
         }
         catch (Exception e) {
-            logger.error("Error occurred getting release status",e);
+            log.error("Error occurred getting release status",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
 

@@ -1,6 +1,21 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -20,13 +35,6 @@ import org.janelia.it.jacs.shared.solr.SolrParams;
 import org.janelia.it.jacs.shared.solr.SolrQueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.util.*;
 
 
 @Path("/data")
@@ -53,6 +61,7 @@ public class SolrWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public SolrJsonResults searchSolrIndices(@ApiParam SolrParams queryParams) {
+        log.debug("searchSolrIndices({})", queryParams);
         SolrConnector solr = WebServiceContext.getSolr();
         try {
             SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
@@ -71,11 +80,12 @@ public class SolrWebService extends ResourceConfig {
             }
 
             SolrDocumentList results = response.getResults();
-            log.debug("searchSolrIndices called with {} and found {} results",queryParams,results.getNumFound());
+            log.debug("Solr search returned {} results",results.getNumFound());
             return new SolrJsonResults(results, facetValues, response.getResults().getNumFound());
-
-        } catch (Exception e) {
-            log.error("Error occurred executing search against SOLR",e);
+        }
+        catch (Exception e) {
+            // No need to log exception because Solr helpfully prints the stack trace to STDERR (Grrrr...)
+            log.error("Error occurred executing search against SOLR");
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

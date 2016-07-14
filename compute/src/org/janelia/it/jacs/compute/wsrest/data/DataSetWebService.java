@@ -44,7 +44,7 @@ import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.in;
 
 @Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
@@ -73,8 +73,10 @@ public class DataSetWebService extends ResourceConfig {
     public List<DataSet> getDataSets(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
+            log.debug("getDataSets({})",subjectKey);
             return dao.getDataSets(subjectKey);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -92,6 +94,7 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String,String> getDatasetPipelines() {
+        log.debug("getDatasetPipelines()");
         DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<DataSet> dataSets = dao.getDataSets(null);
@@ -105,7 +108,8 @@ public class DataSetWebService extends ResourceConfig {
                 }
             }
             return results;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting dataset-pipeline information",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -123,14 +127,13 @@ public class DataSetWebService extends ResourceConfig {
     })
     public String getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
                                       @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
+        log.debug("getSageSyncDataSets(owners={}, sageSync={})", owners, sageSync);
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> dataset = db.getCollection("dataSet");
         try {
-            List<Document> results = new ArrayList<>();
-            List<Document> formattedResults = new ArrayList<>();
-
+            List<Document> results;
             if (owners!=null && owners.size()>0) {
                 results = dataset.find(in("ownerKey", owners))
                         .into(new ArrayList());
@@ -138,7 +141,9 @@ public class DataSetWebService extends ResourceConfig {
                 results = dataset.find()
                         .into(new ArrayList());
             }
-            log.info(results.toString());
+            log.trace(results.toString());
+
+            List<Document> formattedResults = new ArrayList<>();
             for (Document result: results) {
                 if (sageSync!=null && sageSync && !result.getBoolean(("sageSync")))
                     continue;
@@ -151,9 +156,11 @@ public class DataSetWebService extends ResourceConfig {
                 newDoc.put("user", result.get("ownerKey"));
                 formattedResults.add(newDoc);
             }
+
             ObjectMapper mapper = new XmlMapper();
             return mapper.writeValueAsString(formattedResults).replace("item>","dataSet>").replace("ArrayList","dataSetList");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -172,10 +179,12 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet createDataSet(DomainQuery query) {
+        log.debug("createDataSet({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (DataSet)query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred creating DataSet ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -194,10 +203,12 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet updateDataSet(@ApiParam DomainQuery query) {
+        log.debug("updateDataSet({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (DataSet)query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred updating data set ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -216,12 +227,14 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("dataSetId") final String dataSetId) {
+        log.debug("removeDataSet({}, dataSetId={})", subjectKey, dataSetId);
         DomainDAL dao = DomainDAL.getInstance();
         Reference dataSetRef = Reference.createFor(DataSet.class, new Long(dataSetId));
         try {
             DomainObject domainObj = dao.getDomainObject(subjectKey, dataSetRef);
             dao.deleteDomainObject(subjectKey, domainObj);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred removing dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -232,6 +245,7 @@ public class DataSetWebService extends ResourceConfig {
     @ApiOperation(value = "Gets a distinct list of all datasets",
             notes = "")
     public String getAllDatasets() {
+        log.debug("getAllDatasets()");
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -243,7 +257,8 @@ public class DataSetWebService extends ResourceConfig {
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
             return objectMapper.writeValueAsString(jsonResult);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting list of datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

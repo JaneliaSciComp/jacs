@@ -133,7 +133,9 @@ public class Vaa3DStitchGroupingService extends AbstractDomainGridService {
             		currGroup.add(line);
             	}
             }
-          
+    		if (!currGroup.isEmpty()) {
+    			groups.add(currGroup);
+    		}
         }
         catch (FileNotFoundException e) {
     		throw new MissingGridResultException(file.getAbsolutePath(), "Grouped output file not found at "+groupedFile.getAbsolutePath(), e);
@@ -149,6 +151,7 @@ public class Vaa3DStitchGroupingService extends AbstractDomainGridService {
     			logger.error("Error closing grouped file",e);
     		}
     	}
+
         int maxSizeIndex = 0;
         int maxSize = 0;
         
@@ -165,7 +168,6 @@ public class Vaa3DStitchGroupingService extends AbstractDomainGridService {
         
         List<String> maxGroup = groups.get(maxSizeIndex);
     	List<MergedLsmPair> newMergedLsmPairs = new ArrayList<>();
-
         List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
         	
     	for(MergedLsmPair mergedLsmPair : mergedLsmPairs) {

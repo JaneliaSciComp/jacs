@@ -204,10 +204,19 @@ public class DomainDAL {
         return dao.getNeuronFragmentsBySeparationId(subjectKey, id);
     }
 
-    public Sample getSampleBySeparationId(Long id) throws Exception {
-        return dao.getSampleBySeparationId(id);
+    public Sample getSampleBySeparationId(String subjectKey, Long id) throws Exception {
+        return dao.getSampleBySeparationId(subjectKey, id);
     }
 
+    /**
+     * Returns the neuron separation with the given id. Note that this is fine for reading neuron separation information,
+     * but this method cannot be used to update a neuron separation, because there may be multiple instances of an
+     * neuron separation with a given GUID, due to denormalization in the Sample model.
+     * @param subjectKey
+     * @param id
+     * @return
+     * @throws Exception
+     */
     public NeuronSeparation getNeuronSeparation(String subjectKey, Long id) throws Exception {
         return dao.getNeuronSeparation(subjectKey, id);
     }

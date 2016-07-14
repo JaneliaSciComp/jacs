@@ -7,6 +7,9 @@ package org.janelia.it.jacs.model.domain.enums;
  */
 public enum FileType {
 
+    FirstAvailable2d("First Available", true, false),
+    FirstAvailable3d("First Available Stack", false, false),
+
     // Stacks
     LosslessStack("Lossless Stack", false, false),
     VisuallyLosslessStack("Visually Lossless Stack", false, false),
