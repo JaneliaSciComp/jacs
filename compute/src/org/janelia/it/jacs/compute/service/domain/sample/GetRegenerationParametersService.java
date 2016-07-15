@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.entity.sample;
+package org.janelia.it.jacs.compute.service.domain.sample;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.janelia.it.jacs.compute.service.align.AlignmentInputFile;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.tasks.Task;
 
 /**
@@ -17,14 +15,9 @@ import org.janelia.it.jacs.model.tasks.Task;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class GetRegenerationParametersService extends AbstractEntityService {
+public class GetRegenerationParametersService extends AbstractDomainService {
 	
     public void execute() throws Exception {
-
-    	Long sampleId = data.getRequiredItemAsLong("SAMPLE_ENTITY_ID");
-    	Entity parentEntity = entityBean.getAncestorWithType(ownerKey, sampleId, EntityConstants.TYPE_SAMPLE);
-    	Long parentSampleId = parentEntity==null ? sampleId : parentEntity.getId();
-		data.putItem("REGENERATE_SAMPLE_ID", parentSampleId);
 		
     	List<AlignmentInputFile> alignmentInputFiles = (List<AlignmentInputFile>)data.getRequiredItem("ALIGNMENT_INPUTS");
         
