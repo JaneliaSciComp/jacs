@@ -16,7 +16,7 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 @MongoMapped(collectionName="release",label="Line Release")
 public class LineRelease extends AbstractDomainObject {
 
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     private Date releaseDate;
     private Integer lagTimeMonths;
     private boolean sageSync;    

@@ -73,11 +73,11 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="compression_txt",label="Compression Type")
     private String compressionType;
 
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SearchAttribute(key="tmog_dt",label="TMOG Date")
     private Date tmogDate;
 
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
     

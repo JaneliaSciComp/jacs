@@ -76,9 +76,7 @@
                 <sequence if="REGENERATE_INPUT is not empty">
                 
                     <operation name="Get Regeneration Parameters" processor="org.janelia.it.jacs.compute.service.domain.sample.GetRegenerationParametersService">
-                        <input name="SAMPLE_ENTITY_ID"/>
                         <input name="ALIGNMENT_INPUTS" value="$V{REGENERATE_INPUT}"/>
-                        <output name="REGENERATE_SAMPLE_ID"/>
                         <output name="REGENERATE_OBJECTIVES"/>
                     </operation>
                     
@@ -92,7 +90,7 @@
                         <input name="PROCESS_DEF_NAME"/>
                         <input name="DISPLAY_NAME" value="Input Sample Regeneration"/>
                         <input name="PARAMETER_1_KEY" value="sample entity id"/>
-                        <input name="PARAMETER_1_VALUE" value="$V{REGENERATE_SAMPLE_ID}"/>
+                        <input name="PARAMETER_1_VALUE" value="$V{SAMPLE_ENTITY_ID}"/>
                         <input name="PARAMETER_2_KEY" value="run objectives"/>
                         <input name="PARAMETER_2_VALUE" value="$V{REGENERATE_OBJECTIVES}"/>
                         <input name="PROCESS_DATA_MAP">

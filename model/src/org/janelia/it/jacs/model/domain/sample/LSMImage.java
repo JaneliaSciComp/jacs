@@ -33,13 +33,13 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="bcomp_txt",label="Brightness Compensation")
     private String brightnessCompensation;
 
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
     
     // SAGE Terms
 
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SAGEAttribute(cvName="image_query", termName="create_date")
     @SearchAttribute(key="tmog_dt",label="TMOG Date")
     private Date tmogDate;
@@ -80,7 +80,7 @@ public class LSMImage extends Image implements HasAnatomicalArea {
     @SearchAttribute(key="bps_s",label="Bits/Sample")
     private Integer bitsPerSample;
 
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     @SAGEAttribute(cvName="light_imagery", termName="capture_date")
     @SearchAttribute(key="capture_dt",label="Capture Date")
     private Date captureDate;
