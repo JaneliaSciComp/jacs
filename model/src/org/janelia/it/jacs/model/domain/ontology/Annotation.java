@@ -87,7 +87,7 @@ public class Annotation extends AbstractDomainObject {
     public String toString() {
         return "Annotation[" +
                 "id=" + getId() +
-                "name=" + getName() +
+                ", name=" + getName() +
                 ", target='" + target + '\'' +
                 ']';
     }
