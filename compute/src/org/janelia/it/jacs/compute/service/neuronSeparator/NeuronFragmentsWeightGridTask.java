@@ -82,7 +82,11 @@ public class NeuronFragmentsWeightGridTask extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 16;
+        return 15;
     }
+
+    @Override
+    protected int getRequiredSlots() { return 2; }
+
 
 }

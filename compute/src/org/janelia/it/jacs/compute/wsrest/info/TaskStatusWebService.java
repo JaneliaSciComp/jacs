@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.wsrest.info;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lte;
@@ -104,47 +106,78 @@ public class TaskStatusWebService extends ResourceConfig {
     @Path("/tasks/latest")
     @ApiOperation(value = "Gets tasks using a start date cutoff",
             notes = "")
-    public String getLatestTasknfo(@QueryParam("startDate") final String startDate) {
+    public String getLatestTasknfo(@QueryParam("hours") final String hours) {
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
-        MongoCollection<Document> tasks =  db.getCollection("tasks");
-        org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
+        MongoCollection<Document> sample = db.getCollection("sample");
+        MongoCollection<Document> tasks = db.getCollection("tasks");
         List<Document> jsonResult = new ArrayList<>();
+        List<Document> formattedResults = new ArrayList<>();
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.HOUR, -Integer.parseInt(hours));
+
         try {
-            if (startDate==null) {
-                return "Start date is a required parameter to limit the number of tasks returned";
+            if (hours==null) {
+                return "Hours is required parameter to limit the number of tasks returned";
             }
 
             // filter out results by start date time
-            Date startDateTime = DateUtil.createStartDate(startDate);
-            jsonResult = tasks.aggregate(asList(
-                    new Document("$match", new Document("events.eventTimestamp", new Document("$gte", startDateTime))),
-                    new Document("$unwind", "$events"),
-                    new Document("$project", new Document("sampleId", "$parameters.sample entity id")
-                            .append("eventType", "$events.eventType")
-                            .append("description", "$events.description")
-                            .append("timestamp", "$events.eventTimestamp")
-                            .append("taskTime",
-                                    new Document("$subtract", asList(new Date(), "$events.eventTimestamp"))))
-                   ))
-                    .batchSize(500000)
+            jsonResult = tasks.find(gte("events.eventTimestamp", c.getTime()))
+                    .batchSize(1000000)
+                    .sort(orderBy(descending("events.eventTimestamp")))
                     .into(new ArrayList());
-            // lookup Sample
+            List<Long> sampleIds = new ArrayList<>();
+
             for (Document result: jsonResult) {
-                MongoCursor<Sample> results;
-                results = sample.find("{_id:'" + result.getString("sampleId") + "'}").as(Sample.class);
-                if (results.hasNext()) {
-                    Sample sampleInfo = results.next();
-                    result.put("dataSet", sampleInfo.getDataSet());
-                    result.put("sampleName", sampleInfo.getName());
-                    result.put("timestamp", DateUtil.formatDate(result.getDate("timestamp")));
+                Map<String, Object> parameters = (Map<String,Object>)result.get("parameters");
+                Long sampleId = null;
+                if (parameters!=null) {
+                    String sampleRef = (String)parameters.get("sample entity id");
+                    if (sampleRef!=null && sampleRef!="null") {
+                        sampleId = Long.parseLong(sampleRef);
+                    }
+                }
+                if (sampleId!=null) {
+                    result.put("sampleId", sampleId);
+                    sampleIds.add(sampleId);
+                }
+            }
+
+            // lookup Sample
+            List<Document> results = sample.find(in("_id", sampleIds))
+                    .batchSize(10000000)
+                    .projection(fields(include("dataSet", "name")))
+                    .into(new ArrayList());
+            Map<Long, Document> sampleMap = new HashMap<>();
+            for (Document result: results) {
+                sampleMap.put(result.getLong("_id"), result);
+            }
+
+            for (Document result: jsonResult) {
+                Document newDoc = new Document();
+                List<Document> events = (List<Document>)result.get("events");
+                Document event = events.get(events.size()-1);
+                if (result.get("sampleId")!=null && sampleMap.get(result.get("sampleId"))!=null) {
+                    Document sampleInfo = sampleMap.get(result.get("sampleId"));
+                    newDoc.put("sampleName", sampleInfo.getString("name"));
+                    newDoc.put("dataSet", sampleInfo.getString("dataSet"));
+                    newDoc.put("description", event.getString("description"));
+                    newDoc.put("eventType", event.getString("eventType"));
+                    newDoc.put("timestamp", DateUtil.formatDate(event.getDate("eventTimestamp")));
+                    c = Calendar.getInstance();
+                    Calendar d = Calendar.getInstance();
+                    d.setTime(event.getDate("eventTimestamp"));
+                   long secs = (c.getTimeInMillis() - d.getTimeInMillis()) / 1000;
+                    long age = secs / 3600;
+                    newDoc.put("age", age);
+                    formattedResults.add(newDoc);
                 }
             }
 
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-            return objectMapper.writeValueAsString(jsonResult);
+            return objectMapper.writeValueAsString(formattedResults);
         } catch (Exception e) {
             log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Date;
 
 
@@ -25,7 +26,7 @@ import java.util.Date;
 public class HttpDataSource {
 
     private static Logger logger= LoggerFactory.getLogger(HttpDataSource.class);
-    private static String interactiveServer;
+    private static String restServer;
     private static Long mouseLightCurrentSampleId;
     private static boolean useHttp=true;
 
@@ -50,12 +51,13 @@ public class HttpDataSource {
         logger.info("useHttp="+useHttp1);
     }
 
-    public static String getInteractiveServer() {
-        return interactiveServer;
+    public static String getRestServer() {
+        return restServer;
     }
 
-    public static void setInteractiveServer(String interactiveServer) {
-        HttpDataSource.interactiveServer = interactiveServer;
+    public static void setRestServer(String restServer) {
+        HttpDataSource.restServer = restServer;
+        logger.info("HttpDataSource is using server " + restServer);
     }
 
     public static Long getMouseLightCurrentSampleId() {
@@ -85,7 +87,7 @@ public class HttpDataSource {
             indexStyleString="OCTREE";
         }
 
-        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/sample2DTile?"+
+        String url= restServer + "mouselight/sample2DTile?"+
                 "sampleId="+mouseLightCurrentSampleId+
                 "&x="+tileIndex.getX()+
                 "&y="+tileIndex.getY()+
@@ -104,8 +106,14 @@ public class HttpDataSource {
             long startTime=new Date().getTime();
             int statusCode=httpClient.executeMethod(getMethod);
 
-            if (statusCode!= HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+            // debug: sometimes you want to see all the results...comment
+            //  in and out as needed
+            // System.out.println("HttpDataSource: " + statusCode + " from " + url);
+
+            // note: not all tiff tiles exist, so some will return
+            //  no content (204), and that's OK
+            if (statusCode!= HttpStatus.SC_OK && statusCode != HttpStatus.SC_NO_CONTENT) {
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             byte[] responseBytes=getMethod.getResponseBody();
 
@@ -126,13 +134,13 @@ public class HttpDataSource {
     }
 
     public static byte[] fileToBytesByPath(String filepath) throws Exception {
-        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/fileBytes?path="+filepath;
+        String url= restServer + "mouselight/fileBytes?path="+filepath;
         GetMethod getMethod=new GetMethod(url);
         byte[] bytes=null;
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             bytes=getMethod.getResponseBody();
         } catch (Exception ex) {
@@ -144,13 +152,13 @@ public class HttpDataSource {
     }
 
     public static byte[] getMouseLightTiffBytes(String filepath) throws Exception {
-        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/mouseLightTiffBytes?suggestedPath="+filepath;
+        String url= restServer + "mouselight/mouseLightTiffBytes?suggestedPath="+filepath;
         GetMethod getMethod=new GetMethod(url);
         byte[] bytes=null;
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             bytes=getMethod.getResponseBody();
         } catch (Exception ex) {
@@ -162,12 +170,12 @@ public class HttpDataSource {
     }
 
     public static GetMethod getMouseLightTiffStream(String filepath) throws Exception {
-        String url="http://"+interactiveServer+":8180/rest-ml/mouselight/mouseLightTiffStream?suggestedPath="+filepath;
+        String url= restServer + "mouselight/mouseLightTiffStream?suggestedPath="+filepath;
         GetMethod getMethod=new GetMethod(url);
         try {
             int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status not OK");
+                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
 
             return getMethod;

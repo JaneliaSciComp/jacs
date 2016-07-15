@@ -70,6 +70,6 @@ public class Vaa3DConversionService extends ParallelFileProcessingService {
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 36;
+    	return 64;
     }
 }

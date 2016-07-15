@@ -47,5 +47,6 @@
 	<classpathentry kind="lib" path="lib/xstream/xstream-1.4.8.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Jersey"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Swagger"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Directory"/>
 	<classpathentry kind="output" path="build_eclipse"/>
 </classpath>

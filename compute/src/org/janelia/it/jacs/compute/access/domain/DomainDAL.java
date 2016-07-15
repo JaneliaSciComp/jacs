@@ -1,8 +1,8 @@
 package org.janelia.it.jacs.compute.access.domain;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
@@ -22,6 +22,7 @@ import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.LineRelease;
 import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
@@ -102,6 +103,10 @@ public class DomainDAL {
         return dao.getDomainObjectsByName(subjectKey, clazz, name);
     }
 
+    public <T extends DomainObject> List<T> getUserDomainObjectsByName(String subjectKey, Class<T> clazz,  String name) throws Exception {
+        return dao.getUserDomainObjectsByName(subjectKey, clazz, name);
+    }
+    
     public <T extends DomainObject> List<T> getDomainObjectsAs(List<Reference> references, Class<T> clazz) throws Exception {
         return getDomainObjectsAs(null, references, clazz);
     }
@@ -112,7 +117,6 @@ public class DomainDAL {
 
     public void deleteDomainObjects(String subjectKey, List<Reference> references) throws Exception {
         List<DomainObject> domainObjList = dao.getDomainObjects(null, references);
-
         for (DomainObject domainObj: domainObjList) {
             IndexingHelper.sendRemoveFromIndexMessage(domainObj.getId());
             dao.remove(subjectKey, domainObj);
@@ -120,13 +124,27 @@ public class DomainDAL {
     }
 
     public void deleteDomainObject(String subjectKey, DomainObject domainObject) throws Exception {
-        IndexingHelper.sendRemoveFromIndexMessage(domainObject.getId());
         dao.remove(subjectKey, domainObject);
+        IndexingHelper.sendRemoveFromIndexMessage(domainObject.getId());
+        if (domainObject instanceof Annotation) {
+            Annotation annotation = (Annotation)domainObject;
+            DomainObject targetObject = dao.getDomainObject(null, annotation.getTarget());
+            if (targetObject!=null) {
+                IndexingHelper.sendReindexingMessage(targetObject);
+            }
+        }
     }
 
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
         T savedObj =  dao.save(subjectKey, domainObject);
         IndexingHelper.sendReindexingMessage(savedObj);
+        if (domainObject instanceof Annotation) {
+            Annotation annotation = (Annotation)domainObject;
+            DomainObject targetObject = dao.getDomainObject(null, annotation.getTarget());
+            if (targetObject!=null) {
+                IndexingHelper.sendReindexingMessage(targetObject);
+            }
+        }
         return savedObj;
     }
 
@@ -149,6 +167,7 @@ public class DomainDAL {
     }
 
     // specific custom DomainObject operations
+
     public Subject save(Subject user) throws Exception {
         return dao.save(user);
     }
@@ -165,7 +184,7 @@ public class DomainDAL {
         return dao.getDataSetByIdentifier(subjectKey, identifier);
     }
 
-    public List getLsmsBySampleId(String subjectKey, Long sampleId) {
+    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
         return dao.getLsmsBySampleId(subjectKey, sampleId);
     }
 
@@ -183,6 +202,23 @@ public class DomainDAL {
 
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long id) throws Exception {
         return dao.getNeuronFragmentsBySeparationId(subjectKey, id);
+    }
+
+    public Sample getSampleBySeparationId(String subjectKey, Long id) throws Exception {
+        return dao.getSampleBySeparationId(subjectKey, id);
+    }
+
+    /**
+     * Returns the neuron separation with the given id. Note that this is fine for reading neuron separation information,
+     * but this method cannot be used to update a neuron separation, because there may be multiple instances of an
+     * neuron separation with a given GUID, due to denormalization in the Sample model.
+     * @param subjectKey
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    public NeuronSeparation getNeuronSeparation(String subjectKey, Long id) throws Exception {
+        return dao.getNeuronSeparation(subjectKey, id);
     }
 
     public Long getNewId() {
@@ -206,11 +242,10 @@ public class DomainDAL {
     }
 
     public List<Ontology> getOntologies(String subjectKey) throws Exception {
-        Collection<Ontology> ontologies = dao.getOntologies(subjectKey);
-        return new ArrayList<>(ontologies);
+        return dao.getOntologies(subjectKey);
     }
 
-    public Ontology addOntologyTerm(String subjectKey, Long ontologyId, Long parentId, List<OntologyTerm> terms, int index) throws Exception {
+    public Ontology addOntologyTerms(String subjectKey, Long ontologyId, Long parentId, List<OntologyTerm> terms, Integer index) throws Exception {
         Ontology updateOntology = dao.addTerms(subjectKey, ontologyId, parentId, terms, index);
         IndexingHelper.sendReindexingMessage(updateOntology);
         return updateOntology;
@@ -233,6 +268,10 @@ public class DomainDAL {
 
     public List<LineRelease> getLineReleases (String subjectKey) throws Exception {
         return dao.getLineReleases(subjectKey);
+    }
+
+    public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
+        return dao.createLineRelease(subjectKey, name, releaseDate, lagTimeMonths, dataSets);
     }
 
     public List<DomainObject> getChildren(String subjectKey, TreeNode treeNode) throws Exception {
@@ -267,10 +306,14 @@ public class DomainDAL {
     public void changePermissions(String subjectKey, String targetClass, Long targetId, String granteeKey, String rights,
                                   Boolean grant) throws Exception {
         dao.changePermissions(subjectKey, targetClass, targetId, granteeKey, rights, grant);
+        DomainObject domainObj = dao.getDomainObject(subjectKey, Reference.createFor(targetClass, targetId));
+        IndexingHelper.sendReindexingMessage(domainObj);
     }
 
     public void syncPermissions(String subjectKey, String className, Long id, DomainObject permissionTemplate) throws Exception {
         dao.syncPermissions(subjectKey, className, id, permissionTemplate);
+        DomainObject domainObj = dao.getDomainObject(subjectKey, Reference.createFor(className, id));
+        IndexingHelper.sendReindexingMessage(domainObj);
     }
     public List<Preference> getPreferences(String subjectKey) throws Exception {
         return dao.getPreferences(subjectKey);

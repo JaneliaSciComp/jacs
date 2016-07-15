@@ -22,6 +22,8 @@ public class DataSet extends AbstractDomainObject {
     private SampleImageType sampleImageType;
     private boolean sageSync;
     private List<String> pipelineProcesses = new ArrayList<>();
+    private String sageConfigPath;
+    private String sageGrammarPath;
 
     public String getIdentifier() {
         return identifier;
@@ -63,5 +65,20 @@ public class DataSet extends AbstractDomainObject {
         if (pipelineProcesses==null) throw new IllegalArgumentException("Property cannot be null");
         this.pipelineProcesses = pipelineProcesses;
     }
-    
+
+    public String getSageConfigPath() {
+        return sageConfigPath;
+    }
+
+    public void setSageConfigPath(String sageConfigPath) {
+        this.sageConfigPath = sageConfigPath;
+    }
+
+    public String getSageGrammarPath() {
+        return sageGrammarPath;
+    }
+
+    public void setSageGrammarPath(String sageGrammarPath) {
+        this.sageGrammarPath = sageGrammarPath;
+    }
 }

@@ -22,7 +22,6 @@
                 <input name="OBJECTIVE"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="PARAMETERIZED_ALIGNMENT_ALGORITHM"/>
-                <output name="ALIGNED_FILENAME"/>
                 <output name="RUN_ALIGNMENT"/>
             </operation>
             

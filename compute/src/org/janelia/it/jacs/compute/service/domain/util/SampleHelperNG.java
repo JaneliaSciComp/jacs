@@ -38,10 +38,9 @@ public class SampleHelperNG extends DomainHelper {
 
     private static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
     private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
-    
+
     private List<DataSet> dataSets;
     private String dataSetNameFilter;
-    private Map<String,DataSet> dataSetByIdentifier;
 
     // Lookup tables
     private Map<String,SageField> lsmSageFields;
@@ -273,7 +272,6 @@ public class SampleHelperNG extends DomainHelper {
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
 
-        boolean sampleNew = false;
         boolean sampleDirty = false;
         boolean needsReprocessing = lsmDirty;
         
@@ -281,7 +279,6 @@ public class SampleHelperNG extends DomainHelper {
         if (sample.getId()==null) {
             sampleDirty = true;
             needsReprocessing = true;
-            sampleNew = true;
         }
                 
         if (setSampleAttributes(dataSet, sample, objectiveGroups.values())) {
@@ -361,7 +358,8 @@ public class SampleHelperNG extends DomainHelper {
         	}
         }
 
-        if (sampleNew) { // We could disable this check to refresh all sample permissions
+        if (sampleDirty) {
+            // Update the permissions on the Sample and its LSMs and neuron fragments
             domainDAL.syncPermissions(dataSet.getOwnerKey(), Sample.class.getSimpleName(), sample.getId(), dataSet);
         }
 
@@ -928,19 +926,11 @@ public class SampleHelperNG extends DomainHelper {
         return numSamplesReprocessed;
     }
 
-    public Map<String, DataSet> getDataSetByIdentifierMap() throws Exception {
-        if (dataSetByIdentifier==null) {
-            loadDataSets();
-        }
-        return dataSetByIdentifier;
-    }
-
     private void loadDataSets() throws Exception {
-        
+
         if (dataSets!=null) return;
-        
-        this.dataSetByIdentifier = new HashMap<>();
-        this.dataSets = domainDAL.getDomainObjects(ownerKey, DataSet.class);
+
+        this.dataSets = domainDAL.getUserDomainObjects(ownerKey, DataSet.class);
 
         if (dataSetNameFilter != null) {
             List<DataSet> filteredDataSets = new ArrayList<>();
@@ -957,20 +947,13 @@ public class SampleHelperNG extends DomainHelper {
             logger.info("No data sets found for user: "+ownerKey);
             return;
         }
-        
+
         Collections.sort(dataSets, new Comparator<DataSet>() {
 			@Override
 			public int compare(DataSet o1, DataSet o2) {
 				return o1.getName().compareTo(o2.getName());
 			}
 		});
-
-        logger.info("Preloading data sets...");
-        for(DataSet dataSet : dataSets) {
-            // Cache the data set
-            String dataSetIdentifier = dataSet.getIdentifier();
-            dataSetByIdentifier.put(dataSetIdentifier, dataSet);
-        }
     }
 
     public List<SampleTile> getTilesForArea(ObjectiveSample objectiveSample, AnatomicalArea area) {
@@ -1066,11 +1049,15 @@ public class SampleHelperNG extends DomainHelper {
     }
 
     public NeuronFragment addNewNeuronFragment(NeuronSeparation separation, Integer index) {
+        Sample sample = separation.getParentRun().getParent().getParent();
         NeuronFragment neuron = new NeuronFragment();
+        neuron.setOwnerKey(sample.getOwnerKey());
+        neuron.setReaders(sample.getReaders());
+        neuron.setWriters(sample.getWriters());
         neuron.setCreationDate(new Date());
         neuron.setName("Neuron Fragment "+index);
         neuron.setNumber(index);
-        neuron.setSample(Reference.createFor(separation.getParentRun().getParent().getParent()));
+        neuron.setSample(Reference.createFor(sample));
         neuron.setSeparationId(separation.getId());
         neuron.setFilepath(separation.getFilepath());
         neuron.setFiles(new HashMap<FileType,String>());

@@ -371,7 +371,7 @@ public class SampleDataManager implements SampleDataManagerMBean {
         try {
             String processName = "GSPS_CompleteSamplePipeline";
             Sample sample = DomainDAL.getInstance().getDomainObject(null, Sample.class, new Long(sampleId));
-            if (sample==null) throw new IllegalArgumentException("Entity with id "+sampleId+" does not exist");
+            if (sample==null) throw new IllegalArgumentException("Sample with id "+sampleId+" does not exist");
             HashSet<TaskParameter> taskParameters = new HashSet<>();
             taskParameters.add(new TaskParameter("sample entity id", sampleId, null));
             if (reuseSummary!=null) {
@@ -638,6 +638,26 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
         catch (Exception e) {
             log.error("runSageLoader: failed execution", e);
+        }
+    }
+
+    public void runSyncReleaseFolders(String owner, String releaseName) {
+        try {
+            DomainDAL dal = DomainDAL.getInstance();
+            Subject subject = dal.getSubjectByNameOrKey(owner);
+            if (subject==null) throw new IllegalArgumentException("User with name "+owner+" does not exist");
+            List<LineRelease> releases = dal.getDomainObjectsByName(subject.getKey(), LineRelease.class, releaseName);
+            if (releases.isEmpty()) throw new IllegalArgumentException("Release with name "+releaseName+" does not exist");
+            if (releases.size()>1) throw new IllegalArgumentException("More than one release with name "+releaseName);
+            LineRelease release = releases.get(0);
+            String processName = "ConsoleSyncReleaseFolders";
+            String displayName = "Sync Release Folders";
+            HashSet<TaskParameter> taskParameters = new HashSet<>();
+            taskParameters.add(new TaskParameter("release entity id", release.getId().toString(), null));
+            saveAndRunTask(subject.getKey(), processName, displayName, taskParameters);
+        }
+        catch (Exception ex) {
+            log.error("Error running Sync Release Folders", ex);
         }
     }
 

@@ -1,5 +1,20 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -8,22 +23,14 @@ import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Annotation;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.util.List;
+import static org.janelia.it.jacs.model.domain.support.DomainUtils.abbr;
 
 @Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
@@ -52,11 +59,10 @@ public class AnnotationWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("createAnnotation({})",query);
-            Annotation newAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(newAnnotation);
-            return newAnnotation;
-        } catch (Exception e) {
-            log.error("Error occurred creating annotations " + e);
+            return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
+        }
+        catch (Exception e) {
+            log.error("Error occurred creating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -76,11 +82,10 @@ public class AnnotationWebService extends ResourceConfig {
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("updateAnnotation({})",query);
-            Annotation updateAnnotation = (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
-            IndexingHelper.sendReindexingMessage(updateAnnotation);
-            return updateAnnotation;
-        } catch (Exception e) {
-            log.error("Error occurred updating annotations" + e);
+            return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
+        }
+        catch (Exception e) {
+            log.error("Error occurred updating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -100,12 +105,11 @@ public class AnnotationWebService extends ResourceConfig {
     public List<Annotation> getAnnotations(@ApiParam DomainQuery query) {
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getAnnotations(DomainQuery [subjectKey={}, references={} items])",query.getSubjectKey(),query.getReferences().size());
-            log.trace("getAnnotations({})",query);
-            List<Annotation> annotations = dao.getAnnotations(query.getSubjectKey(), query.getReferences());
-            return annotations;
-        } catch (Exception e) {
-            log.error("Error occurred getting annotations" + e);
+            log.debug("getAnnotations({})",query);
+            return dao.getAnnotations(query.getSubjectKey(), query.getReferences());
+        }
+        catch (Exception e) {
+            log.error("Error occurred getting annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -127,10 +131,10 @@ public class AnnotationWebService extends ResourceConfig {
         try {
             log.debug("removeAnnotations({},{})",subjectKey,annotationId);
             DomainObject deleteAnnotation = dao.getDomainObject(subjectKey, annotationRef);
-            IndexingHelper.sendRemoveFromIndexMessage(deleteAnnotation.getId());
             dao.deleteDomainObject(subjectKey, deleteAnnotation);
-        } catch (Exception e) {
-            log.error("Error occurred removing annotations" + e);
+        }
+        catch (Exception e) {
+            log.error("Error occurred removing annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

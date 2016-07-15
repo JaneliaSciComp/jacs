@@ -1,5 +1,18 @@
 package org.janelia.it.jacs.compute.wsrest.data;
 
+import java.util.List;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -8,17 +21,9 @@ import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
-import org.janelia.it.jacs.model.domain.Preference;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.*;
-import java.util.ArrayList;
-import java.util.List;
 
 
 @Path("/data")
@@ -48,11 +53,12 @@ public class WorkspaceWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Workspace getWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+        log.debug("getWorkspace({})", subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getAllWorkspace({})", subjectKey);
             return dao.getDefaultWorkspace(subjectKey);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred getting default workspace",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -70,11 +76,12 @@ public class WorkspaceWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public List<Workspace> getAllWorkspace(@QueryParam("subjectKey") String subjectKey) {
+        log.debug("getAllWorkspace({})",subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("getAllWorkspace({})",subjectKey);
-            return new ArrayList<Workspace>(dao.getUserWorkspaces(subjectKey));
-        } catch (Exception e) {
+            return dao.getUserWorkspaces(subjectKey);
+        }
+        catch (Exception e) {
             log.error("Error occurred getting default workspace",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

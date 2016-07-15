@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -72,7 +73,7 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
     protected ComputeBeanLocal computeBean;
     protected String ownerKey;
     protected SampleHelperNG sampleHelper;
-    protected DomainDAO domainDao;
+    protected DomainDAL domainDao;
     
     protected FileNode metadataFileNode;
     protected Sample sample;
@@ -115,7 +116,7 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
             this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
-            this.domainDao = DomainDAOManager.getInstance().getDao();
+            this.domainDao = DomainDAL.getInstance();
             this.randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
 
             // retrieve sample first so that it gets added to log context

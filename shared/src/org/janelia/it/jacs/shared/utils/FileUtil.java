@@ -1201,13 +1201,15 @@ public class FileUtil {
         return true;
     }
 
+    private static final String FILE_PATTERN = "^(.*?)\\.((([^./]+)(\\.(bz2|gz))?))$";
+
     /**
      * Get the basename of a filepath, without the extension. This method also removes compound extensions (lsm.bz2, tar.gz).
      * @param path
      * @return
      */
     public static String getBasename(String path) {
-        Pattern p = Pattern.compile("^(.*?)(\\.(.+)(\\.(bz2|gz))?)$");
+        Pattern p = Pattern.compile(FILE_PATTERN);
         Matcher m = p.matcher(path);
         if (m.matches()) return m.group(1);
         return path;
@@ -1219,7 +1221,7 @@ public class FileUtil {
      * @return
      */
     public static String getExtension(String path) {
-        Pattern p = Pattern.compile("^(.*?)(\\.(.+)(\\.(bz2|gz))?)$");
+        Pattern p = Pattern.compile(FILE_PATTERN);
         Matcher m = p.matcher(path);
         if (m.matches()) return m.group(3);
         return "";

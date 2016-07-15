@@ -2,6 +2,8 @@ package org.janelia.it.jacs.compute.wsrest.mouselight;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -28,9 +30,9 @@ import org.janelia.it.jacs.shared.lvv.BlockTiffOctreeLoadAdapter;
 import org.janelia.it.jacs.shared.lvv.CoordinateToRawTransformFileSource;
 import org.janelia.it.jacs.shared.lvv.TextureData2d;
 import org.janelia.it.jacs.shared.lvv.TileIndex;
-import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.misc.BASE64Encoder;
 
 import javax.ws.rs.*;
@@ -47,7 +49,13 @@ import java.util.*;
  */
 
 @Path("/mouselight")
-public class WorkspaceRestService {
+public class WorkspaceRestService extends ResourceConfig {
+
+    public WorkspaceRestService() {
+        register(JacksonFeature.class);
+        register(GZIPWriterInterceptor.class);
+    }
+
 
     public static class ExpirableLoadAdapter {
         public BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter;
@@ -57,7 +65,7 @@ public class WorkspaceRestService {
     private static Map<Long, ExpirableLoadAdapter> sampleLoadAdapterMap=new HashMap<>();
     public static final long LOAD_ADAPTER_TIMEOUT_MS=600000;
 
-    private static final Logger log = Logger.getLogger(WorkspaceRestService.class);
+    private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
 
     private static long quasiTimebasedGuid=0L;
 
@@ -569,7 +577,7 @@ public class WorkspaceRestService {
     @GET
     @Path("/mouseLightTiffStream")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @GZIP
+    @Compress
     public Response getMouseLightTiffStream(@QueryParam("suggestedPath") String suggestedPath) {
         File actualFile=getMouseLightTiffFileBySuggestion(suggestedPath);
         if (actualFile!=null) {

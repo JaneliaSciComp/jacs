@@ -24,17 +24,16 @@ import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
-import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.janelia.it.jacs.model.domain.support.DomainUtils.abbr;
 
 
 @Path("/data")
@@ -65,6 +64,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectDetails(@ApiParam DomainQuery query) {
+        log.debug("getObjectDetails(({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             List<DomainObject> detailObjects = null;
@@ -75,7 +75,8 @@ public class DomainObjectWebService extends ResourceConfig {
                         query.getObjectIds());
             }
             return detailObjects;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred processing Object Details ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -87,7 +88,7 @@ public class DomainObjectWebService extends ResourceConfig {
             notes = ""
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class,
+            @ApiResponse( code = 200, message = "Successfully got a list of DomainObjects", response=DomainObject.class,
                     responseContainer = "List"),
             @ApiResponse( code = 500, message = "Internal Server Error getting list of DomainObjects" )
     })
@@ -96,12 +97,14 @@ public class DomainObjectWebService extends ResourceConfig {
     public List<DomainObject> getObjectsByName(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                @ApiParam @QueryParam("name") final String name,
                                                @ApiParam @QueryParam("domainClass") final String domainClass) {
+        log.debug("getObjectsByName({}, name={}, domainClass={})", subjectKey, name, domainClass);
         DomainDAL dao = DomainDAL.getInstance();
         Class clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
             return dao.getDomainObjectsByName(subjectKey, clazz, name);
-        } catch (Exception e) {
-            log.error("Error occurred retrieving domain objects using name" + e);
+        }
+        catch (Exception e) {
+            log.error("Error occurred retrieving domain objects using name",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -118,12 +121,14 @@ public class DomainObjectWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectsByClass(@QueryParam("subjectKey") final String subjectKey,
                                                 @QueryParam("domainClass") final String domainClass) {
+        log.debug("getObjectsByClass({}, domainClass={})", subjectKey, domainClass);
         DomainDAL dao = DomainDAL.getInstance();
         Class clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
             return dao.getDomainObjects(subjectKey, clazz);
-        } catch (Exception e) {
-            log.error("Error occurred retrieving domain objects by class" + e);
+        }
+        catch (Exception e) {
+            log.error("Error occurred retrieving domain objects by class",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -145,6 +150,7 @@ public class DomainObjectWebService extends ResourceConfig {
                                                      @ApiParam @QueryParam("count") final Long count,
                                                      @ApiParam @QueryParam("referenceAttr") final String referenceAttr,
                                                      @ApiParam @QueryParam("referenceClass") final String referenceClass) {
+        log.debug("getObjectsByReverseRef({}, referenceId={}, count={}, referenceAttr={}, referenceClass={})", subjectKey, referenceId, count, referenceAttr, referenceClass);
         DomainDAL dao = DomainDAL.getInstance();
         ReverseReference reverseRef = new ReverseReference();
         reverseRef.setCount(count);
@@ -153,8 +159,9 @@ public class DomainObjectWebService extends ResourceConfig {
         reverseRef.setReferringClassName(referenceClass);
         try {
             return dao.getDomainObjects(subjectKey, reverseRef);
-        } catch (Exception e) {
-            log.error("Error occurred retrieving domain objects using reverse ref" + e);
+        }
+        catch (Exception e) {
+            log.error("Error occurred retrieving domain objects using reverse ref",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -172,6 +179,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Reference> getContainerReferences(@ApiParam DomainQuery query) {
+        log.debug("getContainerReferences({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getContainerReferences(query.getDomainObject());
@@ -192,11 +200,13 @@ public class DomainObjectWebService extends ResourceConfig {
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public DomainObject saveDomainObject (@ApiParam DomainQuery query) {
+    public DomainObject saveDomainObject(@ApiParam DomainQuery query) {
+        log.debug("saveDomainObject({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), query.getDomainObject());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred updating Domain Object",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -214,6 +224,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public void removeDomainObject(@ApiParam DomainQuery query) {
+        log.debug("removeDomainObject({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             for (Reference objectRef : query.getReferences()) {
@@ -228,9 +239,12 @@ public class DomainObjectWebService extends ResourceConfig {
                         dao.deleteDomainObject(subjectKey, domainObj);
                     }
                 }
-
+                else {
+                    throw new IllegalArgumentException("Attempt to delete a non-TreeNode");
+                }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error occurred removing object references",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -248,6 +262,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public DomainObject updateObjectProperty(@ApiParam DomainQuery query) {
+        log.debug("updateObjectProperty({})", query);
         DomainDAL dao = DomainDAL.getInstance();
         try {
             DomainObject updateObj = null;
@@ -261,8 +276,9 @@ public class DomainObjectWebService extends ResourceConfig {
 
             return updateObj;
 
-        } catch (Exception e) {
-            log.error("Error occurred processing Domain Object Update Property ",e);
+        }
+        catch (Exception e) {
+            log.error("Error occurred processing Domain Object Update Property",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

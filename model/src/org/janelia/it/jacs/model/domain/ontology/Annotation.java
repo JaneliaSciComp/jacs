@@ -85,29 +85,11 @@ public class Annotation extends AbstractDomainObject {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Annotation [");
-        if (getId() != null) {
-            builder.append("id=");
-            builder.append(getId());
-            builder.append(", ");
-        }
-        if (getName() != null) {
-            builder.append("name=");
-            builder.append(getName());
-            builder.append(", ");
-        }
-        if (target != null) {
-            builder.append("target=");
-            builder.append(target);
-            builder.append(", ");
-        }
-        if (getOwnerKey() != null) {
-            builder.append("owner=");
-            builder.append(getOwnerKey());
-        }
-        builder.append("]");
-        return builder.toString();
+        return "Annotation[" +
+                "id=" + getId() +
+                "name=" + getName() +
+                ", target='" + target + '\'' +
+                ']';
     }
     
 }

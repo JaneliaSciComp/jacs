@@ -60,13 +60,14 @@
                 <output name="RESULT_ENTITY_ID"/>
     	    </operation>
 
-    	    <!-- Generate the neuron separation results into the database -->
+    	    <!-- Generate the neuron separation results into the database
             <operation name="Generate Neuron Fragment Weights" processor="org.janelia.it.jacs.compute.service.neuronSeparator.NeuronFragmentWeightsService">
                 <input name="MODE" value="GENERATEWEIGHTS"/>
                 <input name="SAMPLE_ENTITY_ID"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <input name="RESULT_ENTITY_ID"/>
             </operation>
+    	    -->
     	    
             <sequence if="ALIGNED_CONSOLIDATED_LABEL_FILEPATH is empty">
                 <sequence if="PREVIOUS_SEPARATION_ID is not empty">

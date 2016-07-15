@@ -21,6 +21,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Ordering;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -315,8 +316,14 @@ public class DomainUtils {
         return "("+domainObject.getName()+", @"+System.identityHashCode(domainObject)+")";
     }
     
-    public static String getFilepath(HasFiles hasFiles, String role) {
-        return getFilepath(hasFiles, FileType.valueOf(role));
+    public static String getFilepath(HasFiles hasFiles, String fileTypeName) {
+        try {
+            return getFilepath(hasFiles, FileType.valueOf(fileTypeName));
+        }
+        catch (IllegalArgumentException e) {
+            log.error("No such file type: "+fileTypeName,e);
+            return null;
+        }
     }
     
     public static String getFilepath(HasFiles hasFiles, FileType fileType) {
@@ -324,7 +331,22 @@ public class DomainUtils {
         if (hasFiles==null) return null;
         Map<FileType,String> files = hasFiles.getFiles();
         if (files==null) return null;
-        String filepath = files.get(fileType);
+
+        log.trace("getFilepath(files:{}, fileType:{})",files,fileType);
+
+        String filepath = null;
+        if (fileType.equals(FileType.FirstAvailable2d) || fileType.equals(FileType.FirstAvailable3d)) {
+            for(FileType type : FileType.values()) {
+                if ((fileType.equals(FileType.FirstAvailable2d) && type.is2dImage()) || (fileType.equals(FileType.FirstAvailable3d) && !type.is2dImage())) {
+                    filepath = files.get(type);
+                    if (filepath!=null) break;
+                }
+            }
+        }
+        else {
+            filepath = files.get(fileType);
+        }
+
         if (filepath==null) return null;
 
         if (filepath.startsWith("/")) {
@@ -371,29 +393,35 @@ public class DomainUtils {
     }
     
     public static String getDefault3dImageFilePath(HasFiles hasFiles) {
-        String path = DomainUtils.getFilepath(hasFiles, FileType.LosslessStack);
-        if (path==null) path = DomainUtils.getFilepath(hasFiles, FileType.VisuallyLosslessStack);
-        return path;
+        return DomainUtils.getFilepath(hasFiles, FileType.FirstAvailable3d);
     }
 
     public static Multiset<String> get2dTypeNames(HasFileGroups hasGroups) {
+        return getTypeNames(hasGroups, true);
+    }
+
+    public static Multiset<String> get2dTypeNames(HasFiles hasFiles) {
+        return getTypeNames(hasFiles, true);
+    }
+
+    public static Multiset<String> getTypeNames(HasFileGroups hasGroups, boolean only2d) {
         Multiset<String> countedTypeNames = LinkedHashMultiset.create();
         for(String groupKey : hasGroups.getGroupKeys()) {
             log.trace("Checking group {}",groupKey);
             HasFiles hasFiles = hasGroups.getGroup(groupKey);
             if (hasFiles.getFiles()!=null) {
-                countedTypeNames.addAll(get2dTypeNames(hasFiles));
+                countedTypeNames.addAll(getTypeNames(hasFiles, only2d));
             }
         }
         return countedTypeNames;
     }
     
-    public static Multiset<String> get2dTypeNames(HasFiles hasFiles) {
+    public static Multiset<String> getTypeNames(HasFiles hasFiles, boolean only2d) {
         Multiset<String> countedTypeNames = LinkedHashMultiset.create();
         if (hasFiles.getFiles()!=null) {
             log.trace("Checking files");
             for(FileType fileType : hasFiles.getFiles().keySet()) {
-                if (!fileType.is2dImage()) continue;
+                if (only2d && !fileType.is2dImage()) continue;
                 log.trace("  Adding {}",fileType.name());
                 countedTypeNames.add(fileType.name());
             }
@@ -441,6 +469,41 @@ public class DomainUtils {
                         .compare(o1.getName(), o2.getName(), Ordering.natural().nullsFirst())
                         .result();
             }
+        });
+    }
+
+    /**
+     * Sort the given list of domain objects by the given sort criteria. The sort criteria is a name of a field found
+     * on all the domain objects. If any of the domain objects are missing the field, then they will be treated as having
+     * a null sort value, and will be sorted to the end of the list. The sortCriteria may be prepended with a + or - to
+     * indicate sorting direction.
+     * @param domainObjects
+     * @param sortCriteria
+     */
+    public static void sortDomainObjects(List<? extends DomainObject> domainObjects, String sortCriteria) {
+
+        if (StringUtils.isEmpty(sortCriteria)) return;
+        final String sortField = (sortCriteria.startsWith("-") || sortCriteria.startsWith("+")) ? sortCriteria.substring(1) : sortCriteria;
+        final boolean ascending = !sortCriteria.startsWith("-");
+
+        final Map<DomainObject, Object> fieldValues = new HashMap<>();
+        for (DomainObject domainObject : domainObjects) {
+            Object value = getFieldValue(domainObject, sortField);
+            fieldValues.put(domainObject, value);
+        }
+
+        Collections.sort(domainObjects, new Comparator<DomainObject>() {
+            @Override
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            public int compare(DomainObject o1, DomainObject o2) {
+                Comparable v1 = (Comparable) fieldValues.get(o1);
+                Comparable v2 = (Comparable) fieldValues.get(o2);
+                Ordering ordering = Ordering.natural().nullsLast();
+                if (!ascending) {
+                    ordering = ordering.reverse();
+                }
+                return ComparisonChain.start().compare(v1, v2, ordering).result();
+        }
         });
     }
 
@@ -522,7 +585,6 @@ public class DomainUtils {
         newFilter.setName(filter.getName());
         newFilter.setSearchString(filter.getSearchString());
         newFilter.setSearchClass(filter.getSearchClass());
-        newFilter.setSort(filter.getSort());
         if (filter.hasCriteria()) {
             for(Criteria criteria : filter.getCriteriaList()) {
                 newFilter.addCriteria(cloneCriteria(criteria));
@@ -581,5 +643,50 @@ public class DomainUtils {
         System.out.println("getObjectClass(image): "+DomainUtils.getBaseClass("image"));
         System.out.println("getSubClasses(TreeNode.class): " + DomainUtils.getSubClasses(TreeNode.class));
         System.out.println("getObjectClasses(image): "+DomainUtils.getObjectClasses("image"));
+    }
+
+    public static Object getFieldValue(DomainObject o1, String fieldName) {
+        try {
+            return org.janelia.it.jacs.shared.utils.ReflectionUtils.get(o1, fieldName);
+        }
+        catch (Exception e) {
+            log.error("Error getting field value "+fieldName,e);
+            return null;
+        }
+    }
+
+    public static List<DomainObjectAttribute> getUniqueAttributes(Collection<DomainObject> domainObjects) {
+        Set<Class<? extends DomainObject>> domainClasses = new HashSet<>();
+        for(DomainObject domainObject : domainObjects) {
+            domainClasses.add(domainObject.getClass());
+        }
+        return getUniqueAttributes(domainClasses.toArray(new Class[domainClasses.size()]));
+    }
+
+    public static List<DomainObjectAttribute> getUniqueAttributes(Class<? extends DomainObject>... domainClasses) {
+
+        Set<DomainObjectAttribute> attrSet = new HashSet<>();
+
+        for(Class<? extends DomainObject> domainClass : domainClasses) {
+            for (DomainObjectAttribute attr : getSearchAttributes(domainClass)) {
+                if (attr.isDisplay()) {
+                    attrSet.add(attr);
+                }
+            }
+        }
+
+        List<DomainObjectAttribute> attrs = new ArrayList<>(attrSet);
+        Collections.sort(attrs, new Comparator<DomainObjectAttribute>() {
+            @Override
+            public int compare(DomainObjectAttribute o1, DomainObjectAttribute o2) {
+                return o1.getLabel().compareTo(o2.getLabel());
+            }
+        });
+
+        return attrs;
+    }
+
+    public static String abbr(Collection ids) {
+        return ids.size() < 6 ? "" + ids : ids.size() + " items";
     }
 }

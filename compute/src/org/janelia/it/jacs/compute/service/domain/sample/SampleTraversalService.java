@@ -85,10 +85,10 @@ public class SampleTraversalService extends AbstractDomainService {
     
         List<Sample> samples;
         if (dataSetName == null) {
-            samples = domainDao.getDomainObjects(ownerKey, Sample.class);
+            samples = domainDao.getUserDomainObjects(ownerKey, Sample.class);
         } 
         else {
-            List<DataSet> dataSets = domainDao.getDomainObjectsByName(ownerKey, DataSet.class, dataSetName);
+            List<DataSet> dataSets = domainDao.getUserDomainObjectsByName(ownerKey, DataSet.class, dataSetName);
             if (dataSets.size() == 1) {
                 DataSet dataSet = dataSets.get(0);
                 samples = domainDao.getSamplesForDataSet(ownerKey, dataSet.getIdentifier());
@@ -119,38 +119,38 @@ public class SampleTraversalService extends AbstractDomainService {
         String status = sample.getStatus();
 
         if (includeAllSamples) {
-            logger.info("Included " + sample + " (id=" + sample.getId() + ") - all");
+            logger.info("Included " + sample.getName() + " (id=" + sample.getId() + ") - all");
             return true;
         }
         
         if (includeMarkedSamples && isMarked(status)) {
-            logger.info("Included " + sample + " (id=" + sample.getId() + ") - marked");
+            logger.info("Included " + sample.getName() + " (id=" + sample.getId() + ") - marked");
             return true;
         }
         
         if (isBlocked(status)) {
-            logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - blocked");
+            logger.info("Excluded " + sample.getName() + " (id=" + sample.getId() + ") - blocked");
             return false;
         }
 
-        if (isDesync(status)) {
-            logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - desync");
+        if (isDesync(status) || !sample.getSageSynced()) {
+            logger.info("Excluded " + sample.getName() + " (id=" + sample.getId() + ") - desync");
             return false;
         }
         
         if (isRetired(status)) {
-            logger.info("Excluded " + sample + " (id=" + sample.getId() + ") - retired");
+            logger.info("Excluded " + sample.getName() + " (id=" + sample.getId() + ") - retired");
             return false;
         }
         
         for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
             if (includeSample(objectiveSample)) {
-                logger.info("Included " + sample + " (id=" + sample.getId() + ") - incomplete");
+                logger.info("Included " + sample.getName() + " (id=" + sample.getId() + ") - incomplete");
                 return true;
             }
         }
 
-        logger.info("Excluded " + sample + " (id=" + sample.getId() + ")");
+        logger.info("Excluded " + sample.getName() + " (id=" + sample.getId() + ")");
         return false;
     }
 

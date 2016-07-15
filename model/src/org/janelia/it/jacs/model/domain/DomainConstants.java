@@ -28,15 +28,15 @@ public class DomainConstants {
     public static final String NAME_ALIGNMENT_BOARDS                 = "Alignment Boards";
     public static final String NAME_RETIRED_DATA                     = "Retired Data";
     public static final String NAME_BLOCKED_DATA                     = "Blocked Data";
-    public static final String NAME_SEARCH_RESULTS                   = "Search Results";
     
     public static final String PREFERENCE_CATEGORY_SAMPLE_RESULT = "SampleResult";
     public static final String PREFERENCE_CATEGORY_IMAGE_TYPE = "ImageType";
-    public static final String PREFERENCE_VALUE_LATEST = "Latest";
     public static final String PREFERENCE_CATEGORY_TABLE_COLUMNS = "TableColumns";
     public static final String PREFERENCE_CATEGORY_DOMAIN_OBJECT_TITLES = "DomainObjectTitles";
     public static final String PREFERENCE_CATEGORY_DOMAIN_OBJECT_SUBTITLES = "DomainObjectSubtitles";
     public static final String PREFERENCE_CATEGORY_NEURON_SEPARATION_VISIBILITY = "NeuronSepVisibility";
+    public static final String PREFERENCE_CATEGORY_KEYBINDS_ONTOLOGY = "Keybind:Ontology:";
+    public static final String PREFERENCE_CATEGORY_SORT_CRITERIA = "SortCriteria";
 
     public static final String GENERAL_USER_GROUP_KEY = "group:workstation_users";
     
@@ -44,5 +44,6 @@ public class DomainConstants {
     public static final String ERROR_ONTOLOGY_CATEGORY = "Report";
 
     public static final String SCALITY_PATH_PREFIX = "/scality/";
+
 
 }

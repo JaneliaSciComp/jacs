@@ -19,6 +19,8 @@ import com.mongodb.WriteConcern;
 import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
+import org.bson.Document;
+import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
@@ -67,6 +69,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.MongoCollection;
 import org.reflections.ReflectionUtils;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 /**
  * Data access to the MongoDB data store.
  * 
@@ -108,6 +113,7 @@ public class MongoDbImport extends AnnotationDAO {
     protected final MongoCollection flyLineCollection;
     protected final MongoCollection imageCollection;
     protected final MongoCollection fragmentCollection;
+    protected final com.mongodb.client.MongoCollection<Document> fragmentWeightsCollection;
     protected final MongoCollection annotationCollection;
     protected final MongoCollection ontologyCollection;
     protected final MongoCollection compartmentSetCollection;
@@ -139,6 +145,7 @@ public class MongoDbImport extends AnnotationDAO {
     	this.flyLineCollection = dao.getCollectionByClass(FlyLine.class);
         this.imageCollection = dao.getCollectionByClass(Image.class);
         this.fragmentCollection = dao.getCollectionByClass(NeuronFragment.class);
+        this.fragmentWeightsCollection = dao.getMongo().getDatabase("jacs").getCollection("fragmentWeights");
         this.annotationCollection = dao.getCollectionByClass(Annotation.class);
         this.ontologyCollection = dao.getCollectionByClass(Ontology.class);
         this.compartmentSetCollection = dao.getCollectionByClass(CompartmentSet.class);
@@ -158,57 +165,57 @@ public class MongoDbImport extends AnnotationDAO {
 
     public void loadAllEntities() throws DaoException {
 
-//        log.info("Building disk-based SAGE property map");
-//        this.largeOp = new MongoLargeOperations(dao);
-//
-//        log.info("Building LSM property map");
-//        largeOp.buildSageImagePropMap();
-//        buildLsmAttributeMap();
-//
-//        log.info("Loading data into MongoDB");
-//        getSession().setFlushMode(FlushMode.MANUAL);
-//
-//        long startAll = System.currentTimeMillis();
-//
-//        log.info("Adding subjects");
-//        loadSubjects();
-//
-//        log.info("Adding ontologies");
-//        loadOntologies(); // must come before buildAnnotationMap to preload the necessary maps
-//
-//        log.info("Building disk-based Annotation map");
-//        buildAnnotationMap();
-//
-//        log.info("Adding data sets");
-//        loadDataSets();
-//
-//        log.info("Adding fly lines");
-//        loadFlyLines();
-//
-//        log.info("Adding samples");
-//        // TODO: handle deleted (i.e. "hidden") neurons
-//        // TODO: handle pattern mask results in samples (knappj)
-//        loadSamples();
-//
-//        log.info("Adding screen samples");
-//        loadScreenData();
-//
+        log.info("Building disk-based SAGE property map");
+        this.largeOp = new MongoLargeOperations(dao);
+
+        log.info("Building LSM property map");
+        largeOp.buildSageImagePropMap();
+        buildLsmAttributeMap();
+
+        log.info("Loading data into MongoDB");
+        getSession().setFlushMode(FlushMode.MANUAL);
+
+        long startAll = System.currentTimeMillis();
+
+        log.info("Adding subjects");
+        loadSubjects();
+
+        log.info("Adding ontologies");
+        loadOntologies(); // must come before buildAnnotationMap to preload the necessary maps
+
+        log.info("Building disk-based Annotation map");
+        buildAnnotationMap();
+
+        log.info("Adding data sets");
+        loadDataSets();
+
+        log.info("Adding fly lines");
+        loadFlyLines();
+
+        log.info("Adding samples");
+        // TODO: handle deleted (i.e. "hidden") neurons
+        // TODO: handle pattern mask results in samples (knappj)
+        loadSamples();
+
+        log.info("Adding screen samples");
+        loadScreenData();
+
         log.info("Adding compartment sets");
         loadCompartmentSets();
-//
-//        log.info("Adding alignment board contexts");
-//        loadAlignmentBoardContexts();
-//
-//        log.info("Adding alignment boards");
-//        loadAlignmentBoards();
-//
-//        log.info("Adding folders");
-//        loadWorkspaces();
-//
-//        log.info("Verify annotations");
-//        verifyAnnotations();
-//
-//        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
+
+        log.info("Adding alignment board contexts");
+        loadAlignmentBoardContexts();
+
+        log.info("Adding alignment boards");
+        loadAlignmentBoards();
+
+        log.info("Adding folders");
+        loadWorkspaces();
+
+        log.info("Verify annotations");
+        verifyAnnotations();
+
+        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
     }
 
     Map<String,LsmSageAttribute> lsmSageAttrs = new HashMap<>();
@@ -405,7 +412,17 @@ public class MongoDbImport extends AnnotationDAO {
         if (sampleNamePattern!=null) {
             dataset.setSampleNamePattern(sampleNamePattern);
         }
-        
+
+        String sageConfigPath = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_CONFIG_PATH);
+        if (sageConfigPath!=null) {
+            dataset.setSageConfigPath(sageConfigPath);
+        }
+
+        String sageGrammarPath = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_SAGE_GRAMMAR_PATH);
+        if (sageGrammarPath!=null) {
+            dataset.setSageGrammarPath(sageGrammarPath);
+        }
+
         String pipelineProcess = dataSetEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_PIPELINE_PROCESS);
         if (pipelineProcess!=null) {
         	List<String> processNames = new ArrayList<>();
@@ -421,7 +438,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         // Look up data set folder and apply the same permissions to the data set object, since the folders will not be migrated
 
-        List<Entity> folders = getEntitiesByNameAndTypeName(dataSetEntity.getOwnerKey(), dataSetEntity.getName(), EntityConstants.TYPE_FOLDER);
+        List<Entity> folders = getUserEntitiesByNameAndTypeName(dataSetEntity.getOwnerKey(), dataSetEntity.getName(), EntityConstants.TYPE_FOLDER);
         if (folders.isEmpty()) {
             log.warn("Could not find data set folder for "+dataSetEntity.getName());
         }
@@ -429,7 +446,6 @@ public class MongoDbImport extends AnnotationDAO {
             if (folders.size()>1) {
                 log.warn("More than one data set folder with name "+dataSetEntity.getName());
             }
-
             Entity dataSetFolder = folders.get(0);
             dataset.setReaders(getSubjectKeysWithPermission(dataSetFolder, "r"));
             dataset.setWriters(getSubjectKeysWithPermission(dataSetFolder, "w"));
@@ -1366,8 +1382,11 @@ public class MongoDbImport extends AnnotationDAO {
         
         populateChildren(nfCollectionEntity);
         collectAnnotations(nfCollectionEntity.getId());
+        boolean hasWeights = false;
         for(Entity fragmentEntity : EntityUtils.getChildrenOfType(nfCollectionEntity, EntityConstants.TYPE_NEURON_FRAGMENT)) {
             NeuronFragment neuronFragment = getNeuronFragment(sampleEntity, separationEntity, fragmentEntity);
+            if (neuronFragment.getVoxelWeight()!=null)
+                hasWeights = true;
             neuronFragments.add(neuronFragment);
             insertAnnotations(getAnnotations(neuronFragment.getId()), neuronFragment);
         }
@@ -1436,12 +1455,19 @@ public class MongoDbImport extends AnnotationDAO {
         if (number!=null) {
             neuronFragment.setNumber(Integer.parseInt(number));
         }
+
         if (separationEntity!=null) {
             neuronFragment.setSeparationId(separationEntity.getId());
             neuronFragment.setFilepath(getFilepath(separationEntity));
+            List<Document> fragmentWeight = fragmentWeightsCollection.find(and(
+                    eq("separationId", separationEntity.getId()),
+                    eq("fragmentId", fragmentEntity.getId()))).into(new ArrayList());
+            if (fragmentWeight!=null && fragmentWeight.size()>0) {
+                neuronFragment.setVoxelWeight(Integer.parseInt(fragmentWeight.get(0).getString("voxelWeight")));
+            }
         }
-        
-        Map<FileType,String> images = new HashMap<>();
+
+        Map < FileType, String > images = new HashMap<>();
         addImage(images,FileType.SignalMip,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE)));
         addImage(images,FileType.MaskFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MASK_IMAGE)));
         addImage(images,FileType.ChanFile,getRelativeFilename(neuronFragment,fragmentEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_CHAN_IMAGE)));
@@ -2524,7 +2550,7 @@ public class MongoDbImport extends AnnotationDAO {
     	}
 
         // Dump all user search results, because it takes forever to import them all (due to translation), and they don't really jive with the new way of Filtering anyway.
-        if ("Search Results".equals(folderEntity.getName()) && EntityUtils.isProtected(folderEntity)) {
+        if (folderEntity.getName().startsWith("Search Results #") && EntityUtils.isProtected(folderEntity)) {
             return null;
         }
         
@@ -2629,17 +2655,25 @@ public class MongoDbImport extends AnnotationDAO {
     
     private Filter getDataSetFilter(String name, String ownerKey, String dataSetIdentifier) {
         Date now = new Date();
+
         Filter filter = new Filter();
         filter.setId(dao.getNewId());
         filter.setName(name);
         filter.setOwnerKey(ownerKey); // Important: the new filter is owned by the parent owner
-        filter.setSearchClass(Sample.class.getName());
+        filter.setSearchClass(Sample.class.getSimpleName());
         filter.setCreationDate(now);
         filter.setUpdatedDate(now);
+
         FacetCriteria dataSetCriteria = new FacetCriteria();
         dataSetCriteria.setAttributeName("dataSet");
         dataSetCriteria.setValues(Sets.newHashSet(dataSetIdentifier));
         filter.addCriteria(dataSetCriteria);
+
+        FacetCriteria syncFacet = new FacetCriteria();
+        syncFacet.setAttributeName("sageSynced");
+        syncFacet.setValues(Sets.newHashSet("true"));
+        filter.addCriteria(syncFacet);
+
         filterCollection.insert(filter);
         return filter;
     }
@@ -3014,6 +3048,7 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     private Set<Annotation> getAnnotations(Long id) {
+        if (largeOp==null) return new HashSet<>();
         return (Set<Annotation>)largeOp.getValue(MongoLargeOperations.ETL_ANNOTATION_MAP, id);
     }
     

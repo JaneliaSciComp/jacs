@@ -11,7 +11,9 @@ import org.janelia.it.jacs.shared.blast.BlastWriterNCBITabWithHeaderTest;
 import org.janelia.it.jacs.shared.blast.blastxmlparser.BlastXMLParserTest;
 import org.janelia.it.jacs.shared.blast.blastxmlparser.BlastXMLWriterTest;
 import org.janelia.it.jacs.shared.fasta.FASTAFileNodeHelperTest;
+import org.janelia.it.jacs.shared.utils.FileUtilTest;
 import org.janelia.it.jacs.shared.utils.IdGeneratorTest;
+import org.janelia.it.jacs.shared.utils.StringUtilsTest;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,6 +27,8 @@ public class SharedModuleTestSuite extends TestSuite {
     public static Test suite() {
         TestSuite suite = new TestSuite();
         // Works
+        suite.addTestSuite(StringUtilsTest.class);
+        suite.addTestSuite(FileUtilTest.class);
         suite.addTestSuite(IdGeneratorTest.class);
         suite.addTestSuite(FASTAFileNodeHelperTest.class);
         suite.addTestSuite(BlastGridMergeSortTest.class);

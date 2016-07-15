@@ -19,6 +19,7 @@
             <param-value>io.swagger.jaxrs.listing,
                 org.janelia.it.jacs.compute.wsrest.data,
                 org.janelia.it.jacs.compute.wsrest.process,
+                org.janelia.it.jacs.compute.wsrest.mouselight
                 org.janelia.it.jacs.compute.wsrest.info,
                 com.fasterxml.jackson.jaxrs.json</param-value>
         </init-param>

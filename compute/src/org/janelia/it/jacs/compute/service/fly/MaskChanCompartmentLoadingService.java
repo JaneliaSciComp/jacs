@@ -180,7 +180,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         compartmentEntity.setName(compartmentDescriptiveName);
         compartmentEntity.setValueByAttributeName(
                 EntityConstants.ATTRIBUTE_COLOR,
-                StringUtils.encodeToHex(compartmentDescriptor.getColors(), logger)
+                StringUtils.encodeToHex(compartmentDescriptor.getColors())
         );
         compartmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
         compartmentEntity = saveStampedEntity(compartmentEntity);

@@ -62,7 +62,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	this.releaseFolder = sampleHelper.createOrVerifyChildFolder(topLevelFolder, release.getName(), true);
     	logger.info("Release folder: "+releaseFolder);
     	
-    	Set<String> includedDataSets = new HashSet<String>(release.getDataSets());
+    	Set<String> includedDataSets = new HashSet<>(release.getDataSets());
     	
     	List<DataSet> dataSets = new ArrayList<>();
     	for(DataSet dataSet : domainDao.getDataSets(ownerKey)) {
@@ -80,7 +80,10 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
 	            Date completionDate = sample.getCompletionDate();
 	            if (completionDate!=null) {
 	                String status = sample.getStatus();
-	                if (DomainConstants.VALUE_BLOCKED.equals(status)) {
+                    if (sample.getSageSynced()!=null && sample.getSageSynced()==false) {
+                        logger.info("    Sample is not synchronized to SAGE");
+                    }
+	                else if (DomainConstants.VALUE_BLOCKED.equals(status)) {
 	                    logger.info("    Sample is blocked");
 	                }
 	                else if (DomainConstants.VALUE_RETIRED.equals(status)) {

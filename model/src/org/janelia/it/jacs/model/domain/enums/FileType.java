@@ -7,6 +7,9 @@ package org.janelia.it.jacs.model.domain.enums;
  */
 public enum FileType {
 
+    FirstAvailable2d("First Available", true, false),
+    FirstAvailable3d("First Available Stack", false, false),
+
     // Stacks
     LosslessStack("Lossless Stack", false, false),
     VisuallyLosslessStack("Visually Lossless Stack", false, false),
@@ -70,7 +73,17 @@ public enum FileType {
     public String getLabel() {
         return label;
     }
-    
+
+    public static FileType getByLabel(String label) {
+        FileType[] values = FileType.values();
+        for (int i=0; i<values.length; i++) {
+            if (values[i].getLabel().equals(label)) {
+                return values[i];
+            }
+        }
+        return null;
+    }
+
     public boolean is2dImage() {
         return is2dImage;
     }
