@@ -40,11 +40,11 @@ public abstract class AbstractDomainObject implements DomainObject, Serializable
     private Set<String> writers = new HashSet<>();
 
     @SearchAttribute(key="creation_date",label="Creation Date")
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     private Date creationDate;
 
     @SearchAttribute(key="updated_date",label="Updated Date")
-    @JsonFormat(pattern="MMM dd, yyyy hh:mm:ss.SSS")
+    @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     private Date updatedDate;
 
     @SearchAttribute(key="owner",label="Owner",facet="owner_s")
