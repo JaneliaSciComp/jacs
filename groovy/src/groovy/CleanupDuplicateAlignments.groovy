@@ -11,7 +11,7 @@ import org.janelia.it.jacs.model.domain.support.DomainUtils
  */
 class CleanupDuplicateAlignmentsScript {
 
-    boolean DEBUG = false
+    boolean DEBUG = true
     DomainDAO dao = DomainDAOManager.instance.dao
 
     public void run() {

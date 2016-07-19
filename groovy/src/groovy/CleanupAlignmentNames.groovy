@@ -1,3 +1,4 @@
+import org.janelia.it.jacs.model.domain.DomainConstants
 import org.janelia.it.jacs.model.domain.sample.*
 import org.janelia.it.jacs.model.domain.support.DomainDAO
 
@@ -31,14 +32,19 @@ class CleanupAlignmentNamesScript {
                 for(PipelineResult result : run.results) {
                     if (result in SampleAlignmentResult) {
                         
-                        if (result.anatomicalArea != null) {
-                            def newName = result.name + " ("+result.anatomicalArea+")"
+                        if (result.anatomicalArea == null) {
+                            throw new IllegalStateException(sample.name+" No anatomical area: "+ result.name)
+                        }
+                        
+                        String suffix = " ("+result.anatomicalArea+")"
+                        if (!result.name.endsWith(suffix)) {
+                            def newName = result.name + suffix
                             println sample.name+" Updating " + result.name + " -> " + newName
                             result.name = newName
                             dirty = true
-                        }
-                        else {
-                            throw new IllegalStateException(sample.name+" No anatomical area: "+ result.name)
+                            if (sample.status.equals(DomainConstants.VALUE_PROCESSING)) {
+                                throw new Exception("Sample is processing, cannot proceed");
+                            }
                         }
                         
                     }
