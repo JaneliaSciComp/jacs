@@ -145,7 +145,7 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
             }
         }
 
-        // Now process all the slide
+        // Now process all the slides
         for (String slideCode : slideGroups.keySet()) {
             processSlideGroup(dataSet, slideCode, slideGroups.get(slideCode));
         }

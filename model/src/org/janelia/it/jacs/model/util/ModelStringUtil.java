@@ -18,4 +18,11 @@ public class ModelStringUtil {
            " "
         );
      }
+
+    public static boolean areEqual(Object s1, Object s2) {
+        if (s1==null) {
+            return s2==null;
+        }
+        return s1.equals(s2);
+    }
 }

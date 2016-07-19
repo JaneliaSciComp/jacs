@@ -65,6 +65,9 @@ public class SlideImage {
             else if (objectiveStr.contains(Objective.OBJECTIVE_20X.getName())) {
                 return Objective.OBJECTIVE_20X.getName();
             }
+            else if (objectiveStr.contains(Objective.OBJECTIVE_25X.getName())) {
+                return Objective.OBJECTIVE_25X.getName();
+            }
             else if (objectiveStr.contains(Objective.OBJECTIVE_40X.getName())) {
                 return Objective.OBJECTIVE_40X.getName();
             }
@@ -72,7 +75,7 @@ public class SlideImage {
                 return Objective.OBJECTIVE_63X.getName();
             }
         }
-        return null;
+        return "";
     }
     
     public Integer getSageId() {
