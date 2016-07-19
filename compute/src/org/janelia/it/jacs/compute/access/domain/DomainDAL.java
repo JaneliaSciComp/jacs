@@ -176,28 +176,36 @@ public class DomainDAL {
         return dao.save(subjectKey, preference);
     }
 
-    public List<Sample> getSamplesForDataSet(String subjectKey, String identifier) throws Exception {
-        return dao.getSamplesForDataSet(subjectKey, identifier);
+    public List<Sample> getActiveSamplesForDataSet(String subjectKey, String identifier) throws Exception {
+        return dao.getActiveSamplesForDataSet(subjectKey, identifier);
     }
 
     public DataSet getDataSetByIdentifier(String subjectKey, String identifier) throws Exception {
         return dao.getDataSetByIdentifier(subjectKey, identifier);
     }
 
-    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
-        return dao.getLsmsBySampleId(subjectKey, sampleId);
+    public List<LSMImage> getActiveLsmsBySampleId(String subjectKey, Long sampleId) {
+        return dao.getActiveLsmsBySampleId(subjectKey, sampleId);
     }
 
-    public List<LSMImage> getLSMsForDataSet(String subjectKey, String identifier) {
-        return dao.getLSMsForDataSet(subjectKey, identifier);
+    public List<LSMImage> getActiveLsmsForDataSet(String subjectKey, String identifier) {
+        return dao.getActiveLsmsForDataSet(subjectKey, identifier);
     }
 
-    public LSMImage getLsmBySageId(String subjectKey, Integer sageId) {
-        return dao.getLsmBySageId(subjectKey, sageId);
+    public LSMImage getActiveLsmBySageId(String subjectKey, Integer sageId) {
+        return dao.getActiveLsmBySageId(subjectKey, sageId);
     }
 
-    public Sample getSampleBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
-        return dao.getSampleBySlideCode(subjectKey, dataSetIdentifier, slideCode);
+    public List<LSMImage> getUserLsmsBySageId(String subjectKey, Integer sageId) {
+        return dao.getUserLsmsBySageId(subjectKey, sageId);
+    }
+
+    public Sample getActiveSampleBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+        return dao.getActiveSampleBySlideCode(subjectKey, dataSetIdentifier, slideCode);
+    }
+
+    public List<Sample> getUserSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+        return dao.getUserSamplesBySlideCode(subjectKey, dataSetIdentifier, slideCode);
     }
 
     public List<NeuronFragment> getNeuronFragmentsBySeparationId(String subjectKey, Long id) throws Exception {

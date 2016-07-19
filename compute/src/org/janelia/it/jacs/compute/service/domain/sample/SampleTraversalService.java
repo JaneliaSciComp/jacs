@@ -91,7 +91,7 @@ public class SampleTraversalService extends AbstractDomainService {
             List<DataSet> dataSets = domainDao.getUserDomainObjectsByName(ownerKey, DataSet.class, dataSetName);
             if (dataSets.size() == 1) {
                 DataSet dataSet = dataSets.get(0);
-                samples = domainDao.getSamplesForDataSet(ownerKey, dataSet.getIdentifier());
+                samples = domainDao.getActiveSamplesForDataSet(ownerKey, dataSet.getIdentifier());
             } 
             else {
                 throw new IllegalArgumentException("found " + dataSets.size() + " entities for " + ownerKey

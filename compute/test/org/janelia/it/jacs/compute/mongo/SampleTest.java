@@ -8,7 +8,6 @@ import java.util.Map;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
@@ -237,7 +236,7 @@ public class SampleTest extends MongoDbTest {
             Sample sample = sampleMap.get(sampleId);
             
             Map<Long,LSMImage> lsmMap = new HashMap<Long,LSMImage>();
-            for(LSMImage lsm : dao.getLsmsBySampleId(subjectKey, sample.getId())) {
+            for(LSMImage lsm : dao.getActiveLsmsBySampleId(subjectKey, sample.getId())) {
                 lsmMap.put(lsm.getId(), lsm);
             }
             

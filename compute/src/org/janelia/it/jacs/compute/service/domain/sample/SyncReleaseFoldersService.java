@@ -75,7 +75,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	for(DataSet dataSetEntity : dataSets) {
     	    String identifier = dataSetEntity.getIdentifier();
     	    logger.info("Processing data set "+identifier);
-    	    for(Sample sample : domainDao.getSamplesForDataSet(ownerKey, identifier)) {
+    	    for(Sample sample : domainDao.getActiveSamplesForDataSet(ownerKey, identifier)) {
                 logger.info("  Processing sample "+sample.getName());
 	            Date completionDate = sample.getCompletionDate();
 	            if (completionDate!=null) {

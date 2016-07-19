@@ -71,8 +71,8 @@ public class SampleHelperNG extends DomainHelper {
         
     	logger.debug("createOrUpdateLSM("+slideImage.getName()+")");
         boolean dirty = false;
-        
-        LSMImage lsm = domainDAL.getLsmBySageId(ownerKey, slideImage.getSageId());
+
+        LSMImage lsm = findBestLsm(slideImage.getSageId());
         if (lsm==null) {
             lsm = new LSMImage();
             lsm.setFiles(new HashMap<FileType,String>());
@@ -96,7 +96,33 @@ public class SampleHelperNG extends DomainHelper {
         lsmCache.put(lsm.getId(), lsm);
         return lsm;
     }
-    
+
+    private LSMImage findBestLsm(Integer sageId) {
+
+        List<LSMImage> lsms = domainDAL.getUserLsmsBySageId(ownerKey, sageId);
+
+        if (lsms.isEmpty()) {
+            return null;
+        }
+
+        // If there is an active LSM, return that
+        for(LSMImage lsm : lsms) {
+            if (lsm.getSageSynced()) {
+                return lsm;
+            }
+        }
+
+        // Otherwise, return the most recently created LSM
+        Collections.sort(lsms, new Comparator<LSMImage>() {
+            @Override
+            public int compare(LSMImage o1, LSMImage o2) {
+                return o2.getCreationDate().compareTo(o1.getCreationDate());
+            }
+        });
+
+        return lsms.get(0);
+    }
+
     private boolean updateLsmAttributes(LSMImage lsm, SlideImage slideImage) throws Exception {
 
     	logger.debug("updateLsmAttribute(lsmId="+lsm.getId()+",sageId="+slideImage.getSageId()+")");
@@ -368,7 +394,7 @@ public class SampleHelperNG extends DomainHelper {
     
     private Sample getOrCreateSample(String slideCode, DataSet dataSet) {
         
-        Sample sample = domainDAL.getSampleBySlideCode(ownerKey, dataSet.getIdentifier(), slideCode);
+        Sample sample = findBestSample(dataSet.getIdentifier(), slideCode);
         if (sample != null) {
         	logger.info("  Found existing sample "+sample.getId()+" with status "+sample.getStatus());
         	return sample;
@@ -382,7 +408,33 @@ public class SampleHelperNG extends DomainHelper {
         numSamplesCreated++;
         return sample;
     }
-    
+
+    private Sample findBestSample(String dataSetIdentifier, String slideCode) {
+
+        List<Sample> samples = domainDAL.getUserSamplesBySlideCode(ownerKey, dataSetIdentifier, slideCode);
+
+        if (samples.isEmpty()) {
+            return null;
+        }
+
+        // If there is an active Sample, return that
+        for(Sample sample : samples) {
+            if (sample.getSageSynced()) {
+                return sample;
+            }
+        }
+
+        // Otherwise, return the most recently created Sample
+        Collections.sort(samples, new Comparator<Sample>() {
+            @Override
+            public int compare(Sample o1, Sample o2) {
+                return o2.getCreationDate().compareTo(o1.getCreationDate());
+            }
+        });
+
+        return samples.get(0);
+    }
+
     private boolean setSampleAttributes(DataSet dataSet, Sample sample, Collection<SlideImageGroup> tileGroupList) {
 
         boolean dirty = false;
