@@ -141,7 +141,15 @@ public class SampleUtils {
         return new ResultDescriptor(objSample.getObjective(), name, null);
     }
 
+    public static PipelineResult getResultContainingNeuronSeparation(Sample sample, NeuronFragment neuronFragment) {
+        return getNeuronSeparation(sample, neuronFragment, PipelineResult.class);
+    }
+
     public static NeuronSeparation getNeuronSeparation(Sample sample, NeuronFragment neuronFragment) {
+        return getNeuronSeparation(sample, neuronFragment, NeuronSeparation.class);
+    }
+
+    public static <T extends PipelineResult> T getNeuronSeparation(Sample sample, NeuronFragment neuronFragment, Class<T> returnClazz) {
 
         if (neuronFragment==null) return null;
 
@@ -154,7 +162,7 @@ public class SampleUtils {
                                 if (secondaryResult!=null && secondaryResult instanceof NeuronSeparation) {
                                     NeuronSeparation separation = (NeuronSeparation)secondaryResult;
                                     if (separation.getFragmentsReference().getReferenceId().equals(neuronFragment.getSeparationId())) {
-                                        return separation;
+                                        return returnClazz.equals(NeuronSeparation.class) ? (T)separation : (T)result;
                                     }
                                 }
                             }
