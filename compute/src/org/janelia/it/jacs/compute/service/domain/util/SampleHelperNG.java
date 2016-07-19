@@ -131,8 +131,8 @@ public class SampleHelperNG extends DomainHelper {
         Map<String,SageField> lsmSageAttrs = getLsmSageFields();
         for(String key : slideImage.getProperties().keySet()) {
             try {
-                SageField attr = lsmSageAttrs.get(key);
-                if (attr==null) {
+                SageField sageField = lsmSageAttrs.get(key);
+                if (sageField==null) {
                 	if (!sageAttrsNotFound.contains(key)) {
                 		logger.warn("SAGE Attribute not found on LSMImage: "+key);
                 		sageAttrsNotFound.add(key);
@@ -143,7 +143,7 @@ public class SampleHelperNG extends DomainHelper {
                 String strValue = value==null?null:value.toString();
                 Object trueValue = null;
                 if (value!=null) {
-                    Class<?> fieldType = attr.field.getType();
+                    Class<?> fieldType = sageField.field.getType();
                     // Convert the incoming value from SAGE to the correct type in our domain model
                     if (fieldType.equals(String.class)) {
                         trueValue = value.toString();
@@ -192,16 +192,9 @@ public class SampleHelperNG extends DomainHelper {
                     }
                 }
 
-                String fieldName = attr.field.getName();
-                Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(lsm, attr.field);
-                if (!StringUtils.areEqual(currValue, trueValue)) {
-                    org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(lsm, attr.field, trueValue);
-	                logger.debug("  Setting " + fieldName + "=" + trueValue);
-	                dirty = true;
-	            }
-	            else {
-	                logger.debug("  Already set "+fieldName+"="+trueValue);
-	            }
+                if (updateValue(lsm, sageField.field.getName(), sageField, trueValue)) {
+                    dirty = true;
+                }
             }
             catch (Exception e) {
                 logger.error("Error setting SAGE attribute value "+key+" for LSM#"+lsm.getId(),e);
@@ -338,7 +331,7 @@ public class SampleHelperNG extends DomainHelper {
             logger.info("  Processing objective "+objective+", signalChannels="+sampleNumSignals+", chanSpec="+channelSpec);
             
             // Find the sample, if it exists, or create a new one.
-            if (createOrUpdateObjectiveSample(sample, slideCode, objective, channelSpec, subTileGroupList)) {
+            if (createOrUpdateObjectiveSample(sample, objective, channelSpec, subTileGroupList)) {
                 sampleDirty = true;
                 needsReprocessing = true;
             }
@@ -492,15 +485,9 @@ public class SampleHelperNG extends DomainHelper {
         	SageField sampleAttr = sampleAttrs.get(fieldName);
             if (sampleAttr!=null) {
                 try {
-                	Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(sample, sampleAttr.field);
                     Object consensusValue = consensusValues.get(fieldName);
-                    if (!StringUtils.areEqual(currValue, consensusValue)) {
-                    	org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(sample, sampleAttr.field, consensusValue);
-                        logger.debug("  Setting " + fieldName + "=" + consensusValue);
+                    if (updateValue(sample, fieldName, sampleAttr, consensusValue)) {
                         dirty = true;
-                    }
-                    else {
-                        logger.debug("  Already set "+fieldName+"="+consensusValue);
                     }
                 }
                 catch (Exception e) {
@@ -551,13 +538,14 @@ public class SampleHelperNG extends DomainHelper {
         return StringUtils.replaceVariablePattern(sampleNamePattern, valueMap);
     }
     
-    private boolean createOrUpdateObjectiveSample(Sample sample, String channelSpec, String objective, String chanSpec, Collection<SlideImageGroup> tileGroupList) throws Exception {
+    private boolean createOrUpdateObjectiveSample(Sample sample, String objective, String chanSpec, Collection<SlideImageGroup> tileGroupList) throws Exception {
 
         boolean dirty = false;
         
         ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
         if (objectiveSample==null) {
             objectiveSample = new ObjectiveSample(objective);
+            objectiveSample.setChanSpec(chanSpec);
             sample.addObjectiveSample(objectiveSample);
             synchronizeTiles(objectiveSample, tileGroupList);
             dirty = true;
@@ -654,16 +642,27 @@ public class SampleHelperNG extends DomainHelper {
     }
 
     /**
-     * Create and return a new sample tile based on the given SAGE image data.
-     * @return
+     * Set the value of the given field name on the given object, if the new value is different from the current value.
+     * @param object
+     * @param fieldName
+     * @param sageField
+     * @param newValue
+     * @return true if the value has changed
      * @throws Exception
      */
-    public SampleTile createTile(SlideImageGroup tileGroup) throws Exception {
-        SampleTile imageTile = new SampleTile();
-        setTileAttributes(imageTile, tileGroup);
-        return imageTile;
+    private boolean updateValue(Object object, String fieldName, SageField sageField, Object newValue) throws Exception {
+        Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(object, sageField.field);
+        if (!StringUtils.areEqual(currValue, newValue)) {
+            org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(object, sageField.field, newValue);
+            logger.debug("  Setting " + fieldName + "=" + newValue);
+            return true;
+        }
+        else {
+            logger.debug("  Already set "+fieldName+"="+newValue);
+            return false;
+        }
     }
-    
+
     /**
      * Set the tile attributes from the given SAGE image data.
      * @return true if something changed
