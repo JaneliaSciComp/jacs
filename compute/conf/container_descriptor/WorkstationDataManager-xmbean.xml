@@ -12,16 +12,6 @@
     </constructor>
 
     <operation>
-        <description>Synchronize the MongoDb to the database</description>
-        <name>runMongoDbSync</name>
-        <parameter>
-           <description>Clear the MongoDB first?</description>
-           <name>clearDb</name>
-           <type>java.lang.Boolean</type>
-        </parameter>
-    </operation>
-
-    <operation>
         <description>Periodic maintenance for the MongoDb database</description>
         <name>runMongoDbMaintenance</name>
     </operation>
