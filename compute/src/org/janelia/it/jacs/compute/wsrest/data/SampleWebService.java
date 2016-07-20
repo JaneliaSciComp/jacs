@@ -74,7 +74,7 @@ public class SampleWebService extends ResourceConfig {
         log.debug("getLsmsForSample({}, {})", subjectKey, sampleId);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            Collection<LSMImage> lsms = dao.getLsmsBySampleId(subjectKey, sampleId);
+            Collection<LSMImage> lsms = dao.getActiveLsmsBySampleId(subjectKey, sampleId);
             return new ArrayList<>(lsms);
         } catch (Exception e) {
             log.error("Error occurred getting lsms for sample",e);

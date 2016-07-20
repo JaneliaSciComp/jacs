@@ -74,19 +74,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
             ex.printStackTrace();
         }
     }
-    
-    public void runMongoDbSync(Boolean clearDb) {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null));
-            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
-                    taskParameters, "mongoDbSync", "MongoDb Sync");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MongoDbSync", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
 
     public void runMongoDbMaintenance() {
         try {

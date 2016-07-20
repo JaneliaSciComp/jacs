@@ -18,6 +18,7 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchType;
+import org.janelia.it.jacs.model.util.ModelStringUtil;
 
 /**
  * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination 
@@ -101,7 +102,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @JsonIgnore
     public void addObjectiveSample(ObjectiveSample objectiveSample) {
         objectiveSample.setParent(this);
-        objectiveSamples.add( objectiveSample);
+        objectiveSamples.add(objectiveSample);
         resortObjectiveSamples();
     }
 
@@ -127,7 +128,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @JsonIgnore
     public ObjectiveSample getObjectiveSample(String objective) {
         for(ObjectiveSample objectiveSample : objectiveSamples) {
-            if (objectiveSample.getObjective().equals(objective)) {
+            if (ModelStringUtil.areEqual(objectiveSample.getObjective(),objective)) {
                 return objectiveSample;
             }
         }

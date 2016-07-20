@@ -145,7 +145,7 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
             }
         }
 
-        // Now process all the slide
+        // Now process all the slides
         for (String slideCode : slideGroups.keySet()) {
             processSlideGroup(dataSet, slideCode, slideGroups.get(slideCode));
         }
@@ -176,7 +176,7 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
         String dataSetIdentifier = dataSet.getIdentifier();
 
         logger.info("Marking desynchronized LSMs in dataSet: "+dataSet.getName());
-        for(LSMImage lsm : domainDao.getLSMsForDataSet(ownerKey, dataSetIdentifier)) {
+        for(LSMImage lsm : domainDao.getActiveLsmsForDataSet(ownerKey, dataSetIdentifier)) {
             if (!visitedLsmIds.contains(lsm.getId())) {
                 logger.info("  Marking unvisited LSM as desynced: "+lsm.getName()+" (id="+lsm.getId()+")");
                 domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", false);
@@ -185,9 +185,9 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
         }
         
         logger.info("Marking desynchronized samples in dataSet: "+dataSet.getName());
-        for(Sample sample : domainDao.getSamplesForDataSet(ownerKey, dataSetIdentifier)) {
+        for(Sample sample : domainDao.getActiveSamplesForDataSet(ownerKey, dataSetIdentifier)) {
             if (!visitedSampleIds.contains(sample.getId())) {
-                // Sample was not visited this time around, it should be marked as desynchronized, and eventually retired
+                // Sample was not visited this time around, it should be marked as desynchronized
                 boolean blocked = DomainConstants.VALUE_BLOCKED.equals(sample.getStatus());
                 boolean retired = DomainConstants.VALUE_RETIRED.equals(sample.getStatus());
                 if (!blocked && !retired) {

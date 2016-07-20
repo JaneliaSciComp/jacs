@@ -671,6 +671,16 @@ public class DomainDAO {
         }
     }
 
+    public List<DataSet> getUserDataSets(String subjectKey) {
+        log.debug("getUserDataSets({})", subjectKey);
+        if (subjectKey == null) {
+            return toList(dataSetCollection.find().as(DataSet.class));
+        }
+        else {
+            return toList(dataSetCollection.find("{ownerKey:#}", subjectKey).as(DataSet.class));
+        }
+    }
+
     public DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier) {
 
         log.debug("getDataSetByIdentifier({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
@@ -684,19 +694,29 @@ public class DomainDAO {
         }
     }
 
-    public List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
+    // Samples by data set
 
-        log.debug("getSampleBySlideCode({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
+    public List<Sample> getActiveSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
+        return getSamplesForDataSet(subjectKey, dataSetIdentifier, true);
+    }
+
+    public List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
+        return getSamplesForDataSet(subjectKey, dataSetIdentifier, false);
+    }
+
+    private List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier, boolean activeOnly) {
+
+        log.debug("getActiveSamplesForDataSet({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
 
         long start = System.currentTimeMillis();
         Set<String> subjects = subjectKey == null ? null : getSubjectSet(subjectKey);
 
         MongoCursor<Sample> cursor;
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            cursor = sampleCollection.find("{dataSet:#,sageSynced:true}", dataSetIdentifier).as(Sample.class);
+            cursor = sampleCollection.find("{dataSet:#"+(activeOnly?",sageSynced:true":"")+"}", dataSetIdentifier).as(Sample.class);
         }
         else {
-            cursor = sampleCollection.find("{dataSet:#,sageSynced:true,readers:{$in:#}}", dataSetIdentifier, subjects).as(Sample.class);
+            cursor = sampleCollection.find("{dataSet:#"+(activeOnly?",sageSynced:true":"")+",readers:{$in:#}}", dataSetIdentifier, subjects).as(Sample.class);
         }
 
         List<Sample> list = toList(cursor);
@@ -704,19 +724,29 @@ public class DomainDAO {
         return list;
     }
 
-    public List<LSMImage> getLSMsForDataSet(String subjectKey, String dataSetIdentifier) {
+    // LSMSs by data set
 
-        log.debug("getSampleBySlideCode({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
+    public List<LSMImage> getActiveLsmsForDataSet(String subjectKey, String dataSetIdentifier) {
+        return getLsmsForDataSet(subjectKey, dataSetIdentifier, true);
+    }
+
+    public List<LSMImage> getLsmsForDataSet(String subjectKey, String dataSetIdentifier) {
+        return getLsmsForDataSet(subjectKey, dataSetIdentifier, false);
+    }
+
+    private List<LSMImage> getLsmsForDataSet(String subjectKey, String dataSetIdentifier, boolean activeOnly) {
+
+        log.debug("getActiveLsmsForDataSet({}, dataSetIdentifier={})", subjectKey, dataSetIdentifier);
 
         long start = System.currentTimeMillis();
         Set<String> subjects = subjectKey == null ? null : getSubjectSet(subjectKey);
 
         MongoCursor<LSMImage> cursor;
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            cursor = imageCollection.find("{dataSet:#,sageSynced:true}", dataSetIdentifier).as(LSMImage.class);
+            cursor = imageCollection.find("{dataSet:#"+(activeOnly?",sageSynced:true":"")+"}", dataSetIdentifier).as(LSMImage.class);
         }
         else {
-            cursor = imageCollection.find("{dataSet:#,sageSynced:true,readers:{$in:#}}", dataSetIdentifier, subjects).as(LSMImage.class);
+            cursor = imageCollection.find("{dataSet:#"+(activeOnly?",sageSynced:true":"")+",readers:{$in:#}}", dataSetIdentifier, subjects).as(LSMImage.class);
         }
 
         List<LSMImage> list = toList(cursor);
@@ -724,34 +754,66 @@ public class DomainDAO {
         return list;
     }
 
-    public Sample getSampleBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+    // Samples by slide code
 
-        log.debug("getSampleBySlideCode({}, dataSetIdentifier={}, slideCode={})", subjectKey, dataSetIdentifier, slideCode);
+    public List<Sample> getSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+        return getSamplesBySlideCode(subjectKey, dataSetIdentifier, slideCode, false);
+    }
+
+    public Sample getActiveSampleBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+        List<Sample> list = getSamplesBySlideCode(subjectKey, dataSetIdentifier, slideCode, true);
+        if (list.isEmpty()) {
+            return null;
+        }
+        if (list.size()>1) {
+            log.warn("More than one active sample found for "+dataSetIdentifier+"/"+slideCode);
+        }
+        return list.get(0);
+    }
+
+    private List<Sample> getSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode, boolean activeOnly) {
+
+        log.debug("getActiveSampleBySlideCode({}, dataSetIdentifier={}, slideCode={})", subjectKey, dataSetIdentifier, slideCode);
 
         long start = System.currentTimeMillis();
         Set<String> subjects = subjectKey == null ? null : getSubjectSet(subjectKey);
 
         MongoCursor<Sample> cursor;
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
-            cursor = sampleCollection.find("{dataSet:#,slideCode:#,sageSynced:true}", dataSetIdentifier, slideCode).as(Sample.class);
+            cursor = sampleCollection.find("{dataSet:#,slideCode:#"+(activeOnly?",sageSynced:true":"")+"}", dataSetIdentifier, slideCode).as(Sample.class);
         }
         else {
-            cursor = sampleCollection.find("{dataSet:#,slideCode:#,sageSynced:true,readers:{$in:#}}", dataSetIdentifier, slideCode, subjects).as(Sample.class);
+            cursor = sampleCollection.find("{dataSet:#,slideCode:#"+(activeOnly?",sageSynced:true":"")+",readers:{$in:#}}", dataSetIdentifier, slideCode, subjects).as(Sample.class);
         }
 
         List<Sample> list = toList(cursor);
         log.trace("Getting " + list.size() + " Sample objects took " + (System.currentTimeMillis() - start) + " ms");
-        if (list.isEmpty()) {
-        	return null;
-        }
-        if (list.size()>1) {
-        	log.warn("More than one active sample found for "+dataSetIdentifier+"/"+slideCode);
-        }
-        return list.get(0);
+        return list;
     }
 
-    public List<LSMImage> getLsmsBySampleId(String subjectKey, Long sampleId) {
-        log.debug("getLsmsBySampleId({}, {})", subjectKey, sampleId);
+    // User samples by slide code
+
+    public List<Sample> getUserSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode) {
+
+        log.debug("getUserSamplesBySlideCode({}, dataSetIdentifier={}, slideCode={})", subjectKey, dataSetIdentifier, slideCode);
+
+        long start = System.currentTimeMillis();
+
+        MongoCursor<Sample> cursor;
+        if (subjectKey == null) {
+            cursor = sampleCollection.find("{dataSet:#,slideCode:#}", dataSetIdentifier, slideCode).as(Sample.class);
+        }
+        else {
+            cursor = sampleCollection.find("{dataSet:#,slideCode:#,ownerKey:#}", dataSetIdentifier, slideCode, subjectKey).as(Sample.class);
+        }
+
+        List<Sample> list = toList(cursor);
+        log.trace("Getting " + list.size() + " Sample objects took " + (System.currentTimeMillis() - start) + " ms");
+        return list;
+    }
+
+    public List<LSMImage> getActiveLsmsBySampleId(String subjectKey, Long sampleId) {
+        log.debug("getActiveLsmsBySampleId({}, {})", subjectKey, sampleId);
         String refStr = "Sample#"+sampleId;
         Set<String> subjects = getSubjectSet(subjectKey);
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
@@ -762,14 +824,24 @@ public class DomainDAO {
         }
     }
 
-    public LSMImage getLsmBySageId(String subjectKey, Integer sageId) {
-        log.debug("getLsmBySageId({}, {})", subjectKey, sageId);
+    public LSMImage getActiveLsmBySageId(String subjectKey, Integer sageId) {
+        log.debug("getActiveLsmBySageId({}, {})", subjectKey, sageId);
         Set<String> subjects = getSubjectSet(subjectKey);
         if (subjects == null || subjects.contains(Subject.ADMIN_KEY)) {
             return imageCollection.findOne("{sageId:#,sageSynced:true}", sageId).as(LSMImage.class);
         }
         else {
             return imageCollection.findOne("{sageId:#,sageSynced:true,readers:{$in:#}}", sageId, subjects).as(LSMImage.class);
+        }
+    }
+
+    public List<LSMImage> getUserLsmsBySageId(String subjectKey, Integer sageId) {
+        log.debug("getUserLsmsBySageId({}, {})", subjectKey, sageId);
+        if (subjectKey == null) {
+            return toList(imageCollection.find("{sageId:#}", sageId).as(LSMImage.class));
+        }
+        else {
+            return toList(imageCollection.find("{sageId:#, ownerKey:#}", sageId, subjectKey).as(LSMImage.class));
         }
     }
 

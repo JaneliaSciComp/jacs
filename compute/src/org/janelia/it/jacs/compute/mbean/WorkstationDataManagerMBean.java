@@ -10,7 +10,6 @@ package org.janelia.it.jacs.compute.mbean;
 public interface WorkstationDataManagerMBean {
     
 	// ETL
-	public void runMongoDbSync(Boolean clearDb);
     public void runMongoDbMaintenance();
 	
 	// SOLR Indexing

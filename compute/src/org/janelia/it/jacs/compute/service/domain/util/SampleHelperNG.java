@@ -28,7 +28,6 @@ import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.reflections.ReflectionUtils;
 
-
 /**
  * Helper methods for dealing with Samples.
  * 
@@ -49,7 +48,8 @@ public class SampleHelperNG extends DomainHelper {
     
     // Processing state
     private Map<Long,LSMImage> lsmCache = new HashMap<>();
-    private Set<Long> updatedLsmIds = new HashSet<>();
+    private Set<Long> changedLsmIds = new HashSet<>();
+    private Set<Long> changedSampleIds = new HashSet<>();
     private Set<String> sageAttrsNotFound = new HashSet<>();
     private int numSamplesCreated = 0;
     private int numSamplesUpdated = 0;
@@ -71,8 +71,8 @@ public class SampleHelperNG extends DomainHelper {
         
     	logger.debug("createOrUpdateLSM("+slideImage.getName()+")");
         boolean dirty = false;
-        
-        LSMImage lsm = domainDAL.getLsmBySageId(ownerKey, slideImage.getSageId());
+
+        LSMImage lsm = findBestLsm(slideImage.getSageId());
         if (lsm==null) {
             lsm = new LSMImage();
             lsm.setFiles(new HashMap<FileType,String>());
@@ -87,7 +87,6 @@ public class SampleHelperNG extends DomainHelper {
         
         if (dirty) {
             lsm = domainDAL.save(ownerKey, lsm);
-            updatedLsmIds.add(lsm.getId());
         }
         else if (!lsm.getSageSynced()) {
             domainDAL.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", true);
@@ -96,17 +95,44 @@ public class SampleHelperNG extends DomainHelper {
         lsmCache.put(lsm.getId(), lsm);
         return lsm;
     }
-    
+
+    private LSMImage findBestLsm(Integer sageId) {
+
+        List<LSMImage> lsms = domainDAL.getUserLsmsBySageId(ownerKey, sageId);
+
+        if (lsms.isEmpty()) {
+            return null;
+        }
+
+        // If there is an active LSM, return that
+        for(LSMImage lsm : lsms) {
+            if (lsm.getSageSynced()) {
+                return lsm;
+            }
+        }
+
+        // Otherwise, return the most recently created LSM
+        Collections.sort(lsms, new Comparator<LSMImage>() {
+            @Override
+            public int compare(LSMImage o1, LSMImage o2) {
+                return o2.getCreationDate().compareTo(o1.getCreationDate());
+            }
+        });
+
+        return lsms.get(0);
+    }
+
     private boolean updateLsmAttributes(LSMImage lsm, SlideImage slideImage) throws Exception {
 
     	logger.debug("updateLsmAttribute(lsmId="+lsm.getId()+",sageId="+slideImage.getSageId()+")");
+        boolean changed = false;
         boolean dirty = false;
         
         Map<String,SageField> lsmSageAttrs = getLsmSageFields();
         for(String key : slideImage.getProperties().keySet()) {
             try {
-                SageField attr = lsmSageAttrs.get(key);
-                if (attr==null) {
+                SageField sageField = lsmSageAttrs.get(key);
+                if (sageField==null) {
                 	if (!sageAttrsNotFound.contains(key)) {
                 		logger.warn("SAGE Attribute not found on LSMImage: "+key);
                 		sageAttrsNotFound.add(key);
@@ -117,7 +143,7 @@ public class SampleHelperNG extends DomainHelper {
                 String strValue = value==null?null:value.toString();
                 Object trueValue = null;
                 if (value!=null) {
-                    Class<?> fieldType = attr.field.getType();
+                    Class<?> fieldType = sageField.field.getType();
                     // Convert the incoming value from SAGE to the correct type in our domain model
                     if (fieldType.equals(String.class)) {
                         trueValue = value.toString();
@@ -129,7 +155,7 @@ public class SampleHelperNG extends DomainHelper {
                     }
                     else if (fieldType.equals(Long.class)) {
                     	if (value instanceof Long) {
-                    		trueValue = (Long)value;
+                    		trueValue = value;
                     	}
                     	else {
                             if (!StringUtils.isEmpty(strValue)) {
@@ -139,7 +165,7 @@ public class SampleHelperNG extends DomainHelper {
                     }
                     else if (fieldType.equals(Integer.class)) {
                     	if (value instanceof Integer) {
-                    		trueValue = (Integer)value;
+                    		trueValue = value;
                     	}
                     	else {
                             if (!StringUtils.isEmpty(strValue)) {
@@ -166,16 +192,13 @@ public class SampleHelperNG extends DomainHelper {
                     }
                 }
 
-                String fieldName = attr.field.getName();
-                Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(lsm, attr.field);
-                if (!StringUtils.areEqual(currValue, trueValue)) {
-                    org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(lsm, attr.field, trueValue);
-	                logger.debug("  Setting " + fieldName + "=" + trueValue);
-	                dirty = true;
-	            }
-	            else {
-	                logger.debug("  Already set "+fieldName+"="+trueValue);
-	            }
+                UpdateType ut = updateValue(lsm, sageField.field.getName(), sageField, trueValue);
+                if (ut != UpdateType.SAME) {
+                    dirty = true;
+                }
+                if (ut == UpdateType.CHANGE) {
+                    changed = true;
+                }
             }
             catch (Exception e) {
                 logger.error("Error setting SAGE attribute value "+key+" for LSM#"+lsm.getId(),e);
@@ -187,6 +210,7 @@ public class SampleHelperNG extends DomainHelper {
         if (!StringUtils.areEqual(lsm.getName(), slideImage.getName())) {
             lsm.setName(slideImage.getName());
             dirty = true;
+            changed = true;
         }
         
         String filepath = slideImage.getFilepath();
@@ -194,12 +218,14 @@ public class SampleHelperNG extends DomainHelper {
             lsm.setFilepath(filepath);
             lsm.getFiles().put(FileType.LosslessStack,filepath);
             dirty = true;
+            changed = true;
         }
 
         String objective = slideImage.getObjective();
         if (!StringUtils.areEqual(lsm.getObjective(), objective)) {
             lsm.setObjective(objective);
             dirty = true;
+            changed = true;
         }
         
         if (lsm.getVoxelSizeX()!=null && lsm.getVoxelSizeY()!=null && lsm.getVoxelSizeZ()!=null) {
@@ -207,6 +233,7 @@ public class SampleHelperNG extends DomainHelper {
             if (!StringUtils.areEqual(lsm.getOpticalResolution(), opticalRes)) {
                 lsm.setOpticalResolution(opticalRes);
                 dirty = true;
+                changed = true;
             }
         }
 
@@ -215,6 +242,7 @@ public class SampleHelperNG extends DomainHelper {
             if (!StringUtils.areEqual(lsm.getImageSize(), imageSize)) {
                 lsm.setImageSize(imageSize);
                 dirty = true;
+                changed = true;
             }
         }
 
@@ -223,30 +251,38 @@ public class SampleHelperNG extends DomainHelper {
             dirty = true;
         }
 
+
+        if (changed) {
+            changedLsmIds.add(lsm.getId());
+        }
+
         return dirty;
     }
         
     public Sample createOrUpdateSample(String slideCode, DataSet dataSet, Collection<LSMImage> lsms) throws Exception {
 
-    	logger.info("Creating or updating sample: "+slideCode+" ("+(dataSet==null?"":"dataSet="+dataSet.getName())+")");
+    	logger.info("Creating or updating sample: "+slideCode+" ("+(dataSet==null?"":"dataSet="+dataSet.getIdentifier())+")");
 
         Multimap<String,SlideImageGroup> objectiveGroups = HashMultimap.create();
-    	boolean lsmDirty = false;
+    	boolean lsmChanged = false;
         int tileNum = 0;
         for(LSMImage lsm : lsms) {
 
-        	// Have any of the LSMs been updated? If so, we need to mark the sample for reprocessing later.
-        	if (updatedLsmIds.contains(lsm.getId())) {
-        		lsmDirty = true;
+        	// Have any of the LSMs been changed? If so, we need to mark the sample for reprocessing later.
+        	if (changedLsmIds.contains(lsm.getId())) {
+        		lsmChanged = true;
         	}
         	
         	// Extract LSM metadata
         	String objective = lsm.getObjective();
-            String area = lsm.getAnatomicalArea();
+            if (objective==null) {
+                objective = "";
+            }
             String tag = lsm.getTile();
             if (tag==null) {
                 tag = "Tile "+(tileNum+1);
             }
+            String area = lsm.getAnatomicalArea();
 
             // Group LSMs by objective and tile
             Collection<SlideImageGroup> subTileGroupList = objectiveGroups.get(objective);
@@ -272,27 +308,40 @@ public class SampleHelperNG extends DomainHelper {
         
         logger.debug("  Sample objectives: "+objectiveGroups.keySet());
 
-        boolean sampleDirty = false;
-        boolean needsReprocessing = lsmDirty;
-        
         Sample sample = getOrCreateSample(slideCode, dataSet);
-        if (sample.getId()==null) {
-            sampleDirty = true;
-            needsReprocessing = true;
-        }
-                
+        boolean sampleNew = sample.getId()==null;
+        boolean sampleDirty = sampleNew;
+
         if (setSampleAttributes(dataSet, sample, objectiveGroups.values())) {
             sampleDirty = true;
+        }
+
+        boolean needsReprocessing = lsmChanged;
+
+        if (lsmChanged && !sampleNew) {
+            logger.info("  LSMs changed, will mark sample for reprocessing");
+        }
+
+        if (changedSampleIds.contains(sample.getId()) && !sampleNew) {
+            logger.info("  Sample attributes changed, will mark sample for reprocessing");
             needsReprocessing = true;
         }
 
         // First, remove all tiles/LSMSs from objectives which are no longer found in SAGE
         for(ObjectiveSample objectiveSample : new ArrayList<>(sample.getObjectiveSamples())) {
         	if (!objectiveGroups.containsKey(objectiveSample.getObjective())) {
-	        	if (objectiveSample.hasPipelineRuns()) {
+
+                if ("".equals(objectiveSample.getObjective()) && objectiveGroups.size()==1) {
+                    logger.warn("  Leaving empty objective alone, because it is the only one");
+                    continue;
+                }
+
+	        	if (!objectiveSample.hasPipelineRuns()) {
+                    logger.warn("  Removing existing '"+objectiveSample.getObjective()+"' objective sample");
 	        		sample.removeObjectiveSample(objectiveSample);
 	        	}
 	        	else {
+                    logger.warn("  Resetting tiles for existing "+objectiveSample.getObjective()+" objective sample");
 	        		objectiveSample.setTiles(new ArrayList<SampleTile>());
 	        	}
 	            sampleDirty = true;
@@ -309,11 +358,15 @@ public class SampleHelperNG extends DomainHelper {
             int sampleNumChannels = sampleNumSignals+1;
             String channelSpec = ChanSpecUtils.createChanSpec(sampleNumChannels, sampleNumChannels);
 
-            logger.info("  Processing objective "+objective+", signalChannels="+sampleNumSignals+", chanSpec="+channelSpec);
+            logger.info("  Processing objective '"+objective+"', signalChannels="+sampleNumSignals+", chanSpec="+channelSpec);
             
             // Find the sample, if it exists, or create a new one.
-            if (createOrUpdateObjectiveSample(sample, slideCode, objective, channelSpec, subTileGroupList)) {
+            UpdateType ut = createOrUpdateObjectiveSample(sample, objective, channelSpec, subTileGroupList);
+            if (ut!=UpdateType.SAME) {
                 sampleDirty = true;
+            }
+            if (ut==UpdateType.CHANGE && !sampleNew) {
+                logger.info("  Objective sample '"+objective+"' changed, will mark sample for reprocessing");
                 needsReprocessing = true;
             }
         }
@@ -324,10 +377,7 @@ public class SampleHelperNG extends DomainHelper {
             sampleDirty = true;
         }
 
-        if (needsReprocessing && sample.getId()!=null) {
-		    if (lsmDirty) {
-		    	logger.info("  LSMs changed, will mark sample for reprocessing");
-		    }
+        if (needsReprocessing) {
         	markForProcessing(sample);
         	sampleDirty = true;
         }
@@ -354,7 +404,7 @@ public class SampleHelperNG extends DomainHelper {
         	if (!StringUtils.areEqual(lsm.getSample(),sampleRef)) {
         		lsm.setSample(sampleRef);
         		saveLsm(lsm);
-        		logger.info("Updated sample reference for LSM#"+lsm.getId());
+        		logger.info("  Updated sample reference for LSM#"+lsm.getId());
         	}
         }
 
@@ -368,7 +418,7 @@ public class SampleHelperNG extends DomainHelper {
     
     private Sample getOrCreateSample(String slideCode, DataSet dataSet) {
         
-        Sample sample = domainDAL.getSampleBySlideCode(ownerKey, dataSet.getIdentifier(), slideCode);
+        Sample sample = findBestSample(dataSet.getIdentifier(), slideCode);
         if (sample != null) {
         	logger.info("  Found existing sample "+sample.getId()+" with status "+sample.getStatus());
         	return sample;
@@ -382,10 +432,37 @@ public class SampleHelperNG extends DomainHelper {
         numSamplesCreated++;
         return sample;
     }
-    
+
+    private Sample findBestSample(String dataSetIdentifier, String slideCode) {
+
+        List<Sample> samples = domainDAL.getUserSamplesBySlideCode(ownerKey, dataSetIdentifier, slideCode);
+
+        if (samples.isEmpty()) {
+            return null;
+        }
+
+        // If there is an active Sample, return that
+        for(Sample sample : samples) {
+            if (sample.getSageSynced()) {
+                return sample;
+            }
+        }
+
+        // Otherwise, return the most recently created Sample
+        Collections.sort(samples, new Comparator<Sample>() {
+            @Override
+            public int compare(Sample o1, Sample o2) {
+                return o2.getCreationDate().compareTo(o1.getCreationDate());
+            }
+        });
+
+        return samples.get(0);
+    }
+
     private boolean setSampleAttributes(DataSet dataSet, Sample sample, Collection<SlideImageGroup> tileGroupList) {
 
         boolean dirty = false;
+        boolean changed = false;
         Date maxTmogDate = null;
 
         Map<String,Object> consensusValues = new HashMap<>();
@@ -440,15 +517,13 @@ public class SampleHelperNG extends DomainHelper {
         	SageField sampleAttr = sampleAttrs.get(fieldName);
             if (sampleAttr!=null) {
                 try {
-                	Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(sample, sampleAttr.field);
                     Object consensusValue = consensusValues.get(fieldName);
-                    if (!StringUtils.areEqual(currValue, consensusValue)) {
-                    	org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(sample, sampleAttr.field, consensusValue);
-                        logger.debug("  Setting " + fieldName + "=" + consensusValue);
+                    UpdateType ut = updateValue(sample, fieldName, sampleAttr, consensusValue);
+                    if (ut != UpdateType.SAME) {
                         dirty = true;
                     }
-                    else {
-                        logger.debug("  Already set "+fieldName+"="+consensusValue);
+                    if (ut == UpdateType.CHANGE) {
+                        changed = true;
                     }
                 }
                 catch (Exception e) {
@@ -456,7 +531,7 @@ public class SampleHelperNG extends DomainHelper {
                 }
             }
             else {
-                logger.debug("  Not a sample attribute: "+fieldName);
+                logger.trace("  Not a sample attribute: "+fieldName);
             }
         }
         
@@ -465,8 +540,13 @@ public class SampleHelperNG extends DomainHelper {
             logger.info("  Updating sample name to: "+newName);
             sample.setName(newName);
             dirty = true;
+            changed = true;
         }
-        
+
+        if (changed) {
+            changedSampleIds.add(sample.getId());
+        }
+
         return dirty;
     }
 
@@ -499,28 +579,33 @@ public class SampleHelperNG extends DomainHelper {
         return StringUtils.replaceVariablePattern(sampleNamePattern, valueMap);
     }
     
-    private boolean createOrUpdateObjectiveSample(Sample sample, String channelSpec, String objective, String chanSpec, Collection<SlideImageGroup> tileGroupList) throws Exception {
+    private UpdateType createOrUpdateObjectiveSample(Sample sample, String objective, String chanSpec, Collection<SlideImageGroup> tileGroupList) throws Exception {
 
-        boolean dirty = false;
-        
         ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
         if (objectiveSample==null) {
-            objectiveSample = new ObjectiveSample(objective);
-            sample.addObjectiveSample(objectiveSample);
-            synchronizeTiles(objectiveSample, tileGroupList);
-            dirty = true;
+            objectiveSample = sample.getObjectiveSample("");
+            if (objectiveSample==null) {
+                objectiveSample = new ObjectiveSample(objective);
+                objectiveSample.setChanSpec(chanSpec);
+                sample.addObjectiveSample(objectiveSample);
+                synchronizeTiles(objectiveSample, tileGroupList);
+                logger.debug("  Created new objective '"+objective+"' for sample "+sample.getName());
+                return UpdateType.ADD;
+            }
+            else {
+                objectiveSample.setObjective(objective);
+                logger.debug("  Updated objective to '"+objective+"' for legacy sample with empty objective");
+                return UpdateType.ADD;
+            }
         }
         else if (synchronizeTiles(objectiveSample, tileGroupList)) {
-            dirty = true;
-            logger.debug("Updated objective "+objective+" for sample "+sample.getName());
+            return UpdateType.CHANGE;
         }
-        
-        return dirty;
+
+        return UpdateType.SAME;
     }
 
     public boolean synchronizeTiles(ObjectiveSample objectiveSample, Collection<SlideImageGroup> tileGroupList) throws Exception {
-        
-        boolean dirty = false;
 
         if (!tilesMatch(objectiveSample, tileGroupList)) {
             // Something has changed, so just recreate the tiles
@@ -537,9 +622,11 @@ public class SampleHelperNG extends DomainHelper {
                 tiles.add(sampleTile);
             }
             objectiveSample.setTiles(tiles);
-            logger.info("  Updated tiles for objective "+objectiveSample.getObjective());
+            logger.info("  Updated tiles for objective '"+objectiveSample.getObjective()+"'");
             return true;
         }
+
+        boolean dirty = false;
 
         for (SlideImageGroup tileGroup : tileGroupList) {
             SampleTile sampleTile = objectiveSample.getTileByName(tileGroup.getTag());
@@ -560,11 +647,11 @@ public class SampleHelperNG extends DomainHelper {
         
         Set<SampleTile> seenTiles = new HashSet<>();
         
-        logger.debug("  Checking if tiles match");
+        logger.trace("  Checking if tiles match");
         
         for (SlideImageGroup tileGroup : tileGroupList) {
         	
-        	logger.debug("  Checking for "+tileGroup.getTag());
+        	logger.trace("  Checking for "+tileGroup.getTag());
 
             // Ensure each tile is in the sample
             SampleTile sampleTile = objectiveSample.getTileByName(tileGroup.getTag());
@@ -597,40 +684,47 @@ public class SampleHelperNG extends DomainHelper {
             return false;
         }
         
-        logger.debug("  Tiles match!");
+        logger.trace("  Tiles match!");
         return true;
     }
 
+    private enum UpdateType {
+        ADD,
+        REMOVE,
+        CHANGE,
+        SAME
+    }
+
     /**
-     * Create and return a new sample tile based on the given SAGE image data.
-     * @return
+     * Set the value of the given field name on the given object, if the new value is different from the current value.
+     * @param object
+     * @param fieldName
+     * @param sageField
+     * @param newValue
+     * @return true if the value has changed
      * @throws Exception
      */
-    public SampleTile createTile(SlideImageGroup tileGroup) throws Exception {
-        SampleTile imageTile = new SampleTile();
-        setTileAttributes(imageTile, tileGroup);
-        return imageTile;
-    }
-    
-    /**
-     * Set the tile attributes from the given SAGE image data.
-     * @return true if something changed
-     * @throws Exception
-     */
-    public boolean setTileAttributes(SampleTile imageTile, SlideImageGroup tileGroup) throws Exception {
-        boolean tileDirty = false;
-        logger.debug("    Setting tile properties: name="+tileGroup.getTag()+", anatomicalArea="+tileGroup.getAnatomicalArea());
-        if (imageTile.getName()==null || !StringUtils.areEqual(imageTile.getName(),tileGroup.getTag())) {
-            imageTile.setName(tileGroup.getTag());
-            tileDirty = true;
+    private UpdateType updateValue(Object object, String fieldName, SageField sageField, Object newValue) throws Exception {
+        Object currValue = org.janelia.it.jacs.shared.utils.ReflectionUtils.getFieldValue(object, sageField.field);
+        if (!StringUtils.areEqual(currValue, newValue)) {
+            org.janelia.it.jacs.shared.utils.ReflectionUtils.setFieldValue(object, sageField.field, newValue);
+
+            if (currValue != null) {
+                logger.debug("  Setting " + fieldName + "='" + newValue+"' (previously '"+currValue+"')");
+            }
+            else {
+                logger.debug("  Setting " + fieldName + "='" + newValue+"'");
+            }
+
+            if (currValue == null) return UpdateType.ADD;
+            else if (newValue == null) return UpdateType.REMOVE;
+            else return UpdateType.CHANGE;
         }
-        if (!StringUtils.areEqual(tileGroup.getAnatomicalArea(),imageTile.getAnatomicalArea())) {
-            imageTile.setAnatomicalArea(tileGroup.getAnatomicalArea());
-            tileDirty = true;
+        else {
+            logger.trace("  Already set "+fieldName+"="+newValue);
+            return UpdateType.SAME;
         }
-        return tileDirty;
     }
-    
     
     private void markForProcessing(Sample sample) throws Exception {
         String sampleStatus = sample.getStatus();
@@ -739,7 +833,7 @@ public class SampleHelperNG extends DomainHelper {
         int sampleNumSignals = -1;
         for(SlideImageGroup tileGroup : tileGroupList) {
 
-            logger.debug("  Calculating number of channels in tile "+tileGroup.getTag());
+            logger.trace("  Calculating number of channels in tile "+tileGroup.getTag());
             
             int tileNumSignals = 0;
             for(LSMImage lsm : tileGroup.getImages()) {
@@ -754,7 +848,7 @@ public class SampleHelperNG extends DomainHelper {
             }
             
             if (tileNumSignals<1) {
-                logger.debug("  Falling back on channel number");
+                logger.trace("  Falling back on channel number");
                 // We didn't get the information from the channel spec, let's fall back on inference from numChannels
                 for(LSMImage lsm : tileGroup.getImages()) {
                     Integer numChannels = lsm.getNumChannels();
@@ -764,7 +858,7 @@ public class SampleHelperNG extends DomainHelper {
                 }
             }
             
-            logger.debug("  Tile "+tileGroup.getTag()+" has "+tileNumSignals+" signal channels");
+            logger.trace("  Tile '"+tileGroup.getTag()+"' has "+tileNumSignals+" signal channels");
             
             if (sampleNumSignals<0) {
                 sampleNumSignals = tileNumSignals;
