@@ -95,7 +95,7 @@ public class Vaa3DStitchGroupingService extends AbstractDomainGridService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 64;
+    	return 72;
     }
 	
     @Override
