@@ -56,6 +56,7 @@ import org.janelia.it.jacs.model.tasks.Task;
  */
 public class SageArtifactExportService extends AbstractDomainService {
 
+    public static final String TRUE_VALUE = "Y";
 	public static final String CREATED_BY = "Janelia Workstation";
     public static final String ANNOTATION_EXPORT_20X = "Publish20xToWeb";
     public static final String ANNOTATION_EXPORT_63X = "Publish63xToWeb";
@@ -451,7 +452,7 @@ public class SageArtifactExportService extends AbstractDomainService {
                     // Single LSM, make that the primary image
                     tileSourceImage = images.get(0);
                     sage.setImageProperty(tileSourceImage, propertyPublishedTo, PUBLISHED_TO, createDate);
-                    sage.setImageProperty(tileSourceImage, propertyToPublish, "Y", createDate);
+                    sage.setImageProperty(tileSourceImage, propertyToPublish, TRUE_VALUE, createDate);
                     sage.setImageProperty(tileSourceImage, propertyPublishingUser, publishingUser, createDate);
                     sage.setImageProperty(tileSourceImage, propertyRelease, release.getName(), createDate);
                     sage.setImageProperty(tileSourceImage, propertyWorkstationSampleId, objectiveSample.getParent().getId().toString(), createDate);
@@ -480,7 +481,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         logger.debug("    Synchronizing primary image "+imageName);
         Image image = sage.getImageByName(imageName);
         
-        Map<CvTerm,String> consensusValues = new HashMap<CvTerm,String>();
+        Map<CvTerm,String> consensusValues = new HashMap();
         CvTerm consensusFamily = null;
         
         for(Image sourceImage : sourceSageImages) {
@@ -512,7 +513,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         }
         
         consensusValues.put(propertyPublishedTo, PUBLISHED_TO);
-        consensusValues.put(propertyToPublish, "Y");
+        consensusValues.put(propertyToPublish, TRUE_VALUE);
         consensusValues.put(propertyPublishingUser, publishingUser);
         consensusValues.put(propertyRelease, release.getName());
         consensusValues.put(propertyWorkstationSampleId, objectiveSample.getParent().getId().toString());
@@ -599,21 +600,33 @@ public class SageArtifactExportService extends AbstractDomainService {
         FileGroup tileGroup = artifactRun.getGroup(tag);
                 
         SecondaryImage secImage = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.SignalMip), productSignalsMip, sourceImage);
-        sageIds.add(secImage.getId());
+        if (secImage!=null) {
+            sageIds.add(secImage.getId());
+        }
         
         SecondaryImage secImage2 = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.AllMip), productMultichannelMip, sourceImage);
-        sageIds.add(secImage2.getId());
+        if (secImage2!=null) {
+            sageIds.add(secImage2.getId());
+        }
         
         SecondaryImage secImage3 = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.SignalMovie), productSignalsTranslation, sourceImage);
-        sageIds.add(secImage3.getId());
+        if (secImage3!=null) {
+            sageIds.add(secImage3.getId());
+        }
         
         SecondaryImage secImage4 = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.AllMovie), productMultichannelTranslation, sourceImage);
-        sageIds.add(secImage4.getId());
+        if (secImage4!=null) {
+            sageIds.add(secImage4.getId());
+        }
         
         logger.info("    Synchronized secondary images: "+sageIds);
     }
     
     private SecondaryImage getOrCreateSecondaryImage(String path, CvTerm productType, Image sourceImage) throws Exception {
+        if (path==null) {
+            logger.error("    Missing "+productType.getDisplayName()+" for "+sourceImage.getName());
+            return null;
+        }
         File file = new File(path);
         String imageName = file.getName();
         String url = getWebdavUrl(path);
@@ -698,7 +711,7 @@ public class SageArtifactExportService extends AbstractDomainService {
                 value = annotationEntity.getValue();
             }
             else if (keyTerm instanceof Tag) {
-                value = "Y";
+                value = TRUE_VALUE;
             }
             else {
                 logger.warn("    Unsupported annotation type: "+keyTerm.getClass().getName());
