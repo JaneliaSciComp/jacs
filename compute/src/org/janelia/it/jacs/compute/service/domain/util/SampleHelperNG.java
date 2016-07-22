@@ -4,8 +4,10 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Ordering;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
@@ -1265,20 +1267,6 @@ public class SampleHelperNG extends DomainHelper {
         return new ArrayList<>(groups.values());
     }
 
-    public void sortMembersByName(TreeNode folder) throws Exception {
-        if (folder ==null || !folder.hasChildren()) return;
-        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDAL.getChildren(ownerKey, folder));
-        Collections.sort(folder.getChildren(), new Comparator<Reference>() {
-            @Override
-            public int compare(Reference o1, Reference o2) {
-                DomainObject d1 = map.get(o1.getTargetId());
-                DomainObject d2 = map.get(o2.getTargetId());
-                return d1.getName().compareTo(d2.getName());
-            }
-        });
-        domainDAL.save(ownerKey, folder);
-    }
-    
     public void sortChildrenByName(TreeNode treeNode) throws Exception {
         if (treeNode==null || !treeNode.hasChildren()) return;
         final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDAL.getChildren(ownerKey, treeNode));
@@ -1287,7 +1275,11 @@ public class SampleHelperNG extends DomainHelper {
             public int compare(Reference o1, Reference o2) {
                 DomainObject d1 = map.get(o1.getTargetId());
                 DomainObject d2 = map.get(o2.getTargetId());
-                return d1.getName().compareTo(d2.getName());
+                String d1Name = d1==null?null:d1.getName();
+                String d2Name = d2==null?null:d2.getName();
+                return ComparisonChain.start()
+                        .compare(d1Name, d2Name, Ordering.natural().nullsLast())
+                        .result();
             }
         });
         domainDAL.save(ownerKey, treeNode);

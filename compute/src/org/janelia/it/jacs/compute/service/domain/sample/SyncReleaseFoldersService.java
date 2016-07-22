@@ -159,7 +159,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	    }
     	    
     	    // Re-sort line folder
-    	    sampleHelper.sortMembersByName(lineFolder);
+    	    sampleHelper.sortChildrenByName(lineFolder);
     	}
 
         // Re-sort release folder
