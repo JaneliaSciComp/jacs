@@ -80,7 +80,7 @@ public class SolrWebService extends ResourceConfig {
             }
 
             SolrDocumentList results = response.getResults();
-            log.debug("Solr search returned {} results",results.getNumFound());
+            log.debug("Solr search found {} results, returning {}",results.getNumFound(), results.size());
             return new SolrJsonResults(results, facetValues, response.getResults().getNumFound());
         }
         catch (Exception e) {
