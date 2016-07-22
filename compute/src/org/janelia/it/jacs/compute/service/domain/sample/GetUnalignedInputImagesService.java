@@ -3,10 +3,10 @@ package org.janelia.it.jacs.compute.service.domain.sample;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
@@ -15,16 +15,11 @@ import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
 import org.janelia.it.jacs.compute.service.image.InputImage;
 import org.janelia.it.jacs.compute.service.vaa3d.MergedLsmPair;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
-import org.janelia.it.jacs.compute.util.FileUtils;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
-import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Ordering;
 
 /**
  * Gets all the unaligned images for the given sample as InputImages which can be used as parameters to other services. 
@@ -36,12 +31,10 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
 
     private static final String SERVICE_PACKAGE = "org.janelia.it.jacs.compute.service.image";
     
-    private String colorSpec;
+    private String defaultColorSpec;
     private String mode;
-
     private Sample sample;
     private ObjectiveSample objectiveSample;
-    private Map<String,String> tileNames = new HashMap<>();
     
     public void execute() throws Exception {
 
@@ -51,22 +44,31 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
         
         List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) data.getRequiredItem("SAMPLE_AREAS");
-        this.colorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
+        this.defaultColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
         this.mode = data.getItemAsString("MODE");
 
-        // For each merged file, find the tile name and save it in a map for later lookup
-        for(AnatomicalArea sampleArea : sampleAreas) {
-            for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
-                tileNames.put(mergedPair.getMergedFilepath(), mergedPair.getTileName());
+        // Create an input image for each sample processing result
+
+
+        String chanSpec = objectiveSample.getChanSpec();
+        if (chanSpec==null) {
+            for(SampleProcessingResult resultEntity : run.getSampleProcessingResults()) {
+                if (chanSpec!=null && !chanSpec.equals(chanSpec)) {
+                    contextLogger.error("Inconsistent channel spec detected: "+chanSpec);
+                }
+                chanSpec = resultEntity.getChannelSpec();
             }
         }
 
-        // Create an input image for each sample processing result
+        // Create an input image for each merged tile and the stitched file
         List<InputImage> inputImages = new ArrayList<>();
-        for(SampleProcessingResult resultEntity : run.getSampleProcessingResults()) {
-            inputImages.add(getInputImage(resultEntity));
+        for(AnatomicalArea sampleArea : sampleAreas) {
+            for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
+                inputImages.add(getInputImage(sampleArea.getName(), mergedPair.getMergedFilepath(), mergedPair.getTileName(), chanSpec));
+            }
+            inputImages.add(getInputImage(sampleArea.getName(), sampleArea.getStitchedFilepath(), null, chanSpec));
         }
-        
+
         Collections.sort(inputImages, new Comparator<InputImage>() {
             @Override
             public int compare(InputImage o1, InputImage o2) {
@@ -105,13 +107,9 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
     	processData.putItem("INPUT_IMAGES", inputImages);
     }
     
-    private InputImage getInputImage(SampleProcessingResult resultEntity) throws ComputeException {
+    private InputImage getInputImage(String area, String filepath, String tileName, String chanSpec) throws ComputeException {
 
-        String area = resultEntity.getAnatomicalArea();
-        String chanSpec = resultEntity.getChannelSpec();
         String effector = sample.getEffector();
-        String filepath = DomainUtils.getDefault3dImageFilePath(resultEntity);
-        String tileName = tileNames.get(filepath);
         
         String key;
         if (filepath.contains("stitched-")) {
@@ -132,7 +130,7 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
             prefix += "-"+sanitize(effector);
         }
         
-        String colorspec = colorSpec;
+        String colorspec = defaultColorSpec;
         String objective = objectiveSample.getObjective();
         if (colorspec==null) {
             contextLogger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective="+objective+" and MODE="+mode+"...");
