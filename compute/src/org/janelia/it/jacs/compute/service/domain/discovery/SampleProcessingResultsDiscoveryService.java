@@ -21,6 +21,7 @@ import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * File discovery service for sample processing results.
@@ -53,6 +54,11 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         result.setAnatomicalArea(sampleArea.getName());
         contextLogger.info("Setting result channel specification to "+channelSpec);
         result.setChannelSpec(channelSpec);
+        if (!StringUtils.areEqual(objectiveSample.getChanSpec(), channelSpec)) {
+            contextLogger.info("Updating channel specification for objective "+objectiveSample.getObjective()+" to "+channelSpec);
+            objectiveSample.setChanSpec(channelSpec);
+        }
+        
         contextLogger.info("Setting result filepath to "+rootPath);
         result.setFilepath(rootPath);
 
