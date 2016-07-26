@@ -31,7 +31,7 @@ public class BasicMIPandMovieGenerationService extends AbstractDomainGridService
     protected static final String MACRO_NAME = "Basic_MIP_StackAvi.ijm";
     
     protected static final int START_DISPLAY_PORT = 890;
-    protected static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
+    protected static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
     protected static final String CONFIG_PREFIX = "fijiConfiguration.";
 
     protected int randomPort; 
@@ -172,7 +172,7 @@ public class BasicMIPandMovieGenerationService extends AbstractDomainGridService
         
         // Monitor Fiji and take periodic screenshots, killing it eventually
         script.append("fpid=$!\n");
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 1800));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, TIMEOUT_SECONDS));
         
         // Encode avi movies as mp4 and delete the input avi's
         script.append("cd $TEMP_DIR\n");
