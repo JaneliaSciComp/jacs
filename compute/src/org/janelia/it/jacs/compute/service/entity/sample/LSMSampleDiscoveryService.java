@@ -32,6 +32,7 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
         DataSet dataset = null;
         try {
             DomainDAL dal = DomainDAL.getInstance();
+            // ASSUME-FOR-NOW: the owner key is the key of user owning the data, not the pipeline.
             dataset = dal.getDataSetByIdentifier(ownerKey, datasetName);
             //processData.
             //                    entityBean.getUserEntitiesWithAttributeValueAndTypeName(null,

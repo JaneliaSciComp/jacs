@@ -1,23 +1,17 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.api.EJBFactory;
-import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.utility.GenericTask;
-import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -32,7 +26,8 @@ public class LSMSampleStartProcessingService extends AbstractEntityService {
         logger.info("Creating ProcessSample task for " + sampleIds.size() + " samples.");
         DomainDAL domainDAL = DomainDAL.getInstance();
 
-        List<Sample> samples = domainDAL.getDomainObjects(null, Sample.class.getSimpleName(), sampleIds);
+        // ASSUME-FOR-NOW: owner key is to be used to find the domain objects; key is for data owner.
+        List<Sample> samples = domainDAL.getDomainObjects(ownerKey, Sample.class.getSimpleName(), sampleIds);
         for (Sample sample: samples) {
             Task processSampleTask = createTask(sample);
             logger.info("Dispatch sample processing task " + processSampleTask.getObjectId());
