@@ -241,7 +241,7 @@ public class MongoDbImport extends AnnotationDAO {
                 loaded++;
             }
             catch (Throwable e) {
-                log.error("Error loading dataset "+entity.getId(),e);
+                log.error("Error loading TM Sample "+entity.getId(),e);
             }
         }
 
@@ -261,15 +261,19 @@ public class MongoDbImport extends AnnotationDAO {
         sample.setFilepath(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
         sample.setMicronToVoxMatrix(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX));
         sample.setVoxToMicronMatrix(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX));
-        log.info("  Migrated sample "+sample.getName());
+        log.trace("  Migrated sample "+sample.getName());
         return sample;
     }
 
     private void loadTmWorkspaces() throws DaoException {
         long start = System.currentTimeMillis();
-        Deque<Entity> entities = new LinkedList<>(getEntitiesByTypeName(null, EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE));
-        resetSession();
-        int loaded = loadTmWorkspaces(entities);
+        int loaded = 0;
+        for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
+            log.info("Loading workspaces for "+subject.getName());
+            Deque<Entity> entities = new LinkedList<>(getEntitiesByTypeName(subject.getKey(), EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE));
+            loaded += loadTmWorkspaces(entities);
+            resetSession();
+        }
         log.info("Loading " + loaded + " TM workspaces took " + (System.currentTimeMillis() - start) + " ms");
     }
 
@@ -292,7 +296,7 @@ public class MongoDbImport extends AnnotationDAO {
                 loaded++;
             }
             catch (Throwable e) {
-                log.error("Error loading dataset "+entity.getId(),e);
+                log.error("Error loading TM Workspace "+entity.getId(),e);
             }
         }
 
