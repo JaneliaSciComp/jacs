@@ -138,6 +138,8 @@ public class LSMSampleInitService extends AbstractEntityService {
     private String[] prepareSlideImageGroupsBySlideCode(Collection<SlideImage> slideImages) {
         String line = null;
         String lab = null;
+        int tileNum = 0;
+        //Map<String,SlideImageGroup> tileGroups = new HashMap<>();
         for (SlideImage slideImage : slideImages) {
             if (lab == null) {
                 lab = slideImage.getLab();
@@ -151,15 +153,17 @@ public class LSMSampleInitService extends AbstractEntityService {
                 logger.warn("Line value for " + slideImage.getImageName() + " - " + slideImage.getLine()
                         + "  does not match " + line);
             }
-            // TODO: this code needs to be ported to use LSMImages
+            //String area = slideImage.getArea();
             //String groupKey = area+"_"+tag;
+
             //SlideImageGroup tileGroup = tileGroups.get(groupKey);
             //if (tileGroup==null) {
             //    tileGroup = new SlideImageGroup(area, tag);
             //    tileGroups.put(groupKey, tileGroup);
             //}
-            //tileNum++;
+            tileNum++;
         }
+        logger.info("Processed tile count of :" + tileNum);
         return new String[] {lab, line};
     }
 }

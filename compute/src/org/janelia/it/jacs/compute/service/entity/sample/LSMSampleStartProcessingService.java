@@ -3,11 +3,11 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import org.janelia.it.jacs.compute.access.DaoException;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -19,6 +19,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Updates the status of a sample.
@@ -27,15 +28,19 @@ public class LSMSampleStartProcessingService extends AbstractEntityService {
     private static final String SAMPLE_PROCESSING_JOBNAME = "GSPS_CompleteSamplePipeline";
 
     public void execute() throws Exception {
-        String sampleId = processData.getString("SAMPLE_ID");
-        logger.info("Creating ProcessSample task for " + sampleId);
-        Entity sampleEntity = entityBean.getEntityById(sampleId);
-        Task processSampleTask = createTask(sampleEntity);
-        logger.info("Dispatch sample processing task " + processSampleTask.getObjectId());
-        computeBean.dispatchJob(SAMPLE_PROCESSING_JOBNAME, processSampleTask.getObjectId());
+        List<Long> sampleIds = (List<Long>)processData.getItem("SAMPLE_ID");
+        logger.info("Creating ProcessSample task for " + sampleIds.size() + " samples.");
+        DomainDAL domainDAL = DomainDAL.getInstance();
+
+        List<Sample> samples = domainDAL.getDomainObjects(null, Sample.class.getSimpleName(), sampleIds);
+        for (Sample sample: samples) {
+            Task processSampleTask = createTask(sample);
+            logger.info("Dispatch sample processing task " + processSampleTask.getObjectId());
+            computeBean.dispatchJob(SAMPLE_PROCESSING_JOBNAME, processSampleTask.getObjectId());
+        }
     }
 
-    private Task createTask(Entity sample) throws DaoException {
+    private Task createTask(Sample sample) throws DaoException {
         HashSet<TaskParameter> taskParameters = new HashSet<>();
         taskParameters.add(new TaskParameter("sample entity id", sample.getId().toString(), null));
         Boolean reusePipelineRuns = processData.getBoolean("REUSE_PIPELINE_RUNS");
