@@ -94,6 +94,7 @@ public class MongoDbImport extends AnnotationDAO {
     private static final Logger log = Logger.getLogger(MongoDbImport.class);
 
     // Mouse constants from the client side
+    protected static final String PREF_OLD_ANNOTATION_NEURON_STYLES = "old-annotation-neuron-styles";
     protected static final String PREF_ANNOTATION_NEURON_STYLES = "annotation-neuron-styles";
     protected static final String PREF_COLOR_MODEL = "preference-colormodel";
     protected static final String PREF_3D_COLOR_MODEL = "preference-3d-colormodel";
@@ -156,7 +157,7 @@ public class MongoDbImport extends AnnotationDAO {
         this.subjectDao = new SubjectDAO(log);
         this.sageDao = new SageDAO(log);
 		this.dao = DomainDAOManager.getInstance().getDao();
-    	dao.getMongo().setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+    	//dao.getMongo().setWriteConcern(WriteConcern.UNACKNOWLEDGED);
     	
     	this.subjectCollection = dao.getCollectionByClass(Subject.class);
         this.preferenceCollection = dao.getCollectionByClass(Preference.class);
@@ -216,7 +217,7 @@ public class MongoDbImport extends AnnotationDAO {
 
     private void loadTmSamples() throws DaoException {
         long start = System.currentTimeMillis();
-        Deque<Entity> entities = new LinkedList<>(getEntitiesByTypeName(null, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE));
+        Deque<Entity> entities = new LinkedList<>(getUserEntitiesByTypeName(null, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE));
         resetSession();
         int loaded = loadTmSamples(entities);
         log.info("Loading " + loaded + " TM samples took " + (System.currentTimeMillis() - start) + " ms");
@@ -270,7 +271,7 @@ public class MongoDbImport extends AnnotationDAO {
         int loaded = 0;
         for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
             log.info("Loading workspaces for "+subject.getName());
-            Deque<Entity> entities = new LinkedList<>(getEntitiesByTypeName(subject.getKey(), EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE));
+            Deque<Entity> entities = new LinkedList<>(getUserEntitiesByTypeName(subject.getKey(), EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE));
             loaded += loadTmWorkspaces(entities);
             resetSession();
         }
@@ -361,18 +362,18 @@ public class MongoDbImport extends AnnotationDAO {
 
         Entity preferencesEntity = EntityUtils.findChildWithName(workspaceEntity, "preferences");
 
-        populateChildren(preferencesEntity);
         collectAnnotations(preferencesEntity.getId());
-        for (EntityData ed : workspaceEntity.getEntityData()) {
+        for (EntityData ed : preferencesEntity.getEntityData()) {
             if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
                 String propertyString = ed.getValue();
                 int eIndex = propertyString.indexOf("=");
                 String key = propertyString.substring(0, eIndex);
                 String value = propertyString.substring(eIndex + 1, propertyString.length());
 
-                if (PREF_ANNOTATION_NEURON_STYLES.equals(key)) {
-                    log.info("    "+key+":  "+value);
-
+                if (PREF_OLD_ANNOTATION_NEURON_STYLES.equals(key)) {
+                    log.info("    Ignoring old neuron styles");
+                }
+                else if (PREF_ANNOTATION_NEURON_STYLES.equals(key)) {
                     ObjectMapper mapper = new ObjectMapper();
                     ObjectNode rootNode = (ObjectNode) mapper.readTree(value);
                     Iterator<Map.Entry<String, JsonNode>> nodeIterator = rootNode.fields();
@@ -407,7 +408,7 @@ public class MongoDbImport extends AnnotationDAO {
                 }
                 else if (PREF_3D_COLOR_MODEL.equals(key)) {
                     workspace.setColorModel3d(getColorModel(value));
-                    log.info("    Color model 3d channel count = "+workspace.getColorModel3d());
+                    log.info("    Color model 3d channel count = "+workspace.getColorModel3d().getChannelCount());
                 }
                 else if (PREF_AUTOMATIC_TRACING.equals(key)) {
                     workspace.setAutoTracing(Boolean.parseBoolean(value));
@@ -454,7 +455,7 @@ public class MongoDbImport extends AnnotationDAO {
             colorModel.getChannels().add(channelModel);
         }
 
-        log.info("    Parsed "+colorModelStr+" into "+colorModel.getChannels().size()+" channels");
+        log.trace("    Parsed "+colorModelStr+" into "+colorModel.getChannels().size()+" channels");
         return colorModel;
     }
 
@@ -466,7 +467,7 @@ public class MongoDbImport extends AnnotationDAO {
         entities = new LinkedList<>(getEntitiesByTypeName(null, EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE));
         resetSession();
         loaded += loadTmFolders(entities);
-        log.info("Loading " + loaded + " TM workspaces took " + (System.currentTimeMillis() - start) + " ms");
+        log.info("Loading " + loaded + " TM folders took " + (System.currentTimeMillis() - start) + " ms");
     }
 
     private int loadTmFolders(Deque<Entity> tmSamples) {
@@ -478,12 +479,18 @@ public class MongoDbImport extends AnnotationDAO {
             try {
                 long start = System.currentTimeMillis();
 
+                int updated = 0;
                 for(Entity parentEntity : getParentEntities(entity.getId())) {
                     if (!parentEntity.getEntityTypeName().equals("Folder")) {
-                        log.warn("Unexpected state: TM entity is a child of "+parentEntity.getEntityTypeName()+" # "+parentEntity.getId());
+                        log.warn("TM entity is a child of a "+parentEntity.getEntityTypeName()+": "+entity.getId());
                         continue;
                     }
                     createOrUpdateFolder(parentEntity);
+                    updated++;
+                }
+
+                if (updated<1) {
+                    log.error("Could not update any parents for entity "+entity.getEntityTypeName()+" # "+entity.getId());
                 }
 
                 // Free memory by releasing the reference to this entire entity tree
@@ -507,38 +514,50 @@ public class MongoDbImport extends AnnotationDAO {
 
         TreeNode treeNode = dao.getDomainObject(folderEntity.getOwnerKey(), TreeNode.class, folderEntity.getId());
 
+        boolean isNew = false;
         if (treeNode==null) {
-            log.error("Cannot find existing tree node in Mongo: "+folderEntity.getId()+" created: "+folderEntity.getCreationDate());
+            log.error("  Cannot find existing tree node in Mongo: "+folderEntity.getId()+" created: "+folderEntity.getCreationDate());
+            treeNode = new TreeNode();
+            treeNode.setId(folderEntity.getId());
+            isNew = true;
+        }
+
+        // Update properties in case they changed since the last ETL
+        treeNode.setName(folderEntity.getName());
+        treeNode.setOwnerKey(folderEntity.getOwnerKey());
+        treeNode.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
+        treeNode.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
+        treeNode.setCreationDate(folderEntity.getCreationDate());
+        treeNode.setUpdatedDate(folderEntity.getUpdatedDate());
+
+        populateChildren(folderEntity);
+        Set<Reference> children = new LinkedHashSet<>();
+
+        for(Entity childEntity : folderEntity.getOrderedChildren()) {
+            String className = getClassName(childEntity.getEntityTypeName());
+            if (className==null) {
+                log.error("  Cannot map object in mouse folder: "+childEntity.getEntityTypeName()+" # "+childEntity.getId());
+            }
+            children.add(Reference.createFor(className==null?TEMP_REF_CLASS:className, childEntity.getId()));
+        }
+
+        // Update the children
+        treeNode.setChildren(new ArrayList<>(children));
+
+        if (isNew) {
+            /// Must insert directly because we set our own id
+            treeNodeCollection.insert(treeNode);
+            // Also make it visible in user's workspace
+            Workspace workspace = dao.getDefaultWorkspace(treeNode.getOwnerKey());
+            dao.addChildren(treeNode.getOwnerKey(), workspace, Arrays.asList(Reference.createFor(treeNode)));
+            log.info("  Added orphan folder to default workspace for "+treeNode.getOwnerKey());
         }
         else {
-            // Update properties in case they changed since the last ETL
-            treeNode.setName(folderEntity.getName());
-            treeNode.setOwnerKey(folderEntity.getOwnerKey());
-            treeNode.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
-            treeNode.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
-            treeNode.setCreationDate(folderEntity.getCreationDate());
-            treeNode.setUpdatedDate(folderEntity.getUpdatedDate());
-
-            populateChildren(folderEntity);
-            Set<Reference> children = new LinkedHashSet<>();
-
-            for(Entity childEntity : folderEntity.getOrderedChildren()) {
-                String className = getClassName(childEntity.getEntityTypeName());
-                if (className==null) {
-                    log.error("Cannot map object in mouse folder: "+childEntity.getEntityTypeName());
-                }
-                children.add(Reference.createFor(className==null?TEMP_REF_CLASS:className, childEntity.getId()));
-            }
-
-            // Update the children
-            treeNode.setChildren(new ArrayList<>(children));
-
             dao.save(treeNode.getOwnerKey(), treeNode);
-            updatedFolders.add(folderEntity.getId());
-
-            log.info("  Migrated folder "+folderEntity.getName());
         }
 
+        log.info("  Migrated folder "+folderEntity.getName());
+        updatedFolders.add(folderEntity.getId());
         collectAnnotations(folderEntity.getId());
     }
 
@@ -3414,6 +3433,12 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
             return Image.class;
+        }
+        else if (EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE.equals(entityType)) {
+            return TmWorkspace.class;
+        }
+        else if (EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE.equals(entityType)) {
+            return TmSample.class;
         }
         return null;
     }
