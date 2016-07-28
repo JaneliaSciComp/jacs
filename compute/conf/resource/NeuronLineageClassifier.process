@@ -1,0 +1,48 @@
+<!--
+
+	This pipeline will kick off the lineage classification prediction to generate probabilities.  It uses a parameter to look up the location for the training model data.
+    It stores this information in a json probabliities file that is used by the console to create a search.
+-->
+
+<process name="NeuronLineageClassifier" processor="queue/lineageClassifierPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+	<sequence>
+	    <sequence>
+	        <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
+                <input name="TASK_PARAMETER_1" value="sample id"/>
+                <input name="PROCESS_VARIABLE_1" value="SAMPLE_ID"/>
+                <output name="SAMPLE_ID"/>
+            </operation>
+
+    	    <operation name="Create Neuron Lineage Classifier Result File Node" processor="org.janelia.it.jacs.compute.service.neuronClassifier.NeuronClassifierService">
+                <input name="MODE" value="NODECREATION"/>
+                <output name="RESULT_FILE_NODE_ID"/>
+                <output name="RESULT_FILE_NODE_DIR" />
+            </operation>
+
+	    	<operation name="Generate Metadata for Lineage Classificat Separation Analysis" processor="org.janelia.it.jacs.compute.service.neuronClassifier.NeuronClassifierService" startEvent="running">
+	    	    <input name="MODE" value="TRAINING"/>
+	    	    <input name="SAMPLE_ID"/>
+    			<output name="METADATA"/>
+    		</operation>
+
+	        <!-- Generate the lineage classification probabilities for this LSM -->
+	        <operation name="Lineage Classifier Prediction" processor="queue/gridSubmitAndWait">
+        		<input name="iservice" value="org.janelia.it.jacs.compute.service.neuronClassifier.LineageClassifierTrainingGridTask"/>
+        	    <input name="METADATA"/>
+        		<input name="RESULT_FILE_NODE_ID"/>
+        		<input name="RESULT_FILE_NODE_DIR"/>
+            </operation>
+
+
+            <!-- process the lineage classification probabilities into a static file -->
+            <sequence name="Processing of lineage classification probabilities into json file somewhere" startEvent="running">
+                <operation name="Updating Neuron Separations and Fragments" processor="org.janelia.it.jacs.compute.service.neuronClassifier.NeuronClassifierService" startEvent="running">
+                    <input name="MODE" value="PROCESSRESULTS"/>
+        		    <input name="RESULT_FILE_NODE_DIR"/>
+                </operation>
+        
+            </sequence>
+
+     	</sequence>
+    </sequence>
+</process>
