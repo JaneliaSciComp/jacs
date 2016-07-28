@@ -65,6 +65,7 @@ public class WorkspaceRestService extends ResourceConfig {
     private static Map<Long, ExpirableLoadAdapter> sampleLoadAdapterMap=new HashMap<>();
     public static final long LOAD_ADAPTER_TIMEOUT_MS=600000;
 
+    private ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
 
     private static long quasiTimebasedGuid=0L;
@@ -502,6 +503,8 @@ public class WorkspaceRestService extends ResourceConfig {
             @QueryParam("axis") String axisString) {
         byte[] textureData2dBytes = null;
         try {
+            long startTime = System.nanoTime();
+
             //log.info("getSample2DTile() invoked, sampleId=" + sampleIdString + " x=" + xString + " y=" + yString + " z=" + zString + " zoom=" + zoomString + " maxZoom=" + maxZoomString + " index=" + indexString + " axis=" + axisString);
             BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter=null;
             ExpirableLoadAdapter expirableLoadAdapter=sampleLoadAdapterMap.get(new Long(sampleIdString));
@@ -530,6 +533,8 @@ public class WorkspaceRestService extends ResourceConfig {
             TextureData2d textureData2d = blockTiffOctreeLoadAdapter.loadToRam(tileIndex);
             if (textureData2d!=null) {
                 textureData2dBytes = textureData2d.copyToByteArray();
+                final double elapsedMs = (double) (System.nanoTime() - startTime) / 1000000.0;
+                activityLog.logTileLoad(zString, tileIndex, elapsedMs, sampleIdString);
             }
         } catch (Exception ex) {
             log.error("getSample2DTile() error: "+ex.getMessage());
