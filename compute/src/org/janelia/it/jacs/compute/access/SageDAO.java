@@ -147,6 +147,19 @@ public class SageDAO {
         return new ResultSetIterator(connection, pStatement, resultSet);
     }
 
+    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
+
+        String sql = "select " +
+                COMMON_IMAGE_VW_ATTR + "," +
+                "line_vw.lab as image_lab_name " +
+                "from image_data_mv as image_vw " +
+                "join image image_t on image_t.id = image_vw.id " +
+                "join line_vw on line_vw.id = image_t.line_id " +
+                "where image_vw.name = ? and image_vw.data_set = ?";
+        log.debug("getSlideImageByDatasetAndLSMName: " + sql + "(" + lsmName + ")");
+        return getSlideImage(sql, lsmName, datasetName);
+    }
+
     /**
      * Retrieve the Sage image by the LSM path
      * @param lsmName
@@ -161,46 +174,8 @@ public class SageDAO {
                     "join image image_t on image_t.id = image_vw.id " +
                     "join line_vw on line_vw.id = image_t.line_id " +
                     "where image_vw.name = ? ";
-        log.debug("GetSlideImageByLSMName: " + sql + "(" + lsmName + ")");
-        SlideImage slideImage = null;
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            conn = getJdbcConnection();
-            pstmt = conn.prepareStatement(sql);
-            int fieldIndex = 1;
-            pstmt.setString(fieldIndex++, lsmName);
-            rs = pstmt.executeQuery();
-            if (rs.next()) {
-                slideImage = new SlideImage(new HashMap<String,Object>());
-                slideImage.setSageId(rs.getInt("image_query_id"));
-                slideImage.setImageName(rs.getString("image_query_name"));
-                slideImage.setImagePath(rs.getString("image_query_path"));
-                slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
-                slideImage.setLine(rs.getString("image_query_line"));
-                slideImage.setLab(rs.getString("image_lab_name"));
-                Date createDate = rs.getTimestamp("image_query_create_date");
-                if (createDate!=null) {
-                    String tmogDate = ISO8601Utils.format(createDate);
-                    if (tmogDate!=null) {
-                        slideImage.setTmogDate(tmogDate);
-                    }
-                }
-            }
-            rs.close();
-            rs = null;
-            pstmt.close();
-            pstmt = null;
-            if (slideImage != null) {
-                fillImageProperties(slideImage, conn);
-            }
-        } catch (SQLException sqle) {
-            throw new DaoException(sqle);
-        } finally {
-            ResultSetIterator.close(rs, pstmt, conn, log);
-        }
-        return slideImage;
+        log.debug("GetSlideImageByOwnerAndLSMName: " + sql + "(" + lsmName + ")");
+        return getSlideImage(sql, lsmName);
     }
 
     /**
@@ -839,6 +814,50 @@ public class SageDAO {
             sql.append('`'); // must escape column names to prevent conflict with SQL reserved words like 'condition'
         }
         return sql.toString();
+    }
+
+    private SlideImage getSlideImage(String sql, String... paramStrings) throws DaoException {
+        SlideImage slideImage = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = getJdbcConnection();
+            pstmt = conn.prepareStatement(sql);
+            int fieldIndex = 1;
+            for (String paramString: paramStrings) {
+                pstmt.setString(fieldIndex++, paramString);
+            }
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                slideImage = new SlideImage(new HashMap<String,Object>());
+                slideImage.setSageId(rs.getInt("image_query_id"));
+                slideImage.setImageName(rs.getString("image_query_name"));
+                slideImage.setImagePath(rs.getString("image_query_path"));
+                slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
+                slideImage.setLine(rs.getString("image_query_line"));
+                slideImage.setLab(rs.getString("image_lab_name"));
+                Date createDate = rs.getTimestamp("image_query_create_date");
+                if (createDate!=null) {
+                    String tmogDate = ISO8601Utils.format(createDate);
+                    if (tmogDate!=null) {
+                        slideImage.setTmogDate(tmogDate);
+                    }
+                }
+            }
+            rs.close();
+            rs = null;
+            pstmt.close();
+            pstmt = null;
+            if (slideImage != null) {
+                fillImageProperties(slideImage, conn);
+            }
+        } catch (SQLException sqle) {
+            throw new DaoException(sqle);
+        } finally {
+            ResultSetIterator.close(rs, pstmt, conn, log);
+        }
+        return slideImage;
     }
 
     private static final String COMMON_IMAGE_VW_ATTR =

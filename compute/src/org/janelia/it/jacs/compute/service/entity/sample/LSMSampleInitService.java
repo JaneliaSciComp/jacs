@@ -19,9 +19,11 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.*;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
+import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.tasks.Event;
@@ -51,45 +53,36 @@ public class LSMSampleInitService extends AbstractEntityService {
 
         SageDAO sageDao = new SageDAO(logger);
 
+        DomainDAL domainDAL = DomainDAL.getInstance();
+        DataSet dataSet = domainDAL.getDataSetByIdentifier(ownerKey, datasetName);
+
+        domainDAL.getDataSetByIdentifier(null, lsmNames.get(0));
         Multimap<String, SlideImage> slideGroups = LinkedListMultimap.create();
         for (String lsmName : lsmNames) {
             // TODO: this code needs to be ported to use LSMImages
-            //try {
-            //    SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
-            //    slideGroups.put(slideImage.getSlideCode(), slideImage);
-            //} catch (DaoException e) {
-            //    logger.warn("Error while retrieving image for " + lsmName, e);
-            //}
+            try {
+                SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
+                slideGroups.put(slideImage.getSlideCode(), slideImage);
+            } catch (DaoException e) {
+                logger.warn("Error while retrieving image for " + lsmName, e);
+            }
         }
 
         List<Task> sageLoadingTasks = new ArrayList<>();
-        prepareSlideImageGroupsForCurrentDataset(slideGroups, sageLoadingTasks);
+        prepareSlideImageGroupsForCurrentDataset(slideGroups, dataSet, sageLoadingTasks);
 
         processData.putItem("SAGE_TASK", sageLoadingTasks);
     }
 
     private void prepareSlideImageGroupsForCurrentDataset(Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
+                                                          DataSet dataset,
                                                           List<Task> targetTasks) {
-        List<Entity> datasets;
-        try {
-            datasets = entityBean.getUserEntitiesWithAttributeValueAndTypeName(null,
-                    EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
-                    datasetName, EntityConstants.TYPE_DATA_SET);
-        } catch (Exception e) {
-            logger.error("Error retrieving dataset entities for " + datasetName, e);
-            return;
-        }
-        if (datasets.size() > 1) {
-            logger.warn("More than one dataset found (" + datasets.size() + ") - only the first one will be considered: ");
-        }
-        Entity dataset = datasets.get(0);
         String owner = extractOwnerId(dataset.getOwnerKey());
         processData.putItem("DATASET_OWNER", owner);
+        String configPath = dataset.getSageConfigPath();
+        String grammarPath = dataset.getSageGrammarPath();
 
-        String configPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_CONFIG_PATH).getValue();
-        String grammarPath = dataset.getEntityDataByAttributeName(EntityConstants.ATTRIBUTE_SAGE_GRAMMAR_PATH).getValue();
-
-        for (final String slideCode : slideImagesGroupedBySlideCode.keySet()) {
+        for (final String slideCode: slideImagesGroupedBySlideCode.keySet()) {
             try {
                 Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
                 String[] labAndLine = prepareSlideImageGroupsBySlideCode(slideImages);
