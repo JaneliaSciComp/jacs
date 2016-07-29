@@ -362,66 +362,71 @@ public class MongoDbImport extends AnnotationDAO {
 
         Entity preferencesEntity = EntityUtils.findChildWithName(workspaceEntity, "preferences");
 
-        collectAnnotations(preferencesEntity.getId());
-        for (EntityData ed : preferencesEntity.getEntityData()) {
-            if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
-                String propertyString = ed.getValue();
-                int eIndex = propertyString.indexOf("=");
-                String key = propertyString.substring(0, eIndex);
-                String value = propertyString.substring(eIndex + 1, propertyString.length());
+        if (preferencesEntity!=null) {
+            collectAnnotations(preferencesEntity.getId());
+            for (EntityData ed : preferencesEntity.getEntityData()) {
+                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
+                    String propertyString = ed.getValue();
+                    int eIndex = propertyString.indexOf("=");
+                    String key = propertyString.substring(0, eIndex);
+                    String value = propertyString.substring(eIndex + 1, propertyString.length());
 
-                if (PREF_OLD_ANNOTATION_NEURON_STYLES.equals(key)) {
-                    log.info("    Ignoring old neuron styles");
-                }
-                else if (PREF_ANNOTATION_NEURON_STYLES.equals(key)) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    ObjectNode rootNode = (ObjectNode) mapper.readTree(value);
-                    Iterator<Map.Entry<String, JsonNode>> nodeIterator = rootNode.fields();
-                    while (nodeIterator.hasNext()) {
-                        Map.Entry<String, JsonNode> entry = nodeIterator.next();
-                        Long neuronId = Long.parseLong(entry.getKey());
-                        ObjectNode styleNode = (ObjectNode) entry.getValue();
-                        JsonNode colorNode = styleNode.path("color");
-                        Color color = null;
-                        boolean visibility = false;
-                        if (colorNode.isMissingNode() || !colorNode.isArray()) {
-                            log.error("  Missing color for neuron "+neuronId);
-                        }
-                        else {
-                            color = new Color(colorNode.get(0).asInt(), colorNode.get(1).asInt(), colorNode.get(2).asInt());
-                        }
-                        JsonNode visibilityNode = styleNode.path("visibility");
-                        if (visibilityNode.isMissingNode() || !visibilityNode.isBoolean()) {
-                            log.error("  Missing visibility for neuron "+neuronId);
-                        }
-                        else {
-                            visibility = visibilityNode.asBoolean();
-                        }
-                        workspace.getNeuronStyles().put(neuronId, new TmNeuronStyle(visibility, color));
+                    if (PREF_OLD_ANNOTATION_NEURON_STYLES.equals(key)) {
+                        log.info("    Ignoring old neuron styles");
                     }
+                    else if (PREF_ANNOTATION_NEURON_STYLES.equals(key)) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        ObjectNode rootNode = (ObjectNode) mapper.readTree(value);
+                        Iterator<Map.Entry<String, JsonNode>> nodeIterator = rootNode.fields();
+                        while (nodeIterator.hasNext()) {
+                            Map.Entry<String, JsonNode> entry = nodeIterator.next();
+                            Long neuronId = Long.parseLong(entry.getKey());
+                            ObjectNode styleNode = (ObjectNode) entry.getValue();
+                            JsonNode colorNode = styleNode.path("color");
+                            Color color = null;
+                            boolean visibility = false;
+                            if (colorNode.isMissingNode() || !colorNode.isArray()) {
+                                log.error("  Missing color for neuron " + neuronId);
+                            }
+                            else {
+                                color = new Color(colorNode.get(0).asInt(), colorNode.get(1).asInt(), colorNode.get(2).asInt());
+                            }
+                            JsonNode visibilityNode = styleNode.path("visibility");
+                            if (visibilityNode.isMissingNode() || !visibilityNode.isBoolean()) {
+                                log.error("  Missing visibility for neuron " + neuronId);
+                            }
+                            else {
+                                visibility = visibilityNode.asBoolean();
+                            }
+                            workspace.getNeuronStyles().put(neuronId, new TmNeuronStyle(visibility, color));
+                        }
 
-                    log.info("    Migrated "+workspace.getNeuronStyles().size()+" neuron styles");
-                }
-                else if (PREF_COLOR_MODEL.equals(key)) {
-                    workspace.setColorModel(getColorModel(value));
-                    log.info("    Color model channel count = "+workspace.getColorModel().getChannelCount());
-                }
-                else if (PREF_3D_COLOR_MODEL.equals(key)) {
-                    workspace.setColorModel3d(getColorModel(value));
-                    log.info("    Color model 3d channel count = "+workspace.getColorModel3d().getChannelCount());
-                }
-                else if (PREF_AUTOMATIC_TRACING.equals(key)) {
-                    workspace.setAutoTracing(Boolean.parseBoolean(value));
-                    log.info("    Auto tracing = "+workspace.isAutoTracing()+"");
-                }
-                else if (PREF_AUTOMATIC_POINT_REFINEMENT.equals(key)) {
-                    workspace.setAutoPointRefinement(Boolean.parseBoolean(value));
-                    log.info("    Auto point refinement = "+workspace.isAutoPointRefinement()+"");
-                }
-                else {
-                    log.error("Unknown workspace preference: "+key);
+                        log.info("    Migrated " + workspace.getNeuronStyles().size() + " neuron styles");
+                    }
+                    else if (PREF_COLOR_MODEL.equals(key)) {
+                        workspace.setColorModel(getColorModel(value));
+                        log.info("    Color model channel count = " + workspace.getColorModel().getChannelCount());
+                    }
+                    else if (PREF_3D_COLOR_MODEL.equals(key)) {
+                        workspace.setColorModel3d(getColorModel(value));
+                        log.info("    Color model 3d channel count = " + workspace.getColorModel3d().getChannelCount());
+                    }
+                    else if (PREF_AUTOMATIC_TRACING.equals(key)) {
+                        workspace.setAutoTracing(Boolean.parseBoolean(value));
+                        log.info("    Auto tracing = " + workspace.isAutoTracing() + "");
+                    }
+                    else if (PREF_AUTOMATIC_POINT_REFINEMENT.equals(key)) {
+                        workspace.setAutoPointRefinement(Boolean.parseBoolean(value));
+                        log.info("    Auto point refinement = " + workspace.isAutoPointRefinement() + "");
+                    }
+                    else {
+                        log.error("Unknown workspace preference: " + key);
+                    }
                 }
             }
+        }
+        else {
+            log.error("  Workspace has no preferences");
         }
 
         return workspace;
@@ -431,7 +436,13 @@ public class MongoDbImport extends AnnotationDAO {
 
         TmColorModel colorModel = new TmColorModel();
 
+        //preference-colormodel=21092:1.000066045195771:49214:255:255:0:255:true:18473:1.000066045195771:49178:0:255:255:255:true
+
         String [] items = colorModelStr.split(":");
+        boolean hasCC = (double)(items.length-4) % 8.0 > 0.0;
+
+        log.info("    Color model has combining constants, array length="+items.length);
+
         int itemNo = 0;
         colorModel.setChannelCount(Integer.parseInt(items[itemNo++]));
         colorModel.setBlackSynchronized(Boolean.parseBoolean(items[itemNo++]));
@@ -451,7 +462,9 @@ public class MongoDbImport extends AnnotationDAO {
             );
             channelModel.setColor(savedColor);
             channelModel.setVisible(Boolean.parseBoolean(items[itemNo++]));
-            channelModel.setCombiningConstant(Float.parseFloat(items[itemNo++]));
+            if (hasCC) {
+                channelModel.setCombiningConstant(Float.parseFloat(items[itemNo++]));
+            }
             colorModel.getChannels().add(channelModel);
         }
 
