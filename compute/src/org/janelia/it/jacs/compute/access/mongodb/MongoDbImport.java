@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.access.mongodb;
 
+import java.awt.Color;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.UnknownHostException;
@@ -12,6 +13,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Sets;
@@ -20,6 +24,7 @@ import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.bson.Document;
+import org.eclipse.core.internal.resources.Folder;
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -58,11 +63,18 @@ import org.janelia.it.jacs.model.domain.screen.FlyLine;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
+import org.janelia.it.jacs.model.domain.tiledMicroscope.TmChannelColorModel;
+import org.janelia.it.jacs.model.domain.tiledMicroscope.TmColorModel;
+import org.janelia.it.jacs.model.domain.tiledMicroscope.TmNeuron;
+import org.janelia.it.jacs.model.domain.tiledMicroscope.TmNeuronStyle;
+import org.janelia.it.jacs.model.domain.tiledMicroscope.TmSample;
+import org.janelia.it.jacs.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityActorPermission;
 import org.janelia.it.jacs.model.entity.EntityConstants;
+import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -81,13 +93,17 @@ public class MongoDbImport extends AnnotationDAO {
 
     private static final Logger log = Logger.getLogger(MongoDbImport.class);
 
+    // Mouse constants from the client side
+    protected static final String PREF_OLD_ANNOTATION_NEURON_STYLES = "old-annotation-neuron-styles";
+    protected static final String PREF_ANNOTATION_NEURON_STYLES = "annotation-neuron-styles";
+    protected static final String PREF_COLOR_MODEL = "preference-colormodel";
+    protected static final String PREF_3D_COLOR_MODEL = "preference-3d-colormodel";
+    protected static final String PREF_AUTOMATIC_TRACING = "tracing-automatic-enabled";
+    protected static final String PREF_AUTOMATIC_POINT_REFINEMENT = "point-refinement-automatic-enabled";
+
+    // Fly constants
 	protected static final String ONTOLOGY_TERM_TYPES_PACKAGE = "org.janelia.it.jacs.model.domain.ontology";
 	protected static final String NO_CONSENSUS_VALUE = "NO_CONSENSUS";
-	protected static final boolean TRANSLATE_ENTITIES = true;
-	protected static final boolean INSERT_ROGUE_ENTITIES = true;
-	
-    private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE };
-
     private static final String SCREEN_OBJECTIVE = "20x";
     private static final String SCREEN_CHAN_SPEC = "src";
     private static final String SCREEN_ALIGNMENT_RESULT_NAME = "JBA Alignment";
@@ -96,9 +112,13 @@ public class MongoDbImport extends AnnotationDAO {
     public static final String SCREEN_DEFAULT_DATA_SET_GAL4 = "flylight_gen1_gal4";
     public static final String SCREEN_DEFAULT_DATA_SET_LEXA = "flylight_gen1_lexa";
     private static final NumberFormat ALIGNMENT_SCORE_FORMATTER = new DecimalFormat("#0.00000");
-
     private static final String TEMP_REF_CLASS = "TEMP_REF";
-    
+
+    // ETL options
+    protected static final boolean TRANSLATE_ENTITIES = true;
+    protected static final boolean INSERT_ROGUE_ENTITIES = true;
+    private static final String[] entityTranslationPriority = { EntityConstants.TYPE_SAMPLE, EntityConstants.TYPE_SCREEN_SAMPLE };
+
     protected final DomainDAO dao;
 	protected final SubjectDAO subjectDao;
 	protected final SageDAO sageDao;
@@ -120,6 +140,9 @@ public class MongoDbImport extends AnnotationDAO {
     protected final MongoCollection alignmentBoardCollection;
     protected final MongoCollection alignmentContextsCollection;
     protected final MongoCollection filterCollection;
+    protected final MongoCollection tmSampleCollection;
+    protected final MongoCollection tmWorkspaceCollection;
+    protected final MongoCollection tmNeuronCollection;
     
     // Load state
     private MongoLargeOperations largeOp;
@@ -134,7 +157,7 @@ public class MongoDbImport extends AnnotationDAO {
         this.subjectDao = new SubjectDAO(log);
         this.sageDao = new SageDAO(log);
 		this.dao = DomainDAOManager.getInstance().getDao();
-    	dao.getMongo().setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+    	//dao.getMongo().setWriteConcern(WriteConcern.UNACKNOWLEDGED);
     	
     	this.subjectCollection = dao.getCollectionByClass(Subject.class);
         this.preferenceCollection = dao.getCollectionByClass(Preference.class);
@@ -152,6 +175,9 @@ public class MongoDbImport extends AnnotationDAO {
         this.alignmentBoardCollection = dao.getCollectionByClass(AlignmentBoard.class);
         this.alignmentContextsCollection = dao.getCollectionByClass(AlignmentContext.class);
         this.filterCollection = dao.getCollectionByClass(Filter.class);
+        this.tmSampleCollection = dao.getCollectionByClass(TmSample.class);
+        this.tmWorkspaceCollection = dao.getCollectionByClass(TmWorkspace.class);
+        this.tmNeuronCollection = dao.getCollectionByClass(TmNeuron.class);
     }
 
     public void dropDatabase() throws DaoException {
@@ -164,7 +190,393 @@ public class MongoDbImport extends AnnotationDAO {
     }
 
     public void loadAllEntities() throws DaoException {
+//        loadAllFlyEntities();
+        loadAllMouseEntities();
+    }
 
+    public void loadAllMouseEntities() throws DaoException {
+
+        log.info("Loading mouse data into MongoDB");
+        getSession().setFlushMode(FlushMode.MANUAL);
+
+        long startAll = System.currentTimeMillis();
+
+        log.info("Adding TM Samples");
+        loadTmSamples();
+
+        log.info("Adding TM Workspaces");
+        loadTmWorkspaces();
+
+        log.info("Adding TM Folders");
+        loadTmFolders();
+
+        log.info("Found "+currAnnotations.size()+" annotations on mouse entities");
+
+        log.info("Loading Fly data into MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
+    }
+
+    private void loadTmSamples() throws DaoException {
+        long start = System.currentTimeMillis();
+        Deque<Entity> entities = new LinkedList<>(getUserEntitiesByTypeName(null, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE));
+        resetSession();
+        int loaded = loadTmSamples(entities);
+        log.info("Loading " + loaded + " TM samples took " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    private int loadTmSamples(Deque<Entity> tmSamples) {
+
+        int loaded = 0;
+        for(Iterator<Entity> i = tmSamples.iterator(); i.hasNext(); ) {
+            Entity entity = i.next();
+
+            try {
+                long start = System.currentTimeMillis();
+                TmSample sample = getTmSample(entity);
+                tmSampleCollection.insert(sample);
+
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove();
+                resetSession();
+
+                log.info("  Loading "+entity.getName()+" ("+entity.getOwnerKey()+") took "+(System.currentTimeMillis()-start)+" ms");
+                loaded++;
+            }
+            catch (Throwable e) {
+                log.error("Error loading TM Sample "+entity.getId(),e);
+            }
+        }
+
+        return loaded;
+    }
+
+    private TmSample getTmSample(Entity sampleEntity) throws Exception {
+        collectAnnotations(sampleEntity.getId());
+        TmSample sample = new TmSample();
+        sample.setId(sampleEntity.getId());
+        sample.setName(sampleEntity.getName());
+        sample.setOwnerKey(sampleEntity.getOwnerKey());
+        sample.setReaders(getSubjectKeysWithPermission(sampleEntity, "r"));
+        sample.setWriters(getSubjectKeysWithPermission(sampleEntity, "w"));
+        sample.setCreationDate(sampleEntity.getCreationDate());
+        sample.setUpdatedDate(sampleEntity.getUpdatedDate());
+        sample.setFilepath(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_FILE_PATH));
+        sample.setMicronToVoxMatrix(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MICRON_TO_VOXEL_MATRIX));
+        sample.setVoxToMicronMatrix(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_VOXEL_TO_MICRON_MATRIX));
+        log.trace("  Migrated sample "+sample.getName());
+        return sample;
+    }
+
+    private void loadTmWorkspaces() throws DaoException {
+        long start = System.currentTimeMillis();
+        int loaded = 0;
+        for (org.janelia.it.jacs.model.user_data.Subject subject : subjectDao.getSubjects()) {
+            log.info("Loading workspaces for "+subject.getName());
+            Deque<Entity> entities = new LinkedList<>(getUserEntitiesByTypeName(subject.getKey(), EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE));
+            loaded += loadTmWorkspaces(entities);
+            resetSession();
+        }
+        log.info("Loading " + loaded + " TM workspaces took " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    private int loadTmWorkspaces(Deque<Entity> tmSamples) {
+
+        int loaded = 0;
+        for(Iterator<Entity> i = tmSamples.iterator(); i.hasNext(); ) {
+            Entity entity = i.next();
+
+            try {
+                long start = System.currentTimeMillis();
+                TmWorkspace workspace = getTmWorkspace(entity);
+                tmWorkspaceCollection.insert(workspace);
+
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove();
+                resetSession();
+
+                log.info("  Loading "+entity.getName()+" ("+entity.getOwnerKey()+") took "+(System.currentTimeMillis()-start)+" ms");
+                loaded++;
+            }
+            catch (Throwable e) {
+                log.error("Error loading TM Workspace "+entity.getId(),e);
+            }
+        }
+
+        return loaded;
+    }
+
+    private TmWorkspace getTmWorkspace(Entity workspaceEntity) throws Exception {
+
+        populateChildren(workspaceEntity);
+        collectAnnotations(workspaceEntity.getId());
+
+        TmWorkspace workspace = new TmWorkspace();
+        workspace.setId(workspaceEntity.getId());
+        workspace.setName(workspaceEntity.getName());
+        workspace.setOwnerKey(workspaceEntity.getOwnerKey());
+        workspace.setReaders(getSubjectKeysWithPermission(workspaceEntity, "r"));
+        workspace.setWriters(getSubjectKeysWithPermission(workspaceEntity, "w"));
+        workspace.setCreationDate(workspaceEntity.getCreationDate());
+        workspace.setUpdatedDate(workspaceEntity.getUpdatedDate());
+
+        String sampleIds = workspaceEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_WORKSPACE_SAMPLE_IDS);
+
+        workspace.setSampleRef(Reference.createFor("TmSample#"+sampleIds));
+
+        String version = null;
+        for (EntityData ed : workspaceEntity.getEntityData()) {
+            if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
+                String propertyString = ed.getValue();
+                int eIndex = propertyString.indexOf("=");
+                String key = propertyString.substring(0, eIndex);
+                String value = propertyString.substring(eIndex + 1, propertyString.length());
+                if (key.equals(org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace.WS_VERSION_PROP)) {
+                    version = value;
+                }
+                else {
+                    throw new IllegalStateException("Unknown TmWorkspace property value: "+propertyString);
+                }
+            }
+        }
+
+        if (version==null || !version.equals("PB_1")) {
+            log.error("Workspace "+workspace.getId()+" has unexpected version: "+version);
+        }
+
+        int neuronCount = 0;
+        for(EntityData pbNeuron : EntityUtils.getOrderedEntityDataForAttribute(workspaceEntity, EntityConstants.ATTRIBUTE_PROTOBUF_NEURON)) {
+            TmNeuron neuron = new TmNeuron();
+            neuron.setId(pbNeuron.getId());
+            neuron.setName("PBNeuron");
+            neuron.setOwnerKey(workspaceEntity.getOwnerKey());
+            neuron.setReaders(getSubjectKeysWithPermission(workspaceEntity, "r"));
+            neuron.setWriters(getSubjectKeysWithPermission(workspaceEntity, "w"));
+            neuron.setCreationDate(pbNeuron.getCreationDate());
+            neuron.setUpdatedDate(pbNeuron.getUpdatedDate());
+            neuron.setWorkspaceRef(Reference.createFor(TmWorkspace.class, workspaceEntity.getId()));
+            neuron.setProtoBuf(pbNeuron.getValue());
+            tmNeuronCollection.insert(neuron);
+            neuronCount++;
+        }
+
+        log.info("  Migrated workspace "+workspace.getName()+" with "+neuronCount+" neurons");
+
+        Entity preferencesEntity = EntityUtils.findChildWithName(workspaceEntity, "preferences");
+
+        if (preferencesEntity!=null) {
+            collectAnnotations(preferencesEntity.getId());
+            for (EntityData ed : preferencesEntity.getEntityData()) {
+                if (ed.getEntityAttrName().equals(EntityConstants.ATTRIBUTE_PROPERTY)) {
+                    String propertyString = ed.getValue();
+                    int eIndex = propertyString.indexOf("=");
+                    String key = propertyString.substring(0, eIndex);
+                    String value = propertyString.substring(eIndex + 1, propertyString.length());
+
+                    if (PREF_OLD_ANNOTATION_NEURON_STYLES.equals(key)) {
+                        log.info("    Ignoring old neuron styles");
+                    }
+                    else if (PREF_ANNOTATION_NEURON_STYLES.equals(key)) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        ObjectNode rootNode = (ObjectNode) mapper.readTree(value);
+                        Iterator<Map.Entry<String, JsonNode>> nodeIterator = rootNode.fields();
+                        while (nodeIterator.hasNext()) {
+                            Map.Entry<String, JsonNode> entry = nodeIterator.next();
+                            Long neuronId = Long.parseLong(entry.getKey());
+                            ObjectNode styleNode = (ObjectNode) entry.getValue();
+                            JsonNode colorNode = styleNode.path("color");
+                            Color color = null;
+                            boolean visibility = false;
+                            if (colorNode.isMissingNode() || !colorNode.isArray()) {
+                                log.error("  Missing color for neuron " + neuronId);
+                            }
+                            else {
+                                color = new Color(colorNode.get(0).asInt(), colorNode.get(1).asInt(), colorNode.get(2).asInt());
+                            }
+                            JsonNode visibilityNode = styleNode.path("visibility");
+                            if (visibilityNode.isMissingNode() || !visibilityNode.isBoolean()) {
+                                log.error("  Missing visibility for neuron " + neuronId);
+                            }
+                            else {
+                                visibility = visibilityNode.asBoolean();
+                            }
+                            workspace.getNeuronStyles().put(neuronId, new TmNeuronStyle(visibility, color));
+                        }
+
+                        log.info("    Migrated " + workspace.getNeuronStyles().size() + " neuron styles");
+                    }
+                    else if (PREF_COLOR_MODEL.equals(key)) {
+                        workspace.setColorModel(getColorModel(value));
+                        log.info("    Color model channel count = " + workspace.getColorModel().getChannelCount());
+                    }
+                    else if (PREF_3D_COLOR_MODEL.equals(key)) {
+                        workspace.setColorModel3d(getColorModel(value));
+                        log.info("    Color model 3d channel count = " + workspace.getColorModel3d().getChannelCount());
+                    }
+                    else if (PREF_AUTOMATIC_TRACING.equals(key)) {
+                        workspace.setAutoTracing(Boolean.parseBoolean(value));
+                        log.info("    Auto tracing = " + workspace.isAutoTracing() + "");
+                    }
+                    else if (PREF_AUTOMATIC_POINT_REFINEMENT.equals(key)) {
+                        workspace.setAutoPointRefinement(Boolean.parseBoolean(value));
+                        log.info("    Auto point refinement = " + workspace.isAutoPointRefinement() + "");
+                    }
+                    else {
+                        log.error("Unknown workspace preference: " + key);
+                    }
+                }
+            }
+        }
+        else {
+            log.error("  Workspace has no preferences");
+        }
+
+        return workspace;
+    }
+
+    private TmColorModel getColorModel(String colorModelStr) {
+
+        TmColorModel colorModel = new TmColorModel();
+
+        //preference-colormodel=21092:1.000066045195771:49214:255:255:0:255:true:18473:1.000066045195771:49178:0:255:255:255:true
+
+        String [] items = colorModelStr.split(":");
+        boolean hasCC = (double)(items.length-4) % 8.0 > 0.0;
+
+        log.info("    Color model has combining constants, array length="+items.length);
+
+        int itemNo = 0;
+        colorModel.setChannelCount(Integer.parseInt(items[itemNo++]));
+        colorModel.setBlackSynchronized(Boolean.parseBoolean(items[itemNo++]));
+        colorModel.setGammaSynchronized(Boolean.parseBoolean(items[itemNo++]));
+        colorModel.setWhiteSynchronized(Boolean.parseBoolean(items[itemNo++]));
+
+        while (itemNo<items.length-1) {
+            TmChannelColorModel channelModel = new TmChannelColorModel();
+            channelModel.setBlackLevel(Integer.parseInt(items[itemNo++]));
+            channelModel.setGamma(Double.parseDouble(items[itemNo++]));
+            channelModel.setWhiteLevel(Integer.parseInt(items[itemNo++]));
+            Color savedColor = new Color(
+                    Integer.parseInt(items[itemNo++]),
+                    Integer.parseInt(items[itemNo++]),
+                    Integer.parseInt(items[itemNo++]),
+                    Integer.parseInt(items[itemNo++])
+            );
+            channelModel.setColor(savedColor);
+            channelModel.setVisible(Boolean.parseBoolean(items[itemNo++]));
+            if (hasCC) {
+                channelModel.setCombiningConstant(Float.parseFloat(items[itemNo++]));
+            }
+            colorModel.getChannels().add(channelModel);
+        }
+
+        log.trace("    Parsed "+colorModelStr+" into "+colorModel.getChannels().size()+" channels");
+        return colorModel;
+    }
+
+    private void loadTmFolders() throws DaoException {
+        long start = System.currentTimeMillis();
+        Deque<Entity> entities = new LinkedList<>(getEntitiesByTypeName(null, EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE));
+        resetSession();
+        int loaded = loadTmFolders(entities);
+        entities = new LinkedList<>(getEntitiesByTypeName(null, EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE));
+        resetSession();
+        loaded += loadTmFolders(entities);
+        log.info("Loading " + loaded + " TM folders took " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    private int loadTmFolders(Deque<Entity> tmSamples) {
+
+        int loaded = 0;
+        for(Iterator<Entity> i = tmSamples.iterator(); i.hasNext(); ) {
+            Entity entity = i.next();
+
+            try {
+                long start = System.currentTimeMillis();
+
+                int updated = 0;
+                for(Entity parentEntity : getParentEntities(entity.getId())) {
+                    if (!parentEntity.getEntityTypeName().equals("Folder")) {
+                        log.warn("TM entity is a child of a "+parentEntity.getEntityTypeName()+": "+entity.getId());
+                        continue;
+                    }
+                    createOrUpdateFolder(parentEntity);
+                    updated++;
+                }
+
+                if (updated<1) {
+                    log.error("Could not update any parents for entity "+entity.getEntityTypeName()+" # "+entity.getId());
+                }
+
+                // Free memory by releasing the reference to this entire entity tree
+                i.remove();
+                resetSession();
+
+                log.info("  Loading folders for "+entity.getName()+" ("+entity.getOwnerKey()+") took "+(System.currentTimeMillis()-start)+" ms");
+                loaded++;
+            }
+            catch (Throwable e) {
+                log.error("Error loading dataset "+entity.getId(),e);
+            }
+        }
+
+        return loaded;
+    }
+
+    private Set<Long> updatedFolders = new HashSet<>();
+    private void createOrUpdateFolder(Entity folderEntity) throws Exception {
+        if (updatedFolders.contains(folderEntity.getId())) return;
+
+        TreeNode treeNode = dao.getDomainObject(folderEntity.getOwnerKey(), TreeNode.class, folderEntity.getId());
+
+        boolean isNew = false;
+        if (treeNode==null) {
+            log.error("  Cannot find existing tree node in Mongo: "+folderEntity.getId()+" created: "+folderEntity.getCreationDate());
+            treeNode = new TreeNode();
+            treeNode.setId(folderEntity.getId());
+            isNew = true;
+        }
+
+        // Update properties in case they changed since the last ETL
+        treeNode.setName(folderEntity.getName());
+        treeNode.setOwnerKey(folderEntity.getOwnerKey());
+        treeNode.setReaders(getSubjectKeysWithPermission(folderEntity, "r"));
+        treeNode.setWriters(getSubjectKeysWithPermission(folderEntity, "w"));
+        treeNode.setCreationDate(folderEntity.getCreationDate());
+        treeNode.setUpdatedDate(folderEntity.getUpdatedDate());
+
+        populateChildren(folderEntity);
+        Set<Reference> children = new LinkedHashSet<>();
+
+        for(Entity childEntity : folderEntity.getOrderedChildren()) {
+            String className = getClassName(childEntity.getEntityTypeName());
+            if (className==null) {
+                log.error("  Cannot map object in mouse folder: "+childEntity.getEntityTypeName()+" # "+childEntity.getId());
+            }
+            children.add(Reference.createFor(className==null?TEMP_REF_CLASS:className, childEntity.getId()));
+        }
+
+        // Update the children
+        treeNode.setChildren(new ArrayList<>(children));
+
+        if (isNew) {
+            /// Must insert directly because we set our own id
+            treeNodeCollection.insert(treeNode);
+            // Also make it visible in user's workspace
+            Workspace workspace = dao.getDefaultWorkspace(treeNode.getOwnerKey());
+            dao.addChildren(treeNode.getOwnerKey(), workspace, Arrays.asList(Reference.createFor(treeNode)));
+            log.info("  Added orphan folder to default workspace for "+treeNode.getOwnerKey());
+        }
+        else {
+            dao.save(treeNode.getOwnerKey(), treeNode);
+        }
+
+        log.info("  Migrated folder "+folderEntity.getName());
+        updatedFolders.add(folderEntity.getId());
+        collectAnnotations(folderEntity.getId());
+    }
+
+    // FLY ENTITIES //
+
+    public void loadAllFlyEntities() throws DaoException {
         log.info("Building disk-based SAGE property map");
         this.largeOp = new MongoLargeOperations(dao);
 
@@ -172,7 +584,7 @@ public class MongoDbImport extends AnnotationDAO {
         largeOp.buildSageImagePropMap();
         buildLsmAttributeMap();
 
-        log.info("Loading data into MongoDB");
+        log.info("Loading Fly data into MongoDB");
         getSession().setFlushMode(FlushMode.MANUAL);
 
         long startAll = System.currentTimeMillis();
@@ -215,7 +627,7 @@ public class MongoDbImport extends AnnotationDAO {
         log.info("Verify annotations");
         verifyAnnotations();
 
-        log.info("Loading MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
+        log.info("Loading Fly data into MongoDB took "+((double)(System.currentTimeMillis()-startAll)/1000/60/60)+" hours");
     }
 
     Map<String,LsmSageAttribute> lsmSageAttrs = new HashMap<>();
@@ -3034,6 +3446,12 @@ public class MongoDbImport extends AnnotationDAO {
         }
         else if (EntityConstants.TYPE_IMAGE_2D.equals(entityType)) {
             return Image.class;
+        }
+        else if (EntityConstants.TYPE_TILE_MICROSCOPE_WORKSPACE.equals(entityType)) {
+            return TmWorkspace.class;
+        }
+        else if (EntityConstants.TYPE_3D_TILE_MICROSCOPE_SAMPLE.equals(entityType)) {
+            return TmSample.class;
         }
         return null;
     }

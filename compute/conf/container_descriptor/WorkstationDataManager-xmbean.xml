@@ -12,6 +12,11 @@
     </constructor>
 
     <operation>
+        <description>Synchronize the MongoDb to the database</description>
+        <name>runMongoDbSync</name>
+    </operation>
+
+    <operation>
         <description>Periodic maintenance for the MongoDb database</description>
         <name>runMongoDbMaintenance</name>
     </operation>
