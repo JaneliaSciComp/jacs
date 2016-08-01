@@ -7,6 +7,7 @@ import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -19,12 +20,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Sets;
-import com.mongodb.WriteConcern;
 import net.sf.ehcache.Cache;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.bson.Document;
-import org.eclipse.core.internal.resources.Folder;
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
@@ -65,7 +64,6 @@ import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.tiledMicroscope.TmChannelColorModel;
 import org.janelia.it.jacs.model.domain.tiledMicroscope.TmColorModel;
-import org.janelia.it.jacs.model.domain.tiledMicroscope.TmNeuron;
 import org.janelia.it.jacs.model.domain.tiledMicroscope.TmNeuronStyle;
 import org.janelia.it.jacs.model.domain.tiledMicroscope.TmSample;
 import org.janelia.it.jacs.model.domain.tiledMicroscope.TmWorkspace;
@@ -80,6 +78,7 @@ import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 import org.jongo.MongoCollection;
 import org.reflections.ReflectionUtils;
+import sun.misc.BASE64Decoder;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -142,7 +141,6 @@ public class MongoDbImport extends AnnotationDAO {
     protected final MongoCollection filterCollection;
     protected final MongoCollection tmSampleCollection;
     protected final MongoCollection tmWorkspaceCollection;
-    protected final MongoCollection tmNeuronCollection;
     
     // Load state
     private MongoLargeOperations largeOp;
@@ -177,7 +175,6 @@ public class MongoDbImport extends AnnotationDAO {
         this.filterCollection = dao.getCollectionByClass(Filter.class);
         this.tmSampleCollection = dao.getCollectionByClass(TmSample.class);
         this.tmWorkspaceCollection = dao.getCollectionByClass(TmWorkspace.class);
-        this.tmNeuronCollection = dao.getCollectionByClass(TmNeuron.class);
     }
 
     public void dropDatabase() throws DaoException {
@@ -344,17 +341,7 @@ public class MongoDbImport extends AnnotationDAO {
 
         int neuronCount = 0;
         for(EntityData pbNeuron : EntityUtils.getOrderedEntityDataForAttribute(workspaceEntity, EntityConstants.ATTRIBUTE_PROTOBUF_NEURON)) {
-            TmNeuron neuron = new TmNeuron();
-            neuron.setId(pbNeuron.getId());
-            neuron.setName("PBNeuron");
-            neuron.setOwnerKey(workspaceEntity.getOwnerKey());
-            neuron.setReaders(getSubjectKeysWithPermission(workspaceEntity, "r"));
-            neuron.setWriters(getSubjectKeysWithPermission(workspaceEntity, "w"));
-            neuron.setCreationDate(pbNeuron.getCreationDate());
-            neuron.setUpdatedDate(pbNeuron.getUpdatedDate());
-            neuron.setWorkspaceRef(Reference.createFor(TmWorkspace.class, workspaceEntity.getId()));
-            neuron.setProtoBuf(pbNeuron.getValue());
-            tmNeuronCollection.insert(neuron);
+            loadNeuron(workspaceEntity, pbNeuron);
             neuronCount++;
         }
 
@@ -430,6 +417,58 @@ public class MongoDbImport extends AnnotationDAO {
         }
 
         return workspace;
+    }
+
+    private void loadNeuron(Entity workspaceEntity, EntityData pbNeuron) {
+
+        byte[] protobufBytes;
+        try {
+            BASE64Decoder decoder = new BASE64Decoder();
+            protobufBytes = decoder.decodeBuffer(pbNeuron.getValue());
+            log.debug("  Neuron "+pbNeuron.getId()+" with encoded bytes="+pbNeuron.getValue().length()+" will now be "+protobufBytes.length+" bytes. Compression: "+((double)protobufBytes.length/(double)pbNeuron.getValue().length()));
+        }
+        catch (Exception e) {
+            log.error("Error decoding PB neuron "+pbNeuron.getId(), e);
+            return;
+        }
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = getJdbcConnection();
+            conn.setAutoCommit(false);
+
+            String sql = "insert into tmNeuron (id,tm_workspace_id,protobuf_value,creation_date,updated_date,owner_key) values (?,?,?,?,?,?)";
+            stmt = conn.prepareStatement(sql);
+
+            stmt.setLong(1, pbNeuron.getId());
+            stmt.setLong(2, workspaceEntity.getId());
+            stmt.setBytes(3, protobufBytes);
+            stmt.setDate(4, new java.sql.Date(pbNeuron.getCreationDate().getTime()));
+            stmt.setDate(5, new java.sql.Date(pbNeuron.getUpdatedDate().getTime()));
+            stmt.setString(6, workspaceEntity.getOwnerKey());
+            stmt.execute();
+
+            conn.commit();
+        }
+        catch (Exception  e) {
+            log.error("Error inserting PB neuron "+pbNeuron.getId(), e);
+            try {
+                if (conn!=null) conn.rollback();
+            }
+            catch (SQLException ex) {
+                log.warn("Error rolling back transaction after exception",e);
+            }
+        }
+        finally {
+            try {
+                if (stmt!=null) stmt.close();
+                if (conn!=null) conn.close();
+            }
+            catch (SQLException e) {
+                log.warn("Ignoring error encountered while closing JDBC connection",e);
+            }
+        }
     }
 
     private TmColorModel getColorModel(String colorModelStr) {
