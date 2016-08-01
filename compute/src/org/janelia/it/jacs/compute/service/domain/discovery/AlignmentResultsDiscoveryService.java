@@ -41,7 +41,7 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
     
     public void execute() throws Exception {
 
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
 
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
@@ -51,7 +51,7 @@ public class AlignmentResultsDiscoveryService extends AbstractDomainService {
         FileNode resultFileNode = (FileNode)data.getRequiredItem("ROOT_FILE_NODE");
         String rootPath = resultFileNode.getDirectoryPath();
         
-        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
+        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
         contextLogger.info("Collected "+filepaths.size()+" files in "+rootPath);
 

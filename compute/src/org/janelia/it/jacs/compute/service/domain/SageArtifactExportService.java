@@ -105,7 +105,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     
     public void execute() throws Exception {
 
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger);
         
         Long releaseId = data.getRequiredItemAsLong("RELEASE_ENTITY_ID");
         this.release = domainDao.getDomainObject(ownerKey, LineRelease.class, releaseId);

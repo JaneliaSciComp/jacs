@@ -65,7 +65,7 @@ public class SampleDataCompressionService extends AbstractDomainService {
         this.mode = data.getRequiredItemAsString("MODE");
         this.inputType = data.getRequiredItemAsString("INPUT_TYPE");
         this.outputType = data.getRequiredItemAsString("OUTPUT_TYPE");
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
                 
         if (mode.equals(MODE_CREATE_INPUT_LIST)) {

@@ -115,7 +115,7 @@ public class Vaa3DConvertToSampleImageService extends SubmitDrmaaJobService {
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+            this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
             this.domainDao = DomainDAL.getInstance();
             this.randomPort = Vaa3DHelper.getRandomPort(START_DISPLAY_PORT);
 

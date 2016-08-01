@@ -203,8 +203,7 @@ public class ReleaseWebService extends ResourceConfig {
 
         try {
             final DomainDAL dal = DomainDAL.getInstance();
-            final ComputeBeanRemote computeBean = EJBFactory.getRemoteComputeBean();
-            final SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, null, logger);
+            final SampleHelperNG sampleHelper = new SampleHelperNG(null, logger);
 
             // Consider all releases with a given name
             for(LineRelease release : DomainDAL.getInstance().getLineReleases(null)) {
