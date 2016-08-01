@@ -563,6 +563,10 @@ public class DomainDAO {
         return list;
     }
 
+    public List<Annotation> getAnnotations(String subjectKey, Reference reference) {
+    	return getAnnotations(subjectKey, Arrays.asList(reference));
+    }
+    
     public List<Annotation> getAnnotations(String subjectKey, Collection<Reference> references) {
         log.debug("getAnnotations({}, references={})", subjectKey, abbr(references));
         Set<String> subjects = getSubjectSet(subjectKey);
