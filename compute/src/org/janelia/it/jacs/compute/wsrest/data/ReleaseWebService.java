@@ -68,14 +68,14 @@ public class ReleaseWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    public List<LineRelease> getReleasesInfo() {
-        log.debug("getReleasesInfo()");
+    public List<LineRelease> getReleasesInfo(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
+        log.debug("getReleasesInfo({})",subjectKey);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            return dao.getDomainObjects(null, LineRelease.class);
+            return dao.getDomainObjects(subjectKey, LineRelease.class);
         }
         catch (Exception e) {
-            log.error("Error occurred getting datasets",e);
+            log.error("Error occurred getting releases info",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -94,14 +94,14 @@ public class ReleaseWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     @Formatted
-    public List<LineRelease> getReleaseInfo(@ApiParam @PathParam("releaseName")String releaseName) {
-        log.debug("getReleaseInfo({})", releaseName);
+    public List<LineRelease> getReleaseInfo(@ApiParam @QueryParam("subjectKey") final String subjectKey, @ApiParam @PathParam("releaseName")String releaseName) {
+        log.debug("getReleaseInfo({}, {})", subjectKey, releaseName);
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            return dao.getDomainObjectsByName(null, LineRelease.class, releaseName);
+            return dao.getDomainObjectsByName(subjectKey, LineRelease.class, releaseName);
         }
         catch (Exception e) {
-            log.error("Error occurred getting datasets",e);
+            log.error("Error occurred getting release info",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -165,7 +165,7 @@ public class ReleaseWebService extends ResourceConfig {
             @ApiResponse( code = 500, message = "Internal Server Error removing a release" )
     })
     @Consumes(MediaType.APPLICATION_JSON)
-    public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+    public void removeRelease(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("releaseId") final String releaseId) {
         log.debug("removeDataSet({}, {})", subjectKey, releaseId);
         DomainDAL dao = DomainDAL.getInstance();

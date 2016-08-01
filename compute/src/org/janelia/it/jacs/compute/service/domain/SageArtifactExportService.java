@@ -481,7 +481,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         logger.debug("    Synchronizing primary image "+imageName);
         Image image = sage.getImageByName(imageName);
         
-        Map<CvTerm,String> consensusValues = new HashMap();
+        Map<CvTerm,String> consensusValues = new HashMap<>();
         CvTerm consensusFamily = null;
         
         for(Image sourceImage : sourceSageImages) {
@@ -653,7 +653,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         Line line = getLineByName(lineName);
         SageSession session = sage.getSageSession(lineName, sessionExperimentType, releaseExperiment);
         if (session==null) {
-            logger.info("  Will creating new session for line "+lineName);
+            logger.info("  Creating new session for line "+lineName);
             session = new SageSession(sessionExperimentType, lab, line, lineName, releaseExperiment, null, createDate);
         }
         else {

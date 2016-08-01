@@ -46,6 +46,11 @@ public class JsonRelease {
     }
 
     @JsonProperty
+    public Boolean getAutoRelease() {
+        return release.isAutoRelease();
+    }
+    
+    @JsonProperty
     public Boolean getSAGESync() {
         return release.isSageSync();
     }

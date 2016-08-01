@@ -51,7 +51,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
         
         DateTime cutoffDate = null;
         Integer lagTime = release.getLagTimeMonths();
-        if (lagTime != null) {
+        if (releaseDate != null && lagTime != null) {
             cutoffDate = releaseDate.minus(Period.months(lagTime));
             logger.info("Cutoff date: "+cutoffDate);
         }
@@ -121,22 +121,22 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
             List<Sample> samples = new ArrayList<>(samplesByLine.get(line));
             logger.info("Processing line "+line+" with "+samples.size()+" samples");
             
-            // Ensure there is at least one 63x polarity sample
-
-            boolean has63xPolaritySample = false;
-            for(Sample sample : samples) {
-                if (has63xPolaritySample(sample)) {
-                    has63xPolaritySample = true;
-                    break;
-                }
-            }
-    	    
-            if (!has63xPolaritySample) {
-                logger.info("  Ignoring line which has no 63x polarity samples");
-                continue;
+            // If this is an automated release, ensure there is at least one 63x polarity sample for each line
+            if (release.isAutoRelease()) {
+	            boolean has63xPolaritySample = false;
+	            for(Sample sample : samples) {
+	                if (has63xPolaritySample(sample)) {
+	                    has63xPolaritySample = true;
+	                    break;
+	                }
+	            }
+	            if (!has63xPolaritySample) {
+	                logger.info("  Ignoring line which has no 63x polarity samples");
+	                continue;
+	            }
             }
             
-            TreeNode lineFolder = verifyOrCreateChildFolder(releaseFolder, line);
+            TreeNode lineFolder = verifyOrCreateLineFolder(line);
     	    
     	    // Sort samples
     	    Collections.sort(samples, new Comparator<Sample>() {
@@ -146,13 +146,12 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
                 }
             });
 
-            logger.info("  Adding samples to line folder");
+            logger.info("  Synchronizing "+samples.size()+" samples to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");
             
     	    // Add missing samples
     	    for(Sample sample : samples) {
-    	        logger.debug("    Processing sample "+sample.getName());
                 if (!lineFolder.hasChild(sample)) {
-                    logger.debug("      Adding to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");
+                    logger.info("      Adding sample to line folder: "+sample.getName());
                     domainDao.addChildren(ownerKey, lineFolder, Arrays.asList(Reference.createFor(sample)));
                     numAdded++;
     	        }
@@ -175,14 +174,14 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
 
         String identifier = sample.getDataSet();
         if (identifier==null || !identifier.toLowerCase().contains("polarity")) {
-            // If the parent sample is not a polarity sample then we don't need to check anything else
+            // If the sample is not a polarity sample then we don't need to check anything else
             return false;
         }
         
         return sample.getObjectives().contains("63x");
     }
 
-    public TreeNode verifyOrCreateChildFolder(TreeNode parentFolder, String childName) throws Exception {
+    public TreeNode verifyOrCreateLineFolder(String childName) throws Exception {
 
         for(TreeNode flyLineFolder : domainDao.getDomainObjectsAs(releaseFolder.getChildren(), TreeNode.class)) {
             if (flyLineFolder.getName().equals(childName)) {
@@ -190,12 +189,12 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
             }
         }
         
-        TreeNode childSet = new TreeNode();
-        childSet.setName(childName);
-        childSet = domainDao.save(ownerKey, childSet);
-        
-        domainDao.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(childSet)));
-        
-        return childSet;
+        TreeNode childNode = new TreeNode();
+        childNode.setName(childName);
+        childNode = domainDao.save(ownerKey, childNode);
+        releaseFolder = domainDao.addChildren(ownerKey, releaseFolder, Arrays.asList(Reference.createFor(childNode)));
+
+        logger.info("  Created new line folder: "+childNode.getName()+" (id="+childNode.getId()+")");
+        return childNode;
     }
 }

@@ -16,6 +16,7 @@ import org.janelia.it.jacs.model.domain.support.MongoMapped;
 @MongoMapped(collectionName="release",label="Line Release")
 public class LineRelease extends AbstractDomainObject {
 
+	private boolean autoRelease;
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
     private Date releaseDate;
     private Integer lagTimeMonths;
@@ -24,7 +25,15 @@ public class LineRelease extends AbstractDomainObject {
     private List<String> annotators = new ArrayList<>();
     private List<String> subscribers = new ArrayList<>();
 
-    public Date getReleaseDate() {
+	public boolean isAutoRelease() {
+		return autoRelease;
+	}
+
+	public void setAutoRelease(boolean autoRelease) {
+		this.autoRelease = autoRelease;
+	}
+
+	public Date getReleaseDate() {
         return releaseDate;
     }
 
