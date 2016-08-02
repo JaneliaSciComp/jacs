@@ -73,14 +73,29 @@ public class MongoDbMaintainer {
         long start = System.currentTimeMillis();
         log.info("Ensuring indexes");
 
-        MongoCollection alignmentBoardCollection = dao.getCollectionByName("alignmentBoard");
-        ensureDomainIndexes(alignmentBoardCollection);
+        // Core Model (Shared)
+
+        MongoCollection subjectCollection = dao.getCollectionByName("subject");
+        subjectCollection.ensureIndex("{key:1}","{unique:true}");
+        subjectCollection.ensureIndex("{name:1}");
+        subjectCollection.ensureIndex("{groups:1}");
+
+        MongoCollection treeNodeCollection = dao.getCollectionByName("treeNode");
+        ensureDomainIndexes(treeNodeCollection);
+
+        MongoCollection ontologyCollection = dao.getCollectionByName("ontology");
+        ensureDomainIndexes(ontologyCollection);
 
         MongoCollection annotationCollection = dao.getCollectionByName("annotation");
         ensureDomainIndexes(annotationCollection);
         annotationCollection.ensureIndex("{target:1}");
         annotationCollection.ensureIndex("{target:1,readers:1}");
-        
+
+        // Fly Model
+
+        MongoCollection alignmentBoardCollection = dao.getCollectionByName("alignmentBoard");
+        ensureDomainIndexes(alignmentBoardCollection);
+
         MongoCollection compartmentSetCollection = dao.getCollectionByName("compartmentSet");
         ensureDomainIndexes(compartmentSetCollection);
 
@@ -111,24 +126,21 @@ public class MongoDbMaintainer {
         imageCollection.ensureIndex("{sampleRef:1}");
         imageCollection.ensureIndex("{sampleRef:1,readers:1}");
 
-        MongoCollection ontologyCollection = dao.getCollectionByName("ontology");
-        ensureDomainIndexes(ontologyCollection);
-
-        MongoCollection patternMaskCollection = dao.getCollectionByName("patternMask");
-        ensureDomainIndexes(patternMaskCollection);
-
         MongoCollection sampleCollection = dao.getCollectionByName("sample");
         ensureDomainIndexes(sampleCollection);
         sampleCollection.ensureIndex("{dataSet:1}");
-        
-        MongoCollection subjectCollection = dao.getCollectionByName("subject");
-        subjectCollection.ensureIndex("{key:1}","{unique:true}");
-        subjectCollection.ensureIndex("{name:1}");
-        subjectCollection.ensureIndex("{groups:1}");
 
-        MongoCollection treeNodeCollection = dao.getCollectionByName("treeNode");
-        ensureDomainIndexes(treeNodeCollection);
-        
+        // Mouse Model
+
+        MongoCollection tmSampleCollection = dao.getCollectionByName("tmSample");
+        ensureDomainIndexes(tmSampleCollection);
+
+        MongoCollection tmWorkspaceCollection = dao.getCollectionByName("tmWorkspace");
+        ensureDomainIndexes(tmWorkspaceCollection);
+        subjectCollection.ensureIndex("{sampleRef:1}");
+        subjectCollection.ensureIndex("{sampleRef:1,readers:1}");
+
+
         log.info("Indexing MongoDB took " + (System.currentTimeMillis() - start) + " ms");
     }
 

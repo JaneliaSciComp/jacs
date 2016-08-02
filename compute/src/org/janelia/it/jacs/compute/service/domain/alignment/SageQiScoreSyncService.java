@@ -63,7 +63,7 @@ public class SageQiScoreSyncService extends AbstractDomainService {
 
         contextLogger.info("Running Qi Score Synchronization (isDebug="+isDebug+")");
 
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);

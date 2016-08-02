@@ -36,7 +36,7 @@ public class InitAnalysisParametersService extends AbstractDomainService {
 
 		Long sampleId = data.getItemAsLong("SAMPLE_ENTITY_ID");
 		if (sampleId!=null) {
-			SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+			SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
 	        Sample sample = sampleHelper.getRequiredSample(data);
 	        ObjectiveSample objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
 	        SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);

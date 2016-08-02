@@ -23,7 +23,7 @@ public class SetSampleStatusService extends AbstractDomainService {
     
     public void execute() throws Exception {
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         String status = data.getRequiredItemAsString("STATUS");

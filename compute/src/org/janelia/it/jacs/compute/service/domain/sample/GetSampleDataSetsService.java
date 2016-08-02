@@ -17,7 +17,7 @@ public class GetSampleDataSetsService extends AbstractDomainService {
 
     public void execute() throws Exception {
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         Sample sample = sampleHelper.getRequiredSample(data);
         
         contextLogger.info("Retrieved sample: "+sample.getName()+" (id="+sample.getId()+")");

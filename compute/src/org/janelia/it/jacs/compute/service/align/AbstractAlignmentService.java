@@ -88,7 +88,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+            this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
             
             this.sample = sampleHelper.getRequiredSample(data);
             this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
@@ -333,7 +333,7 @@ public abstract class AbstractAlignmentService extends SubmitDrmaaJobService imp
             String ownerName = ProcessDataHelper.getTask(processData).getOwner();
             Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
             this.ownerKey = subject.getKey();
-            this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+            this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
 
             this.sample = sampleHelper.getRequiredSample(data);
             this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);

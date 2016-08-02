@@ -169,7 +169,7 @@ public class FileTreeLoaderService implements IService {
             Subject subject = domainDAO.getSubjectByName(ownerName);
             this.ownerKey = subject.getKey();
             
-            this.domainHelper = new DomainHelper(computeBean, ownerKey, logger);
+            this.domainHelper = new DomainHelper(ownerKey, logger);
             
             getNodeDirs();
             

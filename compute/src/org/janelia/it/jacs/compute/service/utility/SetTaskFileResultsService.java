@@ -37,7 +37,7 @@ public class SetTaskFileResultsService extends AbstractDomainService {
 
         List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) processData.getItem("SAMPLE_AREAS");
         if (sampleAreas != null) {
-            SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+            SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
             Sample sample = sampleHelper.getRequiredSample(data);
             ObjectiveSample objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
 

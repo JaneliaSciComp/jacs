@@ -27,7 +27,7 @@ public class ChooseSampleAreaPipelineStepsService extends AbstractDomainService 
         
         AnatomicalArea sampleArea = (AnatomicalArea) data.getRequiredItem("SAMPLE_AREA");
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         
         List<SampleTile> tiles = sampleHelper.getTilesForArea(objectiveSample, sampleArea);
         

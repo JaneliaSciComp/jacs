@@ -24,8 +24,8 @@ public class FileDiscoveryHelperNG extends DomainHelper {
     private Set<Pattern> exclusions = new HashSet<Pattern>();
     private boolean excludeSymLinks = true;
     
-    public FileDiscoveryHelperNG(ComputeBeanLocal computeBean, String ownerKey, Logger logger) {
-        super(computeBean, ownerKey, logger);
+    public FileDiscoveryHelperNG(String ownerKey, Logger logger) {
+        super(ownerKey, logger);
         addFileExclusion("*.log");
         addFileExclusion("*.oos");
         addFileExclusion("sge_*");

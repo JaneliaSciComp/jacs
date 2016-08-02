@@ -45,7 +45,7 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
         logger.info("Running SAGE data set discovery, ownerKey=" + ownerKey + ", dataSetName=" + dataSetName);
 
         this.sageDAO = new SageDAO(logger);
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger);
         sampleHelper.setDataSetNameFilter(dataSetName);
 
         buildLinePropertyMap();

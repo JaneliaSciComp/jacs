@@ -24,7 +24,7 @@ public class InferChannelSpecificationService extends AbstractDomainService {
     
     public void execute() throws Exception {
 
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.channelDyeSpec = data.getItemAsString("CHANNEL_DYE_SPEC");
         
         if (channelDyeSpec!=null) {
