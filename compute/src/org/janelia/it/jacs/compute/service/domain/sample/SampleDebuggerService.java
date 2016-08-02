@@ -25,7 +25,7 @@ public class SampleDebuggerService extends AbstractDomainService {
 			contextLogger.info("    "+parameter.getName()+": "+parameter.getValue());
 		}
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         Sample sample = sampleHelper.getRequiredSample(data);
 	
         contextLogger.info("    Sample Id: "+sample.getId());

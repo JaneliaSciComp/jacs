@@ -30,19 +30,16 @@ public class DomainHelper {
 
     protected Logger logger;
     protected ContextLogger contextLogger;
-    protected ComputeBeanRemote computeBean;
     protected DomainDAL domainDAL;
     protected String ownerKey;
    
-    public DomainHelper(ComputeBeanRemote computeBean, String ownerKey, Logger logger) {
-        this(computeBean, ownerKey, logger, null);
+    public DomainHelper(String ownerKey, Logger logger) {
+        this(ownerKey, logger, null);
     }
 
-    public DomainHelper(ComputeBeanRemote computeBean,
-                        String ownerKey,
+    public DomainHelper(String ownerKey,
                         Logger logger,
                         ContextLogger contextLogger) {
-        this.computeBean  = computeBean;
         this.ownerKey = ownerKey;
         this.domainDAL = DomainDAL.getInstance();
         this.logger = logger;

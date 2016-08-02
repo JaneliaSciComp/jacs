@@ -53,17 +53,13 @@ public class ComputeBaseDAO {
     private final String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
     private final String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
     
-    protected Logger log;
+    protected final Logger log;
     protected SessionFactory sessionFactory;
     protected Session externalSession;
 
     public ComputeBaseDAO(Logger log) {
         getSessionFactory();
-        this.log = log;
-    }
-
-    public ComputeBaseDAO(Session externalSession) {
-        this.externalSession = externalSession;
+        this.log = log==null ? Logger.getLogger(ComputeBaseDAO.class) : log;
     }
 
     public Connection getJdbcConnection() throws DaoException {

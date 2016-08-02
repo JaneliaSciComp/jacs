@@ -41,7 +41,7 @@ public class SeparationDiscoveryService extends AbstractDomainService {
     
     public void execute() throws Exception {
 
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
 
@@ -65,7 +65,7 @@ public class SeparationDiscoveryService extends AbstractDomainService {
             contextLogger.info("Created new separation result: "+separation.getId());
         }
         
-        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
+        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
         contextLogger.info("Collected "+filepaths.size()+" files in "+rootPath);
 

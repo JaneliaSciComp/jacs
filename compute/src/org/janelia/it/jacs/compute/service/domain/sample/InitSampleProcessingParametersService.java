@@ -31,7 +31,7 @@ public class InitSampleProcessingParametersService extends AbstractDomainService
 
 	public void execute() throws Exception {
 
-	    SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+	    SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         this.mergeResultNode = (FileNode) processData.getItem("MERGE_RESULT_FILE_NODE");

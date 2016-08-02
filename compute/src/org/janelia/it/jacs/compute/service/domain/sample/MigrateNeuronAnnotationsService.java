@@ -42,7 +42,7 @@ public class MigrateNeuronAnnotationsService extends AbstractDomainService {
 	
     public void execute() throws Exception {
 
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
 

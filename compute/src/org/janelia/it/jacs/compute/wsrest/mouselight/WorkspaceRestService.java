@@ -1,14 +1,39 @@
 package org.janelia.it.jacs.compute.wsrest.mouselight;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.janelia.it.jacs.compute.access.AnnotationDAO;
-import org.janelia.it.jacs.compute.access.TiledMicroscopeDAO;
-import org.janelia.it.jacs.compute.api.AnnotationBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.compute.api.TiledMicroscopeBeanRemote;
@@ -17,13 +42,9 @@ import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
-import org.janelia.it.jacs.model.tasks.Event;
-import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
-import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmWorkspace;
 import org.janelia.it.jacs.model.user_data.tiled_microscope_protobuf.TmProtobufExchanger;
 import org.janelia.it.jacs.shared.geom.CoordinateAxis;
 import org.janelia.it.jacs.shared.lvv.BlockTiffOctreeLoadAdapter;
@@ -35,21 +56,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.BASE64Encoder;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.nio.file.Files;
-import java.sql.Timestamp;
-import java.util.*;
-
 
 /**
  * Created by murphys on 3/24/2016.
  */
-
 @Path("/mouselight")
 public class WorkspaceRestService extends ResourceConfig {
+
+    @Context
+    HttpServletResponse response;
 
     public WorkspaceRestService() {
         register(JacksonFeature.class);
@@ -65,6 +80,7 @@ public class WorkspaceRestService extends ResourceConfig {
     private static Map<Long, ExpirableLoadAdapter> sampleLoadAdapterMap=new HashMap<>();
     public static final long LOAD_ADAPTER_TIMEOUT_MS=600000;
 
+    private ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
 
     private static long quasiTimebasedGuid=0L;
@@ -432,7 +448,7 @@ public class WorkspaceRestService extends ResourceConfig {
             wi = getWorkspaceInfo(idString);
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("addWorkspaceArtificialNeurons() error",ex);
         }
         finally {
             HibernateSessionUtils.closeSession(dbSession);
@@ -483,7 +499,7 @@ public class WorkspaceRestService extends ResourceConfig {
                 }
             });
         } catch (Exception ex) {
-            log.error("Error in getLoadAdapterForSample() sampleId="+sampleId+" ex="+ex.getMessage());
+            log.error("Error in getLoadAdapterForSample() sampleId="+sampleId,ex);
         }
         return blockTiffOctreeLoadAdapter;
     }
@@ -502,7 +518,9 @@ public class WorkspaceRestService extends ResourceConfig {
             @QueryParam("axis") String axisString) {
         byte[] textureData2dBytes = null;
         try {
-            //log.info("getSample2DTile() invoked, sampleId=" + sampleIdString + " x=" + xString + " y=" + yString + " z=" + zString + " zoom=" + zoomString + " maxZoom=" + maxZoomString + " index=" + indexString + " axis=" + axisString);
+            long startTime = System.nanoTime();
+            log.trace("getSample2DTile() invoked, sampleId=" + sampleIdString + " x=" + xString + " y=" + yString + " z=" + zString + " zoom=" + zoomString + " maxZoom=" + maxZoomString + " index=" + indexString + " axis=" + axisString);
+
             BlockTiffOctreeLoadAdapter blockTiffOctreeLoadAdapter=null;
             ExpirableLoadAdapter expirableLoadAdapter=sampleLoadAdapterMap.get(new Long(sampleIdString));
             if (expirableLoadAdapter!=null &&  ((new Date().getTime()-expirableLoadAdapter.setupTime)<LOAD_ADAPTER_TIMEOUT_MS)) {
@@ -530,10 +548,11 @@ public class WorkspaceRestService extends ResourceConfig {
             TextureData2d textureData2d = blockTiffOctreeLoadAdapter.loadToRam(tileIndex);
             if (textureData2d!=null) {
                 textureData2dBytes = textureData2d.copyToByteArray();
+                final double elapsedMs = (double) (System.nanoTime() - startTime) / 1000000.0;
+                //activityLog.logTileLoad(zString, tileIndex, elapsedMs, sampleIdString);
             }
         } catch (Exception ex) {
-            log.error("getSample2DTile() error: "+ex.getMessage());
-            ex.printStackTrace();
+            log.error("getSample2DTile() error",ex);
         }
         return textureData2dBytes;
     }
@@ -548,8 +567,7 @@ public class WorkspaceRestService extends ResourceConfig {
         try {
             fileBytes=Files.readAllBytes(file.toPath());
         } catch (Exception ex) {
-            log.error("Error in getFileBytes() ="+ex.getMessage());
-            ex.printStackTrace();
+            log.error("Error in getFileBytes()",ex);
         }
         return fileBytes;
     }
@@ -565,8 +583,7 @@ public class WorkspaceRestService extends ResourceConfig {
             try {
                 fileBytes=Files.readAllBytes(actualFile.toPath());
             } catch (Exception ex) {
-                log.error("Error in getMouseLightTiffBytes() =" + ex.getMessage());
-                ex.printStackTrace();
+                log.error("Error in getMouseLightTiffBytes()",ex);
             }
             return fileBytes;
         } else {
@@ -575,10 +592,10 @@ public class WorkspaceRestService extends ResourceConfig {
     }
 
     @GET
-    @Path("/mouseLightTiffStream")
+    @Path("/mouseLightTiffStreamAttachment")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @Compress
-    public Response getMouseLightTiffStream(@QueryParam("suggestedPath") String suggestedPath) {
+    //@Compress // Gzip is painfully slow
+    public Response getMouseLightTiffStreamV1(@QueryParam("suggestedPath") String suggestedPath) {
         File actualFile=getMouseLightTiffFileBySuggestion(suggestedPath);
         if (actualFile!=null) {
             Response.ResponseBuilder responseBuilder=Response.ok(actualFile);
@@ -587,6 +604,38 @@ public class WorkspaceRestService extends ResourceConfig {
         } else {
             return null;
         }
+    }
+
+    @GET
+    @Path("/mouseLightTiffStream")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public StreamingOutput getMouseLightTiffStreamV2(@QueryParam("suggestedPath") final String suggestedPath) throws FileNotFoundException {
+        File actualFile = getMouseLightTiffFileBySuggestion(suggestedPath);
+        if (actualFile==null) {
+            log.info("File not found: "+suggestedPath);
+        }
+        final String filename = actualFile.getAbsolutePath();
+        final long startTime = System.nanoTime();
+        try {
+            String length = Long.toString(Files.size(Paths.get(filename)));
+            response.setHeader("Content-Length", length);
+        }
+        catch (NoSuchFileException e) {
+            log.info("File not found: "+suggestedPath, e);
+            throw new FileNotFoundException("File was not found on the file system.");
+        }
+        catch (IOException e) {
+            log.info("Error getting file: "+suggestedPath, e);
+            throw new FileNotFoundException("Problem retrieving content length data on file");
+        }
+        return new StreamingOutput() {
+            @Override
+            public void write(OutputStream output) throws IOException, WebApplicationException {
+                Files.copy(Paths.get(filename), output);
+                final double elapsedMs = (double) (System.nanoTime() - startTime) / 1000000.0;
+                log.debug("mouseLightTiffStream took "+elapsedMs+" ms for "+suggestedPath);
+            }
+        };
     }
 
     //=================================================================================================//

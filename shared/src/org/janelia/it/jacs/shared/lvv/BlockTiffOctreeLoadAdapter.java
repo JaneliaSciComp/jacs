@@ -39,9 +39,6 @@ extends AbstractTextureLoadAdapter
 	private File topFolder;
     // Metadata: file location required for remote system.
     private String remoteBasePath;
-    // Metadata: different folders could be opened during a user's session.
-    private Long folderOpenTimestamp = null;
-//    private ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 //	public LoadTimer loadTimer = new LoadTimer();
     
 	public BlockTiffOctreeLoadAdapter()
@@ -70,9 +67,9 @@ extends AbstractTextureLoadAdapter
 		this.topFolder = topFolder;        
         OctreeMetadataSniffer sniffer = new OctreeMetadataSniffer(topFolder, tileFormat, coordinateToRawTransformFileSource);
         sniffer.setRemoteBasePath(remoteBasePath);
-        folderOpenTimestamp = new Date().getTime();
+        //folderOpenTimestamp = new Date().getTime();
 		sniffer.sniffMetadata(topFolder);
-       // activityLog.logFolderOpen(remoteBasePath, folderOpenTimestamp);
+        // activityLog.logFolderOpen(remoteBasePath, folderOpenTimestamp);
 		// Don't launch pre-fetch yet.
 		// That must occur AFTER volume initialized signal is sent.
 	}
@@ -89,7 +86,6 @@ extends AbstractTextureLoadAdapter
 	{
 		// Create a local load timer to measure timings just in this thread
 		//LoadTimer localLoadTimer = new LoadTimer();
-        long startTime = System.nanoTime();
 		//localLoadTimer.mark("starting slice load");
         final File octreeFilePath = OctreeMetadataSniffer.getOctreeFilePath(tileIndex, tileFormat, zOriginNegativeShift);
         if (octreeFilePath == null) {
@@ -118,11 +114,6 @@ extends AbstractTextureLoadAdapter
 		// log.info(tileIndex + "" + folder + " : " + relativeSlice);
 		TextureData2d result = loadSlice(relativeSlice, decoders, tileFormat.getChannelCount());
 		//localLoadTimer.mark("finished slice load");
-        
-        final double elapsedMs = (double) (System.nanoTime() - startTime) / 1000000.0;
-//        if (result != null) {
-//            activityLog.logTileLoad(relativeSlice, tileIndex, elapsedMs, folderOpenTimestamp);
-//        }
 
 		//loadTimer.putAll(localLoadTimer);
 		return result;

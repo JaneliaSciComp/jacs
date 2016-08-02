@@ -35,7 +35,7 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
     
     public void execute() throws Exception {
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
@@ -63,7 +63,7 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         result.setFilepath(rootPath);
 
         contextLogger.info("Discovering supporting files in "+rootPath);
-        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
+        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
         
         String stitchedFilepath = sampleArea.getStitchedFilepath();

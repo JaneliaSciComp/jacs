@@ -37,7 +37,7 @@ public class PatternSearch implements PatternSearchMBean {
     protected FileDiscoveryHelperNG getFileDiscoveryHelper() {
         ComputeBeanLocal computeBean=getComputeBean();
         EntityBeanLocal entityBean=getEntityBean();
-        return new FileDiscoveryHelperNG(computeBean, "system", logger);
+        return new FileDiscoveryHelperNG("system", logger);
     }
 
     /////////////// Management Methods ////////////////////////////////////////////////////////////////////////////////

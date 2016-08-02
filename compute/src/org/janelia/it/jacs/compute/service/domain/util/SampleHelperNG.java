@@ -57,12 +57,12 @@ public class SampleHelperNG extends DomainHelper {
     private int numSamplesUpdated = 0;
     private int numSamplesReprocessed = 0;
     
-    public SampleHelperNG(ComputeBeanRemote computeBean, String ownerKey, Logger logger) {
-        this(computeBean, ownerKey, logger, null);
+    public SampleHelperNG(String ownerKey, Logger logger) {
+        this(ownerKey, logger, null);
     }
 
-    public SampleHelperNG(ComputeBeanRemote computeBean, String ownerKey, Logger logger, ContextLogger contextLogger) {
-        super(computeBean, ownerKey, logger, contextLogger);
+    public SampleHelperNG(String ownerKey, Logger logger, ContextLogger contextLogger) {
+        super(ownerKey, logger, contextLogger);
     }
     
     public void setDataSetNameFilter(String dataSetNameFilter) {
