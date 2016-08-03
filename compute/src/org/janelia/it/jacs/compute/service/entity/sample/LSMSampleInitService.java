@@ -2,7 +2,9 @@ package org.janelia.it.jacs.compute.service.entity.sample;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -62,21 +64,28 @@ public class LSMSampleInitService extends AbstractEntityService {
         }
 
         Multimap<String, LSMImage> imagesGroupedBySlideCode = LinkedListMultimap.create();
+        // Sage only-ever should see its own version of the image name.
+        Map<String,String> jacsImageNameToSageImageName = new HashMap<>();
+        Map<String,SageBean> slideCodeToSageBean = new HashMap<>();
         for (String lsmName : lsmNames) {
             try {
-                SlideImage sageVersion = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
-                boolean populatedInSage = sageVersion != null  &&  sageVersion.getChannelSpec() != null;
-                /* *** TEMP *** */
-                if (sageVersion != null) {
-                    logger.info("Successfully detected existing slide image " + lsmName + " from Sage.");
+                SlideImage sageImageInfo = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
+                if (sageImageInfo == null) {
+                    logger.info("LSM: " + lsmName + " unknown to sage. Not processing.");
+                    continue;
                 }
+                SageBean sageBean = new SageBean(sageImageInfo.getLab(), sageImageInfo.getLine());
+
+                boolean populatedInSage = sageImageInfo.getImagePath() != null;
+                /* *** TEMP *** */
                 if (populatedInSage) {
                     logger.info("Successfully detected completion in sage " + lsmName);
                 }
                 /* *** End Temp *** */
 
-                if (1 == 1/* *** TEMP *** */  ||  sageVersion == null  ||  (!populatedInSage)) {
+                if (1 == 1/* *** TEMP *** */  ||  (!populatedInSage)) {
                     String jacsLsmName = convertToJacsFormat(lsmName);
+                    jacsImageNameToSageImageName.put(jacsLsmName, lsmName);
                     List<LSMImage> images = domainDAL.getUserDomainObjectsByName(ownerKey, LSMImage.class, jacsLsmName);
                     if (images == null  || images.isEmpty()) {
                         // Second chance.  May be compressed.
@@ -90,7 +99,13 @@ public class LSMSampleInitService extends AbstractEntityService {
                     }
                     else {
                         LSMImage lsmImage = images.iterator().next();
-                        imagesGroupedBySlideCode.put(lsmImage.getSlideCode(), lsmImage);
+                        String slideCode = lsmImage.getSlideCode();
+                        SageBean assocWithSlideCode = slideCodeToSageBean.get(slideCode);
+                        if (assocWithSlideCode != null  &&  !assocWithSlideCode.equals(sageBean)) {
+                            throw new DaoException("Multiple sage values for slide code " + slideCode + ", seeing " + sageBean + ", and " + assocWithSlideCode);
+                        }
+                        slideCodeToSageBean.put(slideCode, sageBean);
+                        imagesGroupedBySlideCode.put(slideCode, lsmImage);
                     }
                 }
             } catch (DaoException e) {
@@ -98,13 +113,15 @@ public class LSMSampleInitService extends AbstractEntityService {
             }
         }
 
-        List<Task> sageLoadingTasks = getSageLoaderTasksForCurrentDataset(imagesGroupedBySlideCode, dataSet);
+        List<Task> sageLoadingTasks = getSageLoaderTasksForCurrentDataset(imagesGroupedBySlideCode, dataSet, jacsImageNameToSageImageName, slideCodeToSageBean);
 
         processData.putItem("SAGE_TASK", sageLoadingTasks);
     }
 
     private List<Task> getSageLoaderTasksForCurrentDataset(Multimap<String, LSMImage> imagesGroupedBySlideCode,
-                                                           DataSet dataset) {
+                                                           DataSet dataset,
+                                                           Map<String,String> jacsImageNameToSageImageName,
+                                                           Map<String,SageBean> slideCodeToSageBean) {
         List<Task> sageLoadingTasks = new ArrayList<>();
         String owner = extractOwnerId(dataset.getOwnerKey());
         processData.putItem("DATASET_OWNER", owner);
@@ -114,9 +131,11 @@ public class LSMSampleInitService extends AbstractEntityService {
         for (final String slideCode: imagesGroupedBySlideCode.keySet()) {
             try {
                 Collection<LSMImage> slideImages = imagesGroupedBySlideCode.get(slideCode);
-                String[] labAndLine = getLabAndLine(slideImages);
-                List<String> slideImageNames = getSlideImageNames(slideCode, slideImages);
-                SageLoaderTask sageLoaderTask = createSageLoaderTask(owner, configPath, grammarPath, labAndLine, slideImageNames);
+                SageBean sageBean = slideCodeToSageBean.get(slideCode);
+                String line = sageBean.getLine();
+                String lab = sageBean.getLab();
+                List<String> sageImageNames = getSageImageNames(slideCode, slideImages, jacsImageNameToSageImageName);
+                SageLoaderTask sageLoaderTask = createSageLoaderTask(owner, configPath, grammarPath, lab, line, sageImageNames);
                 sageLoadingTasks.add(sageLoaderTask);
 
             } catch (Exception e) {
@@ -126,7 +145,11 @@ public class LSMSampleInitService extends AbstractEntityService {
         return sageLoadingTasks;
     }
 
-    private List<String> getSlideImageNames(final String slideCode, Collection<LSMImage> slideImages) {
+    private List<String> getSageImageNames(
+            final String slideCode,
+            Collection<LSMImage> slideImages,
+            final Map<String,String> jacsImageNameToSageImageName) {
+
         return FluentIterable
                             .from(slideImages)
                             .filter(new Predicate<LSMImage>() {
@@ -144,20 +167,28 @@ public class LSMSampleInitService extends AbstractEntityService {
                                 @Nullable
                                 @Override
                                 public String apply(LSMImage image) {
-                                    return image.getName();
+                                    String jacsImageName = image.getName();
+                                    String sageName = jacsImageNameToSageImageName.get(jacsImageName);
+                                    if (sageName == null) {
+                                        // As long as the mapping ALWAYS has the translation, this should never happen.
+                                        throw new RuntimeException("No Sage back-translation exists for " + jacsImageName);
+                                    }
+                                    else {
+                                        return sageName;
+                                    }
                                 }
                             })
                             .toImmutableList();
     }
 
-    private SageLoaderTask createSageLoaderTask(String owner, String configPath, String grammarPath, String[] labAndLine, List<String> slideImageNames) throws DaoException {
+    private SageLoaderTask createSageLoaderTask(String owner, String configPath, String grammarPath, String lab, String line, List<String> slideImageNames) throws DaoException {
         SageLoaderTask sageLoaderTask = new SageLoaderTask(owner,
                 new ArrayList<Event>(),
                 slideImageNames,
-                labAndLine[1],
+                line,
                 configPath,
                 grammarPath,
-                labAndLine[0],
+                lab,
                 "true",
                 null);
         sageLoaderTask.setParentTaskId(task.getObjectId());
@@ -166,31 +197,31 @@ public class LSMSampleInitService extends AbstractEntityService {
         return sageLoaderTask;
     }
 
-    private String[] getLabAndLine(Collection<LSMImage> slideImages) {
-        String line = null;
-        String lab = null;
-        int tileNum = 0;
-        for (LSMImage lsmImage : slideImages) {
-            String thisImageLab = lsmImage.getFlycoreLabId();
-            String thisImageLine = lsmImage.getLine();
-            if (lab == null) {
-                line = thisImageLine;
-                lab = thisImageLab;
-            } else if (!lab.equals(thisImageLab)) {
-                logger.warn("Lab value for " + lsmImage.getName() + " - " + thisImageLab
-                        + "  does not match " + lab);
-            }
-            if (line == null) {
-                line = thisImageLine;
-            } else if (!line.equals(thisImageLine)) {
-                logger.warn("Line value for " + lsmImage.getName() + " - " + thisImageLine
-                        + "  does not match " + line);
-            }
-            tileNum++;
-        }
-        logger.info("Processed tile count of :" + tileNum);
-        return new String[] {lab, line};
-    }
+//    private String getLineCheckLab(Collection<LSMImage> slideImages) {
+//        String line = null;
+//        String lab = null;
+//        int tileNum = 0;
+//        for (LSMImage lsmImage : slideImages) {
+//            String thisImageLab = lsmImage.getFlycoreLabId();
+//            String thisImageLine = lsmImage.getLine();
+//            if (lab == null) {
+//                line = thisImageLine;
+//                lab = thisImageLab;
+//            } else if (!lab.equals(thisImageLab)) {
+//                logger.warn("Lab value for " + lsmImage.getName() + " - " + thisImageLab
+//                        + "  does not match " + lab);
+//            }
+//            if (line == null) {
+//                line = thisImageLine;
+//            } else if (!line.equals(thisImageLine)) {
+//                logger.warn("Line value for " + lsmImage.getName() + " - " + thisImageLine
+//                        + "  does not match " + line);
+//            }
+//            tileNum++;
+//        }
+//        logger.info("Processed tile count of :" + tileNum);
+//        return line;
+//    }
 
     private String convertToJacsFormat(String sageFormat) {
         String rtnVal = sageFormat;
@@ -199,5 +230,48 @@ public class LSMSampleInitService extends AbstractEntityService {
             rtnVal = sageFormat.substring(slashPos + 1);
         }
         return rtnVal;
+    }
+
+    /** Convenience container for values coming fom sage database. */
+    private static class SageBean {
+        private String lab;
+        private String line;
+        public SageBean(String lab, String line) {
+            this.lab = lab;
+            this.line = line;
+            if (lab == null  ||  line == null) {
+                throw new IllegalArgumentException("Construct with non-null values.");
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null  ||  !(o instanceof SageBean)) {
+                return false;
+            }
+            else {
+                SageBean otherBean = (SageBean) o;
+                return otherBean.toString().equals(toString());
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
+        }
+
+        /** toString : used as a pivotal equality-check value. */
+        @Override
+        public String toString() {
+            return getLab() + " " + getLine();
+        }
+
+        public String getLab() {
+            return lab;
+        }
+
+        public String getLine() {
+            return line;
+        }
     }
 }
