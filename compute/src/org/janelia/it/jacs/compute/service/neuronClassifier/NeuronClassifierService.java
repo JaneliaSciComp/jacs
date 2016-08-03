@@ -160,7 +160,6 @@ public class NeuronClassifierService extends AbstractDomainService {
                     Map<String,String> files = (Map)result.get("files");
                     if (files.get("LosslessStack")!=null) {
                         // get the V3dpbd file and copy it into the temp file location
-                        JFSUtils V3dByteReader
                         return files.get("LosslessStack");
                     }
                 }
