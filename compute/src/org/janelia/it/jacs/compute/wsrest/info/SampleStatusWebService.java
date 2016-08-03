@@ -257,14 +257,22 @@ public class SampleStatusWebService extends ResourceConfig {
     @Path("/sample/pipelinestatus")
     @ApiOperation(value = "Gets pipeline status for a sample",
             notes = "")
-    public String getSamplePipelineStatus() {
+    public String getSamplePipelineStatus(@QueryParam("hours") final String hours) {
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
         MongoCollection<Document> sample = db.getCollection("sample");
         List<Document> jsonResult = new ArrayList<>();
+        int hoursNum = -336;// 14 days by default;
+        if (hours!=null) {
+            hoursNum = -Integer.parseInt(hours);
+        }
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.HOUR, hoursNum);
         try {
             jsonResult = sample.aggregate(asList(
+                    new Document("$match", new Document("creationDate",
+                            new Document ("$gte", c.getTime()))),
                     new Document("$project", new Document("name", "$name")
                             .append("dataSet", "$dataSet")
                             .append("creationDate", "$creationDate")
