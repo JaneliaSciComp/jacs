@@ -625,6 +625,12 @@
                       select-before-update="false">
             </subclass>
 
+            <subclass name="org.janelia.it.jacs.model.user_data.neuron.NeuronLineageClassifierResultNode" discriminator-value="NeuronLineageClassifierResultNode"
+                      dynamic-update="true"
+                      dynamic-insert="true"
+                      select-before-update="false">
+            </subclass>
+
             <subclass name="org.janelia.it.jacs.model.user_data.entity.NamedFileNode" discriminator-value="NamedFileNode"
                       dynamic-update="true"
                       dynamic-insert="true"
