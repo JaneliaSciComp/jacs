@@ -13,6 +13,7 @@ import com.google.common.collect.*;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
@@ -38,22 +39,54 @@ public class LSMSampleInitService extends AbstractEntityService {
                         .trimResults()
                         .omitEmptyStrings()
                         .split((String) processData.getMandatoryItem("LSM_NAMES")));
+        logger.info("Sage init processing for " + ownerKey + "'s " + datasetName);
 
         SageDAO sageDao = new SageDAO(logger);
 
         DomainDAL domainDAL = DomainDAL.getInstance();
         DataSet dataSet = domainDAL.getDataSetByIdentifier(ownerKey, datasetName);
+        if (dataSet == null) {
+            List<DataSet> dataSets = domainDAL.getUserDomainObjectsByName(ownerKey, DataSet.class, datasetName);
+            if (dataSets == null) {
+                throw new Exception("Failed to find dataset by name: " + datasetName);
+            }
+            else if (!(dataSets.size() == 1)) {
+                for (DataSet ds: dataSets) {
+                    logger.info("Name=" + ds.getName()+", Owner=" + ds.getOwnerName() +  ", ID=" + ds.getId() + ", Identifier=" + ds.getIdentifier());
+                }
+                throw new Exception(dataSets.size() + " datasets found for name " + datasetName);
+            }
+            else {
+                dataSet = dataSets.get(0);
+            }
+        }
+
         Multimap<String, LSMImage> imagesGroupedBySlideCode = LinkedListMultimap.create();
         for (String lsmName : lsmNames) {
             try {
-                Object sageVersion = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
-                if (sageVersion == null) {
-                    List<LSMImage> images = domainDAL.getDomainObjectsByName(ownerKey, LSMImage.class, lsmName);
-                    if (images.size() > 1) {
-                        logger.warn("Multiple LSMs named " + lsmName + " under owner " + ownerKey);
+                SlideImage sageVersion = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
+                boolean populatedInSage = sageVersion != null  &&  sageVersion.getChannelSpec() != null;
+                /* *** TEMP *** */
+                if (sageVersion != null) {
+                    logger.info("Successfully detected existing slide image " + lsmName + " from Sage.");
+                }
+                if (populatedInSage) {
+                    logger.info("Successfully detected completion in sage " + lsmName);
+                }
+                /* *** End Temp *** */
+
+                if (1 == 1/* *** TEMP *** */  ||  sageVersion == null  ||  (!populatedInSage)) {
+                    String jacsLsmName = convertToJacsFormat(lsmName);
+                    List<LSMImage> images = domainDAL.getUserDomainObjectsByName(ownerKey, LSMImage.class, jacsLsmName);
+                    if (images == null  || images.isEmpty()) {
+                        // Second chance.  May be compressed.
+                        images = domainDAL.getUserDomainObjectsByName(ownerKey, LSMImage.class, jacsLsmName + ".bz2");
                     }
-                    else if (images.size() == 0) {
-                        logger.warn("No LSM named " + lsmName + " under owner " + ownerKey);
+                    if (images == null  ||  images.isEmpty()) {
+                        logger.warn("No LSM named " + jacsLsmName + " under owner " + ownerKey);
+                    }
+                    else if (images.size() > 1) {
+                        logger.warn("Multiple LSMs named " + lsmName + " under owner " + ownerKey);
                     }
                     else {
                         LSMImage lsmImage = images.iterator().next();
@@ -70,9 +103,8 @@ public class LSMSampleInitService extends AbstractEntityService {
         processData.putItem("SAGE_TASK", sageLoadingTasks);
     }
 
-    // formerly: prepareSlideImageGroupsForCurrentDataset
     private List<Task> getSageLoaderTasksForCurrentDataset(Multimap<String, LSMImage> imagesGroupedBySlideCode,
-                                                     DataSet dataset) {
+                                                           DataSet dataset) {
         List<Task> sageLoadingTasks = new ArrayList<>();
         String owner = extractOwnerId(dataset.getOwnerKey());
         processData.putItem("DATASET_OWNER", owner);
@@ -158,5 +190,14 @@ public class LSMSampleInitService extends AbstractEntityService {
         }
         logger.info("Processed tile count of :" + tileNum);
         return new String[] {lab, line};
+    }
+
+    private String convertToJacsFormat(String sageFormat) {
+        String rtnVal = sageFormat;
+        int slashPos = sageFormat.indexOf('/');
+        if (slashPos > -1) {
+            rtnVal = sageFormat.substring(slashPos + 1);
+        }
+        return rtnVal;
     }
 }
