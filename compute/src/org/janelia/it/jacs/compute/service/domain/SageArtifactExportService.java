@@ -334,7 +334,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         Line line = getLineByName(lineName);
                 
         // Collect artifacts for export
-        SamplePostProcessingResult postResult = objectiveSample.getLatestSuccessfulRun().getLatestResultOfType(SamplePostProcessingResult.class);
+        SamplePostProcessingResult postResult = objectiveSample.getLatestResultOfType(SamplePostProcessingResult.class);
         if (postResult==null) {
             logger.error("    Sample has no post-processed artifacts to export");
             return false;
