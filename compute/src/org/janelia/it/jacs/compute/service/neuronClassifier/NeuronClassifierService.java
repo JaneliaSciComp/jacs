@@ -21,11 +21,12 @@ import org.janelia.it.jacs.compute.service.blast.BlastProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
+import org.janelia.it.jacs.compute.util.JFSUtils;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.tasks.lineageClassifier.LineageClassifierTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.neuron.NeuronLineageClassifierResultNode;
+import org.janelia.it.jacs.shared.img_3d_loader.V3dByteReader;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -150,14 +151,18 @@ public class NeuronClassifierService extends AbstractDomainService {
         }
     }
 
-    private String searchSampleAlignmentResult(Document objectiveSample) {
+    private String retrieveSampleAlignmentResult(Document objectiveSample) {
         List<Document> pipelineRuns = (List)objectiveSample.get("pipelineRuns");
         for (Document pipelineRun: pipelineRuns) {
             List<Document> results = (List)pipelineRun.get("results");
             for (Document result: results) {
                 if (result.getString("class").equals("org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult")) {
                     Map<String,String> files = (Map)result.get("files");
-                    return files.get("LosslessStack");
+                    if (files.get("LosslessStack")!=null) {
+                        // get the V3dpbd file and copy it into the temp file location
+                        JFSUtils V3dByteReader
+                        return files.get("LosslessStack");
+                    }
                 }
 
             }
@@ -185,7 +190,7 @@ public class NeuronClassifierService extends AbstractDomainService {
                 if (!(objectiveSample.getString("objective")!=null && objectiveSample.getString("objective").equals("40x")))
                     continue;
                 // find the sample alignment result
-                String losslessStack = searchSampleAlignmentResult(objectiveSample);
+                String losslessStack = retrieveSampleAlignmentResult(objectiveSample);
 
                 List<Document> tiles = (List<Document>) objectiveSample.get("tiles");
                 Document tileDoc = tiles.get(0);
