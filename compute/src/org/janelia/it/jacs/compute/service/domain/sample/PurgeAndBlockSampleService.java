@@ -30,7 +30,7 @@ public class PurgeAndBlockSampleService extends AbstractDomainService {
             SystemConfigurationProperties.getString("JacsData.Dir.Archive.Linux");
     
     public void execute() throws Exception {
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger);
         String sampleEntityIdStr = data.getRequiredItemAsString("SAMPLE_ENTITY_ID");
         for(String oneSampleEntityIdStr : Task.listOfStringsFromCsvString(sampleEntityIdStr)) {
             final Sample sample = domainDao.getDomainObject(ownerKey, Sample.class, new Long(oneSampleEntityIdStr));

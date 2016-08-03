@@ -1,19 +1,14 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.janelia.it.jacs.model.user_data.tiled_microscope_protobuf;
+
+import java.util.logging.Logger;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 import io.protostuff.LinkedBuffer;
 import io.protostuff.ProtobufIOUtil;
 import io.protostuff.Schema;
 import io.protostuff.runtime.RuntimeSchema;
-import javax.annotation.concurrent.ThreadSafe;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.TmNeuron;
-
-import java.util.logging.Logger;
 
 /**
  * Exchanges data between byte array and Tile Microscope.  At time of writing,
@@ -35,7 +30,7 @@ public class TmProtobufExchanger {
             schema = RuntimeSchema.getSchema(TmNeuron.class);
         } catch (Exception ex) {
             if (schema == null) {
-                throw new RuntimeException("Failed to get schema for " + TmNeuron.class.getCanonicalName());
+                throw new RuntimeException("Failed to get schema for " + TmNeuron.class.getCanonicalName(), ex);
             }
         }
     }

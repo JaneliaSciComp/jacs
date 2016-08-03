@@ -11,8 +11,8 @@ import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.common.ProcessDataAccessor;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.domain.util.DomainHelper;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.janelia.it.jacs.model.user_data.Subject;
 
 /**
  * Base class for services dealing with entities.
@@ -40,13 +40,13 @@ public abstract class AbstractDomainService implements IService {
             this.processData = processData;
             this.data = new ProcessDataAccessor(processData, contextLogger);
             this.computeBean = EJBFactory.getLocalComputeBean();
-            this.domainHelper = new DomainHelper(computeBean, ownerKey, logger, contextLogger);
             this.domainDao = DomainDAL.getInstance();
-            
-            final String ownerName = ProcessDataHelper.getTask(processData).getOwner();
-            final Subject subject = computeBean.getSubjectByNameOrKey(ownerName);
-            this.ownerKey = subject.getKey();
 
+            final String ownerName = ProcessDataHelper.getTask(processData).getOwner();
+            final Subject subject = domainDao.getSubjectByNameOrKey(ownerName);
+            this.ownerKey = subject.getKey();
+            
+            this.domainHelper = new DomainHelper(ownerKey, logger, contextLogger);
             execute();
         }
         catch (ServiceException e) {

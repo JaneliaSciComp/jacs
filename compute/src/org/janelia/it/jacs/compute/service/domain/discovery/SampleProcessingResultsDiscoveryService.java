@@ -21,6 +21,7 @@ import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
  * File discovery service for sample processing results.
@@ -34,7 +35,7 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
     
     public void execute() throws Exception {
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
@@ -53,11 +54,16 @@ public class SampleProcessingResultsDiscoveryService extends AbstractDomainServi
         result.setAnatomicalArea(sampleArea.getName());
         contextLogger.info("Setting result channel specification to "+channelSpec);
         result.setChannelSpec(channelSpec);
+        if (!StringUtils.areEqual(objectiveSample.getChanSpec(), channelSpec)) {
+            contextLogger.info("Updating channel specification for objective "+objectiveSample.getObjective()+" to "+channelSpec);
+            objectiveSample.setChanSpec(channelSpec);
+        }
+        
         contextLogger.info("Setting result filepath to "+rootPath);
         result.setFilepath(rootPath);
 
         contextLogger.info("Discovering supporting files in "+rootPath);
-        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(computeBean, ownerKey, logger);
+        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(ownerKey, logger);
         List<String> filepaths = helper.getFilepaths(rootPath);
         
         String stitchedFilepath = sampleArea.getStitchedFilepath();

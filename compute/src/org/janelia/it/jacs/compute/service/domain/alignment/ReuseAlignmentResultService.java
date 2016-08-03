@@ -25,7 +25,7 @@ public class ReuseAlignmentResultService extends AbstractDomainService {
 
         ParameterizedAlignmentAlgorithm paa = (ParameterizedAlignmentAlgorithm)processData.getItem("PARAMETERIZED_ALIGNMENT_ALGORITHM");
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);

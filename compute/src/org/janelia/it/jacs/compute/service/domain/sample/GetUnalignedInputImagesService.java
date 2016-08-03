@@ -38,7 +38,7 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
     
     public void execute() throws Exception {
 
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
         this.sample = sampleHelper.getRequiredSample(data);
         this.objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
         SamplePipelineRun run = sampleHelper.getRequiredPipelineRun(sample, objectiveSample, data);
@@ -47,26 +47,27 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         this.defaultColorSpec = data.getItemAsString("OUTPUT_COLOR_SPEC");
         this.mode = data.getItemAsString("MODE");
 
-        // Create an input image for each sample processing result
-
-
+        // Find the channel spec for this objective sample
         String chanSpec = objectiveSample.getChanSpec();
         if (chanSpec==null) {
-            for(SampleProcessingResult resultEntity : run.getSampleProcessingResults()) {
-                if (chanSpec!=null && !chanSpec.equals(chanSpec)) {
-                    contextLogger.error("Inconsistent channel spec detected: "+chanSpec);
-                }
-                chanSpec = resultEntity.getChannelSpec();
-            }
+	        for(SampleProcessingResult resultEntity : run.getSampleProcessingResults()) {
+	            if (chanSpec!=null && !chanSpec.equals(resultEntity.getChannelSpec())) {
+	                contextLogger.error("Inconsistent channel spec detected: "+chanSpec);
+	            }
+	            chanSpec = resultEntity.getChannelSpec();
+	        }
         }
-
+        
         // Create an input image for each merged tile and the stitched file
         List<InputImage> inputImages = new ArrayList<>();
         for(AnatomicalArea sampleArea : sampleAreas) {
             for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
                 inputImages.add(getInputImage(sampleArea.getName(), mergedPair.getMergedFilepath(), mergedPair.getTileName(), chanSpec));
             }
-            inputImages.add(getInputImage(sampleArea.getName(), sampleArea.getStitchedFilepath(), null, chanSpec));
+            if (inputImages.size()>1) {
+            	// If there are more than 2 tiles then there should be a stitched image as well
+            	inputImages.add(getInputImage(sampleArea.getName(), sampleArea.getStitchedFilepath(), null, chanSpec));
+            }
         }
 
         Collections.sort(inputImages, new Comparator<InputImage>() {

@@ -40,7 +40,7 @@ public class SampleCleaningService extends AbstractDomainService {
         	isDebug = Boolean.parseBoolean(testRun);	
         }            
 
-        this.sampleHelper = new SampleHelperNG(computeBean, ownerKey, logger, contextLogger);
+        this.sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
 
         logger.info("Cleaning old results from samples for user: "+ownerKey);
         
