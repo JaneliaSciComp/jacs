@@ -55,7 +55,7 @@ public class DomainObjectTests {
         Assert.assertEquals(null,(new CompartmentSet()).getSearchType());
         Assert.assertEquals("dataSet",(new DataSet()).getSearchType());
         Assert.assertEquals("filter",(new Filter()).getSearchType());
-        Assert.assertEquals("flyLine",(new FlyLine()).getSearchType());
+        //Assert.assertEquals("flyLine",(new FlyLine()).getSearchType());
         Assert.assertEquals("image",(new Image()).getSearchType());
         Assert.assertEquals("lsmImage",(new LSMImage()).getSearchType());
         //Assert.assertEquals("release",(new LineRelease()).getSearchType());
