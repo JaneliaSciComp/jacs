@@ -44,7 +44,7 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
         }
 
         // Populate the sample helper.
-        SampleHelperNG sampleHelper = new SampleHelperNG(computeBean, dataset.getOwnerKey(), logger);
+        SampleHelperNG sampleHelper = new SampleHelperNG(dataset.getOwnerKey(), logger);
         sampleHelper.setDataSetNameFilter(datasetName);
         sampleHelper.getDataSets();
 
