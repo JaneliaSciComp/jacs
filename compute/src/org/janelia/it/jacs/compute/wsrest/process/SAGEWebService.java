@@ -68,20 +68,16 @@ public class SAGEWebService extends ResourceConfig {
 
         Response response;
         LSMProcessingTask lsmProcessingTask;
+        String dataOwner = null;
         try {
             final ComputeBeanRemote remoteComputeBean = EJBFactory.getRemoteComputeBean();
 
-            if (owner == null) {
-                throw new IllegalArgumentException("owner parameter is not defined");
-            } else {
-                final User user = remoteComputeBean.getUserByNameOrKey(owner);
-                if (user == null) {
-                    throw new IllegalArgumentException("invalid owner parameter '" + owner + "' specified");
-                }
-            }
-            lsmProcessingParams.setOwner(owner);
+            dataOwner = extractOwner(dataSet, owner);
+            checkOwner(dataOwner, remoteComputeBean);
+            lsmProcessingParams.setOwner(dataOwner);
             lsmProcessingParams.setDataSetName(dataSet);
             lsmProcessingTask = (LSMProcessingTask) remoteComputeBean.saveOrUpdateTask(lsmProcessingParams);
+            logger.info(context + "submitting task " + lsmProcessingParams + " as " + dataOwner);
             remoteComputeBean.submitJob(lsmProcessingTask.getJobName(), lsmProcessingTask.getObjectId());
 
             JsonTask result = new JsonTask(lsmProcessingTask);
@@ -98,11 +94,22 @@ public class SAGEWebService extends ResourceConfig {
         } catch (RemoteException | ComputeException e) {
             response = getErrorResponse(context,
                     Response.Status.INTERNAL_SERVER_ERROR,
-                    "failed to run lsm processing for " + owner + ":" + lsmProcessingParams,
+                    "failed to run lsm processing for " + dataOwner + ":" + lsmProcessingParams,
                     e);
         }
 
         return response;
+    }
+
+    private void checkOwner(String dataOwner, ComputeBeanRemote remoteComputeBean) throws ComputeException {
+        if (dataOwner == null) {
+            throw new IllegalArgumentException("data set owner value is not defined");
+        } else {
+            final User user = remoteComputeBean.getUserByNameOrKey(dataOwner);
+            if (user == null) {
+                throw new IllegalArgumentException("invalid owner parameter '" + dataOwner + "' specified");
+            }
+        }
     }
 
     private String getNormalizedBaseUrlString(UriInfo uriInfo) {
@@ -121,4 +128,14 @@ public class SAGEWebService extends ResourceConfig {
         return Response.status(status).entity(failure).build();
     }
 
+    private String extractOwner(String dataSetName, String defaultName) {
+        int firstUnderscorePos = dataSetName.indexOf('_');
+        if (firstUnderscorePos > -1) {
+            return dataSetName.substring(0, firstUnderscorePos);
+        }
+        else {
+            logger.warn("No owner name found, as part of dataset name /" + dataSetName + "/.  Instead using " + defaultName);
+            return defaultName;
+        }
+    }
 }

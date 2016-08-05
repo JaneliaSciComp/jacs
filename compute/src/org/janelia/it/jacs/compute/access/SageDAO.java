@@ -54,11 +54,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class SageDAO {
 
-    public static final String IMAGE_PROP_PATH = "image_query_path";
-    public static final String IMAGE_PROP_JFS_PATH = "image_query_jfs_path";
     public static final String IMAGE_PROP_LINE_TERM = "image_query_line";
     public static final String LINE_PROP_LINE_TERM = "line_query_line";
-    
+
     private final String jndiPath = SystemConfigurationProperties.getString("sage.jdbc.jndiName", null);
     private final String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName", null);
     private final String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url", null);
@@ -625,20 +623,20 @@ public class SageDAO {
                 String key = "data_set".equals(type) ? type : cv + "_" + type;
                 data.put(key, value);
             }
-            slideImage.setDatasetName((String) data.get("data_set"));
-            slideImage.setSlideCode((String) data.get("light_imagery_slide_code"));
-            slideImage.setTileType((String) data.get("light_imagery_tile"));
-            slideImage.setCrossBarcode((String) data.get("fly_cross_barcode"));
-            slideImage.setChannelSpec((String) data.get("light_imagery_channel_spec"));
-            slideImage.setGender((String) data.get("light_imagery_gender"));
-            slideImage.setArea((String) data.get("light_imagery_area"));
-            slideImage.setAge((String) data.get("light_imagery_age"));
-            slideImage.setChannels((String) data.get("light_imagery_channels"));
-            slideImage.setMountingProtocol((String) data.get("light_imagery_mounting_protocol"));
-            slideImage.setTissueOrientation((String) data.get("light_imagery_tissue_orientation"));
-            slideImage.setVtLine((String) data.get("light_imagery_vt_line"));
-            slideImage.setEffector((String)data.get("fly_effector"));
-            String objectiveStr = (String) data.get("light_imagery_objective");
+            slideImage.setDatasetName((String) data.get(SlideImage.DATA_SET));
+            slideImage.setSlideCode((String) data.get(SlideImage.LIGHT_IMAGERY_SLIDE_CODE));
+            slideImage.setTileType((String) data.get(SlideImage.LIGHT_IMAGERY_TILE));
+            slideImage.setCrossBarcode((String) data.get(SlideImage.FLY_CROSS_BARCODE));
+            slideImage.setChannelSpec((String) data.get(SlideImage.LIGHT_IMAGERY_CHANNEL_SPEC));
+            slideImage.setGender((String) data.get(SlideImage.LIGHT_IMAGERY_GENDER));
+            slideImage.setArea((String) data.get(SlideImage.LIGHT_IMAGERY_AREA));
+            slideImage.setAge((String) data.get(SlideImage.LIGHT_IMAGERY_AGE));
+            slideImage.setChannels((String) data.get(SlideImage.LIGHT_IMAGERY_CHANNELS));
+            slideImage.setMountingProtocol((String) data.get(SlideImage.LIGHT_IMAGERY_MOUNTING_PROTOCOL));
+            slideImage.setTissueOrientation((String) data.get(SlideImage.LIGHT_IMAGERY_TISSUE_ORIENTATION));
+            slideImage.setVtLine((String) data.get(SlideImage.LIGHT_IMAGERY_VT_LINE));
+            slideImage.setEffector((String)data.get(SlideImage.FLY_EFFECTOR));
+            String objectiveStr = (String) data.get(SlideImage.LIGHT_IMAGERY_OBJECTIVE);
             if (objectiveStr!=null) {
                 if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
                     slideImage.setObjective(Objective.OBJECTIVE_10X.getName());
@@ -653,15 +651,15 @@ public class SageDAO {
                     slideImage.setObjective(Objective.OBJECTIVE_63X.getName());
                 }
             }
-            String voxelSizeX = (String) data.get("light_imagery_voxel_size_x");
-            String voxelSizeY = (String) data.get("light_imagery_voxel_size_y");
-            String voxelSizeZ = (String) data.get("light_imagery_voxel_size_z");
+            String voxelSizeX = (String) data.get(SlideImage.LIGHT_IMAGERY_VOXEL_SIZE_X);
+            String voxelSizeY = (String) data.get(SlideImage.LIGHT_IMAGERY_VOXEL_SIZE_Y);
+            String voxelSizeZ = (String) data.get(SlideImage.LIGHT_IMAGERY_VOXEL_SIZE_Z);
             if (voxelSizeX!=null && voxelSizeY!=null && voxelSizeZ!=null) {
                 slideImage.setOpticalRes(voxelSizeX,voxelSizeY,voxelSizeZ);
             }
-            String imageSizeX = (String) data.get("light_imagery_dimension_x");
-            String imageSizeY = (String) data.get("light_imagery_dimension_y");
-            String imageSizeZ = (String) data.get("light_imagery_dimension_z");
+            String imageSizeX = (String) data.get(SlideImage.LIGHT_IMAGERY_DIMENSION_X);
+            String imageSizeY = (String) data.get(SlideImage.LIGHT_IMAGERY_DIMENSION_Y);
+            String imageSizeZ = (String) data.get(SlideImage.LIGHT_IMAGERY_DIMENSION_Z);
             if (imageSizeX!=null && imageSizeY!=null && imageSizeZ!=null) {
                 slideImage.setPixelRes(imageSizeX,imageSizeY,imageSizeZ);
             }
@@ -831,12 +829,12 @@ public class SageDAO {
             rs = pstmt.executeQuery();
             if (rs.next()) {
                 slideImage = new SlideImage(new HashMap<String,Object>());
-                slideImage.setSageId(rs.getInt("image_query_id"));
-                slideImage.setImageName(rs.getString("image_query_name"));
-                slideImage.setImagePath(rs.getString("image_query_path"));
-                slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
-                slideImage.setLine(rs.getString("image_query_line"));
-                slideImage.setLab(rs.getString("image_lab_name"));
+                slideImage.setSageId(rs.getInt(SlideImage.IMAGE_QUERY_ID));
+                slideImage.setImageName(rs.getString(SlideImage.IMAGE_QUERY_NAME));
+                slideImage.setImagePath(rs.getString(SlideImage.IMAGE_QUERY_PATH));
+                slideImage.setJfsPath(rs.getString(SlideImage.IMAGE_QUERY_JFS_PATH));
+                slideImage.setLine(rs.getString(SlideImage.IMAGE_QUERY_LINE));
+                slideImage.setLab(rs.getString(SlideImage.IMAGE_LAB_NAME));
                 Date createDate = rs.getTimestamp("image_query_create_date");
                 if (createDate!=null) {
                     String tmogDate = ISO8601Utils.format(createDate);

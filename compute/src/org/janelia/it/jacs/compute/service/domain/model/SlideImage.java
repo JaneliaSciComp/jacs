@@ -11,29 +11,46 @@ import org.janelia.it.jacs.model.entity.cv.Objective;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SlideImage {
-    
+
+    public static final String DATA_SET = "data_set";
+    public static final String FLY_CROSS_BARCODE = "fly_cross_barcode";
+    public static final String LIGHT_IMAGERY_CHANNEL_SPEC = "light_imagery_channel_spec";
+    public static final String LIGHT_IMAGERY_GENDER = "light_imagery_gender";
+    public static final String LIGHT_IMAGERY_AGE = "light_imagery_age";
+    public static final String LIGHT_IMAGERY_CHANNELS = "light_imagery_channels";
+    public static final String LIGHT_IMAGERY_MOUNTING_PROTOCOL = "light_imagery_mounting_protocol";
+    public static final String LIGHT_IMAGERY_TISSUE_ORIENTATION = "light_imagery_tissue_orientation";
+    public static final String LIGHT_IMAGERY_VT_LINE = "light_imagery_vt_line";
+    public static final String FLY_EFFECTOR = "fly_effector";
+    public static final String LIGHT_IMAGERY_VOXEL_SIZE_X = "light_imagery_voxel_size_x";
+    public static final String LIGHT_IMAGERY_VOXEL_SIZE_Y = "light_imagery_voxel_size_y";
+    public static final String LIGHT_IMAGERY_VOXEL_SIZE_Z = "light_imagery_voxel_size_z";
+    public static final String LIGHT_IMAGERY_DIMENSION_X = "light_imagery_dimension_x";
+    public static final String LIGHT_IMAGERY_DIMENSION_Y = "light_imagery_dimension_y";
+    public static final String LIGHT_IMAGERY_DIMENSION_Z = "light_imagery_dimension_z";
+    public static final String LIGHT_IMAGERY_OBJECTIVE = "light_imagery_objective";
+    public static final String IMAGE_QUERY_JFS_PATH = "image_query_jfs_path";
+    public static final String IMAGE_QUERY_PATH = "image_query_path";
+    public static final String IMAGE_QUERY_ID = "image_query_id";
+    public static final String LIGHT_IMAGERY_SLIDE_CODE = "light_imagery_slide_code";
+    public static final String IMAGE_QUERY_NAME = "image_query_name";
+    public static final String LIGHT_IMAGERY_TILE = "light_imagery_tile";
+    public static final String IMAGE_QUERY_LINE = "image_query_line";
+    public static final String LIGHT_IMAGERY_AREA = "light_imagery_area";
+    public static final String TMOG_DATE = "tmog_date";
+    public static final String IMAGE_LAB_NAME = "image_lab_name";
+
+    private static final String F_PREFIX = "f";
+    private static final String M_PREFIX = "m";
+    private static final String X_PREFIX = "x";
     private Map<String,Object> properties;
 
-    private String datasetName;
-    private String crossBarCode;
-    private String channelSpec;
-    private String age;
-    private String gender;
-    private String channels;
-    private String mountingProtocol;
-    private String tissueOrientation;
-    private String vtLine;
-    private String effector;
-    private String objective;
-    private String[] opticalRes;
-    private String[] pixelRes;
-    
     public SlideImage(Map<String,Object> properties) {
         this.properties = properties;
 
-        String gender = (String)properties.get("light_imagery_gender");
+        String gender = (String)properties.get(LIGHT_IMAGERY_GENDER);
         if (gender!=null) {
-        	properties.put("light_imagery_gender", sanitizeGender(gender));
+        	properties.put(LIGHT_IMAGERY_GENDER, sanitizeGender(gender));
         }
     }
     
@@ -44,13 +61,13 @@ public class SlideImage {
     public String getFilepath() {
 
         // Use JFS path if available
-        String jfsPath = (String)properties.get("image_query_jfs_path");
+        String jfsPath = (String)properties.get(IMAGE_QUERY_JFS_PATH);
         if (jfsPath!=null) {
             return jfsPath;
         }
     
         // Or use the normal path
-        String path = (String)properties.get("image_query_path");
+        String path = (String)properties.get(IMAGE_QUERY_PATH);
         if (path!=null) {
             return path;
         }
@@ -71,7 +88,7 @@ public class SlideImage {
     }
         
     public String getObjective() {
-        String objectiveStr = (String)properties.get("light_imagery_objective");
+        String objectiveStr = (String)properties.get(LIGHT_IMAGERY_OBJECTIVE);
         if (objectiveStr!=null) {
             if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
                 return Objective.OBJECTIVE_10X.getName();
@@ -93,88 +110,212 @@ public class SlideImage {
     }
     
     public Integer getSageId() {
-        Long id = (Long)properties.get("image_query_id");
+        Long id = (Long)properties.get(IMAGE_QUERY_ID);
         if (id==null) return null;
         return id.intValue();
     }
 
     public void setSageId(Integer sageId) {
-        properties.put("image_query_id", new Long(sageId));
+        properties.put(IMAGE_QUERY_ID, new Long(sageId));
     }
 
     
     public String getSlideCode() {
-        return (String)properties.get("light_imagery_slide_code");
+        return (String)properties.get(LIGHT_IMAGERY_SLIDE_CODE);
     }
 
     public void setSlideCode(String slideCode) {
-        properties.put("light_imagery_slide_code", slideCode);
+        properties.put(LIGHT_IMAGERY_SLIDE_CODE, slideCode);
     }
 
     public String getImageName() {
-        return (String)properties.get("image_query_name");
+        return (String)properties.get(IMAGE_QUERY_NAME);
     }
 
     public void setImageName(String imageName) {
-        properties.put("image_query_name", imageName);
+        properties.put(IMAGE_QUERY_NAME, imageName);
     }
 
     public String getImagePath() {
-        return (String)properties.get("image_query_path");
+        return (String)properties.get(IMAGE_QUERY_PATH);
     }
 
     public void setImagePath(String imagePath) {
-        properties.put("image_query_path", imagePath);
+        properties.put(IMAGE_QUERY_PATH, imagePath);
     }
 
     public String getJfsPath() {
-        return (String)properties.get("image_query_jfs_path");
+        return (String)properties.get(IMAGE_QUERY_JFS_PATH);
     }
 
     public void setJfsPath(String jfsPath) {
-        properties.put("image_query_jfs_path", jfsPath);
+        properties.put(IMAGE_QUERY_JFS_PATH, jfsPath);
     }
 
     public String getTileType() {
-        return (String)properties.get("light_imagery_tile");
+        return (String)properties.get(LIGHT_IMAGERY_TILE);
     }
 
     public void setTileType(String tileType) {
-        properties.put("light_imagery_tile", tileType);
+        properties.put(LIGHT_IMAGERY_TILE, tileType);
     }
 
     public String getLine() {
-        return (String)properties.get("image_query_line");
+        return (String)properties.get(IMAGE_QUERY_LINE);
     }
 
     public void setLine(String line) {
-        properties.put("image_query_line", line);
+        properties.put(IMAGE_QUERY_LINE, line);
     }
 
     public String getArea() {
-        return (String)properties.get("light_imagery_area");
+        return (String)properties.get(LIGHT_IMAGERY_AREA);
     }
 
     public void setArea(String area) {
-        properties.put("light_imagery_area", area);
+        properties.put(LIGHT_IMAGERY_AREA, area);
     }
 
     public String getTmogDate() {
-        return (String)properties.get("tmog_date");
+        return (String)properties.get(TMOG_DATE);
     }
 
     public void setTmogDate(String tmogDate) {
-        properties.put("tmog_date", tmogDate);
+        properties.put(TMOG_DATE, tmogDate);
     }
 
     public String getLab() {
-        return (String)properties.get("image_lab_name");
+        return (String)properties.get(IMAGE_LAB_NAME);
     }
 
     public void setLab(String lab) {
-        properties.put("image_lab_name", lab);
+        properties.put(IMAGE_LAB_NAME, lab);
     }
     
+    public String getDatasetName() {
+        return (String)properties.get(DATA_SET);
+    }
+
+    public void setDatasetName(String dataSetName) {
+        properties.put(DATA_SET, dataSetName);
+    }
+
+    public String getCrossBarcode() {
+        return (String)properties.get(FLY_CROSS_BARCODE);
+    }
+
+    public void setCrossBarcode(String crossBarCode) {
+        properties.put(FLY_CROSS_BARCODE, crossBarCode);
+    }
+
+    public String getChannelSpec() {
+        return (String)properties.get(LIGHT_IMAGERY_CHANNEL_SPEC);
+    }
+
+    public void setChannelSpec(String channelSpec) {
+        properties.put(LIGHT_IMAGERY_CHANNEL_SPEC, channelSpec);
+    }
+
+    public String getAge() {
+        return (String)properties.get(LIGHT_IMAGERY_AGE);
+    }
+
+    public void setAge(String age) {
+        properties.put(LIGHT_IMAGERY_AGE, age);
+    }
+
+    public String getGender() {
+        return (String)properties.get(LIGHT_IMAGERY_GENDER);
+    }
+
+    public void setGender(String gender) {
+        properties.put(LIGHT_IMAGERY_GENDER, sanitizeGender(gender));
+    }
+
+    public String getChannels() {
+        return (String)properties.get(LIGHT_IMAGERY_CHANNELS);
+    }
+
+    public void setChannels(String channels) {
+        properties.put(LIGHT_IMAGERY_CHANNELS, channels);
+    }
+
+    public String getMountingProtocol() {
+        return (String)properties.get(LIGHT_IMAGERY_MOUNTING_PROTOCOL);
+    }
+
+    public void setMountingProtocol(String mountingProtocol) {
+        properties.put(LIGHT_IMAGERY_MOUNTING_PROTOCOL, mountingProtocol);
+    }
+
+    public String getTissueOrientation() {
+        return (String)properties.get(LIGHT_IMAGERY_TISSUE_ORIENTATION);
+    }
+
+    public void setTissueOrientation(String tissueOrientation) {
+        properties.put(LIGHT_IMAGERY_TISSUE_ORIENTATION, tissueOrientation);
+    }
+
+    public String getVtLine() {
+        return (String)properties.get(LIGHT_IMAGERY_VT_LINE);
+    }
+
+    public void setVtLine(String vtLine) {
+        properties.put(LIGHT_IMAGERY_VT_LINE, vtLine);
+    }
+
+    public String getEffector() {
+        return (String)properties.get(FLY_EFFECTOR);
+    }
+
+    public void setEffector(String effector) {
+        properties.put(FLY_EFFECTOR, effector);
+    }
+
+    public void setObjective(String objective) {
+        properties.put(LIGHT_IMAGERY_OBJECTIVE, objective);
+    }
+
+    public String[] getOpticalRes() {
+        return new String[] {
+                (String)properties.get(LIGHT_IMAGERY_VOXEL_SIZE_X),
+                (String)properties.get(LIGHT_IMAGERY_VOXEL_SIZE_Y),
+                (String)properties.get(LIGHT_IMAGERY_VOXEL_SIZE_Z),
+        };
+    }
+
+    public void setOpticalRes(String opticalResX, String opticalResY, String opticalResZ) {
+        properties.put(LIGHT_IMAGERY_VOXEL_SIZE_X, opticalResX);
+        properties.put(LIGHT_IMAGERY_VOXEL_SIZE_Y, opticalResY);
+        properties.put(LIGHT_IMAGERY_VOXEL_SIZE_Z, opticalResZ);
+    }
+
+    public void setOpticalRes(String[] opticalRes) {
+        properties.put(LIGHT_IMAGERY_VOXEL_SIZE_X, opticalRes[0]);
+        properties.put(LIGHT_IMAGERY_VOXEL_SIZE_Y, opticalRes[1]);
+        properties.put(LIGHT_IMAGERY_VOXEL_SIZE_Z, opticalRes[2]);
+    }
+
+    public String[] getPixelRes() {
+        return new String[] {
+                (String)properties.get(LIGHT_IMAGERY_VOXEL_SIZE_X),
+                (String)properties.get(LIGHT_IMAGERY_VOXEL_SIZE_Y),
+                (String)properties.get(LIGHT_IMAGERY_VOXEL_SIZE_Z),
+        };
+    }
+
+    public void setPixelRes(String pixelResX, String pixelResY, String pixelResZ) {
+        properties.put(LIGHT_IMAGERY_DIMENSION_X, pixelResX);
+        properties.put(LIGHT_IMAGERY_DIMENSION_Y, pixelResY);
+        properties.put(LIGHT_IMAGERY_DIMENSION_Z, pixelResZ);
+    }
+
+    public void setPixelRes(String[] pixelRes) {
+        properties.put(LIGHT_IMAGERY_DIMENSION_X, pixelRes[0]);
+        properties.put(LIGHT_IMAGERY_DIMENSION_Y, pixelRes[1]);
+        properties.put(LIGHT_IMAGERY_DIMENSION_Z, pixelRes[2]);
+    }
+
     /**
      * Convert non-standard gender values like "Female" into standardized codes like "f". The
      * four standardized codes are "m", "f", "x", and "NO_CONSENSUS" in the case of samples.
@@ -184,125 +325,18 @@ public class SlideImage {
             return null;
         }
         String genderLc = gender.toLowerCase();
-        if (genderLc.startsWith("f")) {
-            return "f";
+        if (genderLc.startsWith(F_PREFIX)) {
+            return F_PREFIX;
         }
-        else if (genderLc.startsWith("m")) {
-            return "m";
+        else if (genderLc.startsWith(M_PREFIX)) {
+            return M_PREFIX;
         }
-        else if (genderLc.startsWith("x")) {
-            return "x";
-        } 
+        else if (genderLc.startsWith(X_PREFIX)) {
+            return X_PREFIX;
+        }
         else {
             return null;
         }
     }
 
-    public String getDatasetName() {
-        return datasetName;
-    }
-
-    public void setDatasetName(String dataSetName) {
-        this.datasetName = dataSetName;
-    }
-
-    public String getCrossBarcode() {
-        return crossBarCode;
-    }
-
-    public void setCrossBarcode(String crossBarCode) {
-        this.crossBarCode = crossBarCode;
-    }
-
-    public String getChannelSpec() {
-        return channelSpec;
-    }
-
-    public void setChannelSpec(String channelSpec) {
-        this.channelSpec = channelSpec;
-    }
-
-    public String getAge() {
-        return age;
-    }
-
-    public void setAge(String age) {
-        this.age = age;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getChannels() {
-        return channels;
-    }
-
-    public void setChannels(String channels) {
-        this.channels = channels;
-    }
-
-    public String getMountingProtocol() {
-        return mountingProtocol;
-    }
-
-    public void setMountingProtocol(String mountingProtocol) {
-        this.mountingProtocol = mountingProtocol;
-    }
-
-    public String getTissueOrientation() {
-        return tissueOrientation;
-    }
-
-    public void setTissueOrientation(String tissueOrientation) {
-        this.tissueOrientation = tissueOrientation;
-    }
-
-    public String getVtLine() {
-        return vtLine;
-    }
-
-    public void setVtLine(String vtLine) {
-        this.vtLine = vtLine;
-    }
-
-    public String getEffector() {
-        return effector;
-    }
-
-    public void setEffector(String effector) {
-        this.effector = effector;
-    }
-
-    public void setObjective(String objective) {
-        this.objective = objective;
-    }
-
-    public String[] getOpticalRes() {
-        return opticalRes;
-    }
-
-    public void setOpticalRes(String opticalResX, String opticalResY, String opticalResZ) {
-        this.opticalRes = new String[] {opticalResX, opticalResY, opticalResZ};
-    }
-
-    public void setOpticalRes(String[] opticalRes) {
-        this.opticalRes = opticalRes;
-    }
-
-    public String[] getPixelRes() {
-        return pixelRes;
-    }
-
-    public void setPixelRes(String pixelResX, String pixelResY, String pixelResZ) {
-        this.pixelRes = new String[] {pixelResX, pixelResY, pixelResZ};
-    }
-
-    public void setPixelRes(String[] pixelRes) {
-        this.pixelRes = pixelRes;
-    }
 }

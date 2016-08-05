@@ -7,6 +7,7 @@ import com.google.common.collect.Multimap;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
@@ -22,14 +23,58 @@ import java.util.*;
  */
 public class LSMSampleDiscoveryService extends AbstractEntityService {
 
+    // Incoming parameter values are stored as members.
     private String datasetName;
+    private String ownerKey;
+    private List<String> lsmNames;
 
     public void execute() throws Exception {
-        datasetName = processData.getString("DATASET_NAME");
-        String ownerKey = processData.getString("OWNER");
+        captureParameters();
 
-        // retrieve the dataset
-        DataSet dataset = null;
+        Set<String> sampleIds = processSamples();
+
+        logger.info("Setting the sample ids output: " + sampleIds);
+        processData.putItem("SAMPLE_ID", ImmutableList.copyOf(sampleIds));
+    }
+
+    /**
+     * Driver method for processing samples.
+     *
+     * @return ids of all samples processed.
+     * @throws Exception
+     */
+    private Set<String> processSamples() throws Exception {
+        // Build a mapping from slide code to all slide images for that code.
+        Multimap<String, SlideImage> slideImagesGroupedBySlideCode = groupSlideImagesBySlideCode(lsmNames);
+        // Get the data set.
+        DataSet dataset = getDataSet();
+
+        // Populate the sample helper.
+        SampleHelperNG sampleHelper = new SampleHelperNG(dataset.getOwnerKey(), logger);
+        sampleHelper.setDataSetNameFilter(datasetName);
+        sampleHelper.getDataSets();
+
+        // Process data from all the slide image codes.  Collect affected samples' ids for downstream processing.
+        Set<String> sampleIds = new LinkedHashSet<>();
+        prepareSamplesBySlideCode(sampleHelper, dataset, slideImagesGroupedBySlideCode, sampleIds);
+        sampleHelper.annexSamples();  // Called method is stubbed: here for future ref, if it gets implemented. LLF
+        return sampleIds;
+    }
+
+    private void captureParameters() throws MissingDataException {
+        datasetName = processData.getString("DATASET_NAME");
+        ownerKey = processData.getString("OWNER");
+
+        // Get all LSM names from the process configuration data.
+        lsmNames = ImmutableList.copyOf(
+                Splitter.on(',')
+                        .trimResults()
+                        .omitEmptyStrings()
+                        .split((String) processData.getMandatoryItem("LSM_NAMES")));
+    }
+
+    private DataSet getDataSet() throws Exception {
+        DataSet dataset;
         try {
             DomainDAL dal = DomainDAL.getInstance();
             // ASSUME-FOR-NOW: the owner key is the key of user owning the data, not the pipeline.
@@ -39,23 +84,14 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
             //                    EntityConstants.ATTRIBUTE_DATA_SET_IDENTIFIER,
             //                    datasetName, EntityConstants.TYPE_DATA_SET);
         } catch (Exception e) {
-            logger.error("Error retrieving datasets for " + datasetName, e);
-            return;
+            String message = "Error retrieving dataset for " + datasetName;
+            logger.error(message, e);
+            throw new Exception(message, e);
         }
+        return dataset;
+    }
 
-        // Populate the sample helper.
-        SampleHelperNG sampleHelper = new SampleHelperNG(dataset.getOwnerKey(), logger);
-        sampleHelper.setDataSetNameFilter(datasetName);
-        sampleHelper.getDataSets();
-
-        // Get all LSM names from the process configuration data.
-        List<String> lsmNames = ImmutableList.copyOf(
-                Splitter.on(',')
-                        .trimResults()
-                        .omitEmptyStrings()
-                        .split((String) processData.getMandatoryItem("LSM_NAMES")));
-
-        // Build a mapping from slide code to all slide images for that code.
+    private Multimap<String, SlideImage> groupSlideImagesBySlideCode(List<String> lsmNames) {
         SageDAO sageDao = new SageDAO(logger);
         Multimap<String, SlideImage> slideGroups = LinkedListMultimap.create();
         for (String lsmName : lsmNames) {
@@ -69,35 +105,28 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
                 logger.warn("Error while retrieving image for " + lsmName, e);
             }
         }
-
-        // Process data from all the slide image codes.  Collect affected samples' ids for downstream processing.
-        Set<String> sampleIds = new LinkedHashSet<>();
-        prepareSlideImageGroupsForCurrentDataset(sampleHelper, dataset, slideGroups, sampleIds);
-        sampleHelper.annexSamples();
-
-        logger.info("Setting the sample ids output: " + sampleIds);
-        processData.putItem("SAMPLE_ID", ImmutableList.copyOf(sampleIds));
+        return slideGroups;
     }
 
-    private void prepareSlideImageGroupsForCurrentDataset(SampleHelperNG sampleHelper,
-                                                          DataSet dataset,
-                                                          Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
-                                                          Collection<String> sampleIds) {
+    private void prepareSamplesBySlideCode(SampleHelperNG sampleHelper,
+                                           DataSet dataset,
+                                           Multimap<String, SlideImage> slideImagesGroupedBySlideCode,
+                                           Collection<String> sampleIds) {
         for (String slideCode : slideImagesGroupedBySlideCode.keySet()) {
             try {
                 Collection<SlideImage> slideImages = slideImagesGroupedBySlideCode.get(slideCode);
-                Sample sampleEntity = prepareSlideImageGroupsBySlideCode(sampleHelper, dataset, slideCode, slideImages);
-                sampleIds.add(sampleEntity.getId().toString());
+                Sample sample = getOrCreateLsmsAndSample(sampleHelper, dataset, slideCode, slideImages);
+                sampleIds.add(sample.getId().toString());
             } catch (Exception e) {
                 logger.error("Error while preparing image groups for  " + datasetName + ": " + slideCode, e);
             }
         }
     }
 
-    private Sample prepareSlideImageGroupsBySlideCode(SampleHelperNG sampleHelper,
-                                                      DataSet dataset,
-                                                      String slideCode,
-                                                      Collection<SlideImage> slideImages)
+    private Sample getOrCreateLsmsAndSample(SampleHelperNG sampleHelper,
+                                            DataSet dataset,
+                                            String slideCode,
+                                            Collection<SlideImage> slideImages)
             throws Exception {
         logger.info("Group images for slideCode " + slideCode);
         Map<String, SlideImageGroup> tileGroups = new LinkedHashMap<>();
@@ -116,6 +145,8 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
                 tileGroup = new SlideImageGroup(area, tag);
                 tileGroups.put(groupKey, tileGroup);
             }
+
+            // Creating LSM image in Jacs.
             LSMImage lsmImage = sampleHelper.createOrUpdateLSM(slideImage);
             tileGroup.addFile(lsmImage);
             allImages.add(lsmImage);
@@ -131,7 +162,7 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
             }
         });
 
-        //String slideCode, DataSet dataSet, Collection<LSMImage> lsms
+        //  Obtaining a sample in jacs.
         return sampleHelper.createOrUpdateSample(slideCode, dataset, allImages);
     }
 }

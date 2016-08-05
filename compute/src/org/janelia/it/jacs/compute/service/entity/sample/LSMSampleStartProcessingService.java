@@ -24,9 +24,9 @@ public class LSMSampleStartProcessingService extends AbstractEntityService {
     public void execute() throws Exception {
         List<Long> sampleIds = (List<Long>)processData.getItem("SAMPLE_ID");
         logger.info("Creating ProcessSample task for " + sampleIds.size() + " samples.");
-        DomainDAL domainDAL = DomainDAL.getInstance();
 
         // ASSUME-FOR-NOW: owner key is to be used to find the domain objects; key is for data owner.
+        DomainDAL domainDAL = DomainDAL.getInstance();
         List<Sample> samples = domainDAL.getDomainObjects(ownerKey, Sample.class.getSimpleName(), sampleIds);
         for (Sample sample: samples) {
             Task processSampleTask = createTask(sample);

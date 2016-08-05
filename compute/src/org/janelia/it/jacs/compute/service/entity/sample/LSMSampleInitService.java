@@ -197,32 +197,6 @@ public class LSMSampleInitService extends AbstractEntityService {
         return sageLoaderTask;
     }
 
-//    private String getLineCheckLab(Collection<LSMImage> slideImages) {
-//        String line = null;
-//        String lab = null;
-//        int tileNum = 0;
-//        for (LSMImage lsmImage : slideImages) {
-//            String thisImageLab = lsmImage.getFlycoreLabId();
-//            String thisImageLine = lsmImage.getLine();
-//            if (lab == null) {
-//                line = thisImageLine;
-//                lab = thisImageLab;
-//            } else if (!lab.equals(thisImageLab)) {
-//                logger.warn("Lab value for " + lsmImage.getName() + " - " + thisImageLab
-//                        + "  does not match " + lab);
-//            }
-//            if (line == null) {
-//                line = thisImageLine;
-//            } else if (!line.equals(thisImageLine)) {
-//                logger.warn("Line value for " + lsmImage.getName() + " - " + thisImageLine
-//                        + "  does not match " + line);
-//            }
-//            tileNum++;
-//        }
-//        logger.info("Processed tile count of :" + tileNum);
-//        return line;
-//    }
-
     private String convertToJacsFormat(String sageFormat) {
         String rtnVal = sageFormat;
         int slashPos = sageFormat.indexOf('/');
