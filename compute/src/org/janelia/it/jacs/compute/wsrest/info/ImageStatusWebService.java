@@ -78,7 +78,7 @@ public class ImageStatusWebService extends ResourceConfig {
                             .append("cycleTime",
                                     new Document ("$divide", asList(
                                             new Document("$subtract", asList("$creationDate", "$tmogDate")),
-                                            360000))))))
+                                            3600000))))))
                     .into(new ArrayList());
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);

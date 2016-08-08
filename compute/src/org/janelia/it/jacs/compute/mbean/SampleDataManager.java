@@ -216,9 +216,17 @@ public class SampleDataManager implements SampleDataManagerMBean {
         }
     }
 
-    @Override
     public void runSyncAllLSMsToScality() {
-
+        try {
+            Set<String> subjectKeys = getSubjectsWithDataSets();
+            for(String subjectKey : subjectKeys) {
+                log.info("Queuing scality sync for "+subjectKey);
+                runSyncDataSetToScality(subjectKey, null, "lsm", true);
+            }
+        }
+        catch (Exception e) {
+            log.error("Error running Sync All LSMs to Scality",e);
+        }
     }
 
     // todo Proved to be too slow.  Used the commented out main method below to generate insert statements adding canceled event (insanely faster)
