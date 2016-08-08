@@ -280,7 +280,7 @@ public class SampleStatusWebService extends ResourceConfig {
                             .append("pipelineTime",
                                     new Document("$divide", asList(
                                             new Document("$subtract", asList(new Date(), "$creationDate")),
-                                            360000))))))
+                                            3600000))))))
                     .into(new ArrayList());
             for (Document result : jsonResult) {
                 result.put("creationDate", DateUtil.formatDate(result.getDate("creationDate")));
