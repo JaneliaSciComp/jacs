@@ -61,7 +61,7 @@
 
         <!--
         Assign new LSMs to the proper parent sample
-
+        -->
         <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleDiscoveryService">
             <input name="TASK_OWNER"/>
             <input name="DATASET_NAME"/>
@@ -82,6 +82,6 @@
             </operation>
 
         </sequence>
-        -->
+        <!-- End -->
     </sequence>
 </process>

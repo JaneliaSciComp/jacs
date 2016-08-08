@@ -448,11 +448,17 @@ public class SageDAO {
 	
 	public ImageProperty setImageProperty(Image image, CvTerm type, String value, Date createDate) throws Exception {
     	for(ImageProperty property : image.getImageProperties()) {
-    		if (property.getType().equals(type) && !property.getValue().equals(value)) {
-    			// Update existing property value
-    			log.debug("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
-    			property.setValue(value);
-    			return saveImageProperty(property);
+    		if (property.getType().equals(type)) {
+    			if (property.getValue().equals(value)) {
+    				// Already at the correct value
+    				return property;
+    			}
+    			else {
+        			// Update existing property value
+        			log.debug("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
+        			property.setValue(value);
+        			return saveImageProperty(property);
+    			}
     		}
     	}
     	// Set new property
