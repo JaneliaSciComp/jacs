@@ -19,7 +19,6 @@ import javax.naming.InitialContext;
 import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -32,8 +31,10 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
-import org.janelia.it.jacs.compute.service.domain.SageArtifactExportService;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.entity.cv.Objective;
+import org.janelia.it.jacs.compute.service.domain.SageArtifactExportService;
 import org.janelia.it.jacs.model.sage.CvTerm;
 import org.janelia.it.jacs.model.sage.Experiment;
 import org.janelia.it.jacs.model.sage.Image;
@@ -43,6 +44,7 @@ import org.janelia.it.jacs.model.sage.Observation;
 import org.janelia.it.jacs.model.sage.SageSession;
 import org.janelia.it.jacs.model.sage.SecondaryImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
+import org.janelia.it.jacs.shared.utils.ISO8601Utils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -143,6 +145,37 @@ public class SageDAO {
         }
 
         return new ResultSetIterator(connection, pStatement, resultSet);
+    }
+
+    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
+
+        String sql = "select " +
+                COMMON_IMAGE_VW_ATTR + "," +
+                "line_vw.lab as image_lab_name " +
+                "from image_data_mv as image_vw " +
+                "join image image_t on image_t.id = image_vw.id " +
+                "join line_vw on line_vw.id = image_t.line_id " +
+                "where image_vw.name = ? and image_vw.data_set = ?";
+        log.debug("getSlideImageByDatasetAndLSMName: " + sql + "(" + lsmName + ")");
+        return getSlideImage(sql, lsmName, datasetName);
+    }
+
+    /**
+     * Retrieve the Sage image by the LSM path
+     * @param lsmName
+     * @return
+     */
+    public SlideImage getSlideImageByOwnerAndLSMName(String lsmName) throws DaoException {
+
+        String sql = "select " +
+                    COMMON_IMAGE_VW_ATTR + "," +
+                    "line_vw.lab as image_lab_name " +
+                    "from image_vw " +
+                    "join image image_t on image_t.id = image_vw.id " +
+                    "join line_vw on line_vw.id = image_t.line_id " +
+                    "where image_vw.name = ? ";
+        log.debug("GetSlideImageByOwnerAndLSMName: " + sql + "(" + lsmName + ")");
+        return getSlideImage(sql, lsmName);
     }
 
     /**
@@ -417,11 +450,17 @@ public class SageDAO {
 	
 	public ImageProperty setImageProperty(Image image, CvTerm type, String value, Date createDate) throws Exception {
     	for(ImageProperty property : image.getImageProperties()) {
-    		if (property.getType().equals(type) && !property.getValue().equals(value)) {
-    			// Update existing property value
-    			log.debug("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
-    			property.setValue(value);
-    			return saveImageProperty(property);
+    		if (property.getType().equals(type)) {
+    			if (property.getValue().equals(value)) {
+    				// Already at the correct value
+    				return property;
+    			}
+    			else {
+        			// Update existing property value
+        			log.debug("Overwriting existing "+type.getName()+" value ("+property.getValue()+") with new value ("+value+") for image "+image.getId()+")");
+        			property.setValue(value);
+        			return saveImageProperty(property);
+    			}
     		}
     	}
     	// Set new property
@@ -571,6 +610,75 @@ public class SageDAO {
         return map;
     }
 
+    private void fillImageProperties(SlideImage slideImage, Connection conn) throws DaoException {
+        String sql = "select " +
+                "ip.cv, ip.type, ip.value " +
+                "from image_property_vw ip " +
+                "where ip.image_id = ? ";
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = getJdbcConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, slideImage.getSageId());
+            rs = pstmt.executeQuery();
+            Map<String, Object> data = new HashMap<>();
+            while (rs.next()) {
+                String cv = rs.getString("cv");
+                String type = rs.getString("type");
+                Object value = rs.getObject("value");
+                // prefix every type with the controlled vocabulary except the data_set type
+                String key = "data_set".equals(type) ? type : cv + "_" + type;
+                data.put(key, value);
+            }
+            slideImage.setDatasetName((String) data.get("data_set"));
+            slideImage.setSlideCode((String) data.get("light_imagery_slide_code"));
+            slideImage.setTileType((String) data.get("light_imagery_tile"));
+            slideImage.setCrossBarcode((String) data.get("fly_cross_barcode"));
+            slideImage.setChannelSpec((String) data.get("light_imagery_channel_spec"));
+            slideImage.setGender((String) data.get("light_imagery_gender"));
+            slideImage.setArea((String) data.get("light_imagery_area"));
+            slideImage.setAge((String) data.get("light_imagery_age"));
+            slideImage.setChannels((String) data.get("light_imagery_channels"));
+            slideImage.setMountingProtocol((String) data.get("light_imagery_mounting_protocol"));
+            slideImage.setTissueOrientation((String) data.get("light_imagery_tissue_orientation"));
+            slideImage.setVtLine((String) data.get("light_imagery_vt_line"));
+            slideImage.setEffector((String)data.get("fly_effector"));
+            String objectiveStr = (String) data.get("light_imagery_objective");
+            if (objectiveStr!=null) {
+                if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_10X.getName());
+                }
+                else if (objectiveStr.contains(Objective.OBJECTIVE_20X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_20X.getName());
+                }
+                else if (objectiveStr.contains(Objective.OBJECTIVE_40X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_40X.getName());
+                }
+                else if (objectiveStr.contains(Objective.OBJECTIVE_63X.getName())) {
+                    slideImage.setObjective(Objective.OBJECTIVE_63X.getName());
+                }
+            }
+            String voxelSizeX = (String) data.get("light_imagery_voxel_size_x");
+            String voxelSizeY = (String) data.get("light_imagery_voxel_size_y");
+            String voxelSizeZ = (String) data.get("light_imagery_voxel_size_z");
+            if (voxelSizeX!=null && voxelSizeY!=null && voxelSizeZ!=null) {
+                slideImage.setOpticalRes(voxelSizeX,voxelSizeY,voxelSizeZ);
+            }
+            String imageSizeX = (String) data.get("light_imagery_dimension_x");
+            String imageSizeY = (String) data.get("light_imagery_dimension_y");
+            String imageSizeZ = (String) data.get("light_imagery_dimension_z");
+            if (imageSizeX!=null && imageSizeY!=null && imageSizeZ!=null) {
+                slideImage.setPixelRes(imageSizeX,imageSizeY,imageSizeZ);
+            }
+        } catch (SQLException sqle) {
+            throw new DaoException(sqle);
+        } finally {
+            ResultSetIterator.close(rs, pstmt, null, log);
+        }
+
+    }
+
     /**
      *
      * @param  dataSet     image data set for filter.
@@ -712,6 +820,50 @@ public class SageDAO {
             sql.append('`'); // must escape column names to prevent conflict with SQL reserved words like 'condition'
         }
         return sql.toString();
+    }
+
+    private SlideImage getSlideImage(String sql, String... paramStrings) throws DaoException {
+        SlideImage slideImage = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = getJdbcConnection();
+            pstmt = conn.prepareStatement(sql);
+            int fieldIndex = 1;
+            for (String paramString: paramStrings) {
+                pstmt.setString(fieldIndex++, paramString);
+            }
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                slideImage = new SlideImage(new HashMap<String,Object>());
+                slideImage.setSageId(rs.getInt("image_query_id"));
+                slideImage.setImageName(rs.getString("image_query_name"));
+                slideImage.setImagePath(rs.getString("image_query_path"));
+                slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
+                slideImage.setLine(rs.getString("image_query_line"));
+                slideImage.setLab(rs.getString("image_lab_name"));
+                Date createDate = rs.getTimestamp("image_query_create_date");
+                if (createDate!=null) {
+                    String tmogDate = ISO8601Utils.format(createDate);
+                    if (tmogDate!=null) {
+                        slideImage.setTmogDate(tmogDate);
+                    }
+                }
+            }
+            rs.close();
+            rs = null;
+            pstmt.close();
+            pstmt = null;
+            if (slideImage != null) {
+                fillImageProperties(slideImage, conn);
+            }
+        } catch (SQLException sqle) {
+            throw new DaoException(sqle);
+        } finally {
+            ResultSetIterator.close(rs, pstmt, conn, log);
+        }
+        return slideImage;
     }
 
     private static final String COMMON_IMAGE_VW_ATTR =

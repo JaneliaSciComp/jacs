@@ -334,7 +334,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         Line line = getLineByName(lineName);
                 
         // Collect artifacts for export
-        SamplePostProcessingResult postResult = objectiveSample.getLatestSuccessfulRun().getLatestResultOfType(SamplePostProcessingResult.class);
+        SamplePostProcessingResult postResult = objectiveSample.getLatestResultOfType(SamplePostProcessingResult.class);
         if (postResult==null) {
             logger.error("    Sample has no post-processed artifacts to export");
             return false;
@@ -631,9 +631,23 @@ public class SageArtifactExportService extends AbstractDomainService {
         String imageName = file.getName();
         String url = getWebdavUrl(path);
         
+        for(SecondaryImage secondaryImage : new ArrayList<>(sourceImage.getSecondaryImages())) {
+        	if (secondaryImage.getProductType().equals(productType)) {
+        		logger.info("       Updating existing "+productType.getDisplayName()+" for "+sourceImage.getName());
+        		secondaryImage.setName(imageName);
+                secondaryImage.setPath(path);
+                secondaryImage.setUrl(url);
+                sage.saveSecondaryImage(secondaryImage);
+                logger.debug("      Updated SAGE secondary image "+secondaryImage.getId());
+                return secondaryImage; 
+        	}
+        }
+        
         SecondaryImage secondaryImage = sage.getSecondaryImageByName(imageName);
         
         if (secondaryImage!=null) {
+        	secondaryImage.setImage(sourceImage);
+        	secondaryImage.setProductType(productType);
             secondaryImage.setPath(path);
             secondaryImage.setUrl(url);
             sage.saveSecondaryImage(secondaryImage);

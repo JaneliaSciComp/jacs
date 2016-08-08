@@ -417,7 +417,27 @@ public class SampleHelperNG extends DomainHelper {
 
         return sample;
     }
-    
+
+    /**
+     * Annex all the samples that were tracked as needing annexing, during processing with findOrAnnexExistingSample().
+     * @throws Exception
+     */
+    public void annexSamples() throws Exception {
+        // Not yet porting this.  Unknown what to-annex means.
+//        if (samplesToAnnex.isEmpty()) return;
+//        logger.info("Will annexing "+samplesToAnnex.size()+" samples");
+//        for(Long entityId : new ArrayList<>(samplesToAnnex)) {
+//            try {
+//                samplesToAnnex.remove(entityId);
+//                entityBean.annexEntityTree(ownerKey, entityId);
+//                numSamplesAnnexed++;
+//            }
+//            catch (Exception e) {
+//                logger.error("Error annexing sample: "+entityId, e);
+//            }
+//        }
+    }
+
     private Sample getOrCreateSample(String slideCode, DataSet dataSet) {
         
         Sample sample = findBestSample(dataSet.getIdentifier(), slideCode);

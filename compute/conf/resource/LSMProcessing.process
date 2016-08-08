@@ -15,6 +15,7 @@
         <!-- Import variables from the task -->
         <operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">
             <input name="DATASET_NAME"/>
+            <input name="OWNER"/>
             <input name="LSM_NAMES"/>
             <input name="REUSE_PIPELINE_RUNS"/>
             <input name="REUSE_SUMMARY"/>
@@ -34,6 +35,7 @@
             </input>
             <output name="DATASET_NAME"/>
             <output name="LSM_NAMES"/>
+            <output name="OWNER"/>
             <output name="REUSE_PIPELINE_RUNS"/>
             <output name="REUSE_SUMMARY"/>
             <output name="REUSE_PROCESSING"/>
@@ -43,7 +45,7 @@
             <output name="TASK_OWNER"/>
         </operation>
 
-        <!-- Prepare the sage loader task -->
+        <!-- Prepare sage loader tasks -->
         <operation name="Prepare sage loader tasks" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleInitService">
             <input name="DATASET_NAME"/>
             <input name="LSM_NAMES"/>
@@ -58,7 +60,8 @@
         </sequence>
 
         <!--
-        Disable the rest of the pipeline until the discovery can work correctly and assign new LSMs to the proper parent sample
+        Assign new LSMs to the proper parent sample
+
         <operation name="Get LSM Sample IDs" processor="org.janelia.it.jacs.compute.service.entity.sample.LSMSampleDiscoveryService">
             <input name="TASK_OWNER"/>
             <input name="DATASET_NAME"/>

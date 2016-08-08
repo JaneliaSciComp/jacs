@@ -13,6 +13,20 @@ import org.janelia.it.jacs.model.entity.cv.Objective;
 public class SlideImage {
     
     private Map<String,Object> properties;
+
+    private String datasetName;
+    private String crossBarCode;
+    private String channelSpec;
+    private String age;
+    private String gender;
+    private String channels;
+    private String mountingProtocol;
+    private String tissueOrientation;
+    private String vtLine;
+    private String effector;
+    private String objective;
+    private String[] opticalRes;
+    private String[] pixelRes;
     
     public SlideImage(Map<String,Object> properties) {
         this.properties = properties;
@@ -182,5 +196,113 @@ public class SlideImage {
         else {
             return null;
         }
+    }
+
+    public String getDatasetName() {
+        return datasetName;
+    }
+
+    public void setDatasetName(String dataSetName) {
+        this.datasetName = dataSetName;
+    }
+
+    public String getCrossBarcode() {
+        return crossBarCode;
+    }
+
+    public void setCrossBarcode(String crossBarCode) {
+        this.crossBarCode = crossBarCode;
+    }
+
+    public String getChannelSpec() {
+        return channelSpec;
+    }
+
+    public void setChannelSpec(String channelSpec) {
+        this.channelSpec = channelSpec;
+    }
+
+    public String getAge() {
+        return age;
+    }
+
+    public void setAge(String age) {
+        this.age = age;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getChannels() {
+        return channels;
+    }
+
+    public void setChannels(String channels) {
+        this.channels = channels;
+    }
+
+    public String getMountingProtocol() {
+        return mountingProtocol;
+    }
+
+    public void setMountingProtocol(String mountingProtocol) {
+        this.mountingProtocol = mountingProtocol;
+    }
+
+    public String getTissueOrientation() {
+        return tissueOrientation;
+    }
+
+    public void setTissueOrientation(String tissueOrientation) {
+        this.tissueOrientation = tissueOrientation;
+    }
+
+    public String getVtLine() {
+        return vtLine;
+    }
+
+    public void setVtLine(String vtLine) {
+        this.vtLine = vtLine;
+    }
+
+    public String getEffector() {
+        return effector;
+    }
+
+    public void setEffector(String effector) {
+        this.effector = effector;
+    }
+
+    public void setObjective(String objective) {
+        this.objective = objective;
+    }
+
+    public String[] getOpticalRes() {
+        return opticalRes;
+    }
+
+    public void setOpticalRes(String opticalResX, String opticalResY, String opticalResZ) {
+        this.opticalRes = new String[] {opticalResX, opticalResY, opticalResZ};
+    }
+
+    public void setOpticalRes(String[] opticalRes) {
+        this.opticalRes = opticalRes;
+    }
+
+    public String[] getPixelRes() {
+        return pixelRes;
+    }
+
+    public void setPixelRes(String pixelResX, String pixelResY, String pixelResZ) {
+        this.pixelRes = new String[] {pixelResX, pixelResY, pixelResZ};
+    }
+
+    public void setPixelRes(String[] pixelRes) {
+        this.pixelRes = pixelRes;
     }
 }
