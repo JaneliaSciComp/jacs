@@ -96,7 +96,12 @@ public class LSMSampleDiscoveryService extends AbstractEntityService {
         Multimap<String, SlideImage> slideGroups = LinkedListMultimap.create();
         for (String lsmName : lsmNames) {
             try {
-                SlideImage slideImage = sageDao.getSlideImageByDatasetAndLSMName(datasetName, lsmName);
+                SlideImage slideImage = sageDao.getSlideImageByLSMName(lsmName);
+                if (! slideImage.getDatasetName().equals(datasetName)) {
+                    throw new IllegalArgumentException(
+                        "Data set name from lsm (" + slideImage.getDatasetName() + ") does not match " + datasetName
+                    );
+                }
                 if (slideImage.getSlideCode() != null)
                     slideGroups.put(slideImage.getSlideCode(), slideImage);
                 else

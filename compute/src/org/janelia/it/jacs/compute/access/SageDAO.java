@@ -145,18 +145,30 @@ public class SageDAO {
         return new ResultSetIterator(connection, pStatement, resultSet);
     }
 
-    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
-
-        String sql = "select " +
-                COMMON_IMAGE_VW_ATTR + "," +
-                "line_vw.lab as image_lab_name " +
-                "from image_data_mv as image_vw " +
-                "join image image_t on image_t.id = image_vw.id " +
-                "join line_vw on line_vw.id = image_t.line_id " +
-                "where image_vw.name = ? and image_vw.data_set = ?";
-        log.debug("getSlideImageByDatasetAndLSMName: " + sql + "(" + lsmName + ")");
-        return getSlideImage(sql, lsmName, datasetName);
+    /**
+     * Given an lsm name, get its representative slide image, without using a materialized view.  We want
+     * immediate turnaround on data that has just been added to tables.
+     *
+     * @param lsmName find slide image for this.
+     * @return fully-fleshed slide image.
+     * @throws DaoException
+     */
+    public SlideImage getSlideImageByLSMName(String lsmName) throws DaoException {
+        return getSlideImage(SLIDE_IMAGE_BY_LSMNAME_SQL, lsmName);
     }
+
+//    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
+//
+//        String sql = "select " +
+//                COMMON_IMAGE_VW_ATTR + "," +
+//                "line_vw.lab as image_lab_name " +
+//                "from image_data_mv as image_vw " +
+//                "join image image_t on image_t.id = image_vw.id " +
+//                "join line_vw on line_vw.id = image_t.line_id " +
+//                "where image_vw.name = ? and image_vw.data_set = ?";
+//        log.debug("getSlideImageByDatasetAndLSMName: " + sql + "(" + lsmName + ")");
+//        return getSlideImage(sql, lsmName, datasetName);
+//    }
 
     /**
      * Retrieve the Sage image by the LSM path
@@ -880,6 +892,12 @@ public class SageDAO {
             "  and (i.created_by is null or i.created_by!='"+SageArtifactExportService.CREATED_BY+"') " +
             ") image_vw on ip1.image_id = image_vw.id " +
             "group by image_vw.id ";
+
+    public static final String SLIDE_IMAGE_BY_LSMNAME_SQL = "select i.id image_query_id,i.name image_query_name,i.path image_query_path," +
+            "i.jfs_path image_query_jfs_path,i.line image_query_line,i.family light_imagery_family," +
+            "i.capture_date light_imagery_capture_date,i.representative light_imagery_representative," +
+            "i.created_by light_imagery_created_by,i.create_date image_query_create_date,l.lab image_lab_name " +
+            "from image_vw i join line_vw l on (i.line=l.name) where i.name=?";
 
     private static final String ALL_LINE_PROPERTY_SQL_1 =
             "select line_vw.id line_query_id, line_vw.name line_query_line, line_vw.lab line_query_lab, line_vw.gene line_query_gene, line_vw.organism line_query_organism, line_vw.synonyms line_query_synonyms";
