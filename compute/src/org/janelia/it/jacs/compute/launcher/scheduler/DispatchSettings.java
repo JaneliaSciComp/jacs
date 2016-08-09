@@ -13,7 +13,7 @@ import javax.naming.NamingException;
 public class DispatchSettings implements DispatchSettingsMBean {
     private static final Logger LOG = LoggerFactory.getLogger(DispatchSettings.class);
 
-    private String currentProcessingId = SystemConfigurationProperties.getString("computeserver.dispatch.identifier");
+    private String currentProcessingId = SystemConfigurationProperties.getString("System.ServerName");
     private boolean fetchUnassignedJobs = SystemConfigurationProperties.getBoolean("computeserver.dispatch.fetchUnassignedJobs", false);
     private int maxRetries = SystemConfigurationProperties.getInt("computeserver.dispatch.maxRetries");
     private int prefetchSize = SystemConfigurationProperties.getInt("computeserver.dispatch.prefetchSize");
