@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.service.entity.sample;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
@@ -20,9 +22,26 @@ import java.util.List;
  */
 public class LSMSampleStartProcessingService extends AbstractEntityService {
     private static final String SAMPLE_PROCESSING_JOBNAME = "GSPS_CompleteSamplePipeline";
+    public static final String SAMPLE_ID_PARAM = "SAMPLE_ID"; //TODO consider moving this for common use by whole pipeline.
 
     public void execute() throws Exception {
-        List<Long> sampleIds = (List<Long>)processData.getItem("SAMPLE_ID");
+        Object o = processData.getItem(SAMPLE_ID_PARAM);
+        List<Long> sampleIds;
+        if (o instanceof String) {
+            logger.info("Sample Id input is " + o.getClass() + ", valued as " + o.toString());
+            List<String> sampleIdStrings = ImmutableList.copyOf(
+                    Splitter.on(',')
+                            .trimResults()
+                            .omitEmptyStrings()
+                            .split((String) o));
+            sampleIds = new ArrayList<>();
+            for (String sampleIdString: sampleIdStrings) {
+                sampleIds.add(Long.parseLong(sampleIdString));
+            }
+        }
+        else {
+            sampleIds = (List<Long>)processData.getItem(SAMPLE_ID_PARAM);
+        }
         logger.info("Creating ProcessSample task for " + sampleIds.size() + " samples.");
 
         // ASSUME-FOR-NOW: owner key is to be used to find the domain objects; key is for data owner.

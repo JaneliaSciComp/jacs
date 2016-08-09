@@ -116,34 +116,34 @@ public class SageDAO {
         return getCurrentSession();
     }
 
-    /**
-     * Returns all the images in a given image family with a null data set, with their properties as columns. 
-     * You can get the column names by calling getColumnNames() on the returned ResultSetIterator object.
-     * The client must call close() on the returned iterator when finished with it. 
-     * @return Iterator over the JDBC result set. 
-     * @throws DaoException
-     */
-    public ResultSetIterator getImagesByFamily(String sageImageFamily) throws DaoException {
-
-        Connection connection = null;
-        PreparedStatement pStatement = null;
-        ResultSet resultSet = null;
-
-        try {
-            final String sql = "select * from image_data_mv where family=? and data_set is null and display=true order by slide_code, name";
-            connection = getJdbcConnection();
-            pStatement = connection.prepareStatement(sql);
-            pStatement.setString(1, sageImageFamily);
-            pStatement.setFetchSize(Integer.MIN_VALUE);
-            resultSet = pStatement.executeQuery();
-
-        } catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, log);
-            throw new DaoException("Error querying SAGE", e);
-        }
-
-        return new ResultSetIterator(connection, pStatement, resultSet);
-    }
+//    /**
+//     * Returns all the images in a given image family with a null data set, with their properties as columns.
+//     * You can get the column names by calling getColumnNames() on the returned ResultSetIterator object.
+//     * The client must call close() on the returned iterator when finished with it.
+//     * @return Iterator over the JDBC result set.
+//     * @throws DaoException
+//     */
+//    public ResultSetIterator getImagesByFamily(String sageImageFamily) throws DaoException {
+//
+//        Connection connection = null;
+//        PreparedStatement pStatement = null;
+//        ResultSet resultSet = null;
+//
+//        try {
+//            final String sql = "select * from image_data_mv where family=? and data_set is null and display=true order by slide_code, name";
+//            connection = getJdbcConnection();
+//            pStatement = connection.prepareStatement(sql);
+//            pStatement.setString(1, sageImageFamily);
+//            pStatement.setFetchSize(Integer.MIN_VALUE);
+//            resultSet = pStatement.executeQuery();
+//
+//        } catch (SQLException e) {
+//            ResultSetIterator.close(resultSet, pStatement, connection, log);
+//            throw new DaoException("Error querying SAGE", e);
+//        }
+//
+//        return new ResultSetIterator(connection, pStatement, resultSet);
+//    }
 
     /**
      * Given an lsm name, get its representative slide image, without using a materialized view.  We want

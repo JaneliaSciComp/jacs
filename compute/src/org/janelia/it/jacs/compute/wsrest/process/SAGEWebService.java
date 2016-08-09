@@ -23,6 +23,7 @@ import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
+import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 import org.jboss.resteasy.annotations.providers.jaxb.Formatted;
 
@@ -105,8 +106,8 @@ public class SAGEWebService extends ResourceConfig {
         if (dataOwner == null) {
             throw new IllegalArgumentException("data set owner value is not defined");
         } else {
-            final User user = remoteComputeBean.getUserByNameOrKey(dataOwner);
-            if (user == null) {
+            final Subject subject = remoteComputeBean.getSubjectByNameOrKey(dataOwner);
+            if (subject == null) {
                 throw new IllegalArgumentException("invalid owner parameter '" + dataOwner + "' specified");
             }
         }

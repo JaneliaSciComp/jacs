@@ -39,21 +39,22 @@ public class SageDAOTest {
         }
     }
 
-    @Test
-    @Category(TestCategories.SlowIntegrationTests.class)
-    public void testGetImagesByFamily() throws Exception {
-
-        ResultSetIterator iterator = null;
-        try {
-            iterator = sageDao.getImagesByFamily("flylight_flip");
-            validateIteratorResults(iterator, 10, "light_imagery_age");
-        } finally {
-            if (iterator != null) {
-                iterator.close();
-            }
-        }
-
-    }
+//  No images without data sets exist as of 8/8/2016. LLF
+//    @Test
+//    @Category(TestCategories.SlowIntegrationTests.class)
+//    public void testGetImagesByFamily() throws Exception {
+//
+//        ResultSetIterator iterator = null;
+//        try {
+//            iterator = sageDao.getImagesByFamily("flylight_flip");
+//            validateIteratorResults(iterator, 10, "light_imagery_age");
+//        } finally {
+//            if (iterator != null) {
+//                iterator.close();
+//            }
+//        }
+//
+//    }
 
 //    @Test
 //    @Category(TestCategories.SlowIntegrationTests.class)
