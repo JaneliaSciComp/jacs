@@ -26,7 +26,7 @@ import org.janelia.it.jacs.model.tasks.Task;
  */
 public class GetObjectiveSamplesService extends AbstractDomainService {
 
-    private Sample sample;
+	private Long sampleId;
 	private List<String> pipelines20x = null; 
 	private List<String> pipelines40x = null; 
 	private List<String> pipelines63x = null;
@@ -37,6 +37,7 @@ public class GetObjectiveSamplesService extends AbstractDomainService {
     public void execute() throws Exception {
 
         boolean reusePipelineRuns = data.getItemAsBoolean("REUSE_PIPELINE_RUNS");
+		sampleId = data.getItemAsLong("SAMPLE_ENTITY_ID");
     	
     	String objectiveList = data.getItemAsString("RUN_OBJECTIVES");
     	if (objectiveList!=null) {
@@ -123,10 +124,10 @@ public class GetObjectiveSamplesService extends AbstractDomainService {
     	}
     	
         if (pipelineSet.isEmpty()) {
-            contextLogger.info("Sample "+sample.getName()+" "+objectiveSample.getObjective()+" has no unfulfilled pipelines");
+            contextLogger.info("Sample "+sampleId+" "+objectiveSample.getObjective()+" has no unfulfilled pipelines");
         }
         else {
-            contextLogger.info("Sample "+sample.getName()+" "+objectiveSample.getObjective()+" has unfulfilled pipelines: "+pipelineSet);	
+            contextLogger.info("Sample "+sampleId+" "+objectiveSample.getObjective()+" has unfulfilled pipelines: "+pipelineSet);
         }
         
 		return pipelineSet.isEmpty();
