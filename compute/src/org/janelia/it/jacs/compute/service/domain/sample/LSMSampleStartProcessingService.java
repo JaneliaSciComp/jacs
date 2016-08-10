@@ -1,10 +1,10 @@
-package org.janelia.it.jacs.compute.service.entity.sample;
+package org.janelia.it.jacs.compute.service.domain.sample;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Updates the status of a sample.
  */
-public class LSMSampleStartProcessingService extends AbstractEntityService {
+public class LSMSampleStartProcessingService extends AbstractDomainService {
     private static final String SAMPLE_PROCESSING_JOBNAME = "GSPS_CompleteSamplePipeline";
     public static final String SAMPLE_ID_PARAM = "SAMPLE_ID"; //TODO consider moving this for common use by whole pipeline.
 

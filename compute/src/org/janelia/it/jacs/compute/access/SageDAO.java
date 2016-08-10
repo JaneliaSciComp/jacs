@@ -893,11 +893,19 @@ public class SageDAO {
             ") image_vw on ip1.image_id = image_vw.id " +
             "group by image_vw.id ";
 
-    public static final String SLIDE_IMAGE_BY_LSMNAME_SQL = "select i.id image_query_id,i.name image_query_name,i.path image_query_path," +
-            "i.jfs_path image_query_jfs_path,i.line image_query_line,i.family light_imagery_family," +
-            "i.capture_date light_imagery_capture_date,i.representative light_imagery_representative," +
-            "i.created_by light_imagery_created_by,i.create_date image_query_create_date,l.lab image_lab_name " +
-            "from image_vw i join line_vw l on (i.line=l.name) where i.name=?";
+    public static final String SLIDE_IMAGE_BY_LSMNAME_SQL = "select " + COMMON_IMAGE_VW_ATTR + "," +
+            "image_vw.id image_query_id,image_vw.name image_query_name,image_vw.path image_query_path," +
+            "image_vw.jfs_path image_query_jfs_path,image_vw.line image_query_line,image_vw.family light_imagery_family," +
+            "image_vw.capture_date light_imagery_capture_date,image_vw.representative light_imagery_representative," +
+            "image_vw.created_by light_imagery_created_by,image_vw.create_date image_query_create_date,l.lab image_lab_name " +
+            "from image_vw image_vw join line_vw l on (image_vw.line=l.name) where image_vw.name=?";
+
+//    public static final String SLIDE_IMAGE_BY_LSMNAME_SQL = "select " + COMMON_IMAGE_VW_ATTR +
+//            "i.id image_query_id,i.name image_query_name,i.path image_query_path," +
+//            "i.jfs_path image_query_jfs_path,i.line image_query_line,i.family light_imagery_family," +
+//            "i.capture_date light_imagery_capture_date,i.representative light_imagery_representative," +
+//            "i.created_by light_imagery_created_by,i.create_date image_query_create_date,l.lab image_lab_name " +
+//            "from image_vw i join line_vw l on (i.line=l.name) where i.name=?";
 
     private static final String ALL_LINE_PROPERTY_SQL_1 =
             "select line_vw.id line_query_id, line_vw.name line_query_line, line_vw.lab line_query_lab, line_vw.gene line_query_gene, line_vw.organism line_query_organism, line_vw.synonyms line_query_synonyms";

@@ -1,4 +1,4 @@
-package org.janelia.it.jacs.compute.service.entity.sample;
+package org.janelia.it.jacs.compute.service.domain.sample;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -8,10 +8,10 @@ import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.SageDAO;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImageGroup;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -21,7 +21,7 @@ import java.util.*;
 /**
  * Discovers the SAGE samples associated with the given LSM and processes the corresponding samples.
  */
-public class LSMSampleDiscoveryService extends AbstractEntityService {
+public class LSMSampleDiscoveryService extends AbstractDomainService {
 
     // Incoming parameter values are stored as members.
     private String datasetName;
