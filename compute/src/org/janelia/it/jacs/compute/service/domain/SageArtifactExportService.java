@@ -346,9 +346,15 @@ public class SageArtifactExportService extends AbstractDomainService {
 
         List<SampleTile> tiles = objectiveSample.getTiles();
 
-        // Tiles 
+        // Tiles
         Map<String,ImageArea> imageAreaMap = new HashMap<>();
         for(SampleTile tile : tiles) {
+
+            if (tile.getName().contains("-Verify")) {
+                logger.trace("    Excluding tile "+tile.getName());
+                continue;
+            }
+
             logger.trace("    Converting tile "+tile.getName());
             
             String area = tile.getAnatomicalArea();
