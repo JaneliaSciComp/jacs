@@ -57,6 +57,7 @@ import org.janelia.it.jacs.model.tasks.Task;
 public class SageArtifactExportService extends AbstractDomainService {
 
     public static final String TRUE_VALUE = "Y";
+    public static final String FALSE_VALUE = "N";
 	public static final String CREATED_BY = "Janelia Workstation";
     public static final String ANNOTATION_EXPORT_20X = "Publish20xToWeb";
     public static final String ANNOTATION_EXPORT_63X = "Publish63xToWeb";
@@ -389,7 +390,7 @@ public class SageArtifactExportService extends AbstractDomainService {
             imageArea.tiles.add(imageTile); 
         }
 
-        List<SampleProcessingResult> processingResults = objectiveSample.getLatestSuccessfulRun().getSampleProcessingResults();
+        List<SampleProcessingResult> processingResults = objectiveSample.getLatestResultsOfType(SampleProcessingResult.class);
         
         // Stitched images
         for (ImageArea imageArea : imageAreaMap.values()) {
@@ -420,8 +421,6 @@ public class SageArtifactExportService extends AbstractDomainService {
             }
         }
 
-        String objective = objectiveSample.getObjective();
-
         for (ImageArea imageArea : imageAreaMap.values()) {
             
             logger.debug("    Synchronizing area '"+imageArea.areaName+"'");
@@ -430,7 +429,7 @@ public class SageArtifactExportService extends AbstractDomainService {
             for(ImageTile imageTile : imageArea.tiles) {
             
                 logger.debug("      Synchronizing tile '"+imageTile.tileName+"'");
-                Image tileSourceImage = null;
+                Image tileSourceImage;
                                 
                 List<Integer> tileSageImageIds = new ArrayList<>();
                 for(ImageStack imageStack : imageTile.images) {
@@ -805,7 +804,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     }
     
     /**
-     * Set to_publish=0 for all the images related to the given sample, and then delete any "Published" annotations on it.
+     * Set to_publish=N for all the images related to the given sample, and then delete any "Published" annotations on it.
      * @param objectiveSample
      * @throws Exception
      */
@@ -839,7 +838,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         if (!stillPublished) {
             for(Image image : sage.getImagesByPropertyValue(propertyWorkstationSampleId, sample.getId().toString())) {
                 logger.info("    Unpublishing primary image "+image.getName()+" (id="+image.getId()+")");
-                sage.setImageProperty(image, propertyToPublish, "N", createDate);
+                sage.setImageProperty(image, propertyToPublish, FALSE_VALUE, createDate);
             }   
         }
         
