@@ -78,9 +78,9 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	    for(Sample sample : domainDao.getActiveSamplesForDataSet(ownerKey, identifier)) {
                 logger.info("  Processing sample "+sample.getName());
 	            Date completionDate = sample.getCompletionDate();
-	            if (completionDate!=null) {
+	            if (!release.isAutoRelease() || completionDate!=null) {
 	                String status = sample.getStatus();
-                    if (sample.getSageSynced()!=null && sample.getSageSynced()==false) {
+                    if (sample.getSageSynced()!=null && !sample.getSageSynced()) {
                         logger.info("    Sample is not synchronized to SAGE");
                     }
 	                else if (DomainConstants.VALUE_BLOCKED.equals(status)) {
@@ -112,8 +112,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
     	}
 
         logger.info("Considering "+samplesByLine.keySet().size()+" fly lines, with "+samplesAdded+" samples");
-    	
-        int numAdded = 0;
+
     	List<String> lines = new ArrayList<>(samplesByLine.keySet());
     	Collections.sort(lines);
     	for(String line : lines) {
@@ -121,7 +120,7 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
             List<Sample> samples = new ArrayList<>(samplesByLine.get(line));
             logger.info("Processing line "+line+" with "+samples.size()+" samples");
             
-            // If this is an automated release, ensure there is at least one 63x polarity sample for each line
+            // If this is an automated release, ensure there is at least one 63x polarity sample for each published line
             if (release.isAutoRelease()) {
 	            boolean has63xPolaritySample = false;
 	            for(Sample sample : samples) {
@@ -137,34 +136,27 @@ public class SyncReleaseFoldersService extends AbstractDomainService {
             }
             
             TreeNode lineFolder = verifyOrCreateLineFolder(line);
-    	    
-    	    // Sort samples
-    	    Collections.sort(samples, new Comparator<Sample>() {
-                @Override
-                public int compare(Sample o1, Sample o2) {
-                    return o1.getName().compareTo(o2.getName());
-                }
-            });
 
             logger.info("  Synchronizing "+samples.size()+" samples to line folder: "+lineFolder.getName()+" (id="+lineFolder.getId()+")");
             
     	    // Add missing samples
+			List<Reference> toAdd = new ArrayList<>();
     	    for(Sample sample : samples) {
                 if (!lineFolder.hasChild(sample)) {
                     logger.info("      Adding sample to line folder: "+sample.getName());
-                    domainDao.addChildren(ownerKey, lineFolder, Arrays.asList(Reference.createFor(sample)));
-                    numAdded++;
+					toAdd.add(Reference.createFor(sample));
     	        }
     	    }
-    	    
+
+			lineFolder = domainDao.addChildren(ownerKey, lineFolder, toAdd);
+
     	    // Re-sort line folder
     	    sampleHelper.sortChildrenByName(lineFolder);
+			logger.info("  Added "+toAdd.size()+" samples to line folder "+lineFolder.getName());
     	}
 
         // Re-sort release folder
         sampleHelper.sortChildrenByName(releaseFolder);
-
-        logger.info("Added "+numAdded+" samples to line folders");
         
         processData.putItem("RELEASE_FOLDER_ID", releaseFolder.getId().toString());
         contextLogger.info("Putting '"+releaseFolder.getId()+"' in RELEASE_FOLDER_ID");
