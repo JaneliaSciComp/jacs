@@ -508,6 +508,19 @@ public class SageDAO {
         return secondaryImage;
     }
 
+    public void deleteSecondaryImage(SecondaryImage secondaryImage) throws DaoException {
+        try {
+            Image image = secondaryImage.getImage();
+            if (image!=null) {
+                image.getSecondaryImages().remove(secondaryImage);
+            }
+            getCurrentSession().delete(secondaryImage);
+        }
+        catch (Exception e) {
+            throw new DaoException("Error deleting secondary image in SAGE", e);
+        }
+    }
+
     public SageSession getSageSession(String sessionName, CvTerm type, Experiment experiment) {
         if (log.isTraceEnabled()) {
             log.trace("getSession(sessionName="+sessionName+")");    
