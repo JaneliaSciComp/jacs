@@ -114,7 +114,7 @@ public class SWCData {
     public void write(File swcFile, int offset) throws Exception {
         if (isValid()) {
             if (offset != -1) {
-                final String swcFileName = swcFile.getName();
+                String swcFileName = swcFile.getName();
                 String parentDirName = swcFileName.substring(0, swcFileName.length() - STD_SWC_EXTENSION.length());
                 File parentDir = new File(swcFile.getParent(), parentDirName);
                 // If anyone ever made a file of the name we wish to call our
@@ -124,9 +124,19 @@ public class SWCData {
                 }
                 if (! parentDir.exists() ) {
                     parentDir.mkdirs();
-                }                
-                String newName = StringUtils.getIteratedName(swcFileName, offset);
-                swcFile = new File(parentDir, newName);
+                }
+
+                // use neuron name for the file name, but increment if it's
+                // in use already (we allow multiple neurons with the same name)
+                if (parseName() != "") {
+                    swcFile = getUniqueSWCFile(parentDir, parseName());
+                } else {
+                    // I don't think this will ever be used now...but if
+                    //  the neuron doesn't have a name, we have a fallback
+                    String newName = StringUtils.getIteratedName(swcFileName, offset);
+                    swcFile = new File(parentDir, newName);
+                }
+
             }
             FileWriter writer = new FileWriter(swcFile);
             writeSwcFile(writer);
@@ -136,6 +146,20 @@ public class SWCData {
             writeErrorSWC();
         }
 
+    }
+
+    /**
+     * given a filename, return a filename in the input directory that
+     * is unique, adding integers as needed
+     */
+    private File getUniqueSWCFile(File parentDir, String basename) {
+        File testFile = new File(parentDir, basename + STD_SWC_EXTENSION);
+        int counter = 1;
+        while (testFile.exists()) {
+            counter++;
+            testFile = new File(parentDir, basename + "_" + counter + STD_SWC_EXTENSION);
+        }
+        return testFile;
     }
 
     /**
