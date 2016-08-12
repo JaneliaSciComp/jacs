@@ -1,15 +1,7 @@
 package org.janelia.it.jacs.compute.service.domain;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -68,8 +60,9 @@ public class SageArtifactExportService extends AbstractDomainService {
     public static final String PUBLICATION_OWNER = "group:workstation_users";
     public static final String PUBLICATION_ONTOLOGY_NAME = "Publication";
     public static final String LINE_ANNOTATION_CV_NAME = "alps_splitgal4_public_annotation";
+    public static final String NEED_POST_PROCESSING_FOLDER_NAME = "Need Post Processing";
     private static final String SCALITY_JFS_PREFIX = "/scality";
-    
+
     private SageDAO sage;
     private SampleHelperNG sampleHelper;
     
@@ -337,7 +330,9 @@ public class SageArtifactExportService extends AbstractDomainService {
         // Collect artifacts for export
         SamplePostProcessingResult postResult = objectiveSample.getLatestResultOfType(SamplePostProcessingResult.class);
         if (postResult==null) {
-            logger.error("    Sample has no post-processed artifacts to export");
+            Sample sample = objectiveSample.getParent();
+            logger.error("    "+sample.getName()+" has no post-processed artifacts to export. Adding to folder "+NEED_POST_PROCESSING_FOLDER_NAME);
+            addToPostProcessFolder(sample);
             return false;
         }
                 
@@ -350,14 +345,14 @@ public class SageArtifactExportService extends AbstractDomainService {
         Map<String,ImageArea> imageAreaMap = new HashMap<>();
         for(SampleTile tile : tiles) {
 
-            if (tile.getName().contains("-Verify")) {
-                logger.trace("    Excluding tile "+tile.getName());
+            String area = tile.getAnatomicalArea();
+            if (area.endsWith("-Verify")) {
+                logger.trace("    Excluding tile "+tile.getName()+" with area "+area);
                 continue;
             }
 
             logger.trace("    Converting tile "+tile.getName());
-            
-            String area = tile.getAnatomicalArea();
+
             ImageArea imageArea = imageAreaMap.get(area);
             if (imageArea==null) {
                 imageArea = new ImageArea();
@@ -408,7 +403,7 @@ public class SageArtifactExportService extends AbstractDomainService {
                     String area = result.getAnatomicalArea();
                     if (imageArea.areaName.equals(area)) {
                         if (imageStack!=null) {
-                            logger.warn("Multiple results for area: "+area);
+                            logger.debug("    Multiple results for area: "+area+". Choosing latest.");
                             continue;
                         }
                         imageStack = new ImageStack();
@@ -600,26 +595,27 @@ public class SageArtifactExportService extends AbstractDomainService {
 
     private void synchronizeSecondaryImages(SamplePostProcessingResult artifactRun, Image sourceImage, String tag) throws Exception {
         logger.debug("    Synchronizing secondary images for image: "+sourceImage.getName());
+        Sample sample = artifactRun.getParentRun().getParent().getParent();
         List<Integer> sageIds = new ArrayList<>();
         
         FileGroup tileGroup = artifactRun.getGroup(tag);
                 
-        SecondaryImage secImage = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.SignalMip), productSignalsMip, sourceImage);
+        SecondaryImage secImage = getOrCreateSecondaryImage(sample, DomainUtils.getFilepath(tileGroup, FileType.SignalMip), productSignalsMip, sourceImage);
         if (secImage!=null) {
             sageIds.add(secImage.getId());
         }
         
-        SecondaryImage secImage2 = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.AllMip), productMultichannelMip, sourceImage);
+        SecondaryImage secImage2 = getOrCreateSecondaryImage(sample, DomainUtils.getFilepath(tileGroup, FileType.AllMip), productMultichannelMip, sourceImage);
         if (secImage2!=null) {
             sageIds.add(secImage2.getId());
         }
         
-        SecondaryImage secImage3 = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.SignalMovie), productSignalsTranslation, sourceImage);
+        SecondaryImage secImage3 = getOrCreateSecondaryImage(sample, DomainUtils.getFilepath(tileGroup, FileType.SignalMovie), productSignalsTranslation, sourceImage);
         if (secImage3!=null) {
             sageIds.add(secImage3.getId());
         }
         
-        SecondaryImage secImage4 = getOrCreateSecondaryImage(DomainUtils.getFilepath(tileGroup, FileType.AllMovie), productMultichannelTranslation, sourceImage);
+        SecondaryImage secImage4 = getOrCreateSecondaryImage(sample, DomainUtils.getFilepath(tileGroup, FileType.AllMovie), productMultichannelTranslation, sourceImage);
         if (secImage4!=null) {
             sageIds.add(secImage4.getId());
         }
@@ -627,38 +623,61 @@ public class SageArtifactExportService extends AbstractDomainService {
         logger.info("    Synchronized secondary images: "+sageIds);
     }
     
-    private SecondaryImage getOrCreateSecondaryImage(String path, CvTerm productType, Image sourceImage) throws Exception {
+    private SecondaryImage getOrCreateSecondaryImage(Sample sample, String path, CvTerm productType, Image sourceImage) throws Exception {
         if (path==null) {
-            logger.error("    Missing "+productType.getDisplayName()+" for "+sourceImage.getName());
+            logger.error("    "+sample.getName()+" is missing "+productType.getDisplayName()+" for "+sourceImage.getName()+". Adding to folder "+NEED_POST_PROCESSING_FOLDER_NAME);
+            addToPostProcessFolder(sample);
             return null;
         }
         File file = new File(path);
         String imageName = file.getName();
         String url = getWebdavUrl(path);
-        
+
+        // Find latest secondary image for this product type
+        SecondaryImage latestSecondaryImage = null;
         for(SecondaryImage secondaryImage : new ArrayList<>(sourceImage.getSecondaryImages())) {
-        	if (secondaryImage.getProductType().equals(productType)) {
-        		logger.info("       Updating existing "+productType.getDisplayName()+" for "+sourceImage.getName());
-        		secondaryImage.setName(imageName);
-                secondaryImage.setPath(path);
-                secondaryImage.setUrl(url);
-                sage.saveSecondaryImage(secondaryImage);
-                logger.debug("      Updated SAGE secondary image "+secondaryImage.getId());
-                return secondaryImage; 
-        	}
+            if (secondaryImage.getProductType().equals(productType)) {
+                latestSecondaryImage = secondaryImage;
+            }
         }
-        
+
+        // Delete everything except the latest
+        for(SecondaryImage secondaryImage : new ArrayList<>(sourceImage.getSecondaryImages())) {
+            if (secondaryImage.getProductType().equals(productType) && secondaryImage!=latestSecondaryImage) {
+                // Not latest, so it must be deleted
+                logger.info("      Removing duplicate "+productType.getDisplayName()+" for "+sourceImage.getName()+": "+secondaryImage.getId());
+                sage.deleteSecondaryImage(secondaryImage);
+            }
+        }
+
+        // This is necessary because the deletes above must be committed before our updates below
+        sage.getCurrentSession().flush();
+
+        // Update existing secondary image if possible
+        if (latestSecondaryImage!=null) {
+            logger.info("      Updating existing "+productType.getDisplayName()+" for "+sourceImage.getName()+": "+latestSecondaryImage.getId());
+            latestSecondaryImage.setName(imageName);
+            latestSecondaryImage.setPath(path);
+            latestSecondaryImage.setUrl(url);
+            sage.saveSecondaryImage(latestSecondaryImage);
+            logger.debug("      Updated SAGE secondary image "+latestSecondaryImage.getId());
+            return latestSecondaryImage;
+        }
+
+        // Find existing secondary image associated with another image
         SecondaryImage secondaryImage = sage.getSecondaryImageByName(imageName);
         
         if (secondaryImage!=null) {
+            // Steal it for ourselves
         	secondaryImage.setImage(sourceImage);
         	secondaryImage.setProductType(productType);
             secondaryImage.setPath(path);
             secondaryImage.setUrl(url);
             sage.saveSecondaryImage(secondaryImage);
-            logger.debug("      Updated SAGE secondary image "+secondaryImage.getId());
+            logger.debug("      Updated SAGE secondary image from another image: "+secondaryImage.getId());
         }
         else {
+            // Nothing exists, create a new secondary image
             secondaryImage = new SecondaryImage(sourceImage, productType, imageName, path, url, createDate);
             sage.saveSecondaryImage(secondaryImage);
             logger.debug("      Created SAGE secondary image "+secondaryImage.getId());
@@ -761,7 +780,7 @@ public class SageArtifactExportService extends AbstractDomainService {
 
             for (int i=1; i<annotations.size(); i++) {
                 Annotation dupAnnotation = annotations.get(i);
-                logger.warn("    Ignoring duplicate line annotation: "+dupAnnotation.getName());
+                logger.debug("    Ignoring duplicate line annotation: "+dupAnnotation.getName());
             }
         }
 
@@ -849,7 +868,12 @@ public class SageArtifactExportService extends AbstractDomainService {
         }
         
     }
-    
+
+    private void addToPostProcessFolder(Sample sample) throws Exception {
+        TreeNode runFolder = domainHelper.createOrVerifyRootEntity(ownerKey, NEED_POST_PROCESSING_FOLDER_NAME, true);
+        domainDao.addChildren(ownerKey, runFolder, Arrays.asList(Reference.createFor(sample)));
+    }
+
     private String getWebdavUrl(String filepath) {
     	if (filepath==null) return null;
         return JFSUtils.getWebdavUrlForJFSPath(filepath);
