@@ -228,10 +228,9 @@ public class TmModelManipulator {
     }
 
     // @todo may need to add create, update dates + ownerKey
-    public TmStructuredTextAnnotation addStructuredTextAnnotation(TmNeuron oldTmNeuron, Long parentID, int parentType, int formatVersion,
+    public TmStructuredTextAnnotation addStructuredTextAnnotation(TmNeuron neuron, Long parentID, int parentType, int formatVersion,
             String data) throws Exception {
         
-        TmNeuron tmNeuron = refreshFromData(oldTmNeuron);
         // parent must be neuron or geoann:
         if (parentType != TmStructuredTextAnnotation.GEOMETRIC_ANNOTATION
                 && parentType != TmStructuredTextAnnotation.NEURON) {
@@ -239,7 +238,7 @@ public class TmModelManipulator {
         }
 
         // parent must not already have a structured text annotation
-        if (tmNeuron.getStructuredTextAnnotationMap().containsKey(parentID)) {
+        if (neuron.getStructuredTextAnnotationMap().containsKey(parentID)) {
             throw new Exception("parent ID already has a structured text annotation; use update, not add");
         }
 
@@ -247,7 +246,7 @@ public class TmModelManipulator {
                 idSource.next(), parentID, parentType, data
         );
         
-        tmNeuron.getStructuredTextAnnotationMap().put( parentID, annotation );
+        neuron.getStructuredTextAnnotationMap().put( parentID, annotation );
 
         return annotation;
     }
@@ -358,46 +357,21 @@ public class TmModelManipulator {
     }    
     
     /**
-     * Moves the annotation, and its tree, from old to new neuron.  This is a
-     * complete operation, which refreshes from database, and flushes back
-     * to database.
+     * Moves the annotation and its tree from source to destination neuron.
+     * Does not refresh from database, or save to database.
      * 
-     * @todo ensure that the new neuron is available at call time.
      * @param annotation this will be moved.
-     * @param inMemOldTmNeuron this is the current container of the annotation.
-     * @param inMemNewTmNeuron this will be the container of the annotation.
+     * @param oldTmNeuron this is the current (source) container of the annotation.
+     * @param newTmNeuron this is the destination container of the annotation.
      * @throws Exception thrown by called methods.
      */
-    public void moveNeurite(TmGeoAnnotation annotation, TmNeuron inMemOldTmNeuron, TmNeuron inMemNewTmNeuron) throws Exception {
-        // already in the neuron?  we're done
-        if (inMemNewTmNeuron.getId() == inMemOldTmNeuron.getId()) {
+    public void moveNeurite(TmGeoAnnotation annotation, TmNeuron oldTmNeuron, TmNeuron newTmNeuron) throws Exception {
+        long newNeuronId = newTmNeuron.getId();
+
+        // already same neuron?  done!
+        if (oldTmNeuron.getId().equals(newNeuronId)) {
             return;
         }
-        
-        log.debug("Moving from old neuron " + System.identityHashCode(inMemOldTmNeuron) + " to " + System.identityHashCode(inMemNewTmNeuron));
-
-        TmNeuron oldTmNeuron = refreshFromData(inMemOldTmNeuron);
-        TmNeuron newTmNeuron = refreshFromData(inMemNewTmNeuron);
-        log.debug("Refreshed old neuron " + System.identityHashCode(inMemOldTmNeuron) + ", refreshed new neuron " + System.identityHashCode(inMemNewTmNeuron));
-        
-        moveNeuriteInMem(annotation, oldTmNeuron, newTmNeuron);
-        saveNeuronData(newTmNeuron);
-        saveNeuronData(oldTmNeuron);                
-    }
-    
-    /**
-     * Moves the annotation, and its tree, from old to new neuron.  Do
-     * not refresh from database, or save to database.  This is a partial
-     * operation.
-     * 
-     * @todo ensure that the new neuron is available at call time.
-     * @param annotation this will be moved.
-     * @param oldTmNeuron this is the current container of the annotation.
-     * @param newTmNeuron this will be the container of the annotation.
-     * @throws Exception thrown by called methods.
-     */
-    public void moveNeuriteInMem(TmGeoAnnotation annotation, TmNeuron oldTmNeuron, TmNeuron newTmNeuron) throws Exception {
-        long newNeuronId = newTmNeuron.getId();
 
         // Find the root annotation.  Ultimate parent of the annotation.
         TmGeoAnnotation rootAnnotation = annotation;
@@ -405,8 +379,6 @@ public class TmModelManipulator {
             rootAnnotation = oldTmNeuron.getParentOf(rootAnnotation);
         }
 
-        // DEBUG: find out if subtree list is accurate.
-        //List<TmGeoAnnotation> debug = oldTmNeuron.getSubTreeList(rootAnnotation);
         // Move all the geo-annotations from the old to the new neuron.
         Map<Long,TmGeoAnnotation> movedAnnotationIDs = new HashMap<>();
         final Map<Long, TmStructuredTextAnnotation> oldStructuredTextAnnotationMap = oldTmNeuron.getStructuredTextAnnotationMap();
@@ -467,10 +439,6 @@ public class TmModelManipulator {
         }
     }
 
-    public TmNeuron refreshFromData(TmNeuron neuron) throws Exception {
-        return dataSource.refreshFromEntityData(neuron);
-    }
-
     public void saveNeuronData(TmNeuron neuron) throws Exception {
         dataSource.saveNeuron(neuron);
     }
@@ -484,75 +452,6 @@ public class TmModelManipulator {
 		if (! tmNeuron.containsRootAnnotation( newRoot )) {
 			tmNeuron.addRootAnnotation( newRoot );
 		}        
-    }
-
-    /**
-     * fix connectivity issues for all neurons in a workspace
-     */
-    private void fixConnectivityWorkspace(TmWorkspace tmWorkspace) throws Exception {
-        // remember, can't load workspace object, because that's what we're fixing!
-        for (TmNeuron tmNeuron: tmWorkspace.getNeuronList()) {
-            fixConnectivityNeuron(tmWorkspace, tmNeuron);
-        }
-    }
-
-    /**
-     * fix connectity issues for a neuron (bad parents, since children aren't
-     * stored in the entity data); fix in this case means breaking links
-     */
-    private void fixConnectivityNeuron(TmWorkspace tmWorkspace, TmNeuron tmNeuron) throws Exception {
-        // Not doing the refresh here: may corrupt an intermediate.
-        final StringBuilder errorResults = new StringBuilder();
-        // Check whether the end points are actually known to this neuron.
-        final List<TmAnchoredPathEndpoints> toRemoveEP = new ArrayList<>();
-        for (TmAnchoredPathEndpoints endPoint: tmNeuron.getAnchoredPathMap().keySet()) {
-            if (tmNeuron.getGeoAnnotationMap().get(endPoint.getFirstAnnotationID()) == null  ||
-                tmNeuron.getGeoAnnotationMap().get(endPoint.getSecondAnnotationID()) == null) {
-                // Must discard this point.
-                toRemoveEP.add(endPoint);
-                errorResults
-                        .append(endPoint)
-                        .append(" removed from ")
-                        .append(tmNeuron)
-                        .append(" because its endpoints were not found among annotations.")
-                        .append("\n");
-            }
-        }
-        // Need do this in separate pass, to avoid concurrent-mod.
-        for (TmAnchoredPathEndpoints endPoints: toRemoveEP) {
-            tmNeuron.getAnchoredPathMap().remove(endPoints);
-        }
-        
-        // Check whether the roots are really known annotations.
-        final List<TmGeoAnnotation> toRepairRoots = new ArrayList<>();
-        for (TmGeoAnnotation root: tmNeuron.getRootAnnotations()) {
-            if (! tmNeuron.getGeoAnnotationMap().containsKey(root.getId())) {
-                toRepairRoots.add(root);
-                errorResults
-                        .append(root)
-                        .append(" repaired in ")
-                        .append(tmNeuron)
-                        .append(" because it was not found among annotations.")
-                        .append("\n");
-            }
-        }        
-        // Separate pass to avoid concurrent-mod.
-        for (TmGeoAnnotation geo: toRepairRoots) {
-            tmNeuron.getGeoAnnotationMap().put(geo.getId(), geo);
-        }
-        
-        // Ensure parentage ids are properly established.
-        for (TmGeoAnnotation geo: tmNeuron.getGeoAnnotationMap().values()) {
-            if (geo.getNeuronId() != tmNeuron.getId()) {
-                geo.setNeuronId( tmNeuron.getId() );
-                errorResults
-                        .append(geo)
-                        .append(" had parentage corrected to ")
-                        .append(tmNeuron)
-                        .append(".\n");
-            }
-        }
-        
     }
 
     private void deleteNeuronData(TmNeuron neuron) throws Exception {

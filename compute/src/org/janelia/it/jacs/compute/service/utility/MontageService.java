@@ -155,7 +155,7 @@ public class MontageService extends SubmitDrmaaJobService {
     	
     	File[] coreFiles = FileUtil.getFilesWithPrefixes(file, "core");
     	if (coreFiles.length > 0) {
-    		throw new MissingGridResultException(file.getAbsolutePath(), "Grouping core dumped for "+resultFileNode.getDirectoryPath());
+    		throw new MissingGridResultException(file.getAbsolutePath(), "Montage core dumped for "+resultFileNode.getDirectoryPath());
     	}
     }
 }

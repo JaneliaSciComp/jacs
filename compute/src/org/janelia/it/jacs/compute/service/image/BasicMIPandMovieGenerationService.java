@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityGridService;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainGridService;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
@@ -22,7 +22,7 @@ import org.janelia.it.jacs.shared.utils.FileUtil;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class BasicMIPandMovieGenerationService extends AbstractEntityGridService {
+public class BasicMIPandMovieGenerationService extends AbstractDomainGridService {
 
     protected static final String EXECUTABLE_DIR = SystemConfigurationProperties.getString("Executables.ModuleBase");
     protected static final String FIJI_BIN_PATH = EXECUTABLE_DIR + SystemConfigurationProperties.getString("Fiji.Bin.Path");
@@ -31,7 +31,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
     protected static final String MACRO_NAME = "Basic_MIP_StackAvi.ijm";
     
     protected static final int START_DISPLAY_PORT = 890;
-    protected static final int TIMEOUT_SECONDS = 1800;  // 30 minutes
+    protected static final int TIMEOUT_SECONDS = 3600;  // 60 minutes
     protected static final String CONFIG_PREFIX = "fijiConfiguration.";
 
     protected int randomPort; 
@@ -172,7 +172,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
         
         // Monitor Fiji and take periodic screenshots, killing it eventually
         script.append("fpid=$!\n");
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, TIMEOUT_SECONDS));
         
         // Encode avi movies as mp4 and delete the input avi's
         script.append("cd $TEMP_DIR\n");
@@ -193,7 +193,7 @@ public class BasicMIPandMovieGenerationService extends AbstractEntityGridService
     
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 20;
+    	return 50;
     }
 
 	@Override

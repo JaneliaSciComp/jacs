@@ -1,9 +1,10 @@
 package org.janelia.it.jacs.compute.engine.def;
 
+import java.io.Serializable;
+import java.util.Collection;
+
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-
-import java.io.Serializable;
 
 /**
  * This class represents a condition within forEach, if, and loopUntil attributes
@@ -67,8 +68,14 @@ public class Condition implements Serializable {
             case IS_NULL:
                 return actualValue==null;
             case IS_NOT_EMPTY:
+            	if (actualValue instanceof Collection) {
+                    return actualValue!=null && !((Collection)actualValue).isEmpty();
+            	}
                 return actualValue!=null && !StringUtils.isEmpty(actualValue.toString());
             case IS_EMPTY:
+            	if (actualValue instanceof Collection) {
+                    return actualValue!=null && ((Collection)actualValue).isEmpty();
+            	}
                 return actualValue==null || StringUtils.isEmpty(actualValue.toString());
             default:
                 throw new RuntimeException("not supported");

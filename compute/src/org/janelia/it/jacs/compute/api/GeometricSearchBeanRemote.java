@@ -9,6 +9,7 @@ package org.janelia.it.jacs.compute.api;
 import java.io.File;
 import java.util.List;
 import javax.ejb.Remote;
+
 import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 
 /**

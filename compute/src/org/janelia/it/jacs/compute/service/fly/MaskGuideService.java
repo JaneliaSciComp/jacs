@@ -237,7 +237,7 @@ public class MaskGuideService extends SubmitDrmaaJobService implements IService 
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 12;
+        return 12;
     }
     
     @Override

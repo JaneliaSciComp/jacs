@@ -92,7 +92,7 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
     Subdirectories can be specified below the property e.g. java.io.tmpdir/one
 
     -->
-    <diskStore path="/data/jacsCache"/>
+    <diskStore path="/opt/data/jacsCache"/>
 
     <!--
     TransactionManagerLookup configuration
@@ -468,15 +468,15 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
            diskSpoolBufferSizeMB="50"
             />
 
-    <cache name="ancestorMapCache"
+    <cache name="etlAnnotationMapCache"
            maxEntriesLocalHeap="10"
            eternal="true"
            overflowToDisk="true"
            diskSpoolBufferSizeMB="50"
             />
-            
-    <cache name="neo4jMapCache"
-           maxEntriesLocalHeap="100"
+
+    <cache name="ancestorMapCache"
+           maxEntriesLocalHeap="10"
            eternal="true"
            overflowToDisk="true"
            diskSpoolBufferSizeMB="50"

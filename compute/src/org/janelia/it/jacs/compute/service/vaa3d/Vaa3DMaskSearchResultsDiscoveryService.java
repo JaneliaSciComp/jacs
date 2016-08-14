@@ -1,5 +1,11 @@
 package org.janelia.it.jacs.compute.service.vaa3d;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Scanner;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -11,22 +17,13 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.entity.EntityHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.maskSearch.MaskSearchTask;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.maskSearch.MaskSearchResultNode;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
-
 /**
- * File discovery service for neuron merge results.
- * 
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ * TODO: UNDOCUMENTED
  */
 public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
 
@@ -52,8 +49,7 @@ public class Vaa3DMaskSearchResultsDiscoveryService implements IService{
             task = ProcessDataHelper.getTask(processData);
 
             MaskSearchResultNode tmpNode = (MaskSearchResultNode)ProcessDataHelper.getResultFileNode(processData);
-            Entity parentFolder = entityHelper.createOrVerifyRootEntity(task.getParameter(MaskSearchTask.PARAM_resultsFolderName),
-                    true, true);
+            Entity parentFolder = entityHelper.createOrVerifyRootEntity(task.getParameter(MaskSearchTask.PARAM_resultsFolderName), true, true);
             parentFolder.setValueByAttributeName(EntityConstants.ATTRIBUTE_SEARCH_TASK_ID, task.getObjectId().toString());
             Entity inputMaskEntity = createMaskInputEntity(task.getParameter(MaskSearchTask.PARAM_inputFilePath));
             Entity textResultsEntity = createMaskSearchResultEntity(tmpNode.getFilePathByTag(MaskSearchResultNode.TAG_RESULTS));

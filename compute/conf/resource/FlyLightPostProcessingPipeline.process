@@ -12,53 +12,44 @@
         <input name="REUSE_POST"/>
     
         <!-- Decide which types of processing will be run -->
-        <operation name="Choose Summary Processing Steps" processor="org.janelia.it.jacs.compute.service.entity.sample.ChoosePostProcessingPipelineStepsService">
+        <operation name="Choose Summary Processing Steps" processor="org.janelia.it.jacs.compute.service.domain.sample.ChoosePostProcessingPipelineStepsService">
             <output name="RUN_POST"/>
         </operation>
         
         <sequence if="REUSE_POST=true">
             
             <!-- Reuse sample processing from previous pipeline run -->
-            <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.entity.sample.ReusePostProcessingResultService">
+            <operation name="Reuse Alignment Entity" processor="org.janelia.it.jacs.compute.service.domain.sample.ReusePostProcessingResultService">
                 <input name="SAMPLE_ENTITY_ID"/>
+                <input name="OBJECTIVE"/>
                 <input name="PIPELINE_RUN_ENTITY_ID"/>
                 <output name="RESULT_ENTITY"/>
                 <output name="RESULT_ENTITY_ID"/>
                 <output name="RUN_POST"/>
             </operation>
             
-            <sequence if="RUN_POST=false">
-        
-                <!-- Register images -->
-                <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-                    <input name="RESULT_ENTITY_ID"/>
-                    <input name="PIPELINE_RUN_ENTITY_ID"/>
-                </operation>
-        
-            </sequence>
-            
         </sequence>
         
         <sequence if="RUN_POST=true">
         
-            <!-- TODO: Right now, post-processing only works if processing is run. To fix this, we need to populate SAMPLE_AREAS and other variables when processing is reused. -->
+            <!-- TODO: Right now, post-processing only works if processing is run. To support running post only, we would need to regenerate the merged tiles in lossless format. -->
             <sequence if="RUN_PROCESSING=true">
             
                 <!-- Create a result node for this group -->
-                <operation name="Create Post-Processing Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+                <operation name="Create Post-Processing Result Node" processor="org.janelia.it.jacs.compute.service.domain.node.CreateNamedResultFileNodeService">
                     <input name="NAME" value="Post"/>
                     <output name="RESULT_FILE_NODE"/>
                     <output name="RESULT_FILE_NODE_ID"/>
                 </operation>
                 
                 <!-- Get a list of unaligned images to create summaries for -->
-                <operation name="Get unaligned image List" processor="org.janelia.it.jacs.compute.service.entity.sample.GetUnalignedInputImagesService">
-                    <input name="SAMPLE_AREAS"/>
+                <operation name="Get unaligned image List" processor="org.janelia.it.jacs.compute.service.domain.sample.GetUnalignedInputImagesService">
                     <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="OBJECTIVE"/>
                     <input name="PIPELINE_RUN_ENTITY_ID"/>
+                    <input name="SAMPLE_AREAS"/>
                     <input name="OUTPUT_COLOR_SPEC"/>
                     <input name="MODE" value="$V{IMAGE_TYPE}"/>
-                    <input name="SAMPLE_NAMING" value="true"/>
                     <output name="INPUT_IMAGES"/>
                     <output name="SERVICE_CLASS"/>
                     <output name="NORMALIZE_TO_FIRST_IMAGE"/>
@@ -78,20 +69,16 @@
                 </sequence>
                 
                 <!-- Load the MIPs and movies into the database -->
-                <operation name="Discover Post-Processing Results" processor="org.janelia.it.jacs.compute.service.fileDiscovery.IncrementalPostProcessingResultsDiscoveryService">
+                <operation name="Discover Post-Processing Results" processor="org.janelia.it.jacs.compute.service.domain.discovery.PostProcessingResultsDiscoveryService">
                     <input name="ROOT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
-                    <input name="ROOT_ENTITY_ID" value="$V{PIPELINE_RUN_ENTITY_ID}"/>
+                    <input name="SAMPLE_ENTITY_ID"/>
+                    <input name="OBJECTIVE"/>
+                    <input name="PIPELINE_RUN_ENTITY_ID"/>
                     <input name="RESULT_ENTITY_NAME" value="Post-Processing Result"/>
+                    <input name="INPUT_IMAGES"/>
                     <output name="RESULT_ENTITY_ID"/>
                 </operation>
                     
-                <!-- Register images -->
-                <operation name="Register images" processor="org.janelia.it.jacs.compute.service.entity.sample.ResultImageRegistrationService">
-                    <input name="PIPELINE_RUN_ENTITY_ID"/>
-                    <input name="RESULT_ENTITY_ID"/>
-                    <input name="INPUT_IMAGES"/>
-                </operation>
-            
             </sequence>
         
         </sequence>

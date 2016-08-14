@@ -1,0 +1,8 @@
+{
+    "mongodb": {
+        "connection": {
+            "host": "localhost",
+            "dbname": "jacs"
+        }
+    }
+}

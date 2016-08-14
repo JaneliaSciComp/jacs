@@ -17,11 +17,8 @@ import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException
 import org.janelia.it.jacs.compute.service.vaa3d.Vaa3DHelper;
 import org.janelia.it.jacs.compute.util.ChanSpecUtils;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.cv.Objective;
 import org.janelia.it.jacs.model.vo.ParameterException;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -48,14 +45,9 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
         super.init(processData);
         try {
             this.scriptFile = data.getRequiredItemAsString("ALIGNMENT_SCRIPT_NAME");
-
-            entityLoader.populateChildren(sampleEntity);
-            Entity supportingData = EntityUtils.getSupportingData(sampleEntity);
-            if (supportingData!=null) {
-                this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_MOUNTING_PROTOCOL);
-                this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_TISSUE_ORIENTATION);
-                this.genderCode = sanitizeGender(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, EntityConstants.ATTRIBUTE_GENDER));
-            }
+            this.mountingProtocol = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "mountingProtocol");
+            this.tissueOrientation = sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "tissueOrientation");
+            this.genderCode = sanitizeGender(sampleHelper.getConsensusLsmAttributeValue(alignedAreas, "gender"));
         }
         catch (Exception e) {
             throw new ServiceException(e);
@@ -136,7 +128,7 @@ public class ConfiguredAlignmentService extends AbstractAlignmentService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	if (Objective.OBJECTIVE_20X.getName().equals(sampleEntity.getValueByAttributeName(EntityConstants.ATTRIBUTE_OBJECTIVE))) {
+    	if (Objective.OBJECTIVE_20X.getName().equals(objectiveSample.getObjective())) {
     		// If this is only a 20x alignment, we can probably get away with half a node.
     		return 64;
     	}

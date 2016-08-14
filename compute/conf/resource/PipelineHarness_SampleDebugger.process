@@ -16,7 +16,7 @@
             <output name="SAMPLE_ENTITY_ID"/>
         </operation>
 	
-		<operation name="Sample debugger" processor="org.janelia.it.jacs.compute.service.entity.sample.SampleDebuggerService">
+		<operation name="Sample debugger" processor="org.janelia.it.jacs.compute.service.domain.sample.SampleDebuggerService">
 		    <input name="SAMPLE_ENTITY_ID"/>
 		</operation>
 		

@@ -161,25 +161,36 @@ public class ReflectionHelper {
     /**
      * Get the given attribute from the specified object, using the public getter method.
      */
-    public static Object getUsingGetter(Object obj, String fieldName) 
-            throws Exception {
-        String methodName = getAccessor("get", fieldName);
-        return obj.getClass().getMethod(methodName, EMPTY_ARGS_TYPES).invoke(
-            obj, EMPTY_ARGS_VALUES);
+    public static Object getUsingGetter(Object obj, String fieldName) throws Exception {
+        return getGetter(obj.getClass(), fieldName).invoke(obj, EMPTY_ARGS_VALUES);
+    }
+
+    /**
+     * Get the public getter method for the given field.
+     */
+    public static Method getGetter(Class<?> clazz, String fieldName) throws Exception {
+        String methodName = getAccessorName("get", fieldName);
+        return clazz.getMethod(methodName, EMPTY_ARGS_TYPES);
     }
 
     /**
      * Set the given attribute on the specified object, using the public setter method.
      */
-    public static void setUsingSetter(Object obj, String fieldName, Object value) 
-            throws Exception {
-        Class[] argTypes = {value.getClass()};
+    public static void setUsingSetter(Object obj, String fieldName, Object value) throws Exception {
         Object[] argValues = {value};
-        String methodName = getAccessor("set", fieldName);
-        obj.getClass().getMethod(methodName, argTypes).invoke(obj, argValues);
+        getSetter(obj.getClass(), fieldName, value.getClass()).invoke(obj, argValues);
+    }
+
+    /**
+     * Get the public setter method for the given field.
+     */
+    public static Method getSetter(Class<?> clazz, String fieldName, Class<?> valueClass) throws Exception {
+        Class[] argTypes = {valueClass};
+        String methodName = getAccessorName("set", fieldName);
+        return clazz.getMethod(methodName, argTypes);
     }
     
-    private static String getAccessor(String prefix, String fieldName) throws NoSuchMethodException {
+    private static String getAccessorName(String prefix, String fieldName) throws NoSuchMethodException {
         String firstChar = fieldName.substring(0, 1).toUpperCase();
         return prefix+firstChar+fieldName.substring(1);
     }

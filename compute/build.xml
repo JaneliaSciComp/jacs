@@ -32,33 +32,41 @@
     <property name="localname" value="compute"/>
     <property name="condesc.dir" value="${basedir}/conf/container_descriptor"/>
     <property name="webServices.dir" value="${basedir}/conf/webServices"/>
+    <property name="jacs.properties.dir" value="${basedir}/../shared/conf"/>
+    <property name="build.jars.dir" value="${basedir}/build/jars"/>
 
     <property name="rest-ws-war" value="${localname}-rest-ws.war"/>
+    <property name="secure-ws-war" value="${localname}-secure-ws.war"/>
 
-    <!-- Compiles all src code from other than the src area into ${build.classes.dir} -->
-	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
+    <!-- Set some generic properties. Doing it in this target gives us access to all props in the generic set-common-properties -->
+    <target name="set-common-properties" depends="build-module-init.set-common-properties">
+        <property name="common.module" value="${basedir}/../common"/>
+        <property name="model.module" value="${basedir}/../model"/>
+        <property name="jar.name" value="${localname}.jar"/>
+        <property name="test.jar.name" value="${localname}-test.jar"/>
+        <property name="drmaa.jar.name" value="${localname}-drmaa.jar"/>
+        <property name="build.unzipped.dir" value="${build.jars.dir}/unzipped"/>
 
-        <property name="shared.src.dir" value="${basedir}/../shared/src"/>
-        <property name="model.src.dir" value="${basedir}/../model/src"/>
-        <path id="compile.local-classpath">
-           <fileset dir="${shared.src.dir}/../lib" includes="**/*.jar"/>
-           <fileset dir="${basedir}/../common" includes="**/*.jar"/>
-            <!-- We need the jar for JAXB -->
-           <pathelement location="${common.module}/JAXB-2.1.5/jaxb-api.jar"/>
-           <pathelement location="${common.module}/JAXB-2.1.5/jaxb-impl.jar"/>
-           <pathelement location="${common.module}/JAXB-2.1.5/jaxb1-impl.jar"/>
+        <!-- Add jars (not in ${lib.dir}) required for compiling src -->
+        <path id="compile.classpath.additional">
+            <pathelement location="${model.module}/build/jars/jacs-model.jar"/>
+            <pathelement location="${shared.module}/build/jars/jacs-shared.jar"/>
+            <pathelement location="${common.dir}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
+            <fileset dir="${basedir}/../common" includes="**/*.jar"/>
         </path>
-        <javac srcdir="${model.src.dir}" destdir="${build.classes.dir}"
-               debug="${compile.debug}" optimize="${compile.optimize}" deprecation="${compile.deprecation}">
-            <classpath refid="compile.local-classpath"/>
-            <include name="org/janelia/it/jacs/model/**/*.java"/>
-        </javac>
-        <javac srcdir="${shared.src.dir}" destdir="${build.classes.dir}"
-               debug="${compile.debug}" optimize="${compile.optimize}" deprecation="${compile.deprecation}">
-            <classpath refid="compile.local-classpath"/>
-            <include name="org/janelia/it/jacs/shared/**/*.java"/>
-        </javac>
+
+        <!-- additional classes needed to compile and/or run tests -->
+        <path id="test.classpath.additional">
+            <pathelement path="${model.module}/build/test/classes"/> <!-- shared test classes -->
+            <pathelement location="${compute.module}/scripts/blast/"/>
+            <fileset file="${compute.module}/scripts/blast/blast.parameters"/>
+            <pathelement location="${shared.module}/conf" />
+        </path>
+
     </target>
+
+	<target name="local-compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
+	</target>
 
     <target name="local-jar" depends="local-compile, compile, make-jars-dir" unless="manifest.classpath">  
     	<property name="dep.dir" value="${build.jars.dir}/lib"/>
@@ -68,22 +76,22 @@
         <!-- Maintenance note: to add a jar to the lib folder of compute's ear file, add it to compute.classpath. -->
         <path id="compute.classpath">
             <fileset dir="${basedir}/lib" includes="**/*.jar"/>
-            <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
-            <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
-            <fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Neo4j" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/jama-1.0.1" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Scality" includes="**/*.jar"/>
+		    <fileset file="${common.dir}/Logging/slf4j-api-1.7.5.jar"/>
+		    <fileset file="${common.dir}/Logging/slf4j-log4j12-1.7.5.jar"/>
+			<fileset dir="${common.dir}/Apache-Commons" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Solrj" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/ehcache" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/jama-1.0.1" includes="**/*.jar"/>
+			<fileset dir="${common.dir}/Guava" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
             <fileset dir="${common.dir}/snakeyaml-1.11" includes="**/*.jar"/>
             <fileset dir="${common.dir}/commons-vfs" includes="**/*.jar"/>
             <fileset dir="${common.dir}/commons-net" includes="**/*.jar"/>
             <fileset dir="${common.dir}/JodaTime" includes="**/*.jar"/>
             <fileset dir="${common.dir}/protostuff-1.3.9" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/JAX-RS-2.0.1" includes="**/*.jar"/>
+            <fileset dir="${common.dir}/Jersey-2.19" includes="**/*.jar"/>
             <fileset file="${common.dir}/GWT/gwt-servlet.jar"/>
             <fileset file="${common.dir}/Spring/jxl.jar"/>
             <fileset dir="${basedir}/../shared/lib" includes="**/jai*.jar"/>
@@ -101,7 +109,7 @@
        		<classpath refid="dependency.classpath" />
         </manifestclasspath>
 
-	<jar destfile="${build.jars.dir}/${jar.name}">
+	    <jar destfile="${build.jars.dir}/${jar.name}">
             <fileset dir="${build.classes.dir}" includes="**/*.class"/>
             <fileset dir="${basedir}/conf/resource" includes="*.process"/>
             <manifest>
@@ -111,14 +119,9 @@
             </manifest>
         </jar>
 
-        <antcall target="drmaa-jar">
-            <param name="jacs.properties.dir" value="${basedir}/../shared/conf"/>
-            <param name="build.jars.dir" value="${basedir}/build/jars"/>
-        </antcall>
-
 	</target>
 
-    <target name="test-jar" depends="local-compile">
+    <target name="test-jar" depends="local-compile, make-jars-dir">
         <jar destfile="${build.jars.dir}/${test.jar.name}" >
             <fileset dir="${basedir}/test/conf/fasta" />
             <fileset dir="${basedir}/test/conf/process" includes="*.process"/>
@@ -131,18 +134,18 @@
         </jar>
 	</target>
 
-    <target name="drmaa-jar" depends="setup">
-        <!-- build jacs-drmaa.jar -->
+    <!-- build jacs-drmaa.jar -->
+    <target name="drmaa-jar" depends="local-compile, make-jars-dir">
+
         <mkdir dir="${build.unzipped.dir}" />
         <unjar src="${basedir}/lib/drmaa.jar" dest="${build.unzipped.dir}" overwrite="true"/>
-        <!--<copy file="${basedir}/../shared/conf/jacs.properties" todir="${build.unzipped.dir}" overwrite="true" />-->
+
         <jar destfile="${build.jars.dir}/${drmaa.jar.name}">
             <fileset dir="${build.classes.dir}">
                 <include name="org/janelia/it/jacs/compute/drmaa/*.class"/>
                 <include name="org/janelia/it/jacs/compute/service/common/grid/submit/GridProcessResult.class"/>
                 <include name="org/janelia/it/jacs/compute/service/common/grid/submit/sge/RemoteJobStatusLogger.class"/>
                 <include name="org/janelia/it/jacs/compute/api/JobControlBeanRemote.class"/>
-                <include name="org/janelia/it/jacs/model/**/*.class"/>
             </fileset>
             <fileset dir="${basedir}/conf/drmaa">
                 <include name="**"/>
@@ -150,6 +153,7 @@
             <fileset dir="${jacs.properties.dir}">
                 <include name="jacs.properties"/>
             </fileset>
+            <zipfileset src="${model.module}/build/jars/jacs-model.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/Spring/log4j-1.2.14.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/Spring/commons-logging.jar" excludes="META-INF/** meta-inf/**"/>
             <zipfileset src="${common.dir}/Spring/spring.jar" excludes="META-INF/** meta-inf/**"/>
@@ -172,10 +176,57 @@
                 <include name="services/**"/>
             </metainf>
         </jar>
+
         <delete dir="${build.unzipped.dir}"/>
+
     </target>
 
-    <target name="dashboard-war">
+    <target name="build-war" depends="local-jar, make-jars-dir">
+
+        <war warfile="${basedir}/build/jars/${localname}.war" webxml="${basedir}/WEB-INF/web.xml">
+            <classes dir="${build.classes.dir}">
+                <include name="org/**/web/**/*.class"/>
+            </classes>
+            <fileset dir="${jacs.properties.dir}">
+                <include name="jacs.properties"/>
+            </fileset>
+            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
+            </manifest>
+        </war>
+
+        <war warfile="${basedir}/build/jars/${secure-ws-war}" webxml="${basedir}/WEB-INF/secure-web-rest-ws.xml">
+            <classes dir="${build.classes.dir}">
+                <include name="org/**/wsrest/**/*.class"/>
+            </classes>
+            <fileset dir="${jacs.properties.dir}">
+                <include name="jacs.properties"/>
+            </fileset>
+            <fileset dir="${basedir}/conf">
+                <include name="ehcache2-jacs.xml"/>
+                <include name="c3p0-nosql.json"/>
+            </fileset>
+            <fileset dir="${basedir}/webcontent">
+                <include name="**/*"/>
+            </fileset>
+            <lib dir="${common.dir}/Directory">
+                <include name="**/*.jar"/>
+            </lib>
+            <lib dir="${common.dir}/swagger">
+                <include name="**/*.jar"/>
+            </lib>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
+            </manifest>
+        </war>
+
+    </target>
+
+    <target name="dashboard-war" depends="local-compile, make-jars-dir">
+    	
         <war warfile="${basedir}/build/jars/compute-dashboard.war" webxml="${basedir}/../dashboard/web.xml">
             <fileset dir="${basedir}/../dashboard/src">
                 <include name="index.html"/>
@@ -189,80 +240,11 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
         </war>
+
     </target>
 
-    <target name="build-war" depends="local-jar">
-        <war warfile="${basedir}/build/jars/${localname}.war" webxml="${basedir}/WEB-INF/web.xml">
-            <classes dir="${build.classes.dir}">
-                <include name="org/**/web/**/*.class"/>
-                <!--<include name="org/**/servlet/**/*.class"/>-->
-            </classes>
-            <fileset dir="${jacs.properties.dir}">
-                <include name="jacs.properties"/>
-            </fileset>
-            <!--<fileset dir="${basedir}/jsp">-->
-                <!--<include name="index.jsp"/>-->
-                <!--<include name="css/*"/>-->
-                <!--<include name="images/*"/>-->
-                <!--<include name="includes/*"/>-->
-                <!--<include name="js/*"/>-->
-                <!--<include name="*.jsp"/>-->
-                <!--<include name="*.css"/>-->
-            <!--</fileset>-->
-            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
-            <manifest>
-                <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
-            </manifest>
-        </war>
-        <war warfile="${basedir}/build/jars/${rest-ws-war}" webxml="${basedir}/WEB-INF/web-rest-ws.xml">
-            <classes dir="${build.classes.dir}">
-                <include name="org/**/wsrest/RestfulWebService.class"/>
-                <include name="org/**/wsrest/computeresources/**/*.class"/>
-                <include name="org/**/wsrest/mouselight/**/*.class"/>
-                <include name="org/**/wsrest/dataresources/**/*.class"/>
-                <include name="org/**/annotation/api/*.class"/>
-                <include name="org/**/annotation/to/*.class"/>
-            </classes>
-            <lib dir="${basedir}/lib/resteasy-2.3.4">
-                <include name="**/*.jar"/>
-            </lib>
-            <webinf dir="${condesc.dir}" includes="jboss-web.xml"/>
-            <manifest>
-                <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${DSTAMP} ${TSTAMP}"/>
-            </manifest>
-        </war>
-    </target>
+    <target name="build-ear" depends="build-war, dashboard-war" description="builds the ear file">
 
-    <target name="build-ear" depends="make-jars-dir, build-war, dashboard-war" description="builds the ear file">
-        <delete file="${build.jars.dir}/*" verbose="true"/>
-    	
-        <ear destfile="${build.jars.dir}/${localname}.ear" appxml="${condesc.dir}/application.xml">
-            <fileset file="${basedir}/lib/drmaa.jar"/>
-            <fileset file="${basedir}/build/jars/${localname}.war"/>
-            <fileset file="${basedir}/build/jars/compute-dashboard.war"/>
-            <fileset file="${basedir}/build/jars/${rest-ws-war}"/>
-            <fileset file="${basedir}/build/jars/${localname}.jar"/>
-            <fileset file="${basedir}/build/jars/${localname}.sar"/>
-            <fileset file="${basedir}/build/jars/${localname}.har"/>
-            <zipfileset dir="${dep.dir}" prefix="lib"/>
-            <fileset dir="${jacs.properties.dir}">
-                <include name="jacs.properties"/>
-            </fileset>
-            <fileset dir="${basedir}/conf">
-            	<include name="ehcache2-jacs.xml"/>
-            	<include name="neo4j-beans.xml"/>
-            </fileset>
-            <manifest>
-                <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
-            </manifest>
-            <metainf dir="${condesc.dir}" includes="jboss-app.xml"/>
-        </ear>
-    </target>
-    <!-- Defines the set of targets that should be run to completely build this module. -->
-	<target name="build" depends="local-jar">
         <!-- build .har file for Hibernate-service -->
         <jar jarfile="${basedir}/build/jars/${localname}.har">
             <fileset dir="${basedir}/../model/conf/hibernate_mappings">
@@ -277,6 +259,7 @@
             </manifest>
             <metainf dir="${condesc.dir}" includes="hibernate-service.xml"/>
         </jar>
+
         <!-- build .sar file for StartupMBean -->
         <jar jarfile="${basedir}/build/jars/${localname}.sar">
             <manifest>
@@ -284,20 +267,20 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}">
-            	<include name="jboss-service.xml"/>
-            	<include name="*-xmbean.xml"/>
+                <include name="jboss-service.xml"/>
+                <include name="*-xmbean.xml"/>
             </metainf>
         </jar>
+
         <!-- build ejb client jar -->
         <jar jarfile="${basedir}/build/jars/${localname}-client.jar">
             <fileset dir="${build.classes.dir}">
                 <include name="org/janelia/it/jacs/compute/api/EJBRemoteHome.class"/>
                 <include name="org/janelia/it/jacs/compute/api/AnnotationBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/ComputeBeanRemote.class"/>
-            	<include name="org/janelia/it/jacs/compute/api/EntityBeanRemote.class"/>
+                <include name="org/janelia/it/jacs/compute/api/EntityBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/SearchBeanRemote.class"/>
-            	<include name="org/janelia/it/jacs/compute/api/SolrBeanRemote.class"/>
-                <!--<include name="org/janelia/it/jacs/compute/api/GenomeContextBeanRemote.class"/>-->
+                <include name="org/janelia/it/jacs/compute/api/SolrBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/GeometricSearchBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/ComputeException.class"/>
                 <include name="org/janelia/it/jacs/compute/access/DaoException.class"/>
@@ -305,8 +288,7 @@
                 <include name="org/janelia/it/jacs/compute/engine/service/ServiceException.class"/>
                 <include name="org/janelia/it/jacs/compute/api/JobControlBeanRemote.class"/>
                 <include name="org/janelia/it/jacs/compute/api/TiledMicroscopeBeanRemote.class"/>
-            	<include name="org/janelia/it/jacs/compute/api/support/*.class"/>
-                <!--<include name="org/janelia/it/jacs/compute/gcdml/**/*.class"/>-->
+                <include name="org/janelia/it/jacs/compute/api/support/*.class"/>
             </fileset>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
@@ -314,86 +296,51 @@
             </manifest>
         </jar>
 
-        <antcall target="test-jar" />
+        <ear destfile="${build.jars.dir}/${localname}.ear" appxml="${condesc.dir}/application.xml">
+            <fileset file="${basedir}/lib/drmaa.jar"/>
+            <fileset file="${basedir}/build/jars/compute-dashboard.war"/>
+            <fileset file="${basedir}/build/jars/${rest-ws-war}"/>
+            <fileset file="${basedir}/build/jars/${secure-ws-war}"/>
+            <fileset file="${basedir}/build/jars/${localname}.war"/>
+            <fileset file="${basedir}/build/jars/${localname}.jar"/>
+            <fileset file="${basedir}/build/jars/${localname}.sar"/>
+            <fileset file="${basedir}/build/jars/${localname}.har"/>
+        	<zipfileset file="${shared.module}/build/jars/jacs-shared.jar" prefix="lib"/>
+            <zipfileset file="${model.module}/build/jars/jacs-model.jar" prefix="lib"/>
+        	<zipfileset dir="${dep.dir}" prefix="lib"/>
+            <fileset dir="${jacs.properties.dir}">
+                <include name="jacs.properties"/>
+            </fileset>
+            <fileset dir="${basedir}/conf">
+                <include name="ehcache2-jacs.xml"/>
+            </fileset>
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
+            </manifest>
+            <metainf dir="${condesc.dir}" includes="jboss-app.xml"/>
+        </ear>
 
-        <!-- build ear for application -->
-        <antcall target="build-ear" >
-            <param name="jacs.properties.dir" value="${basedir}/../shared/conf"/>
-            <param name="build.jars.dir" value="${basedir}/build/jars"/>
-        </antcall>
-
-        <!-- copy required perl script -->
-        <!--<copy file="${basedir}/scripts/camera_html_blast.pl" todir="${basedir}/build/jars" overwrite="true"/>-->
     </target>
 
-    <!--<target name="commandline-gcdml-tar" depends="local-jar">-->
-        <!--<delete file="${build.jars.dir}/commandline-gcdml.tar" />-->
-        <!--<mkdir dir="${build.jars.dir}/gcdml-dir/jar" />-->
+    <target name="clean">
+        <delete includeEmptyDirs="true">
+            <fileset dir="${basedir}/build">
+                <include name="*/**" />
+            </fileset>
+        </delete>
+    </target>
 
-        <!--<copy file="${common.dir}/Spring/log4j-1.2.14.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/GWT/gwt-user.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/Spring/hibernate3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/Spring/dom4j-1.6.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/Spring/commons-collections-2.1.1.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/Spring/cglib.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--&lt;!&ndash;These jars below were removed as the ant target is defunct.  Still keeping the target around, for now. &ndash;&gt;-->
-        <!--&lt;!&ndash;<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/jbossall-client.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
-        <!--&lt;!&ndash;<copy file="${common.dir}/JBoss-Lib-4.2.3.GA/commons-logging.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
-        <!--<copy file="${common.dir}/JBoss-Server-4.2.3.GA/javassist.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.dir}/JBoss-Server-4.2.3.GA/antlr.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-
-        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb-api.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${common.module}/JAXB-2.1.5/jaxb1-impl.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-
-        <!--<copy file="${basedir}/../model/build/jars/jacs-model.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="${basedir}/../jacs/conf/container_descriptor/hibernate.cfg.xml" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-
-        <!--&lt;!&ndash;<copy file="${common.dir}/PostgreSQL-8.1/jdbc/postgresql-8.1-404.jdbc3.jar" todir="${build.jars.dir}/gcdml-dir/jar" />&ndash;&gt;-->
-        <!--<copy file="${common.dir}/MySQL/mysql-connector-java-5.1.15-bin.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-
-        <!--<copy file="${build.jars.dir}/compute.jar" todir="${build.jars.dir}/gcdml-dir/jar" />-->
-        <!--<copy file="/conf/jacs.properties" todir="${build.jars.dir}/gcdml-dir" />-->
-        <!--<copy file="${basedir}/../shared/build/jars/gcdml-shared.jar" todir="${build.jars.dir}/gcdml-dir" />-->
-
-        <!--<tar destfile="${build.jars.dir}/commandline-gcdml.tar" basedir="${build.jars.dir}/gcdml-dir" />-->
-
-        <!--<delete dir="${build.jars.dir}/gcdml-dir" />-->
-
-    <!--</target>-->
-    
-    <!-- Set some generic properties.  Doing it in this target gives us access to all  -->
-	<!-- props in the generic set-common-properties -->
-	<target name="set-common-properties" depends="build-module-init.set-common-properties">
-		<property name="common.module" value="${basedir}/../common"/>
-		<property name="model.module" value="${basedir}/../model"/>
-		<property name="jar.name" value="${localname}.jar"/>
-        <property name="test.jar.name" value="${localname}-test.jar"/>
-        <property name="drmaa.jar.name" value="${localname}-drmaa.jar"/>
-        <property name="build.unzipped.dir" value="${build.jars.dir}/unzipped"/>
-
-        <!-- Add jars (not in ${lib.dir}) required for compiling src -->
-		<path id="compile.classpath.additional">
-			<pathelement location="${model.module}/build/jars/jacs-model.jar"/>
-            <pathelement location="${common.dir}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
-			<pathelement location="${common.module}/build/jars/jacs-shared.jar"/>
-            <fileset dir="${basedir}/../common" includes="**/*.jar"/>
-        </path>
-
-        <!-- additional classes needed to compile and/or run tests -->
-        <path id="test.classpath.additional">
-            <pathelement path="${model.module}/build/test/classes"/> <!-- shared test classes -->
-            <pathelement location="${compute.module}/scripts/blast/"/>
-            <fileset file="${compute.module}/scripts/blast/blast.parameters"/>
-            <pathelement location="${shared.module}/conf" />
-        </path>
+    <!-- Defines the set of targets that should be run to completely build this module. -->
+    <target name="build" depends="build-ear, drmaa-jar, test-jar">
 
     </target>
 
     <!-- deploys to app server area -->
     <target name="windows-deploy-[your-server]-dev" depends="setup" description="Deploy ear and jars to development server">
-        <input message="Please enter server name (i.e. camdev2):" addproperty="server.address" defaultvalue=""/>
-        <input message="Please enter password for ccbuild:" addproperty="server.password" />
+        <property name="server.address">${user.server.machine}</property>
+        <!--<input message="Please enter server name (i.e. camdev2):" addproperty="server.address" defaultvalue=""/>-->
+        <input message="[${server.address}] Please enter password:" addproperty="server.password" />
 
         <echo message="Checking ${jacs.properties.dir}/${server.address}.properties for existance" />
         <condition property="deployment-specific.properties.file.name"
@@ -449,7 +396,7 @@
             <isset property="user.server.machine"/>
         </condition>
         <antcall target="setHost"/>
-        <antcall target='getHost'/>
+        <antcall target="getHost"/>
     </target>
 
     <target name="getHost" unless="host.provided" description="Ping the user for a host">
@@ -483,7 +430,7 @@
         </antcall>
     </target>
 
-    <target name="deploy-jboss-app" depends="setup" >
+    <target name="deploy-jboss-app" depends="setup">
 
         <echo message="Testing connection" />
         <echo message="SSH Common Params ${ssh.common.params} for ${ssh}"/>
@@ -523,19 +470,12 @@
 
         <echo message="computeserver.ejb.service = ${FromPropFile.computeserver.ejb.service}" />
 
-         <!--build ear file -->
-        <antcall target="build-ear" >
-            <param name="jacs.properties.dir" value="${temp.dir}"/>
-            <param name="build.jars.dir" value="${temp.dir}"/>
+        <!--build drmaa file -->
+        <antcall target="build">
+           <param name="jacs.properties.dir" value="${temp.dir}"/>
         </antcall>
 
-        <!--build drmaa file -->
-       <antcall target="drmaa-jar" >
-           <param name="jacs.properties.dir" value="${temp.dir}"/>
-           <param name="build.jars.dir" value="${temp.dir}"/>
-       </antcall>
-
-         <!--stop jboss server and give it time to shutdown-->
+        <!--stop jboss server and give it time to shutdown-->
         <sequential >
             <echo message="Shutting down JBoss...(/groups/jacs/jacsHosts/bin/stopwildfly.sh ${jboss.home} ${FromPropFile.computeserver.ejb.service})" />
             <exec executable="${ssh}" description="Shutting down Jboss"
@@ -564,14 +504,16 @@
         <echo message="Copying ${localname}.ear file to server" />
         <exec executable="${scp}" description="Publishing ear file">
             <arg line="${scp.common.params} ${temp.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/standalone/deployments/${localname}.ear"/>
+            <arg line="${scp.common.params} ${build.jars.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/server/default/deploy/${localname}.ear"/>
         </exec>
+
          <!--copy jars -->
         <echo message="Copying libs to server: ${scp} ${scp.common.params} ${shared.module}/build/jars/jacs-grid.jar ${server.username}@${server.address}:${Grid.Jar.Path}" />
         <exec executable="${scp}">
             <arg line="${scp.common.params} ${shared.module}/build/jars/jacs-grid.jar ${server.username}@${server.address}:${Grid.Jar.Path}"/>
         </exec>
         <exec executable="${scp}">
-            <arg line="${scp.common.params} ${temp.dir}/${drmaa.jar.name} ${server.username}@${server.address}:${Drmaa.Submitter.Jar.Path}"/>
+            <arg line="${scp.common.params} ${build.jars.dir}/${drmaa.jar.name} ${server.username}@${server.address}:${Drmaa.Submitter.Jar.Path}"/>
         </exec>
         <exec executable="${scp}">
             <arg line="${scp.common.params} ${basedir}/scripts/${FromPropFile.Drmaa.Submitter.Script.Name} ${server.username}@${server.address}:${Drmaa.Submitter.Script.Path}"/>
@@ -581,6 +523,7 @@
         </exec>
 
          <!--restart JBoss -->
+    	<sleep seconds="2"/>
         <echo message="Starting JBoss" />
         <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} default)"
               outputproperty="exec.output" errorproperty="exec.error">

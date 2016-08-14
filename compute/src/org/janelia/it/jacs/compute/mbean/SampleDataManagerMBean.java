@@ -15,16 +15,12 @@ public interface SampleDataManagerMBean {
     public void runAllSampleDataCompression(String compressionType);
     public void runSampleDataCompression(String user, String dataSetName, String compressionType);
     public void runSingleSampleDataCompression(String sampleId, String compressionType);
-    public void runSampleImageRegistration(String user);
-    public void runSampleRetirement(String user, String dataSetName, String maxSamples, Boolean testRun);
-    public void runAllSampleRetirement(String maxSamplesPerUser, Boolean testRun);
     
     // File management
-    public void runSingleSampleArchival(String sampleEntityId);  
-    public void runCompleteSampleArchival(String user);
     public void runSyncSampleToScality(String sampleEntityId, String filetypes, Boolean deleteSourceFiles);  
     public void runSyncDataSetToScality(String user, String dataSet, String filetypes, Boolean deleteSourceFiles);
-    
+    public void runSyncAllLSMsToScality();
+
     // Generic confocal image processing pipelines, driven by pipeline configurations on a data-set basis
     public void cancelAllIncompleteDataSetPipelineTasks();
     public void cancelAllIncompleteUserTasks(String user);
@@ -33,18 +29,13 @@ public interface SampleDataManagerMBean {
     public void runSampleFolder(String folderId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams);
     public void runSamplePipelines(String sampleId, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment, String extraParams);
     public void runConfiguredSamplePipeline(String sampleEntityId, String configurationName, Boolean reuseSummary, Boolean reuseProcessing, Boolean reusePost, Boolean reuseAlignment);
-    public void runNeuronSeparationPipeline(String resultEntityId);
-    public void runNeuronSeparationMapping(String separationId1, String separationId2);
     
     // Generic sample processing
-    public void applyProcessToDataset(String user, String dataSetName, String parentOrChildren, String processName, String extraParams);
+    public void applyProcessToDataset(String user, String dataSetName, String processName, String extraParams);
     public void applyProcessToSample(String sampleEntityId, String processName, String extraParams);
     public void applyProcessToSamplesInFolder(String folderId, String processName, String extraParams);
     
     // Upgrade pipelines
-    public void runRepairSeparationsPipeline(String user);
-    public void runRepairSeparationResultsPipeline(String user);
-
     public void scalityMigrationService(String filePath);
     public void jfsExportService(String filePath);
     public void bzipLSMCompressionService(String filePath, String owner, String compressMode);
@@ -52,6 +43,7 @@ public interface SampleDataManagerMBean {
     
     // SAGE database
     public void runSageLoader(String owner, String item, String configPath, String grammarPath, String lab, String debug, String lock);
+    public void runSyncReleaseFolders(String owner, String releaseName);
     public void runSageArtifactExport(String owner, String releaseName);
     public void runSageArtifactExport();
     public void runSageQiScoreSync(Boolean testRun);

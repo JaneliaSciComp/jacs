@@ -49,7 +49,7 @@ public class NeuronMergeResultNode extends FileNode implements IsSerializable, S
         });
         // Assumes one and only one file, and that the tag is a unique part of the filename!
         if (1 <= tmpFiles.length) {
-            return tmpFiles[0].getAbsolutePath();
+            return tmpFiles[0].getName();
         }
         return null;
     }

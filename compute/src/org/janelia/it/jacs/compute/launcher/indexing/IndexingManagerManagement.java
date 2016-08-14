@@ -18,9 +18,11 @@ public interface IndexingManagerManagement {
 
 	void destroy();
 
-	public void scheduleIndexing(Long entityId);
+	public void scheduleIndexing(Long domainObjectId, String clazz);
 
-	public void scheduleAddNewAncestor(Long entityId, Long newAncestorId);
+	public void scheduleRemoval(Long domainObjectId);
+
+	public void scheduleAddNewAncestor(Long domainObjectId, Long newAncestorId);
 	
 	public int runNextBatch();
 }

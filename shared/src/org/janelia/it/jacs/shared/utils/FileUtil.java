@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -1197,5 +1199,31 @@ public class FileUtil {
             }
         }
         return true;
+    }
+
+    private static final String FILE_PATTERN = "^(.*?)\\.((([^./]+)(\\.(bz2|gz))?))$";
+
+    /**
+     * Get the basename of a filepath, without the extension. This method also removes compound extensions (lsm.bz2, tar.gz).
+     * @param path
+     * @return
+     */
+    public static String getBasename(String path) {
+        Pattern p = Pattern.compile(FILE_PATTERN);
+        Matcher m = p.matcher(path);
+        if (m.matches()) return m.group(1);
+        return path;
+    }
+
+    /**
+     * Get the extension of a filepath. This method also returns compound extensions (lsm.bz2, tar.gz).
+     * @param path
+     * @return
+     */
+    public static String getExtension(String path) {
+        Pattern p = Pattern.compile(FILE_PATTERN);
+        Matcher m = p.matcher(path);
+        if (m.matches()) return m.group(3);
+        return "";
     }
 }

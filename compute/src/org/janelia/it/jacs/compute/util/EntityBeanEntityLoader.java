@@ -2,7 +2,6 @@ package org.janelia.it.jacs.compute.util;
 
 import java.util.Set;
 
-import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EntityBeanRemote;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityData;

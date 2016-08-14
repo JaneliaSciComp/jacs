@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.service.neuronSeparator;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
  * Common utility functions for generating command lines to call the Neuron Separator and its related utilities.
@@ -39,6 +38,10 @@ public class NeuronSeparatorHelper {
     protected static final String NEURON_MAPPING_SCRIPT = 
             SystemConfigurationProperties.getString("Executables.ModuleBase") +
             SystemConfigurationProperties.getString("NeuronMapping.ScriptPath");
+
+    protected static final String NEURON_WEIGHTS_SCRIPT =
+            SystemConfigurationProperties.getString("Executables.ModuleBase") +
+                    SystemConfigurationProperties.getString("NeuronWeights.ScriptPath");
     
 	public static String getNeuronSeparationCommands(int numThreads, boolean isWarped) throws ServiceException {
 	    StringBuilder script = new StringBuilder();
@@ -54,6 +57,13 @@ public class NeuronSeparatorHelper {
     public static String getNeuronMappingCommands(String outputDir, String inputFile1, String inputFile2) {
         StringBuilder script = new StringBuilder();
         script.append("sh "+NEURON_MAPPING_SCRIPT+" \""+outputDir+"\" \""+inputFile1+"\" \""+inputFile2+"\"");
+        return script.toString();
+    }
+
+    public static String getNeuronWeightsCommands(int numThreads) {
+        StringBuilder script = new StringBuilder();
+        script.append("export NFE_MAX_THREAD_COUNT="+numThreads+"\n");
+        script.append("sh "+NEURON_WEIGHTS_SCRIPT+ " $CONFIG_FILE $OUTPUT_DIR");
         return script.toString();
     }
     

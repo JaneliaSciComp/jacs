@@ -64,6 +64,8 @@
             <fileset dir="${common.module}/LOCI/" includes="*.jar"/>
             <fileset dir="${common.module}/Solrj/" includes="*.jar"/>
             <fileset dir="${common.module}/JodaTime/" includes="*.jar"/>
+            <fileset dir="${common.module}/Reflections" includes="*.jar"/>
+            <fileset dir="${common.module}/Directory/" includes="*.jar"/>
             <pathelement location="${common.module}/Spring/dom4j-1.6.1.jar"/>
             <fileset dir="${common.dir}/Hibernate-3.2" includes="hibernate3.jar"/>
         </path>

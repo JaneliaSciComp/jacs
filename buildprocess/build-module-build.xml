@@ -27,6 +27,9 @@
     <!-- Import all the generic module targets -->
     <!--<import file="../buildprocess/build-module.xml"/>-->
 
+	<target name="setup">
+    </target>
+	
 	<!-- Compiles all code in ${src.dir} into ${build.classes.dir} -->
 	<target name="compile" depends="setup, make-classes-dir, make-lib-dir" if="src.dir.exists">
 		<!-- Aggregate the final classpath -->

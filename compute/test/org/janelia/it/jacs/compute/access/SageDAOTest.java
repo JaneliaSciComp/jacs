@@ -2,6 +2,7 @@ package org.janelia.it.jacs.compute.access;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.util.ResultSetIterator;
+import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.model.TestCategories;
 import org.junit.Before;
@@ -19,6 +20,7 @@ import static org.junit.Assert.*;
  */
 public class SageDAOTest {
 
+    public static final String LSM_NAME = "20150801/FLFL_20150804132904506_142588.lsm";
     private SageDAO sageDao;
 
     @Before
@@ -37,21 +39,22 @@ public class SageDAOTest {
         }
     }
 
-    @Test
-    @Category(TestCategories.SlowIntegrationTests.class)
-    public void testGetImagesByFamily() throws Exception {
-
-        ResultSetIterator iterator = null;
-        try {
-            iterator = sageDao.getImagesByFamily("flylight_flip");
-            validateIteratorResults(iterator, 10, "light_imagery_age");
-        } finally {
-            if (iterator != null) {
-                iterator.close();
-            }
-        }
-
-    }
+//  No images without data sets exist as of 8/8/2016. LLF
+//    @Test
+//    @Category(TestCategories.SlowIntegrationTests.class)
+//    public void testGetImagesByFamily() throws Exception {
+//
+//        ResultSetIterator iterator = null;
+//        try {
+//            iterator = sageDao.getImagesByFamily("flylight_flip");
+//            validateIteratorResults(iterator, 10, "light_imagery_age");
+//        } finally {
+//            if (iterator != null) {
+//                iterator.close();
+//            }
+//        }
+//
+//    }
 
 //    @Test
 //    @Category(TestCategories.SlowIntegrationTests.class)
@@ -107,6 +110,21 @@ public class SageDAOTest {
                 iterator.close();
             }
         }
+    }
+
+    @Test
+    @Category(TestCategories.FastIntegrationTests.class)
+    public void testGetSlideImageByLsmName() throws Exception {
+        SlideImage slideImage = sageDao.getSlideImageByLSMName(LSM_NAME);
+        assertNotNull(LSM_NAME + " returned null value.", slideImage);
+        assertNotNull(LSM_NAME + " returned null image name.", slideImage.getImageName());
+        assertNotNull(LSM_NAME + " returned null image path.", slideImage.getImagePath());
+        //assertNotNull(LSM_NAME + " returned null jfs path.", slideImage.getJfsPath());
+
+        assertNotNull(LSM_NAME + " returned null age.", slideImage.getAge());
+        assertNotNull(LSM_NAME + " returned null area.", slideImage.getArea());
+        assertNotNull(LSM_NAME + " returned null channels.", slideImage.getChannels());
+        assertNotNull(LSM_NAME + " returned null channelSpec.", slideImage.getChannelSpec());
     }
 
     private void validateIteratorResults(ResultSetIterator iterator,

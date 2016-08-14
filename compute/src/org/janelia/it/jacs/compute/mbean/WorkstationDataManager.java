@@ -1,13 +1,28 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.*;
-import org.janelia.it.jacs.compute.service.entity.OrphanAnnotationCheckerService;
-import org.janelia.it.jacs.compute.service.entity.OrphanEntityCheckerService;
-import org.janelia.it.jacs.compute.service.fileDiscovery.FlyScreenDiscoveryService;
+import org.janelia.it.jacs.compute.api.ComputeException;
+import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.api.EntityBeanLocal;
+import org.janelia.it.jacs.compute.api.EntityBeanRemote;
+import org.janelia.it.jacs.compute.service.domain.OrphanAnnotationCheckerService;
+import org.janelia.it.jacs.compute.service.domain.OrphanEntityCheckerService;
 import org.janelia.it.jacs.compute.service.fileDiscovery.SampleRun;
 import org.janelia.it.jacs.compute.service.fly.MaskGuideService;
-import org.janelia.it.jacs.compute.service.fly.ScreenSampleLineCoordinationService;
 import org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService;
 import org.janelia.it.jacs.compute.service.solr.SolrIndexingService;
 import org.janelia.it.jacs.compute.util.BulkEntityBuilder;
@@ -15,13 +30,10 @@ import org.janelia.it.jacs.compute.util.FileVerificationUtil;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
-import org.janelia.it.jacs.model.tasks.fileDiscovery.FileDiscoveryTask;
 import org.janelia.it.jacs.model.tasks.fileDiscovery.FileTreeLoaderPipelineTask;
-import org.janelia.it.jacs.model.tasks.fly.FlyScreenPatternAnnotationTask;
 import org.janelia.it.jacs.model.tasks.fly.MaskSampleAnnotationTask;
 import org.janelia.it.jacs.model.tasks.neuron.NeuronMergeTask;
 import org.janelia.it.jacs.model.tasks.tic.SingleTicTask;
@@ -29,10 +41,6 @@ import org.janelia.it.jacs.model.tasks.utility.GenericTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,29 +56,14 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
     public WorkstationDataManager() {
     }
 
-    public void runAnnotationImport(String user, String annotationsPath, String ontologyName) {
+    public void runMongoDbSync() {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("annotations filepath", annotationsPath, null));
-            taskParameters.add(new TaskParameter("ontology name", ontologyName, null));
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
-                    taskParameters, "annotationImport", "Annotation Import Pipeline");
+            taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(false), null));
+            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
+                    taskParameters, "mongoDbSync", "MongoDb Sync");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("AnnotationImportPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runScreenScoresLoading(String user, String acceptsPath, String loadedPath) {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("accepts file path", acceptsPath, null));
-            taskParameters.add(new TaskParameter("loaded file path", loadedPath, null));
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
-                    taskParameters, "screenScoresLoading", "Screen Scores Loading");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresLoadingPipeline", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("MongoDbSync", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -95,55 +88,13 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
     }
 
-    public void runScreenScoresExport(String user, String outputFilepath) {
+    public void runMongoDbMaintenance() {
         try {
             HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("output filepath", outputFilepath, null));
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
-                    taskParameters, "screenScoresExport", "Screen Scores Export");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("ScreenScoresExportPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runSplitLinesLoading(String user, String topLevelFolderName, String representativesPath, String splitConstructsPath) {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter("top level folder name", topLevelFolderName, null));
-            taskParameters.add(new TaskParameter("representatives filepath", representativesPath, null));
-            taskParameters.add(new TaskParameter("split constructs filepath", splitConstructsPath, null));
-            Task task = new GenericTask(new HashSet<Node>(), user, new ArrayList<Event>(),
-                    taskParameters, "splitLinesLoading", "Split Lines Loading");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("SplitLinesLoadingPipeline", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runNeo4jSync(Boolean clearDb) {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null));
             Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
-                    taskParameters, "neo4jSync", "Neo4j Sync");
+                    taskParameters, "mongoDbMaintenance", "MongoDb Maintenance");
             task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("Neo4jSync", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runMongoDbSync(Boolean clearDb) {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            taskParameters.add(new TaskParameter(MongoDbLoadService.PARAM_clearDb, Boolean.toString(clearDb), null));
-            Task task = new GenericTask(new HashSet<Node>(), "system", new ArrayList<Event>(),
-                    taskParameters, "mongoDbSync", "MongoDb Sync");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("MongoDbSync", task.getObjectId());
+            EJBFactory.getLocalComputeBean().submitJob("MongoDbMaintenance", task.getObjectId());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -274,74 +225,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
         }
         catch (ComputeException e) {
             // Already printed by the ComputeBean
-        }
-    }
-
-    public void runFlyScreenPipeline(String user, Boolean refresh) {
-        try {
-            String topLevelFolderName = FlyScreenDiscoveryService.SCREEN_SAMPLE_TOP_LEVEL_FOLDER_NAME;
-            String inputDirList = "/nrs/jacs/jacsData/filestore/system/ScreenStaging";
-            Task task = new FileDiscoveryTask(new HashSet<Node>(),
-                    user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
-                    inputDirList, topLevelFolderName, refresh);
-            task.setJobName("FlyLight Screen File Discovery Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("FlyLightScreen", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void runFlyScreenPatternAnnotationPipeline(String user, Boolean refresh) {
-        try {
-            String topLevelFolderName = ScreenSampleLineCoordinationService.SCREEN_PATTERN_TOP_LEVEL_FOLDER_NAME;
-            Task task = new FlyScreenPatternAnnotationTask(new HashSet<Node>(),
-                    user, new ArrayList<Event>(), new HashSet<TaskParameter>(),
-                    topLevelFolderName, refresh);
-            task.setJobName("FlyLight Screen Pattern Annotation Task");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("FlyScreenPatternAnnotation", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    /**
-     * @Deprecated this method creates ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH attributes, which are deprecated.
-     */
-    @Deprecated
-    public void performScreenPipelineSurgery(String username) {
-        try {
-            final EntityBeanLocal entityBean = EJBFactory.getLocalEntityBean();
-            Set<Entity> entities=entityBean.getEntitiesByName("FlyLight Screen Data");
-            Set<Entity> userEntities=new HashSet<>();
-            for (Entity e : entities) {
-                if (e.getOwnerKey().equals(username)) {
-                    userEntities.add(e);
-                }
-            }
-
-            if (userEntities.size()==1) {
-                Entity topEntity=entities.iterator().next();
-                logger.info("Found top-level entity name="+topEntity.getName()+" , now changing attributes");
-                Entity screenTree=entityBean.getEntityTree(topEntity.getId());
-
-                EntityUtils.replaceAllAttributeTypesInEntityTree(screenTree, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE, EntityConstants.ATTRIBUTE_DEFAULT_2D_IMAGE_FILE_PATH, new EntityUtils.SaveUnit() {
-                    public void saveUnit(Object o) throws Exception {
-                        EntityData ed=(EntityData)o;
-                        logger.info("Saving attribute change for ed="+ed.getId());
-                        entityBean.saveOrUpdateEntityData(ed);
-                    }
-                }
-                );
-                logger.info("Done replacement, now saving");
-                entityBean.saveOrUpdateEntity(topEntity);
-                logger.info("Done with save");
-            } else {
-                logger.error("Found more than one top-level entity - this is unexpected - exiting");
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
     }
 
@@ -792,17 +675,6 @@ public class WorkstationDataManager implements WorkstationDataManagerMBean {
 //        return i;
 //    }
 //
-    public void runNernaRetiredDataCleanup() {
-        try {
-            HashSet<TaskParameter> taskParameters = new HashSet<>();
-            Task task = new GenericTask(new HashSet<Node>(), "nerna", new ArrayList<Event>(),
-                    taskParameters, "cleanupRetiredData", "Cleanup Retired Data");
-            task = EJBFactory.getLocalComputeBean().saveOrUpdateTask(task);
-            EJBFactory.getLocalComputeBean().submitJob("CleanupRetiredData", task.getObjectId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
 
     public void runFileVerification() {
         FileVerificationUtil util = new FileVerificationUtil();

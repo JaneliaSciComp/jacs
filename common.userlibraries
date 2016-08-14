@@ -8,7 +8,7 @@
         <archive path="/common/Apache-Commons/commons-fileupload-1.2.jar"/>
         <archive path="/common/Apache-Commons/commons-collections-2.1.1.jar"/>
         <archive path="/common/Apache-Commons/commons-codec-1.3.jar"/>
-        <archive path="/common/Apache-Commons/log4j-1.2.15.jar"/>
+        <archive path="/common/Apache-Commons/commons-lang3-3.3.2.jar"/>
     </library>
     <library name="Axis" systemlibrary="false">
         <archive path="/common/Axis2-1.5.5/activation-1.1.jar"/>
@@ -109,7 +109,6 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-xmlbeans-1.5.5.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/bcel-5.1.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/bio-formats.jar"/>
-        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/bson4jackson-2.2.3.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/cglib-2.1.3.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-codec-1.5.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-compress-1.8.1.jar"/>
@@ -141,9 +140,6 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/httpcore-4.0.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/ij-1.48c.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackrabbit-webdav-2.5.2.jar"/>
-        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackson-annotations-2.2.3.jar"/>
-        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackson-core-2.2.3.jar"/>
-        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackson-databind-2.2.3.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jai_codec.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jai_core.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jalopy-1.5rc3.jar"/>
@@ -240,6 +236,13 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xmlbeans-2.3.0.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/XmlSchema-1.4.3.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/xuggle-xuggler-5.4.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/bson4jackson-2.4.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackson-annotations-2.4.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackson-core-2.4.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackson-databind-2.4.1.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/javassist-3.16.1-GA.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jsr305-1.3.9.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/reflections-0.9.9-RC1.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/beansbinding-1.2.1.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-io-2.4.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-lang3-3.3.2-javadoc.jar"/>
@@ -253,6 +256,18 @@
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/javacpp.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/kd.jar"/>
         <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/sis-jhdf5-batteries_included.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/jongo-1.2.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/mongodb-driver-3.1.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/mongodb-driver-core-3.1.0.jar"/>
+        <archive path="/ConsoleApplication/ConsoleWrapper/release/modules/ext/bson-3.1.0.jar"/>
+    </library>
+    <library name="Directory" systemlibrary="false">
+        <archive path="/common/Directory/api-all-1.0.0-M30.jar"/>
+        <archive path="/common/Directory/commons-pool-1.6.jar"/>
+        <archive path="/common/Directory/mina-core-2.0.9.jar"/>
+        <archive path="/common/Directory/org.apache.servicemix.bundles.antlr-2.7.7_5.jar"/>
+        <archive path="/common/Directory/org.apache.servicemix.bundles.dom4j-1.6.1_5.jar"/>
+        <archive path="/common/Directory/org.apache.servicemix.bundles.xpp3-1.1.4c_6.jar"/>
     </library>
     <library name="Ehcache" systemlibrary="false">
         <archive path="/common/ehcache/ehcache-core-2.5.1.jar"/>
@@ -302,6 +317,9 @@
         <archive path="/common/javacpp-presets-bin/ffmpeg-windows-x86.jar"/>
         <archive path="/common/javacpp-presets-bin/ffmpeg.jar"/>
         <archive path="/common/javacpp-presets-bin/javacpp.jar"/>
+    </library>
+    <library name="JAX-RS" systemlibrary="false">
+        <archive path="/common/JAX-RS-2.0.1/javax.ws.rs-api-2.0.1.jar"/>
     </library>
     <library name="JAXB" systemlibrary="false">
         <archive path="/common/JAXB-2.1.5/activation.jar"/>
@@ -391,8 +409,47 @@
         <archive path="/common/JBoss-Server-4.2.3.GA/jboss-ejb3x.jar"/>
         <archive path="/common/JBoss-Server-4.2.3.GA/jboss-ejb3.jar"/>
         <archive path="/common/JBoss-Server-4.2.3.GA/quartz.jar"/>
-        <archive path="/common/JBoss-Server-4.2.3.GA/servlet-api.jar"/>
         <archive path="/common/JBoss-Server-4.2.3.GA/jboss-system.jar"/>
+        <archive path="/common/Jetty/servlet-api-3.0.jar"/>
+    </library>
+    <library name="Jersey" systemlibrary="false">
+        <archive path="/common/Jersey-2.19/aopalliance-repackaged-2.4.0-b31.jar"/>
+        <archive path="/common/Jersey-2.19/c3p0-0.9.1.1.jar"/>
+        <archive path="/common/Jersey-2.19/commons-codec-1.9.jar"/>
+        <archive path="/common/Jersey-2.19/commons-collections-3.2.1.jar"/>
+        <archive path="/common/Jersey-2.19/commons-io-2.4.jar"/>
+        <archive path="/common/Jersey-2.19/commons-lang-2.6.jar"/>
+        <archive path="/common/Jersey-2.19/commons-logging-1.2.jar"/>
+        <archive path="/common/Jersey-2.19/gwt-user-2.7.0.jar"/>
+        <archive path="/common/Jersey-2.19/hk2-api-2.4.0-b25.jar"/>
+        <archive path="/common/Jersey-2.19/hk2-locator-2.4.0-b25.jar"/>
+        <archive path="/common/Jersey-2.19/hk2-utils-2.4.0-b25.jar"/>
+        <archive path="/common/Jersey-2.19/httpclient-4.4.1.jar"/>
+        <archive path="/common/Jersey-2.19/httpcore-4.4.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-annotations-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-core-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-databind-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-dataformat-xml-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-jaxrs-base-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-jaxrs-json-provider-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/jackson-module-jaxb-annotations-2.5.1.jar"/>
+        <archive path="/common/Jersey-2.19/javassist-3.18.1-GA.jar"/>
+        <archive path="/common/Jersey-2.19/javax.annotation-api-1.2.jar"/>
+        <archive path="/common/Jersey-2.19/javax.inject-2.4.0-b31.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-client-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-common-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-container-servlet-core-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-entity-filtering-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-guava-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-media-jaxb-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-media-json-jackson-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/jersey-server-2.19.jar"/>
+        <archive path="/common/Jersey-2.19/osgi-resource-locator-1.0.1.jar"/>
+        <archive path="/common/Jersey-2.19/reflections-0.9.9-RC1.jar"/>
+        <archive path="/common/Jersey-2.19/stax2-api-3.1.1.jar"/>
+        <archive path="/common/Jersey-2.19/validation-api-1.1.0.Final.jar"/>
+        <archive path="/common/Jersey-2.19/woodstox-core-asl-4.2.0.jar"/>
+        <archive path="/common/Jersey-2.19/xml-apis-1.0.b2.jar"/>
     </library>
     <library name="Jetty" systemlibrary="false">
         <archive path="/common/Jetty/jetty-continuation-8.1.8.v20121106.jar"/>
@@ -437,32 +494,18 @@
         <archive path="/common/LZ4/lz4-1.1.1.jar"/>
     </library>
     <library name="MongoDB" systemlibrary="false">
-        <archive path="/common/MongoDB/mongo-java-driver-2.11.3.jar" source="/common/MongoDB/mongo-java-driver-2.11.3-sources.jar"/>
-        <archive path="/common/MongoDB/bson4jackson-2.2.3.jar"/>
-        <archive path="/common/MongoDB/jackson-annotations-2.2.3.jar"/>
-        <archive path="/common/MongoDB/jackson-core-2.2.3.jar"/>
-        <archive path="/common/MongoDB/jackson-databind-2.2.3.jar"/>
-        <archive path="/common/MongoDB/jongo-1.0.jar"/>
+        <archive path="/common/MongoDB/bson4jackson-2.4.0.jar"/>
+        <archive path="/common/MongoDB/jackson-annotations-2.4.1.jar"/>
+        <archive path="/common/MongoDB/jackson-core-2.4.1.jar"/>
+        <archive path="/common/MongoDB/jackson-databind-2.4.1.jar"/>
         <archive path="/common/MongoDB/jsr305-1.3.9.jar"/>
+        <archive path="/common/MongoDB/bson-3.2.2.jar"/>
+        <archive path="/common/MongoDB/jongo-1.3.0.jar"/>
+        <archive path="/common/MongoDB/mongodb-driver-3.2.2.jar"/>
+        <archive path="/common/MongoDB/mongodb-driver-core-3.2.2.jar"/>
     </library>
     <library name="MySQL" systemlibrary="false">
         <archive path="/common/MySQL/mysql-connector-java-5.1.35-bin.jar"/>
-    </library>
-    <library name="Neo4j" systemlibrary="false">
-        <archive path="/common/Neo4j/concurrentlinkedhashmap-lru-1.3.1.jar"/>
-        <archive path="/common/Neo4j/geronimo-jta_1.1_spec-1.1.1.jar"/>
-        <archive path="/common/Neo4j/lucene-core-3.6.2.jar"/>
-        <archive path="/common/Neo4j/neo4j-cypher-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/neo4j-graph-algo-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/neo4j-graph-matching-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/neo4j-jmx-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/neo4j-kernel-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/neo4j-lucene-index-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/neo4j-shell-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/neo4j-udc-2.0.0-M03.jar"/>
-        <archive path="/common/Neo4j/org.apache.servicemix.bundles.jline-0.9.94_1.jar"/>
-        <archive path="/common/Neo4j/scala-library-2.10.0.jar"/>
-        <archive path="/common/Neo4j/server-api-2.0.0-M03.jar"/>
     </library>
     <library name="NetBeansRCP" systemlibrary="false">
         <archive path="/ConsoleApplication/platform/core/core.jar"/>
@@ -525,21 +568,21 @@
         <archive path="/ConsoleApplication/platform/modules/org-netbeans-swing-plaf.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-netbeans-swing-tabcontrol.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-actions.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-awt.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-awt.jar" source="/netbeans-7.4"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-compat.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-dialogs.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-execution.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-explorer.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-explorer.jar" source="/netbeans-7.4"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-io.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-loaders.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-nodes.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-nodes.jar" source="/netbeans-7.4/openide.nodes"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-options.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-text.jar"/>
         <archive path="/ConsoleApplication/platform/modules/org-openide-util-enumerations.jar"/>
-        <archive path="/ConsoleApplication/platform/modules/org-openide-windows.jar"/>
+        <archive path="/ConsoleApplication/platform/modules/org-openide-windows.jar" source="/netbeans-7.4"/>
         <archive path="/ConsoleApplication/platform/lib/org-openide-modules.jar"/>
-        <archive path="/ConsoleApplication/platform/lib/org-openide-util-lookup.jar"/>
-        <archive path="/ConsoleApplication/platform/lib/org-openide-util.jar"/>
+        <archive path="/ConsoleApplication/platform/lib/org-openide-util-lookup.jar" source="/netbeans-7.4/openide.util.lookup/src"/>
+        <archive path="/ConsoleApplication/platform/lib/org-openide-util.jar" source="/netbeans-7.4/openide.util/src"/>
     </library>
     <library name="Protostuff" systemlibrary="false">
         <archive path="/common/protostuff-1.3.9/protostuff-api-1.3.9-SNAPSHOT.jar"/>
@@ -557,6 +600,11 @@
     </library>
     <library name="Reflections" systemlibrary="false">
         <archive path="/common/Reflections/reflections-0.9.9-RC1.jar"/>
+        <archive path="/common/Reflections/javassist-3.16.1-GA.jar"/>
+    </library>
+    <library name="RSyntaxTextArea" systemlibrary="false">
+        <archive path="/common/RSyntaxTextArea/autocomplete-2.6.0-SNAPSHOT.jar"/>
+        <archive path="/common/RSyntaxTextArea/rsyntaxtextarea-2.6.0-SNAPSHOT.jar"/>
     </library>
     <library name="SAAJ" systemlibrary="false">
         <archive path="/common/SAAJ/saaj-impl-1.3.2.jar"/>
@@ -628,6 +676,15 @@
         <archive path="/common/Spring-3/org.springframework.transaction-3.0.7.RELEASE.jar"/>
         <archive path="/common/Spring-3/scala-library-2.9.0-1.jar"/>
         <archive path="/common/Spring-3/server-api-1.6.1.jar"/>
+    </library>
+    <library name="Swagger" systemlibrary="false">
+        <archive path="/common/swagger/jackson-dataformat-yaml-2.4.5.jar"/>
+        <archive path="/common/swagger/jersey-media-multipart-2.1.jar"/>
+        <archive path="/common/swagger/swagger-annotations-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-core-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-jaxrs-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-jersey2-jaxrs-1.5.8.jar"/>
+        <archive path="/common/swagger/swagger-models-1.5.8.jar"/>
     </library>
     <library name="Xuggler" systemlibrary="false">
         <archive path="/common/Xuggler/xuggle-xuggler-5.4.jar"/>

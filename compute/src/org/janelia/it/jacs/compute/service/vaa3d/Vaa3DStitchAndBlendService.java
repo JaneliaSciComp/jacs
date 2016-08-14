@@ -5,7 +5,7 @@ import org.janelia.it.jacs.compute.engine.data.MissingDataException;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SubmitDrmaaJobService;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.exceptions.MissingGridResultException;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
@@ -58,15 +58,8 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         writeInstanceFiles();
         setJobIncrementStop(1);
 
-        this.stitchedFilename = sampleArea.getStitchedFilename();
-    	List<MergedLsmPair> mergedLsmPairs = sampleArea.getMergedLsmPairs();
-    	if (mergedLsmPairs.size()==1) {
-    		logger.warn("Creating stitching bypass script. This is an old code path that should not longer be exercised!");
-    		createBypassShellScript(writer, mergedLsmPairs.get(0).getMergedFilepath(), stitchedFilename);
-    	}            
-    	else {
-        	createShellScript(writer, inputFileNode.getDirectoryPath(), stitchedFilename);
-    	}
+        this.stitchedFilename = sampleArea.getStitchedFilepath();
+        createShellScript(writer, inputFileNode.getDirectoryPath(), stitchedFilename);
     }
 
     private void writeInstanceFiles() throws Exception {
@@ -74,29 +67,6 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
         if (!configFile.createNewFile()) { 
         	throw new ServiceException("Unable to create SGE Configuration file "+configFile.getAbsolutePath()); 
     	}
-    }
-    
-    /**
-     * TODO: remove this method
-     * if there is just one merged file we have to bypass the stitcher altogether because otherwise we get a bogus 
-     * output from it. 
-     * @param writer
-     * @param mergedFilepath
-     * @param stitchedFilepath
-     * @throws Exception
-     */
-    private void createBypassShellScript(FileWriter writer, String mergedFilepath, String stitchedFilepath) throws Exception {
-        StringBuffer script = new StringBuffer();
-    	if ((mergedFilepath.endsWith("lsm")||mergedFilepath.endsWith("v3draw")) && stitchedFilepath.endsWith("v3dpbd")) {
-    		// need to convert
-    		script.append(Vaa3DHelper.getFormattedConvertCommand(mergedFilepath, stitchedFilepath));
-    	}
-    	else {
-    		// just copy 
-    		script.append("cp "+mergedFilepath+" "+stitchedFilepath);	
-    	}
-        script.append("\n");
-        writer.write(script.toString());
     }
 
     /**
@@ -121,7 +91,7 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
 
     @Override
     protected int getRequiredMemoryInGB() {
-    	return 64;
+    	return 72;
     }
 
 	@Override
@@ -145,5 +115,4 @@ public class Vaa3DStitchAndBlendService extends SubmitDrmaaJobService {
     		throw new MissingGridResultException(file.getAbsolutePath(), "Stitched output file not found for "+resultFileNode.getDirectoryPath());
     	}
 	}
-    
 }

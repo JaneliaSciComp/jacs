@@ -16,7 +16,7 @@ public interface SolrBeanLocal extends SolrBeanRemote {
 	public void indexAllEntitiesInTree(Long entityId) throws ComputeException;
 	
     public void mongoAllDomainObjects(boolean clearDb) throws ComputeException;
-    
-	public void neo4jAllEntities(boolean clearDb) throws ComputeException;
+
+	public void mongoMaintenance() throws ComputeException;
 
 }

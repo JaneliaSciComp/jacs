@@ -8,8 +8,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.data.MissingDataException;
-import org.janelia.it.jacs.compute.service.entity.AbstractEntityService;
-import org.janelia.it.jacs.compute.service.entity.sample.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
+import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
+import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.user_data.FileNode;
 
@@ -24,28 +27,34 @@ import org.janelia.it.jacs.model.user_data.FileNode;
  *   
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SetTaskFileResultsService extends AbstractEntityService {
+public class SetTaskFileResultsService extends AbstractDomainService {
+
+    protected Logger logger = Logger.getLogger(SetTaskFileResultsService.class);
 
 	public static final String RESULT_TOKEN = "RESULT!";
-	
-	protected Logger logger = Logger.getLogger(SetTaskFileResultsService.class);
-	
+
     public void execute() throws Exception {
-        
+
         List<AnatomicalArea> sampleAreas = (List<AnatomicalArea>) processData.getItem("SAMPLE_AREAS");
         if (sampleAreas != null) {
-        	StringBuilder sb = new StringBuilder();
+            SampleHelperNG sampleHelper = new SampleHelperNG(ownerKey, logger, contextLogger);
+            Sample sample = sampleHelper.getRequiredSample(data);
+            ObjectiveSample objectiveSample = sampleHelper.getRequiredObjectiveSample(sample, data);
+
+            StringBuilder sb = new StringBuilder();
             for(AnatomicalArea sampleArea : sampleAreas) {
             	if (sb.length()>0) sb.append(",");
+            	sb.append(objectiveSample.getObjective());
+            	sb.append(":");
             	sb.append(sampleArea.getName());
-            	sb.append("=");
-                sb.append(sampleArea.getStitchedFilename());
+            	sb.append(":");
+                sb.append(sampleArea.getStitchedFilepath());
             }
             setResultMessage(RESULT_TOKEN+sb.toString());
             return;
         }
         
-        // TODO: this other path should also use RESULT_TOKEN 
+        // TODO: this other code path should also use RESULT_TOKEN 
         // Better yet, we should create a formal mechanism for passing results between tasks
         
         FileNode finalOutputNode = (FileNode)data.getRequiredItem("RESULT_FILE_NODE");

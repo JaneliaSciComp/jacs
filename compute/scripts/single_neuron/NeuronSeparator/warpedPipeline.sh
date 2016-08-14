@@ -48,16 +48,6 @@ echo "Output dir: $OUTDIR"
 echo "Signal channels: $SIGNAL_CHAN"
 echo "Reference channel: $REF_CHAN"
 
-CONSOLIDATED_LABEL="$OUTDIR/ConsolidatedLabel.v3draw"
-
-if [ ! -s "$CONSOLIDATED_LABEL" ]; then
-    CONSOLIDATED_LABEL="$OUTDIR/ConsolidatedLabel.v3dpbd"
-    if [ ! -s "$CONSOLIDATED_LABEL" ]; then
-        echo "ConsolidatedLabel file not found in output directory"
-        exit 1
-    fi
-fi
-
 EXT=${INPUT_FILE#*.}
 if [ $EXT == "v3dpbd" ]; then
     PBD_INPUT_FILE=$INPUT_FILE
@@ -97,7 +87,7 @@ if [ -s $INPUT_FILE ]; then
     echo "~ Generating aligned reference"
     cat $INPUT_FILE | $NSDIR/v3draw_select_channels $REF_CHAN > Reference.v3draw
 
-    echo "~ Copying final output to: $OUTDIR"
+    echo "~ Moving intermediate outputs to: $OUTDIR"
     mv *.nsp $OUTDIR
     mv *.pbd $OUTDIR
     mv *.txt $OUTDIR
@@ -105,6 +95,17 @@ if [ -s $INPUT_FILE ]; then
     mv ConsolidatedSignal.v3draw $OUTDIR
     mv Reference.v3draw $OUTDIR
 
+    echo "~ Launching artifact pipeline..."
+    $DIR/artifactPipeline.sh $OUTDIR $NAME $INPUT_FILE "$SIGNAL_CHAN" "$REF_CHAN"
+
+    echo "~ Compressing final outputs in: $OUTDIR"
+    cd $OUTDIR
+    shopt -s nullglob
+    for fin in *.v3draw; do
+        fout=${fin%.v3draw}.v3dpbd
+        $Vaa3D -cmd image-loader -convert $fin $fout && rm $fin
+    done
+    shopt -u nullglob
 fi
 
 if ls core* &> /dev/null; then
@@ -113,11 +114,6 @@ if ls core* &> /dev/null; then
 fi
 
 echo "~ Finished with separation pipeline"
-
-if [ -s "$CONSOLIDATED_LABEL" ]; then
-    echo "~ Launching artifact pipeline..."
-    $DIR/artifactPipeline.sh $OUTDIR $NAME $INPUT_FILE "$SIGNAL_CHAN" "$REF_CHAN"
-fi
 
 echo "~ Removing temp files"
 rm -rf $WORKING_DIR

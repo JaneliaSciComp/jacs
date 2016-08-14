@@ -7,7 +7,6 @@ import org.janelia.it.jacs.compute.service.fileDiscovery.FileDiscoveryHelper;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityType;
 import org.janelia.it.jacs.shared.annotation.PatternAnnotationDataManager;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
@@ -181,7 +180,7 @@ public class MaskChanCompartmentLoadingService extends AbstractEntityService {
         compartmentEntity.setName(compartmentDescriptiveName);
         compartmentEntity.setValueByAttributeName(
                 EntityConstants.ATTRIBUTE_COLOR,
-                StringUtils.encodeToHex(compartmentDescriptor.getColors(), logger)
+                StringUtils.encodeToHex(compartmentDescriptor.getColors())
         );
         compartmentEntity.setValueByAttributeName(EntityConstants.ATTRIBUTE_NUMBER, index.toString());
         compartmentEntity = saveStampedEntity(compartmentEntity);

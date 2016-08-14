@@ -24,14 +24,14 @@
 	    </operation>
 	    
 	    <!-- Create a result node for this group -->
-	    <operation name="Create Intersection Result Node" processor="org.janelia.it.jacs.compute.service.entity.CreateNamedResultFileNodeService">
+	    <operation name="Create Intersection Result Node" processor="org.janelia.it.jacs.compute.service.domain.node.CreateNamedResultFileNodeService">
 		    <input name="NAME" value="Intersection"/>
 	        <output name="RESULT_FILE_NODE"/>
 	        <output name="RESULT_FILE_NODE_ID"/>
 	    </operation>
 	    
 	    <!-- Export the data into parameters that will be used by the subsequent services -->
-	    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.entity.InitScreenSampleCrossParametersService">
+	    <operation name="Create Parameters" processor="org.janelia.it.jacs.compute.service.domain.InitScreenSampleCrossParametersService">
 	    	<input name="RESULT_FILE_NODE"/>
 			<input name="SCREEN_SAMPLE_1_ID_LIST"/>
 			<input name="SCREEN_SAMPLE_2_ID_LIST"/>

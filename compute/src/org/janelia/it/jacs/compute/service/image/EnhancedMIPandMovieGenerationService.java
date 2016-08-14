@@ -103,7 +103,7 @@ public class EnhancedMIPandMovieGenerationService extends BasicMIPandMovieGenera
         
         // Monitor Fiji and take periodic screenshots, killing it eventually
         script.append("fpid=$!\n");
-        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, 600));
+        script.append(Vaa3DHelper.getXvfbScreenshotLoop("./xvfb.${PORT}", "PORT", "fpid", 30, TIMEOUT_SECONDS));
         
         // Encode avi movies as mp4 and delete the input avi's
         script.append("cd $TEMP_DIR\n");
@@ -123,6 +123,6 @@ public class EnhancedMIPandMovieGenerationService extends BasicMIPandMovieGenera
 
     @Override
     protected int getRequiredMemoryInGB() {
-        return 40;
+        return 50;
     }
 }

@@ -14,6 +14,7 @@ import org.janelia.it.jacs.model.ontology.OntologyAnnotation;
  * @see AnnotationBeanRemote
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Deprecated
 @Local
 public interface AnnotationBeanLocal extends AnnotationBeanRemote {
 

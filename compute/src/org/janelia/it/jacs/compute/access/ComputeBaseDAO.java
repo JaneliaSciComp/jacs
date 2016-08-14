@@ -3,7 +3,12 @@ package org.janelia.it.jacs.compute.access;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -12,17 +17,23 @@ import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.hibernate.*;
-import org.janelia.it.jacs.compute.engine.def.ProcessDef;
-import org.janelia.it.jacs.model.entity.*;
+import org.hibernate.LockMode;
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
+import org.janelia.it.jacs.model.domain.support.DomainUtils;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.TaskMessage;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
-import org.janelia.it.jacs.model.user_data.*;
+import org.janelia.it.jacs.model.user_data.FileNode;
+import org.janelia.it.jacs.model.user_data.Group;
+import org.janelia.it.jacs.model.user_data.Node;
+import org.janelia.it.jacs.model.user_data.Subject;
+import org.janelia.it.jacs.model.user_data.User;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
 /**
@@ -42,17 +53,13 @@ public class ComputeBaseDAO {
     private final String jdbcUser = SystemConfigurationProperties.getString("batch.jdbc.username", null);
     private final String jdbcPw = SystemConfigurationProperties.getString("batch.jdbc.password", null);
     
-    protected Logger log;
+    protected final Logger log;
     protected SessionFactory sessionFactory;
     protected Session externalSession;
 
     public ComputeBaseDAO(Logger log) {
         getSessionFactory();
-        this.log = log;
-    }
-
-    public ComputeBaseDAO(Session externalSession) {
-        this.externalSession = externalSession;
+        this.log = log==null ? Logger.getLogger(ComputeBaseDAO.class) : log;
     }
 
     public Connection getJdbcConnection() throws DaoException {
@@ -177,7 +184,7 @@ public class ComputeBaseDAO {
             log.trace("getMostRecentTasksWithName(owner="+owner+", taskName="+taskName+")");    
         }
         
-        String ownerName = EntityUtils.getNameFromSubjectKey(owner);
+        String ownerName = DomainUtils.getNameFromSubjectKey(owner);
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select t from Task t ");
         hql.append("where t.owner = :owner ");
@@ -194,7 +201,7 @@ public class ComputeBaseDAO {
             log.trace("getIncompleteTasks(owner="+owner+", taskName="+taskName+")");    
         }
         
-        String ownerName = EntityUtils.getNameFromSubjectKey(owner);
+        String ownerName = DomainUtils.getNameFromSubjectKey(owner);
         Session session = getCurrentSession();
         StringBuffer hql = new StringBuffer("select t from Task t ");
         hql.append("inner join fetch t.events ");

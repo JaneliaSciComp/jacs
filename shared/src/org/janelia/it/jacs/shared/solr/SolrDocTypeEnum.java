@@ -7,5 +7,6 @@ package org.janelia.it.jacs.shared.solr;
  */
 public enum SolrDocTypeEnum {
 	ENTITY,
+	DOCUMENT,
 	SAGE_TERM
 }

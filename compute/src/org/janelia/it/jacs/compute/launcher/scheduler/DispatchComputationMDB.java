@@ -44,18 +44,24 @@ public class DispatchComputationMDB implements Job {
         boolean fetchUnassignedJobsFlag = dispatchSettings.isFetchUnassignedJobs();
         ComputeBeanLocal computeBean = (ComputeBeanLocal) mdctx.lookup(EJBFactory.LOCAL_COMPUTE_JNDI_NAME);
         JobControlBeanLocal jobBean = (JobControlBeanLocal) mdctx.lookup(EJBFactory.LOCAL_JOB_CONTROL_JNDI_NAME);
-        List<DispatcherJob> pendingJobs = jobBean.nextPendingJobs(processingNodeId, fetchUnassignedJobsFlag, maxRetries, prefetchSize);
-        for (DispatcherJob job : pendingJobs) {
-            LOG.info("Submit job {}", job.getDispatchId());
-            try {
-                computeBean.submitJob(job.getProcessDefnName(), job.getDispatchedTaskId());
-                job.setDispatchStatus(DispatcherJob.Status.SUBMITTED);
-                updateJob(jobBean, job);
-            } catch (Exception e) {
-                job.setDispatchStatus(DispatcherJob.Status.FAILED);
-                updateJob(jobBean, job);
-                LOG.info("Job {} submission failed", job.getDispatchId(), e);
+        if (computeBean!=null && jobBean!=null) {
+            List<DispatcherJob> pendingJobs = jobBean.nextPendingJobs(processingNodeId, fetchUnassignedJobsFlag, maxRetries, prefetchSize);
+            for (DispatcherJob job : pendingJobs) {
+                LOG.info("Submit job {}", job.getDispatchId());
+                try {
+                    computeBean.submitJob(job.getProcessDefnName(), job.getDispatchedTaskId());
+                    job.setDispatchStatus(DispatcherJob.Status.SUBMITTED);
+                    updateJob(jobBean, job);
+                }
+                catch (Exception e) {
+                    job.setDispatchStatus(DispatcherJob.Status.FAILED);
+                    updateJob(jobBean, job);
+                    LOG.info("Job {} submission failed", job.getDispatchId(), e);
+                }
             }
+        }
+        else {
+            LOG.warn("Could not find beans");
         }
         LOG.debug("Completed dispatching currently queued jobs.");
     }

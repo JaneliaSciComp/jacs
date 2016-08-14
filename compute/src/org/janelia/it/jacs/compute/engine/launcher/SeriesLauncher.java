@@ -83,7 +83,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param actionDef   a process or sequence definition
      * @param processData the running state of the process
-     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
+     * @throws ComputeException server error
      *
      */
     protected void launchActions(ActionDef actionDef, IProcessData processData) throws ComputeException {
@@ -110,7 +110,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param seriesDef   a process or sequence definition
      * @param processData the running state of the process
-     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
+     * @throws ComputeException server error
      *
      */
     protected void launchSeries(SeriesDef seriesDef, IProcessData processData) throws ComputeException {
@@ -163,7 +163,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param sequenceDef a sequence definition
      * @param processData the running state of the process
-     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
+     * @throws ComputeException server error
      *
      */
     protected void launchSequence(SequenceDef sequenceDef, IProcessData processData) throws ComputeException {
@@ -247,7 +247,7 @@ public abstract class SeriesLauncher implements ILauncher {
      *
      * @param processData the running state of the process
      * @param seriesDef   the process or sequence definition this launcher has launched
-     * @throws org.janelia.it.jacs.compute.api.ComputeException server error
+     * @throws ComputeException server error
      *
      */
     protected void waitForAsyncActions(IProcessData processData, SeriesDef seriesDef) throws ComputeException {
