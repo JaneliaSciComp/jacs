@@ -62,7 +62,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SearchAttribute(key="slide_code_txt",label="Slide Code")
     private String slideCode;
     
-    @SearchAttribute(key="status_txt",label="Status")
+    @SearchAttribute(key="status_txt",label="Status",facet="status_s")
     private String status;
     
     @SearchAttribute(key="visited_b",label="Visited")

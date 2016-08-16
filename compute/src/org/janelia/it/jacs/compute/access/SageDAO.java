@@ -420,7 +420,16 @@ public class SageDAO {
             throw new DaoException("Error deleting image property in SAGE", e);
         }
     }
-    
+
+    public String getImagePropertyValue(Image image, CvTerm propertyType) {
+        for(ImageProperty property : image.getImageProperties()) {
+            if (property.getType().equals(propertyType)) {
+                return property.getValue();
+            }
+        }
+        return null;
+    }
+
     public void deleteImageProperty(ImageProperty imageProperty) throws DaoException {
         try {
         	Image image = imageProperty.getImage();
@@ -506,6 +515,16 @@ public class SageDAO {
             throw new DaoException("Error saving secondary image in SAGE", e);
         }
         return secondaryImage;
+    }
+
+    public void deleteImage(Image image) throws DaoException {
+        try {
+            // This should cascade and delete all image properties and secondary images
+            getCurrentSession().delete(image);
+        }
+        catch (Exception e) {
+            throw new DaoException("Error deleting image in SAGE", e);
+        }
     }
 
     public void deleteSecondaryImage(SecondaryImage secondaryImage) throws DaoException {
