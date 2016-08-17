@@ -17,9 +17,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.gui.search.Filter;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
@@ -33,6 +35,7 @@ public class FilterWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public FilterWebService() {
         register(JacksonFeature.class);
@@ -51,13 +54,16 @@ public class FilterWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Filter createFilter(@ApiParam DomainQuery query) {
         log.debug("createFilter({})",query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (Filter)query.getDomainObject());
         }
         catch (Exception e) {
-            log.error("Error occurred creating Search Filter ",e);
+            log.error("Error occurred creating Search Filter ", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/filter", stopWatch.getTime());
         }
     }
 
@@ -74,6 +80,7 @@ public class FilterWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Filter updateFilter(@ApiParam DomainQuery query) {
         log.debug("updateFilter({})",query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (Filter)query.getDomainObject());
@@ -81,6 +88,8 @@ public class FilterWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred updating search filter ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/filter", stopWatch.getTime());
         }
     }
 }

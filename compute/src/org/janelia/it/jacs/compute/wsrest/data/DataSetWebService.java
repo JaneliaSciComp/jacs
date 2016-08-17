@@ -31,11 +31,13 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
@@ -53,6 +55,7 @@ public class DataSetWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public DataSetWebService() {
         register(JacksonFeature.class);
@@ -71,6 +74,7 @@ public class DataSetWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<DataSet> getDataSets(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getDataSets({})",subjectKey);
@@ -79,6 +83,8 @@ public class DataSetWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/dataset", stopWatch.getTime());
         }
     }
 
@@ -95,6 +101,7 @@ public class DataSetWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String,String> getDatasetPipelines() {
         log.debug("getDatasetPipelines()");
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<DataSet> dataSets = dao.getDataSets(null);
@@ -112,6 +119,8 @@ public class DataSetWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting dataset-pipeline information",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/data/dataset/pipeline", stopWatch.getTime());
         }
     }
 
@@ -128,6 +137,7 @@ public class DataSetWebService extends ResourceConfig {
     public String getSageSyncDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
                                       @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
         log.debug("getSageSyncDataSets(owners={}, sageSync={})", owners, sageSync);
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -163,6 +173,8 @@ public class DataSetWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/data/dataSet/sage", stopWatch.getTime());
         }
     }
 
@@ -180,6 +192,7 @@ public class DataSetWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet createDataSet(DomainQuery query) {
         log.debug("createDataSet({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (DataSet)query.getDomainObject());
@@ -187,6 +200,8 @@ public class DataSetWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred creating DataSet ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/dataset", stopWatch.getTime());
         }
     }
 
@@ -204,6 +219,7 @@ public class DataSetWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public DataSet updateDataSet(@ApiParam DomainQuery query) {
         log.debug("updateDataSet({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (DataSet)query.getDomainObject());
@@ -211,6 +227,8 @@ public class DataSetWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred updating data set ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/dataset", stopWatch.getTime());
         }
     }
 
@@ -228,6 +246,7 @@ public class DataSetWebService extends ResourceConfig {
     public void removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("dataSetId") final String dataSetId) {
         log.debug("removeDataSet({}, dataSetId={})", subjectKey, dataSetId);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         Reference dataSetRef = Reference.createFor(DataSet.class, new Long(dataSetId));
         try {
@@ -237,6 +256,8 @@ public class DataSetWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred removing dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "DELETE", "/data/dataset", stopWatch.getTime());
         }
     }
 
@@ -246,6 +267,7 @@ public class DataSetWebService extends ResourceConfig {
             notes = "")
     public String getAllDatasets() {
         log.debug("getAllDatasets()");
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -261,6 +283,8 @@ public class DataSetWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting list of datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "DELETE", "/data/dataset/all", stopWatch.getTime());
         }
     }
 

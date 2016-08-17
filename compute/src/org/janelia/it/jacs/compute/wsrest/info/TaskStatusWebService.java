@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.compute.wsrest.info;
 
 import java.io.StringWriter;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -27,16 +28,23 @@ import com.mongodb.client.MongoDatabase;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
+import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
+import org.janelia.it.jacs.model.entity.Entity;
+import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.shared.utils.DateUtil;
 import org.jongo.MongoCursor;
 import org.slf4j.Logger;
@@ -64,6 +72,7 @@ public class TaskStatusWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public TaskStatusWebService() {
         register(JacksonFeature.class);
@@ -74,6 +83,7 @@ public class TaskStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets task event information using the sample entity id",
             notes = "")
     public String getTaskEvents(@QueryParam("sampleId") final String sampleId) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -99,6 +109,8 @@ public class TaskStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/tasks/events", stopWatch.getTime());
         }
     }
 
@@ -107,6 +119,7 @@ public class TaskStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets tasks using a start date cutoff",
             notes = "")
     public String getLatestTasknfo(@QueryParam("hours") final String hours) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -181,6 +194,8 @@ public class TaskStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/tasks/latest", stopWatch.getTime());
         }
     }
 

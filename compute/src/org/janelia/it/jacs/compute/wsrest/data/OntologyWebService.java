@@ -22,9 +22,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ontology.Ontology;
 import org.janelia.it.jacs.model.domain.ontology.OntologyTerm;
@@ -39,6 +41,7 @@ public class OntologyWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public OntologyWebService() {
         register(JacksonFeature.class);
@@ -58,6 +61,7 @@ public class OntologyWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<Ontology> getOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         log.debug("getOntologies({})", subjectKey);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getOntologies(subjectKey);
@@ -65,6 +69,8 @@ public class OntologyWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/ontology", stopWatch.getTime());
         }
     }
 
@@ -81,6 +87,7 @@ public class OntologyWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology createOntology(@ApiParam DomainQuery query) {
         log.debug("createOntology({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (Ontology)query.getDomainObject());
@@ -88,6 +95,8 @@ public class OntologyWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred creating ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/ontology", stopWatch.getTime());
         }
     }
 
@@ -105,6 +114,7 @@ public class OntologyWebService extends ResourceConfig {
     public void removeOntology(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("ontologyId") final String ontologyId) {
         log.debug("removeOntology({}, {})", subjectKey, ontologyId);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         Reference ontologyRef = Reference.createFor(Ontology.class, new Long(ontologyId));
         try {
@@ -114,6 +124,8 @@ public class OntologyWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred removing ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "DELETE", "/data/ontology", stopWatch.getTime());
         }
     }
 
@@ -132,6 +144,7 @@ public class OntologyWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology addTermsToOntology(@ApiParam DomainQuery query) {
         log.debug("addTermsToOntology({})",query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             List<Long> objectIds = query.getObjectIds();
@@ -146,6 +159,8 @@ public class OntologyWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred adding ontology terms",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/ontology/terms", stopWatch.getTime());
         }
     }
 
@@ -163,6 +178,7 @@ public class OntologyWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Ontology reorderOntology(@ApiParam DomainQuery query) {
         log.debug("reorderOntology({})",query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             List<Long> objectIds = query.getObjectIds();
@@ -177,6 +193,8 @@ public class OntologyWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred reordering ontology",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/ontology/terms", stopWatch.getTime());
         }
     }
 
@@ -198,6 +216,7 @@ public class OntologyWebService extends ResourceConfig {
                                             @ApiParam @QueryParam("parentTermId") final Long parentTermId,
                                             @ApiParam @QueryParam("termId") final Long termId) {
         log.debug("removeTermsFromOntology({}, ontologyId={}, parentTermId={}, termId={})",subjectKey,ontologyId,parentTermId,termId);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.removeOntologyTerm(subjectKey, ontologyId, parentTermId, termId);
@@ -205,6 +224,8 @@ public class OntologyWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred removing ontology terms",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "DELETE", "/data/ontology/terms", stopWatch.getTime());
         }
     }
 }

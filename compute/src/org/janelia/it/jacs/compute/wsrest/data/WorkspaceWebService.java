@@ -18,9 +18,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,7 @@ public class WorkspaceWebService extends ResourceConfig {
 
     @Context
     HttpHeaders headers;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public WorkspaceWebService() {
         register(JacksonFeature.class);
@@ -54,6 +57,7 @@ public class WorkspaceWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Workspace getWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         log.debug("getWorkspace({})", subjectKey);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getDefaultWorkspace(subjectKey);
@@ -61,6 +65,8 @@ public class WorkspaceWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting default workspace",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/workspace", stopWatch.getTime());
         }
     }
 
@@ -77,6 +83,7 @@ public class WorkspaceWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<Workspace> getAllWorkspace(@QueryParam("subjectKey") String subjectKey) {
         log.debug("getAllWorkspace({})",subjectKey);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getUserWorkspaces(subjectKey);
@@ -84,6 +91,8 @@ public class WorkspaceWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting default workspace",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/workspaces", stopWatch.getTime());
         }
     }
 

@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -28,6 +29,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.shared.solr.FacetValue;
 import org.janelia.it.jacs.shared.solr.SolrJsonResults;
@@ -44,6 +46,7 @@ public class SolrWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public SolrWebService() {
         register(JacksonFeature.class);
@@ -62,6 +65,7 @@ public class SolrWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public SolrJsonResults searchSolrIndices(@ApiParam SolrParams queryParams) {
         log.debug("searchSolrIndices({})", queryParams);
+        StopWatch stopWatch = new StopWatch();
         SolrConnector solr = WebServiceContext.getSolr();
         try {
             SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
@@ -87,6 +91,8 @@ public class SolrWebService extends ResourceConfig {
             // No need to log exception because Solr helpfully prints the stack trace to STDERR (Grrrr...)
             log.error("Error occurred executing search against SOLR");
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/data/search", stopWatch.getTime());
         }
     }
 }

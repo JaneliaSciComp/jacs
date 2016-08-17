@@ -4,6 +4,8 @@ package org.janelia.it.jacs.compute.wsrest.process;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.mip.MIPMapTilesTask;
 import org.janelia.it.jacs.model.user_data.mip.MIPMapTilesResultNode;
@@ -27,6 +29,7 @@ import java.util.Map;
 public class MIPMapTilesWebService extends AbstractComputationService<MIPMapTilesTask, MIPMapTilesResultNode> {
     private static final Logger LOG = LoggerFactory.getLogger(MIPMapTilesWebService.class);
     private static final String RESOURCE_NAME = "MIPMapTiles";
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public MIPMapTilesWebService() {
         super(RESOURCE_NAME);
@@ -49,9 +52,11 @@ public class MIPMapTilesWebService extends AbstractComputationService<MIPMapTile
     })
     public Response post(@QueryParam("owner") String owner, MIPMapTilesTask mipMapTilesTask, @Context Request req) throws ProcessingException {
         LOG.info("3d mapping requested by {} with {}", owner, mipMapTilesTask);
+        StopWatch stopWatch = new StopWatch();
         mipMapTilesTask.setOwner(owner);
         MIPMapTilesTask persistedTask = init(mipMapTilesTask);
         submitJob(persistedTask);
+        activityLog.logRESTServiceCall(owner, "POST", "/process/mipmaps/images", stopWatch.getTime());
         return Response
                 .status(Response.Status.CREATED)
                 .entity(new JsonTask(persistedTask))

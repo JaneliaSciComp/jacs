@@ -29,10 +29,12 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
@@ -52,6 +54,7 @@ public class ImageStatusWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public ImageStatusWebService() {
         register(JacksonFeature.class);
@@ -65,6 +68,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String getImageCycleTime() {
+        StopWatch stopWatch = new StopWatch();
         MongoCollection<Document> image = getNativeCollection("image");
         List<Document> jsonResult = new ArrayList<>();
         try {
@@ -87,6 +91,8 @@ public class ImageStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image cycle times",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/image/cycletime", stopWatch.getTime());
         }
     }
 
@@ -104,6 +110,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Image getLsmStackByName(@QueryParam("name") final String name) {
+        StopWatch stopWatch = new StopWatch();
         try {
             DomainDAO dao = DomainDAOManager.getInstance().getDao();
             List<Image> images = (List<Image>)dao.getDomainObjectsByName(null, Image.class, name);
@@ -114,6 +121,8 @@ public class ImageStatusWebService extends ResourceConfig {
             log.error("Error occurred getting LSM Stack",e);
             e.printStackTrace();
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/lsmstack/name", stopWatch.getTime());
         }
     }
 
@@ -125,6 +134,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public String getImageBySample(@QueryParam("name") final String name,
                                   @QueryParam("type") final String type) {
+        StopWatch stopWatch = new StopWatch();
         if (name==null || type==null) {
             return "Both name and type are required parameters";
         }
@@ -156,6 +166,8 @@ public class ImageStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image cycle times", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/image/samplename", stopWatch.getTime());
         }
     }
 
@@ -167,6 +179,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public String getLsmStackCycleTime(@QueryParam("startDate") final String startDate,
                                        @QueryParam("endDate") final String endDate) {
+        StopWatch stopWatch = new StopWatch();
         MongoCollection<Document> image = getNativeCollection("image");
         List<Document> jsonResult = new ArrayList<>();
 
@@ -258,6 +271,8 @@ public class ImageStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image cycle times", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/lsmstack/cycletime", stopWatch.getTime());
         }
     }
 
@@ -269,6 +284,7 @@ public class ImageStatusWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public String getLsmStackCompareTime(@QueryParam("name") final String name,
                                          @QueryParam("compareDate") final String compareDate) {
+        StopWatch stopWatch = new StopWatch();
         MongoCollection<Document> image = getNativeCollection("image");
         List<Document> jsonResult = new ArrayList<>();
 
@@ -296,6 +312,8 @@ public class ImageStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image cycle times",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/lsmstack/elapsed", stopWatch.getTime());
         }
     }
 
@@ -311,6 +329,7 @@ public class ImageStatusWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public LSMImage getImage(@ApiParam @QueryParam("name") final String name) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection image = dao.getCollectionByName("image");
 
@@ -332,6 +351,8 @@ public class ImageStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting LSM image information",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/lsmstack/images", stopWatch.getTime());
         }
         return null;
     }

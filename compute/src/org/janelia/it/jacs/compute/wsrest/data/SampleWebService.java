@@ -28,11 +28,13 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -52,6 +54,7 @@ public class SampleWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public SampleWebService() {
         register(JacksonFeature.class);
@@ -72,6 +75,7 @@ public class SampleWebService extends ResourceConfig {
     public List<LSMImage> getLsmsForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                            @ApiParam @QueryParam("sampleId") final Long sampleId) {
         log.debug("getLsmsForSample({}, {})", subjectKey, sampleId);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             Collection<LSMImage> lsms = dao.getActiveLsmsBySampleId(subjectKey, sampleId);
@@ -79,6 +83,8 @@ public class SampleWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/sample/lsms", stopWatch.getTime());
         }
     }
 
@@ -97,6 +103,7 @@ public class SampleWebService extends ResourceConfig {
                            @ApiParam @QueryParam("sampleId") final Long sampleId,
                            @ApiParam @QueryParam("name") final String name) {
         log.debug("getSamples({}, {}, {})", subjectKey, sampleId, name);
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -145,6 +152,8 @@ public class SampleWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting lsms for sample",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/sample", stopWatch.getTime());
         }
     }
 

@@ -24,10 +24,12 @@ import com.mongodb.client.MongoDatabase;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.compute.wsrest.WebServiceContext;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
@@ -55,6 +57,7 @@ public class DatasetStatusWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public DatasetStatusWebService() {
         register(JacksonFeature.class);
@@ -65,6 +68,7 @@ public class DatasetStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Returns a count of sample errors by dataset",
             notes = "")
     public String getDataSetErrors() {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -86,6 +90,8 @@ public class DatasetStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting sample status counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/dataset/sampleerrors", stopWatch.getTime());
         }
     }
 
@@ -94,6 +100,7 @@ public class DatasetStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets All the DataSets for an Owner",
             notes = "")
     public String getDatasetsByOwner() {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -112,6 +119,8 @@ public class DatasetStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/dataset/sageimagery", stopWatch.getTime());
         }
     }
 
@@ -120,6 +129,7 @@ public class DatasetStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets a distinct list of all datasets",
             notes = "")
     public String getDatasets() {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -135,6 +145,8 @@ public class DatasetStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting list of datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/dataset/all", stopWatch.getTime());
         }
     }
 }

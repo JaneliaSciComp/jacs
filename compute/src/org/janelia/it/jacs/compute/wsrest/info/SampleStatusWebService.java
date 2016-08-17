@@ -28,10 +28,12 @@ import com.mongodb.client.MongoDatabase;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.bson.Document;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
@@ -58,6 +60,7 @@ public class SampleStatusWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public SampleStatusWebService() {
         register(JacksonFeature.class);
@@ -69,6 +72,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getLSMImageInfo(@QueryParam("totals") final Boolean totals,
                                   @QueryParam("status") final String status) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -94,6 +98,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting datasets",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample", stopWatch.getTime());
         }
     }
 
@@ -103,6 +109,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getBlockView(@QueryParam("startDate") final String startDate,
                                @QueryParam("endDate") final String endDate) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -152,6 +159,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting samples", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/blockview", stopWatch.getTime());
         }
     }
 
@@ -161,6 +170,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getSampleInformation(@QueryParam("sampleId") final Long sampleId,
                                      @QueryParam("attribute") final String attribute) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -185,6 +195,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image completion",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/attribute", stopWatch.getTime());
         }
     }
 
@@ -193,6 +205,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets Sample data projection ordered and sorted by attribute",
             notes = "")
     public String getSampleInformation(@QueryParam("attribute") final String attribute) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
@@ -209,6 +222,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image completion",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/custom", stopWatch.getTime());
         }
     }
 
@@ -218,6 +233,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     public String getImageCompletion(@QueryParam("line") final String line,
                                      @QueryParam("slideCode") final String slideCode) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -243,6 +259,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image completion",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/imagecompletion", stopWatch.getTime());
         }
     }
 
@@ -258,6 +276,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Gets pipeline status for a sample",
             notes = "")
     public String getSamplePipelineStatus(@QueryParam("hours") final String hours) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -293,6 +312,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting image cycle times",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/pipelinestatus", stopWatch.getTime());
         }
     }
 
@@ -301,6 +322,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "Bins all the samples by status",
             notes = "")
     public String getSampleStatus() {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -318,6 +340,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting sample status counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/statuscounts", stopWatch.getTime());
         }
     }
 
@@ -327,6 +351,7 @@ public class SampleStatusWebService extends ResourceConfig {
             notes = "")
     @Produces(MediaType.APPLICATION_JSON)
     public List<String> getSampleErrorMips(@QueryParam("dataset") final String dataset) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
         StringWriter query = new StringWriter();
@@ -378,6 +403,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting sample status counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/errormips", stopWatch.getTime());
         }
     }
 
@@ -386,6 +413,7 @@ public class SampleStatusWebService extends ResourceConfig {
     @ApiOperation(value = "returns information about pipeline errors by sample",
             notes = "")
     public String getSampleErrors() {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -416,6 +444,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/errors", stopWatch.getTime());
         }
     }
 
@@ -432,6 +462,7 @@ public class SampleStatusWebService extends ResourceConfig {
                                               @QueryParam("line") final String line,
                                               @QueryParam("dataSet") final String dataSet,
                                               @QueryParam("wildcard") final Boolean wildcard) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         org.jongo.MongoCollection sample = dao.getCollectionByName("sample");
 
@@ -541,6 +572,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/search", stopWatch.getTime());
         }
     }
 
@@ -553,6 +586,7 @@ public class SampleStatusWebService extends ResourceConfig {
     })
     public String getSampleStatusByDate(@QueryParam("startDate") final String startDate,
                                         @QueryParam("endDate") final String endDate) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAO dao = DomainDAOManager.getInstance().getDao();
         MongoClient m = dao.getMongo();
         MongoDatabase db = m.getDatabase("jacs");
@@ -595,6 +629,8 @@ public class SampleStatusWebService extends ResourceConfig {
         } catch (Exception e) {
             log.error("Error occurred getting sample error counts by dataset",e);
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/info/sample/workstationstatus", stopWatch.getTime());
         }
     }
 }
