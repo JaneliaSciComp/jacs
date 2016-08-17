@@ -19,9 +19,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.workspace.TreeNode;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
@@ -38,6 +40,7 @@ public class TreeNodeWebService extends ResourceConfig {
 
     @Context
     HttpHeaders headers;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public TreeNodeWebService() {
         register(JacksonFeature.class);
@@ -56,6 +59,7 @@ public class TreeNodeWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode createTreeNode(@ApiParam DomainQuery query) {
         log.debug("createTreeNode({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (TreeNode)query.getDomainObject());
@@ -63,6 +67,8 @@ public class TreeNodeWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred creating tree node",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/treenode", stopWatch.getTime());
         }
     }
 
@@ -79,6 +85,7 @@ public class TreeNodeWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode reorderTreeNode(@ApiParam DomainQuery query) {
         log.debug("reorderTreeNode({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             List<Integer> orderList = query.getOrdering();
@@ -91,6 +98,8 @@ public class TreeNodeWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred reordering Tree Node",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/treenode/reorder", stopWatch.getTime());
         }
     }
 
@@ -108,6 +117,7 @@ public class TreeNodeWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode addChildren(@ApiParam DomainQuery query) {
         log.debug("addChildren({})",query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.addChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
@@ -115,6 +125,8 @@ public class TreeNodeWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred add children to tree node ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/treenode/children", stopWatch.getTime());
         }
     }
 
@@ -133,6 +145,7 @@ public class TreeNodeWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public TreeNode removeChildren(@ApiParam DomainQuery query) {
         log.debug("removeChildren({})",query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.removeChildren(query.getSubjectKey(), (TreeNode) query.getDomainObject(), query.getReferences());
@@ -140,6 +153,8 @@ public class TreeNodeWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred removing children from tree node ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/treenode/children", stopWatch.getTime());
         }
     }
 }

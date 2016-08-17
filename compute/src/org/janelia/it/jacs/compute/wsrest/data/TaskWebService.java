@@ -14,8 +14,10 @@ import javax.ws.rs.core.UriInfo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.hibernate.Session;
 import org.janelia.it.jacs.compute.access.TaskDAO;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.compute.util.HibernateSessionUtils;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.entity.json.JsonTaskEvent;
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory;
 public class TaskWebService {
     private static final Logger log = LoggerFactory.getLogger(TaskWebService.class);
     private TaskDAO taskDAO = new TaskDAO();
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     @GET
     @Path("/tasks")
@@ -49,6 +52,7 @@ public class TaskWebService {
                                       @QueryParam("length") Integer length,
                                       @Context UriInfo uriInfo) {
         log.debug("getAllTasks({}, offset={}, length={})", owner, offset, length);
+        StopWatch stopWatch = new StopWatch();
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -64,6 +68,7 @@ public class TaskWebService {
         }
         finally {
             HibernateSessionUtils.closeSession(dbSession);
+            activityLog.logRESTServiceCall(null, "GET", "/data/tasks", stopWatch.getTime());
         }
     }
 
@@ -81,6 +86,7 @@ public class TaskWebService {
     public JsonTask getTask(@QueryParam("owner") String owner,
                             @QueryParam("task-id") Long taskId, @Context UriInfo uriInfo) {
         log.debug("getTask({}, taskId={})", owner, taskId);
+        StopWatch stopWatch = new StopWatch();
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -101,6 +107,7 @@ public class TaskWebService {
         }
         finally {
             HibernateSessionUtils.closeSession(dbSession);
+            activityLog.logRESTServiceCall(null, "GET", "/data/task", stopWatch.getTime());
         }
         throw new IllegalArgumentException("Record not found");
     }
@@ -119,6 +126,7 @@ public class TaskWebService {
     public List<JsonTaskEvent> getTaskEvents(@QueryParam("owner") String owner,
                                              @QueryParam("task-id") Long taskId) {
         log.debug("getTaskEvents({}, taskId={})", owner, taskId);
+        StopWatch stopWatch = new StopWatch();
         Session dbSession = null;
         try {
             dbSession = HibernateSessionUtils.getSession();
@@ -133,6 +141,7 @@ public class TaskWebService {
         }
         finally {
             HibernateSessionUtils.closeSession(dbSession);
+            activityLog.logRESTServiceCall(null, "GET", "/data/task/events", stopWatch.getTime());
         }
         throw new IllegalArgumentException("Record not found");
     }

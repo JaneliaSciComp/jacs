@@ -21,9 +21,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.ReverseReference;
@@ -46,6 +48,7 @@ public class DomainObjectWebService extends ResourceConfig {
 
     @Context
     HttpHeaders headers;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public DomainObjectWebService() {
         register(JacksonFeature.class);
@@ -65,6 +68,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<DomainObject> getObjectDetails(@ApiParam DomainQuery query) {
         log.debug("getObjectDetails(({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             List<DomainObject> detailObjects = null;
@@ -79,6 +83,8 @@ public class DomainObjectWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred processing Object Details ",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "GET", "/domainobject/details", stopWatch.getTime());
         }
     }
 
@@ -98,6 +104,7 @@ public class DomainObjectWebService extends ResourceConfig {
                                                @ApiParam @QueryParam("name") final String name,
                                                @ApiParam @QueryParam("domainClass") final String domainClass) {
         log.debug("getObjectsByName({}, name={}, domainClass={})", subjectKey, name, domainClass);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         Class clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
@@ -106,6 +113,8 @@ public class DomainObjectWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred retrieving domain objects using name",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/domainobject/name", stopWatch.getTime());
         }
     }
 
@@ -122,6 +131,7 @@ public class DomainObjectWebService extends ResourceConfig {
     public List<DomainObject> getObjectsByClass(@QueryParam("subjectKey") final String subjectKey,
                                                 @QueryParam("domainClass") final String domainClass) {
         log.debug("getObjectsByClass({}, domainClass={})", subjectKey, domainClass);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         Class clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
@@ -130,6 +140,8 @@ public class DomainObjectWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred retrieving domain objects by class",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/domainobject/class", stopWatch.getTime());
         }
     }
 
@@ -151,6 +163,7 @@ public class DomainObjectWebService extends ResourceConfig {
                                                      @ApiParam @QueryParam("referenceAttr") final String referenceAttr,
                                                      @ApiParam @QueryParam("referenceClass") final String referenceClass) {
         log.debug("getObjectsByReverseRef({}, referenceId={}, count={}, referenceAttr={}, referenceClass={})", subjectKey, referenceId, count, referenceAttr, referenceClass);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         ReverseReference reverseRef = new ReverseReference();
         reverseRef.setCount(count);
@@ -163,6 +176,8 @@ public class DomainObjectWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred retrieving domain objects using reverse ref",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/domainobject/reverseLookup", stopWatch.getTime());
         }
     }
 
@@ -180,12 +195,15 @@ public class DomainObjectWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<Reference> getContainerReferences(@ApiParam DomainQuery query) {
         log.debug("getContainerReferences({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getContainerReferences(query.getDomainObject());
         } catch (Exception e) {
             log.error("Error occurred getting folder references",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/domainobject/references", stopWatch.getTime());
         }
     }
 
@@ -202,6 +220,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public DomainObject saveDomainObject(@ApiParam DomainQuery query) {
         log.debug("saveDomainObject({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), query.getDomainObject());
@@ -209,6 +228,8 @@ public class DomainObjectWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred updating Domain Object",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/domainobject", stopWatch.getTime());
         }
     }
 
@@ -225,6 +246,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public void removeDomainObject(@ApiParam DomainQuery query) {
         log.debug("removeDomainObject({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             for (Reference objectRef : query.getReferences()) {
@@ -247,6 +269,8 @@ public class DomainObjectWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred removing object references",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/domainobject/remove", stopWatch.getTime());
         }
     }
 
@@ -263,6 +287,7 @@ public class DomainObjectWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public DomainObject updateObjectProperty(@ApiParam DomainQuery query) {
         log.debug("updateObjectProperty({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             DomainObject updateObj = null;
@@ -280,6 +305,8 @@ public class DomainObjectWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred processing Domain Object Update Property",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "GET", "/data/domainobject/details", stopWatch.getTime());
         }
     }
     

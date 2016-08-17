@@ -14,12 +14,14 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import io.swagger.annotations.Api;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.status.RestfulWebServiceFailure;
 import org.janelia.it.jacs.model.tasks.utility.LSMProcessingTask;
@@ -39,6 +41,7 @@ public class SAGEWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public SAGEWebService() {
         register(JacksonFeature.class);
@@ -61,6 +64,7 @@ public class SAGEWebService extends ResourceConfig {
             @PathParam("dataSet")String dataSet,
             LSMProcessingTask lsmProcessingParams,
             @Context UriInfo uriInfo) {
+        StopWatch stopWatch = new StopWatch();
 
         final String context = "launchLsmPipelines: ";
         logger.info(context +"entry, owner=" + owner +
@@ -97,6 +101,8 @@ public class SAGEWebService extends ResourceConfig {
                     Response.Status.INTERNAL_SERVER_ERROR,
                     "failed to run lsm processing for " + dataOwner + ":" + lsmProcessingParams,
                     e);
+        } finally {
+            activityLog.logRESTServiceCall(owner, "POST", "/process/lsmPipelines", stopWatch.getTime());
         }
 
         return response;

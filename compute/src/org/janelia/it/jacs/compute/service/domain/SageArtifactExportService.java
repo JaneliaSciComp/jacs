@@ -187,6 +187,10 @@ public class SageArtifactExportService extends AbstractDomainService {
             if (reps>0) {
                 exportLineAnnotations(flyLineFolder.getName());
             }
+
+            logger.trace("Flushing session");
+            sage.getCurrentSession().flush();
+            sage.getCurrentSession().clear();
         }
        
         // Log the exported names
@@ -264,6 +268,7 @@ public class SageArtifactExportService extends AbstractDomainService {
             c += processSample(dataSetIdentifier, objectiveSample, annotations);    
         }
 
+        logger.trace("  Getting SAGE images for "+sample.getSlideCode());
         for(Image image : new ArrayList<>(sage.getImagesByPropertyValue(propertySlideCode, sample.getSlideCode()))) {
             String imageDataSet = sage.getImagePropertyValue(image, propertyDataSet);
             if (!primaryImageIdsForCurrentSample.contains(image.getId()) && sample.getDataSet().equals(imageDataSet) && CREATED_BY.equals(image.getCreatedBy())) {
@@ -272,6 +277,7 @@ public class SageArtifactExportService extends AbstractDomainService {
             }
         }
 
+        logger.trace("  Exported "+c+" samples");
         return c;
     }
     

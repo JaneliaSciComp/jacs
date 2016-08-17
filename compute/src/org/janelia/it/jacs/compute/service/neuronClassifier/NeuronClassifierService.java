@@ -1,6 +1,12 @@
 package org.janelia.it.jacs.compute.service.neuronClassifier;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,12 +14,20 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
+
+import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.janelia.it.jacs.compute.access.mongodb.DomainDAOManager;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -21,12 +35,11 @@ import org.janelia.it.jacs.compute.service.blast.BlastProcessDataConstants;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
-import org.janelia.it.jacs.compute.util.JFSUtils;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.neuron.NeuronLineageClassifierResultNode;
-import org.janelia.it.jacs.shared.img_3d_loader.V3dByteReader;
+import org.janelia.it.jacs.shared.img_3d_loader.V3dSignalFileLoader;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -86,33 +99,41 @@ public class NeuronClassifierService extends AbstractDomainService {
     private void generateModelsFromTraining() throws Exception {
         logger.info("Starting query to retrieve annotation and image information for training model data");
 
-        String sampleIdString = processData.getString("SAMPLE_ID");
-        Long sampleId = Long.parseLong(sampleIdString);
+        String[] sampleIdList = processData.getString("SAMPLE_ID_LIST").split(",");
+        List<String> jsonResults = new ArrayList<String>();
 
-        DomainDAO dao = DomainDAOManager.getInstance().getDao();
-        MongoClient m = dao.getMongo();
-        MongoDatabase db = m.getDatabase("jacs");
-        MongoCollection<Document> annotation = db.getCollection("annotation");
-        List<Document> annotationResults;
-        Document metadata = new Document();
+        for (int i=0; i<sampleIdList.length; i++) {
+            Long sampleId = Long.parseLong(sampleIdList[i]);
 
-        Document data = findLSMInfo(sampleId);
-        if (data!=null) {
-            List<String> annotationList = new ArrayList<>();
-            annotationResults = annotation.find(eq("target", "Sample#"+sampleId)).into(new ArrayList());
+            DomainDAO dao = DomainDAOManager.getInstance().getDao();
+            MongoClient m = dao.getMongo();
+            MongoDatabase db = m.getDatabase("jacs");
+            MongoCollection<Document> annotation = db.getCollection("annotation");
+            List<Document> annotationResults;
+            Document metadata = new Document();
 
-            for (Document annotationDoc : annotationResults) {
-                if (annotationDoc.get("key") != null) {
-                    annotationList.add(annotationDoc.getString("key"));
+            Document data = findLSMInfo(sampleId);
+            if (data!=null) {
+                List<String> annotationList = new ArrayList<>();
+                annotationResults = annotation.find(eq("target", "Sample#"+sampleId)).into(new ArrayList());
+
+                for (Document annotationDoc : annotationResults) {
+                    if (annotationDoc.get("key") != null) {
+                        annotationList.add(annotationDoc.getString("key"));
+                    }
+                }
+                if (annotationList.size()>0) {
+                    data.put("annotations", annotationList);
                 }
             }
-            if (annotationList.size()>0) {
-                data.put("annotations", annotationList);
-            }
-
-            logger.info("generatePrediction() putting vars in processData, metadata=" + data.toJson());
-            processData.putItem("METADATA", data.toJson());
+            jsonResults.add(data.toJson());
         }
+        String finalJson = "[" + StringUtils.join(jsonResults, ",") + "]";
+        logger.info("generatePrediction() putting vars in processData, metadata=" + finalJson);
+        OutputStream foo = Files.newOutputStream(Paths.get("/groups/jacs/jacsDev/servers/schauderd-ws1/dump/input.json"));
+        foo.write(finalJson.getBytes());
+        processData.putItem("METADATA", finalJson);
+
     }
 
     private void generatePrediction() throws Exception {
@@ -200,6 +221,7 @@ public class NeuronClassifierService extends AbstractDomainService {
                         imageResults = image.find(eq("_id", lsmId)).into(new ArrayList());
                         if (imageResults.size()>0) {
                             Document imageResult = imageResults.get(0);
+                            losslessStack = copyV3dPbdToLocalRaw(sampleDoc.getString("name"), losslessStack);
                             imageResult.put("losslessStack", losslessStack);
                             return imageResult;
                         }
@@ -211,5 +233,69 @@ public class NeuronClassifierService extends AbstractDomainService {
         return null;
     }
 
+    private static final int BUFFER_SIZE = 2 * 1024 * 1024; // 2Mb
+    private static final int EOF = -1;
+
+    private int convertPbdToRaw (String dumpFile) throws Exception {
+        V3dSignalFileLoader signal = new V3dSignalFileLoader();
+        signal.loadVolumeFile(dumpFile);
+        byte[] buffer0 = new byte[43];
+        ByteBuffer buffer = ByteBuffer.wrap(buffer0);
+        String magic = "raw_image_stack_by_hpeng";
+        byte[] b = magic.getBytes("UTF-8");
+        buffer.put(b);
+        String endianness = "B";
+        buffer.put(endianness.getBytes("UTF-8"));
+        short dataType = 4;
+        buffer.putShort(dataType);
+        buffer.putInt(signal.getSx());
+        buffer.putInt(signal.getSy());
+        buffer.putInt(signal.getSz());
+        buffer.putInt(signal.getChannelCount());
+        OutputStream moo = Files.newOutputStream(Paths.get(dumpFile.replaceFirst("v3dpbd","raw")));
+        moo.write(buffer.array());
+        moo.write(signal.getTextureByteArray());
+        moo.close();
+        return 1;
+    }
+
+    private String copyV3dPbdToLocalRaw(String sampleName, String path) {
+        InputStream input = null;
+        FileOutputStream output = null;
+        GetMethod getMethod = null;
+
+        String fullUrl = "http://jacs-webdav:8080/JFS/api/file" + path;
+        MultiThreadedHttpConnectionManager mgr = new MultiThreadedHttpConnectionManager();
+        HttpConnectionManagerParams managerParams = mgr.getParams();
+        managerParams.setDefaultMaxConnectionsPerHost(2); // default is 2
+        managerParams.setMaxTotalConnections(20);            // default is 20
+        HttpClient httpClient = new HttpClient(mgr);
+        String dumpFile = "/groups/jacs/jacsDev/servers/schauderd-ws1/dump/" + sampleName + ".v3dpbd";
+        final int responseCode;
+        try {
+            getMethod = new GetMethod(fullUrl);
+            responseCode = httpClient.executeMethod(getMethod);
+            if (responseCode == HttpServletResponse.SC_OK) {
+                input = getMethod.getResponseBodyAsStream();
+                output = new FileOutputStream(new File(dumpFile));
+                byte[] buffer = new byte[BUFFER_SIZE];
+                int n;
+                while (EOF != (n = input.read(buffer))) {
+                    output.write(buffer, 0, n);
+                }
+                if (convertPbdToRaw (dumpFile)==1) {
+                    Files.delete(Paths.get(dumpFile));
+                }
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "/groups/jacs/jacsDev/servers/schauderd-ws1/dump/" + sampleName + ".raw";
+
+    }
 
 }

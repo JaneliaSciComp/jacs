@@ -5,8 +5,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.lang.time.StopWatch;
 import org.janelia.it.jacs.compute.service.common.ProcessDataConstants;
 import org.janelia.it.jacs.compute.service.image.InputImage;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.entity.json.JsonTask;
 import org.janelia.it.jacs.model.tasks.mip.MIPGenerationTask;
 import org.janelia.it.jacs.model.tasks.mip.MIPInputImageData;
@@ -34,6 +36,7 @@ import java.util.Map;
 public class MIPGenerationWebService extends AbstractComputationService<MIPGenerationTask, MIPGenerationResultNode> {
     private static final String RESOURCE_NAME = "MIPGeneration";
     private static final Logger LOG = LoggerFactory.getLogger(MIPGenerationWebService.class);
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public MIPGenerationWebService() {
         super(RESOURCE_NAME);
@@ -64,10 +67,12 @@ public class MIPGenerationWebService extends AbstractComputationService<MIPGener
     })
     public Response post(@QueryParam("owner") String owner, MIPGenerationTask mipGenerationTask, @Context Request req) throws ProcessingException {
         LOG.info("MIP generation requested by {} with {}", owner, mipGenerationTask);
+        StopWatch stopWatch = new StopWatch();
         mipGenerationTask.setOwner(owner);
         validateRequest(mipGenerationTask);
         MIPGenerationTask persistedTask = init(mipGenerationTask);
         submitJob(persistedTask);
+        activityLog.logRESTServiceCall(owner, "POST", "/process/mips/images", stopWatch.getTime());
         return Response
                 .status(Response.Status.CREATED)
                 .entity(new JsonTask(persistedTask))

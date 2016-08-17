@@ -80,7 +80,6 @@ public class WorkspaceRestService extends ResourceConfig {
     private static Map<Long, ExpirableLoadAdapter> sampleLoadAdapterMap=new HashMap<>();
     public static final long LOAD_ADAPTER_TIMEOUT_MS=600000;
 
-    private ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRestService.class);
 
     private static long quasiTimebasedGuid=0L;
