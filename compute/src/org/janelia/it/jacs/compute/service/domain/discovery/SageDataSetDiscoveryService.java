@@ -30,9 +30,8 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
     private SageDAO sageDAO;
     private SampleHelperNG sampleHelper;
 
-    private Set<Long> visitedLsmIds = new HashSet<>();
-    private Set<Long> visitedSampleIds = new HashSet<>();
-	private Map<String, Map<String, Object>> lineMap = new HashMap<>();
+    private Set<Long> visitedLsmIds;
+    private Set<Long> visitedSampleIds;
     private String dataSetName = null;
     private int sageRowsProcessed = 0;
     private int lsmsMarkedDesync = 0;
@@ -48,15 +47,17 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
         this.sampleHelper = new SampleHelperNG(ownerKey, logger);
         sampleHelper.setDataSetNameFilter(dataSetName);
 
-        buildLinePropertyMap();
-        
+        SageDiscoverServiceHelper sageDiscoverServiceHelper = new SageDiscoverServiceHelper(sampleHelper);
+
         for(DataSet dataSet : sampleHelper.getDataSets()) {
             if (!dataSet.isSageSync()) {
                 logger.info("Skipping non-SAGE data set: "+dataSet.getName());
             }
             else {
                 logger.info("Processing data set: "+dataSet.getName());
-                processSageDataSet(dataSet);
+                sageDiscoverServiceHelper.processSageDataSet(dataSet);
+                visitedLsmIds = sageDiscoverServiceHelper.getVisitedLsmIds();
+                visitedSampleIds = sageDiscoverServiceHelper.getVisitedSampleIds();
                 markDesynced(dataSet);
             }
         }
@@ -76,100 +77,6 @@ public class SageDataSetDiscoveryService extends AbstractDomainService {
             logger.warn("IMPORTANT: "+samplesMarkedDesync+" samples were marked as desynchronized. These need to be manually curated and fixed or deleted as soon as possible.");
         }
 
-    }
-    
-	private void buildLinePropertyMap() throws Exception {
-		logger.info("Building property map for all lines");
-		ResultSetIterator iterator = null;
-		try {
-			iterator = sageDAO.getAllLineProperties();
-			while (iterator.hasNext()) {
-				Map<String, Object> lineProperties = iterator.next();
-				lineMap.put((String) lineProperties.get(SageDAO.LINE_PROP_LINE_TERM), lineProperties);
-			}
-		} 
-		finally {
-			if (iterator != null) {
-                try {
-                	iterator.close();
-                }
-                catch (Exception e) {
-                    logger.error("Unable to close ResultSetIterator for line properties "+
-                            "\n"+e.getMessage()+"\n. Continuing...");
-                }
-			}
-		}
-		logger.info("Retrieved properties for " + lineMap.size() + " lines");
-    }
-    
-    /**
-     * Provide either imageFamily or dataSetIdentifier. 
-     */
-    private void processSageDataSet(DataSet dataSet) throws Exception {
-
-        Multimap<String,LSMImage> slideGroups = LinkedListMultimap.create();
-        
-        String dataSetIdentifier = dataSet.getIdentifier();
-        logger.info("Querying SAGE for data set: "+dataSetIdentifier);
-
-        ResultSetIterator iterator = null;
-        try {
-            iterator = sageDAO.getAllImagePropertiesByDataSet(dataSetIdentifier);
-
-            while (iterator.hasNext()) {
-                Map<String,Object> row = iterator.next();
-                
-                Map<String,Object> allProps = new HashMap<>(row);
-				String line = (String) row.get(SageDAO.IMAGE_PROP_LINE_TERM);
-				if (line != null) {
-					Map<String, Object> lineProperties = lineMap.get(line);
-					if (lineProperties != null) {
-						allProps.putAll(lineProperties);
-					}
-				}
-                
-                LSMImage lsm = sampleHelper.createOrUpdateLSM(new SlideImage(allProps));
-                slideGroups.put(lsm.getSlideCode(), lsm);
-                sageRowsProcessed++;
-            }
-        }
-        finally {
-            if (iterator!=null) {
-                try {
-                    iterator.close();
-                }
-                catch (Exception e) {
-                    logger.error("Unable to close ResultSetIterator for data set "+dataSet.getName()+
-                            "\n"+e.getMessage()+"\n. Continuing...");
-                }
-            }
-        }
-
-        // Now process all the slides
-        for (String slideCode : slideGroups.keySet()) {
-            processSlideGroup(dataSet, slideCode, slideGroups.get(slideCode));
-        }
-    }
-    
-    private void processSlideGroup(DataSet dataSet, String slideCode, Collection<LSMImage> lsms) throws Exception {
-    
-        for(LSMImage lsm : lsms) {
-        	
-        	if (lsm.getSlideCode()==null) {
-        		logger.error("SAGE id "+lsm.getSageId()+" has null slide code");
-        		return;
-        	}
-        	
-	    	if (lsm.getFilepath()==null) {
-	    		logger.warn("Slide code "+lsm.getSlideCode()+" has an image with a null path, so it is not ready for synchronization.");
-	    		return;
-	    	}
-	    	
-	    	visitedLsmIds.add(lsm.getId());
-        }
-    	
-        Sample sample = sampleHelper.createOrUpdateSample(slideCode, dataSet, lsms);
-        visitedSampleIds.add(sample.getId());
     }
     
     private void markDesynced(DataSet dataSet) throws Exception {

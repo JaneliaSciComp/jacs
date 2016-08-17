@@ -922,6 +922,7 @@ public class DomainDAO {
                 domainObject.setCreationDate(now);
                 domainObject.setUpdatedDate(now);
                 collection.save(domainObject);
+                log.trace("Create new object " + domainObject);
             }
             else {
                 domainObject.setUpdatedDate(now);
@@ -929,8 +930,9 @@ public class DomainDAO {
                 if (result.getN() != 1) {
                     throw new IllegalStateException("Updated " + result.getN() + " records instead of one: " + collectionName + "#" + domainObject.getId());
                 }
+                log.trace("Updated " + result.getN()+ " rows for " + domainObject);
             }
-            log.trace("Saved " + domainObject.getClass().getName() + "#" + domainObject.getId());
+            log.trace("Saved " + domainObject);
             return domainObject;
         }
         catch (MongoException e) {

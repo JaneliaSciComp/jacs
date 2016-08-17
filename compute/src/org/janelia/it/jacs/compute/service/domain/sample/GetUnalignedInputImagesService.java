@@ -62,6 +62,7 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
         List<InputImage> inputImages = new ArrayList<>();
         for(AnatomicalArea sampleArea : sampleAreas) {
             for(MergedLsmPair mergedPair : sampleArea.getMergedLsmPairs()) {
+                if (sampleArea.getName().contains("-Verify")) continue;
                 inputImages.add(getInputImage(sampleArea.getName(), mergedPair.getMergedFilepath(), mergedPair.getTileName(), chanSpec));
             }
             if (inputImages.size()>1) {

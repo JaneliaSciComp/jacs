@@ -54,11 +54,9 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
  */
 public class SageDAO {
 
-    public static final String IMAGE_PROP_PATH = "image_query_path";
-    public static final String IMAGE_PROP_JFS_PATH = "image_query_jfs_path";
     public static final String IMAGE_PROP_LINE_TERM = "image_query_line";
     public static final String LINE_PROP_LINE_TERM = "line_query_line";
-    
+
     private final String jndiPath = SystemConfigurationProperties.getString("sage.jdbc.jndiName", null);
     private final String jdbcDriver = SystemConfigurationProperties.getString("sage.jdbc.driverClassName", null);
     private final String jdbcUrl = SystemConfigurationProperties.getString("sage.jdbc.url", null);
@@ -118,47 +116,59 @@ public class SageDAO {
         return getCurrentSession();
     }
 
+//    /**
+//     * Returns all the images in a given image family with a null data set, with their properties as columns.
+//     * You can get the column names by calling getColumnNames() on the returned ResultSetIterator object.
+//     * The client must call close() on the returned iterator when finished with it.
+//     * @return Iterator over the JDBC result set.
+//     * @throws DaoException
+//     */
+//    public ResultSetIterator getImagesByFamily(String sageImageFamily) throws DaoException {
+//
+//        Connection connection = null;
+//        PreparedStatement pStatement = null;
+//        ResultSet resultSet = null;
+//
+//        try {
+//            final String sql = "select * from image_data_mv where family=? and data_set is null and display=true order by slide_code, name";
+//            connection = getJdbcConnection();
+//            pStatement = connection.prepareStatement(sql);
+//            pStatement.setString(1, sageImageFamily);
+//            pStatement.setFetchSize(Integer.MIN_VALUE);
+//            resultSet = pStatement.executeQuery();
+//
+//        } catch (SQLException e) {
+//            ResultSetIterator.close(resultSet, pStatement, connection, log);
+//            throw new DaoException("Error querying SAGE", e);
+//        }
+//
+//        return new ResultSetIterator(connection, pStatement, resultSet);
+//    }
+
     /**
-     * Returns all the images in a given image family with a null data set, with their properties as columns. 
-     * You can get the column names by calling getColumnNames() on the returned ResultSetIterator object.
-     * The client must call close() on the returned iterator when finished with it. 
-     * @return Iterator over the JDBC result set. 
+     * Given an lsm name, get its representative slide image, without using a materialized view.  We want
+     * immediate turnaround on data that has just been added to tables.
+     *
+     * @param lsmName find slide image for this.
+     * @return fully-fleshed slide image.
      * @throws DaoException
      */
-    public ResultSetIterator getImagesByFamily(String sageImageFamily) throws DaoException {
-
-        Connection connection = null;
-        PreparedStatement pStatement = null;
-        ResultSet resultSet = null;
-
-        try {
-            final String sql = "select * from image_data_mv where family=? and data_set is null and display=true order by slide_code, name";
-            connection = getJdbcConnection();
-            pStatement = connection.prepareStatement(sql);
-            pStatement.setString(1, sageImageFamily);
-            pStatement.setFetchSize(Integer.MIN_VALUE);
-            resultSet = pStatement.executeQuery();
-
-        } catch (SQLException e) {
-            ResultSetIterator.close(resultSet, pStatement, connection, log);
-            throw new DaoException("Error querying SAGE", e);
-        }
-
-        return new ResultSetIterator(connection, pStatement, resultSet);
+    public SlideImage getSlideImageByLSMName(String lsmName) throws DaoException {
+        return getSlideImage(SLIDE_IMAGE_BY_LSMNAME_SQL, lsmName);
     }
 
-    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
-
-        String sql = "select " +
-                COMMON_IMAGE_VW_ATTR + "," +
-                "line_vw.lab as image_lab_name " +
-                "from image_data_mv as image_vw " +
-                "join image image_t on image_t.id = image_vw.id " +
-                "join line_vw on line_vw.id = image_t.line_id " +
-                "where image_vw.name = ? and image_vw.data_set = ?";
-        log.debug("getSlideImageByDatasetAndLSMName: " + sql + "(" + lsmName + ")");
-        return getSlideImage(sql, lsmName, datasetName);
-    }
+//    public SlideImage getSlideImageByDatasetAndLSMName(String datasetName, String lsmName) throws DaoException {
+//
+//        String sql = "select " +
+//                COMMON_IMAGE_VW_ATTR + "," +
+//                "line_vw.lab as image_lab_name " +
+//                "from image_data_mv as image_vw " +
+//                "join image image_t on image_t.id = image_vw.id " +
+//                "join line_vw on line_vw.id = image_t.line_id " +
+//                "where image_vw.name = ? and image_vw.data_set = ?";
+//        log.debug("getSlideImageByDatasetAndLSMName: " + sql + "(" + lsmName + ")");
+//        return getSlideImage(sql, lsmName, datasetName);
+//    }
 
     /**
      * Retrieve the Sage image by the LSM path
@@ -410,7 +420,16 @@ public class SageDAO {
             throw new DaoException("Error deleting image property in SAGE", e);
         }
     }
-    
+
+    public String getImagePropertyValue(Image image, CvTerm propertyType) {
+        for(ImageProperty property : image.getImageProperties()) {
+            if (property.getType().equals(propertyType)) {
+                return property.getValue();
+            }
+        }
+        return null;
+    }
+
     public void deleteImageProperty(ImageProperty imageProperty) throws DaoException {
         try {
         	Image image = imageProperty.getImage();
@@ -496,6 +515,29 @@ public class SageDAO {
             throw new DaoException("Error saving secondary image in SAGE", e);
         }
         return secondaryImage;
+    }
+
+    public void deleteImage(Image image) throws DaoException {
+        try {
+            // This should cascade and delete all image properties and secondary images
+            getCurrentSession().delete(image);
+        }
+        catch (Exception e) {
+            throw new DaoException("Error deleting image in SAGE", e);
+        }
+    }
+
+    public void deleteSecondaryImage(SecondaryImage secondaryImage) throws DaoException {
+        try {
+            Image image = secondaryImage.getImage();
+            if (image!=null) {
+                image.getSecondaryImages().remove(secondaryImage);
+            }
+            getCurrentSession().delete(secondaryImage);
+        }
+        catch (Exception e) {
+            throw new DaoException("Error deleting secondary image in SAGE", e);
+        }
     }
 
     public SageSession getSageSession(String sessionName, CvTerm type, Experiment experiment) {
@@ -631,20 +673,20 @@ public class SageDAO {
                 String key = "data_set".equals(type) ? type : cv + "_" + type;
                 data.put(key, value);
             }
-            slideImage.setDatasetName((String) data.get("data_set"));
-            slideImage.setSlideCode((String) data.get("light_imagery_slide_code"));
-            slideImage.setTileType((String) data.get("light_imagery_tile"));
-            slideImage.setCrossBarcode((String) data.get("fly_cross_barcode"));
-            slideImage.setChannelSpec((String) data.get("light_imagery_channel_spec"));
-            slideImage.setGender((String) data.get("light_imagery_gender"));
-            slideImage.setArea((String) data.get("light_imagery_area"));
-            slideImage.setAge((String) data.get("light_imagery_age"));
-            slideImage.setChannels((String) data.get("light_imagery_channels"));
-            slideImage.setMountingProtocol((String) data.get("light_imagery_mounting_protocol"));
-            slideImage.setTissueOrientation((String) data.get("light_imagery_tissue_orientation"));
-            slideImage.setVtLine((String) data.get("light_imagery_vt_line"));
-            slideImage.setEffector((String)data.get("fly_effector"));
-            String objectiveStr = (String) data.get("light_imagery_objective");
+            slideImage.setDatasetName((String) data.get(SlideImage.DATA_SET));
+            slideImage.setSlideCode((String) data.get(SlideImage.LIGHT_IMAGERY_SLIDE_CODE));
+            slideImage.setTileType((String) data.get(SlideImage.LIGHT_IMAGERY_TILE));
+            slideImage.setCrossBarcode((String) data.get(SlideImage.FLY_CROSS_BARCODE));
+            slideImage.setChannelSpec((String) data.get(SlideImage.LIGHT_IMAGERY_CHANNEL_SPEC));
+            slideImage.setGender((String) data.get(SlideImage.LIGHT_IMAGERY_GENDER));
+            slideImage.setArea((String) data.get(SlideImage.LIGHT_IMAGERY_AREA));
+            slideImage.setAge((String) data.get(SlideImage.LIGHT_IMAGERY_AGE));
+            slideImage.setChannels((String) data.get(SlideImage.LIGHT_IMAGERY_CHANNELS));
+            slideImage.setMountingProtocol((String) data.get(SlideImage.LIGHT_IMAGERY_MOUNTING_PROTOCOL));
+            slideImage.setTissueOrientation((String) data.get(SlideImage.LIGHT_IMAGERY_TISSUE_ORIENTATION));
+            slideImage.setVtLine((String) data.get(SlideImage.LIGHT_IMAGERY_VT_LINE));
+            slideImage.setEffector((String)data.get(SlideImage.FLY_EFFECTOR));
+            String objectiveStr = (String) data.get(SlideImage.LIGHT_IMAGERY_OBJECTIVE);
             if (objectiveStr!=null) {
                 if (objectiveStr.contains(Objective.OBJECTIVE_10X.getName())) {
                     slideImage.setObjective(Objective.OBJECTIVE_10X.getName());
@@ -659,15 +701,15 @@ public class SageDAO {
                     slideImage.setObjective(Objective.OBJECTIVE_63X.getName());
                 }
             }
-            String voxelSizeX = (String) data.get("light_imagery_voxel_size_x");
-            String voxelSizeY = (String) data.get("light_imagery_voxel_size_y");
-            String voxelSizeZ = (String) data.get("light_imagery_voxel_size_z");
+            String voxelSizeX = (String) data.get(SlideImage.LIGHT_IMAGERY_VOXEL_SIZE_X);
+            String voxelSizeY = (String) data.get(SlideImage.LIGHT_IMAGERY_VOXEL_SIZE_Y);
+            String voxelSizeZ = (String) data.get(SlideImage.LIGHT_IMAGERY_VOXEL_SIZE_Z);
             if (voxelSizeX!=null && voxelSizeY!=null && voxelSizeZ!=null) {
                 slideImage.setOpticalRes(voxelSizeX,voxelSizeY,voxelSizeZ);
             }
-            String imageSizeX = (String) data.get("light_imagery_dimension_x");
-            String imageSizeY = (String) data.get("light_imagery_dimension_y");
-            String imageSizeZ = (String) data.get("light_imagery_dimension_z");
+            String imageSizeX = (String) data.get(SlideImage.LIGHT_IMAGERY_DIMENSION_X);
+            String imageSizeY = (String) data.get(SlideImage.LIGHT_IMAGERY_DIMENSION_Y);
+            String imageSizeZ = (String) data.get(SlideImage.LIGHT_IMAGERY_DIMENSION_Z);
             if (imageSizeX!=null && imageSizeY!=null && imageSizeZ!=null) {
                 slideImage.setPixelRes(imageSizeX,imageSizeY,imageSizeZ);
             }
@@ -837,12 +879,12 @@ public class SageDAO {
             rs = pstmt.executeQuery();
             if (rs.next()) {
                 slideImage = new SlideImage(new HashMap<String,Object>());
-                slideImage.setSageId(rs.getInt("image_query_id"));
-                slideImage.setImageName(rs.getString("image_query_name"));
-                slideImage.setImagePath(rs.getString("image_query_path"));
-                slideImage.setJfsPath(rs.getString("image_query_jfs_path"));
-                slideImage.setLine(rs.getString("image_query_line"));
-                slideImage.setLab(rs.getString("image_lab_name"));
+                slideImage.setSageId(rs.getInt(SlideImage.IMAGE_QUERY_ID));
+                slideImage.setImageName(rs.getString(SlideImage.IMAGE_QUERY_NAME));
+                slideImage.setImagePath(rs.getString(SlideImage.IMAGE_QUERY_PATH));
+                slideImage.setJfsPath(rs.getString(SlideImage.IMAGE_QUERY_JFS_PATH));
+                slideImage.setLine(rs.getString(SlideImage.IMAGE_QUERY_LINE));
+                slideImage.setLab(rs.getString(SlideImage.IMAGE_LAB_NAME));
                 Date createDate = rs.getTimestamp("image_query_create_date");
                 if (createDate!=null) {
                     String tmogDate = ISO8601Utils.format(createDate);
@@ -882,6 +924,20 @@ public class SageDAO {
             "  and (i.created_by is null or i.created_by!='"+SageArtifactExportService.CREATED_BY+"') " +
             ") image_vw on ip1.image_id = image_vw.id " +
             "group by image_vw.id ";
+
+    public static final String SLIDE_IMAGE_BY_LSMNAME_SQL = "select " + COMMON_IMAGE_VW_ATTR + "," +
+            "image_vw.id image_query_id,image_vw.name image_query_name,image_vw.path image_query_path," +
+            "image_vw.jfs_path image_query_jfs_path,image_vw.line image_query_line,image_vw.family light_imagery_family," +
+            "image_vw.capture_date light_imagery_capture_date,image_vw.representative light_imagery_representative," +
+            "image_vw.created_by light_imagery_created_by,image_vw.create_date image_query_create_date,l.lab image_lab_name " +
+            "from image_vw image_vw join line_vw l on (image_vw.line=l.name) where image_vw.name=?";
+
+//    public static final String SLIDE_IMAGE_BY_LSMNAME_SQL = "select " + COMMON_IMAGE_VW_ATTR +
+//            "i.id image_query_id,i.name image_query_name,i.path image_query_path," +
+//            "i.jfs_path image_query_jfs_path,i.line image_query_line,i.family light_imagery_family," +
+//            "i.capture_date light_imagery_capture_date,i.representative light_imagery_representative," +
+//            "i.created_by light_imagery_created_by,i.create_date image_query_create_date,l.lab image_lab_name " +
+//            "from image_vw i join line_vw l on (i.line=l.name) where i.name=?";
 
     private static final String ALL_LINE_PROPERTY_SQL_1 =
             "select line_vw.id line_query_id, line_vw.name line_query_line, line_vw.lab line_query_lab, line_vw.gene line_query_gene, line_vw.organism line_query_organism, line_vw.synonyms line_query_synonyms";
