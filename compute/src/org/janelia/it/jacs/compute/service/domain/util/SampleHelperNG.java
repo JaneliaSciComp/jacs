@@ -10,7 +10,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
-import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.service.common.ContextLogger;
 import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;
 import org.janelia.it.jacs.compute.service.domain.model.SlideImage;
@@ -286,16 +285,12 @@ public class SampleHelperNG extends DomainHelper {
             }
             String area = lsm.getAnatomicalArea();
 
-            // Group LSMs by objective and tile
+            // Group LSMs by objective, tile and area
             Collection<SlideImageGroup> subTileGroupList = objectiveGroups.get(objective);
             SlideImageGroup group = null;
             for(SlideImageGroup slideImageGroup : subTileGroupList) {
-            	if (StringUtils.areEqual(slideImageGroup.getTag(), tag)) {
+            	if (StringUtils.areEqual(slideImageGroup.getTag(), tag) && StringUtils.areEqual(slideImageGroup.getAnatomicalArea(), area)) {
             		group = slideImageGroup;
-            		if (!StringUtils.areEqual(slideImageGroup.getAnatomicalArea(), area)) {
-                        logger.warn("  No consensus for area in tile group '"+group.getTag()+"' ("+slideImageGroup.getAnatomicalArea()+" != "+area+")");
-                		group.setAnatomicalArea(NO_CONSENSUS_VALUE);
-            		}
             		break;
             	}
             }
@@ -651,7 +646,7 @@ public class SampleHelperNG extends DomainHelper {
         boolean dirty = false;
 
         for (SlideImageGroup tileGroup : tileGroupList) {
-            SampleTile sampleTile = objectiveSample.getTileByName(tileGroup.getTag());
+            SampleTile sampleTile = objectiveSample.getTileByNameAndArea(tileGroup.getTag(), tileGroup.getAnatomicalArea());
             if (sampleTile==null) {
             	throw new IllegalStateException("No such tile: "+tileGroup.getTag());
             }
@@ -676,7 +671,7 @@ public class SampleHelperNG extends DomainHelper {
         	logger.trace("  Checking for "+tileGroup.getTag());
 
             // Ensure each tile is in the sample
-            SampleTile sampleTile = objectiveSample.getTileByName(tileGroup.getTag());
+            SampleTile sampleTile = objectiveSample.getTileByNameAndArea(tileGroup.getTag(), tileGroup.getAnatomicalArea());
             if (sampleTile==null) {
             	logger.info("  Existing sample does not contain tile: "+tileGroup.getTag());
                 return false;
