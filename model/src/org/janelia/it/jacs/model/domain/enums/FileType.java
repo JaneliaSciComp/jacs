@@ -30,9 +30,9 @@ public enum FileType {
     RefSignal3Mip("Reference+Signal 3 MIP", true, false),
     
     // Movies
-    AllMovie("Reference+Signal Movie", false, false),
     SignalMovie("Signal Movie", false, false),
     ReferenceMovie("Reference Movie", false, false),
+    AllMovie("Reference+Signal Movie", false, false),
     
     // Alignment outputs
     AlignmentVerificationMovie("Alignment Verification Movie", false, false),
