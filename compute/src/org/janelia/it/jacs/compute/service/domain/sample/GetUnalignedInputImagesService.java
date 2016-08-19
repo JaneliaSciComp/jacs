@@ -65,8 +65,8 @@ public class GetUnalignedInputImagesService extends AbstractDomainService {
                 if (sampleArea.getName().contains("-Verify")) continue;
                 inputImages.add(getInputImage(sampleArea.getName(), mergedPair.getMergedFilepath(), mergedPair.getTileName(), chanSpec));
             }
-            if (inputImages.size()>1) {
-            	// If there are more than 2 tiles then there should be a stitched image as well
+            if (sampleArea.getMergedLsmPairs().size()>1) {
+            	// If there are more than 2 tiles in this sample area, then there should be a stitched image as well
             	inputImages.add(getInputImage(sampleArea.getName(), sampleArea.getStitchedFilepath(), null, chanSpec));
             }
         }
