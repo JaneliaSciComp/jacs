@@ -61,7 +61,11 @@ public class Sample extends AbstractDomainObject implements IsParent {
     @SAGEAttribute(cvName="light_imagery", termName="slide_code")
     @SearchAttribute(key="slide_code_txt",label="Slide Code")
     private String slideCode;
-    
+
+    @SAGEAttribute(cvName="fly", termName="cross_barcode")
+    @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
+    private Integer crossBarcode;
+
     @SearchAttribute(key="status_txt",label="Status",facet="status_s")
     private String status;
     
@@ -218,6 +222,14 @@ public class Sample extends AbstractDomainObject implements IsParent {
 
     public void setSlideCode(String slideCode) {
         this.slideCode = slideCode;
+    }
+
+    public Integer getCrossBarcode() {
+        return crossBarcode;
+    }
+
+    public void setCrossBarcode(Integer crossBarcode) {
+        this.crossBarcode = crossBarcode;
     }
 
     public String getStatus() {
