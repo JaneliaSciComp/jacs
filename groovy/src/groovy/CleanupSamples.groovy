@@ -12,23 +12,23 @@ import org.janelia.it.jacs.shared.utils.StringUtils
  */
 class CleanupSamplesScript {
 
-    boolean DEBUG = true
+    boolean DEBUG = false
     DomainDAO dao = DomainDAOManager.instance.dao
 
     public void run() {
         Set<String> users = new HashSet<>()
         for(DataSet dataSet : dao.getDataSets(null)) {
             users.add(dataSet.ownerKey)
-//            println "Processing "+dataSet.identifier
-//            for(Sample sample : dao.getSamplesForDataSet(dataSet.ownerKey, dataSet.identifier)) {
-//                cleanup(sample)
-//            }
+            println "Processing "+dataSet.identifier
+            for(Sample sample : dao.getSamplesForDataSet(dataSet.ownerKey, dataSet.identifier)) {
+                cleanup(sample)
+            }
         }
         // Samples without data sets
-        for(Sample sample : dao.getCollectionByClass(Sample.class).find("{dataSet:{\$exists:false}}").as(Sample.class)) {
-            println sample.name
-            cleanup(sample)
-        }
+//        for(Sample sample : dao.getCollectionByClass(Sample.class).find("{dataSet:{\$exists:false}}").as(Sample.class)) {
+//            println sample.name
+//            cleanup(sample)
+//        }
     }
 
     def cleanup(Sample sample) { 
@@ -43,7 +43,8 @@ class CleanupSamplesScript {
         boolean dirty = false
 //        dirty |= cleanupAlignmentNames(sample)
 //        dirty |= cleanupDuplicateAlignments(sample)
-        dirty |= cleanupNullObjective(sample)
+//        dirty |= cleanupNullObjective(sample)
+        dirty |= cleanupMissingErrors(sample)
         return dirty
     }
     
@@ -140,6 +141,38 @@ class CleanupSamplesScript {
         return dirty
     }
     
+    def boolean cleanupMissingErrors(Sample sample) {
+        
+        if ("Error".equals(sample.status)) {
+            
+            boolean hasError = false;
+            SamplePipelineRun latestRun = null;
+            for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+                SamplePipelineRun run = objectiveSample.getLatestRun();
+                latestRun = run;
+                if (run!=null && run.hasError()) {
+                    hasError = true;
+                }
+            }
+            
+            if (!hasError) {
+                if (latestRun==null) {
+                    println sample.name+" is missing error in pipeline run, AND has no pipeline runs!"
+                }
+                else {
+                    println sample.name+" is missing error in pipeline run. Adding to "+latestRun.name
+                    PipelineError error = new PipelineError()
+                    error.setCreationDate(latestRun.getCreationDate())
+                    error.setClassification("ComputeError")
+                    error.setDescription("Unrecorded error")
+                    latestRun.setError(error)
+                    return true
+                }
+            }
+        }
+        
+        return false
+    }
 }
 
 new CleanupSamplesScript().run()
