@@ -1,23 +1,17 @@
 package org.janelia.it.jacs.shared.lvv;
 
-import com.sun.media.jai.codec.ByteArraySeekableStream;
-import com.sun.media.jai.codec.SeekableStream;
+import java.util.Date;
+
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.util.Date;
 
 
 /**
@@ -25,12 +19,13 @@ import java.util.Date;
  */
 public class HttpDataSource {
 
-    private static Logger logger= LoggerFactory.getLogger(HttpDataSource.class);
+    private static Logger logger = LoggerFactory.getLogger(HttpDataSource.class);
     private static String restServer;
     private static Long mouseLightCurrentSampleId;
     private static boolean useHttp=true;
 
     private static HttpClient httpClient;
+    private static HttpClient simpleHttpClient;
     static {
         // Strange threading/connection issues were resolved by reusing a single HTTP Client with a high connection count.
         // The solution was found here:
@@ -40,6 +35,10 @@ public class HttpDataSource {
         params.setDefaultMaxConnectionsPerHost(20);
         multiThreadedHttpConnectionManager.setParams(params);
         httpClient = new HttpClient(multiThreadedHttpConnectionManager);
+
+        // Non-threaded version for Horta tile streaming
+        SimpleHttpConnectionManager simpleHttpConnectionManager = new SimpleHttpConnectionManager();
+        simpleHttpClient = new HttpClient(simpleHttpConnectionManager);
     }
 
     public static boolean useHttp() {
@@ -151,52 +150,24 @@ public class HttpDataSource {
         return bytes;
     }
 
-    public static byte[] getMouseLightTiffBytes(String filepath) throws Exception {
-        String url= restServer + "mouselight/mouseLightTiffBytes?suggestedPath="+filepath;
-        GetMethod getMethod=new GetMethod(url);
-        byte[] bytes=null;
-        try {
-            int statusCode = httpClient.executeMethod(getMethod);
-            if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
-            }
-            bytes=getMethod.getResponseBody();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            getMethod.releaseConnection();
-        }
-        return bytes;
-    }
-
+    /**
+     * This method uses a single-threaded version of the HTTP client, so threading must be done by the caller.
+     * @param filepath
+     * @return
+     */
     public static GetMethod getMouseLightTiffStream(String filepath) throws Exception {
-        String url= restServer + "mouselight/mouseLightTiffStream?suggestedPath="+filepath;
-        GetMethod getMethod=new GetMethod(url);
+        String url = restServer + "mouselight/mouseLightTiffStream?suggestedPath="+filepath;
+        GetMethod getMethod = new GetMethod(url);
         try {
-            int statusCode = httpClient.executeMethod(getMethod);
+            int statusCode = simpleHttpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
                 throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
-
             return getMethod;
-            // NOTE: if I try simply returning the inputStream, it shows up as closed in the decoder.
-            // If I inefficiently convert the stream to a byte array and then create another stream
-            // it works. Need to figure out how to make this more efficient.
-
-            // THE PROBLEM IS THE RELEASE CONNECTION!!!!!!! WE NEED A CALLBACK TO SHUT THIS
-
-            // InputStream inputStream=getMethod.getResponseBodyAsStream();
-
-//            byte[] bytes = IOUtils.toByteArray(inputStream);
-//            SeekableStream s = new ByteArraySeekableStream(bytes);
-
-//            return new BufferedInputStream(getMethod.getResponseBodyAsStream());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        }
+        finally {
             getMethod.releaseConnection();
         }
-        return null;
     }
 
 }
