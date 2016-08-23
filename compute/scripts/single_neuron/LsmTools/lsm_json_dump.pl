@@ -9,7 +9,7 @@
 # Zeiss::LSM
 #
 
-use lib '/usr/local/perl5/lib/perl5/site_perl/5.8.5';
+use lib '/misc/local/perl5/lib/perl5/site_perl/5.8.5';
 use lib '/groups/jacs/jacsHosts/servers/jacs/executables/perl/lib/perl5';
 
 use Zeiss::LSM;
