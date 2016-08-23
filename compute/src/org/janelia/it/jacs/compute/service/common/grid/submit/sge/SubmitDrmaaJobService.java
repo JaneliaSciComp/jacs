@@ -299,8 +299,9 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	int slots = getRequiredSlots();
         	this.gridResourceSpec = new GridResourceSpec(mem, slots, isExclusive());
         	String ns = gridResourceSpec.getNativeSpec();
-        	if (isShortPipelineJob()) {
-        		ns += " -l short=true -now n";
+        	// One hour (seconds)
+            if (isShortPipelineJob()) {
+        		ns += " -l h_rt=3600 -l sl7=true";
         	}
             if (isImmediateProcessingJob()) {
                 if (isShortPipelineJob()) {
@@ -313,7 +314,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	    ns += " "+ans;
         	}
         	if (!ns.contains("sandy=true")) {
-        		ns += " -l sandy=true";
+        		ns += " -l sandy=true -l sl7=true";
         	}
         	contextLogger.info("Setting native specification to accomodate "+mem+" GB of memory and "+slots+" slot(s): "+ns);
         	jt.setNativeSpecification(ns);	
