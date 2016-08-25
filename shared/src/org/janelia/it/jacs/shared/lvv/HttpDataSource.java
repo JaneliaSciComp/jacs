@@ -132,24 +132,6 @@ public class HttpDataSource {
         return textureData2d;
     }
 
-    public static byte[] fileToBytesByPath(String filepath) throws Exception {
-        String url= restServer + "mouselight/fileBytes?path="+filepath;
-        GetMethod getMethod=new GetMethod(url);
-        byte[] bytes=null;
-        try {
-            int statusCode = httpClient.executeMethod(getMethod);
-            if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
-            }
-            bytes=getMethod.getResponseBody();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            getMethod.releaseConnection();
-        }
-        return bytes;
-    }
-
     /**
      * This method uses a single-threaded version of the HTTP client, so threading must be done by the caller.
      * @param filepath
@@ -160,7 +142,7 @@ public class HttpDataSource {
         logger.info("Getting "+url);
         GetMethod getMethod = new GetMethod(url);
         try {
-            int statusCode = simpleHttpClient.executeMethod(getMethod);
+            int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
                 throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
