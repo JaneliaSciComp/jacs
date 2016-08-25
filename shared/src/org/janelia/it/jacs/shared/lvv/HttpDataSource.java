@@ -24,8 +24,8 @@ public class HttpDataSource {
     private static Long mouseLightCurrentSampleId;
     private static boolean useHttp=true;
 
-    private static HttpClient httpClient;
-    private static HttpClient simpleHttpClient;
+    private static final HttpClient httpClient;
+    private static final HttpClient simpleHttpClient;
     static {
         // Strange threading/connection issues were resolved by reusing a single HTTP Client with a high connection count.
         // The solution was found here:
@@ -157,6 +157,7 @@ public class HttpDataSource {
      */
     public static GetMethod getMouseLightTiffStream(String filepath) throws Exception {
         String url = restServer + "mouselight/mouseLightTiffStream?suggestedPath="+filepath;
+        logger.info("Getting "+url);
         GetMethod getMethod = new GetMethod(url);
         try {
             int statusCode = simpleHttpClient.executeMethod(getMethod);
@@ -165,8 +166,9 @@ public class HttpDataSource {
             }
             return getMethod;
         }
-        finally {
+        catch (Exception e) {
             getMethod.releaseConnection();
+            throw e;
         }
     }
 
