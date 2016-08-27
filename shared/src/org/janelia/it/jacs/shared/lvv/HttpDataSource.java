@@ -24,8 +24,8 @@ public class HttpDataSource {
     private static Long mouseLightCurrentSampleId;
     private static boolean useHttp=true;
 
-    private static HttpClient httpClient;
-    private static HttpClient simpleHttpClient;
+    private static final HttpClient httpClient;
+    private static final HttpClient simpleHttpClient;
     static {
         // Strange threading/connection issues were resolved by reusing a single HTTP Client with a high connection count.
         // The solution was found here:
@@ -132,24 +132,6 @@ public class HttpDataSource {
         return textureData2d;
     }
 
-    public static byte[] fileToBytesByPath(String filepath) throws Exception {
-        String url= restServer + "mouselight/fileBytes?path="+filepath;
-        GetMethod getMethod=new GetMethod(url);
-        byte[] bytes=null;
-        try {
-            int statusCode = httpClient.executeMethod(getMethod);
-            if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
-            }
-            bytes=getMethod.getResponseBody();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            getMethod.releaseConnection();
-        }
-        return bytes;
-    }
-
     /**
      * This method uses a single-threaded version of the HTTP client, so threading must be done by the caller.
      * @param filepath
@@ -157,16 +139,18 @@ public class HttpDataSource {
      */
     public static GetMethod getMouseLightTiffStream(String filepath) throws Exception {
         String url = restServer + "mouselight/mouseLightTiffStream?suggestedPath="+filepath;
+        logger.info("Getting "+url);
         GetMethod getMethod = new GetMethod(url);
         try {
-            int statusCode = simpleHttpClient.executeMethod(getMethod);
+            int statusCode = httpClient.executeMethod(getMethod);
             if (statusCode != HttpStatus.SC_OK) {
                 throw new Exception("HTTP status " + statusCode + " (not OK) from url " + url);
             }
             return getMethod;
         }
-        finally {
+        catch (Exception e) {
             getMethod.releaseConnection();
+            throw e;
         }
     }
 
