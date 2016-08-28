@@ -3,12 +3,14 @@ package org.janelia.it.jacs.compute.xslt;
 /**
  * Created by Leslie L Foster on 8/28/2016.
  */
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Properties;
 
+import javax.xml.XMLConstants;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -88,10 +90,7 @@ public class GeneralXsltConverter {
     public InputStream getStream() {
         Transformer transformer;
         TransformerFactory factory = TransformerFactory.newInstance();
-        //  Eliminating both these external access settings, until can verify
-        //  1) they are needed and
-        //  2) build system won't unexpectedly choke on them.
-        //factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
+        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
         //factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "all");
         InputStream inStream = getClass().getClassLoader().getResourceAsStream(getXslFile());
         StreamSource stylesheet = new StreamSource(inStream);
