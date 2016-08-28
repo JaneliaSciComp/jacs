@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Properties;
 
-import javax.xml.XMLConstants;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -90,7 +89,9 @@ public class GeneralXsltConverter {
     public InputStream getStream() {
         Transformer transformer;
         TransformerFactory factory = TransformerFactory.newInstance();
-        factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
+        //  Odd thing: still not resolving this constant...
+        factory.setAttribute("http://javax.xml.XMLConstants/property/accessExternalDTD", "all");
+        //factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
         //factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "all");
         InputStream inStream = getClass().getClassLoader().getResourceAsStream(getXslFile());
         StreamSource stylesheet = new StreamSource(inStream);
