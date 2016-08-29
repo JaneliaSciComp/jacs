@@ -55,7 +55,7 @@ public class JFSExportService extends SubmitDrmaaJobService {
 
     @Override
     protected String getAdditionalNativeSpecification() {
-        return "-l scalityr=1 -l sandy=true";
+        return "-l scalityr=1 -l sandy=true -l sl7=true";
     }
 
     private JFSExportResultNode createResultFileNode() throws Exception {
