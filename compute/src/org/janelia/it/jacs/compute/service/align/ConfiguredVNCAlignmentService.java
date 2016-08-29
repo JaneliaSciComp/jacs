@@ -39,8 +39,4 @@ public class ConfiguredVNCAlignmentService extends ConfiguredAlignmentService {
         return 16;
     }
 
-    @Override
-    protected String getAdditionalNativeSpecification() {
-        return "-l sandy=true -l sl7=true";
-    }
 }

@@ -301,7 +301,7 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	String ns = gridResourceSpec.getNativeSpec();
         	// One hour (seconds)
             if (isShortPipelineJob()) {
-        		ns += " -l h_rt=3600 -l sl7=true";
+        		ns += " -l h_rt=3600";
         	}
             if (isImmediateProcessingJob()) {
                 if (isShortPipelineJob()) {
@@ -314,8 +314,11 @@ public abstract class SubmitDrmaaJobService implements SubmitJobService {
         	    ns += " "+ans;
         	}
         	if (!ns.contains("sandy=true")) {
-        		ns += " -l sandy=true -l sl7=true";
+        		ns += " -l sandy=true";
         	}
+            if (!ns.contains("sl7=true") && !ns.contains("jacs=true")) {
+                ns += " -l sl7=true";
+            }
         	contextLogger.info("Setting native specification to accomodate "+mem+" GB of memory and "+slots+" slot(s): "+ns);
         	jt.setNativeSpecification(ns);	
         }

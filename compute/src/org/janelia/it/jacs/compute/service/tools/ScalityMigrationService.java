@@ -114,7 +114,7 @@ public class ScalityMigrationService extends SubmitDrmaaJobService {
 
     @Override
     protected String getAdditionalNativeSpecification() {
-        return "-l scalityr=1 -l sandy=true -l sl7=true";
+        return "-l scalityr=1";
     }
 
     private ScalityMigrationResultNode createResultFileNode() throws Exception {

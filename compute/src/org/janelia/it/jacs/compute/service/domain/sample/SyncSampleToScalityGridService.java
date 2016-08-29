@@ -298,7 +298,7 @@ public class SyncSampleToScalityGridService extends AbstractDomainGridService {
 
     @Override
     protected String getAdditionalNativeSpecification() {
-        return "-l scalityw=1 -l sandy=true -l sl7=true";
+        return "-l scalityw=1";
     }
 
     @Override
