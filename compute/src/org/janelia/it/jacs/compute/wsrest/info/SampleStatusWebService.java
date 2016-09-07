@@ -493,7 +493,7 @@ public class SampleStatusWebService extends ResourceConfig {
             if (wildcard!=null && wildcard) {
                 query = "{" + field + ":{$regex: \".*" + val + ".*\"}}";
             } else {
-                query = "{" + field + ":\"" + val + "\", status: {$exists: true}}";
+                query = "{" + field + ":\"" + val + "\"}";
             }
 
             results = sample.find(query).as(Sample.class);
@@ -523,6 +523,7 @@ public class SampleStatusWebService extends ResourceConfig {
                 if (result.getDataSet()!=null) {
                     newDoc.put("dataSet", result.getDataSet());
                 }
+                newDoc.put("status", (null==result.getStatus())?"":result.getStatus());
                 HasFiles files = SampleUtils.getResult(result, ResultDescriptor.LATEST);
                 if (files!=null && files instanceof SampleProcessingResult) {
                     SampleProcessingResult latestResult = (SampleProcessingResult)files;

@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Lists;
+import org.janelia.it.jacs.model.util.ModelStringUtil;
 
 /**
  * A set of LSMs in a Sample with a common objective. 
@@ -176,9 +177,9 @@ public class ObjectiveSample implements Serializable {
     }
 
     @JsonIgnore
-    public SampleTile getTileByName(String name) {
+    public SampleTile getTileByNameAndArea(String name, String area) {
         for(SampleTile tile : tiles) {
-            if (tile.getName().equals(name)) {
+            if (ModelStringUtil.areEqual(tile.getName(),name) && ModelStringUtil.areEqual(tile.getAnatomicalArea(),area)) {
                 return tile;
             }
         }
