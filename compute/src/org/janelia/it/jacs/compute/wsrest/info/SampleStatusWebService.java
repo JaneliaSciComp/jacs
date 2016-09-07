@@ -296,12 +296,16 @@ public class SampleStatusWebService extends ResourceConfig {
                             .append("dataSet", "$dataSet")
                             .append("creationDate", "$creationDate")
                             .append("completionDate", "$completionDate")
+                            .append("status", "$status")
                             .append("pipelineTime",
                                     new Document("$divide", asList(
                                             new Document("$subtract", asList(new Date(), "$creationDate")),
                                             3600000))))))
                     .into(new ArrayList());
             for (Document result : jsonResult) {
+                if (result.getString("status")==null)  {
+                    result.put("status", "");
+                }
                 result.put("creationDate", DateUtil.formatDate(result.getDate("creationDate")));
                 result.put("completionDate", DateUtil.formatDate(result.getDate("completionDate")));
             }
