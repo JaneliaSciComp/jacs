@@ -79,6 +79,7 @@ public class Sample extends AbstractDomainObject implements IsParent {
     private String compressionType;
 
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ssX")
+    @SAGEAttribute(cvName="image_query", termName="create_date")
     @SearchAttribute(key="tmog_dt",label="TMOG Date")
     private Date tmogDate;
 
