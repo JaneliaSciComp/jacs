@@ -19,6 +19,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * From jacs.properties
+ * # Hmmer3 Properties
+ Hmmer3.MaxOutputFileSizeMB=200
+ Hmmer3.MaxQueriesPerExec=5000
+ Hmmer3.MaxNumberOfJobs=45000
+ Hmmer3.Cmd=/usr/local/packages/hmmer-3.0/bin/hmmscan
+ Hmmer3.ResultName=hmmer3_output
+ Hmmer3.LowThreshold=50
+ */
 public class HMMER3MultiFastaSplitterService extends MultiFastaSplitterService {
     private HMMER3Task hmmer3Task;
     private ComputeDAO computeDAO;

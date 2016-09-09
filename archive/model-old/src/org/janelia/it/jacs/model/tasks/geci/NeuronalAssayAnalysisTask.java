@@ -18,6 +18,9 @@ import java.util.Set;
  * Date: Dec 15, 2008
  * Time: 3:03:13 PM
  * Modified by naxelrod
+ * From jacs.properties
+ * # GECI Neuronal Assay Analysis
+ NeuronalAssayAnalysis.Cmd=Neuronal_Assay_Analysis/matlab
  */
 public class NeuronalAssayAnalysisTask extends Task {
     transient public static final String TASK_NAME = "neuronalAssayAnalysis";

@@ -12,7 +12,7 @@ import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.compute.service.common.file.FileServiceConstants;
 import org.janelia.it.jacs.compute.service.common.file.SimpleMultiFastaSplitterService;
-import org.janelia.it.jacs.compute.service.common.grid.submit.teragrid.TeraGridHelper;
+import src.org.janelia.it.jacs.compute.service.common.grid.submit.teragrid.TeraGridHelper;
 import org.janelia.it.jacs.compute.service.metageno.MetaGenoPerlConfig;
 import org.janelia.it.jacs.compute.service.metageno.SimpleGridJobRunner;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;

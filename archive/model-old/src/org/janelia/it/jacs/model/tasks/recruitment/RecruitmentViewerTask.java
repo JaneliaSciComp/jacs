@@ -14,6 +14,26 @@ import java.util.Set;
  * User: tsafford
  * Date: Apr 2, 2007
  * Time: 4:53:11 PM
+ * From jacs.properties
+ * # Recruitment Viewer
+ RecruitmentViewer.DatabaseQueryChunkSize=5000
+ RecruitmentViewer.DaysTillExpiration=1
+ RecruitmentViewer.DefaultTaskId=1176484461718537934
+ RecruitmentViewer.ImageExtension=.png
+ RecruitmentViewer.JavaMaxMemory=1500
+ RecruitmentViewer.MaxZoom=4
+ RecruitmentViewer.processor=org.janelia.it.jacs.shared.processors.recruitment.RecruitmentDataHelper
+ RecruitmentViewer.TileSize=256
+ RecruitmentViewer.TileURL=/jacs/tiledImage.srv
+ RecruitmentViewer.SampleFile.Name=sample.info
+ RecruitmentViewer.HeaderFile.Name=all.headers
+ RecruitmentViewer.PerlRecruitmentProgram.Name=recruitment_builder.pl
+ RecruitmentViewer.PerlBaseDir=recruitment
+ RecruitmentViewer.ImageGenerationQueue=-l fast
+ Recruitment.StripeChunkSize=10000
+ Recruitment.MediumQueueMaxByteSize=3000000
+ Recruitment.OverlapAmount=1200
+ Recruitment.GenomeProjectFastaFileNode=1466843979168350581
  */
 public class RecruitmentViewerTask extends Task {
 

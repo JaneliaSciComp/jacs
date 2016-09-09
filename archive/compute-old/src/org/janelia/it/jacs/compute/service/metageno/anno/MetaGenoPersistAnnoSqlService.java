@@ -35,6 +35,10 @@ import java.util.List;
  * User: smurphy
  * Date: Sep 3, 2009
  * Time: 3:46:01 PM
+ * From jacs.properties
+ * MgPersist.PerlDir=/usr/local/projects/CAMERA/mg_prok_sqlite_perl_bin
+ MgPersist.PersistAnnotationCmd=mg_sqlite_persist_anno_cmd.pl
+ MgPersist.PersistOrfCmd=mg_sqlite_persist_orf_cmd.pl
  */
 public class MetaGenoPersistAnnoSqlService implements IService {
 

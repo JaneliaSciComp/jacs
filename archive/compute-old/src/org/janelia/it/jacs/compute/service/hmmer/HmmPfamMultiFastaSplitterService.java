@@ -24,6 +24,14 @@ import java.util.List;
  * User: smurphy
  * Date: Oct 29, 2008
  * Time: 4:36:13 PM
+ * From jacs.properties
+ * # HmmerPfam Properties
+ HmmerPfam.MaxOutputFileSizeMB=200
+ HmmerPfam.MaxQueriesPerExec=5000
+ HmmerPfam.MaxNumberOfJobs=45000
+ HmmerPfam.Cmd=/home/ccbuild/bin/hmmpfam_cell.sh
+ HmmerPfam.ResultName=hmmpfam_output
+ HmmerPfam.LowThreshold=50
  */
 public class HmmPfamMultiFastaSplitterService extends MultiFastaSplitterService {
     private HmmpfamTask hmmpfamTask;

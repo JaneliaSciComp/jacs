@@ -15,6 +15,11 @@ import java.util.Set;
  * User: tsafford
  * Date: Dec 15, 2008
  * Time: 3:03:13 PM
+ * From jacs.properties
+ * #BarcodeDesign.PERL5LIB=/usr/local/perl:/usr/local/devel/DAS/software/reseq:/usr/local/projects/CAMERA/servers/camdev5/executables/BarcodeDesigner
+ BarcodeDesign.PERL5LIB=/usr/local/perl
+ BarcodeDesign.Cmd=primer_design/PrimerDesigner/ProjectTools/SuperScripts/BarcodeDesigner/designBarcodes.pl
+ BarcodeDesign.PalindromeBin=/usr/local/packages/EMBOSS-5.0.0/bin/palindrome
  */
 public class BarcodeDesignerTask extends Task {
     transient public static final String TASK_NAME = "barcodeDesigner";

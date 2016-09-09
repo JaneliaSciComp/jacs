@@ -30,6 +30,14 @@ import java.util.Set;
  * User: smurphy
  * Date: Feb 13, 2009
  * Time: 1:01:58 PM
+ * From jacs.properties
+ * # TrnaScan Properties
+ TrnaScan.DefaultFastaEntriesPerExec=10000
+ TrnaScan.Cmd=/usr/local/common/tRNAscan-SE
+ TrnaScan.Queue=-l default
+ TrnaScan.BsmlCmd=tRNAscan-SE2bsml.pl
+ TrnaScan.ExtractCmd=camera_extract_trna_features.pl
+ TrnaScan.MaskCmd=mask_by_analysis.pl
  */
 public class TrnaScanService extends SubmitDrmaaJobService {
     public static String TRNA_SCAN_TASK = "TRNA_SCAN_TASK";

@@ -30,6 +30,11 @@ import java.util.Set;
  * User: ekelsey
  * Date: Sep 20, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * #Fasta2Bsml
+ Fasta2Bsml.Fasta2BsmlCmd = /usr/local/devel/ANNOTATION/ard/ergatis-v2r10b1/bin/fasta2bsml
+ Fasta2Bsml.Queue=-l medium
+ Fasta2Bsml.MaxEntriesPerJob=200
  */
 public class Fasta2BsmlService extends SubmitDrmaaJobService {
 

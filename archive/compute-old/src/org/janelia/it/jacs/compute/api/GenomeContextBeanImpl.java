@@ -18,12 +18,14 @@ import java.util.List;
  * User: smurphy
  * Date: Nov 12, 2007
  * Time: 11:22:58 AM
+ * From jacs.properties
+ * GenomeContextEJB.Name=GenomeContextEJB
  */
 @Stateless(name = "GenomeContextEJB")
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 @PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
-public class GenomeContextBeanImpl implements GenomeContextBeanLocal, GenomeContextBeanRemote {
+public class GenomeContextBeanImpl implements org.janelia.it.jacs.compute.api.GenomeContextBeanLocal, GenomeContextBeanRemote {
     private Logger _logger = Logger.getLogger(this.getClass());
     public static final String APP_VERSION = "jacs.version";
     public static final String SEARCH_EJB_PROP = "GenomeContextEJB.Name";

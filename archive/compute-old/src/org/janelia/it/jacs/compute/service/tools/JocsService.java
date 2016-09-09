@@ -28,6 +28,12 @@ import java.util.Set;
  * User: ekelsey
  * Date: Aug 26, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * #JOCs
+ Jocs.ParseBsmlCmd = /usr/local/devel/ANNOTATION/ekelsey/VICS/trunk/compute/scripts/pangenome/CogBsmlLoader
+ Jocs.Queue=-l medium
+ Jocs.MaxEntriesPerJob=200
+ Jocs.BestHit = /usr/local/devel/ANNOTATION/ard/ergatis-v2r10b1/bin/best_hit
  */
 public class JocsService extends SubmitDrmaaJobService {
 

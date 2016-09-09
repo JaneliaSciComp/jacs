@@ -26,6 +26,16 @@ import java.util.Set;
  * User: jinman
  * Date: Jul 26, 2010
  * Time: 12:41:05 PM
+ * From jacs.properties
+ * # EAP
+ EAP.CreateComputeDBCmd=/usr/local/devel/ANNOTATION/EAP/pipeline/createComputeDB.pl
+ EAP.AddQueryFastaCmd=/usr/local/devel/ANNOTATION/EAP/pipeline/addQueryFasta.pl
+ EAP.ComputeCmd=/usr/local/devel/ANNOTATION/EAP/pipeline/compute.pl
+ EAP.GetAnnotationCmd=/usr/local/devel/ANNOTATION/EAP/pipeline/get_annotation.pl
+ EAP.SummarizeEvidenceCmd=/usr/local/devel/ANNOTATION/EAP/pipeline/summarize_evidence.pl
+ EAP.Queue=-l medium
+ EAP.MaxEntriesPerJob=200
+ EAP.LocalTmpDir=/tmp
  */
 public class EAPService extends SubmitDrmaaJobService {
 

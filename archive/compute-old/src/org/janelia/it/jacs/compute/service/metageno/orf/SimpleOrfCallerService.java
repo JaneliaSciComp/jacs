@@ -32,6 +32,22 @@ import java.util.Set;
  * User: smurphy
  * Date: Mar 5, 2009
  * Time: 9:27:08 AM
+ * From jacs.properties
+ * # Simple Orf Caller Properties
+ SimpleOrfCaller.DefaultFastaEntriesPerExec=10000
+ SimpleOrfCaller.Queue=-l default
+ SimpleOrfCaller.Cmd=open_reading_frames.pl
+ SimpleOrfCaller.TranslationTable=11
+ SimpleOrfCaller.BeginningAsStart=1
+ SimpleOrfCaller.EndAsStop=1
+ SimpleOrfCaller.AssumeStops=0
+ SimpleOrfCaller.FullOrfs=0
+ SimpleOrfCaller.MinOrfSize=180
+ SimpleOrfCaller.MaxOrfSize=0
+ SimpleOrfCaller.MinUnmaskedSize=150
+ SimpleOrfCaller.Frames=0
+ SimpleOrfCaller.ForceMethionine=0
+ SimpleOrfCaller.HeaderAdditions=
  */
 public class SimpleOrfCallerService extends SubmitDrmaaJobService {
     private static Logger logger = Logger.getLogger(SimpleOrfCallerService.class);

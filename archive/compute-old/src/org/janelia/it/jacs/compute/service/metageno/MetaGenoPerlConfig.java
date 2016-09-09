@@ -8,6 +8,12 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
  * User: smurphy
  * Date: Oct 29, 2009
  * Time: 2:11:03 PM
+ * From jacs.properties
+ * MgPerl.PERL5LIB=/usr/local/projects/CAMERA/test/svn_test/unified-prok-metagenomics-pipeline/trunk/lib:/usr/local/projects/CAMERA/test/svn_test/unified-prok-metagenomics-pipeline/trunk/bin
+ MgPerl.PERL_MOD_DIR=/usr/local/projects/CAMERA/test/svn_test/unified-prok-metagenomics-pipeline/trunk/lib
+ MgPerl.PERL_BIN_DIR=/usr/local/projects/CAMERA/test/svn_test/unified-prok-metagenomics-pipeline/trunk/bin
+ MgPerl.PERL_EXEC=/usr/local/perl
+ MgPerl.SYBASE=/usr/local/packages/sybase
  */
 public class MetaGenoPerlConfig {
 

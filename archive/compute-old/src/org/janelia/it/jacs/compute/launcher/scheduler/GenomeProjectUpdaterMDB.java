@@ -29,6 +29,7 @@ public class GenomeProjectUpdaterMDB implements Job {
     private Logger log = Logger.getLogger(GenomeProjectUpdaterMDB.class);
 
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+        //ComputeServer.UseRecruitmentScheduler=false
         if (!SystemConfigurationProperties.getBoolean("ComputeServer.UseRecruitmentScheduler")) {
             return;
         }

@@ -30,6 +30,11 @@ import java.util.Set;
  * User: smurphy
  * Date: Mar 30, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * # Signalp
+ Signalp.SignalpCmd=/usr/local/bin/signalp
+ Signalp.Queue=-l medium
+ Signalp.MaxEntriesPerJob=200
  */
 public class SignalpService extends SubmitDrmaaJobService {
 

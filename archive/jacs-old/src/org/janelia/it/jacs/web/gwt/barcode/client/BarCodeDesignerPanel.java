@@ -67,6 +67,7 @@ public class BarCodeDesignerPanel extends Composite {
 
     private void init(String title) {
         _mainPanel = new TitledBox(title);
+        //Wiki.BarcodeHelp=DAS/Automatic+Bar+Code+Designer+and+Deconvolution
         _mainPanel.addActionLink(new HelpActionLink("help", SystemProps.getString("Wiki.Base", "") +
                 SystemProps.getString("Wiki.BarcodeHelp", "")));
         projectCodeRequired = SystemProps.getBoolean("Grid.RequiresProjectCode", false);

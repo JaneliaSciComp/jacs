@@ -30,6 +30,11 @@ import java.util.Set;
  * User: jinman
  * Date: Jun 10, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * # Fgenesh
+ Fgenesh.FgeneshCmd=/usr/local/bin/fgenesh
+ Fgenesh.Queue=-l medium
+ Fgenesh.MaxEntriesPerJob=200
  */
 public class FgeneshService extends SubmitDrmaaJobService {
 

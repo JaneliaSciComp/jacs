@@ -10,11 +10,38 @@ import org.janelia.it.jacs.model.download.Publication;
 import java.io.InputStream;
 import java.util.*;
 
+import javax.management.Query;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Lfoster
  * Date: Oct 26, 2006
  * Time: 1:55:15 PM
+ * From jacs.properties
+ * #
+ #   download_delivery_controller.base_file_location is for the base locations of all projects, and
+ #   also the base location for all file downloads.  All downloaded files are rooted here.  This is for
+ #   both security, and for commoperlnality.
+ #
+ #   xml_publication_helper.project_location_map is a mapping of project name vs project location.  The
+ #   location is relative to the download_delivery_controller.base_file_location.  A group of project
+ #   names are separated by semicolons, and their corresponding locations are also separated by semis.
+ #   the relationships are paired off positionally (the first name -> the first location).
+ #
+ * # UCSD: this should point to the root of downloadable file area.
+ download_delivery_controller.base_file_location=/usr/local/projects/CAMERA/data/release-production/data
+ download_delivery_controller.ftp_host_port_location=camweb/ftpdata/
+ download_delivery_controller.ftp_disk_location=/usr/local/projects/CAMERA/ftpdata/
+ #download_delivery_controller.base_file_location=S:\\runtime-shared\\data
+ #download_delivery_controller.ftp_disk_location=S:\\runtime-shared\\ftpdata\\
+ #
+ # NOTE: under ideal conditions, will be the same as the base_file_location.  A relative path is needed on the
+ # RKV test system, to avoid having to provide open access to entire file system, to an anonymous FTP site.
+ #
+ download_delivery_controller.ftp_link_target_location=/usr/local/projects/CAMERA/data/release-production/data
+
+ #blast_result_download_delivery_controller.ftp_link_target_location=../../runtime-shared/filestore
+ blast_result_download_delivery_controller.ftp_link_target_location=/usr/local/projects/CAMERA/data/release-production/data
  * <p/>
  * For the Download metadata, convert projects from XML to relational storage.
  */

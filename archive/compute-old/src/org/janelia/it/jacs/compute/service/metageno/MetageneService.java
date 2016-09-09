@@ -30,6 +30,16 @@ import java.util.Set;
  * User: smurphy
  * Date: Feb 23, 2009
  * Time: 12:42:24 PM
+ * From jacs.properties
+ * # Metagene service properties
+ Metagene.DefaultFastaEntriesPerExec=10000
+ # Metagene 1.0
+ #Metagene.Cmd=/usr/local/devel/ANNOTATION/microbial/metagene
+ #Metagene.BtabCmd=metagene2btab.pl
+ # Metagene 2.0
+ Metagene.Cmd=/usr/local/devel/ANNOTATION/microbial/metagene_2_from_jbadger
+ Metagene.BtabCmd=metagene2_2btab.pl
+ Metagene.Queue=-l default
  */
 public class MetageneService extends SubmitDrmaaJobService {
     // IService constants

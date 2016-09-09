@@ -30,6 +30,16 @@ import java.util.Set;
  * User: jinman
  * Date: Jul16, 2010
  * Time: 11:22:22 AM
+ * From jacs.properties
+ * # EvidenceModeler
+ EvidenceModeler.EvidenceModelerCmd=/usr/local/packages/EVM/evidence_modeler.pl
+ EvidenceModeler.PartitioningCmd=/usr/local/packages/EVM/EvmUtils/partition_EVM_inputs.pl
+ EvidenceModeler.CmdWritingCmd=/usr/local/packages/EVM/EvmUtils/write_EVM_commands.pl
+ EvidenceModeler.CmdRunningCmd=/usr/local/packages/EVM/EvmUtils/execute_EVM_commands.pl
+ EvidenceModeler.CombiningCmd=/usr/local/packages/EVM/EvmUtils/recombine_EVM_partial_outputs.pl
+ EvidenceModeler.GffConversionCmd=/usr/local/packages/EVM/EvmUtils/convert_EVM_outputs_to_GFF3.pl
+ EvidenceModeler.Queue=-l medium
+ EvidenceModeler.MaxEntriesPerJob=1
  */
 public class EvidenceModelerService extends SubmitDrmaaJobService {
 
