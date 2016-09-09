@@ -31,6 +31,14 @@ import java.util.Set;
  * User: jinman
  * Date: April 28, 2010
  * Time: 10:20:32 AM
+ * From jacs.properties
+ * # CddSearch
+ CddSearch.MaxEval=1e-10
+ CddSearch.OtherOpts=-m 8
+ CddSearch.Db=/usr/local/db/cdd/cdd/current/cdd
+ CddSearch.RpsBlastCmd=blast-2.2.15/bin/rpsblast
+ CddSearch.DefaultFastaEntriesPerExec=100000
+ CddSearch.Queue=-l default
  */
 public class CddSearchService extends SubmitDrmaaJobService {
 

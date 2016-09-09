@@ -18,6 +18,20 @@ import java.util.Set;
  * User: tsafford
  * Date: Dec 15, 2008
  * Time: 3:03:13 PM
+ * From jacs.properties
+ * # Prokaryotic Annotation Pipeline
+ ProkAnnotation.BaseDir=/usr/local/annotation
+ ProkAnnotation.ASBaseDir=/usr/local/annotation/OMNIUM/annotation_engine
+ ProkAnnotation.NcbiBaseDir=/genbank/genomes/Bacteria/
+ ProkAnnotation.PerlBaseDir=prok/
+ ProkAnnotation.loadGenomeSetupScript=load_genome_setup.dbi
+ ProkAnnotation.GBKPTTScript=GBK_and_PTT_to_DB.dbi
+ ProkAnnotation.GBKRNAScript=GBK_RNA.dbi
+ ProkAnnotation.NewDatabaseRequestURL=http://intranet.janelia.org/cms/node/2895
+ ProkAnnotation.DefaultGridCode=08020
+ ProkAnnotation.HelpURL=http://confluence.janelia.org/display/VISW/VICS+Prokaryotic+Pipeline+Info:
+
+
  */
 public class ProkaryoticAnnotationTask extends Task {
     transient public static final String TASK_NAME = "prokAnnotationTask";

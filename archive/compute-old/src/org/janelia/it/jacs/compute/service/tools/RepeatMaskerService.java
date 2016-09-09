@@ -30,6 +30,11 @@ import java.util.Set;
  * User: jinman
  * Date: Jun 14, 2010
  * Time: 12:50:05 PM
+ * From jacs.properties
+ * # RepeatMasker
+ RepeatMasker.RepeatMaskerCmd=/usr/local/bin/RepeatMasker
+ RepeatMasker.Queue=-l medium
+ RepeatMasker.MaxEntriesPerJob=200
  */
 public class RepeatMaskerService extends SubmitDrmaaJobService {
 

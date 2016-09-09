@@ -31,6 +31,11 @@ import java.util.Set;
  * User: jinman
  * Date: Jun 28, 2010
  * Time: 3:00:05 PM
+ * From jacs.properties
+ * # Genezilla
+ Genezilla.GenezillaCmd=/usr/local/devel/ANNOTATION/jorvis/opt/genezilla
+ Genezilla.Queue=-l medium
+ Genezilla.MaxEntriesPerJob=200
  */
 public class GenezillaService extends SubmitDrmaaJobService {
 

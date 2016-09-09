@@ -22,6 +22,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * From jacs.properties
+ * #HMMER3
+ HMMER3.HMMER3Cmd=/misc/local/hmmer-3.0/bin/hmmscan
+ HMMER3.Queue=-l medium
+ HMMER3.MaxEntriesPerJob=200
+ */
 public class HMMER3SubmitJobService extends SubmitDrmaaJobService {
     public static final String HMMER3_CMD = SystemConfigurationProperties.getString("HMMER3.HMMER3Cmd");
     public static final String HMMER3_QUEUE = SystemConfigurationProperties.getString("HMMER3.Queue");

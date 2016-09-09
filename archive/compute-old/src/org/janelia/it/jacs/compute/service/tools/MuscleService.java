@@ -52,7 +52,13 @@ import java.util.Set;
  * Without refinement (very fast, avg accuracy similar to T-Coffee): -maxiters 2
  * Fastest possible (amino acids): -maxiters 1 -diags -sv -distance1 kbit20_3
  * Fastest possible (nucleotides): -maxiters 1 -diags
- */
+ *
+ * From jacs.properties
+ * #Muscle
+ Muscle.MuscleCmd=/usr/local/bin/muscle
+ Muscle.Queue=-l medium
+ Muscle.MaxEntriesPerJob=200
+  */
 public class MuscleService extends SubmitDrmaaJobService {
 
     public static final String MUSCLE_CMD = SystemConfigurationProperties.getString("Muscle.MuscleCmd");

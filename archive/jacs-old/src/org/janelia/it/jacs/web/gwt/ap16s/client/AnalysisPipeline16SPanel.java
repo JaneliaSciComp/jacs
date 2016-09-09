@@ -85,6 +85,7 @@ public class AnalysisPipeline16SPanel extends Composite {
 
     private void init(String title) {
         _mainPanel = new TitledBox(title);
+        //Wiki.AHP16SHelp=DAS/Small+Sub+Unit+Analysis+Pipeline
         _mainPanel.addActionLink(new HelpActionLink("help", SystemProps.getString("Wiki.Base", "") + SystemProps.getString("Wiki.AHP16SHelp", "")));
         projectCodeRequired = SystemProps.getBoolean("Grid.RequiresProjectCode", false);
         initWidget(_mainPanel);

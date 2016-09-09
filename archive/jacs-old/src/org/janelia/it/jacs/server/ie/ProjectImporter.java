@@ -28,6 +28,13 @@ import java.util.regex.Pattern;
 /**
  * This class is responsible for reading all the projects in the directroy (xml_publication.iedir)
  * specified in jacs.properties and persisting the contents to the database
+ * From jacs.properties
+ * # Project data will be loaded from and written to this directory.  Use by Project Exporter/Importer utility classes only.
+ #xml_project.ie.dir=C:/download/projects
+ xml_project.ie.dir=
+ # Publication data will be loaded from and written to this directory.  Use by Project Exporter/Importer utility classes only.
+ #xml_publication.ie.dir=C:/download/publications
+ xml_publication.ie.dir=
  *
  * @author Tareq Nabeel
  */

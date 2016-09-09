@@ -30,6 +30,11 @@ import java.util.Set;
  * User: jinman
  * Date: April 15, 2010
  * Time: 10:57:28 AM
+ * From jacs.properties
+ * # Targetp
+ Targetp.TargetpCmd=/usr/local/bin/targetp
+ Targetp.Queue=-l medium
+ Targetp.MaxEntriesPerJob=200
  */
 public class TargetpService extends SubmitDrmaaJobService {
 

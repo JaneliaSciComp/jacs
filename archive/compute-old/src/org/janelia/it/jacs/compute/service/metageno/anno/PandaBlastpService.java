@@ -25,7 +25,15 @@ import java.io.IOException;
  * User: smurphy
  * Date: Mar 19, 2009
  * Time: 2:33:19 PM
- */
+ * From jacs.properties
+ * MgAnnotation.TeraGrid.UseForBlast=false
+ MgAnnotation.TeraGrid.PandaDbName=panda_20091112_new_deflines.fasta
+ MgAnnotation.TeraGrid.BlastpProgram=blastp
+ MgAnnotation.TeraGrid.PandaDbSize=1702432768
+ MgAnnotation.TeraGrid.SqliteAccessionMap=/usr/local/projects/CAMERA/remapped_panda_20091112/panda_20091112_remap.db
+ MgAnnotation.TeraGrid.PandaBlastpParameters=-v 10 -b 10 -X 15 -e 1e-5 -K 10 -f 11 -Z 25.0 -W 3 -U F -y 7.0 -A 40
+ MgAnnotation.TeraGrid.JcviUtilityQueue=-l fast
+  */
 public class PandaBlastpService extends MgAnnoBaseService {
 
     public static final String ANNOTATION_INPUT_DATA_TYPE = "BTAB";

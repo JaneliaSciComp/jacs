@@ -52,7 +52,7 @@ public class SamplesMapPanel extends Composite implements DataRetrievedListener 
     private PulldownPopup _projectPulldownPopup;
     private ProjectSelectionPopup _projectSelectionPopup;
     private ProjectsSelectedListener _projectsSelectedListener;
-
+    //ProjectSamples.HelpURL=http://www.janelia.org
     public static final String PROJECT_SAMPLES_HELP_LINK_PROP = "ProjectSamples.HelpURL";
 
     private static DownloadMetaDataServiceAsync downloadService = (DownloadMetaDataServiceAsync) GWT.create(DownloadMetaDataService.class);

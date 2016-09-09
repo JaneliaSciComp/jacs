@@ -30,6 +30,11 @@ import java.util.Set;
  * User: smurphy
  * Date: Mar 30, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * # Trf
+ Trf.TrfCmd=/usr/local/bin/trf
+ Trf.Queue=-l medium
+ Trf.MaxEntriesPerJob=200
  */
 public class TrfService extends SubmitDrmaaJobService {
 

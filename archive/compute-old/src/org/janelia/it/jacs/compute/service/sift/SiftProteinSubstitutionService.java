@@ -29,6 +29,13 @@ import java.util.Set;
  * User: zguan
  * Date: Jul 21, 2010
  * Time: 10:35:32 AM
+ * From jacs.properties
+ * # SiftProteinSubstitution
+ SiftProteinSubstitution.SiftProteinSubstitutionCmd=csh /usr/local/projects/SIFT/build/build-production/sift/bin/SIFT_for_submitting_fasta_seq.csh
+ SiftProteinSubstitution.TmpResultDir=/usr/local/projects/SIFT/build/build-production/sift/tmp
+ SiftProteinSubstitution.ProteinDatabase=/usr/local/projects/SIFT/test/legacy_blast/data/uniprot_trembl
+ SiftProteinSubstitution.Queue=-l medium
+ SiftProteinSubstitution.MaxEntriesPerJob=200
  */
 public class SiftProteinSubstitutionService extends SubmitDrmaaJobService {
 

@@ -30,6 +30,12 @@ import java.util.Set;
  * User: ekelsey
  * Date: Jul 28, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * # Clustalw2
+ Clustalw2.Clustalw2Cmd=/usr/local/bin/clustalw2
+ Clustalw2.Queue=-l medium
+ Clustalw2.MaxEntriesPerJob=200
+ Clustalw2.MSF2Bsml = /usr/local/devel/ANNOTATION/ard/ergatis-v2r10b1/bin/MSF2Bsml
  */
 public class Clustalw2Service extends SubmitDrmaaJobService {
 

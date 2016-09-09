@@ -30,6 +30,11 @@ import java.util.Set;
  * User: jinman
  * Date: May 180, 2010
  * Time: 2:31:05 PM
+ * From jacs.properties
+ * # InterProScan
+ InterProScan.InterProScanCmd=/usr/local/packages/iprscan/bin/iprscan
+ InterProScan.Queue=-l medium
+ InterProScan.MaxEntriesPerJob=200
  */
 public class InterProScanService extends SubmitDrmaaJobService {
 

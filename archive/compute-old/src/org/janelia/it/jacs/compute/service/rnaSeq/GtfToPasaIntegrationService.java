@@ -30,6 +30,26 @@ import java.util.Set;
  * User: smurphy
  * Date: Apr 12, 2010
  * Time: 11:02:58 AM
+ * From jacs.properties
+ * # Pasa
+ Pasa.ScriptDir=/usr/local/devel/ANNOTATION/PASA2/scripts
+ Pasa.Gtf2FastaQueue=-l fast
+ Pasa.Gtf2FastaScript=gtf2fasta.pl
+ Pasa.Gtf2GffScript=create_gff_for_pasa_upload.pl
+ Pasa.PipelineScript=Launch_PASA_pipeline.pl
+ Pasa.PipelineScriptQueue=-l medium
+ Pasa.Default.Align.MaxIntronLength=10000
+ Pasa.Default.Align.MinPercentAligned=90
+ Pasa.Default.Align.MinAvgPerId=95
+ Pasa.Default.AnnotCompare.MinPercentOverlap=50
+ Pasa.Default.AnnotCompare.MinPercentProtCoding=40
+ Pasa.Default.AnnotCompare.MinPercidProtCompare=70
+ Pasa.Default.AnnotCompare.MinPercentLengthFlCompare=70
+ Pasa.Default.AnnotCompare.MinPercentAlignLength=70
+ Pasa.Default.AnnotCompare.MinPercentOverlapGeneReplace=80
+ Pasa.Default.AnnotCompare.MaxUtrExons=2
+ Pasa.Default.GeneticCode=universal
+ Pasa.AddDbToPasaAdminDbScriptFullPath=/usr/local/devel/ANNOTATION/PASA2/rnaseq_integration/add_db_to_pasa_admin_db.pl
  */
 public class GtfToPasaIntegrationService implements IService {
 

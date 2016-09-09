@@ -30,6 +30,11 @@ import java.util.Set;
  * User: jinman
  * Date: May 4, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * # PrositeScan
+ PrositeScan.PrositeScanCmd=/usr/local/bin/ps_scan.pl
+ PrositeScan.Queue=-l medium
+ PrositeScan.MaxEntriesPerJob=200
  */
 public class PrositeScanService extends SubmitDrmaaJobService {
 

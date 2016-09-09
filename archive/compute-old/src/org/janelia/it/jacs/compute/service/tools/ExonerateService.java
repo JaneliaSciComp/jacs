@@ -30,6 +30,11 @@ import java.util.Set;
  * User: jinman
  * Date: Jul 6, 2010
  * Time: 12:15:05 PM
+ * From jacs.properties
+ * # Exonerate
+ Exonerate.ExonerateCmd=/usr/local/bin/exonerate
+ Exonerate.Queue=-l medium
+ Exonerate.MaxEntriesPerJob=200
  */
 public class ExonerateService extends SubmitDrmaaJobService {
 

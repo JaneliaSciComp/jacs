@@ -32,6 +32,18 @@ import java.util.Set;
  * User: smurphy
  * Date: Mar 19, 2009
  * Time: 2:33:32 PM
+ * From jacs.properties
+ * # Priam
+ Priam.DefaultFastaEntriesPerExec=100000
+ Priam.Queue=-l default
+ Priam.MaxEval=1e-10
+ Priam.OtherOpts=-m 8
+ Priam.Db=/usr/local/projects/CAMERA/db/priam_jun09_gene/ANNOTATION/priam_jun09_gene
+ Priam.DeflineMap=/usr/local/projects/CAMERA/db/priam_jun09_gene/ANNOTATION/defline_map.txt
+ Priam.ExpandPriamToEcCmd=expandPriToEcHitLines.pl
+ Priam.Pssm=/usr/local/db/calit_db/PRIAM/blastpgp
+ Priam.RpsBlastCmd=blast-2.2.15/bin/rpsblast
+ Priam.CreateEcListCmd=create_ec_list.pl
  */
 public class PriamEcService extends SubmitDrmaaJobService {
 

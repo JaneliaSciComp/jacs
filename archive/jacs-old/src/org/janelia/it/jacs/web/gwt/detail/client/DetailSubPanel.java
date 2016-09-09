@@ -1,6 +1,8 @@
 
 package org.janelia.it.jacs.web.gwt.detail.client;
 
+import java.awt.Panel;
+
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.*;
 import org.janelia.it.jacs.web.gwt.common.client.panel.TitledBox;
@@ -30,7 +32,7 @@ public abstract class DetailSubPanel extends VerticalPanel {
     private FlexTable mainDataTable;
     private LoadingLabel mainLoadingLabel;
     private String acc;
-    private DetailPanel parentPanel;
+    private org.janelia.it.jacs.web.gwt.detail.client.DetailPanel parentPanel;
     private ActionLink previousPanelLink;
 
     public DetailSubPanel() {
@@ -69,7 +71,7 @@ public abstract class DetailSubPanel extends VerticalPanel {
         this.mainLoadingLabel = mainLoadingLabel;
     }
 
-    public DetailPanel getParentPanel() {
+    public org.janelia.it.jacs.web.gwt.detail.client.DetailPanel getParentPanel() {
         return parentPanel;
     }
 
@@ -237,7 +239,7 @@ public abstract class DetailSubPanel extends VerticalPanel {
         return "Camera Acc";
     }
 
-    protected void setParentPanel(DetailPanel parentPanel) {
+    protected void setParentPanel(org.janelia.it.jacs.web.gwt.detail.client.DetailPanel parentPanel) {
         this.parentPanel = parentPanel;
     }
 

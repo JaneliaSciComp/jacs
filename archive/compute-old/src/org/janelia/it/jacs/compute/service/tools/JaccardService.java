@@ -27,6 +27,16 @@ import java.util.Set;
  * User: ekelsey
  * Date: Aug 13, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * # Jaccard
+ Jaccard.JaccardCmd = /usr/local/devel/ANNOTATION/ekelsey/VICS/trunk/compute/scripts/pangenome/clusterBsmlPairwiseAlignments
+ Jaccard.Queue=-l medium
+ Jaccard.MaxEntriesPerJob=200
+ Jaccard.MakeFastaLookupCmd=/usr/local/devel/ANNOTATION/ekelsey/VICS/trunk/compute/scripts/pangenome/fasta2idlookup.pl
+ Jaccard.ClusterCmd = /usr/local/devel/ANNOTATION/EGC_utilities/bin/cluster
+ Jaccard.Cog2FastaCmd = /usr/local/devel/ANNOTATION/ekelsey/VICS/trunk/compute/scripts/pangenome/CogProteinFasta.pl
+ Jaccard.MergeListsCmd = /usr/local/devel/ANNOTATION/ard/ergatis-v2r10b1/bin/merge_lists
+ Jaccard.JaccardFind = /usr/bin/find
  */
 public class JaccardService extends SubmitDrmaaJobService {
 

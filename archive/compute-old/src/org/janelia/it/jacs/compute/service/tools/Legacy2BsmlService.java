@@ -30,6 +30,12 @@ import java.util.regex.Pattern;
  * User: ekelsey
  * Date: Aug 11, 2010
  * Time: 3:31:05 PM
+ * From jacs.properties
+ * # Legacy2Bsml
+ Legacy2Bsml.Legacy2BsmlCmd = /usr/local/devel/ANNOTATION/ard/ergatis-v2r10b1/bin/legacy2bsml
+ Legacy2Bsml.Queue=-l medium
+ Legacy2Bsml.MaxEntriesPerJob=200
+ Legacy2Bsml.RepositoryRoot=/usr/local/annotation/
  */
 public class Legacy2BsmlService extends SubmitDrmaaJobService {
 

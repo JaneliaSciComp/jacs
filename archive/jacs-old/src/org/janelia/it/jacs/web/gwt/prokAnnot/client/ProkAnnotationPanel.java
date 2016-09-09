@@ -76,8 +76,11 @@ public class ProkAnnotationPanel extends Composite {
         this._listener = listener;
         TitledBox _mainPanel = new TitledBox(title);
         _mainPanel.removeActionLinks();
+        //Wiki.ProkPipelineHelp=VISW/Prokaryotic+Pipeline
         _mainPanel.addActionLink(new HelpActionLink("help", SystemProps.getString("Wiki.Base", "") +
                 SystemProps.getString("Wiki.ProkPipelineHelp", "")));
+        //Jira.Base=http://issuetracker/
+        //Jira.ProkPipeline=browse/PROK
         _mainPanel.addActionLink(new HelpActionLink("report issues/requests", SystemProps.getString("Jira.Base", "") +
                 SystemProps.getString("Jira.ProkPipeline", "")));
         initWidget(_mainPanel);

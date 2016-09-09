@@ -22,6 +22,14 @@ import java.util.List;
  * User: smurphy
  * Date: Oct 29, 2008
  * Time: 4:36:13 PM
+ * From jacs.properties
+ * # Reverse PSI-BLAST Properties
+ RpsBlast.MaxOutputFileSizeMB=200
+ RpsBlast.MaxQueriesPerExec=1000
+ RpsBlast.MaxNumberOfJobs=45000
+ RpsBlast.Cmd=blast-2.2.15/bin/rpsblast
+ RpsBlast.ResultName=rpsblast_output
+ RpsBlast.LowThreshold=50
  */
 public class ReversePsiBlastMultiFastaSplitterService extends LockLessMultiFastaSplitterService {
     private ReversePsiBlastTask rpsblastTask;

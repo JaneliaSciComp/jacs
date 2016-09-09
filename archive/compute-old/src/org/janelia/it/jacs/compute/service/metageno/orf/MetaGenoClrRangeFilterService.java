@@ -21,6 +21,19 @@ import java.io.File;
  * User: smurphy
  * Date: Feb 19, 2009
  * Time: 4:32:48 PM
+ * From jacs.properties
+ * # Clear-range filter properties
+ MgPipeline.ClearRangeMinOrfSize=180
+ MgPipeline.ClearRangeFilterOrfCmd=clr_range_filter_orf.pl
+ MgPipeline.ClearRangeFilterPepCmd=clr_range_filter_pep.pl
+ MgPipeline.OrfToBtabCmd=cameragene2btab.pl
+ MgPipeline.OrfOverlapCmd=report_camera_orf_overlaps.pl
+ MgPipeline.OrfStatsCmd=camera_orf_stats.pl
+ MgPipeline.OrfStatsPercentNInterval=5
+ MgPipeline.OrfStatsLengthInterval=100
+ MgPipeline.MetageneMapCmd=camera_orf_metagene_mapping.pl
+ MgPipeline.MetagenePepFastaCmd=get_seq_no_gzip.pl
+ MgOrfPipeline.Cleanup=false
  */
 public class MetaGenoClrRangeFilterService implements IService {
 

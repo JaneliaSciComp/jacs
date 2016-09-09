@@ -7,12 +7,12 @@ import org.apache.lucene.search.Hits;
 import org.janelia.it.jacs.compute.access.ComputeDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessManager;
-import org.janelia.it.jacs.compute.service.search.SearchQuerySessionContainer;
+//import src.org.janelia.it.jacs.compute.service.search.SearchQuerySessionContainer;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.tasks.search.SearchTask;
 import org.janelia.it.jacs.model.user_data.search.SearchResultNode;
-import org.janelia.it.jacs.shared.lucene.LuceneDataFactory;
-import org.janelia.it.jacs.shared.lucene.searchers.LuceneSearcher;
+//import src.org.janelia.it.jacs.shared.lucene.LuceneDataFactory;
+//import src.org.janelia.it.jacs.shared.lucene.searchers.LuceneSearcher;
 import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.annotation.ejb.TransactionTimeout;
 import org.jboss.ejb3.StrictMaxPool;
@@ -85,19 +85,19 @@ public class SearchBeanImpl implements SearchBeanLocal, SearchBeanRemote {
 //    }
 
     public int populateSearchResult(Long searchTaskId, List<String> topics) throws DaoException {
-        int numResults;
-        ComputeDAO _computeDAO = new ComputeDAO(_logger);
-        SearchQuerySessionContainer searchSessionContainer =
-                new SearchQuerySessionContainer(SearchQuerySessionContainer.SEARCH_ENGINE_LUCENE, _computeDAO);
-        SearchTask searchTask = (SearchTask) _computeDAO.getTaskById(searchTaskId);
-        try {
-            numResults = searchSessionContainer.populateSearchResult(searchTask, topics);
-            _logger.debug("**************SearchBean.populateSearchResult() for searchId=" + searchTaskId +
-                    " topics=" + topics + " returned numResults=" + numResults);
-        }
-        catch (Exception e) {
-            throw new DaoException(e.getMessage(), e);
-        }
+        int numResults=0;
+//        ComputeDAO _computeDAO = new ComputeDAO(_logger);
+//        SearchQuerySessionContainer searchSessionContainer =
+//                new SearchQuerySessionContainer(SearchQuerySessionContainer.SEARCH_ENGINE_LUCENE, _computeDAO);
+//        SearchTask searchTask = (SearchTask) _computeDAO.getTaskById(searchTaskId);
+//        try {
+//            numResults = searchSessionContainer.populateSearchResult(searchTask, topics);
+//            _logger.debug("**************SearchBean.populateSearchResult() for searchId=" + searchTaskId +
+//                    " topics=" + topics + " returned numResults=" + numResults);
+//        }
+//        catch (Exception e) {
+//            throw new DaoException(e.getMessage(), e);
+//        }
         return numResults;
     }
 
@@ -110,12 +110,12 @@ public class SearchBeanImpl implements SearchBeanLocal, SearchBeanRemote {
      */
     public void search(String searchType, String searchString) {
         try {
-            LuceneSearcher searcher = LuceneDataFactory.getDocumentSearcher(searchType);
-            Hits hits = searcher.search(searchString);
-            for (Iterator iterator = hits.iterator(); iterator.hasNext();) {
-                Hit o = (Hit) iterator.next();
-                System.out.println("Hit: " + o.getId() + ", score:" + o.getScore() + ", name:" + o.get("name") + ", description:" + o.get("description"));
-            }
+//            LuceneSearcher searcher = LuceneDataFactory.getDocumentSearcher(searchType);
+//            Hits hits = searcher.search(searchString);
+//            for (Iterator iterator = hits.iterator(); iterator.hasNext();) {
+//                Hit o = (Hit) iterator.next();
+//                System.out.println("Hit: " + o.getId() + ", score:" + o.getScore() + ", name:" + o.get("name") + ", description:" + o.get("description"));
+//            }
         }
         catch (Exception e) {
             e.printStackTrace();
