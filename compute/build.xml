@@ -501,10 +501,9 @@
         </exec>
 
          <!--copy ear file -->
-        <echo message="Copying ${localname}.ear file to server" />
+        <echo message="Copying ${temp.dir}/${localname}.ear file to server ${server.username}@${server.address}:${jboss.home}/standalone/deployments/${localname}.ear" />
         <exec executable="${scp}" description="Publishing ear file">
-            <arg line="${scp.common.params} ${temp.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/standalone/deployments/${localname}.ear"/>
-            <arg line="${scp.common.params} ${build.jars.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/server/default/deploy/${localname}.ear"/>
+            <arg line="${scp.common.params} ${build.jars.dir}/${localname}.ear ${server.username}@${server.address}:${jboss.home}/standalone/deployments/${localname}.ear"/>
         </exec>
 
          <!--copy jars -->
@@ -524,10 +523,10 @@
 
          <!--restart JBoss -->
     	<sleep seconds="2"/>
-        <echo message="Starting JBoss" />
-        <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} default)"
+        <echo message="Starting JBoss: ${startjbossscript} ${jboss.home} ${server.address}" />
+        <exec executable="${ssh}" description="Starting Jboss (${startjbossscript} ${jboss.home} ${server.address})"
               outputproperty="exec.output" errorproperty="exec.error">
-            <arg line="${ssh.common.params} ${startjbossscript} ${jboss.home} default"/>
+            <arg line="${ssh.common.params} ${startjbossscript} ${jboss.home} ${server.address}"/>
         </exec>
         <echo message="Done : ${exec.output}"  />
         <echo message="Done : ${exec.error}"  />
