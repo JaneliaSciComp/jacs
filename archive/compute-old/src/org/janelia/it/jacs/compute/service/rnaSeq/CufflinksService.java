@@ -29,6 +29,12 @@ import java.util.Set;
  * User: smurphy
  * Date: Feb 4, 2010
  * Time: 3:31:19 PM
+ * From jacs.properties
+ * # Cufflinks
+ Cufflinks.CufflinksCmd=/usr/local/bin/cufflinks
+ Cufflinks.Queue=-l default
+ Cufflinks.ThreadsPerJob=4
+ Cufflinks.SortSplitSize=1000000
  */
 public class CufflinksService extends SubmitDrmaaJobService {
     // IService constants

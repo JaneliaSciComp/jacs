@@ -21,10 +21,12 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.glassfish.jersey.internal.util.Base64;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.compute.wsrest.security.BasicAuthToken;
 import org.janelia.it.jacs.compute.wsrest.security.LDAPProvider;
 import org.janelia.it.jacs.compute.wsrest.security.Token;
@@ -46,6 +48,7 @@ public class UserWebService extends ResourceConfig {
 
     @Context
     HttpHeaders headers;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     LDAPProvider authenticator;
 
@@ -66,6 +69,7 @@ public class UserWebService extends ResourceConfig {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Subject loginSubject() {
+        StopWatch stopWatch = new StopWatch();
         // user authentication
         BasicAuthToken userInfo = (BasicAuthToken)getCredentials();
         log.debug("loginSubject({})", userInfo.getUsername());
@@ -85,6 +89,8 @@ public class UserWebService extends ResourceConfig {
             catch (Exception e) {
                 log.error("Error occurred authenticating user",e);
                 throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+            } finally {
+                activityLog.logRESTServiceCall("user:" + userInfo.getUsername(), "GET", "/data/login", stopWatch.getTime());
             }
         }
         return null;
@@ -116,6 +122,7 @@ public class UserWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<Subject> getSubjects() {
         log.debug("getSubjects()");
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getSubjects();
@@ -123,6 +130,8 @@ public class UserWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting subjects",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/data/user/subjects", stopWatch.getTime());
         }
     }
 
@@ -141,6 +150,7 @@ public class UserWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Subject getSubjectByKey(@QueryParam("subjectKey") String subjectKey) {
         log.debug("getSubjectByKey({})", subjectKey);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getSubjectByKey(subjectKey);
@@ -148,6 +158,8 @@ public class UserWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred finding subject " + subjectKey,e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/user/subject", stopWatch.getTime());
         }
     }
 
@@ -165,6 +177,7 @@ public class UserWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public List<Preference> getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         log.debug("getPreferences({})",subjectKey);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getPreferences(subjectKey);
@@ -172,6 +185,8 @@ public class UserWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting preferences",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/user/preferences", stopWatch.getTime());
         }
     }
 
@@ -188,6 +203,7 @@ public class UserWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public Preference setPreferences(DomainQuery query) {
         log.debug("setPreferences({})",query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), query.getPreference());
@@ -195,6 +211,8 @@ public class UserWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred setting preferences",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/user/preferences", stopWatch.getTime());
         }
     }
 
@@ -213,6 +231,7 @@ public class UserWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public void changePermissions(@ApiParam Map<String, Object> params) {
         log.debug("changePermissions({})",params);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             dao.changePermissions((String) params.get("subjectKey"), (String) params.get("targetClass"), (Long)params.get("targetId"),
@@ -221,6 +240,8 @@ public class UserWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred setting permissions",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "PUT", "/data/user/permissions", stopWatch.getTime());
         }
     }
 

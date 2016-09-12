@@ -19,7 +19,7 @@ public class LineageClassifierTask extends Task {
     transient public static final String TASK_NAME = "LineageClassifier";
     transient public static final String DISPLAY_NAME = "Lineage Classifier";
 
-    public static final String PARAM_SAMPLE = "sample id";
+    public static final String PARAM_SAMPLE = "sample id list";
 
     // Default values - default overrides
 
@@ -46,12 +46,12 @@ public class LineageClassifierTask extends Task {
         return null;
     }
 
-    public Long getSampleId() {
-        return getParameterAsLong(PARAM_SAMPLE);
+    public String getSampleIdList() {
+        return getParameter(PARAM_SAMPLE);
     }
 
-    public void setSampleId(Long sampleId) {
-        setParameterAsLong(PARAM_SAMPLE, sampleId);
+    public void setSampleIdList(String sampleIdList) {
+        this.setParameter(PARAM_SAMPLE, sampleIdList);
     }
 
     public String getDisplayName() {

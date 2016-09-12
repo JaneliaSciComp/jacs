@@ -15,7 +15,15 @@ import java.util.Set;
  * User: tsafford
  * Date: Nov 11, 2008
  * Time: 3:28:52 PM
- */
+ * From jacs.properties
+ * # PSI-BLAST Properties
+ PgpBlast.MaxOutputFileSizeMB=200
+ PgpBlast.MaxQueriesPerExec=100
+ PgpBlast.MaxNumberOfJobs=45000
+ PgpBlast.Cmd=blast-2.2.15/bin/blastpgp
+ PgpBlast.ResultName=blastpgp_output
+ PgpBlast.LowThreshold=50
+  */
 public class PsiBlastTask extends BlastTask {
 
     private static int MAX_GI_LIST_CHARS = 4000;

@@ -30,6 +30,23 @@ public class DispatcherDAO {
 
     public List<DispatcherJob> nextPendingJobs(String hostName, boolean fetchUnassignedJobsFlag, int maxRetries, int maxLength) {
         List<DispatcherJob> nextJobs = new ArrayList<>();
+
+        Connection conn = null;
+//        if (fetchUnassignedJobsFlag) {
+//            String updateQuery = "update dispatcher_job set dispatch_host = ? where dispatch_status = ? and retries < ? and dispatch_host is null limit ?";
+//            try {
+//                conn = getJdbcConnection();
+//                pstmt = conn.prepareStatement(pendingJobsQueryBuffer.toString(),
+//                        ResultSet.TYPE_SCROLL_SENSITIVE,
+//                        ResultSet.CONCUR_UPDATABLE);
+//                pstmt.setString(fieldIndex++, DispatcherJob.Status.PENDING.name());
+//                pstmt.setInt(fieldIndex++, maxRetries);
+//                pstmt.setString(fieldIndex++, hostName);
+//                pstmt.setInt(fieldIndex++, maxLength);
+//                rs = pstmt.executeQuery();
+//
+//            }
+//        }
         StringBuffer pendingJobsQueryBuffer = new StringBuffer();
         pendingJobsQueryBuffer.append("select ")
                 .append("dispatch_id, dispatched_task_id, dispatched_task_owner, process_defn_name, dispatch_status, dispatch_host, retries, dispatched_date, creation_date ")
@@ -40,9 +57,8 @@ public class DispatcherDAO {
         } else {
             pendingJobsQueryBuffer.append("and dispatch_host = ? ");
         }
-        pendingJobsQueryBuffer.append("order by creation_date limit ?");
+        pendingJobsQueryBuffer.append("order by creation_date limit ? FOR UPDATE");
         Date currentDate = new Date();
-        Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         int fieldIndex = 1;

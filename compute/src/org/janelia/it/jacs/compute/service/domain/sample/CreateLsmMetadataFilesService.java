@@ -92,21 +92,28 @@ public class CreateLsmMetadataFilesService extends AbstractDomainGridService {
     }
 
     private void createShellScript(FileWriter writer) throws Exception {
-        StringBuffer script = new StringBuffer();
+        final String perlModulePath = SystemConfigurationProperties.getString("Sage.Perllib");
+        final String perlBinPath = SystemConfigurationProperties.getString("Perl.Path");
+        final String cmdPrefix =
+                "export PATH=$PATH:" + perlModulePath + ";export PERL5LIB=$PERL5LIB:" + perlModulePath + ";";
+
+        StringBuilder script = new StringBuilder();
         script.append("read INPUT_FILENAME\n");
         script.append("read JSON_FILENAME\n");
+        script.append("whoami").append("\n");
+        script.append(cmdPrefix).append("\n");
         script.append("cd "+outputDir.getAbsolutePath()).append("\n");
         script.append("echo \"Generating metadata for LSM files in sample "+sampleId+"\" \n");
+        script.append(perlBinPath).append(" ");
         script.append(getScriptToCreateLsmJsonFile("$INPUT_FILENAME", "$JSON_FILENAME")).append("\n");
         
         writer.write(script.toString());
     }
     
     private String getScriptToCreateLsmJsonFile(String inputFile, String outputFile) throws ServiceException {
-        return "perl " +
-                SystemConfigurationProperties.getString("Executables.ModuleBase") + 
-                SystemConfigurationProperties.getString("LSMJSONDump.CMD")+ " " +
-                addQuotes(inputFile) + " > " + addQuotes(outputFile);
+        return SystemConfigurationProperties.getString("Executables.ModuleBase") +
+               SystemConfigurationProperties.getString("LSMJSONDump.CMD")+ " " +
+               addQuotes(inputFile) + " > " + addQuotes(outputFile);
     }
     
     private String addQuotes(String s) {

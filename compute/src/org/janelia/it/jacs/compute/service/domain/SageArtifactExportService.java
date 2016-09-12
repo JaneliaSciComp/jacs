@@ -83,6 +83,8 @@ public class SageArtifactExportService extends AbstractDomainService {
     private CvTerm propertyPublishingUser;
     private CvTerm propertyRelease;
     private CvTerm propertyWorkstationSampleId;
+    private CvTerm propertyDataSet;
+    private CvTerm propertySlideCode;
     private CvTerm propertyChanSpec;
     private CvTerm propertyDimensionX;
     private CvTerm propertyDimensionY;
@@ -133,7 +135,9 @@ public class SageArtifactExportService extends AbstractDomainService {
         this.propertyToPublish = getCvTermByName("light_imagery","to_publish");
         this.propertyPublishingUser = getCvTermByName("light_imagery","publishing_user");
         this.propertyRelease = getCvTermByName("light_imagery","alps_release");
-        this.propertyWorkstationSampleId = getCvTermByName("light_imagery","workstation_sample_id"); 
+        this.propertyWorkstationSampleId = getCvTermByName("light_imagery","workstation_sample_id");
+        this.propertyDataSet = getCvTermByName("light_imagery","data_set");
+        this.propertySlideCode = getCvTermByName("light_imagery","slide_code");
         this.propertyChanSpec = getCvTermByName("light_imagery","channel_spec");
         this.propertyDimensionX = getCvTermByName("light_imagery","dimension_x");
         this.propertyDimensionY = getCvTermByName("light_imagery","dimension_y");
@@ -183,6 +187,10 @@ public class SageArtifactExportService extends AbstractDomainService {
             if (reps>0) {
                 exportLineAnnotations(flyLineFolder.getName());
             }
+
+            logger.trace("Flushing session");
+            sage.getCurrentSession().flush();
+            sage.getCurrentSession().clear();
         }
        
         // Log the exported names
@@ -249,13 +257,27 @@ public class SageArtifactExportService extends AbstractDomainService {
             logger.warn("  Ignoring sample from data set that is not in this release: "+sample.getName());
             return 0;
         }
-        
+
+        // Reset state
+        primaryImageIdsForCurrentSample.clear();
+
         List<Annotation> annotations = domainDao.getAnnotations(null, Reference.createFor(sample));
         logger.trace("  Processing sample "+sample.getName());
         int c = 0;
         for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
             c += processSample(dataSetIdentifier, objectiveSample, annotations);    
         }
+
+        logger.trace("  Getting SAGE images for "+sample.getSlideCode());
+        for(Image image : new ArrayList<>(sage.getImagesByPropertyValue(propertySlideCode, sample.getSlideCode()))) {
+            String imageDataSet = sage.getImagePropertyValue(image, propertyDataSet);
+            if (!primaryImageIdsForCurrentSample.contains(image.getId()) && sample.getDataSet().equals(imageDataSet) && CREATED_BY.equals(image.getCreatedBy())) {
+                logger.warn("    Deleting deprecated sample image: "+image.getName()+" (id="+image.getId()+")");
+                sage.deleteImage(image);
+            }
+        }
+
+        logger.trace("  Exported "+c+" samples");
         return c;
     }
     
@@ -322,7 +344,7 @@ public class SageArtifactExportService extends AbstractDomainService {
     private boolean syncSample(ObjectiveSample objectiveSample, String dataSetIdentifier, String publishingUser) throws Exception {
 
         logger.info("  Exporting "+dataSetIdentifier+" - "+objectiveSample.getName());
-        
+
         // Find fly line
         String lineName = objectiveSample.getParent().getLine();
         Line line = getLineByName(lineName);
@@ -471,10 +493,12 @@ public class SageArtifactExportService extends AbstractDomainService {
                 exportedNames.add(areaSourceImage.getName());
             }
         }
-        
+
         return true;
     }
-    
+
+    private Set<Integer> primaryImageIdsForCurrentSample = new HashSet<>();
+
     private Image getOrCreatePrimaryImage(ObjectiveSample objectiveSample, ImageStack imageStack, Line line, List<Image> sourceSageImages, String publishingUser) throws Exception {
 
         String imageName = imageStack.name;
@@ -590,6 +614,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         }
 
         logger.info("    Synchronized primary image: "+image.getId());
+        primaryImageIdsForCurrentSample.add(image.getId());
         return image;
     }
 
@@ -645,7 +670,7 @@ public class SageArtifactExportService extends AbstractDomainService {
         for(SecondaryImage secondaryImage : new ArrayList<>(sourceImage.getSecondaryImages())) {
             if (secondaryImage.getProductType().equals(productType) && secondaryImage!=latestSecondaryImage) {
                 // Not latest, so it must be deleted
-                logger.info("      Removing duplicate "+productType.getDisplayName()+" for "+sourceImage.getName()+": "+secondaryImage.getId());
+                logger.warn("      Removing duplicate "+productType.getDisplayName()+": "+sourceImage.getName()+" ("+secondaryImage.getId()+")");
                 sage.deleteSecondaryImage(secondaryImage);
             }
         }

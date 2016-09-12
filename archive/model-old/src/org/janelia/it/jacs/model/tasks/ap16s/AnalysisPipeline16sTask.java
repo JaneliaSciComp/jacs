@@ -18,6 +18,12 @@ import java.util.Set;
  * User: tsafford
  * Date: Dec 15, 2008
  * Time: 3:03:13 PM
+ * From jacs.properties
+ * # AHP 16S Analysis Pipeline
+ AP16S.PipelineCmd=16sDataAnalysis/site_analysis/analyze_bactPCR_sample_consolidated.sh
+ #AP16S.ClassifierCmd=site_analysis/Use_MSU_RDP_Classifier.pl
+ AP16S.ClassifierCmd=16sDataAnalysis/site_analysis/runLocalRDP.sh
+ AP16S.MassagingCmd=16sDataAnalysis/site_analysis/RDP_massaging.csh
  */
 public class AnalysisPipeline16sTask extends Task {
     transient public static final String TASK_NAME = "ahp16s";

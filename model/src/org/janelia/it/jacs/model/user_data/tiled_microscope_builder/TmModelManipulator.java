@@ -252,16 +252,29 @@ public class TmModelManipulator {
     }
 	
 	public void updateStructuredTextAnnotation(TmNeuron neuron, TmStructuredTextAnnotation annotation, String jsonString) throws Exception {
+        // note for the future: this method and the delete one below ought to be just
+        //  in-lined in AnnotationModel; maybe the add method above, too
         annotation.setDataString(jsonString);
-		neuron.getStructuredTextAnnotationMap().put(annotation.getId(), annotation);
-	}
+		neuron.getStructuredTextAnnotationMap().put(annotation.getParentId(), annotation);
+    }
 	
 	public void deleteStructuredTextAnnotation(TmNeuron neuron, long annotationId) {
 		if (neuron.getStructuredTextAnnotationMap().containsKey(annotationId)) {
 			neuron.getStructuredTextAnnotationMap().remove(annotationId);
 		}
-	}
-    
+    }
+
+    // for debugging, if needed
+    private void printStructureTextAnnotationMap(TmNeuron neuron) {
+        Map<Long, TmStructuredTextAnnotation> staMap = neuron.getStructuredTextAnnotationMap();
+        System.out.println("structure text map for neuron " + neuron.getName() + ", neuron ID " + neuron.getId());
+        for (Long annID: staMap.keySet()) {
+            TmStructuredTextAnnotation sta = staMap.get(annID);
+            System.out.println("    key:" + annID + " str text ID: " + sta.getId() + " parent ID: "  + annID +
+                " parent type: " + sta.getParentType() + " data string:" + sta.getDataString());
+        }
+    }
+
     /**
      * This can be a partial operation.  Therefore, it will not carry out any
      * communication with the databse.

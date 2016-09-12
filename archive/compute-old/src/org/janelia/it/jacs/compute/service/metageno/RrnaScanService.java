@@ -32,6 +32,26 @@ import java.util.Set;
  * User: smurphy
  * Date: Feb 23, 2009
  * Time: 12:32:03 PM
+ * From jacs.properties
+ * # RrnaScan Properties
+ RrnaScan.DefaultFastaEntriesPerExec=10000
+ RrnaScan.Queue=-l default
+ RrnaScan.Database=/usr/local/annotation/CAMERA/CustomDB/camera_rRNA_finder.all_rRNA.coded.cdhit_80.fsa
+ RrnaScan.BlastCmd=blast-2.2.15/bin/blastall
+ RrnaScan.FirstBlastOptions=-e 0.1 -F T -b 1 -v 1 -z 3000000000 -W 9
+ RrnaScan.SecondBlastOptions=-e 1e-4 -F 'm L' -b 1500 -v 1500 -q 5 -r 4 -X 1500 -z 3000000000 -W 9 -U T
+ RrnaScan.Blast2BtabCmd=wu-blast2btab.pl
+ RrnaScan.Btab2BsmlCmd=blastbtab2bsml.pl
+ RrnaScan.Bsml2FastaCmd=camera_bsml_to_fasta_filter_on_alignment.pl
+ RrnaScan.Blast2TableCmd=blast_raw_to_table.pl
+ RrnaScan.BlastTableIntervalCmd=blast_table_interval_collapse.pl
+ RrnaScan.RrnaFinder2BsmlCmd=camera_rrna_finder2bsml.pl
+ RrnaScan.RrnaSequenceExtractCmd=camera_rrna_sequence_extract.pl
+ RrnaScan.MaskCmd=mask_by_analysis.pl
+ RrnaScan.Min5sLength=25
+ RrnaScan.Min16sLength=250
+ RrnaScan.Min18sLength=250
+ RrnaScan.Min23sLength=250
  */
 public class RrnaScanService extends SubmitDrmaaJobService {
     public static String RRNA_SCAN_TASK = "RRNA_SCAN_TASK";

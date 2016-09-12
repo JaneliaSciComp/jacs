@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
@@ -29,8 +30,7 @@ import org.janelia.it.jacs.model.domain.ontology.Annotation;
 import org.janelia.it.jacs.shared.utils.DomainQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.janelia.it.jacs.model.domain.support.DomainUtils.abbr;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 
 @Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
@@ -39,6 +39,8 @@ public class AnnotationWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public AnnotationWebService() {
         register(JacksonFeature.class);
@@ -56,14 +58,17 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Annotation createAnnotation(@ApiParam DomainQuery query) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
-            log.debug("createAnnotation({})",query);
+            log.debug("createAnnotation({})", query);
             return (Annotation)dao.save(query.getSubjectKey(), query.getDomainObject());
         }
         catch (Exception e) {
             log.error("Error occurred creating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(),  "PUT", "/data/annotation", stopWatch.getTime());
         }
     }
 
@@ -79,6 +84,7 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Annotation updateAnnotation(@ApiParam DomainQuery query) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("updateAnnotation({})",query);
@@ -87,6 +93,8 @@ public class AnnotationWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred updating annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(),  "POST", "/data/annotation", stopWatch.getTime());
         }
     }
 
@@ -103,6 +111,7 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Annotation> getAnnotations(@ApiParam DomainQuery query) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             log.debug("getAnnotations({})",query);
@@ -111,6 +120,8 @@ public class AnnotationWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/annotation/details", stopWatch.getTime());
         }
     }
 
@@ -126,6 +137,7 @@ public class AnnotationWebService extends ResourceConfig {
     @Consumes(MediaType.APPLICATION_JSON)
     public void removeAnnotations(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("annotationId") final String annotationId) {
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         Reference annotationRef = Reference.createFor(Annotation.class, new Long(annotationId));
         try {
@@ -136,6 +148,8 @@ public class AnnotationWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred removing annotations", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "DELETE", "/data/annotation", stopWatch.getTime());
         }
     }
 }

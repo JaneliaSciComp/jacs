@@ -51,10 +51,11 @@ public class LSMProcessingTask extends Task {
     }
 
     private void setDefaultValues() {
-        setParameter(PARAM_REUSE_PIPELINE_RUNS, "true");
-        setParameter(PARAM_REUSE_SUMMARY, "true");
-        setParameter(PARAM_REUSE_PROCESSING, "true");
-        setParameter(PARAM_REUSE_ALIGNMENT, "true");
+        setParameter(PARAM_REUSE_PIPELINE_RUNS, "false");
+        setParameter(PARAM_REUSE_SUMMARY, "false");
+        setParameter(PARAM_REUSE_PROCESSING, "false");
+        setParameter(PARAM_REUSE_ALIGNMENT, "false");
+        setParameter(PARAM_REUSE_POST, "false");
         setTaskName(TASK_NAME);
         setJobName(DEFAULT_JOBNAME);
     }

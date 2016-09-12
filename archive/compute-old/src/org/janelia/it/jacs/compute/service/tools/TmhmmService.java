@@ -30,6 +30,11 @@ import java.util.Set;
  * User: jinman
  * Date: April 19, 2010
  * Time: 3:07:15 PM
+ * From jacs.properties
+ * #Tmhmm (Vanilla flavor)
+ Tmhmm.TmhmmCmd=/usr/local/bin/tmhmm
+ Tmhmm.Queue=-l medium
+ Tmhmm.MaxEntriesPerJob=200
  */
 public class TmhmmService extends SubmitDrmaaJobService {
 

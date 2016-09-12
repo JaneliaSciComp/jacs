@@ -17,6 +17,11 @@ import java.util.Set;
  * User: tsafford
  * Date: Dec 15, 2008
  * Time: 3:03:13 PM
+ * From jacs.properties
+ * # Inspect Command line
+ InspectPrep.Cmd=proteogenomic/ClusterSub.py
+ Inspect.Cmd=proteogenomic/sgeInspect.sh
+ Inspect.PValueCmd=proteogenomic/PValue.py
  */
 public class InspectTask extends Task {
     transient public static final String TASK_NAME = "inspect";

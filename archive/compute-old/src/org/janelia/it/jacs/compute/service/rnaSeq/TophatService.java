@@ -27,6 +27,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * From jacs.properties
+ * # Tophat
+ Tophat.TophatCmd=/usr/local/bin/tophat
+ Tophat.SamtoolsCmd=/usr/local/bin/samtools
+ Tophat.BowtieBuildCmd=/usr/local/bin/bowtie-build
+ Tophat.Queue=-l default
+ */
 public class TophatService extends SubmitDrmaaJobService {
     // IService constants
     public static String TOPHAT_TASK = "TOPHAT_TASK";

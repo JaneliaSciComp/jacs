@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-use lib '/usr/local/perl5/lib/perl5/site_perl/5.8.5';
-#use lib '/usr/local/perl5/lib/perl5/site_perl/5.8.5/lib64/perl5/5.8.5/x86_64-linux-thread-multi';
+use lib '/misc/local/perl5/lib/perl5/site_perl/5.8.5';
+#use lib '/misc/local/perl5/lib/perl5/site_perl/5.8.5/lib64/perl5/5.8.5/x86_64-linux-thread-multi';
 
 use Zeiss::LSM;
 use Data::Dumper;

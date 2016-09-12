@@ -43,6 +43,7 @@ public class FrvControlsPanel extends TitledBox implements IsJobSettable {
     private RoundedTabPanel _tabs;
     private ArrayList<FrvControlsPanelTab> panels = new ArrayList<FrvControlsPanelTab>();
     private static final int DB_MAX_SIZE = 80;
+    //RecruitmentViewer.HelpURL=http://www.janelia.org
     private static final String HELP_LINK_URL_PROPERTY_NAME = "RecruitmentViewer.HelpURL";
     private RecruitableJobInfo _originalJob;
     private JobSelectionListener listener;

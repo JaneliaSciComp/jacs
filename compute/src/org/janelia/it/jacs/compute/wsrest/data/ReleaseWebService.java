@@ -19,6 +19,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.log4j.Logger;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -27,6 +28,7 @@ import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.service.domain.SageArtifactExportService;
 import org.janelia.it.jacs.compute.service.domain.util.SampleHelperNG;
+import org.janelia.it.jacs.compute.util.ActivityLogHelper;
 import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -49,6 +51,7 @@ public class ReleaseWebService extends ResourceConfig {
 
     @Context
     SecurityContext securityContext;
+    ActivityLogHelper activityLog = ActivityLogHelper.getInstance();
 
     public ReleaseWebService() {
         register(JacksonFeature.class);
@@ -70,6 +73,7 @@ public class ReleaseWebService extends ResourceConfig {
     @Formatted
     public List<LineRelease> getReleasesInfo(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         log.debug("getReleasesInfo({})",subjectKey);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getDomainObjects(subjectKey, LineRelease.class);
@@ -77,6 +81,8 @@ public class ReleaseWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting releases info",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/release", stopWatch.getTime());
         }
     }
 
@@ -96,6 +102,7 @@ public class ReleaseWebService extends ResourceConfig {
     @Formatted
     public List<LineRelease> getReleaseInfo(@ApiParam @QueryParam("subjectKey") final String subjectKey, @ApiParam @PathParam("releaseName")String releaseName) {
         log.debug("getReleaseInfo({}, {})", subjectKey, releaseName);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.getDomainObjectsByName(subjectKey, LineRelease.class, releaseName);
@@ -103,6 +110,8 @@ public class ReleaseWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting release info",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "GET", "/data/release/", stopWatch.getTime());
         }
     }
 
@@ -120,6 +129,7 @@ public class ReleaseWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public LineRelease createRelease(DomainQuery query) {
         log.debug("createRelease({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             LineRelease release = (LineRelease)query.getDomainObject();
@@ -128,6 +138,8 @@ public class ReleaseWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred creating release",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "PUT", "/data/release", stopWatch.getTime());
         }
     }
 
@@ -145,6 +157,7 @@ public class ReleaseWebService extends ResourceConfig {
     @Produces(MediaType.APPLICATION_JSON)
     public LineRelease updateRelease(@ApiParam DomainQuery query) {
         log.debug("updateRelease({})", query);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         try {
             return dao.save(query.getSubjectKey(), (LineRelease)query.getDomainObject());
@@ -152,6 +165,8 @@ public class ReleaseWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred updating data set",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(query.getSubjectKey(), "POST", "/data/release", stopWatch.getTime());
         }
     }
 
@@ -168,6 +183,7 @@ public class ReleaseWebService extends ResourceConfig {
     public void removeRelease(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                               @ApiParam @QueryParam("releaseId") final String releaseId) {
         log.debug("removeDataSet({}, {})", subjectKey, releaseId);
+        StopWatch stopWatch = new StopWatch();
         DomainDAL dao = DomainDAL.getInstance();
         Reference releaseRef = Reference.createFor(LineRelease.class, new Long(releaseId));
         try {
@@ -177,6 +193,8 @@ public class ReleaseWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred removing release",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(subjectKey, "DELETE", "/data/release", stopWatch.getTime());
         }
     }
 
@@ -198,6 +216,7 @@ public class ReleaseWebService extends ResourceConfig {
             @ApiParam @PathParam("releaseName")String releaseName) {
 
         log.debug("getReleaseStatus({})", releaseName);
+        StopWatch stopWatch = new StopWatch();
 
         final Map<String,JsonLineStatus> lines = new HashMap<>();
 
@@ -272,6 +291,8 @@ public class ReleaseWebService extends ResourceConfig {
         catch (Exception e) {
             log.error("Error occurred getting release status",e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            activityLog.logRESTServiceCall(null, "GET", "/data/release/"+releaseName+"/status", stopWatch.getTime());
         }
 
         return Response.status(Response.Status.OK).entity(lines).build();

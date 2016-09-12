@@ -30,6 +30,12 @@ import java.util.Set;
  * User: jinman
  * Date: Jul 1, 2010
  * Time: 2:00:05 PM
+ * From jacs.properties
+ * # Augustus
+ Augustus.AugustusCmd=/usr/local/bin/augustus
+ Augustus.ConfigPath=/usr/local/packages/augustus/config
+ Augustus.Queue=-l medium
+ Augustus.MaxEntriesPerJob=200
  */
 public class AugustusService extends SubmitDrmaaJobService {
 

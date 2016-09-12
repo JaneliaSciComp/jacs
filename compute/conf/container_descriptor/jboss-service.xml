@@ -36,7 +36,7 @@
     <mbean code="org.janelia.it.jacs.compute.mbean.FileNodeManager" name="ComputeServer:service=FileNodeManager"/>
     <!--<mbean code="org.janelia.it.jacs.compute.mbean.RecruitmentNodeManager" name="ComputeServer:service=RecruitmentNodeManager"/>-->
     <mbean code="org.janelia.it.jacs.compute.mbean.AnnotationNodeManager" name="ComputeServer:service=AnnotationNodeManager"/>
-    <mbean code="org.janelia.it.jacs.compute.mbean.SearchDataManager" name="ComputeServer:service=SearchDataManager"/>
+    <!--<mbean code="src.org.janelia.it.jacs.compute.mbean.SearchDataManager" name="ComputeServer:service=SearchDataManager"/>-->
     <!--<mbean code="org.janelia.it.jacs.compute.mbean.GenomeProjectNodeManager" name="ComputeServer:service=GenomeProjectNodeManager"/>-->
     <mbean code="org.janelia.it.jacs.compute.mbean.GridJobsManager" name="ComputeServer:service=GridJobsManager"/>
     <mbean code="org.janelia.it.jacs.compute.mbean.LocalTestManager" name="ComputeServer:service=LocalTestManager"/>
