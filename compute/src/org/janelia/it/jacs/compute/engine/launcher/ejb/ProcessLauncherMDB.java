@@ -8,8 +8,8 @@ import org.janelia.it.jacs.compute.engine.def.SeriesDef;
 import org.janelia.it.jacs.compute.engine.launcher.ILauncher;
 import org.janelia.it.jacs.compute.engine.launcher.ProcessLauncher;
 import org.janelia.it.jacs.compute.engine.util.JmsUtil;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.ejb3.StrictMaxPool;
+
+
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.EJBException;
@@ -34,7 +34,7 @@ import javax.jms.Message;
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class ProcessLauncherMDB extends SeriesLauncherMDB {
     private static Logger logger = Logger.getLogger(ProcessLauncherMDB.class);
 

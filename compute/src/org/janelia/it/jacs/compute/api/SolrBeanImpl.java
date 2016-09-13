@@ -26,9 +26,9 @@ import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.shared.solr.SageTerm;
 import org.janelia.it.jacs.shared.solr.SolrDocTypeEnum;
 import org.janelia.it.jacs.shared.solr.SolrResults;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
-import org.jboss.ejb3.StrictMaxPool;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
 
 /**
  * Implementation of SOLR indexing and searching operations. 
@@ -39,7 +39,7 @@ import org.jboss.ejb3.StrictMaxPool;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class SolrBeanImpl implements SolrBeanLocal, SolrBeanRemote {
 	
 	private static final Logger log = Logger.getLogger(SolrBeanImpl.class);

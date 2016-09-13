@@ -16,9 +16,9 @@ import org.janelia.it.jacs.compute.util.DedupingDelayQueue;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
 import org.janelia.it.jacs.model.domain.support.DomainUtils;
-import org.jboss.annotation.ejb.Management;
-import org.jboss.annotation.ejb.Service;
-import org.jboss.annotation.ejb.TransactionTimeout;
+//import org.jboss.ejb3.annotation.Management;
+//import org.jboss.ejb3.annotation.Service;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 /**
  * The indexing manager is a singleton service responsible for keeping track of entities to be indexed, and then
@@ -26,8 +26,8 @@ import org.jboss.annotation.ejb.TransactionTimeout;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Service(objectName = "jboss:custom=IndexingManager")
-@Management(IndexingManagerManagement.class)
+//@Service(objectName = "jboss:custom=IndexingManager")
+//@Management(IndexingManagerManagement.class)
 public class IndexingManagerImpl implements IndexingManagerManagement {
 
 	private static final int MAX_BATCH_SIZE = 10000;

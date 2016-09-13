@@ -49,8 +49,8 @@
             <fileset dir="${basedir}/lib/" includes="**/*.jar"/>
             <fileset dir="${model.module}/build/jars" includes="jacs-model.jar"/>
             <fileset dir="${basedir}/../common/GWT-Serializable/" includes="**/*.jar" />
-            <pathelement location="${common.module}/JBoss-Server-4.2.3.GA/log4j.jar"/>
-            <pathelement location="${common.module}/JBoss-Server-4.2.3.GA/mail.jar"/>
+            <pathelement location="${common.module}/Old/log4j.jar"/>
+            <pathelement location="${common.module}/Old/mail.jar"/>
             <pathelement location="${common.module}/Lucene-2.3.1/lucene-core-2.3.1.jar"/>
             <!--<fileset dir="${common.module}/JAXB/" includes="*.jar"/>-->
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>

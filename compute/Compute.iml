@@ -79,7 +79,6 @@
     <orderEntry type="library" name="Hibernate" level="project" />
     <orderEntry type="library" name="jama-1.0" level="project" />
     <orderEntry type="library" name="JAX-RS-2.0" level="project" />
-    <orderEntry type="library" name="JBoss Minimal" level="project" />
     <orderEntry type="library" name="Jersey-2" level="project" />
     <orderEntry type="library" name="JodaTime" level="project" />
     <orderEntry type="library" name="Logging" level="project" />
@@ -133,8 +132,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Lucene" level="project" />
-    <orderEntry type="library" name="mysql-connector-java-5.1.35-bin" level="project" />
-    <orderEntry type="library" name="mysql-connector-java-5.1.35-bin" level="project" />
+    <orderEntry type="library" name="Quartz" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

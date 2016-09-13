@@ -5,8 +5,8 @@ import com.google.common.collect.ImmutableMap;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.engine.data.IProcessData;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.ejb3.StrictMaxPool;
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ import javax.jms.*;
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 300, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 300, timeout = 10000)
 public class DispatchListenerMDB implements MessageListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(DispatchListenerMDB.class);

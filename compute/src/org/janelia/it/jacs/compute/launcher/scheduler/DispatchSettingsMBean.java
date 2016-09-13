@@ -1,7 +1,5 @@
 package org.janelia.it.jacs.compute.launcher.scheduler;
 
-import org.jboss.annotation.ejb.Management;
-
 import javax.management.MXBean;
 
 public interface DispatchSettingsMBean {

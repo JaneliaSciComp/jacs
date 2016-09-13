@@ -143,6 +143,7 @@
         <jarDirectory url="file://$MODULE_DIR$/../common/swagger" recursive="false" />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Old" level="project" />
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="_basePreferences">

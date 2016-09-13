@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.launcher.scheduler;
 
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.jboss.annotation.ejb.ResourceAdapter;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -17,7 +16,7 @@ import java.util.Date;
         // crontTrigger starts with seconds.  Below should run at the stroke of 2AM EST, every day
         @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0 2 * * ?")
 })
-@ResourceAdapter("quartz-ra.rar")
+//@ResourceAdapter("quartz-ra.rar")
 /**
  * Created by IntelliJ IDEA.
  * User: tsafford

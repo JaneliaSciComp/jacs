@@ -15,8 +15,8 @@ import org.janelia.it.jacs.compute.service.common.ProcessDataHelper;
 import org.janelia.it.jacs.model.tasks.Task;
 import org.janelia.it.jacs.model.user_data.FileNode;
 import org.janelia.it.jacs.shared.utils.FileUtil;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.ejb3.StrictMaxPool;
+
+
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
@@ -45,7 +45,7 @@ import java.util.List;
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 300, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 300, timeout = 10000)
 public class BaseServiceMDB implements MessageListener {
     protected Logger logger;
 

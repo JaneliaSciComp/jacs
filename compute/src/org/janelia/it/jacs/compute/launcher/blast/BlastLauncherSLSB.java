@@ -8,9 +8,9 @@ import org.janelia.it.jacs.compute.engine.launcher.ILauncher;
 import org.janelia.it.jacs.compute.engine.launcher.LauncherException;
 import org.janelia.it.jacs.compute.engine.launcher.ejb.SequenceLauncherSLSB;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
-import org.jboss.ejb3.StrictMaxPool;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -22,7 +22,7 @@ import javax.ejb.TransactionAttributeType;
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.MANDATORY)
 @TransactionTimeout(432000)
-@PoolClass(value = StrictMaxPool.class, maxSize = 60, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 60, timeout = 10000)
 public class BlastLauncherSLSB extends SequenceLauncherSLSB {
 
     /**

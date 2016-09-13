@@ -11,17 +11,16 @@ import org.janelia.it.jacs.compute.api.SolrBeanImpl;
 import org.janelia.it.jacs.model.entity.EntityAttribute;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityType;
-import org.jboss.annotation.ejb.Management;
-import org.jboss.annotation.ejb.Service;
-
+//import org.jboss.ejb3.annotation.Management;
+//import org.jboss.ejb3.annotation.Service;
 /**
  * Created with IntelliJ IDEA.
  * User: saffordt
  * Date: 5/2/13
  * Time: 2:35 PM
  */
-@Service
-@Management(StartupVerificationService.class)
+//@Service
+//@Management(StartupVerificationService.class)
 public class StartupVerificationsBean implements StartupVerificationService {
 
     private static final Logger log = Logger.getLogger(SolrBeanImpl.class);

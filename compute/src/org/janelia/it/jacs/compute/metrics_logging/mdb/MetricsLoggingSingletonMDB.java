@@ -2,8 +2,8 @@ package org.janelia.it.jacs.compute.metrics_logging.mdb;
 
 import org.apache.log4j.Logger;
 
-import org.jboss.ejb3.StrictMaxPool;
-import org.jboss.annotation.ejb.PoolClass;
+
+
 import javax.ejb.MessageDriven;
 import javax.ejb.ActivationConfigProperty;
 import javax.jms.JMSException;
@@ -42,7 +42,7 @@ import org.janelia.it.jacs.model.user_data.UserToolEvent;
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "10"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 1, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 1, timeout = 10000)
 @TransactionAttribute(REQUIRED)
 public class MetricsLoggingSingletonMDB implements MessageListener {
     

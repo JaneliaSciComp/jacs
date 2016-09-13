@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.utils.SystemCall;
-import org.jboss.annotation.ejb.ResourceAdapter;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -21,7 +20,7 @@ import java.util.Scanner;
         // crontTrigger starts with seconds.  Below should run every 30 minutes, every day
         @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0/30 * * * ?")
 })
-@ResourceAdapter("quartz-ra.rar")
+//@ResourceAdapter("quartz-ra.rar")
 /**
  * Created by IntelliJ IDEA.
  * User: tsafford

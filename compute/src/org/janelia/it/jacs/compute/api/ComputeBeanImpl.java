@@ -30,9 +30,7 @@ import org.janelia.it.jacs.shared.utils.ControlledVocabElement;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.MailHelper;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
-import org.jboss.ejb3.StrictMaxPool;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
@@ -64,7 +62,7 @@ import java.lang.IllegalStateException;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
+//@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     
     private Logger logger = Logger.getLogger(this.getClass());

@@ -6,7 +6,6 @@ import org.janelia.it.jacs.compute.jtc.AsyncMessageInterface;
 import org.janelia.it.jacs.compute.service.common.grid.submit.GridProcessResult;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.janelia.it.jacs.shared.utils.IOUtils;
-import org.jboss.annotation.ejb.ResourceAdapter;
 import org.jboss.logging.Logger;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
@@ -23,7 +22,7 @@ import java.util.Set;
         // crontTrigger starts with seconds.  Below should run every 1 minutes
         @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0/1 * * * ?")
 })
-@ResourceAdapter("quartz-ra.rar")
+//@ResourceAdapter("quartz-ra.rar")
 
 /**
  * Created by IntelliJ IDEA.

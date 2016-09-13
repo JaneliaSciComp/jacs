@@ -1,14 +1,14 @@
 package org.janelia.it.jacs.compute.launcher.indexing;
 
 import javax.ejb.ActivationConfigProperty;
+import javax.ejb.DependsOn;
 import javax.ejb.EJBException;
 import javax.ejb.MessageDriven;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 
-import org.jboss.annotation.ejb.Depends;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.ejb3.StrictMaxPool;
+
+
 
 /**
  * An MBD for handling reindexing requests asynchronously.
@@ -24,11 +24,11 @@ import org.jboss.ejb3.StrictMaxPool;
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 10, timeout = 10000)
-@Depends ({"jboss:custom=IndexingManager"})
+//@PoolClass(value  StrictMaxPool.class, maxSize = 10, timeout = 10000)
+@DependsOn({"jboss:custom=IndexingManager"})
 public class IndexingMDB implements MessageListener {
 	
-	@Depends({"jboss:custom=IndexingManager"})
+//	@DependsOn({"jboss:custom=IndexingManager"})
 	private IndexingManagerManagement indexingManager;
 	
 	@Override

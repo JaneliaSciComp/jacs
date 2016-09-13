@@ -13,13 +13,12 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
 import org.apache.log4j.Logger;
-import org.apache.solr.client.solrj.SolrQuery;
 import org.janelia.it.jacs.compute.access.AnnotationDAO;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.PatternSearchDAO;
-import org.janelia.it.jacs.compute.access.solr.SolrDAO;
-import org.janelia.it.jacs.compute.launcher.indexing.IndexingHelper;
 import org.janelia.it.jacs.model.entity.Entity;
 import org.janelia.it.jacs.model.entity.EntityConstants;
 import org.janelia.it.jacs.model.entity.EntityData;
@@ -32,9 +31,6 @@ import org.janelia.it.jacs.shared.annotation.DataDescriptor;
 import org.janelia.it.jacs.shared.annotation.DataFilter;
 import org.janelia.it.jacs.shared.annotation.FilterResult;
 import org.janelia.it.jacs.shared.utils.EntityUtils;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
-import org.jboss.ejb3.StrictMaxPool;
 
 import com.google.common.collect.ComparisonChain;
 
@@ -43,7 +39,7 @@ import com.google.common.collect.ComparisonChain;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = StrictMaxPool.class, maxSize = 500, timeout = 10000)
+//@PoolClass(value = StrictMaxPool.class, maxSize = 500, timeout = 10000)
 public class AnnotationBeanImpl implements AnnotationBeanLocal, AnnotationBeanRemote {
 	
     private static final Logger _logger = Logger.getLogger(AnnotationBeanImpl.class);

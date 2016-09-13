@@ -2,13 +2,12 @@
 package org.janelia.it.jacs.compute.launcher.indexing;
 
 import javax.ejb.ActivationConfigProperty;
+import javax.ejb.DependsOn;
 import javax.ejb.MessageDriven;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
-import org.jboss.annotation.ejb.Depends;
-import org.jboss.annotation.ejb.ResourceAdapter;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -22,13 +21,13 @@ import org.quartz.JobExecutionException;
         // Wake up every 20 seconds
         @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/15 * * * * ?")
 })
-@ResourceAdapter("quartz-ra.rar")
-@Depends ({"jboss:custom=IndexingManager"})
+//@ResourceAdapter("quartz-ra.rar")
+@DependsOn({"jboss:custom=IndexingManager"})
 public class BatchIndexingJobMDB implements Job {
 
 	private static final Boolean ENABLE_INDEXING = SystemConfigurationProperties.getBoolean("Solr.EnableIndexing");
 	
-	@Depends({"jboss:custom=IndexingManager"})
+//	@DependsOn({"jboss:custom=IndexingManager"})
 	private IndexingManagerManagement indexingManager;
 	
 	// Eliminate (unneeded) transactions on this method, because they cause some strange JTA exceptions 

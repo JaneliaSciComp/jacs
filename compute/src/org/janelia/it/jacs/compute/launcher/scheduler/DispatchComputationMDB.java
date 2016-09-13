@@ -3,7 +3,6 @@ package org.janelia.it.jacs.compute.launcher.scheduler;
 import org.janelia.it.jacs.compute.api.*;
 import org.janelia.it.jacs.model.jobs.DispatcherJob;
 import org.janelia.it.jacs.shared.utils.StringUtils;
-import org.jboss.annotation.ejb.ResourceAdapter;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -21,7 +20,7 @@ import java.util.List;
         @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 */2 * * * ?")
     }
 )
-@ResourceAdapter("quartz-ra.rar")
+//@ResourceAdapter("quartz-ra.rar")
 public class DispatchComputationMDB implements Job {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DispatchComputationMDB.class);
 

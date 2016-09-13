@@ -15,8 +15,8 @@ import org.janelia.it.jacs.compute.service.common.grid.submit.sge.SimpleJobStatu
 import org.janelia.it.jacs.model.TimebasedIdentifierGenerator;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.Task;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.ejb3.StrictMaxPool;
+
+
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
@@ -47,7 +47,7 @@ import java.util.Map;
 //        @ActivationConfigProperty(propertyName="RedeliveryDelay", propertyValue="30"),
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
-@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class GridSubmitAndWaitMDB extends BaseServiceMDB {
 
     public void onMessage(Message message) {

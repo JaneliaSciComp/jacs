@@ -3,9 +3,9 @@ package org.janelia.it.jacs.compute.engine.launcher.ejb;
 
 import org.janelia.it.jacs.compute.engine.launcher.ILauncher;
 import org.janelia.it.jacs.compute.engine.launcher.SequenceLauncher;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
-import org.jboss.ejb3.StrictMaxPool;
+
+import org.jboss.ejb3.annotation.TransactionTimeout;
+
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -28,7 +28,7 @@ import javax.ejb.TransactionAttributeType;
 @Stateless
 @TransactionAttribute(value = TransactionAttributeType.MANDATORY)
 @TransactionTimeout(432000)
-@PoolClass(value = StrictMaxPool.class, maxSize = 200, timeout = 90000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 200, timeout = 90000)
 public class SequenceLauncherSLSB extends SeriesLauncherSLSB {
 
     protected ILauncher getLauncher() {

@@ -27,5 +27,5 @@
       login modules used to authentication users.
       <security-domain>java:/jaas/jmx-console</security-domain>
    -->
-    <security-domain flushOnSessionInvalidation="true">java:/jaas/other</security-domain>
+    <security-domain flushOnSessionInvalidation="true">other</security-domain>
 </jboss-web>

@@ -15,9 +15,7 @@ import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataServer;
 import org.janelia.it.jacs.compute.service.activeData.ActiveDataServerSimpleLocal;
 import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
-import org.jboss.annotation.ejb.PoolClass;
-import org.jboss.annotation.ejb.TransactionTimeout;
-import org.jboss.ejb3.StrictMaxPool;
+import org.jboss.ejb3.annotation.TransactionTimeout;
 
 /**
  *
@@ -27,7 +25,7 @@ import org.jboss.ejb3.StrictMaxPool;
 @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 @TransactionTimeout(432000)
 //@Interceptors({UsageInterceptor.class})
-@PoolClass(value = StrictMaxPool.class, maxSize = 100, timeout = 10000)
+//@PoolClass(value  StrictMaxPool.class, maxSize = 100, timeout = 10000)
 public class GeometricSearchBeanImpl implements GeometricSearchBeanLocal, GeometricSearchBeanRemote {
 	
     private static final Logger logger = Logger.getLogger(GeometricSearchBeanImpl.class);
