@@ -3,6 +3,9 @@ package org.janelia.it.jacs.compute.mbean;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanLocal;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -20,11 +23,17 @@ import org.janelia.it.jacs.model.user_data.Node;
  * Time: 12:19 PM
  * To change this template use File | Settings | File Templates.
  */
-public class PatternSearch implements PatternSearchMBean {
+@Singleton
+@Startup
+public class PatternSearch extends AbstractComponentMBean implements PatternSearchMBean {
 
     private static final Logger logger = Logger.getLogger(PatternSearch.class);
 
-    //////// Utilities ////////////////////////////////////////////////////////////////////////////////////////////////
+    public PatternSearch() {
+        super("jacs");
+    }
+
+//////// Utilities ////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected EntityBeanLocal getEntityBean() {
         return EJBFactory.getLocalEntityBean();

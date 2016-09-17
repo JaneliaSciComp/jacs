@@ -21,6 +21,8 @@ import org.janelia.it.jacs.model.vo.*;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import java.io.File;
@@ -36,7 +38,9 @@ import java.util.*;
  *
  * @version $Id: BlastTest.java 1 2011-02-16 21:07:19Z tprindle $
  */
-public class BlastTest implements BlastTestMBean {
+@Singleton
+@Startup
+public class BlastTest extends AbstractComponentMBean implements BlastTestMBean {
     // todo This test is out of date.  OrderEJB doesn't exist.
     public static final String ORDER_EJB_PROP = "BlastServer.OrderEJB";
 
@@ -46,6 +50,7 @@ public class BlastTest implements BlastTestMBean {
     private static final Logger logger = Logger.getLogger(BlastTest.class);
 
     public BlastTest() {
+        super("jacs");
     }
 
     public void submitFileNodeQueryBlastNTest() {

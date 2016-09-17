@@ -18,17 +18,23 @@ import java.io.FilenameFilter;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 /**
  * Created by IntelliJ IDEA.
  * User: tsafford
  * Date: Jul 2, 2007
  * Time: 5:00:41 PM
  */
-public class AdministrativeManager implements AdministrativeManagerMBean {
+@Singleton
+@Startup
+public class AdministrativeManager extends AbstractComponentMBean implements AdministrativeManagerMBean {
 
     private static final Logger LOGGER = Logger.getLogger(AdministrativeManager.class);
 
     public AdministrativeManager() {
+        super("jacs");
     }
 
     /**

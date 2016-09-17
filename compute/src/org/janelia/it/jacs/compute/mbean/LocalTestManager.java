@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.util.BulkEntityBuilder;
@@ -12,7 +15,12 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class LocalTestManager implements LocalTestManagerMBean {
+@Singleton
+@Startup
+public class LocalTestManager extends AbstractComponentMBean implements LocalTestManagerMBean {
+	public LocalTestManager() {
+		super("jacs");
+	}
 
 	private static final Logger logger = Logger.getLogger(LocalTestManager.class);
 	

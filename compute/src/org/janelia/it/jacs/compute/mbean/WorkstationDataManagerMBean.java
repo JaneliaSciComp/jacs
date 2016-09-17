@@ -1,12 +1,15 @@
 package org.janelia.it.jacs.compute.mbean;
 
 
+import javax.management.MXBean;
+
 /**
  * Created by IntelliJ IDEA.
  * User: murphys
  * Date: 5/24/11
  * Time: 10:38 AM
  */
+@MXBean
 public interface WorkstationDataManagerMBean {
     
 	// ETL

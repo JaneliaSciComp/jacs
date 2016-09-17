@@ -6,6 +6,9 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.model.tasks.Event;
 import org.janelia.it.jacs.model.tasks.TaskParameter;
@@ -19,9 +22,12 @@ import org.janelia.it.jacs.model.user_data.Node;
  * Date: Jul 2, 2007
  * Time: 5:00:41 PM
  */
-public class AnnotationManager implements AnnotationManagerMBean {
+@Singleton
+@Startup
+public class AnnotationManager extends AbstractComponentMBean implements AnnotationManagerMBean {
 
     public AnnotationManager() {
+        super("jacs");
     }
 
     public void testNeuronSep(String inputFilePath) {

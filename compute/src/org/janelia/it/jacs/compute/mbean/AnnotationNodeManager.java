@@ -12,16 +12,22 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 /**
  * Created by IntelliJ IDEA.
  * User: tsafford
  * Date: Jan 14, 2009
  * Time: 11:38:49 AM
  */
-public class AnnotationNodeManager implements AnnotationNodeManagerMBean {
+@Singleton
+@Startup
+public class AnnotationNodeManager extends AbstractComponentMBean implements AnnotationNodeManagerMBean {
     private static final Logger logger = Logger.getLogger(AnnotationNodeManager.class);
 
     public AnnotationNodeManager() {
+        super("jacs");
     }
 
     public void resetNewNcbiGenomes(String ncbiGenomeLoadFile, boolean isTest) {

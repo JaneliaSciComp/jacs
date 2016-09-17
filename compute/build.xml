@@ -269,6 +269,7 @@
             <metainf dir="${condesc.dir}">
                 <include name="jboss-service.xml"/>
                 <include name="*-xmbean.xml"/>
+                <include name="beans.xml"/>
             </metainf>
         </jar>
 

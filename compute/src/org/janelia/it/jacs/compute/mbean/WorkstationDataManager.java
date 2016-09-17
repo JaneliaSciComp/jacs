@@ -14,6 +14,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeException;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -48,12 +51,15 @@ import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
  * Date: 5/24/11
  * Time: 10:37 AM
  */
-public class WorkstationDataManager implements WorkstationDataManagerMBean {
+@Singleton
+@Startup
+public class WorkstationDataManager extends AbstractComponentMBean implements WorkstationDataManagerMBean {
 
     private static final Logger logger = Logger.getLogger(WorkstationDataManager.class);
 
 
     public WorkstationDataManager() {
+        super("jacs");
     }
 
     public void runMongoDbSync() {

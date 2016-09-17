@@ -10,15 +10,24 @@ import org.janelia.it.jacs.model.user_data.Node;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 /**
  * Beginnings of a validation launcher.
  *
  * Created by fosterl on 6/17/14.
  */
-public class Validator implements ValidatorMBean {
+@Singleton
+@Startup
+public class Validator extends AbstractComponentMBean implements ValidatorMBean {
     private Logger log = Logger.getLogger(Validator.class);
     public transient static final String PROCESS_NAME = "ValidationServicePipeline";
     public transient static final String DEFAULT_DISPLAY_NAME = "Sample Content Validation";
+
+    public Validator() {
+        super("jacs");
+    }
 
     @Override
     public void runValidations(String user, Long guid, String label, String types, Boolean nodebug) {

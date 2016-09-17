@@ -11,6 +11,9 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.access.domain.DomainDAL;
@@ -38,7 +41,12 @@ import org.janelia.it.jacs.model.tasks.utility.VLCorrectionTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.shared.utils.StringUtils;
 
-public class SampleDataManager implements SampleDataManagerMBean {
+@Singleton
+@Startup
+public class SampleDataManager extends AbstractComponentMBean implements SampleDataManagerMBean {
+    public SampleDataManager() {
+        super("jacs");
+    }
 
     private static final Logger log = Logger.getLogger(SampleDataManager.class);
 

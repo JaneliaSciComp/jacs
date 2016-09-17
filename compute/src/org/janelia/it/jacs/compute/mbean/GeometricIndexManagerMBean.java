@@ -6,13 +6,16 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
-import org.jboss.system.ServiceMBean;
+//import org.jboss.system.ServiceMBean;
+
+import javax.management.MXBean;
 
 /**
  *
  * @author murphys
  */
-interface GeometricIndexManagerMBean extends ServiceMBean {
+@MXBean
+interface GeometricIndexManagerMBean /**extends ServiceMBean**/ {
     
     public void startGeometricIndexManager();
     

@@ -17,6 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileOwnerAttributeView;
+
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.user_data.tiledMicroscope.CoordinateToRawTransform;
 import org.janelia.it.jacs.model.util.MatrixUtilities;
@@ -25,7 +29,9 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  * Created by fosterl on 10/23/15.
  * @See TiledMicroscopeManager - which currently does not do much.  Should this method be in that instead?
  */
-public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBean {
+@Singleton
+@Startup
+public class LargeVolumeSampleDiscovery extends AbstractComponentMBean implements LargeVolumeSampleDiscoveryMBean {
     
     public static final String SHARED_PERMISSION = "group:mouselight";
     // Setting ownership of all created samples, to Jayaram, to avoid breakage
@@ -35,9 +41,12 @@ public class LargeVolumeSampleDiscovery implements LargeVolumeSampleDiscoveryMBe
     
     private Notifier notifier;
     
-    public LargeVolumeSampleDiscovery() {}
+    public LargeVolumeSampleDiscovery() {
+        super("jacs");
+    }
     
     public LargeVolumeSampleDiscovery(Notifier notifier) {
+        super("jacs");
         this.notifier = notifier;
     }
 

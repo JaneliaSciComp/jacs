@@ -9,16 +9,22 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 /**
  * Created by IntelliJ IDEA.
  * User: adrozdet
  * Date: Aug 4, 2008
  * Time: 12:36:58 PM
  */
-public class GridJobsManager implements GridJobsManagerMBean {
+@Singleton
+@Startup
+public class GridJobsManager extends AbstractComponentMBean implements GridJobsManagerMBean {
     private static final Logger logger = Logger.getLogger(GridJobsManager.class);
 
     public GridJobsManager() {
+        super("jacs");
     }
 
     public void cancelTask(long taskId) {

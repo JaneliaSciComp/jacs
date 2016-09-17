@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
@@ -26,7 +29,13 @@ import org.janelia.it.jacs.model.user_data.Node;
  * Time: 12:11 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TiledMicroscopeManager implements TiledMicroscopeManagerMBean {
+@Singleton
+@Startup
+public class TiledMicroscopeManager extends AbstractComponentMBean implements TiledMicroscopeManagerMBean {
+
+    public TiledMicroscopeManager() {
+        super("jacs");
+    }
 
     public void createTiledMicroscopeEntityTypes() {
         try {

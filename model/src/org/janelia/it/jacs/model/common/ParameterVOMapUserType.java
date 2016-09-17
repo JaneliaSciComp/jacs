@@ -2,6 +2,7 @@
 package org.janelia.it.jacs.model.common;
 
 import org.hibernate.HibernateException;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.UserType;
 import org.janelia.it.jacs.model.vo.*;
 
@@ -52,6 +53,7 @@ public class ParameterVOMapUserType implements UserType {
 
     public Object nullSafeGet(ResultSet resultSet,
                               String[] names,
+                              SharedSessionContractImplementor x,
                               Object owner) throws HibernateException, SQLException {
         String value = resultSet.getString(names[0]);
         if (resultSet.wasNull()) {
@@ -62,7 +64,8 @@ public class ParameterVOMapUserType implements UserType {
 
     public void nullSafeSet(PreparedStatement statement,
                             Object value,
-                            int index)
+                            int index,
+                            SharedSessionContractImplementor x)
             throws HibernateException, SQLException {
         if (value == null) {
             statement.setNull(index, Types.LONGVARCHAR);

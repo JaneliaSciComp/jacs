@@ -1,6 +1,8 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.management.MXBean;
+
 /**
  * Created by IntelliJ IDEA.
  * User: smurphy
@@ -9,6 +11,7 @@ package org.janelia.it.jacs.compute.mbean;
  *
  * @version $Id: ComputeStartupMBean.java 1 2011-02-16 21:07:19Z tprindle $
  */
+@MXBean
 public interface ComputeStartupMBean {
 
     public void reReadProperties();

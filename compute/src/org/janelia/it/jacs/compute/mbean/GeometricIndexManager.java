@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
@@ -23,13 +27,14 @@ import org.janelia.it.jacs.model.tasks.TaskParameter;
 import org.janelia.it.jacs.model.tasks.geometricSearch.GeometricIndexTask;
 import org.janelia.it.jacs.model.user_data.Node;
 import org.janelia.it.jacs.model.user_data.User;
-import org.jboss.system.ServiceMBeanSupport;
 
 /**
  *
  * @author murphys
  */
-public class GeometricIndexManager extends ServiceMBeanSupport implements GeometricIndexManagerMBean {
+@Singleton
+@Startup
+public class GeometricIndexManager extends AbstractComponentMBean implements GeometricIndexManagerMBean {
     
     private static final Logger logger = Logger.getLogger(GeometricIndexManager.class);
     private static final long MANAGER_DELAY_INTERVAL_MINUTES = 60L;
@@ -39,6 +44,10 @@ public class GeometricIndexManager extends ServiceMBeanSupport implements Geomet
     
     private static GeometricIndexTask indexTask=null;
     private static long indexTaskStartTime=0L;
+
+    public GeometricIndexManager() {
+        super("jacs");
+    }
 
     @Override
     public void startGeometricIndexManager() {
@@ -74,22 +83,22 @@ public class GeometricIndexManager extends ServiceMBeanSupport implements Geomet
         }
     }
 
-    @Override
+//    @Override
     public void create() throws Exception {
         logger.info("create() called");
     }
 
-    @Override
+//    @Override
     public void destroy() {
         logger.info("destroy() called");
     }
 
-    @Override
+//    @Override
     public void start() throws Exception {
         logger.info("start() called");
     }
 
-    @Override
+//    @Override
     public void stop() {
         logger.info("stop() called");
         managerPool.shutdown();

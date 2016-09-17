@@ -1,5 +1,7 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.management.MXBean;
+
 /**
  * Created with IntelliJ IDEA.
  * User: murphys
@@ -7,6 +9,7 @@ package org.janelia.it.jacs.compute.mbean;
  * Time: 12:10 PM
  * To change this template use File | Settings | File Templates.
  */
+@MXBean
 public interface TiledMicroscopeManagerMBean {
 
     public void createTiledMicroscopeEntityTypes();

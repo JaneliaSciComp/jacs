@@ -3,7 +3,8 @@ package org.janelia.it.jacs.model;
 
 import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
-import org.hibernate.engine.SessionImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 
 import java.io.InputStream;
@@ -315,6 +316,11 @@ public class TimebasedIdentifierGenerator implements IdentifierGenerator {
         uidStringBuffer.append(subnetComponent);
         String uidString = uidStringBuffer.toString();
         return Long.parseLong(uidString, 2);
+    }
+
+    @Override
+    public Serializable generate(SharedSessionContractImplementor sharedSessionContractImplementor, Object o) throws HibernateException {
+        return null;
     }
 
 //    public static void main(String[] args) {

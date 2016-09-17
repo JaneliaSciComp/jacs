@@ -1,6 +1,9 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 
@@ -12,10 +15,13 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
  *
  * @version $Id: ComputeStartup.java 1 2011-02-16 21:07:19Z tprindle $
  */
-public class ComputeStartup implements ComputeStartupMBean {
+@Singleton
+@Startup
+public class ComputeStartup extends AbstractComponentMBean implements ComputeStartupMBean {
     private static final Logger logger = Logger.getLogger(ComputeStartup.class);
 
     public ComputeStartup() {
+        super("jacs");
         reReadProperties();
     }
 

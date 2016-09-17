@@ -1,10 +1,13 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.management.MXBean;
+
 /**
  * MBean for managing Samples and their processing results. 
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@MXBean
 public interface SampleDataManagerMBean {
 
     // Maintenance Pipelines    

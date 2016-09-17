@@ -1,5 +1,8 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+
 import org.apache.log4j.Logger;
 import org.janelia.it.jacs.compute.access.DaoException;
 import org.janelia.it.jacs.compute.api.AnnotationBeanLocal;
@@ -12,11 +15,17 @@ import org.janelia.it.jacs.model.user_data.Group;
 import org.janelia.it.jacs.model.user_data.Subject;
 import org.janelia.it.jacs.model.user_data.User;
 
-public class SubjectManager implements SubjectManagerMBean {
+@Singleton
+@Startup
+public class SubjectManager extends AbstractComponentMBean implements SubjectManagerMBean {
 
     private static final Logger log = Logger.getLogger(SubjectManager.class);
-    
-    public void createUser(String username) {
+
+	public SubjectManager() {
+		super("jacs");
+	}
+
+	public void createUser(String username) {
         try {
             ComputeBeanLocal computeBean = EJBFactory.getLocalComputeBean();
             AnnotationBeanLocal annotationBean = EJBFactory.getLocalAnnotationBean();

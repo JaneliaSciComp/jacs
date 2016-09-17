@@ -1,12 +1,15 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.management.MXBean;
+
 /**
  * Created by IntelliJ IDEA.
  * User: adrozdet
  * Date: Aug 4, 2008
  * Time: 12:35:57 PM
  */
+@MXBean
 public interface GridJobsManagerMBean {
 
     public void cancelTask(long taskId);

@@ -39,7 +39,8 @@
             <fileset dir="${common.dir}/Reflections" includes="**/*.jar"/>
             <fileset dir="${common.dir}/Logging" includes="**/*.jar"/>
             <fileset dir="${common.dir}/MongoDB" includes="**/*.jar"/>
-            <fileset dir="${common.dir}/Spring" includes="hibernate3.jar"/>
+            <!--<fileset dir="${common.dir}/Spring" includes="hibernate3.jar"/>-->
+            <fileset dir="${common.dir}/Hibernate-5.2.2" includes="hibernate-core-5.2.2.Final.jar"/>
             <fileset dir="${common.dir}/Spring" includes="log4j-1.2.14.jar"/>
             <fileset dir="${common.dir}/jama-1.0.1" includes="Jama-1.0.3.jar"/>
             <fileset dir="${common.dir}/protostuff-1.3.9" includes="**/*.jar"/>
