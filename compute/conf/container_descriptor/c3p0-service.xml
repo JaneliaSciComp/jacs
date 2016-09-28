@@ -2,10 +2,10 @@
 <server>
 	<mbean code="com.mchange.v2.c3p0.jboss.C3P0PooledDataSource" name="jboss:service=C3P0PooledDataSourceJacs">
 		<attribute name="JndiName">java:ComputeServer_DataSource</attribute>
-		<attribute name="JdbcUrl">jdbc:mysql://flyportal-db:3306/flyportal</attribute>
+		<attribute name="JdbcUrl">jdbc:mysql://dev-db:3306/flyportal</attribute>
 		<attribute name="DriverClass">com.mysql.jdbc.Driver</attribute>
-		<attribute name="User">flyportalAdmin</attribute>
-		<attribute name="Password">flyp0rt@lAdm1n</attribute>
+		<attribute name="User">flyportalApp</attribute>
+		<attribute name="Password">flyportalApp</attribute>
 		<attribute name="AcquireIncrement">5</attribute>
 		<attribute name="IdleConnectionTestPeriod">600</attribute>
 		<attribute name="InitialPoolSize">5</attribute>
@@ -17,10 +17,10 @@
 	</mbean>
 	<mbean code="com.mchange.v2.c3p0.jboss.C3P0PooledDataSource" name="jboss:service=C3P0PooledDataSourceBatch">
 		<attribute name="JndiName">java:Batch_DataSource</attribute>
-		<attribute name="JdbcUrl">jdbc:mysql://flyportal-db:3306/flyportal?useCursorFetch=true&amp;rewriteBatchedStatements=true&amp;useServerPrepStmts=true&amp;cachePrepStmts=true</attribute>
+		<attribute name="JdbcUrl">jdbc:mysql://dev-db:3306/flyportal?useCursorFetch=true&amp;rewriteBatchedStatements=true&amp;useServerPrepStmts=true&amp;cachePrepStmts=true</attribute>
 		<attribute name="DriverClass">com.mysql.jdbc.Driver</attribute>
-		<attribute name="User">flyportalAdmin</attribute>
-		<attribute name="Password">flyp0rt@lAdm1n</attribute>
+		<attribute name="User">flyportalApp</attribute>
+		<attribute name="Password">flyportalApp</attribute>
 		<attribute name="AcquireIncrement">5</attribute>
 		<attribute name="IdleConnectionTestPeriod">600</attribute>
 		<attribute name="InitialPoolSize">5</attribute>
@@ -36,8 +36,8 @@
 		<attribute name="JndiName">java:Sage_DataSource</attribute>
 		<attribute name="JdbcUrl">jdbc:mysql://mysql3:3306/sage?useCursorFetch=true&amp;rewriteBatchedStatements=true&amp;useServerPrepStmts=true&amp;cachePrepStmts=true</attribute>
 		<attribute name="DriverClass">com.mysql.jdbc.Driver</attribute>
-		<attribute name="User">sageApp</attribute>
-		<attribute name="Password">h3ll0K1tty</attribute>
+		<attribute name="User">sageRead</attribute>
+		<attribute name="Password">sageRead</attribute>
 		<attribute name="AcquireIncrement">5</attribute>
 		<attribute name="IdleConnectionTestPeriod">600</attribute>
 		<attribute name="InitialPoolSize">5</attribute>

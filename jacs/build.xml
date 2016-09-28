@@ -89,7 +89,8 @@
             <fileset dir="lib" includes="*.jar"/>
             <fileset dir="${gwt.home}" includes="**/*.jar" />
             <fileset dir="${build.jars.dir}" includes="${gwt.common.jar.name}"/> <!-- include our "common" gwt module -->
-            <fileset dir="${common.module}/Hibernate-3.2/" includes="*.jar"/>
+            <fileset dir="${common.dir}/Hibernate-5.2.2" includes="hibernate-core-5.2.2.Final.jar"/>
+            <fileset dir="${common.dir}/Hibernate-5.2.2" includes="hibernate-jpa-2.1-api-1.0.0.Final.jar"/>
             <fileset file="${common.module}/MySQL/mysql-connector-java-5.1.15-bin.jar"/>
             <fileset dir="${common.module}/JAXB-2.1.5/" includes="*.jar"/>
             <fileset dir="${shared.module}/conf/" includes="jacs.properties"/>
@@ -407,8 +408,8 @@
             <lib dir="${common.module}/MySQL">
                 <include name="mysql-connector-java-5.1.15-bin.jar"/>
             </lib>
-            <lib dir="${common.module}/Hibernate-3.2">
-                <include name="antlr-2.7.6.jar"/>
+            <lib dir="${common.module}/Hibernate-5.2.2">
+                <include name="antlr-2.7.7"/>
             </lib>
             <lib dir="${model.module}/build/jars">
                 <include name="jacs-model.jar"/>

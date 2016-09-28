@@ -334,14 +334,17 @@ public class ParameterVOMapUserType implements UserType {
         return sb.toString();
     }
 
+    @Override
     public int hashCode(Object x) {
         return x.hashCode();
     }
 
+    @Override
     public Serializable disassemble(Object object) throws HibernateException {
         return (Serializable) object;
     }
 
+    @Override
     public Object assemble(Serializable serializable, Object object) throws HibernateException {
         return serializable;
     }

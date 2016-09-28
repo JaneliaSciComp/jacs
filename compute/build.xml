@@ -112,6 +112,7 @@
 	    <jar destfile="${build.jars.dir}/${jar.name}">
             <fileset dir="${build.classes.dir}" includes="**/*.class"/>
             <fileset dir="${basedir}/conf/resource" includes="*.process"/>
+            <fileset file="${jacs.properties.dir}/jacs.properties"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
@@ -320,6 +321,8 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}" includes="jboss-app.xml"/>
+            <metainf dir="${condesc.dir}" includes="persistence.xml"/>
+            <metainf dir="${condesc.dir}" includes="c3p0-service.xml"/>
         </ear>
 
     </target>
