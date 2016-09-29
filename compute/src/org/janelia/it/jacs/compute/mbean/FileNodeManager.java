@@ -15,6 +15,7 @@ import org.janelia.it.jacs.shared.node.FastaUtil;
 import org.janelia.it.jacs.shared.utils.FileUtil;
 import org.janelia.it.jacs.shared.utils.SystemCall;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.naming.InitialContext;
@@ -32,6 +33,7 @@ import java.util.Scanner;
  */
 @Singleton
 @Startup
+@Remote(FileNodeManagerMBean.class)
 public class FileNodeManager extends AbstractComponentMBean implements FileNodeManagerMBean {
     private static final Logger logger = Logger.getLogger(FileNodeManager.class);
 

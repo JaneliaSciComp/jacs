@@ -9,6 +9,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -20,6 +21,7 @@ import javax.ejb.Startup;
  */
 @Singleton
 @Startup
+@Remote(GridJobsManagerMBean.class)
 public class GridJobsManager extends AbstractComponentMBean implements GridJobsManagerMBean {
     private static final Logger logger = Logger.getLogger(GridJobsManager.class);
 

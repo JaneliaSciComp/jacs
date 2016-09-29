@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -17,6 +18,7 @@ import org.janelia.it.jacs.model.entity.EntityConstants;
  */
 @Singleton
 @Startup
+@Remote(LocalTestManagerMBean.class)
 public class LocalTestManager extends AbstractComponentMBean implements LocalTestManagerMBean {
 	public LocalTestManager() {
 		super("jacs");

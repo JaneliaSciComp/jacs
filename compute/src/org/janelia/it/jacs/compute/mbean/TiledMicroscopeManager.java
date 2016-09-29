@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.naming.Context;
@@ -31,6 +32,7 @@ import org.janelia.it.jacs.model.user_data.Node;
  */
 @Singleton
 @Startup
+@Remote(TiledMicroscopeManagerMBean.class)
 public class TiledMicroscopeManager extends AbstractComponentMBean implements TiledMicroscopeManagerMBean {
 
     public TiledMicroscopeManager() {

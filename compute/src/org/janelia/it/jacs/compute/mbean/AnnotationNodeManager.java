@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -23,6 +24,7 @@ import javax.ejb.Startup;
  */
 @Singleton
 @Startup
+@Remote(AnnotationManagerMBean.class)
 public class AnnotationNodeManager extends AbstractComponentMBean implements AnnotationNodeManagerMBean {
     private static final Logger logger = Logger.getLogger(AnnotationNodeManager.class);
 

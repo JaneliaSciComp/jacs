@@ -25,9 +25,9 @@
 <!DOCTYPE jboss-app PUBLIC "-//JBoss//DTD J2EE Application 1.4//EN"
          "http://www.jboss.org/j2ee/dtd/jboss-app_4_2.dtd">
 <jboss-app>
-    <loader-repository> javax.xml.bind:loader=compute.ear
-		<loader-repository-config> java2ParentDelegation=true </loader-repository-config>
-	</loader-repository>
+    <!--<loader-repository> javax.xml.bind:loader=compute.ear-->
+		<!--<loader-repository-config> java2ParentDelegation=true </loader-repository-config>-->
+	<!--</loader-repository>-->
     <module>
         <service>compute.sar</service>
     </module>

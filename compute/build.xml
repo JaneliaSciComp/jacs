@@ -268,9 +268,9 @@
                 <attribute name="Build-Date" value="${start.DSTAMP} ${start.TSTAMP}"/>
             </manifest>
             <metainf dir="${condesc.dir}">
-                <include name="jboss-service.xml"/>
-                <include name="*-xmbean.xml"/>
-                <include name="beans.xml"/>
+                <!--<include name="jboss-service.xml"/>-->
+                <!--<include name="*-xmbean.xml"/>-->
+                <!--<include name="beans.xml"/>-->
             </metainf>
         </jar>
 
@@ -323,6 +323,7 @@
             <metainf dir="${condesc.dir}" includes="jboss-app.xml"/>
             <metainf dir="${condesc.dir}" includes="persistence.xml"/>
             <metainf dir="${condesc.dir}" includes="c3p0-service.xml"/>
+            <metainf dir="${condesc.dir}" includes="beans.xml"/>
         </ear>
 
     </target>

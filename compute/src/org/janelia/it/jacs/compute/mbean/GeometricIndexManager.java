@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -34,6 +35,7 @@ import org.janelia.it.jacs.model.user_data.User;
  */
 @Singleton
 @Startup
+@Remote(GeometricIndexManagerMBean.class)
 public class GeometricIndexManager extends AbstractComponentMBean implements GeometricIndexManagerMBean {
     
     private static final Logger logger = Logger.getLogger(GeometricIndexManager.class);
@@ -83,21 +85,21 @@ public class GeometricIndexManager extends AbstractComponentMBean implements Geo
         }
     }
 
-//    @Override
-    public void create() throws Exception {
-        logger.info("create() called");
-    }
-
-//    @Override
-    public void destroy() {
-        logger.info("destroy() called");
-    }
-
-//    @Override
-    public void start() throws Exception {
-        logger.info("start() called");
-    }
-
+////    @Override
+//    public void create() throws Exception {
+//        logger.info("create() called");
+//    }
+//
+////    @Override
+//    public void destroy() {
+//        logger.info("destroy() called");
+//    }
+//
+////    @Override
+//    public void start() throws Exception {
+//        logger.info("start() called");
+//    }
+//
 //    @Override
     public void stop() {
         logger.info("stop() called");

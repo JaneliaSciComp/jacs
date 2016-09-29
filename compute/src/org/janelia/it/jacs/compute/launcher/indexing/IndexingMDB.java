@@ -25,7 +25,7 @@ import javax.jms.MessageListener;
         @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 10, timeout = 10000)
-@DependsOn({"jboss:custom=IndexingManager"})
+@DependsOn({"IndexingManager"})
 public class IndexingMDB implements MessageListener {
 	
 //	@DependsOn({"jboss:custom=IndexingManager"})

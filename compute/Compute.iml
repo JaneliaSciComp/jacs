@@ -47,6 +47,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Model" />
     <orderEntry type="module" module-name="Shared" />
+    <orderEntry type="library" name="WildFly-10.0.0.Final" level="project" />
+    <orderEntry type="library" name="Hibernate-5.2" level="project" />
     <orderEntry type="library" name="RESTEasy-2.3.4" level="project" />
     <orderEntry type="module-library">
       <library>
@@ -57,9 +59,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="WildFly-10.0.0.Final" level="project" />
-    <orderEntry type="library" name="Hibernate-5.2" level="project" />
-    <orderEntry type="library" name="Spring" level="project" />
     <orderEntry type="library" name="Apache Commons" level="project" />
     <orderEntry type="module-library">
       <library>
@@ -85,7 +84,6 @@
     <orderEntry type="library" name="MongoDB" level="project" />
     <orderEntry type="library" name="Reflections" level="project" />
     <orderEntry type="library" name="Solrj" level="project" />
-    <orderEntry type="library" name="Spring" level="project" />
     <orderEntry type="library" name="Spring-3" level="project" />
     <orderEntry type="library" name="swagger" level="project" />
     <orderEntry type="library" name="SnakeYaml-11" level="project" />

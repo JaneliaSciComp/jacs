@@ -15,7 +15,7 @@ import javax.management.MXBean;
  * @author murphys
  */
 @MXBean
-interface GeometricIndexManagerMBean /**extends ServiceMBean**/ {
+public interface GeometricIndexManagerMBean /**extends ServiceMBean**/ {
     
     public void startGeometricIndexManager();
     

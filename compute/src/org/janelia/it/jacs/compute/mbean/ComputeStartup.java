@@ -1,6 +1,7 @@
 
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -17,6 +18,7 @@ import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
  */
 @Singleton
 @Startup
+@Remote(ComputeStartupMBean.class)
 public class ComputeStartup extends AbstractComponentMBean implements ComputeStartupMBean {
     private static final Logger logger = Logger.getLogger(ComputeStartup.class);
 

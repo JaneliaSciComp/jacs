@@ -1,10 +1,11 @@
 package org.janelia.it.jacs.compute.launcher.indexing;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
@@ -15,7 +16,6 @@ import org.janelia.it.jacs.compute.access.mongodb.SolrConnector;
 import org.janelia.it.jacs.compute.util.DedupingDelayQueue;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.support.DomainDAO;
-import org.janelia.it.jacs.model.domain.support.DomainUtils;
 //import org.jboss.ejb3.annotation.Management;
 //import org.jboss.ejb3.annotation.Service;
 import org.jboss.ejb3.annotation.TransactionTimeout;
@@ -28,6 +28,8 @@ import org.jboss.ejb3.annotation.TransactionTimeout;
  */
 //@Service(objectName = "jboss:custom=IndexingManager")
 //@Management(IndexingManagerManagement.class)
+@Singleton( name = "IndexingManager" )
+@Startup
 public class IndexingManagerImpl implements IndexingManagerManagement {
 
 	private static final int MAX_BATCH_SIZE = 10000;

@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileOwnerAttributeView;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -31,6 +32,7 @@ import org.janelia.it.jacs.model.util.MatrixUtilities;
  */
 @Singleton
 @Startup
+@Remote(LargeVolumeSampleDiscoveryMBean.class)
 public class LargeVolumeSampleDiscovery extends AbstractComponentMBean implements LargeVolumeSampleDiscoveryMBean {
     
     public static final String SHARED_PERMISSION = "group:mouselight";

@@ -22,7 +22,7 @@ import org.quartz.JobExecutionException;
         @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/15 * * * * ?")
 })
 //@ResourceAdapter("quartz-ra.rar")
-@DependsOn({"jboss:custom=IndexingManager"})
+@DependsOn({"IndexingManager"})
 public class BatchIndexingJobMDB implements Job {
 
 	private static final Boolean ENABLE_INDEXING = SystemConfigurationProperties.getBoolean("Solr.EnableIndexing");

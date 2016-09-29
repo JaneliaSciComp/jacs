@@ -18,6 +18,7 @@ import java.io.FilenameFilter;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -29,6 +30,7 @@ import javax.ejb.Startup;
  */
 @Singleton
 @Startup
+@Remote(AdministrativeManagerMBean.class)
 public class AdministrativeManager extends AbstractComponentMBean implements AdministrativeManagerMBean {
 
     private static final Logger LOGGER = Logger.getLogger(AdministrativeManager.class);

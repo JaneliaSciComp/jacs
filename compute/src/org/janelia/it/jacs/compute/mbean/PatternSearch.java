@@ -3,6 +3,7 @@ package org.janelia.it.jacs.compute.mbean;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -25,6 +26,7 @@ import org.janelia.it.jacs.model.user_data.Node;
  */
 @Singleton
 @Startup
+@Remote(PatternSearchMBean.class)
 public class PatternSearch extends AbstractComponentMBean implements PatternSearchMBean {
 
     private static final Logger logger = Logger.getLogger(PatternSearch.class);

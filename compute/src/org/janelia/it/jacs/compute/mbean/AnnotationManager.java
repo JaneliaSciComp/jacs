@@ -6,6 +6,7 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -24,6 +25,7 @@ import org.janelia.it.jacs.model.user_data.Node;
  */
 @Singleton
 @Startup
+@Remote(AnnotationManagerMBean.class)
 public class AnnotationManager extends AbstractComponentMBean implements AnnotationManagerMBean {
 
     public AnnotationManager() {

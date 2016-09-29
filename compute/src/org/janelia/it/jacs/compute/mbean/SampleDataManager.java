@@ -11,6 +11,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -43,6 +44,7 @@ import org.janelia.it.jacs.shared.utils.StringUtils;
 
 @Singleton
 @Startup
+@Remote(SampleDataManagerMBean.class)
 public class SampleDataManager extends AbstractComponentMBean implements SampleDataManagerMBean {
     public SampleDataManager() {
         super("jacs");

@@ -1,5 +1,6 @@
 package org.janelia.it.jacs.compute.mbean;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -17,6 +18,7 @@ import org.janelia.it.jacs.model.user_data.User;
 
 @Singleton
 @Startup
+@Remote(SubjectManagerMBean.class)
 public class SubjectManager extends AbstractComponentMBean implements SubjectManagerMBean {
 
     private static final Logger log = Logger.getLogger(SubjectManager.class);

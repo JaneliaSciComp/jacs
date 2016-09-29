@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -53,6 +54,7 @@ import org.janelia.it.jacs.shared.annotation.MaskAnnotationDataManager;
  */
 @Singleton
 @Startup
+@Remote(WorkstationDataManagerMBean.class)
 public class WorkstationDataManager extends AbstractComponentMBean implements WorkstationDataManagerMBean {
 
     private static final Logger logger = Logger.getLogger(WorkstationDataManager.class);

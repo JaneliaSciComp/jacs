@@ -6,8 +6,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
 
-import javax.resource.spi.IllegalStateException;
-
 import org.janelia.it.jacs.compute.engine.service.ServiceException;
 import org.janelia.it.jacs.compute.service.domain.AbstractDomainService;
 import org.janelia.it.jacs.compute.service.domain.model.AnatomicalArea;

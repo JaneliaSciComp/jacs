@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.user_data.Node;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import javax.ejb.Remote;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -20,6 +21,7 @@ import javax.ejb.Startup;
  */
 @Singleton
 @Startup
+@Remote(ValidatorMBean.class)
 public class Validator extends AbstractComponentMBean implements ValidatorMBean {
     private Logger log = Logger.getLogger(Validator.class);
     public transient static final String PROCESS_NAME = "ValidationServicePipeline";

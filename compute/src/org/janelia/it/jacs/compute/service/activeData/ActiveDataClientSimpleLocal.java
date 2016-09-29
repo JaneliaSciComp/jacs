@@ -7,14 +7,8 @@
 package org.janelia.it.jacs.compute.service.activeData;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.log4j.Logger;
-import org.janelia.it.jacs.shared.geometric_search.GeometricIndexManagerModel;
 
 /**
  *
