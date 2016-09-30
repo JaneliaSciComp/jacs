@@ -1,7 +1,7 @@
 <!-- 
 	Ex Post Facto pipeline for rerunning all image registrations.
 -->
-<process name="Re-register Images Post Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Re-register Images Post Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
 	    <input name="SAMPLE_ENTITY_ID"/>

@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="CreateBlastDB" startEvent="pending" processor="queue/blastDBLauncher" updateProcessStatus="on_success">
+<process name="CreateBlastDB" startEvent="pending" processor="java:/jms/queue/blastDBLauncher" updateProcessStatus="on_success">
     <sequence>
         <operation name="Create Blast Database" processor="org.janelia.it.jacs.compute.service.blast.createDB.CreateBlastDBService" />
     </sequence>

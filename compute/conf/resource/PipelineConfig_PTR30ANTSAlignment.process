@@ -1,4 +1,4 @@
-<process name="PTR 30 ANTS Alignment" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="PTR 30 ANTS Alignment" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
     
         <include name="Pipeline" process="FlyLightPairedSamplePipeline">

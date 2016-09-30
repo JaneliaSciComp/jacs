@@ -1,4 +1,4 @@
-<process name="FlyLight Paired Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+<process name="FlyLight Paired Sample Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending">
 	<sequence>
 	    
         <input name="PIPELINE_PROCESS"/>

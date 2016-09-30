@@ -312,7 +312,7 @@ public class FileNodeManager extends AbstractComponentMBean implements FileNodeM
     protected Connection getJdbcConnection() throws Exception {
         InitialContext ic = new InitialContext();
         javax.sql.DataSource ds;
-        ds = (javax.sql.DataSource) ic.lookup("java:/" + "ComputeServer_DataSource");
+        ds = (javax.sql.DataSource) ic.lookup("java:jboss/datasources/ComputeServer_DataSource");
         Connection connection = ds.getConnection();
         //connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         connection.setAutoCommit(false);

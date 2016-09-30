@@ -1,7 +1,7 @@
 <!-- 
 	Load in the screen pattern intensity scores.
 -->
-<process name="Mask Channel Compartments Loading Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Mask Channel Compartments Loading Pipeline" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 		 
 	    <!-- Import variables -->

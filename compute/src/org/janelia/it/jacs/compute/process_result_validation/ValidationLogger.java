@@ -16,7 +16,7 @@ public class ValidationLogger implements Closeable {
     public static final String REPORT_FILE_PATH_PARAM = "reportFilePath";
     public static final String FILE_SECTION_NAME_PARAM = "fileSectionName";
     public static final String FILE_CONTENT_PARAM = "fileContent";
-    public static final String NON_CONCURRENT_WRITE_QUEUE = "queue/validationSingleWriteback";
+    public static final String NON_CONCURRENT_WRITE_QUEUE = "java:/jms/queue/validationSingleWriteback";
 
     public static final String CATEGORY_COUNT_FMT = "%2$d\t%1$s";
     public static final String SAMPLE_BREAK_TAG = "::Sample";

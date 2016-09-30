@@ -1,9 +1,9 @@
 <!--
 	Create a guide for the specified Mask directory
 -->
-<process name="Mask Guide Setup" processor="queue/maskSampleAnnotationPipelineLauncher" startEvent="pending">
+<process name="Mask Guide Setup" processor="java:/jms/queue/maskSampleAnnotationPipelineLauncher" startEvent="pending">
     <sequence name="Mask Guide" waitForAsync="true">
-	    <operation name="Mask Guide" processor="queue/gridSubmitAndWait">
+	    <operation name="Mask Guide" processor="java:/jms/queue/gridSubmitAndWait">
 		    <input name="iservice" value="org.janelia.it.jacs.compute.service.fly.MaskGuideService"/>
 		    <input name="MODE" value="MODE_SETUP"/>
 		    <output name="MIPS_CONVERSION_PATH"/>
@@ -13,7 +13,7 @@
 	<sequence forEach="MIPS_CONVERSION_PATH" waitForAsync="true">
         <sequence async="true">
             <sequence name="MIP Conversion to PNG" waitForAsync="true">
-                <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+                <operation name="MIP Conversion to PNG" processor="java:/jms/queue/gridSubmitAndWait">
                	    <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
                		<input name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
                		<input name="MIPS_CONVERSION_PATH"/>

@@ -1,7 +1,7 @@
 <!-- 
 	Synchronize the folder hierarchy for a Fly Line Release. 
 -->
-<process name="Sync Release Folders" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sync Release Folders" processor="java:/jms/queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Sync Release Folders" waitForAsync="true">
         
         <input name="RELEASE_ENTITY_ID"/>

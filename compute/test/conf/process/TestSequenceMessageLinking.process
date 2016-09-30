@@ -29,13 +29,13 @@
         </operation>
         <operation name="Create Fasta Input"  processor="org.jcvi.vics.compute.service.blast.fastasplit.BlastMultiFastaSplitterService"/>
          <sequence waitForAsync="true">
-            <operation name="Submit Job" startEvent="running" processor="queue/submitBlastJob" queueToLinkTo="queue/blastLauncher">
+            <operation name="Submit Job" startEvent="running" processor="java:/jms/queue/submitBlastJob" queueToLinkTo="queue/blastLauncher">
                  <input name="RESULT_FILE_NODE_ID"/>
                  <input name="BLAST_FASTA_INPUT_FILE"/>
                 <output name="BLAST_NUMBER_OF_HITS_TO_KEEP"/>
                 <output name="BLAST_DEST_OUTPUT_DIR"/>
             </operation>
-            <sequence name="merge" startEvent="postprocess" waitForAsync="true" forEach="BLAST_DEST_OUTPUT_DIR" queueToLinkFrom="queue/blastLauncher" queueToLinkTo="queue/persistFinalNodeBlastResults">
+            <sequence name="merge" startEvent="postprocess" waitForAsync="true" forEach="BLAST_DEST_OUTPUT_DIR" queueToLinkFrom="java:/jms/queue/blastLauncher" queueToLinkTo="queue/persistFinalNodeBlastResults">
                 <operation name="Merge Sort Results" processor="org.jcvi.vics.compute.service.blast.merge.MergeSortResultsService">
                     <input name="RESULT_FILE_NODE_ID" />
                     <input name="BLAST_NUMBER_OF_HITS_TO_KEEP"/>
@@ -45,7 +45,7 @@
             </sequence>
             <!-- This is improper use of if condition and updateProcessStatus ... process status would not get updated when if condition doesn't hold true
                  Put queueToLinkFrom in sequence that wraps operation and put if condition in the operation -->
-            <operation name="Persist Blast Results" if="TOTAL_BLAST_HITS&lt;=50000" queueToLinkFrom="queue/persistFinalNodeBlastResults" updateProcessStatus="on_success">
+            <operation name="Persist Blast Results" if="TOTAL_BLAST_HITS&lt;=50000" queueToLinkFrom="java:/jms/queue/persistFinalNodeBlastResults" updateProcessStatus="on_success">
                 <input name="RESULT_FILE_NODE_ID" />
                 <input name="BLAST_DEST_OUTPUT_DIR" />
                 <input name="TOTAL_BLAST_HITS"/>

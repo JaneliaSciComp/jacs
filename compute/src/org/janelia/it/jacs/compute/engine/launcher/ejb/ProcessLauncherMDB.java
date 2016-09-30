@@ -25,14 +25,14 @@ import javax.jms.Message;
  */
 @MessageDriven(name = "ProcessLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/processLauncher"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/processLauncher"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "200"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="20"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class ProcessLauncherMDB extends SeriesLauncherMDB {

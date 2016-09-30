@@ -1,7 +1,7 @@
 <!-- 
 	Check for orphan annotations, and potentially remove them.
 -->
-<process name="Orphan Annotation Checker" processor="queue/largePipelineLauncher" startEvent="pending">
+<process name="Orphan Annotation Checker" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 		<operation name="Orphan Annotation" processor="org.janelia.it.jacs.compute.service.domain.OrphanAnnotationCheckerService">
 		</operation>

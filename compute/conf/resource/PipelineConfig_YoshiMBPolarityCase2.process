@@ -1,4 +1,4 @@
-<process name="Yoshi Mushroom Body Polarity Case 2 Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Yoshi Mushroom Body Polarity Case 2 Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
     
         <include name="Pipeline" process="FlyLightPairedSamplePipeline">

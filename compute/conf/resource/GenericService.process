@@ -21,9 +21,9 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="GenericService"  startEvent="pending" processor="queue/genericServiceLauncher" updateProcessStatus="on_success">
+<process name="GenericService"  startEvent="pending" processor="java:/jms/queue/genericServiceLauncher" updateProcessStatus="on_success">
     <sequence name="GenericServiceSubmitJob" waitForAsync="true" startEvent="running">
-        <operation name="GenericServiceOperation"  processor="queue/gridSubmitAndWait" async="true">
+        <operation name="GenericServiceOperation"  processor="java:/jms/queue/gridSubmitAndWait" async="true">
             <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.GenericService"/>
         </operation>
     </sequence>

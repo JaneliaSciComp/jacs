@@ -3,7 +3,7 @@
 	
 	While we're in there, we can also correct folder placement of any image which is in the wrong place.
 -->
-<process name="Screen Score Export Pipeline" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Screen Score Export Pipeline" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
 	    <!-- Import variables from the MCFODataPipelineTask -->

@@ -1,7 +1,7 @@
 <!-- 
 	Synchronize index with entities in the database. 
 -->
-<process name="MongoDB Index Synchronization" processor="queue/largePipelineLauncher" startEvent="pending">
+<process name="MongoDB Index Synchronization" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 		<operation name="MongoDB Sync" processor="org.janelia.it.jacs.compute.service.mongodb.MongoDbLoadService">
 		</operation>

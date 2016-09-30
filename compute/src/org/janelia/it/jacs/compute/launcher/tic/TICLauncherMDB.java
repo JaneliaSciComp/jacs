@@ -19,14 +19,14 @@ import javax.ejb.MessageDriven;
  */
 @MessageDriven(name = "TICLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/ticLauncher"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/ticLauncher"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "10"),
 //        @ActivationConfigProperty(propertyName = "MaxMessages", propertyValue = "30"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 10, timeout = 10000)
 public class TICLauncherMDB extends SeriesLauncherMDB {

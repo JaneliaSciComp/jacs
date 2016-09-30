@@ -1,4 +1,4 @@
-<process name="Tanya Central Brain MCFO Case 1 Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Tanya Central Brain MCFO Case 1 Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
     
         <!-- Tanya asks for only reference channel in her 20x images -->

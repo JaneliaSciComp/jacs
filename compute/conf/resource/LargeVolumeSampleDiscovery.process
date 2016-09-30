@@ -2,7 +2,7 @@
 	Makes Large-Volume-Viewer compatible sample objects in database, to
         cover all the directories it finds in standard locations.
 -->
-<process name="Large Volume Sample Discovery Pipeline" processor="queue/lvsDiscovery" startEvent="pending">
+<process name="Large Volume Sample Discovery Pipeline" processor="java:/jms/queue/lvsDiscovery" startEvent="pending">
 
 	<sequence>
 

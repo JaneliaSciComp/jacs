@@ -1,7 +1,7 @@
 <!-- 
     Discover samples in SAGE, add them into the database and run the configured pipeline for each one.
 -->
-<process name="User Data Set Pipelines" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="User Data Set Pipelines" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
         <input name="RUN_MODE"/>

@@ -16,10 +16,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
 
-@MessageDriven(activationConfig = {
-        // crontTrigger starts with seconds.  Below should run every 30 minutes, every day
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0/30 * * * ?")
-})
+//@MessageDriven(activationConfig = {
+//        // crontTrigger starts with seconds.  Below should run every 30 minutes, every day
+//        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0/30 * * * ?")
+//})
 //@ResourceAdapter("quartz-ra.rar")
 /**
  * Created by IntelliJ IDEA.

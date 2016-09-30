@@ -1,4 +1,4 @@
-<process name="Fly Light Paired Sample MCFO Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Fly Light Paired Sample MCFO Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
     
         <include name="Pipeline" process="FlyLightPairedSamplePipeline">

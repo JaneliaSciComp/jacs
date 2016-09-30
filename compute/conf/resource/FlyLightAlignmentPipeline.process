@@ -1,7 +1,7 @@
  <!-- 
       Run a brain alignment algorithm on a given input file for a given sample. 
  -->
- <process name="FlyLight Alignment Pipeline" processor="queue/alignmentPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+ <process name="FlyLight Alignment Pipeline" processor="java:/jms/queue/alignmentPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 
 		<input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -94,7 +94,7 @@
                         <input name="PARAMETER_2_KEY" value="run objectives"/>
                         <input name="PARAMETER_2_VALUE" value="$V{REGENERATE_OBJECTIVES}"/>
                         <input name="PROCESS_DATA_MAP">
-                            <entry key="QUEUE_OVERRIDE" value="queue/sampleSecondaryPipelineLauncher"/>
+                            <entry key="QUEUE_OVERRIDE" value="java:/jms/queue/sampleSecondaryPipelineLauncher"/>
                         </input>
                         <input name="TASK_PARAMETER_MAP">
                             <entry key="alignment algorithms" value=""/>
@@ -121,7 +121,7 @@
                     
 	       	    <!-- Align the sample -->
 	            <sequence name="Align" waitForAsync="true">
-	    	        <operation name="Align" processor="queue/gridSubmitAndWait">
+	    	        <operation name="Align" processor="java:/jms/queue/gridSubmitAndWait">
 	    	            <input name="iservice" value="$V{ALIGNMENT_SERVICE_CLASS}"/>
 	    	    		<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
 	    	    		<input name="ALIGNMENT_SCRIPT_NAME"/>
@@ -144,7 +144,7 @@
 	            
 	    	    <!-- Generate MIP for the stitched file -->
 	            <sequence name="Generate sample MIPs" waitForAsync="true">
-	    	        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+	    	        <operation name="Generate MIPs" processor="java:/jms/queue/gridSubmitAndWait">
 	    	            <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
 	    				<input name="RESULT_FILE_NODE" value="$V{ALIGN_RESULT_FILE_NODE}"/>
 	    				<input name="INPUT_IMAGES" value="$V{ALIGNED_IMAGES}"/>

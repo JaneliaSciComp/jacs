@@ -11,12 +11,12 @@ import javax.ejb.MessageDriven;
 
 @MessageDriven(name = "TmNeuronConverterMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/tmNeuronUpdate"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/tmNeuronUpdate"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "35"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "72000"),
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 35, timeout = 10000)
 

@@ -458,7 +458,7 @@ public class DefLoader implements Serializable {
         if (actionDef.getProcessorName().endsWith("/local")) {
             actionDef.setProcessorType(ProcessorType.LOCAL_SLSB);
         }
-        else if (actionDef.getProcessorName().startsWith("queue/")) {
+        else if (actionDef.getProcessorName().startsWith("java:/jms/queue/")) {
             actionDef.setProcessorType(ProcessorType.LOCAL_MDB);
         }
         else {

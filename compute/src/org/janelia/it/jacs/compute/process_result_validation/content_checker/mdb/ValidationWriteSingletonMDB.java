@@ -36,12 +36,12 @@ import java.io.PrintWriter;
 @MessageDriven(name = "ValidationWriteSingletonMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "destination", propertyValue = NON_CONCURRENT_WRITE_QUEUE ),
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
         // This value must remain at 1.  Single use/no concurrency.
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 1, timeout = 10000)
 public class ValidationWriteSingletonMDB implements MessageListener {

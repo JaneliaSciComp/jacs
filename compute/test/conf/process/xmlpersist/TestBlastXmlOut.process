@@ -22,7 +22,7 @@
   -->
 
 <process name="TestBlastXmlOut" >  <!-- Executed by ProcessLauncher Pojo -->
-    <sequence startEvent="pending" processor="queue/blastLauncher" >
+    <sequence startEvent="pending" processor="java:/jms/queue/blastLauncher" >
         <operation name="Create Blast Result File Node" processor="org.jcvi.vics.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
             <output name="RESULT_FILE_NODE_DIR" />

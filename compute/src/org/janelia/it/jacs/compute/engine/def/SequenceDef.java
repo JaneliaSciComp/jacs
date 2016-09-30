@@ -11,7 +11,7 @@ import org.janelia.it.jacs.compute.engine.launcher.SequenceLauncher;
  */
 public class SequenceDef extends SeriesDef {
     private static final ProcessorType DEFAULT_PROCESSOR_TYPE = ProcessorType.POJO;
-    private static final String DEFAULT_LOCAL_MDB_PROCESSOR = "queue/AnonymousSequenceLauncher";
+    private static final String DEFAULT_LOCAL_MDB_PROCESSOR = "java:/jms/queue/AnonymousSequenceLauncher";
     private static final String DEFAULT_POJO_PROCESSOR = SequenceLauncher.class.getName();
     private static final String DEFAULT_LOCAL_SLSB_PROCESSOR = "compute/SequenceLauncherSLSB/local";
 

@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="ReversePsiBlast"  startEvent="pending" processor="queue/rpsBlastLauncher" >
+<process name="ReversePsiBlast"  startEvent="pending" processor="java:/jms/queue/rpsBlastLauncher" >
     <sequence name="reversePsiBlastLauncher">
         <!-- create result node via ejb to persist node to db and allow it to be accessed/updated by subsequent mdb calls -->
         <operation name="Create Reverse Psi Blast File Node" processor="compute/ReversePsiBlastCreateResultNodeSLSB/local"/>
@@ -43,7 +43,7 @@
             <output name="INPUT_OUTPUT_DIR_MAP"/>
         </operation>
         <sequence name="ReversePsiBlast Submit Job" waitForAsync="true">
-            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
+            <operation name="Submit Job" processor="java:/jms/queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.reversePsiBlast.ReversePsiBlastSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="PARTITION_LIST"/>
@@ -55,7 +55,7 @@
         </sequence>
         <!-- assume each ReversePsiBlast DB has only one partition, so no need to merge/sort its results -->
         <sequence name="ReversePsiBlast Persist Blast XML Results" waitForAsync="true">
-            <operation name="Persist Blast XML Results" processor="queue/gridSubmitAndWait">
+            <operation name="Persist Blast XML Results" processor="java:/jms/queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.reversePsiBlast.PersistFinalXMLResultsGridService"/>
                 <input name="RESULT_FILE_NODE_ID"/>                
                 <input name="OUTPUT_DIR_LIST"/>

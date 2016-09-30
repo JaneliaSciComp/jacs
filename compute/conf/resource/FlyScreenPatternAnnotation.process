@@ -1,7 +1,7 @@
 <!--
 	Computes the annotation for the GAL4 effector anatomical expression patterns for Fly Line Screen Samples.
 -->
-<process name="Fly Screen Pattern Annotation Pipeline" processor="queue/flyScreenPatternAnnotationPipelineLauncher" startEvent="pending">
+<process name="Fly Screen Pattern Annotation Pipeline" processor="java:/jms/queue/flyScreenPatternAnnotationPipelineLauncher" startEvent="pending">
 
 	<sequence>
 
@@ -62,7 +62,7 @@
                     <sequence if="SAMPLE_COUNT&gt;=1">
 
                     <sequence name="Compute Pattern Annotation" waitForAsync="true">
-       			        <operation name="Pattern Annotation" processor="queue/gridSubmitAndWait">
+       			        <operation name="Pattern Annotation" processor="java:/jms/queue/gridSubmitAndWait">
         			        <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DPatternAnnotationService"/>
         			        <input name="RESULT_FILE_NODE"/>
     		                <input name="SAMPLE_ID_LIST"/>
@@ -77,7 +77,7 @@
  	                <sequence forEach="MIPS_CONVERSION_PATH" waitForAsync="true">
 	                    <sequence async="true">
                             <sequence name="MIP Conversion to PNG" waitForAsync="true">
-            		             <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+            		             <operation name="MIP Conversion to PNG" processor="java:/jms/queue/gridSubmitAndWait">
            			                 <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
            			                 <input name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
            		    		         <input name="MIPS_CONVERSION_PATH"/>

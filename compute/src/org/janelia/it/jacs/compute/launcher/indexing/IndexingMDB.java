@@ -17,12 +17,12 @@ import javax.jms.MessageListener;
  */
 @MessageDriven(name = "IndexingMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/indexing"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/indexing"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "10"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 10, timeout = 10000)
 @DependsOn({"IndexingManager"})

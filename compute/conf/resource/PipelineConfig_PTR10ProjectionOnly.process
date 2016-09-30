@@ -1,4 +1,4 @@
-<process name="PTR 10 Projection Only" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="PTR 10 Projection Only" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
     
         <include name="Pipeline" process="FlyLightProjectionPipeline">

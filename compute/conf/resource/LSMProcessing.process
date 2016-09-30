@@ -1,7 +1,7 @@
 <!--
     Run all of the pipelines associated with all of the Data Sets that the given Sample is a part of.
 -->
-<process name="LSM Processing Pipeline" processor="queue/lsmPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="LSM Processing Pipeline" processor="java:/jms/queue/lsmPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
         <input name="DATASET_NAME"/>
         <input name="LSM_NAMES"/>

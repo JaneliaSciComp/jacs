@@ -21,9 +21,9 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="Vl Correction Test" startEvent="pending" processor="queue/shortPipelineLauncher" updateProcessStatus="on_success">
+<process name="Vl Correction Test" startEvent="pending" processor="java:/jms/queue/shortPipelineLauncher" updateProcessStatus="on_success">
     <sequence name="VL Correction Test" waitForAsync="true" startEvent="running">
-        <operation name="VL Correction Test" processor="queue/gridSubmitAndWait">
+        <operation name="VL Correction Test" processor="java:/jms/queue/gridSubmitAndWait">
             <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.VLCorrectionService"/>
         </operation>
      </sequence>

@@ -1,4 +1,4 @@
-<process name="Leet 40x Whole Brain Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Leet 40x Whole Brain Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	    
         <include name="Pipeline" process="FlyLightSamplePipeline">

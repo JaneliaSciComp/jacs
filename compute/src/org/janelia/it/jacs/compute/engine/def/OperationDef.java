@@ -11,7 +11,7 @@ import java.util.Set;
  */
 public class OperationDef extends ActionDef {
     private static final ProcessorType DEFAULT_PROCESSOR_TYPE = ProcessorType.POJO;
-    private static final String DEFAULT_LOCAL_MDB_PROCESSOR = "queue/baseService";
+    private static final String DEFAULT_LOCAL_MDB_PROCESSOR = "java:/jms/queue/baseService";
 
     /**
      * The input parameters specified in the operation definition

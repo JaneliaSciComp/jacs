@@ -41,7 +41,7 @@ public class AsyncMessageInterface {
     private static String LOCAL_CONNECTION_FACTORY = "java:/XAConnectionFactory";
     //Default to the cluster multicast default address
     private String providerUrl = "230.0.0.4:1102";
-    private String dlq = "queue/DLQ";
+    private String dlq = "java:/jms/queue/DLQ";
 
     private QueueSender sender;
     private QueueSession session;

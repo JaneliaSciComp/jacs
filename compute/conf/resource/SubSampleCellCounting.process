@@ -5,7 +5,7 @@
      TODO: This pipeline is completely broken, due to many changes in the services supporting FlyLightSamplePipeline, which this was copy and pasted from. 
      This needs to be rewritten as an analysis step for the normal pipeline. 
 -->
-<process name="Cell Counting Sample Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending">
+<process name="Cell Counting Sample Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending">
     <sequence name="Main">
     
         <input name="SAMPLE_ENTITY_ID"/>
@@ -62,7 +62,7 @@
 
             <!-- Read from the Entity model and export the data into parameters that will be used by the subsequent services -->
             <sequence name="Wait Async" waitForAsync="true">
-                <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+                <sequence name="Limit Archive Access" processor="java:/jms/queue/archiveAccess">
                     <operation name="Init Processing Parameters" processor="org.janelia.it.jacs.compute.service.domain.sample.InitSampleProcessingParametersService">
                         <input name="SAMPLE_RESULT_FILE_NODE"/>
                         <input name="MERGE_RESULT_FILE_NODE"/>
@@ -87,7 +87,7 @@
 
                 <!-- Copy the files, and update the paths in the merge parameters -->
                 <sequence name="Wait Async" waitForAsync="true">
-                    <sequence name="Limit Archive Access" processor="queue/archiveAccess">
+                    <sequence name="Limit Archive Access" processor="java:/jms/queue/archiveAccess">
                         <operation name="Copy Lsms" processor="org.janelia.it.jacs.compute.service.entity.sample.CopyLsmsFromArchiveService">
                             <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
                             <input name="BULK_MERGE_PARAMETERS"/>
@@ -100,7 +100,7 @@
 
             <!-- Asynchronously create the metadata describing the input LSM files -->
             <sequence name="Create Lsm Metadata Files" waitForAsync="true">
-                <operation name="Create Lsm Metadata Files" processor="queue/gridSubmitAndWait">
+                <operation name="Create Lsm Metadata Files" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.domain.sample.CreateLsmMetadataFilesService"/>
                     <input name="BULK_MERGE_PARAMETERS"/>
                     <input name="RESULT_FILE_NODE" value="$V{METADATA_RESULT_FILE_NODE}"/>
@@ -110,7 +110,7 @@
 
             <!-- Convert the image to the sample image format, leave the channels alone -->
             <sequence name="Convert to sample image" waitForAsync="true">
-                <operation name="Convert to sample image" processor="queue/gridSubmitAndWait">
+                <operation name="Convert to sample image" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConvertToSampleImageService"/>
                     <input name="RESULT_FILE_NODE" value="$V{MERGE_RESULT_FILE_NODE}"/>
                     <input name="SAMPLE_ENTITY_ID"/>
@@ -144,7 +144,7 @@
             </sequence>
 
             <sequence name="Generate sample MIPs" waitForAsync="true">
-                <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+                <operation name="Generate MIPs" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
                     <input name="RESULT_FILE_NODE" value="$V{STITCH_RESULT_FILE_NODE}"/>
                     <input name="INPUT_FILENAMES" value="$V{STACK_FILENAMES}"/>
@@ -181,7 +181,7 @@
                             <output name="CELL_COUNTING_FILE_NODE_ID"/>
                         </operation>
                         <sequence name="Cell Counting Grid" waitForAsync="true">
-                            <operation name="Cell Counting" processor="queue/gridSubmitAndWait">
+                            <operation name="Cell Counting" processor="java:/jms/queue/gridSubmitAndWait">
                                 <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3dCellCountingService"/>
                                 <input name="INPUT_FILE" value="$V{TILE_FILENAMES}"/>
                                 <input name="RESULT_FILE_NODE_ID" value="$V{CELL_COUNTING_FILE_NODE_ID}"/>
@@ -198,7 +198,7 @@
                             </operation>
                         </sequence>
                         <sequence name="Generate sample MIPs" waitForAsync="true">
-                            <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+                            <operation name="Generate MIPs" processor="java:/jms/queue/gridSubmitAndWait">
                                 <input name="iservice" value="org.janelia.it.jacs.compute.service.neuronSeparator.MIPGenerationService"/>
                                 <input name="RESULT_FILE_NODE" value="$V{CELL_COUNTING_FILE_NODE}"/>
                                 <input name="INPUT_FILENAMES" value="$V{CELL_COUNTING_MIP_FILES}"/>

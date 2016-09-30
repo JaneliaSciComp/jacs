@@ -13,15 +13,18 @@ import org.quartz.JobExecutionException;
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
+import javax.ejb.Schedule;
+import javax.ejb.Startup;
+import javax.inject.Singleton;
 import javax.jms.ObjectMessage;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
 
-@MessageDriven(activationConfig = {
-        // crontTrigger starts with seconds.  Below should run every 1 minutes
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0/1 * * * ?")
-})
+//@MessageDriven(activationConfig = {
+//        // crontTrigger starts with seconds.  Below should run every 1 minutes
+//        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0/1 * * * ?")
+//})
 //@ResourceAdapter("quartz-ra.rar")
 
 /**
@@ -34,9 +37,12 @@ import java.util.Set;
  * Time: 4:29:34 PM
  *
  */
+@Singleton
+@Startup
 public class GridSubmitAndWaitMonitorMDB implements Job {
     private static final Logger logger = Logger.getLogger(GridSubmitAndWaitMonitorMDB.class);
 
+    @Schedule(second="0", minute="*/1", hour="*")
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         Set<String> keySet = GridSubmitHelperMap.getInstance().getDataMapKeys();
         try {

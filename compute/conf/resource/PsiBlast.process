@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="PsiBlast"  startEvent="pending" updateProcessStatus="on_success" processor="queue/psiBlastLauncher" >
+<process name="PsiBlast"  startEvent="pending" updateProcessStatus="on_success" processor="java:/jms/queue/psiBlastLauncher" >
     <sequence name="psiBlastLauncher">
         <operation name="Create Psi Blast Result Node" processor="org.janelia.it.jacs.compute.service.psiBlast.PsiBlastCreateResultNodeService">
             <output name="RESULT_FILE_NODE_ID"/>
@@ -37,7 +37,7 @@
             <output name="BLAST_QUERY_FILES"/>
         </operation>
         <sequence name="PsiBlast Submit Job" waitForAsync="true">
-            <operation name="Submit Job" processor="queue/gridSubmitAndWait">
+            <operation name="Submit Job" processor="java:/jms/queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.blast.submit.BlastSubmitJobService"/>
                 <input name="RESULT_FILE_NODE_ID"/>
                 <input name="BLAST_QUERY_OUTPUT_FILE_MAP"/>

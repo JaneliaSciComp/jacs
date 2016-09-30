@@ -18,14 +18,14 @@ import javax.ejb.MessageDriven;
  */
 @MessageDriven(name = "SequenceLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/AnonymousSequenceLauncher"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/AnonymousSequenceLauncher"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "50"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="50"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
         // DLQMaxResent is a JBoss-specific management property. 0 = no resent messages
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 500, timeout = 80000)
 public class SequenceLauncherMDB extends SeriesLauncherMDB {

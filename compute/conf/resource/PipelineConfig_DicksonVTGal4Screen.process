@@ -1,4 +1,4 @@
-<process name="Dickson VT Gal4 Screen Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Dickson VT Gal4 Screen Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
         <!-- Run 20x pipeline -->

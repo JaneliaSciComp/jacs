@@ -35,7 +35,7 @@
                     </operation>
                 </sequence>
             </sequence>
-            <sequence processor="queue/blastLauncher" >
+            <sequence processor="java:/jms/queue/blastLauncher" >
                 <operation name="Submit Job" startEvent="running" processor="compute/SubmitBlastJobSLSB/local">
                     <input name="RESULT_FILE_NODE_ID"/>
                     <input name="BLAST_FASTA_INPUT_FILE"/>

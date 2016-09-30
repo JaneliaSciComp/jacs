@@ -1,7 +1,7 @@
 <!-- 
 	Purge a sample of all large 3d files and block further processing on it.
 -->
-<process name="Purge and Block Sample" processor="queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Purge and Block Sample" processor="java:/jms/queue/consolePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence name="Purge and Block Sample" waitForAsync="true">
         
         <input name="SAMPLE_ENTITY_ID"/>

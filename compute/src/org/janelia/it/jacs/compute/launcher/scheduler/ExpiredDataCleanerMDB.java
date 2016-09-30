@@ -10,10 +10,10 @@ import org.quartz.JobExecutionException;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 
-@MessageDriven(activationConfig = {
-        // crontTrigger starts with seconds.  Below should run at the stroke of 2AM EST, every day
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0 4 * * ?")
-})
+//@MessageDriven(activationConfig = {
+//        // crontTrigger starts with seconds.  Below should run at the stroke of 2AM EST, every day
+//        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0 4 * * ?")
+//})
 //@ResourceAdapter("quartz-ra.rar")
 /**
  * Created by IntelliJ IDEA.

@@ -1,7 +1,7 @@
 <!--
 	Validation service.
 -->
-<process name="Validation Pipeline" processor="queue/validationPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Validation Pipeline" processor="java:/jms/queue/validationPipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 		<!-- Import variables -->
     	<operation name="Import Variables" processor="org.janelia.it.jacs.compute.service.common.InitVariablesFromTaskService">

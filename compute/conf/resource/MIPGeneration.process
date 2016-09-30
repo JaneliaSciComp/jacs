@@ -1,6 +1,6 @@
-<process name="MIPService"  startEvent="pending" processor="queue/mipServiceLauncher" updateProcessStatus="on_success">
+<process name="MIPService"  startEvent="pending" processor="java:/jms/queue/mipServiceLauncher" updateProcessStatus="on_success">
     <sequence name="Generate sample MIPs" waitForAsync="true">
-        <operation name="Generate MIPs" processor="queue/gridSubmitAndWait">
+        <operation name="Generate MIPs" processor="java:/jms/queue/gridSubmitAndWait">
             <input name="iservice" value="org.janelia.it.jacs.compute.service.image.BasicMIPandMovieGenerationService"/>
             <input name="RESULT_FILE_NODE" />
             <input name="RESULT_FILE_NODE_ID" />

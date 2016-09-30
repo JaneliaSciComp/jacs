@@ -82,8 +82,8 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
     private SubjectDAO subjectDAO = new SubjectDAO(logger);
     private DispatcherDAO dispatcherDAO = new DispatcherDAO();
 
-    @Resource(mappedName = MetricsLoggingConstants.QUEUE)
-    private Queue metricsLoggingQueue;
+//    @Resource(mappedName = MetricsLoggingConstants.QUEUE)
+//    private Queue metricsLoggingQueue;
     
     @Resource(mappedName="java:/ConnectionFactory")
     private ConnectionFactory connectionFactory;
@@ -180,10 +180,11 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
                 return null;
             }
             message.setObject(userToolEvent);
-            
+
+            // @todo WildFly fix - put this back in
             // Send and complete.
-            producer = session.createProducer(metricsLoggingQueue);
-            producer.send(message);
+//            producer = session.createProducer(metricsLoggingQueue);
+//            producer.send(message);
             
             return userToolEvent;
         }
@@ -247,9 +248,10 @@ public class ComputeBeanImpl implements ComputeBeanLocal, ComputeBeanRemote {
             }
             message.setObject(userToolEvents);
 
+            // @todo WildFly fix - put this back in
             // Send and complete.
-            producer = session.createProducer(metricsLoggingQueue);
-            producer.send(message);
+//            producer = session.createProducer(metricsLoggingQueue);
+//            producer.send(message);
 
             return;
         } catch (Throwable th) {

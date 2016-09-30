@@ -1,4 +1,4 @@
-<process name="Terra Incognita Whole Brain Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Terra Incognita Whole Brain Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 
         <!-- Import variables from the task -->

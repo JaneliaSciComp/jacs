@@ -12,7 +12,7 @@ package org.janelia.it.jacs.shared.annotation.metrics_logging;
  * @author fosterl
  */
 public class MetricsLoggingConstants {
-    public static final String QUEUE = "queue/MetricsLoggingQueue";
+    public static final String QUEUE = "java:/jms/queue/MetricsLoggingSingletonMDB";
 
     public static final String ID_KEY = "id";
     public static final String CATEGORY_KEY = "category";

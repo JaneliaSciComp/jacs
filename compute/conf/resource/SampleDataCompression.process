@@ -1,7 +1,7 @@
 <!-- 
 	Compress existing image files to one or more output formats.
 -->
-<process name="Sample Data Compression" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Sample Data Compression" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
 		<input name="SAMPLE_ENTITY_ID"/>
@@ -78,7 +78,7 @@
     	    
     	    <!-- Convert all the files in the group -->
             <sequence name="RAW Conversion to PBD" waitForAsync="true">
-    	        <operation name="RAW Conversion to PBD" processor="queue/gridSubmitAndWait">
+    	        <operation name="RAW Conversion to PBD" processor="java:/jms/queue/gridSubmitAndWait">
     	            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DConversionService"/>
     			    <input name="IGNORE_ERRORS" value="true"/>
     	    		<input name="RESULT_FILE_NODE" value="$V{TEMP_FILE_NODE}"/>

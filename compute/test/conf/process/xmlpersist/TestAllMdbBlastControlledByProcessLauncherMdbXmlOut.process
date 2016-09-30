@@ -21,7 +21,7 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="TestAllMdbBlastControlledByProcessLauncherMdbXmlOut" startEvent="pending" processor="queue/processLauncher">  <!-- Executed by ProcessLauncherMDB-->
+<process name="TestAllMdbBlastControlledByProcessLauncherMdbXmlOut" startEvent="pending" processor="java:/jms/queue/processLauncher">  <!-- Executed by ProcessLauncherMDB-->
     <sequence name="Create Splits" >
         <operation name="Create Blast Result File Node" processor="org.jcvi.vics.compute.service.blast.persist.results.initial.CreateBlastResultFileNodeService">
             <output name="RESULT_FILE_NODE_ID"/>

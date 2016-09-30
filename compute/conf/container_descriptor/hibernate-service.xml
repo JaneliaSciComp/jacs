@@ -24,7 +24,7 @@
 <server>
     <mbean code="org.jboss.hibernate.jmx.Hibernate"
            name="jboss.har:service=ComputeHibernate">
-        <attribute name="DatasourceName">java:/ComputeServer_DataSource</attribute>
+        <attribute name="DatasourceName">java:jboss/datasources/ComputeServer_DataSource</attribute>
 		<attribute name="Dialect">org.hibernate.dialect.MySQLDialect</attribute>
         <attribute name="SessionFactoryName">java:/hibernate/ComputeSessionFactory</attribute>
         <attribute name="CacheProviderClass">org.hibernate.cache.HashtableCacheProvider</attribute>
@@ -33,7 +33,7 @@
     </mbean>
     <mbean code="org.jboss.hibernate.jmx.Hibernate"
            name="jboss.har:service=SageHibernate">
-        <attribute name="DatasourceName">java:/Sage_DataSource</attribute>
+        <attribute name="DatasourceName">java:jboss/datasources/Sage_DataSource</attribute>
         <attribute name="Dialect">org.hibernate.dialect.MySQLDialect</attribute>
         <attribute name="SessionFactoryName">java:/hibernate/SageSessionFactory</attribute>
         <attribute name="CacheProviderClass">org.hibernate.cache.HashtableCacheProvider</attribute>

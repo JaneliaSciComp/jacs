@@ -1,7 +1,7 @@
 <!-- 
 	Delete file nodes which are no longer referenced by the database in any way. 
 -->
-<process name="Sample Trash Compactor" processor="queue/largePipelineLauncher" startEvent="pending">
+<process name="Sample Trash Compactor" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 		<operation name="Sample File Node Sync" processor="org.janelia.it.jacs.compute.service.domain.SampleTrashCompactorService">
 		</operation>

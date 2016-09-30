@@ -1,4 +1,4 @@
-<process name="Aljoscha MCFO Case 1 Pipeline Without 20x Merge" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Aljoscha MCFO Case 1 Pipeline Without 20x Merge" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
         <!--

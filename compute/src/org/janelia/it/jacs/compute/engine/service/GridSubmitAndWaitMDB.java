@@ -34,9 +34,9 @@ import java.util.Map;
  * This MDB will process 2 types of messages - request for submission, and response from asynchronous submitter
  */
 @MessageDriven(name = "GridSubmitAndWaitMDB", activationConfig = {
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/gridSubmitAndWait"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/gridSubmitAndWait"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "200"),
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
 //    @ActivationConfigProperty(propertyName="MaxMessages", propertyValue="5"),
@@ -45,7 +45,7 @@ import java.util.Map;
         @ActivationConfigProperty(propertyName = "reconnectInterval", propertyValue = "30"),
 //        @ActivationConfigProperty(propertyName="RedeliveryLimit", propertyValue="100"),
 //        @ActivationConfigProperty(propertyName="RedeliveryDelay", propertyValue="30"),
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 200, timeout = 10000)
 public class GridSubmitAndWaitMDB extends BaseServiceMDB {

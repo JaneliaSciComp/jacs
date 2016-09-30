@@ -7,9 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.naming.InitialContext;
-import javax.naming.Name;
-import javax.naming.NamingException;
 
 
 @Singleton

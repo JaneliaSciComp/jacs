@@ -1,7 +1,7 @@
 <!--
 	Creates 3D Compartment Annotation for a file which lists a set of input files
 -->
-<process name="Compartment Annotation 3D Process" processor="queue/compartmentAnnotation3DLauncher" startEvent="pending">
+<process name="Compartment Annotation 3D Process" processor="java:/jms/queue/compartmentAnnotation3DLauncher" startEvent="pending">
    <sequence>
 
       <operation name="Compartment Annotation 3D" processor="org.janelia.it.jacs.compute.service.annotation.CompartmentAnnotation3DService">
@@ -18,7 +18,7 @@
       </operation>
 
       <sequence name="Compute Pattern Annotation" waitForAsync="true">
-        <operation name="Pattern Annotation" processor="queue/gridSubmitAndWait">
+        <operation name="Pattern Annotation" processor="java:/jms/queue/gridSubmitAndWait">
             <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.Vaa3DPatternAnnotationService"/>
             <input name="RESULT_FILE_NODE"/>
             <input name="SAMPLE_ID_LIST"/>
@@ -33,7 +33,7 @@
       <sequence forEach="MIPS_CONVERSION_PATH" waitForAsync="true">
         <sequence async="true">
             <sequence name="MIP Conversion to PNG" waitForAsync="true">
-                <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+                <operation name="MIP Conversion to PNG" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
                     <input name="IMAGE_CONVERSION_RESULT_NODE_MAP"/>
                     <input name="MIPS_CONVERSION_PATH"/>

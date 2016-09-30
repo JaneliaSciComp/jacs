@@ -1,7 +1,7 @@
-<process name="MIPMapTiles"  startEvent="pending" processor="queue/mipServiceLauncher" updateProcessStatus="on_success">
+<process name="MIPMapTiles"  startEvent="pending" processor="java:/jms/queue/mipServiceLauncher" updateProcessStatus="on_success">
     <sequence name="Generate MIPMaps">
         <sequence name="Retiling" waitForAsync="true">
-            <operation name="Retile the stack" processor="queue/gridSubmitAndWait">
+            <operation name="Retile the stack" processor="java:/jms/queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapTilesService" />
                 <input name="RETILE_IMAGE" />
                 <input name="RESULT_FILE_NODE_ID" />
@@ -50,7 +50,7 @@
         </sequence>
 
         <sequence name="Scaling" waitForAsync="true">
-            <operation name="Scale the stack" processor="queue/gridSubmitAndWait">
+            <operation name="Scale the stack" processor="java:/jms/queue/gridSubmitAndWait">
                 <input name="iservice" value="org.janelia.it.jacs.compute.service.mip.MIPMapsScaleService" />
                 <input name="SCALE_IMAGE" />
                 <input name="RESULT_FILE_NODE_ID" />

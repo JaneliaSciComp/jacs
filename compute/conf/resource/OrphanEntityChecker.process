@@ -1,7 +1,7 @@
 <!-- 
 	Check for orphan entities, and potentially remove them.
 -->
-<process name="Orphan Entity Checker" processor="queue/largePipelineLauncher" startEvent="pending">
+<process name="Orphan Entity Checker" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending">
 	<sequence>
 		<operation name="Orphan Annotation" processor="org.janelia.it.jacs.compute.service.domain.OrphanEntityCheckerService">
 		</operation>

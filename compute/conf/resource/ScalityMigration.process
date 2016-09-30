@@ -21,9 +21,9 @@
   ~ "http://www.perlfoundation.org/artistic_license_2_0."
   -->
 
-<process name="Scality Migration" startEvent="pending" processor="queue/shortPipelineLauncher" updateProcessStatus="on_success">
+<process name="Scality Migration" startEvent="pending" processor="java:/jms/queue/shortPipelineLauncher" updateProcessStatus="on_success">
     <sequence name="Scality Migration" waitForAsync="true" startEvent="running">
-        <operation name="Scality Migration" processor="queue/gridSubmitAndWait">
+        <operation name="Scality Migration" processor="java:/jms/queue/gridSubmitAndWait">
             <input name="iservice" value="org.janelia.it.jacs.compute.service.tools.ScalityMigrationService"/>
         </operation>
      </sequence>

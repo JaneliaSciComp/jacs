@@ -1,7 +1,7 @@
  <!-- 
       Generate summary secondary data files for the LSMs of the given sample. 
  -->
- <process name="FlyLight Summary Pipeline" processor="queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+ <process name="FlyLight Summary Pipeline" processor="java:/jms/queue/samplePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
     <sequence>
 
         <input name="PIPELINE_RUN_ENTITY_ID"/>
@@ -66,7 +66,7 @@
         
             <!-- Copy the files from archive -->
             <sequence name="Wait Async" waitForAsync="true">
-                <operation name="Copy LSMs" processor="queue/gridSubmitAndWait">
+                <operation name="Copy LSMs" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ArchiveGridService"/>
                     <input name="RESULT_FILE_NODE" value="$V{LSM_FILE_NODE}"/>
                     <input name="SOURCE_FILE_PATHS" value="$V{LSM_SOURCE_FILE_PATHS}"/>
@@ -76,7 +76,7 @@
             
             <!-- Create the metadata describing the LSM files -->
             <sequence name="Create LSM Metadata Files" waitForAsync="true">
-                <operation name="Create LSM Metadata Files" processor="queue/gridSubmitAndWait">
+                <operation name="Create LSM Metadata Files" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.domain.sample.CreateLsmMetadataFilesService"/>
                     <input name="SAMPLE_AREA"/>
                     <input name="RESULT_FILE_NODE"/>
@@ -108,7 +108,7 @@
             
             <!-- Create MIPs and movies for all LSMs -->
             <sequence name="Create LSM Summary Artifacts" waitForAsync="true">
-                <operation name="Create LSM Summary Artifacts" processor="queue/gridSubmitAndWait">
+                <operation name="Create LSM Summary Artifacts" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.image.BasicMIPandMovieGenerationService"/>
                     <input name="RESULT_FILE_NODE"/>
                     <input name="OUTPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
@@ -120,7 +120,7 @@
 
             <!-- Create montages from LSM MIPs -->
             <sequence name="Create LSM Montages" waitForAsync="true">
-                <operation name="Create LSM Montages" processor="queue/gridSubmitAndWait">
+                <operation name="Create LSM Montages" processor="java:/jms/queue/gridSubmitAndWait">
                     <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.MontageService"/>
                     <input name="INPUT_FILE_NODE" value="$V{RESULT_FILE_NODE}"/>
                     <input name="RESULT_FILE_NODE"/>

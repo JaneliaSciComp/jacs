@@ -15,12 +15,12 @@ import javax.ejb.MessageDriven;
 import javax.ejb.MessageDrivenContext;
 import java.util.List;
 
-@MessageDriven(
-    activationConfig = {
-        // crontTrigger starts with seconds.  Below should run at the stroke of 1 AM EST, every day
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 */2 * * * ?")
-    }
-)
+//@MessageDriven(
+//    activationConfig = {
+//        // crontTrigger starts with seconds.  Below should run at the stroke of 1 AM EST, every day
+//        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 */2 * * * ?")
+//    }
+//)
 //@ResourceAdapter("quartz-ra.rar")
 public class DispatchComputationMDB implements Job {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DispatchComputationMDB.class);

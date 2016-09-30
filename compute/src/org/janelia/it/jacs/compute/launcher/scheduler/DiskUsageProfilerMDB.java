@@ -12,10 +12,10 @@ import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import java.io.File;
 
-@MessageDriven(activationConfig = {
-        // crontTrigger starts with seconds.  Below should run at the stroke of 1 AM EST, every day
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0 1 * * ?")
-})
+//@MessageDriven(activationConfig = {
+//        // crontTrigger starts with seconds.  Below should run at the stroke of 1 AM EST, every day
+//        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "0 0 1 * * ?")
+//})
 //@ResourceAdapter("quartz-ra.rar")
 /**
  * Created by IntelliJ IDEA.

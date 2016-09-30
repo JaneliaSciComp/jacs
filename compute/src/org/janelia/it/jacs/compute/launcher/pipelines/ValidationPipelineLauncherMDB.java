@@ -11,12 +11,12 @@ import javax.ejb.MessageDriven;
 
 @MessageDriven(name = "ValidationPipelineLauncherMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge "),
-        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
+//        @ActivationConfigProperty(propertyName = "messagingType", propertyValue = "javax.jms.MessageListener"),
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/validationPipelineLauncher"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "java:/jms/queue/validationPipelineLauncher"),
         @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "35"),
         @ActivationConfigProperty(propertyName = "transactionTimeout", propertyValue = "432000"),
-        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
+//        @ActivationConfigProperty(propertyName = "DLQMaxResent", propertyValue = "0")
 })
 //@PoolClass(value  StrictMaxPool.class, maxSize = 35, timeout = 10000)
 

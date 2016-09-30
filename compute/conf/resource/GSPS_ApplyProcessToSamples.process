@@ -1,7 +1,7 @@
 <!-- 
 	Run a subtask process for every sample for a given user.
 -->
-<process name="Apply Process To Samples" processor="queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
+<process name="Apply Process To Samples" processor="java:/jms/queue/largePipelineLauncher" startEvent="pending" updateProcessStatus="on_success">
 	<sequence>
 	
         <input name="DATA_SET_NAME"/>

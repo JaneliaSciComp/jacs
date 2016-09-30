@@ -1,7 +1,7 @@
 <!--
 	Discover Fly Light Screen registration (alignment) stacks and add these to the JACS database
 -->
-<process name="Fly Light Screen Pipeline" processor="queue/flyLightScreenPipelineLauncher" startEvent="pending">
+<process name="Fly Light Screen Pipeline" processor="java:/jms/queue/flyLightScreenPipelineLauncher" startEvent="pending">
 	<sequence>
 
 	    <sequence>
@@ -69,7 +69,7 @@
                     </operation>
 
  		            <sequence name="Map Channels" waitForAsync="true">
-       			        <operation name="Map Channels" processor="queue/gridSubmitAndWait">
+       			        <operation name="Map Channels" processor="java:/jms/queue/gridSubmitAndWait">
         			            <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MapChannelService"/>
         			            <input name="SAMPLE_FILE_NODE_ID_LIST"/>
        				            <input name="SAMPLE_FILE_NODE_LIST"/>
@@ -83,7 +83,7 @@
         			</sequence>
 
                     <sequence name="MIP Generation" waitForAsync="true">
-        		        <operation name="MIP Generation" processor="queue/gridSubmitAndWait">
+        		        <operation name="MIP Generation" processor="java:/jms/queue/gridSubmitAndWait">
         				    <input name="iservice" value="org.janelia.it.jacs.compute.service.vaa3d.MIPGenerationService"/>
         				    <input name="SAMPLE_FILE_NODE_LIST"/>
         				    <input name="SAMPLE_FILE_NODE_ID_LIST"/>
@@ -95,7 +95,7 @@
         			</sequence>
 
                     <sequence name="MIP Conversion to PNG" waitForAsync="true">
-        		        <operation name="MIP Conversion to PNG" processor="queue/gridSubmitAndWait">
+        		        <operation name="MIP Conversion to PNG" processor="java:/jms/queue/gridSubmitAndWait">
        			            <input name="iservice" value="org.janelia.it.jacs.compute.service.utility.ImageConversionService"/>
    				            <input name="SAMPLE_FILE_NODE_ID_LIST"/>
         				    <input name="SAMPLE_FILE_NODE_LIST"/>

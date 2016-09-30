@@ -2,7 +2,6 @@
 package org.janelia.it.jacs.compute.mbean;
 
 import org.apache.log4j.Logger;
-import org.hibernate.Session;
 import org.janelia.it.jacs.compute.api.ComputeBeanRemote;
 import org.janelia.it.jacs.compute.api.EJBFactory;
 import org.janelia.it.jacs.compute.drmaa.DrmaaHelper;
@@ -43,8 +42,6 @@ import java.util.*;
 public class BlastTest extends AbstractComponentMBean implements BlastTestMBean {
     // todo This test is out of date.  OrderEJB doesn't exist.
     public static final String ORDER_EJB_PROP = "BlastServer.OrderEJB";
-
-    Session session;
 
     private PropertyHelper helper;
     private static final Logger logger = Logger.getLogger(BlastTest.class);

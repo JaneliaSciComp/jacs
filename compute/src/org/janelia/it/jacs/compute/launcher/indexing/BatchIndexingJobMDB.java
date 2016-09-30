@@ -4,8 +4,11 @@ package org.janelia.it.jacs.compute.launcher.indexing;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.DependsOn;
 import javax.ejb.MessageDriven;
+import javax.ejb.Schedule;
+import javax.ejb.Startup;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.inject.Singleton;
 
 import org.janelia.it.jacs.model.common.SystemConfigurationProperties;
 import org.quartz.Job;
@@ -17,11 +20,13 @@ import org.quartz.JobExecutionException;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@MessageDriven(activationConfig = {
-        // Wake up every 20 seconds
-        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/15 * * * * ?")
-})
+//@MessageDriven(activationConfig = {
+//        // Wake up every 20 seconds
+//        @ActivationConfigProperty(propertyName = "cronTrigger", propertyValue = "*/15 * * * * ?")
+//})
 //@ResourceAdapter("quartz-ra.rar")
+@Singleton
+@Startup
 @DependsOn({"IndexingManager"})
 public class BatchIndexingJobMDB implements Job {
 
@@ -31,6 +36,7 @@ public class BatchIndexingJobMDB implements Job {
 	private IndexingManagerManagement indexingManager;
 	
 	// Eliminate (unneeded) transactions on this method, because they cause some strange JTA exceptions 
+	@Schedule(second="*/15", minute="*", hour="*")
 	@TransactionAttribute(value = TransactionAttributeType.NEVER)
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
